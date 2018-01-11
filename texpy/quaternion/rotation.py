@@ -1,0 +1,195 @@
+import numpy as np
+
+from texpy.quaternion.quaternion import Quaternion
+from texpy.vector.vector3d import Vector3d
+
+
+class Rotation(Quaternion):
+
+    _improper = None
+
+    def __init__(self, data):
+        super(Rotation, self).__init__(data)
+        if isinstance(data, Rotation):
+            self.improper = data.improper
+        with np.errstate(divide='ignore', invalid='ignore'):
+            self.data = self.data / self.norm[..., np.newaxis]
+
+    def __mul__(self, other):
+        if isinstance(other, Rotation):
+            q = self.to_quaternion() * other.to_quaternion()
+            r = q.to_rotation()
+            i = np.logical_xor(self.improper, other.improper)
+            r.improper = i
+            return r
+        if isinstance(other, Quaternion):
+            q = self.to_quaternion() * other
+            return q
+        if isinstance(other, Vector3d):
+            v = self.to_quaternion() * other
+            improper = (self.improper * np.ones(other.shape)).astype(bool)
+            v[improper] = -v[improper]
+            return v
+        try:
+            other = np.atleast_1d(other).astype(int)
+        except ValueError:
+            pass
+        if isinstance(other, np.ndarray):
+            assert np.all(abs(other) == 1), "Rotations can only be multiplied by 1 or -1"
+            r = Rotation(self.data)
+            r.improper = np.logical_xor(self.improper, other == -1)
+            return r
+        return NotImplemented
+
+    def __neg__(self):
+        r = self.__class__(self.data)
+        r.improper = np.logical_not(self.improper)
+        return r
+
+    def __invert__(self):
+        r = super(Rotation, self).__invert__()
+        r.improper = self.improper
+        return r
+
+    def __getitem__(self, key):
+        obj = super(Rotation, self).__getitem__(key)
+        i = self.improper[key]
+        obj.improper = np.atleast_1d(i)
+        return obj
+
+    @property
+    def unique(self):
+        if len(self.data) == 0:
+            return self.__class__(self.data)
+        rotation = self.flatten()
+        a = rotation.a
+        b = rotation.b
+        c = rotation.c
+        d = rotation.d
+        i = rotation.improper
+        abcd = np.stack((a ** 2, b ** 2, c ** 2, d ** 2, a * b, a * c, a * d,
+                         b * c, b * d, c * d, i), axis=-1).round(5)
+        _, m = np.unique(abcd, axis=0, return_index=True)
+        return rotation[m]
+
+    def outer(self, other):
+        r = super(Rotation, self).outer(other)
+        if isinstance(r, Rotation):
+            r.improper = np.logical_xor.outer(self.improper, other.improper)
+        return r
+
+    def flatten(self):
+        r = super(Rotation, self).flatten()
+        r.improper = self.improper.T.flatten().T
+        return r
+
+    @property
+    def improper(self):
+        if self._improper is None:
+            self._improper = np.zeros(self.shape, dtype=bool)
+        return self._improper.astype(bool)
+
+    @improper.setter
+    def improper(self, value):
+        value = np.atleast_1d(value)
+        assert value.shape == self.shape, "Shape must be {}. (Gave {}).".format(self.shape, value.shape)
+        self._improper = value
+
+    def dot_outer(self, other):
+        cosines = np.abs(super(Rotation, self).dot_outer(other))
+        if isinstance(other, Rotation):
+            improper = self.improper.reshape(self.shape + (1,) * len(other.shape))
+            i = np.logical_xor(improper, other.improper)
+            cosines = np.minimum(~i, cosines)
+        else:
+            cosines[self.improper] = 0
+        return cosines
+
+    def to_quaternion(self):
+        return Quaternion(self.data)
+
+    def to_axangle(self):
+        return self.axis * self.angle
+
+    def to_rodrigues(self):
+        a = self.a
+        a[np.isclose(a, 0)] = 1e-6
+        data = np.stack((self.b / a, self.c / a, self.d / a), axis=-1)
+        return Vector3d(data)
+
+    def to_euler(self, convention='bunge'):  # TODO: other conventions
+        """Rotations as Euler angles.
+
+        Parameters
+        ----------
+        convention : 'matthies' | 'bunge' | 'zxz'
+            The Euler angle convention used.
+
+        Returns
+        -------
+        ndarray
+            Array of Euler angles in radians.
+
+        """
+        at1 = np.arctan2(self.d, self.a)
+        at2 = np.arctan2(self.b, self.c)
+        alpha = at1 - at2
+        beta = 2 * np.arctan2(np.sqrt(self.b ** 2 + self.c ** 2),
+                              np.sqrt(self.a ** 2 + self.d ** 2))
+        gamma = at1 + at2
+        mask = np.isclose(beta, 0)
+        alpha[mask] = 2 * np.arcsin(
+            np.maximum(-1, np.minimum(1, np.sign(self.a[mask]) * self.d[mask])))
+        gamma[mask] = 0
+
+        if convention == 'bunge' or convention == 'zxz':
+            mask = ~np.isclose(beta, 0)
+            alpha[mask] += np.pi / 2
+            gamma[mask] += 3 * np.pi / 2
+        else:
+            raise NotImplementedError(
+                '{} is not an implemented convention. See docstring.'.format(
+                    convention))
+
+        alpha = np.mod(alpha, 2 * np.pi)
+        gamma = np.mod(gamma, 2 * np.pi)
+
+        return np.stack((alpha, beta, gamma), axis=-1)
+
+
+    @classmethod
+    def from_euler(cls, euler):
+        # Bunge convention
+        euler = np.array(euler)
+        n = euler.shape[:-1]
+        alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
+        alpha -= np.pi / 2
+        gamma -= 3 * np.pi / 2
+        zero = np.zeros(n)
+        qalpha = Quaternion(
+            np.stack((np.cos(alpha / 2), zero, zero, np.sin(alpha / 2)),
+                     axis=-1))
+        qbeta = Quaternion(
+            np.stack((np.cos(beta / 2), zero, np.sin(beta / 2), zero), axis=-1))
+        qgamma = Quaternion(
+            np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)),
+                     axis=-1))
+        data = qalpha * qbeta * qgamma
+        rot = Rotation(data.data)
+        rot.improper = zero
+        return rot
+
+    @classmethod
+    def identity(cls, N=1):
+        return cls(np.hstack([np.ones((N, 1)), np.zeros((N, 3))]))
+
+    @property
+    def reciprocal(self):
+        angles = np.zeros(self.shape) + np.pi
+        return self * Rotation.from_axangle(-self.axis, angles)
+
+    def min_axes(self):
+        axes = self.axis
+        angle = np.minimum(self.angle, 2 * np.pi - self.angle)
+        print(angle)
+        return axes[~np.isclose(angle, 0)]
