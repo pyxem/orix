@@ -1,6 +1,5 @@
 import itertools
 
-import tqdm
 import numpy as np
 
 from texpy.object3d import Object3d, check_matching_type
@@ -133,4 +132,3 @@ class Quaternion(Object3d):
     def to_rotation(self):
         from .rotation import Rotation
         return Rotation(self.unit.data)
-
