@@ -28,9 +28,8 @@ class OrientationRegion:
 
     @classmethod
     def get_normals(cls, rotations):
-        rotations = rotations[~rotations.improper].unique
-        rotations = rotations[~np.isclose(rotations.angle, 0)].unique
-        rotations = rotations[~np.isclose(rotations.angle, 0)]
+        rotations = rotations[~rotations.improper].unique()
+        rotations = rotations[~np.isclose(rotations.angle, 0)].unique()
         # Unique elements found manually to allow index return
         if len(rotations.axis.data):
             axes, indices = np.unique(rotations.axis.data.round(9), axis=0,
@@ -48,7 +47,7 @@ class OrientationRegion:
     def cleanup(self):
         greater_than_pi = self.normals.angle > np.pi - 1e-3
         if not np.any(greater_than_pi):
-            normals = self.normals.unique
+            normals = self.normals.unique()
             reciprocal = normals * AxAngle.from_axes_angles(
                 -normals.axis, np.pi * np.ones(normals.shape)).to_rotation()
             inside = OrientationRegion.is_inside(
@@ -95,7 +94,7 @@ class OrientationRegion:
             return vertices
         vertices_all = Rotation.stack([Quaternion.triple_cross(f[0], f[1], f[2]) for f in itertools.combinations(normals, 3)])
         vertices_all = vertices_all[~np.any(np.isnan(vertices_all.data), axis=-1)]
-        vertices_all = vertices_all.unique.to_quaternion()
+        vertices_all = vertices_all.unique().to_quaternion()
         vertices = vertices_all[OrientationRegion.is_inside(normals, vertices_all)]
         switch180 = np.isclose(vertices.angle, np.pi)
         vertices180 = vertices[switch180]
@@ -106,7 +105,7 @@ class OrientationRegion:
             vertices = vertices180[inside].flatten()
         else:
             vertices[switch180] = vertices180[inside]
-        return vertices.unique
+        return vertices.unique()
 
     def face_indices(self):
         if self.vertices is not None:
@@ -149,9 +148,9 @@ class OrientationRegion:
         Quaternion
 
         """
-        quaternions_all = self.symmetry.outer(quaternions)
-        quaternions_inside = self.contains(quaternions_all)
-        return quaternions_all[quaternions_inside]
+        best_transforms = self.symmetry.dot_outer(quaternions).argmax(axis=0)
+        quaternions_inside = quaternions * ~self.symmetry[best_transforms]
+        return quaternions_inside
 
     @staticmethod
     def calculate_axis_sector(normals):
@@ -199,24 +198,19 @@ class MisorientationRegion(OrientationRegion):
         -------
         Quaternion
 
-        Notes
-        -----
-        Clarification needed. Symmetrising according to both symmetries leads
-        to multiple equivalent transformations in the fundamental region.
 
         """
         t = transformations
         s1, s2 = self.symmetry
         # First, symmetrise the transformations
-        quaternions_all = s1.outer(t).outer(~(s2.outer(t)))
-        quaternions_all = Quaternion.stack([quaternions_all, ~quaternions_all])
-        # Next, pick one transformation inside the fundamental zone
-        inside = self.contains(quaternions_all)
-        s = slice(1, len())
-        order = np.argsort(np.argwhere(inside)[:, ])
-
-        return quaternions_all[quaternions_inside]
-
+        s, index = ((~s2.to_quaternion()).outer(~s1.to_quaternion())).unique(return_index=True)
+        s = s.numerical_sort()
+        s2_index, s1_index = np.unravel_index(index, (s2.size, s1.size), order='F')
+        s12_index = np.argmax(np.abs(t.dot_outer(s)), axis=-1)
+        s1_index = s1_index[s12_index]
+        s2_index = s2_index[s12_index]
+        dat = s2[s2_index] * t * s1[s1_index]
+        return dat
 
 
 class Face(Quaternion):

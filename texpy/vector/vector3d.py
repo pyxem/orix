@@ -120,6 +120,10 @@ class Vector3d(Object3d):
     def z(self, value):
         self.data[..., 2] = value
 
+    @property
+    def xyz(self):
+        return self.x, self.y, self.z
+
     # @property
     # def arrows(self):
     #     return [Arrow3d((0, v[0]), (0, v[1]), (0, v[2]),

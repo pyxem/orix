@@ -94,22 +94,6 @@ class Symmetry(Rotation):
             return quaternions.__class__(v_related.data.reshape(v_related.shape[::-1] + (-1,)))
         return NotImplemented
 
-    def project(self, quaternions):
-        """Returns quaternions projected into the fundamental region.
-
-        Parameters
-        ----------
-        quaternions : Quaternion
-
-        Returns
-        -------
-        Quaternion
-
-        """
-        quaternions = self.symmetrise(quaternions)
-        quaternions_inside = self.fundamental_region.contains(quaternions)
-        return quaternions[quaternions_inside]
-
     @staticmethod
     def factorise(s1, s2):
         """Factorises 's1' and 's2' into `l`, `d`, `r`

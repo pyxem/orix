@@ -57,8 +57,7 @@ class Rotation(Quaternion):
         obj.improper = np.atleast_1d(i)
         return obj
 
-    @property
-    def unique(self):
+    def unique(self, return_index=False, return_inverse=False):
         if len(self.data) == 0:
             return self.__class__(self.data)
         rotation = self.flatten()
@@ -69,8 +68,16 @@ class Rotation(Quaternion):
         i = rotation.improper
         abcd = np.stack((a ** 2, b ** 2, c ** 2, d ** 2, a * b, a * c, a * d,
                          b * c, b * d, c * d, i), axis=-1).round(5)
-        _, m = np.unique(abcd, axis=0, return_index=True)
-        return rotation[m]
+        _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
+        dat = self[np.sort(idx)]
+        if return_index and return_inverse:
+            return dat, idx, inv
+        elif return_index and not return_inverse:
+            return dat, idx
+        elif return_inverse and not return_index:
+            return dat, inv
+        else:
+            return dat
 
     def outer(self, other):
         r = super(Rotation, self).outer(other)
@@ -116,6 +123,11 @@ class Rotation(Quaternion):
         a[np.isclose(a, 0)] = 1e-6
         data = np.stack((self.b / a, self.c / a, self.d / a), axis=-1)
         return Vector3d(data)
+
+    def to_homochoric(self):
+        angle = self.angle
+        coefficient = ((angle - np.sin(angle)) * 0.75) ** (1/3)
+        return self.axis * coefficient
 
     def to_euler(self, convention='bunge'):  # TODO: other conventions
         """Rotations as Euler angles.

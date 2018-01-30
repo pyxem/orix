@@ -31,7 +31,7 @@ class SphericalRegion:
         mirror_planes = symmetry.axis[
             np.logical_and(symmetry.improper, np.abs(symmetry.angle) >= np.pi - 1e-6)]
         mirror_planes = mirror_planes[mirror_planes.z > 0 - 1e-6]
-        mirror_planes = symmetry.outer(mirror_planes).unique
+        mirror_planes = symmetry.outer(mirror_planes).unique()
 
         # Separate mirror planes parallel to z-axis
         zone = np.isclose(mirror_planes.dot(Vector3d.zvector()), 0)
@@ -39,7 +39,7 @@ class SphericalRegion:
         mirror_planes_nz = mirror_planes[~zone]
 
         if np.any(np.isclose(symmetry.outer(Vector3d.zvector()).z, -1)) and np.any(symmetry.improper):
-            mirror_planes_nz = Vector3d(np.concatenate((mirror_planes_nz.data, Vector3d.zvector().data))).unique
+            mirror_planes_nz = Vector3d(np.concatenate((mirror_planes_nz.data, Vector3d.zvector().data))).unique()
 
         # We only ever need two mirror planes parallel to z-axis
         # The first should generally have normal along the y-axis, close to it.
@@ -86,7 +86,7 @@ class SphericalRegion:
         # Deal with the rotations
         rotations = symmetry[~symmetry.improper]
         rotations = rotations.outer(rotations)
-        r_inside = rotations[supersector.contains(rotations.axis, edge=False)].to_quaternion().unique.to_rotation()
+        r_inside = rotations[supersector.contains(rotations.axis, edge=False)].to_quaternion().unique().to_rotation()
         r_inside = r_inside[r_inside.angle > 1e-6]
 
         # For every rotation inside the supersector, divide up the remaining
@@ -112,9 +112,9 @@ class SphericalRegion:
                 n1 = -n1
             n2 = - (r * n1)
             supersector.normals = Vector3d(np.concatenate(
-                [supersector.normals.data, n1.data, n2.data])).unique
+                [supersector.normals.data, n1.data, n2.data])).unique()
             inside = supersector.contains(r_inside.axis, edge=False)
-            r_inside = r_inside[inside].unique
+            r_inside = r_inside[inside].unique()
             if r_inside.size == size:
                 break
         return supersector

@@ -245,7 +245,7 @@ def test_to_euler(rotation, euler, convention):
 ], indirect=['rotation'])
 def test_unique(rotation, improper, expected, improper_expected):
     rotation.improper = improper
-    u = rotation.unique
+    u = rotation.unique()
     assert np.allclose(u.data, expected, atol=1e-6)
     assert np.allclose(u.improper, improper_expected)
 

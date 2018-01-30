@@ -343,10 +343,3 @@ def test_symmetrise_vector(symbol, single, expected):
     v_related = s.symmetrise(v)
     assert v_related.shape == v.shape + s.shape
     assert np.allclose(v_related.data, expected, atol=1e-3)
-
-
-@pytest.mark.parametrize('symmetry, quaternion, expected', [
-
-], indirect=['symmetry', 'quaternion'])
-def test_project(symmetry, quaternion, expected):
-    pass

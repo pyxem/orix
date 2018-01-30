@@ -78,15 +78,22 @@ class Object3d:
     def flatten(self):
         return self.__class__(self.data.T.reshape(self.dim, -1).T)
 
-    @property
-    def unique(self):
+    def unique(self, return_index=False, return_inverse=False):
         data = self.flatten().data.round(9)
         # Remove zeros
         data = data[~np.all(np.isclose(data, 0), axis=1)]
         if len(data) == 0:
             return self.__class__(data)
-        _, idx = np.unique(data.round(4), axis=0, return_index=True)
-        return self.__class__(data[np.sort(idx)])
+        _, idx, inv = np.unique(data.round(4), axis=0, return_index=True, return_inverse=True)
+        dat = self.__class__(data[np.sort(idx)])
+        if return_index and return_inverse:
+            return dat, idx, inv
+        elif return_index and not return_inverse:
+            return dat, idx
+        elif return_inverse and not return_index:
+            return dat, inv
+        else:
+            return dat
 
     @property
     def norm(self):
@@ -101,4 +108,7 @@ class Object3d:
         dat = self.data.round(4)
         ind = np.lexsort([dat[:, i] for i in range(self.dim - 1, -1, -1)])
         return self.__class__(self.data[ind])
+
+    def reshape(self, *args):
+        return self.__class__(self.data.reshape(*args, self.dim))
 
