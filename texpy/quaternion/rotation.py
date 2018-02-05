@@ -2,18 +2,20 @@ import numpy as np
 
 from texpy.quaternion.quaternion import Quaternion
 from texpy.vector.vector3d import Vector3d
+from texpy.plot.rotation_plot import RotationPlot, plot_pole_figure
 
 
 class Rotation(Quaternion):
 
     _improper = None
+    plot_type = RotationPlot
 
     def __init__(self, data):
         super(Rotation, self).__init__(data)
         if isinstance(data, Rotation):
             self.improper = data.improper
         with np.errstate(divide='ignore', invalid='ignore'):
-            self.data = self.data / self.norm[..., np.newaxis]
+            self.data = self.data / self.norm.data[..., np.newaxis]
 
     def __mul__(self, other):
         if isinstance(other, Rotation):
@@ -61,10 +63,10 @@ class Rotation(Quaternion):
         if len(self.data) == 0:
             return self.__class__(self.data)
         rotation = self.flatten()
-        a = rotation.a
-        b = rotation.b
-        c = rotation.c
-        d = rotation.d
+        a = rotation.a.data
+        b = rotation.b.data
+        c = rotation.c.data
+        d = rotation.d.data
         i = rotation.improper
         abcd = np.stack((a ** 2, b ** 2, c ** 2, d ** 2, a * b, a * c, a * d,
                          b * c, b * d, c * d, i), axis=-1).round(5)
@@ -103,7 +105,7 @@ class Rotation(Quaternion):
         self._improper = value
 
     def dot_outer(self, other):
-        cosines = np.abs(super(Rotation, self).dot_outer(other))
+        cosines = np.abs(super(Rotation, self).dot_outer(other).data)
         if isinstance(other, Rotation):
             improper = self.improper.reshape(self.shape + (1,) * len(other.shape))
             i = np.logical_xor(improper, other.improper)
@@ -116,7 +118,8 @@ class Rotation(Quaternion):
         return Quaternion(self.data)
 
     def to_axangle(self):
-        return self.axis * self.angle
+        from texpy.vector.axangle import AxAngle
+        return AxAngle((self.axis * self.angle).data)
 
     def to_rodrigues(self):
         a = self.a
@@ -125,7 +128,7 @@ class Rotation(Quaternion):
         return Vector3d(data)
 
     def to_homochoric(self):
-        angle = self.angle
+        angle = self.angle.data
         coefficient = ((angle - np.sin(angle)) * 0.75) ** (1/3)
         return self.axis * coefficient
 
@@ -143,15 +146,15 @@ class Rotation(Quaternion):
             Array of Euler angles in radians.
 
         """
-        at1 = np.arctan2(self.d, self.a)
-        at2 = np.arctan2(self.b, self.c)
+        at1 = np.arctan2(self.d.data, self.a.data)
+        at2 = np.arctan2(self.b.data, self.c.data)
         alpha = at1 - at2
-        beta = 2 * np.arctan2(np.sqrt(self.b ** 2 + self.c ** 2),
-                              np.sqrt(self.a ** 2 + self.d ** 2))
+        beta = 2 * np.arctan2(np.sqrt(self.b.data ** 2 + self.c.data ** 2),
+                              np.sqrt(self.a.data ** 2 + self.d.data ** 2))
         gamma = at1 + at2
         mask = np.isclose(beta, 0)
         alpha[mask] = 2 * np.arcsin(
-            np.maximum(-1, np.minimum(1, np.sign(self.a[mask]) * self.d[mask])))
+            np.maximum(-1, np.minimum(1, np.sign(self.a[mask].data) * self.d[mask].data)))
         gamma[mask] = 0
 
         if convention == 'bunge' or convention == 'zxz':
@@ -202,6 +205,9 @@ class Rotation(Quaternion):
 
     def min_axes(self):
         axes = self.axis
-        angle = np.minimum(self.angle, 2 * np.pi - self.angle)
+        angle = np.minimum(self.angle.data, 2 * np.pi - self.angle.data)
         print(angle)
         return axes[~np.isclose(angle, 0)]
+
+    def plot_pole_figure(self, **kwargs):
+        return plot_pole_figure(self, **kwargs)

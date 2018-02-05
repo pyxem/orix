@@ -29,14 +29,14 @@ class OrientationRegion:
     @classmethod
     def get_normals(cls, rotations):
         rotations = rotations[~rotations.improper].unique()
-        rotations = rotations[~np.isclose(rotations.angle, 0)].unique()
+        rotations = rotations[~np.isclose(rotations.angle.data, 0)].unique()
         # Unique elements found manually to allow index return
         if len(rotations.axis.data):
             axes, indices = np.unique(rotations.axis.data.round(9), axis=0,
                                       return_inverse=True)
             axes = np.concatenate((axes, -axes), axis=-2)
             angles = np.array(
-                [min(rotations.angle[indices == index]) for index in
+                [min(rotations.angle.data[indices == index]) for index in
                  set(indices)])
             angles = np.concatenate((angles / 2, np.pi - angles / 2), axis=-1)
             normals = AxAngle.from_axes_angles(axes, angles).to_rotation()
@@ -92,13 +92,13 @@ class OrientationRegion:
                 [0, 0, 1, 0]
             ])
             return vertices
-        vertices_all = Rotation.stack([Quaternion.triple_cross(f[0], f[1], f[2]) for f in itertools.combinations(normals, 3)])
+        vertices_all = Rotation.stack([Rotation.triple_cross(f[0], f[1], f[2]) for f in itertools.combinations(normals, 3)])
         vertices_all = vertices_all[~np.any(np.isnan(vertices_all.data), axis=-1)]
         vertices_all = vertices_all.unique().to_quaternion()
         vertices = vertices_all[OrientationRegion.is_inside(normals, vertices_all)]
-        switch180 = np.isclose(vertices.angle, np.pi)
+        switch180 = np.isclose(vertices.angle.data, np.pi)
         vertices180 = vertices[switch180]
-        vertices180 = Quaternion.stack([vertices180, AxAngle.from_axes_angles(vertices180.axis, -vertices180.angle).to_rotation().to_quaternion()])
+        vertices180 = Quaternion.stack([vertices180, AxAngle.from_axes_angles(vertices180.axis, -vertices180.angle.data).to_rotation().to_quaternion()])
         axis_sector = OrientationRegion.calculate_axis_sector(normals)
         inside = axis_sector.contains(vertices180.axis)
         if inside.size > switch180.size:
@@ -110,7 +110,7 @@ class OrientationRegion:
     def face_indices(self):
         if self.vertices is not None:
             face_indices = [
-                np.where(np.isclose(normal.dot(self.vertices), 0))[0]
+                np.where(np.isclose(normal.dot(self.vertices).data, 0))[0]
                 for normal in self.normals]
             for i, fi in enumerate(face_indices):
                 if len(fi) < 3:
@@ -157,8 +157,7 @@ class OrientationRegion:
         from texpy.vector.spherical_region import SphericalRegion
         n = normals.axis
         ind = normals.angle > np.pi - 1e-3
-        spherical_region = SphericalRegion()
-        spherical_region.normals = n[ind]
+        spherical_region = SphericalRegion(n[ind].data)
         return spherical_region
 
     def axis_sector(self):
@@ -175,9 +174,9 @@ class MisorientationRegion(OrientationRegion):
 
         disjoint = Symmetry.disjoint(symmetry_1, symmetry_2)
         spherical_region = disjoint.calculate_fundamental_sector()
-        angles = [np.pi - 1e-6] * spherical_region.normals.size
+        angles = [np.pi - 1e-6] * spherical_region.size
         zero_order_symmetries = AxAngle.from_axes_angles(
-            spherical_region.normals, angles).to_rotation()
+            spherical_region, angles).to_rotation()
 
         normals = cls.get_normals(rotations)
 

@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-
+from texpy.base.object3d import DimensionError
 from texpy.quaternion.quaternion import Quaternion
 from texpy.vector.vector3d import Vector3d
 
@@ -53,7 +53,7 @@ def something(request):
     1, 2, 3, 5, 6, 8,
 ])
 def test_init(input_length):
-    with pytest.raises(AssertionError):
+    with pytest.raises(DimensionError):
         Quaternion(tuple(range(input_length)))
 
 
@@ -62,11 +62,11 @@ def test_neg(quaternion):
 
 
 def test_norm(quaternion):
-    assert np.all(quaternion.norm == (quaternion.data**2).sum(axis=-1)**0.5)
+    assert np.all(quaternion.norm.data == (quaternion.data**2).sum(axis=-1)**0.5)
 
 
 def test_unit(quaternion):
-    assert np.allclose(quaternion.unit.norm, 1)
+    assert np.allclose(quaternion.unit.norm.data, 1)
 
 
 def test_conj(quaternion):
@@ -75,14 +75,16 @@ def test_conj(quaternion):
 
 
 def test_mul(quaternion, something):
-    sa, sb, sc, sd = something.a, something.b, something.c, something.d
-    qa, qb, qc, qd = quaternion.a, quaternion.b, quaternion.c, quaternion.d
+    sa, sb, sc, sd = something.a.data, something.b.data, \
+                     something.c.data, something.d.data
+    qa, qb, qc, qd = quaternion.a.data, quaternion.b.data, \
+                     quaternion.c.data, quaternion.d.data
     q1 = quaternion * something
     assert isinstance(q1, Quaternion)
-    assert np.allclose(q1.a, sa * qa - sb * qb - sc * qc - sd * qd)
-    assert np.allclose(q1.b, qa * sb + qb * sa + qc * sd - qd * sc)
-    assert np.allclose(q1.c, qa * sc - qb * sd + qc * sa + qd * sb)
-    assert np.allclose(q1.d, qa * sd + qb * sc - qc * sb + qd * sa)
+    assert np.allclose(q1.a.data, sa * qa - sb * qb - sc * qc - sd * qd)
+    assert np.allclose(q1.b.data, qa * sb + qb * sa + qc * sd - qd * sc)
+    assert np.allclose(q1.c.data, qa * sc - qb * sd + qc * sa + qd * sb)
+    assert np.allclose(q1.d.data, qa * sd + qb * sc - qc * sb + qd * sa)
 
 
 def test_mul_identity(quaternion, identity):
@@ -97,7 +99,7 @@ def test_no_multiplicative_inverse(quaternion, something):
 
 def test_inverse(quaternion):
     assert np.allclose((quaternion * ~quaternion).data, (~quaternion * quaternion).data)
-    assert np.allclose((quaternion * ~quaternion).a, 1)
+    assert np.allclose((quaternion * ~quaternion).a.data, 1)
     assert np.allclose((quaternion * ~quaternion).data[..., 1:], 0)
 
 
@@ -111,12 +113,12 @@ def test_dot_outer(quaternion, something):
     assert d.shape == quaternion.shape + something.shape
     for i in np.ndindex(quaternion.shape):
         for j in np.ndindex(something.shape):
-            assert np.allclose(d[i + j], quaternion[i].dot(something[j]))
+            assert np.allclose(d[i + j].data, quaternion[i].dot(something[j]).data)
 
 
 def test_angle_with_self(quaternion):
     a = quaternion.angle_with(quaternion)
-    assert np.allclose(a, 0, atol=1e-6)
+    assert np.allclose(a.data, 0, atol=1e-6)
 
 
 def test_angle_with(quaternion, something):
@@ -128,7 +130,7 @@ def test_angle_with(quaternion, something):
 def test_axis(quaternion):
     axis = quaternion.axis
     assert isinstance(axis, Vector3d)
-    assert np.all(axis.norm == 1)
+    assert np.all(axis.norm.data == 1)
 
 
 def test_angle(quaternion):

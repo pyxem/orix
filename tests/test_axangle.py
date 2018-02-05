@@ -40,19 +40,19 @@ def axangle(request):
 
 
 def test_angle(axangle):
-    assert np.allclose(axangle.angle, axangle.norm)
+    assert np.allclose(axangle.angle.data, axangle.norm.data)
 
 
 def test_axis(axangle):
     assert axangle.axis.shape == axangle.shape
-    assert np.allclose(axangle.axis.norm, 1)
+    assert np.allclose(axangle.axis.norm.data, 1)
 
 
 def test_to_rotation(axangle):
     r = axangle.to_rotation()
     assert isinstance(r, Rotation)
-    assert np.allclose(r.norm, 1)
-    assert np.allclose(r.angle, axangle.angle % (2*np.pi))
+    assert np.allclose(r.norm.data, 1)
+    assert np.allclose(r.angle.data, axangle.angle.data % (2*np.pi))
 
 
 @pytest.mark.parametrize('axis, angle, expected_axis', [
@@ -62,4 +62,4 @@ def test_to_rotation(axangle):
 def test_from_axes_angles(axis, angle, expected_axis):
     ax = AxAngle.from_axes_angles(axis, angle)
     assert np.allclose(ax.axis.data, expected_axis)
-    assert np.allclose(ax.angle, abs(angle))
+    assert np.allclose(ax.angle.data, abs(angle))

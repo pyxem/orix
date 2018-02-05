@@ -233,7 +233,7 @@ def test_misorientation_region(misorientation_region, normals, vertices):
 ], indirect=['misorientation_region'])
 def test_axis_sector(misorientation_region, normals):
     a = misorientation_region.axis_sector()
-    assert np.allclose(a.normals.data, normals)
+    assert np.allclose(a.data, normals)
 
 @pytest.mark.parametrize('misorientation_region, transformation, expected', [
     (

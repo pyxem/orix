@@ -8,8 +8,7 @@ from texpy.vector.vector3d import Vector3d
 
 @pytest.fixture
 def spherical_region(request):
-    sr = SphericalRegion()
-    sr.normals = request.param
+    sr = SphericalRegion(request.param)
     return sr
 
 @pytest.fixture
@@ -80,5 +79,5 @@ def test_is_inside(spherical_region, vector):
 def test_from_symmetry(symbol, normals):
     s = Symmetry.from_symbol(symbol)
     sr = SphericalRegion.from_symmetry(s)
-    print(sr.normals.data.round(4))
-    assert np.allclose(sr.normals.data, normals, atol=1e-4)
+    print(sr.data.round(4))
+    assert np.allclose(sr.data, normals, atol=1e-4)

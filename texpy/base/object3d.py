@@ -2,28 +2,46 @@ import numpy as np
 import itertools
 
 
-def check_matching_type(this, obj):
-    if not isinstance(obj, this.__class__):
+def check(obj, cls):
+    if not isinstance(obj, cls):
         try:
-            obj = this.__class__(obj)
+            obj = cls(obj)
         except:
             raise ValueError('Could not turn {} (type {}) into {}'.format(
-                        obj, obj.__class__.__name__, this.__class__.__name__))
+                        obj, obj.__class__.__name__, cls.__name__))
     return obj
 
 
+class DimensionError(Exception):
+
+    def __init__(self, object):
+        class_name = object.__class__.__name__
+        required_dimension = object.dim
+        received_dimension = object.shape[-1]
+        super().__init__(
+            "{} requires data of dimension {} "
+            "but received dimension {}.".format(
+                class_name, required_dimension, received_dimension
+            ))
+
+
 class Object3d:
+    """Base class for 3d objects.
+
+    """
 
     dim = None
     data = None
-    __array_priority__ = 1000
+    plot_type = None
+    __array_ufunc__ = None
 
     def __init__(self, data=None):
         if isinstance(data, self.__class__):
             data = data.data
         data = np.atleast_2d(data)
-        assert data.shape[-1] == self.dim, "Data must have final shape (..., {}). Got shape {}.".format(self.dim, data.shape)
         self.data = data
+        if data.shape[-1] != self.dim:
+            raise DimensionError(self)
 
     def __repr__(self):
         name = self.__class__.__name__
@@ -67,8 +85,7 @@ class Object3d:
 
     @classmethod
     def stack(cls, sequence):
-        s0 = sequence[0]
-        sequence = [check_matching_type(s0, s).data for s in sequence]
+        sequence = [check(s, cls).data for s in sequence]
         try:
             stack = np.stack(sequence, axis=-2)
         except ValueError:
@@ -97,12 +114,13 @@ class Object3d:
 
     @property
     def norm(self):
-        return np.sqrt(np.sum(np.square(self.data), axis=-1))
+        from texpy.scalar.scalar import Scalar
+        return Scalar(np.sqrt(np.sum(np.square(self.data), axis=-1)))
 
     @property
     def unit(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            return self.__class__(np.nan_to_num(self.data / self.norm[..., np.newaxis]))
+            return self.__class__(np.nan_to_num(self.data / self.norm.data[..., np.newaxis]))
 
     def numerical_sort(self):
         dat = self.data.round(4)
@@ -112,3 +130,7 @@ class Object3d:
     def reshape(self, *args):
         return self.__class__(self.data.reshape(*args, self.dim))
 
+    def plot(self, ax=None, **kwargs):
+        plt = self.plot_type(self, ax=ax)
+        plt.draw(**kwargs)
+        return plt.ax
