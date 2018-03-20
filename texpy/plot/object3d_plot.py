@@ -1,7 +1,4 @@
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    pass
+import matplotlib.pyplot as plt
 
 
 class Object3dPlot:
