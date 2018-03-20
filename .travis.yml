@@ -4,7 +4,7 @@ python:
   - "3.6"
 
 before_install:
-  - pip install pytest-cov python-coveralls
+  - pip install pytest-cov python-coveralls sphinx_rtd_theme
 
 install:
   - python setup.py install
@@ -14,3 +14,13 @@ script:
 
 after_success:
   - coveralls
+  - sphinx-apidoc -fo docs/source/api pyxem
+  - sphinx-build -b html docs/source docs/build
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  local_dir: ${TRAVIS_BUILD_DIR}/docs/build
+  on:
+    branch: master

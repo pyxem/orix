@@ -1,6 +1,3 @@
-texpy
-=====
-
 texpy is a package under development for the handling of quaternion
 objects, built primarily on top of `numpy <http://www.numpy.org/>`__ and
 `matplotlib <https://matplotlib.org/>`__ and heavily inspired by the
@@ -28,11 +25,26 @@ but installation via GitHub is easy.
    instructions.
 2. Open a shell to a suitable local directory. Create and activate a
    clean environment for texpy:
-   ``> conda create --name texpy-env python=3   > activate texpy-env  # Windows   > source activate texpy-env  # Linux/MacOS``
+
+   .. code:: shell
+
+      > conda create --name texpy-env python=3
+      > activate texpy-env  # Windows
+      > source activate texpy-env  # Linux/MacOS
+
 3. Install numpy, and optionally matplotlib:
-   ``> conda install numpy matplotlib``
+
+   .. code:: shell
+
+      > conda install numpy matplotlib
+
 4. Install texpy from GitHub using pip:
-   ``> pip install git+https://github.com/bm424/texpy.git`` This will
+
+   .. code:: shell
+
+      > pip install git+https://github.com/bm424/texpy.git
+
+   This will
    always install the latest version. Given sufficient interest,
    specific versions may be released for backwards compatibility and
    citation purposes.
