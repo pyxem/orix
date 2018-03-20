@@ -3,6 +3,9 @@ language: python
 python:
   - "3.6"
 
+before_install:
+  - pip install python-coveralls
+
 install:
   - python setup.py install
 
