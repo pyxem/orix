@@ -10,4 +10,7 @@ setup(
     author_email=__author_email__,
     description=__description__,
     packages=find_packages(exclude=['texpy/tests']),
+    install_requires=[
+        "numpy"
+    ]
 )
