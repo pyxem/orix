@@ -220,7 +220,7 @@ class Vector3d(Object3d):
         return r * cls(np.stack((x, y, z), axis=-1))
 
     @classmethod
-    def zero(cls, shape):
+    def zero(cls, shape=(1,)):
         """Returns zero vectors in the specified shape.
 
         Parameters

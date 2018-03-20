@@ -149,6 +149,15 @@ def test_cross_error(vector, number):
 def test_polar(theta, phi, r, expected):
     assert np.allclose(Vector3d.from_polar(theta, phi, r).data, expected.data, atol=1e-5)
 
+@pytest.mark.parametrize('shape', [
+    (1,),
+    (2, 2),
+    (5, 4, 3),
+])
+def test_zero(shape):
+    v = Vector3d.zero(shape)
+    assert v.shape == shape
+    assert v.data.shape[-1] == v.dim
 
 def test_angle_with(vector, something):
     a = vector.angle_with(vector).data
