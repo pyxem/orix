@@ -130,7 +130,14 @@ class Object3d:
     def reshape(self, *args):
         return self.__class__(self.data.reshape(*args, self.dim))
 
-    def plot(self, ax=None, **kwargs):
-        plt = self.plot_type(self, ax=ax)
+    def plot(self, ax=None, figsize=(6, 6), **kwargs):
+        plt = self.plot_type(self, ax=ax, figsize=figsize)
         plt.draw(**kwargs)
         return plt.ax
+
+    def sample(self, n=500):
+        """Selects 'n' random values of this data."""
+        if n > self.size:
+            n = self.size
+        sample = np.random.choice(self.size, n, False)
+        return self.flatten()[sample]

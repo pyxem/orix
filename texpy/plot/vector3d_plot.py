@@ -6,8 +6,8 @@ from texpy.plot.object3d_plot import Object3dPlot
 
 class VectorPlot(Object3dPlot):
 
-    def __init__(self, vector, ax=None):
-        ax = plt.figure(figsize=(6, 6)).add_subplot(111, projection='3d', aspect='equal') \
+    def __init__(self, vector, ax=None, figsize=(6, 6)):
+        ax = plt.figure(figsize=figsize).add_subplot(111, projection='3d', aspect='equal') \
             if ax is None else ax
         super(VectorPlot, self).__init__(vector, ax)
 

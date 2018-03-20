@@ -56,7 +56,7 @@ class Symmetry(Rotation):
 
     @staticmethod
     def disjoint(symmetry_1, symmetry_2):
-        is1, is2 = np.nonzero(np.isclose(symmetry_1.dot_outer(symmetry_2), 1))
+        is1, is2 = np.nonzero(np.isclose(symmetry_1.dot_outer(symmetry_2).data, 1))
         is1, is2 = np.array(tuple(set(is1))), np.array(tuple(set(is2)))
         if len(is1) == 1:
             return Symmetry.identity()
@@ -110,26 +110,26 @@ class Symmetry(Rotation):
 
         """
         qs1, qs2 = s1.to_quaternion(), s2.to_quaternion()
-        in1, in2 = np.where(np.isclose(np.abs(qs1.dot_outer(qs2)), 1))
+        in1, in2 = np.where(np.isclose(np.abs(qs1.dot_outer(qs2).data), 1))
         d = qs1[in1]  # Common symmetries
 
         # Compute l
         l = Quaternion((1, 0, 0, 0))
-        subs = np.isclose(np.abs((l.outer(d)).dot_outer(qs1)), 1)
+        subs = np.isclose(np.abs((l.outer(d)).dot_outer(qs1).data), 1)
         c = np.any(subs, axis=tuple(range(len(subs.shape) - 1)))
         while not np.all(c):
             new = np.where(~c)[0][0]
             l.data = np.concatenate([l.data, qs1[new].data], axis=0)
-            subs = np.isclose(np.abs(l.outer(d).dot_outer(qs1)), 1)
+            subs = np.isclose(np.abs(l.outer(d).dot_outer(qs1).data), 1)
             c = np.any(subs, axis=tuple(range(len(subs.shape) - 1)))
 
         # Compute r
         r = Quaternion((1, 0, 0, 0))
-        c = np.any(np.isclose(np.abs((d * r).dot_outer(qs2)), 1), axis=0)
+        c = np.any(np.isclose(np.abs((d * r).dot_outer(qs2).data), 1), axis=0)
         while not np.all(c):
             new = np.where(~c)[0][0]
             r.data = np.concatenate([r.data, qs2[new].data], axis=0)
-            subs = np.isclose(np.abs(d.outer(r).dot_outer(qs2)), 1)
+            subs = np.isclose(np.abs(d.outer(r).dot_outer(qs2).data), 1)
             c = np.any(subs, axis=tuple(range(len(subs.shape) - 1)))
 
         return l, d, r

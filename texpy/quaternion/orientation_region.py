@@ -6,6 +6,7 @@ from texpy.quaternion.quaternion import Quaternion
 from texpy.quaternion.rotation import Rotation
 from texpy.vector.vector3d import Vector3d
 from texpy.vector.axangle import AxAngle
+from texpy.plot.orientation_region_plot import OrientationRegionPlot
 
 
 class OrientationRegion:
@@ -14,6 +15,7 @@ class OrientationRegion:
     vertices = None
     faces = None
     symmetry = None
+    plot_type = OrientationRegionPlot
 
     @classmethod
     def from_symmetry(cls, symmetry):
@@ -121,8 +123,8 @@ class OrientationRegion:
     def is_inside(normals, quaternions):
         normals = Quaternion(normals)
         cosines = normals.dot_outer(quaternions)
-        inside1 = cosines < 1e-6
-        inside2 = cosines > -1e-6
+        inside1 = cosines < 1e-7
+        inside2 = cosines > -1e-7
         axes = tuple(range(len(normals.shape)))
         inside = np.logical_or(np.all(inside1, axis=axes),
                              np.all(inside2, axis=axes))
@@ -148,8 +150,8 @@ class OrientationRegion:
         Quaternion
 
         """
-        best_transforms = self.symmetry.dot_outer(quaternions).argmax(axis=0)
-        quaternions_inside = quaternions * ~self.symmetry[best_transforms]
+        best_transforms = self.symmetry.dot_outer(~quaternions).data.argmax(axis=0)
+        quaternions_inside = self.symmetry[best_transforms] * quaternions
         return quaternions_inside
 
     @staticmethod
@@ -162,6 +164,11 @@ class OrientationRegion:
 
     def axis_sector(self):
         return self.calculate_axis_sector(self.normals)
+
+    def plot(self, ax=None, figsize=(6, 6)):
+        plt = self.plot_type(self, ax=ax, figsize=figsize)
+        plt.draw()
+        return plt.ax
 
 
 class MisorientationRegion(OrientationRegion):
@@ -184,6 +191,7 @@ class MisorientationRegion(OrientationRegion):
             np.concatenate((normals.data, zero_order_symmetries.data), axis=-2))
         misorientation_region.normals = normals
         misorientation_region.symmetry = (symmetry_1, symmetry_2)
+        misorientation_region.sector = spherical_region
         return misorientation_region.cleanup()
 
     def project(self, transformations):
@@ -199,17 +207,12 @@ class MisorientationRegion(OrientationRegion):
 
 
         """
-        t = transformations
+        from texpy.quaternion.symmetry import Symmetry
         s1, s2 = self.symmetry
         # First, symmetrise the transformations
-        s, index = ((~s2.to_quaternion()).outer(~s1.to_quaternion())).unique(return_index=True)
-        s = s.numerical_sort()
-        s2_index, s1_index = np.unravel_index(index, (s2.size, s1.size), order='F')
-        s12_index = np.argmax(np.abs(t.dot_outer(s)), axis=-1)
-        s1_index = s1_index[s12_index]
-        s2_index = s2_index[s12_index]
-        dat = s2[s2_index] * t * s1[s1_index]
-        return dat
+        if not np.allclose(s1.data, s2.data):
+            raise NotImplementedError('Only self-similar symmetries work at this time.')
+
 
 
 class Face(Quaternion):

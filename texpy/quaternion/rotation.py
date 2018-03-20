@@ -2,6 +2,7 @@ import numpy as np
 
 from texpy.quaternion.quaternion import Quaternion
 from texpy.vector.vector3d import Vector3d
+from texpy.scalar.scalar import Scalar
 from texpy.plot.rotation_plot import RotationPlot, plot_pole_figure
 
 
@@ -85,6 +86,8 @@ class Rotation(Quaternion):
         r = super(Rotation, self).outer(other)
         if isinstance(r, Rotation):
             r.improper = np.logical_xor.outer(self.improper, other.improper)
+        if isinstance(r, Vector3d):
+            r[self.improper] = -r[self.improper]
         return r
 
     def flatten(self):
@@ -112,7 +115,7 @@ class Rotation(Quaternion):
             cosines = np.minimum(~i, cosines)
         else:
             cosines[self.improper] = 0
-        return cosines
+        return Scalar(cosines)
 
     def to_quaternion(self):
         return Quaternion(self.data)
@@ -122,10 +125,11 @@ class Rotation(Quaternion):
         return AxAngle((self.axis * self.angle).data)
 
     def to_rodrigues(self):
-        a = self.a
-        a[np.isclose(a, 0)] = 1e-6
-        data = np.stack((self.b / a, self.c / a, self.d / a), axis=-1)
-        return Vector3d(data)
+        from texpy.vector.rodrigues import Rodrigues
+        a = self.a.data
+        a[np.isclose(a, 0)] = 1e-9
+        data = np.stack((self.b.data / a, self.c.data / a, self.d.data / a), axis=-1)
+        return Rodrigues(data)
 
     def to_homochoric(self):
         angle = self.angle.data

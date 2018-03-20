@@ -337,7 +337,7 @@ def test_dot_outer_rot(rotation, improper, rotation_2, improper_2, expected):
     rotation_2.improper = improper_2
     cosines = rotation.dot_outer(rotation_2)
     assert cosines.shape == rotation.shape + rotation_2.shape
-    assert np.allclose(cosines, expected, atol=1e-4)
+    assert np.allclose(cosines.data, expected, atol=1e-4)
 
 
 @pytest.mark.parametrize('rotation, improper, quaternion, expected', [
@@ -363,4 +363,4 @@ def test_dot_outer_quat(rotation, improper, quaternion, expected):
     rotation.improper = improper
     cosines = rotation.dot_outer(quaternion)
     assert cosines.shape == rotation.shape + quaternion.shape
-    assert np.allclose(cosines, expected, atol=1e-4)
+    assert np.allclose(cosines.data, expected, atol=1e-4)

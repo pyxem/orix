@@ -4,14 +4,15 @@ from texpy.plot.vector3d_plot import VectorPlot
 
 class RotationPlot(VectorPlot):
 
-    def __init__(self, rotation, ax=None):
+    def __init__(self, rotation, ax=None, figsize=(6, 6)):
         vector = rotation.to_axangle()
-        super(RotationPlot, self).__init__(vector, ax)
+        super(RotationPlot, self).__init__(vector, ax, figsize)
 
 
 def plot_pole_figure(rotation, **kwargs):
     _, (ax_north, ax_south) = plt.subplots(1, 2)
     ax_south.set_aspect('equal')
+
     ax_north.set_aspect('equal')
     x, y, z = rotation.axis.xyz
     north = z >= 0

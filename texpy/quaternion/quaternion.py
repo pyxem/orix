@@ -60,8 +60,8 @@ class Quaternion(Object3d):
         return self.__class__(self.conj.data / (self.norm.data ** 2)[..., np.newaxis])
 
     def outer(self, other):
+        e = lambda x, y: np.multiply.outer(x, y)
         if isinstance(other, Quaternion):
-            e = lambda x, y: np.multiply.outer(x, y)
             sa, oa = self.a.data, other.a.data
             sb, ob = self.b.data, other.b.data
             sc, oc = self.c.data, other.c.data
@@ -72,6 +72,14 @@ class Quaternion(Object3d):
             d = e(sd, oa) - e(sc, ob) + e(sb, oc) + e(sa, od)
             q = np.stack((a, b, c, d), axis=-1)
             return other.__class__(q)
+        elif isinstance(other, Vector3d):
+            a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
+            x, y, z = other.x.data, other.y.data, other.z.data
+            x_new = e(a ** 2 + b ** 2 - c ** 2 - d ** 2, x) + 2 * (e(a * c + b * d, z) + e(b * c - a * d, y))
+            y_new = e(a ** 2 - b ** 2 + c ** 2 - d ** 2, y) + 2 * (e(a * d + b * c, x) + e(c * d - a * b, z))
+            z_new = e(a ** 2 - b ** 2 - c ** 2 + d ** 2, z) + 2 * (e(a * b + c * d, y) + e(b * d - a * c, x))
+            v = np.stack((x_new, y_new, z_new), axis=-1)
+            return other.__class__(v)
         return super(Quaternion, self).outer(other)
 
     def __mul__(self, other):

@@ -98,8 +98,19 @@ class Scalar(Object3d):
             return self.__class__(other * self.data)
         return NotImplemented
 
+    def __eq__(self, other):
+        if isinstance(other, Scalar):
+            return self.data == other.data
+        elif isinstance(other, (int, float)):
+            return self.data == other
+        elif isinstance(other, (list, tuple)):
+            other = np.array(other)
+        if isinstance(other, np.ndarray):
+            return self.data == other
+        return NotImplemented
+
     def __gt__(self, other):
-        if isinstance(other, Object3d):
+        if isinstance(other, Scalar):
             return self.data > other.data
         elif isinstance(other, (int, float)):
             return self.data > other
@@ -110,7 +121,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __lt__(self, other):
-        if isinstance(other, Object3d):
+        if isinstance(other, Scalar):
             return self.data < other.data
         elif isinstance(other, (int, float)):
             return self.data < other
@@ -121,7 +132,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __ge__(self, other):
-        if isinstance(other, Object3d):
+        if isinstance(other, Scalar):
             return self.data >= other.data
         elif isinstance(other, (int, float)):
             return self.data >= other
@@ -132,7 +143,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __le__(self, other):
-        if isinstance(other, Object3d):
+        if isinstance(other, Scalar):
             return self.data <= other.data
         elif isinstance(other, (int, float)):
             return self.data <= other

@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 
 class Object3dPlot:
 
-    def __init__(self, obj, ax=None):
+    def __init__(self, obj, ax=None, figsize=(6, 6)):
 
         self.obj = obj
-        ax = plt.figure(figsize=(6, 6)).add_subplot(111) if ax is None else ax
+        ax = plt.figure(figsize=figsize).add_subplot(111) if ax is None else ax
         self.ax = ax
         if obj.data_dim == 1:
             self.plot_function = self.plot_1d
