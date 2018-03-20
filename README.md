@@ -4,6 +4,9 @@ texpy is a package under development for the handling of quaternion objects, bui
 
 While developed and intended with crystallographic texture analysis in mind, the handling of vectors and quaternions is kept as general as possible to allow applications in other areas, given interest.
 
+[![Build Status](https://travis-ci.org/bm424/texpy.svg?branch=master)](https://travis-ci.org/bm424/texpy)
+[![Coverage Status](https://coveralls.io/repos/github/bm424/texpy/badge.svg)](https://coveralls.io/github/bm424/texpy)
+
 ## Installation
 
 As texpy is still under development there has been no official release, but installation via GitHub is easy.
