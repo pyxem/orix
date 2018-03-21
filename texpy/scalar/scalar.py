@@ -1,3 +1,6 @@
+"""Scalar base classes.
+
+"""
 import numpy as np
 
 from texpy.base.object3d import Object3d
@@ -5,17 +8,20 @@ from texpy.plot.scalar_plot import ScalarPlot
 
 
 class Scalar(Object3d):
-    """Zero-dimensional data objects.
+    """Basic scalar class.
 
-    Scalars represent single numerical values, such as the x-component of a
-    vector or the rotation angle of a quaternion.
+    Scalars currently support the following mathematical operations:
 
-    Scalars support mathematical operations with sane data types including
-    numpy arrays, integers, vectors, etc.
+        - Unary negation.
+        - Addition to other scalars, numerical types, and array_like objects.
+        - Subtraction to the above.
+        - Multiplication to the above.
+        - Element-wise boolean comparisons (``==``, ``<`` etc).
+        - Unary exponentiation.
 
     Attributes
     ----------
-    data : ndarray
+    data : :obj:`numpy.ndarray`
 
     """
 
@@ -173,4 +179,15 @@ class Scalar(Object3d):
 
     @property
     def shape(self):
+        """Tuple of the shape of the Scalar.
+
+        Returns
+        -------
+        tuple
+
+        """
         return self.data.shape
+
+    def reshape(self, *args):
+        """Returns a new Scalar containing the same data with a new shape."""
+        return self.__class__(self.data.reshape(*args))

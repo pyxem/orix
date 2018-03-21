@@ -24,6 +24,20 @@
 
 # -- General configuration ------------------------------------------------
 
+autoclass_content = "both"  # include both class docstring and __init__
+autodoc_default_flags = [
+        # Make sure that any autodoc declarations show the right members
+        "members",
+        "inherited-members",
+        "private-members",
+        "show-inheritance",
+]
+autosummary_generate = True  # Make _autosummary files and include them
+napoleon_google_docstring = True  # Force consistency, leave only Google
+napoleon_use_rtype = False  # More legible
+# napoleon_include_init_with_doc = True
+# napoleon_use_ivar = True
+
 # If your documentation needs a minimal Sphinx version, state it here.
 #
 # needs_sphinx = '1.0'
@@ -33,6 +47,7 @@
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -170,4 +185,7 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {
+    'https://docs.python.org/3/': None,
+    'https://docs.scipy.org/doc/numpy/': None,
+}

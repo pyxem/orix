@@ -36,6 +36,13 @@ class Object3d:
     __array_ufunc__ = None
 
     def __init__(self, data=None):
+        """Create an object from raw data.
+
+        Parameters
+        ----------
+        data : array_like
+
+        """
         if isinstance(data, self.__class__):
             data = data.data
         data = np.atleast_2d(data)
@@ -59,6 +66,7 @@ class Object3d:
 
     @classmethod
     def empty(cls):
+        """Creates an empty object with the appropriate dimensions."""
         return cls(np.zeros((0, cls.dim)))
 
     @property
@@ -67,21 +75,17 @@ class Object3d:
 
     @property
     def data_dim(self):
+        """The dimensions of `data`.
+
+        For example, if `data` has shape (4, 4, 3), `data_dim` is 3.
+
+        """
         return len(self.shape)
 
     @property
     def size(self):
-        s = 1
-        for i in self.shape:
-            s *= i
-        return s
-
-    def outer(self, other):
-        data = np.zeros(self.shape + other.shape + (other.dim,))
-        for i, j in itertools.product(np.ndindex(self.shape), np.ndindex(other.shape)):
-            data[i + j] = (self[i] * other[j]).data
-        # data = np.squeeze(data)
-        return other.__class__(data)
+        """The total number of entries in this object."""
+        return np.prod(self.shape)
 
     @classmethod
     def stack(cls, sequence):
@@ -93,9 +97,34 @@ class Object3d:
         return cls(stack)
 
     def flatten(self):
+        """Returns a new object containing the same data in a single column."""
         return self.__class__(self.data.T.reshape(self.dim, -1).T)
 
     def unique(self, return_index=False, return_inverse=False):
+        """Returns a new object containing only this object's unique entries.
+
+        Unless overridden, this method returns the numerically unique entries.
+        Also removes zero entries which are assumed to be degenerate.
+
+        Parameters
+        ----------
+        return_index : bool, optional
+            If True, will also return the indices of the (flattened) data where
+            the unique entries were found.
+        return_inverse : bool, optional
+            If True, will also return the indices to reconstruct the (flattened)
+            data from the unique data.
+
+        Returns
+        -------
+        dat : Object3d
+            The numerically unique entries.
+        idx : numpy.ndarray, optional
+            The indices of the unique data in the (flattened) array.
+        inv : numpy.ndarray, optional
+            The indices of the (flattened) data in the unique array.
+
+        """
         data = self.flatten().data.round(9)
         # Remove zeros
         data = data[~np.all(np.isclose(data, 0), axis=1)]
@@ -128,6 +157,7 @@ class Object3d:
         return self.__class__(self.data[ind])
 
     def reshape(self, *args):
+        """Returns a new object containing the same data with a new shape."""
         return self.__class__(self.data.reshape(*args, self.dim))
 
     def plot(self, ax=None, figsize=(6, 6), **kwargs):
@@ -136,7 +166,14 @@ class Object3d:
         return plt.ax
 
     def sample(self, n=500):
-        """Selects 'n' random values of this data."""
+        """Selects 'n' random values of this data.
+
+        Parameters
+        ----------
+        n : int
+            The number of samples to draw from this object.
+
+        """
         if n > self.size:
             n = self.size
         sample = np.random.choice(self.size, n, False)

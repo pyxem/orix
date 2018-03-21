@@ -108,3 +108,24 @@ def test_pow(scalar, other, expected):
     pow = scalar ** other
     assert np.allclose(pow.data, expected)
 
+
+@pytest.mark.parametrize('scalar, expected', [
+    ((1, 1, 1), (3,)),
+    ([[0, -1], [4, 2]], (2, 2)),
+    ([[5, 1, 0]], (1, 3)),
+], indirect=['scalar'])
+def test_shape(scalar, expected):
+    shape = scalar.shape
+    assert shape == expected
+
+
+@pytest.mark.parametrize('scalar, shape, expected', [
+    ((1, 1, 1), (3, 1), np.array([[1], [1], [1]])),
+    ([[0, -1], [4, 2]], (4,), [0, -1, 4, 2]),
+    pytest.param([[0, -1], [4, 2]], (3,), [0, -1, 4], marks=pytest.mark.xfail)
+], indirect=['scalar'])
+def test_reshape(scalar, shape, expected):
+    s = scalar.reshape(*shape)
+    assert s.shape == shape
+    assert np.allclose(s.data, expected)
+

@@ -14,7 +14,6 @@ script:
 
 after_success:
   - coveralls
-  - sphinx-apidoc -fo docs/source/api texpy
   - sphinx-build -b html docs/source docs/build
 
 deploy:

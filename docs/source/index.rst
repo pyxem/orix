@@ -6,14 +6,10 @@
 Welcome to texpy's documentation!
 =================================
 
-.. include:: ../../README.rst
+.. automodule:: texpy
 
-.. toctree::
-   :maxdepth: 4
-   :caption: Contents:
-
-   api/modules
-
+   Members
+   =======
 
 Indices and tables
 ==================
