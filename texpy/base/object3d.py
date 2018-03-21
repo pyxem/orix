@@ -136,7 +136,7 @@ class Object3d:
 
     @property
     def norm(self):
-        from texpy.scalar.scalar import Scalar
+        from texpy.scalar import Scalar
         return Scalar(np.sqrt(np.sum(np.square(self.data), axis=-1)))
 
     @property

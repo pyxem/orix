@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from texpy.scalar.scalar import Scalar
+from texpy.scalar import Scalar
 from texpy.vector import Vector3d
 
 

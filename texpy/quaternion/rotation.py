@@ -2,7 +2,7 @@ import numpy as np
 
 from texpy.quaternion import Quaternion
 from texpy.vector import Vector3d
-from texpy.scalar.scalar import Scalar
+from texpy.scalar import Scalar
 from texpy.plot.rotation_plot import RotationPlot, plot_pole_figure
 
 

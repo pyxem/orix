@@ -19,7 +19,7 @@ Submodules
 import numpy as np
 from texpy.base.object3d import Object3d, check
 from texpy.plot.vector3d_plot import VectorPlot
-from texpy.scalar.scalar import Scalar
+from texpy.scalar import Scalar
 
 
 def check_vector(obj):
