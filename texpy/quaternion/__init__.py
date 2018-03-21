@@ -9,6 +9,15 @@ further reference see
 Unit quaternions are efficient objects for representing rotations, and hence
 orientations.
 
+Submodules
+==========
+
+.. autosummary::
+    :toctree: _autosummary
+
+    rotation
+    symmetry
+
 """
 import numpy as np
 from texpy.base.object3d import check, Object3d
