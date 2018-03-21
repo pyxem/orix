@@ -7,7 +7,7 @@ before_install:
   - pip install pytest-cov python-coveralls sphinx sphinx_rtd_theme autodocsumm
 
 install:
-  - python setup.py install
+  - pip install .
 
 script:
   - pytest --cov=texpy
