@@ -2,10 +2,10 @@ import itertools
 
 import numpy as np
 
-from texpy.quaternion.quaternion import Quaternion
+from texpy.quaternion import Quaternion
 from texpy.quaternion.rotation import Rotation
-from texpy.vector.vector3d import Vector3d
-from texpy.vector.axangle import AxAngle
+from texpy.vector import Vector3d
+from texpy.vector.neo_euler import AxAngle
 from texpy.plot.orientation_region_plot import OrientationRegionPlot
 
 
@@ -41,7 +41,7 @@ class OrientationRegion:
                 [min(rotations.angle.data[indices == index]) for index in
                  set(indices)])
             angles = np.concatenate((angles / 2, np.pi - angles / 2), axis=-1)
-            normals = AxAngle.from_axes_angles(axes, angles).to_rotation()
+            normals = Rotation.from_neo_euler(AxAngle.from_axes_angles(axes, angles))
         else:
             normals = Rotation(np.zeros((0, 4)))
         return normals
@@ -50,11 +50,11 @@ class OrientationRegion:
         greater_than_pi = self.normals.angle > np.pi - 1e-3
         if not np.any(greater_than_pi):
             normals = self.normals.unique()
-            reciprocal = normals * AxAngle.from_axes_angles(
-                -normals.axis, np.pi * np.ones(normals.shape)).to_rotation()
+            reciprocal = normals * Rotation.from_neo_euler(AxAngle.from_axes_angles(
+                -normals.axis, np.pi * np.ones(normals.shape)))
             inside = OrientationRegion.is_inside(
-                normals.to_quaternion(),
-                -reciprocal.to_quaternion()
+                Quaternion(normals),
+                Quaternion(-reciprocal)
             )
             if len(inside):
                 self.normals = normals[inside]
@@ -96,12 +96,12 @@ class OrientationRegion:
             return vertices
         vertices_all = Rotation.stack([Rotation.triple_cross(f[0], f[1], f[2]) for f in itertools.combinations(normals, 3)])
         vertices_all = vertices_all[~np.any(np.isnan(vertices_all.data), axis=-1)]
-        vertices_all = vertices_all.unique().to_quaternion()
+        vertices_all = Rotation(vertices_all.unique())
         vertices = vertices_all[OrientationRegion.is_inside(normals, vertices_all)]
         switch180 = np.isclose(vertices.angle.data, np.pi)
         vertices180 = vertices[switch180]
-        vertices180 = Quaternion.stack([vertices180, AxAngle.from_axes_angles(vertices180.axis, -vertices180.angle.data).to_rotation().to_quaternion()])
-        axis_sector = OrientationRegion.calculate_axis_sector(normals)
+        vertices180 = Rotation.stack([vertices180, Quaternion(Rotation.from_neo_euler(AxAngle.from_axes_angles(vertices180.axis, -vertices180.angle.data)))])
+        axis_sector = OrientationRegion.calculate_axis_sector(Rotation(normals))
         inside = axis_sector.contains(vertices180.axis)
         if inside.size > switch180.size:
             vertices = vertices180[inside].flatten()
@@ -182,8 +182,8 @@ class MisorientationRegion(OrientationRegion):
         disjoint = Symmetry.disjoint(symmetry_1, symmetry_2)
         spherical_region = disjoint.calculate_fundamental_sector()
         angles = [np.pi - 1e-6] * spherical_region.size
-        zero_order_symmetries = AxAngle.from_axes_angles(
-            spherical_region, angles).to_rotation()
+        zero_order_symmetries = Rotation.from_neo_euler(AxAngle.from_axes_angles(
+            spherical_region, angles))
 
         normals = cls.get_normals(rotations)
 

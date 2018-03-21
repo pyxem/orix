@@ -1,6 +1,8 @@
 import numpy as np
 
-from texpy.vector.vector3d import Vector3d
+from texpy.vector import Vector3d
+from texpy.quaternion import Quaternion
+from texpy.quaternion.rotation import Rotation
 
 
 class SphericalRegion(Vector3d):
@@ -85,7 +87,7 @@ class SphericalRegion(Vector3d):
         # Deal with the rotations
         rotations = symmetry[~symmetry.improper]
         rotations = rotations.outer(rotations)
-        r_inside = rotations[supersector.contains(rotations.axis, edge=False)].to_quaternion().unique().to_rotation()
+        r_inside = Rotation(Quaternion(rotations[supersector.contains(rotations.axis, edge=False)]).unique())
         r_inside = r_inside[r_inside.angle > 1e-6]
 
         # For every rotation inside the supersector, divide up the remaining

@@ -33,7 +33,7 @@ autodoc_default_flags = [
         "show-inheritance",
 ]
 autosummary_generate = True  # Make _autosummary files and include them
-napoleon_google_docstring = True  # Force consistency, leave only Google
+napoleon_google_docstring = True  # Force consistency, leave only Numpy
 napoleon_use_rtype = False  # More legible
 # napoleon_include_init_with_doc = True
 # napoleon_use_ivar = True
@@ -46,6 +46,7 @@ napoleon_use_rtype = False  # More legible
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'autodocsumm',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.doctest',

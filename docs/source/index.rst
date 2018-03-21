@@ -6,6 +6,8 @@
 Welcome to texpy's documentation!
 =================================
 
+.. include:: ../../README.rst
+
 .. automodule:: texpy
 
    Members

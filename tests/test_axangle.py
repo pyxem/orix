@@ -2,9 +2,8 @@ import pytest
 import numpy as np
 import itertools
 
-from texpy.vector.axangle import AxAngle
-from texpy.vector.vector3d import Vector3d
-from texpy.quaternion.rotation import Rotation
+from texpy.vector.neo_euler import AxAngle
+from texpy.vector import Vector3d
 
 
 axes = [
@@ -46,13 +45,6 @@ def test_angle(axangle):
 def test_axis(axangle):
     assert axangle.axis.shape == axangle.shape
     assert np.allclose(axangle.axis.norm.data, 1)
-
-
-def test_to_rotation(axangle):
-    r = axangle.to_rotation()
-    assert isinstance(r, Rotation)
-    assert np.allclose(r.norm.data, 1)
-    assert np.allclose(r.angle.data, axangle.angle.data % (2*np.pi))
 
 
 @pytest.mark.parametrize('axis, angle, expected_axis', [

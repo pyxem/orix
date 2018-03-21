@@ -3,7 +3,7 @@ import pytest
 
 from texpy.quaternion.symmetry import Symmetry
 from texpy.vector.spherical_region import SphericalRegion
-from texpy.vector.vector3d import Vector3d
+from texpy.vector import Vector3d
 
 
 @pytest.fixture

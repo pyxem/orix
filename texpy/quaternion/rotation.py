@@ -1,7 +1,7 @@
 import numpy as np
 
-from texpy.quaternion.quaternion import Quaternion
-from texpy.vector.vector3d import Vector3d
+from texpy.quaternion import Quaternion
+from texpy.vector import Vector3d
 from texpy.scalar.scalar import Scalar
 from texpy.plot.rotation_plot import RotationPlot, plot_pole_figure
 
@@ -20,16 +20,16 @@ class Rotation(Quaternion):
 
     def __mul__(self, other):
         if isinstance(other, Rotation):
-            q = self.to_quaternion() * other.to_quaternion()
-            r = q.to_rotation()
+            q = Quaternion(self) * Quaternion(other)
+            r = Rotation(q)
             i = np.logical_xor(self.improper, other.improper)
             r.improper = i
             return r
         if isinstance(other, Quaternion):
-            q = self.to_quaternion() * other
+            q = Quaternion(self) * other
             return q
         if isinstance(other, Vector3d):
-            v = self.to_quaternion() * other
+            v = Quaternion(self) * other
             improper = (self.improper * np.ones(other.shape)).astype(bool)
             v[improper] = -v[improper]
             return v
@@ -82,6 +82,11 @@ class Rotation(Quaternion):
         else:
             return dat
 
+    def angle_with(self, other):
+        other = check_quaternion(other)
+        angles = Scalar(np.nan_to_num(np.arccos(2 * self.unit.dot(other.unit).data ** 2 - 1)))
+        return angles
+
     def outer(self, other):
         r = super(Rotation, self).outer(other)
         if isinstance(r, Rotation):
@@ -117,19 +122,26 @@ class Rotation(Quaternion):
             cosines[self.improper] = 0
         return Scalar(cosines)
 
-    def to_quaternion(self):
-        return Quaternion(self.data)
+    @classmethod
+    def from_neo_euler(cls, neo_euler):
+        """Creates a rotation from a neo-euler (vector) representation.
 
-    def to_axangle(self):
-        from texpy.vector.axangle import AxAngle
-        return AxAngle((self.axis * self.angle).data)
+        Parameters
+        ----------
+        neo_euler : NeoEuler
 
-    def to_rodrigues(self):
-        from texpy.vector.rodrigues import Rodrigues
-        a = self.a.data
-        a[np.isclose(a, 0)] = 1e-9
-        data = np.stack((self.b.data / a, self.c.data / a, self.d.data / a), axis=-1)
-        return Rodrigues(data)
+        Returns
+        -------
+        Rotation
+
+        """
+        s = np.sin(neo_euler.angle.data / 2)
+        a = np.cos(neo_euler.angle.data / 2)
+        b = s * neo_euler.axis.x.data
+        c = s * neo_euler.axis.y.data
+        d = s * neo_euler.axis.z.data
+        r = cls(np.stack([a, b, c, d], axis=-1))
+        return r
 
     def to_homochoric(self):
         angle = self.angle.data
@@ -215,3 +227,17 @@ class Rotation(Quaternion):
 
     def plot_pole_figure(self, **kwargs):
         return plot_pole_figure(self, **kwargs)
+
+    @property
+    def axis(self):
+        """Vector3d : the axis of rotation."""
+        axis = Vector3d(np.stack((self.b.data, self.c.data, self.d.data), axis=-1))
+        axis[self.a.data < -1e-6] = -axis[self.a.data < -1e-6]
+        axis[axis.norm.data == 0] = Vector3d.xvector()
+        axis.data = axis.data / axis.norm.data[..., np.newaxis]
+        return axis
+
+    @property
+    def angle(self):
+        """Scalar : the angle of rotation."""
+        return Scalar(2 * np.nan_to_num(np.arccos(np.abs(self.a.data))))

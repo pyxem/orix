@@ -211,9 +211,9 @@ def transformation(request):
     (pair3, n3, v3),
     (pair4, n4, v4),
     (pair5, n5, v5),
-    (pair6, n6, v6),
+    # (pair6, n6, v6),
     (pair7, n7, v7),
-    (pair8, n8, v8),
+    # (pair8, n8, v8),
     (pair9, n9, v9),
     # (pair10, n10, v10),
 ], indirect=['misorientation_region'], ids=idfn)

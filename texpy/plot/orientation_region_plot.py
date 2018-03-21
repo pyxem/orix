@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from texpy.vector.rodrigues import Rodrigues
+from texpy.vector.neo_euler import Rodrigues
 from texpy.quaternion.rotation import Rotation
 
 

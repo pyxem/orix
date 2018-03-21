@@ -1,5 +1,5 @@
 import numpy as np
-from texpy.vector.vector3d import Vector3d
+from texpy.vector import Vector3d
 from texpy.grid.s1grid import S1Grid
 
 

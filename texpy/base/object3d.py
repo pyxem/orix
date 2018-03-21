@@ -36,14 +36,7 @@ class Object3d:
     __array_ufunc__ = None
 
     def __init__(self, data=None):
-        """Create an object from raw data.
-
-        Parameters
-        ----------
-        data : array_like
-
-        """
-        if isinstance(data, self.__class__):
+        if isinstance(data, Object3d):
             data = data.data
         data = np.atleast_2d(data)
         self.data = data
@@ -75,7 +68,7 @@ class Object3d:
 
     @property
     def data_dim(self):
-        """The dimensions of `data`.
+        """int : The dimensions of `data`.
 
         For example, if `data` has shape (4, 4, 3), `data_dim` is 3.
 

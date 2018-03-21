@@ -4,8 +4,8 @@ import pytest
 from math import cos, pi
 
 from texpy.quaternion.symmetry import Symmetry
-from texpy.quaternion.quaternion import Quaternion
-from texpy.vector.vector3d import Vector3d
+from texpy.quaternion import Quaternion
+from texpy.vector import Vector3d
 from texpy.point_group import PointGroup
 
 

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from texpy.scalar.scalar import Scalar
-from texpy.vector.vector3d import Vector3d
+from texpy.vector import Vector3d
 
 
 @pytest.fixture(params=[(1,)])

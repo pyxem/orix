@@ -2,7 +2,7 @@ from math import pi
 import numpy as np
 import pytest
 
-from texpy.vector.vector3d import Vector3d
+from texpy.vector import Vector3d
 from texpy.scalar.scalar import Scalar
 
 vectors = [
@@ -179,8 +179,9 @@ def test_mul_array(vector):
 @pytest.mark.parametrize('vector, rotation, expected', [
     ((1, 0, 0), pi / 2, (0, 1, 0)),
     ((1, 1, 0), pi / 2, (-1, 1, 0)),
+    ((1, 1, 0), [pi/2, pi, 3*pi/2, 2*pi], [(-1, 1, 0), (-1, -1, 0), (1, -1, 0), (1, 1, 0)]),
     ((1, 1, 1), -pi / 2, (1, -1, 1)),
-])
+], indirect=['vector'])
 def test_rotate(vector, rotation, expected):
     r = Vector3d(vector).rotate(Vector3d.zvector(), rotation)
     assert isinstance(r, Vector3d)

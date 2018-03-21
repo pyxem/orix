@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 from texpy.base.object3d import DimensionError
-from texpy.quaternion.quaternion import Quaternion
-from texpy.vector.vector3d import Vector3d
+from texpy.quaternion import Quaternion
+from texpy.vector import Vector3d
 
 values = [
     (0.707, 0., 0., 0.707),
@@ -114,29 +114,6 @@ def test_dot_outer(quaternion, something):
     for i in np.ndindex(quaternion.shape):
         for j in np.ndindex(something.shape):
             assert np.allclose(d[i + j].data, quaternion[i].dot(something[j]).data)
-
-
-def test_angle_with_self(quaternion):
-    a = quaternion.angle_with(quaternion)
-    assert np.allclose(a.data, 0, atol=1e-6)
-
-
-def test_angle_with(quaternion, something):
-    a = quaternion.angle_with(something)
-    assert np.all(a >= 0)
-    assert np.all(a <= np.pi)
-
-
-def test_axis(quaternion):
-    axis = quaternion.axis
-    assert isinstance(axis, Vector3d)
-    assert np.all(axis.norm.data == 1)
-
-
-def test_angle(quaternion):
-    angle = quaternion.angle
-    assert np.all(angle >= 0)
-    assert np.all(angle <= np.pi)
 
 
 @pytest.mark.parametrize('quaternion, vector, expected', [

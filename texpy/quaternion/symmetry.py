@@ -3,10 +3,10 @@ from math import sin, cos, pi
 
 from texpy.point_group import PointGroup
 from texpy.quaternion.orientation_region import OrientationRegion
-from texpy.quaternion.quaternion import Quaternion
+from texpy.quaternion import Quaternion
 from texpy.quaternion.rotation import Rotation
 from texpy.vector.spherical_region import SphericalRegion
-from texpy.vector.vector3d import Vector3d
+from texpy.vector import Vector3d
 
 
 class Symmetry(Rotation):

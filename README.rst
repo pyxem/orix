@@ -70,6 +70,544 @@ several further unique operations.
 
 .. code:: python
 
+from texpy.vector import Vector3d    >>> import numpy as np
+from texpy.vector import Vector3d    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+from texpy.vector import Vector3d    >>> import numpy as np
+    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+from texpy.vector import Vector3d    >>> import numpy as np
+    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+from texpy.vector import Vector3d    >>> import numpy as np
+    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>>
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>>
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>>
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>>
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> from texpy.vector import Vector3d    >>> import numpy as np
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
+    >>> import numpy as np
+    >>> from texpy.vector.vector3d import Vector3d
+    >>> v = Vector3d((1, 1, -1))
+    >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
+    >>> w = Vector3d(w_array)
+    >>> v + w
+    # Vector3d (2, 2)
+    # [[[ 2  1 -1]
+    #   [ 1  1 -2]]
+    #
+    #  [[ 2  2 -1]
+    #   [ 0  1 -2]]]
+    >>> v.dot(w)
+    # array([[1, 1],
+    #        [2, 0]])
+    >>> v.cross(w)
+    # Vector3d (2, 2)
+    # [[[ 0 -1 -1]
+    #   [-1  1  0]]
+    #
+    #  [[ 1 -1  0]
+    #   [-1  2  1]]]
+    >>> v.unit
+    # Vector3d (1,)
+    # [[ 0.5774  0.5774 -0.5774]]
+    >>> w[0]
+    # Vector3d (2,)
+    # [[ 1  0  0]
+    #   [ 0  0 -1]]
+    >>> w[:, 0]
+    # Vector3d (2,)
+    # [[1 0 0]
+    #  [1 1 0]]
+
+
+
     >>> import numpy as np
     >>> from texpy.vector.vector3d import Vector3d
     >>> v = Vector3d((1, 1, -1))

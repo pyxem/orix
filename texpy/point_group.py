@@ -1,6 +1,6 @@
 import numpy as np
 
-from texpy.vector.axangle import AxAngle
+from texpy.vector.neo_euler import AxAngle
 from texpy.quaternion.rotation import Rotation
 
 hermann_mauguin = [
@@ -108,7 +108,7 @@ class PointGroup:
         rot = []
         for ax, n in axangles:
             angles = (2 * np.pi / n) * np.arange(n)
-            r = Rotation.stack([AxAngle.from_axes_angles(ax, angle).to_rotation() for angle in angles]).flatten()
+            r = Rotation.stack([Rotation.from_neo_euler(AxAngle.from_axes_angles(ax, angle)) for angle in angles]).flatten()
             rot.append(r)
         if self.inversion.shape[0] == 2:
             rot.append(Rotation([[1, 0, 0, 0], [1, 0, 0, 0]]) * [1, -1])

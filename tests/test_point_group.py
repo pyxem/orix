@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from texpy.point_group import PointGroup
-from texpy.vector.vector3d import Vector3d
+from texpy.vector import Vector3d
 
 symbols = ['2', 'm-3']
 

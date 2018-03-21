@@ -3,9 +3,9 @@ import numpy as np
 import pytest
 import itertools
 
-from texpy.quaternion.quaternion import Quaternion
+from texpy.quaternion import Quaternion
 from texpy.quaternion.rotation import Rotation
-from texpy.vector.vector3d import Vector3d
+from texpy.vector import Vector3d
 
 rotations = [
     (0.707, 0., 0., 0.707),
@@ -364,3 +364,26 @@ def test_dot_outer_quat(rotation, improper, quaternion, expected):
     cosines = rotation.dot_outer(quaternion)
     assert cosines.shape == rotation.shape + quaternion.shape
     assert np.allclose(cosines.data, expected, atol=1e-4)
+
+
+# def test_angle_with_self(rotation):
+#     a = quaternion.angle_with(quaternion)
+#     assert np.allclose(a.data, 0, atol=1e-6)
+#
+#
+# def test_angle_with(rotation, something):
+#     a = quaternion.angle_with(something)
+#     assert np.all(a >= 0)
+#     assert np.all(a <= np.pi)
+#
+#
+# def test_axis(quaternion):
+#     axis = quaternion.axis
+#     assert isinstance(axis, Vector3d)
+#     assert np.all(axis.norm.data == 1)
+#
+#
+# def test_angle(quaternion):
+#     angle = quaternion.angle
+#     assert np.all(angle >= 0)
+#     assert np.all(angle <= np.pi)
