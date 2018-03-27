@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from texpy.base.object3d import DimensionError
+from texpy.base import DimensionError
 from texpy.quaternion import Quaternion
 from texpy.vector import Vector3d
 

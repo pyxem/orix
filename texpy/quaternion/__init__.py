@@ -23,7 +23,7 @@ Members
 
 """
 import numpy as np
-from texpy.base.object3d import check, Object3d
+from texpy.base import check, Object3d
 from texpy.scalar import Scalar
 from texpy.vector import Vector3d
 

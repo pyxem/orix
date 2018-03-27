@@ -10,12 +10,6 @@ Welcome to texpy's documentation!
 
    installation
 
-
-.. automodule:: texpy
-
-   Members
-   =======
-
 Indices and tables
 ==================
 
