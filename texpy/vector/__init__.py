@@ -30,23 +30,15 @@ def check_vector(obj):
 
 
 class Vector3d(Object3d):
-    """Basic vector object.
+    """Vector base class.
 
-    Vectors currently support the following mathematical operations:
+    Vectors support the following mathematical operations:
 
     - Unary negation.
     - Addition to other vectors, scalars, numbers, and compatible
       array-like objects.
     - Subtraction to and from the above.
     - Multiplication to scalars, numbers, and compatible array-like objects.
-
-    Attributes
-    ----------
-    data : numpy.ndarray
-        The numpy array containing the vector data.
-    x, y, z : Scalar
-        The individual elements of each vector.
-
 
     Examples
     --------

@@ -11,7 +11,7 @@ from texpy.plot.scalar_plot import ScalarPlot
 
 
 class Scalar(Object3d):
-    """Basic scalar class.
+    """Scalar base class.
 
     Scalars currently support the following mathematical operations:
 
@@ -21,10 +21,6 @@ class Scalar(Object3d):
         - Multiplication to the above.
         - Element-wise boolean comparisons (``==``, ``<`` etc).
         - Unary exponentiation.
-
-    Attributes
-    ----------
-    data : :obj:`numpy.ndarray`
 
     """
 

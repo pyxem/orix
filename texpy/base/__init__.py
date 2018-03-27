@@ -30,7 +30,11 @@ class Object3d:
     """
 
     dim = None
+    """int : The number of dimensions for this object."""
+
     data = None
+    """np.ndarray : Array holding this object's numerical data."""
+
     plot_type = None
     __array_ufunc__ = None
 
@@ -58,11 +62,12 @@ class Object3d:
 
     @classmethod
     def empty(cls):
-        """Creates an empty object with the appropriate dimensions."""
+        """Object3d : An empty object with the appropriate dimensions."""
         return cls(np.zeros((0, cls.dim)))
 
     @property
     def shape(self):
+        """tuple : Shape of the object."""
         return self.data.shape[:-1]
 
     @property
@@ -76,7 +81,7 @@ class Object3d:
 
     @property
     def size(self):
-        """The total number of entries in this object."""
+        """int : Total number of entries in this object."""
         return np.prod(self.shape)
 
     @classmethod
@@ -89,7 +94,7 @@ class Object3d:
         return cls(stack)
 
     def flatten(self):
-        """Returns a new object containing the same data in a single column."""
+        """Object3d : A new object with the same data in a single column."""
         return self.__class__(self.data.T.reshape(self.dim, -1).T)
 
     def unique(self, return_index=False, return_inverse=False):

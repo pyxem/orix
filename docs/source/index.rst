@@ -9,10 +9,12 @@ Welcome to texpy's documentation!
 .. toctree::
 
    installation
+   quickstart
+   plotting
+   api
 
-Indices and tables
-==================
+Index
+=====
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
