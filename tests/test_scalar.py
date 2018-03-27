@@ -14,6 +14,15 @@ def scalar(request):
 def vector(request):
     return Vector3d(request.param)
 
+@pytest.mark.parametrize('data, expected', [
+    ((5, 3), (5, 3)),
+    ([[1], [2]], [[1], [2]]),
+    (np.array([1, 2, 3, 4, 5]), [1, 2, 3, 4, 5]),
+    (Scalar([-1, 1]), [-1, 1]),
+])
+def test_init(data, expected):
+    scalar = Scalar(data)
+    assert np.allclose(scalar.data, expected)
 
 @pytest.mark.parametrize('scalar, expected', [
     (1, -1),

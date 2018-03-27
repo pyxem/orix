@@ -58,61 +58,54 @@ def test_neg(vector):
     assert np.all((-vector).data == -(vector.data))
 
 
-def test_add_number(vector, number):
-    assert np.all((vector + number).data == vector.data + number)
-    assert np.all((number + vector).data == (vector + number).data)
+@pytest.mark.parametrize('vector, other, expected', [
+    ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[2, 4, 6], [-2, 0, 2]]),
+    ([1, 2, 3], Scalar([4]), [5, 6, 7]),
+    ([1, 2, 3], 0.5, [1.5, 2.5, 3.5]),
+    ([1, 2, 3], [-1, 2], [[0, 1, 2], [3, 4, 5]]),
+    ([1, 2, 3], np.array([-1, 1]), [[0, 1, 2], [2, 3, 4]]),
+    pytest.param([1, 2, 3], 'dracula', None, marks=pytest.mark.xfail),
+], indirect=['vector'])
+def test_add(vector, other, expected):
+    s1 = vector + other
+    s2 = other + vector
+    assert np.allclose(s1.data, expected)
+    assert np.allclose(s1.data, s2.data)
 
 
-def test_add_vector(vector, something):
-    assert np.all((vector + something).data == vector.data + something.data)
-    assert np.all((vector + something).data == (something + vector).data)
+@pytest.mark.parametrize('vector, other, expected', [
+    ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[0, 0, 0], [4, 4, 4]]),
+    ([1, 2, 3], Scalar([4]), [-3, -2, -1]),
+    ([1, 2, 3], 0.5, [0.5, 1.5, 2.5]),
+    ([1, 2, 3], [-1, 2], [[2, 3, 4], [-1, 0, 1]]),
+    ([1, 2, 3], np.array([-1, 1]), [[2, 3, 4], [0, 1, 2]]),
+    pytest.param([1, 2, 3], 'dracula', None, marks=pytest.mark.xfail),
+], indirect=['vector'])
+def test_sub(vector, other, expected):
+    s1 = vector - other
+    s2 = other - vector
+    assert np.allclose(s1.data, expected)
+    assert np.allclose(-s1.data, s2.data)
 
 
-@pytest.mark.parametrize('vector, scalar, expected', [
-    ((1, 0, 0), 1, (2, 1, 1)),
-    (((-1, -1, 1), (0.5, 0.5, -0.5)), (-1, 2), ((-2, -2, 0), (2.5, 2.5, 1.5))),
-], indirect=['vector', 'scalar'])
-def test_add_scalar(vector, scalar, expected):
-    sum = vector + scalar
-    assert np.allclose(sum.data, expected)
-
-
-def test_sub_number(vector, number):
-    assert np.all((vector - number).data == vector.data - number)
-    assert np.all((number - vector).data == -(vector - number).data)
-
-
-def test_sub_vector(vector, something):
-    assert np.all((vector - something).data == vector.data - something.data)
-    assert np.all((vector - something).data == -(something - vector).data)
-
-
-@pytest.mark.parametrize('vector, scalar, expected', [
-    ((1, 0, 0), 1, (0, -1, -1)),
-    (((-1, -1, 1), (0.5, 0.5, -0.5)), (-1, 2), ((0, 0, 2), (-1.5, -1.5, -2.5))),
-], indirect=['vector', 'scalar'])
-def test_sub_scalar(vector, scalar, expected):
-    sub = vector - scalar
-    assert np.allclose(sub.data, expected)
-
-
-def test_mul_number(vector, number):
-    assert np.all((vector * number).data == vector.data * number)
-    assert np.all((number * vector).data == (vector * number).data)
-
-
-def test_mul_error(vector, something):
-    with pytest.raises(ValueError):
-        vector * something
-
-
-@pytest.mark.parametrize('vector, scalar, expected', [
-    ((1, 0, 0), 1, (1, 0, 0)),
-    (((-1, -1, 1), (0.5, 0.5, -0.5)), (-1, 2), ((1, 1, -1), (1, 1, -1))),
-], indirect=['vector', 'scalar'])
-def test_mul_scalar(vector, scalar, expected):
-    mul = vector * scalar
-    assert np.allclose(mul.data, expected)
+@pytest.mark.parametrize('vector, other, expected', [
+    pytest.param(
+        [1, 2, 3],
+        Vector3d([[1, 2, 3], [-3, -2, -1]]),
+        [[0, 0, 0], [4, 4, 4]],
+        marks=pytest.mark.xfail(raises=ValueError)
+    ),
+    ([1, 2, 3], Scalar([4]), [4, 8, 12]),
+    ([1, 2, 3], 0.5, [0.5, 1., 1.5]),
+    ([1, 2, 3], [-1, 2], [[-1, -2, -3], [2, 4, 6]]),
+    ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]]),
+    pytest.param([1, 2, 3], 'dracula', None, marks=pytest.mark.xfail),
+], indirect=['vector'])
+def test_mul(vector, other, expected):
+    s1 = vector * other
+    s2 = other * vector
+    assert np.allclose(s1.data, expected)
+    assert np.allclose(s1.data, s2.data)
 
 
 def test_dot(vector, something):
@@ -175,6 +168,17 @@ def test_mul_array(vector):
     assert isinstance(m2, Vector3d)
     assert np.all(m1.data == m2.data)
 
+@pytest.mark.parametrize('vector, x, y, z', [
+    ([1, 2, 3], 1, 2, 3),
+    ([[0, 2, 3], [2, 2, 3]], [0, 2], [2, 2], [3, 3]),
+], indirect=['vector'])
+def test_xyz(vector, x, y, z):
+    vx, vy, vz = vector.xyz
+    assert np.allclose(vx, x)
+    assert np.allclose(vy, y)
+    assert np.allclose(vz, z)
+
+
 
 @pytest.mark.parametrize('vector, rotation, expected', [
     ((1, 0, 0), pi / 2, (0, 1, 0)),
@@ -186,3 +190,30 @@ def test_rotate(vector, rotation, expected):
     r = Vector3d(vector).rotate(Vector3d.zvector(), rotation)
     assert isinstance(r, Vector3d)
     assert np.allclose(r.data, expected)
+
+@pytest.mark.parametrize('vector, data, expected', [
+    ([1, 2, 3], 3, [3, 2, 3]),
+    ([[0, 2, 3], [2, 2, 3]], 1, [[1, 2, 3], [1, 2, 3]]),
+    ([[0, 2, 3], [2, 2, 3]], [-1, 1], [[-1, 2, 3], [1, 2, 3]])
+], indirect=['vector'])
+def test_assign_x(vector, data, expected):
+    vector.x = data
+    assert np.allclose(vector.data, expected)
+
+@pytest.mark.parametrize('vector, data, expected', [
+    ([1, 2, 3], 3, [1, 3, 3]),
+    ([[0, 2, 3], [2, 2, 3]], 1, [[0, 1, 3], [2, 1, 3]]),
+    ([[0, 2, 3], [2, 2, 3]], [-1, 1], [[0, -1, 3], [2, 1, 3]])
+], indirect=['vector'])
+def test_assign_y(vector, data, expected):
+    vector.y = data
+    assert np.allclose(vector.data, expected)
+
+@pytest.mark.parametrize('vector, data, expected', [
+    ([1, 2, 3], 1, [1, 2, 1]),
+    ([[0, 2, 3], [2, 2, 3]], 1, [[0, 2, 1], [2, 2, 1]]),
+    ([[0, 2, 3], [2, 2, 3]], [-1, 1], [[0, 2, -1], [2, 2, 1]])
+], indirect=['vector'])
+def test_assign_z(vector, data, expected):
+    vector.z = data
+    assert np.allclose(vector.data, expected)
