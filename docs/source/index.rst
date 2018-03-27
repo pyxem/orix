@@ -6,7 +6,10 @@
 Welcome to texpy's documentation!
 =================================
 
-.. include:: ../../README.rst
+.. toctree::
+
+   installation
+
 
 .. automodule:: texpy
 

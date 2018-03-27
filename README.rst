@@ -17,37 +17,18 @@ possible to allow applications in other areas, given interest.
 Installation
 ------------
 
-As texpy is still under development there has been no official release,
-but installation via GitHub is easy.
+There has been no official release of texpy as it is still under development.
+However, it is easily installed from GitHub using pip:
 
-1. Download and install
-   `Anaconda <https://www.anaconda.com/download/>`__ according to system
-   instructions.
-2. Open a shell to a suitable local directory. Create and activate a
-   clean environment for texpy:
+.. code:: shell
 
-   .. code:: shell
+   > pip install git+https://github.com/bm424/texpy.git
 
-      > conda create --name texpy-env python=3
-      > activate texpy-env  # Windows
-      > source activate texpy-env  # Linux/MacOS
-
-3. Install numpy, and optionally matplotlib:
-
-   .. code:: shell
-
-      > conda install numpy matplotlib
-
-4. Install texpy from GitHub using pip:
-
-   .. code:: shell
-
-      > pip install git+https://github.com/bm424/texpy.git
-
-   This will
-   always install the latest version. Given sufficient interest,
-   specific versions may be released for backwards compatibility and
-   citation purposes.
+This will
+always install the latest version. Given sufficient interest,
+specific versions may be released for backwards compatibility and
+citation purposes. For more detailed instructions refer to the
+`documentation <https://bm424.github.io/texpy/index.html>`_.
 
 Getting started
 ---------------

@@ -18,6 +18,9 @@ Submodules
     rotation
     symmetry
 
+Members
+=======
+
 """
 import numpy as np
 from texpy.base.object3d import check, Object3d

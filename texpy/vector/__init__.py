@@ -15,6 +15,9 @@ Submodules
     neo_euler
     spherical_region
 
+Members
+=======
+
 """
 import numpy as np
 from texpy.base.object3d import Object3d, check
