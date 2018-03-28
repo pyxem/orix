@@ -87,10 +87,7 @@ class Object3d:
     @classmethod
     def stack(cls, sequence):
         sequence = [check(s, cls).data for s in sequence]
-        try:
-            stack = np.stack(sequence, axis=-2)
-        except ValueError:
-            raise
+        stack = np.stack(sequence, axis=-2)
         return cls(stack)
 
     def flatten(self):

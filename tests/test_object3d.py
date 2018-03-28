@@ -117,3 +117,21 @@ def test_flatten(object3d):
     assert flat.data_dim == 1
     assert flat.shape[0] == object3d.size
 
+
+@pytest.mark.parametrize('test_object3d', [
+    1,
+], indirect=['test_object3d'])
+def test_unique(test_object3d):
+    object = test_object3d([[1], [1], [2], [3], [3]])
+    unique = object.unique()
+    assert np.allclose(unique.data.flatten(), [1, 2, 3])
+    unique, idx = object.unique(return_index=True)
+    assert np.allclose(unique.data.flatten(), [1, 2, 3])
+    assert np.allclose(idx, [0, 2, 3])
+    unique, inv = object.unique(return_inverse=True)
+    assert np.allclose(unique.data.flatten(), [1, 2, 3])
+    assert np.allclose(inv, [0, 0, 1, 2, 2])
+    unique, idx, inv = object.unique(True, True)
+    assert np.allclose(unique.data.flatten(), [1, 2, 3])
+    assert np.allclose(idx, [0, 2, 3])
+    assert np.allclose(inv, [0, 0, 1, 2, 2])
