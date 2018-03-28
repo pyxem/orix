@@ -92,7 +92,6 @@ class PointGroup:
         axis_110 = a + b
         axis_111 = a + b + c
         axangles = {
-
             '2/m': [(c, 2)],
             'mmm': [(a, 2), (c, 2),],
             '4/m': [(c, 4),],
@@ -100,15 +99,18 @@ class PointGroup:
             '-3': [(c, 3),],
             '-3m': [(m, 2), (c, 3),],
             '6/m': [(c, 6),],
-            '6/mmm': [(a, 2), (c, 6), ],
+            '6/mmm': [(a, 2), (c, 6),],
             'm-3': [(axis_111, 3), (a, 2,), (c, 2,),],
-            'm-3m': [(axis_111, 3), (axis_110, 2), (c, 4), ],
+            'm-3m': [(axis_111, 3), (axis_110, 2), (c, 4),],
         }.get(self.laue_class)
         # Do rotations
         rot = []
         for ax, n in axangles:
             angles = (2 * np.pi / n) * np.arange(n)
-            r = Rotation.stack([Rotation.from_neo_euler(AxAngle.from_axes_angles(ax, angle)) for angle in angles]).flatten()
+            r = Rotation.stack(
+                [Rotation.from_neo_euler(
+                    AxAngle.from_axes_angles(ax, angle)) for angle in angles
+                 ]).flatten()
             rot.append(r)
         if self.inversion.shape[0] == 2:
             rot.append(Rotation([[1, 0, 0, 0], [1, 0, 0, 0]]) * [1, -1])
