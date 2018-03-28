@@ -37,7 +37,9 @@ def test_neg(scalar, expected):
     (1, 1, 2),
     ((1, 2), (2, -1), (3, 1)),
     ([[0, -1], [4, 2]], 0.5, [[0.5, -0.5], [4.5, 2.5]]),
-    ((4,), np.array([[-1, -1], [-1, -1]]), [[3, 3], [3, 3]])
+    ((4,), np.array([[-1, -1], [-1, -1]]), [[3, 3], [3, 3]]),
+    ((-1,), Scalar((1,)), [0]),
+    pytest.param(0.5, 'frederick', None, marks=pytest.mark.xfail),
 ], indirect=['scalar'])
 def test_add(scalar, other, expected):
     sum = scalar + other
@@ -50,7 +52,9 @@ def test_add(scalar, other, expected):
     (1, 1, 0),
     ((1, 2), (2, -1), (-1, 3)),
     ([[0, -1], [4, 2]], 0.5, [[-0.5, -1.5], [3.5, 1.5]]),
-    ((4,), np.array([[-1, -2], [1, -1]]), [[5, 6], [3, 5]])
+    ((4,), np.array([[-1, -2], [1, -1]]), [[5, 6], [3, 5]]),
+    ((-1,), Scalar((1,)), [-2]),
+    pytest.param(0.5, 'frederick', None, marks=pytest.mark.xfail),
 ], indirect=['scalar'])
 def test_sub(scalar, other, expected):
     sub = scalar - other
@@ -63,7 +67,9 @@ def test_sub(scalar, other, expected):
     (1, 1, 1),
     ((1, 2), (2, -1), (2, -2)),
     ([[0, -1], [4, 2]], 0.5, [[0, -0.5], [2, 1]]),
-    ((4,), np.array([[-1, -2], [1, -1]]), [[-4, -8], [4, -4]])
+    ((4,), np.array([[-1, -2], [1, -1]]), [[-4, -8], [4, -4]]),
+    ((-1,), Scalar((1,)), [-1]),
+    pytest.param(0.5, 'frederick', None, marks=pytest.mark.xfail),
 ], indirect=['scalar'])
 def test_mul(scalar, other, expected):
     mul = scalar * other
@@ -74,9 +80,25 @@ def test_mul(scalar, other, expected):
 
 @pytest.mark.parametrize('scalar, other, expected', [
     pytest.param(1, 1, 0, marks=pytest.mark.xfail),
+    ((2, 2), (2, -1), (1, 0)),
+    ([[0.5, -1], [4, 2]], 0.5, [[1, 0], [0, 0]]),
+    ((4,), np.array([[-1, -2], [4, -1]]), [[0, 0], [1, 0]]),
+    ([5], Scalar([5]), 1),
+    ([5], Scalar([6]), 0),
+    pytest.param([3], 'larry', None, marks=pytest.mark.xfail),
+], indirect=['scalar'])
+def test_equality(scalar, other, expected):
+    eq = scalar == other
+    assert np.allclose(eq, expected)
+
+
+@pytest.mark.parametrize('scalar, other, expected', [
+    pytest.param(1, 1, 0, marks=pytest.mark.xfail),
     ((1, 2), (2, -1), (0, 1)),
     ([[0, -1], [4, 2]], 0.5, [[0, 0], [1, 1]]),
     ((4,), np.array([[-1, -2], [1, -1]]), [[1, 1], [1, 1]]),
+    ([5], Scalar([6]), 0),
+    pytest.param([3], 'larry', None, marks=pytest.mark.xfail),
 ], indirect=['scalar'])
 def test_inequality(scalar, other, expected):
     gt = scalar > other
@@ -90,6 +112,9 @@ def test_inequality(scalar, other, expected):
     ((1, 2), (2, -1), (0, 1)),
     ([[0, -1], [4, 2]], 0.5, [[0, 0], [1, 1]]),
     ((1,), np.array([[-1, -2], [1, -1]]), [[1, 1], [1, 1]]),
+    ([5], Scalar([5]), 1),
+    ([5], Scalar([6]), 0),
+    pytest.param([3], 'larry', None, marks=pytest.mark.xfail),
 ], indirect=['scalar'])
 def test_ge(scalar, other, expected):
     gt = scalar >= other
@@ -101,6 +126,9 @@ def test_ge(scalar, other, expected):
     ((1, 2), (2, -1), (1, 0)),
     ([[0, -1], [4, 2]], 0.5, [[1, 1], [0, 0]]),
     ((1,), np.array([[-1, -2], [1, -1]]), [[0, 0], [1, 0]]),
+    ([5], Scalar([5]), 1),
+    ([5], Scalar([6]), 1),
+    pytest.param([3], 'larry', None, marks=pytest.mark.xfail),
 ], indirect=['scalar'])
 def test_le(scalar, other, expected):
     le = scalar <= other
@@ -111,7 +139,8 @@ def test_le(scalar, other, expected):
     (1, 1, 1),
     ((1., 2.), (2, -1), (1, 0.5)),
     ([[0, -1], [4, 2]], 2, [[0, 1], [16, 4]]),
-    ((4.,), np.array([[-1, -2], [1, -1]]), [[0.25, 0.0625], [4, 0.25]])
+    ((4.,), np.array([[-1, -2], [1, -1]]), [[0.25, 0.0625], [4, 0.25]]),
+    pytest.param([3], 'larry', None, marks=pytest.mark.xfail),
 ], indirect=['scalar'])
 def test_pow(scalar, other, expected):
     pow = scalar ** other
@@ -137,4 +166,17 @@ def test_reshape(scalar, shape, expected):
     s = scalar.reshape(*shape)
     assert s.shape == shape
     assert np.allclose(s.data, expected)
+
+
+@pytest.mark.parametrize('data, expected', [
+    (
+        [Scalar([[1, 2], [3, 4]]), Scalar([[5, 6], [7, 8]])],
+        [[[1, 5], [2, 6]], [[3, 7], [4, 8]]]
+    ),
+])
+def test_stack(data, expected):
+    stack = Scalar.stack(data)
+    assert isinstance(stack, Scalar)
+    assert stack.shape[-1] == len(data)
+    assert np.allclose(stack.data, expected)
 

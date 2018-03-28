@@ -4,6 +4,7 @@ import itertools
 
 from texpy.vector.neo_euler import AxAngle
 from texpy.vector import Vector3d
+from texpy.quaternion.rotation import Rotation
 
 
 axes = [
@@ -55,3 +56,12 @@ def test_from_axes_angles(axis, angle, expected_axis):
     ax = AxAngle.from_axes_angles(axis, angle)
     assert np.allclose(ax.axis.data, expected_axis)
     assert np.allclose(ax.angle.data, abs(angle))
+
+
+@pytest.mark.parametrize('rotation, expected', [
+    (Rotation([1, 0, 0, 0]), [0, 0, 0]),
+    (Rotation([0, 1, 0, 0]), [np.pi, 0, 0])
+])
+def test_from_rotation(rotation, expected):
+    axangle = AxAngle.from_rotation(rotation)
+    assert np.allclose(axangle.data, expected)
