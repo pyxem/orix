@@ -62,6 +62,9 @@ class SphericalRegion(Vector3d):
             mirror_plane_z_1 = -mirror_plane_z_1
             mirror_plane_z_2 = -mirror_plane_z_2
 
+        if np.allclose(mirror_plane_z_1.data, -mirror_plane_z_2.data):
+            mirror_plane_z_2 = Vector3d.empty()
+
         # Deal with the remaining mirror planes
         # The last will normally have a normal pointing *away* from the combined
         # normals of the first two planes, if they exist
@@ -84,10 +87,12 @@ class SphericalRegion(Vector3d):
                 mplanenz.data
             ], axis=-2))
 
+
         # Deal with the rotations
         rotations = symmetry[~symmetry.improper]
         rotations = rotations.outer(rotations)
         r_inside = Rotation(Quaternion(rotations[supersector.contains(rotations.axis, edge=False)]).unique())
+        print(r_inside.axis, r_inside.angle)
         r_inside = r_inside[r_inside.angle > 1e-6]
 
         # For every rotation inside the supersector, divide up the remaining

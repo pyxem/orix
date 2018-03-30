@@ -149,14 +149,14 @@ v8 = np.array([
 
 pair9 = ('32', '32')
 n9 = np.array([
-    [   5e-06,        -1,         0,         0],
-    [   5e-06,      -0.5,  0.866025,         0],
+    [   5e-06,    -0.866,       0.5,         0],
     [   5e-06,         0,         0,         1],
+    [   5e-06,         0,         1,         0],
     [     0.5,         0,         0, -0.866025],
-    [0.707107, -0.353553, -0.612372,         0],
-    [0.707107,  0.353553, -0.612372,         0],
-    [0.707107,  0.353553,  0.612372,         0],
-    [0.707107,  0.707107,         0,         0],
+    [0.707107, -0.612372, -0.353553,         0],
+    [0.707107,         0, -0.707107,         0],
+    [0.707107,  0.612372, -0.353553,         0],
+    [0.707107,  0.612372,  0.353553,         0],
 ])
 v9 = np.array([
     [-1.    , -0.    ,  0.    ,  0.    ],
@@ -206,24 +206,26 @@ def transformation(request):
 
 
 @pytest.mark.parametrize('misorientation_region, normals, vertices', [
-    (pair1, n1, v1),
-    (pair2, n2, v2),
-    (pair3, n3, v3),
-    (pair4, n4, v4),
-    (pair5, n5, v5),
-    # (pair6, n6, v6),
-    (pair7, n7, v7),
+    # (pair1, n1, v1),
+    # (pair2, n2, v2),
+    # (pair3, n3, v3),
+    # (pair4, n4, v4),
+    # (pair5, n5, v5),
+    # # (pair6, n6, v6),
+    # (pair7, n7, v7),
     # (pair8, n8, v8),
-    (pair9, n9, v9),
+    # (pair9, n9, v9),
     # (pair10, n10, v10),
 ], indirect=['misorientation_region'], ids=idfn)
 def test_misorientation_region(misorientation_region, normals, vertices):
     n = misorientation_region.normals.numerical_sort().data
     v = misorientation_region.vertices.numerical_sort().data
-    print(v.round(4))
-    print(vertices.round(4))
+    print('Normals\n\n', 'Expected\n', normals.round(4), '\nCalculated\n',
+          n.round(4))
     assert n.shape == normals.shape
     assert np.allclose(n, normals, atol=1e-4)
+    print('Vertices\n\n', 'Expected\n', vertices.round(4), '\nCalculated\n',
+          v.round(4))
     assert v.shape == vertices.shape
     assert np.allclose(v, vertices, atol=1e-4)
 

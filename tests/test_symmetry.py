@@ -36,13 +36,13 @@ def test_rotations_from_point_group(point_group, quaternion, improper):
 @pytest.mark.parametrize('symbol_1, symbol_2, disjoint', [
     ('m-3', '2', np.array([
         [1, 0, 0, 0],
-        [0, 0, 0, 1],
+        [0, 0, 1, 0],
     ])),
     ('m-3', '2/m', np.array([
         [1, 0, 0, 0],
-        [0, 0, 0, 1],
+        [0, 0, 1, 0],
         [1, 0, 0, 0],
-        [0, 0, 0, 1],
+        [0, 0, 1, 0],
     ])),
     ('4', '432', np.array([
         [        1,         0,         0,         0],
