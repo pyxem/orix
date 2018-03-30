@@ -6,6 +6,11 @@
 Welcome to texpy's documentation!
 =================================
 
+.. image:: /_static/img/triad-object.png
+   :width: 200px
+   :alt: Image of an object with three-fold symmetry.
+   :align: center
+
 .. toctree::
 
    installation

@@ -1,3 +1,24 @@
+"""Collections of transformations representing a symmetry group.
+
+An object's symmetry can be characterized by the transformations relating
+symmetrically-equivalent views on that object. Consider the following shape.
+
+.. image:: /_static/img/triad-object.png
+   :width: 200px
+   :alt: Image of an object with three-fold symmetry.
+   :align: center
+
+This obviously has three-fold symmetry. If we rotated it by
+:math:`\\frac{2}{3}\\pi` or :math:`\\frac{4}{3}\\pi`, the image would be unchanged.
+These angles, as well as :math:`0`, or the identity, expressed as quaternions,
+form a group. Applying any operation in the group to any other results in
+another member of the group.
+
+Symmetries can consist of rotations or mirror operations, expressed as
+improper rotations.
+
+"""
+
 import numpy as np
 from math import sin, cos, pi
 
@@ -10,6 +31,14 @@ from texpy.vector import Vector3d
 
 
 class Symmetry(Rotation):
+    """Base class for symmetries.
+
+    Attributes
+    ----------
+    point_group : PointGroup
+        The point group of this symmetry group.
+
+    """
 
     point_group = None
     fundamental_region = None
