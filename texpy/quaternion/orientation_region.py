@@ -180,7 +180,7 @@ class MisorientationRegion(OrientationRegion):
     @classmethod
     def from_symmetry(cls, symmetry_1, symmetry_2):
         misorientation_region = cls()
-        from texpy.quaternion.symmetry import Symmetry
+        from texpy.quaternion.symmetry_legacy import Symmetry
         rotations = Rotation(symmetry_2).outer(Rotation(symmetry_1))
 
         disjoint = Symmetry.disjoint(symmetry_1, symmetry_2)
@@ -211,7 +211,7 @@ class MisorientationRegion(OrientationRegion):
 
 
         """
-        from texpy.quaternion.symmetry import Symmetry
+        from texpy.quaternion.symmetry_legacy import Symmetry
         s1, s2 = self.symmetry
         # First, symmetrise the transformations
         if not np.allclose(s1.data, s2.data):

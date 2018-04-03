@@ -368,3 +368,7 @@ class Vector3d(Object3d):
         angle = 0 if angle is None else angle
         q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
         return q * self
+
+    @classmethod
+    def random(cls, shape=(1,)):
+        return cls(np.random.rand(*shape, cls.dim))

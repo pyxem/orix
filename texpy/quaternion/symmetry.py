@@ -18,153 +18,99 @@ Symmetries can consist of rotations or mirror operations, expressed as
 improper rotations.
 
 """
-
 import numpy as np
-from math import sin, cos, pi
 
-from texpy.point_group import PointGroup
-from texpy.quaternion.orientation_region import OrientationRegion
-from texpy.quaternion import Quaternion
 from texpy.quaternion.rotation import Rotation
-from texpy.vector.spherical_region import SphericalRegion
-from texpy.vector import Vector3d
-
-
 
 
 class Symmetry(Rotation):
-    """Base class for symmetries.
-
-    Attributes
-    ----------
-    point_group : PointGroup
-        The point group of this symmetry group.
-
-    """
-
-    point_group = None
-    fundamental_region = None
-
-    def __init__(self, data):
-        super(Symmetry, self).__init__(data)
-        self.fundamental_region = self.calculate_fundamental_region()
-
-    def __repr__(self):
-        name = self.__class__.__name__
-        point_group = str(self.point_group)
-        data = np.array_str(self.data, precision=4, suppress_small=True)
-        return '\n'.join([name + ' ' + point_group, data])
-
-    def __getitem__(self, key):
-        return self.to_rotation().__getitem__(key)
 
     @classmethod
-    def from_symbol(cls, symmetry_symbol):
-        point_group = PointGroup(symmetry_symbol)
-        rotations = cls.rotations_from_point_group(point_group)
-        s = cls(rotations.data)
-        s.improper = rotations.improper
-        s.point_group = point_group
-        return s
+    def generate_from(cls, *symmetries):
+        generator = cls((1, 0, 0, 0))
+        for symmetry in symmetries:
+            generator = generator.outer(symmetry).unique()
+        print(generator.improper)
+        size = 1
+        size_new = generator.size
+        while size_new != size:
+            size = size_new
+            generator = generator.outer(generator).unique()
+            size_new = generator.size
+        return generator
 
-    @staticmethod
-    def rotations_from_point_group(point_group):
-        if point_group.lattice in ['trigonal', 'hexagonal']:
-            a, b, c = Vector3d((cos(- pi / 6), sin(- pi / 6), 0)), Vector3d.yvector(), Vector3d.zvector()
-        else:
-            a, b, c = Vector3d.xvector(), Vector3d.yvector(), Vector3d.zvector()
-        rot = point_group.rotations(a, b, c)
-        rotations = Rotation.identity()
-        for r in rot:
-            rotations = rotations.outer(r)
-        return rotations.flatten()
 
-    def calculate_fundamental_region(self):
-        return OrientationRegion.from_symmetry(self)
+C1 = Symmetry((1, 0, 0, 0))
+Ci = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)]); Ci.improper = [0, 1]
 
-    def calculate_fundamental_sector(self):
-        return SphericalRegion.from_symmetry(self)
+C2x = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)])
+C2y = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)])
+C2z = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)])
+C2 = Symmetry(C2z)
 
-    @staticmethod
-    def disjoint(symmetry_1, symmetry_2):
-        is1, is2 = np.nonzero(np.isclose(symmetry_1.dot_outer(symmetry_2).data, 1))
-        is1, is2 = np.array(tuple(set(is1))), np.array(tuple(set(is2)))
-        if len(is1) == 1:
-            return Symmetry.identity()
-        if len(is1) == symmetry_1.size:
-            return Symmetry(symmetry_1)
-        if len(is2) == symmetry_2.size:
-            return Symmetry(symmetry_2)
-        s = Symmetry(symmetry_1[is1].data)
-        s.improper = symmetry_1.improper[is1]
-        return s
+Csx = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)]); Csx.improper = [0, 1]
+Csy = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)]); Csy.improper = [0, 1]
+Csz = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)]); Csz.improper = [0, 1]
+Cs = Symmetry(Csz)
 
-    def to_rotation(self):
-        from .rotation import Rotation
-        r = Rotation(self.data)
-        r.improper = self.improper
-        return r
+C2h = Symmetry.generate_from(C2, Cs)
+D2 = Symmetry.generate_from(C2z, C2x, C2y)
+C2v = Symmetry.generate_from(C2z, Csx)
+D2h = Symmetry.generate_from(Csz, Csx, Csy)
 
-    def symmetrise(self, quaternions):
-        """Returns all rotations symmetrically equivalent to 'quaternions'.
+C4x = Symmetry([
+    (1, 0, 0, 0),
+    (0.5**0.5, 0.5**0.5, 0, 0),
+    (0, 1, 0, 0),
+    (-0.5**0.5, 0.5**0.5, 0, 0),
+])
+C4y = Symmetry([
+    (1, 0, 0, 0),
+    (0.5**0.5, 0, 0.5**0.5, 0),
+    (0, 0, 1, 0),
+    (-0.5**0.5, 0, 0.5**0.5, 0),
+])
+C4z = Symmetry([
+    (1, 0, 0, 0),
+    (0.5**0.5, 0, 0, 0.5**0.5),
+    (0, 0, 0, 1),
+    (-0.5**0.5, 0, 0, 0.5**0.5),
+])
+C4 = Symmetry(C4z)
 
-        Parameters
-        ----------
-        quaternions : Quaternion
+S4 = Symmetry.generate_from(C2, Ci)
+C4h = Symmetry.generate_from(C4, Cs)
+D4 = Symmetry.generate_from(C4, C2x, C2y)
+C4v = Symmetry.generate_from(C4, Csx)
+D2d = Symmetry.generate_from(S4, C2x, Csy)
+D4h = Symmetry.generate_from(C4h, Csx, Csy)
 
-        Returns
-        -------
-        Quaternion
+C3x = Symmetry([(1, 0, 0, 0), (0.5, 0.75**0.5, 0, 0), (-0.5, 0.75**0.5, 0, 0)])
+C3y = Symmetry([(1, 0, 0, 0), (0.5, 0, 0.75**0.5, 0), (-0.5, 0, 0.75**0.5, 0)])
+C3z = Symmetry([(1, 0, 0, 0), (0.5, 0, 0, 0.75**0.5), (-0.5, 0, 0, 0.75**0.5)])
+C3 = Symmetry(C3z)
 
-        """
-        if isinstance(quaternions, Quaternion):
-            q_related = self.to_rotation().outer(quaternions)
-            return quaternions.__class__(q_related.data.reshape(q_related.shape[::-1] + (-1,)))
-        if isinstance(quaternions, Vector3d):
-            v_related = self.to_rotation().outer(quaternions)
-            return quaternions.__class__(v_related.data.reshape(v_related.shape[::-1] + (-1,)))
-        return NotImplemented
+S6 = Symmetry.generate_from(C3, Ci)
+D3 = Symmetry.generate_from(C3, C2x)
+C3v = Symmetry.generate_from(C3, Csx)
+D3d = Symmetry.generate_from(S6, Csx)
 
-    @staticmethod
-    def factorise(s1, s2):
-        """Factorises 's1' and 's2' into `l`, `d`, `r`
+C6 = Symmetry.generate_from(C3, C2)
+C3h = Symmetry.generate_from(C3, Cs)
+C6h = Symmetry.generate_from(C6, Cs)
+D6 = Symmetry.generate_from(C6, C2x, C2y)
+C6v = Symmetry.generate_from(C6, Csx, Csy)
+D3h = Symmetry.generate_from(C3h, Csx, C2y)
+D6h = Symmetry.generate_from(C6h, Csx, Csy)
 
-        Parameters
-        ----------
-        s1, s2 : Symmetry
 
-        Returns
-        -------
-        l, d, r : Quaternion
-            `s1 == l.outer(d)`
-            `s2 == d.outer(r)`
 
-        """
-        qs1, qs2 = s1.to_quaternion(), s2.to_quaternion()
-        in1, in2 = np.where(np.isclose(np.abs(qs1.dot_outer(qs2).data), 1))
-        d = qs1[in1]  # Common symmetries
-
-        # Compute l
-        l = Quaternion((1, 0, 0, 0))
-        subs = np.isclose(np.abs((l.outer(d)).dot_outer(qs1).data), 1)
-        c = np.any(subs, axis=tuple(range(len(subs.shape) - 1)))
-        while not np.all(c):
-            new = np.where(~c)[0][0]
-            l.data = np.concatenate([l.data, qs1[new].data], axis=0)
-            subs = np.isclose(np.abs(l.outer(d).dot_outer(qs1).data), 1)
-            c = np.any(subs, axis=tuple(range(len(subs.shape) - 1)))
-
-        # Compute r
-        r = Quaternion((1, 0, 0, 0))
-        c = np.any(np.isclose(np.abs((d * r).dot_outer(qs2).data), 1), axis=0)
-        while not np.all(c):
-            new = np.where(~c)[0][0]
-            r.data = np.concatenate([r.data, qs2[new].data], axis=0)
-            subs = np.isclose(np.abs(d.outer(r).dot_outer(qs2).data), 1)
-            c = np.any(subs, axis=tuple(range(len(subs.shape) - 1)))
-
-        return l, d, r
-
+cubic = Rotation((0.5, 0.5, 0.5, 0.5))
+T = Symmetry.generate_from(C2, cubic)
+Th = Symmetry.generate_from(T, Ci)
+O = Symmetry.generate_from(C4, cubic, C2x)
+Td = Symmetry.generate_from(S4, cubic, Csx)
+Oh = Symmetry.generate_from(O, Ci)
 
 
 

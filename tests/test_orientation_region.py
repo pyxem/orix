@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from texpy.quaternion.orientation_region import OrientationRegion
-from texpy.quaternion.symmetry import Symmetry
+from texpy.quaternion.symmetry_legacy import Symmetry
 from texpy.quaternion.rotation import Rotation
 
 

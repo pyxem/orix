@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from texpy.quaternion.symmetry import Symmetry
+from texpy.quaternion.symmetry_legacy import Symmetry
 from texpy.vector.spherical_region import SphericalRegion
 from texpy.vector import Vector3d
 

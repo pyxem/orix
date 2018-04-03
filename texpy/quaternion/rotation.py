@@ -60,6 +60,11 @@ class Rotation(Quaternion):
         obj.improper = np.atleast_1d(i)
         return obj
 
+    def flatten(self):
+        r = super(Rotation, self).flatten()
+        r.improper = self.improper.flatten()
+        return r
+
     def unique(self, return_index=False, return_inverse=False):
         if len(self.data) == 0:
             return self.__class__(self.data)
@@ -72,7 +77,7 @@ class Rotation(Quaternion):
         abcd = np.stack((a ** 2, b ** 2, c ** 2, d ** 2, a * b, a * c, a * d,
                          b * c, b * d, c * d, i), axis=-1).round(5)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
-        dat = self[np.sort(idx)]
+        dat = rotation[np.sort(idx)]
         if return_index and return_inverse:
             return dat, idx, inv
         elif return_index and not return_inverse:

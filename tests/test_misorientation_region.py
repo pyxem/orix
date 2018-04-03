@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from texpy.quaternion.symmetry import Symmetry
+from texpy.quaternion.symmetry_legacy import Symmetry
 from texpy.quaternion.orientation_region import MisorientationRegion
 from texpy.quaternion.rotation import Rotation
 
