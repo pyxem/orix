@@ -30,6 +30,8 @@ from texpy.vector.spherical_region import SphericalRegion
 from texpy.vector import Vector3d
 
 
+
+
 class Symmetry(Rotation):
     """Base class for symmetries.
 

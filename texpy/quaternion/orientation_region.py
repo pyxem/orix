@@ -107,7 +107,11 @@ class OrientationRegion:
             vertices = vertices180[inside].flatten()
         else:
             vertices[switch180] = vertices180[inside]
-        return vertices.unique()
+        vertices = vertices.unique()
+        switchpolarity = vertices.a.data < 0
+        verticesswitched = Rotation(-(vertices[switchpolarity].data))
+        vertices[switchpolarity] = verticesswitched
+        return vertices
 
     def face_indices(self):
         if self.vertices is not None:

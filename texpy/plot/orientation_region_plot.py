@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 from texpy.vector.neo_euler import Rodrigues
+from texpy.vector.neo_euler import AxAngle
 from texpy.quaternion.rotation import Rotation
 
 
@@ -22,10 +22,10 @@ class OrientationRegionPlot:
                 self.orientation_region.vertices).data, 0)
         faces = []
         for f in vertices_in_faces:
-            faces.append(self.orientation_region.vertices[f].to_rotation())
+            faces.append(Rotation(self.orientation_region.vertices[f]))
         faces_sorted = []
         for face in faces:
-            face_rodrigues = face.to_rodrigues()
+            face_rodrigues = Rodrigues.from_rotation(face)
             center = Rodrigues(face_rodrigues.data.mean(axis=0))
             disp = face_rodrigues - center
             sign = np.sign(disp.cross(disp[0]).unit.dot(center.unit).data)
@@ -35,7 +35,7 @@ class OrientationRegionPlot:
                 (face_sorted.data, face_sorted[0].data)))
             faces_sorted.append(face_sorted)
         for face in faces_sorted:
-            self.ax.plot(*face.to_rotation().to_axangle().xyz, 'k-', linewidth=0.5, **kwargs)
+            self.ax.plot(*AxAngle.from_rotation(Rotation(face)).xyz, 'k-', linewidth=0.5, **kwargs)
         lim = np.abs(np.concatenate([
             self.ax.get_xlim(), self.ax.get_ylim(), self.ax.get_zlim()
         ])).max() * 1.1

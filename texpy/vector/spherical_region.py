@@ -92,7 +92,7 @@ class SphericalRegion(Vector3d):
         rotations = symmetry[~symmetry.improper]
         rotations = rotations.outer(rotations)
         r_inside = Rotation(Quaternion(rotations[supersector.contains(rotations.axis, edge=False)]).unique())
-        print(r_inside.axis, r_inside.angle)
+
         r_inside = r_inside[r_inside.angle > 1e-6]
 
         # For every rotation inside the supersector, divide up the remaining
