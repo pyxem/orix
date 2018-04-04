@@ -69,13 +69,7 @@ class Rotation(Quaternion):
         if len(self.data) == 0:
             return self.__class__(self.data)
         rotation = self.flatten()
-        a = rotation.a.data
-        b = rotation.b.data
-        c = rotation.c.data
-        d = rotation.d.data
-        i = rotation.improper
-        abcd = np.stack((a ** 2, b ** 2, c ** 2, d ** 2, a * b, a * c, a * d,
-                         b * c, b * d, c * d, i), axis=-1).round(5)
+        abcd = rotation.differentiators()
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         dat = rotation[np.sort(idx)]
         if return_index and return_inverse:
@@ -86,6 +80,16 @@ class Rotation(Quaternion):
             return dat, inv
         else:
             return dat
+
+    def differentiators(self):
+        a = self.a.data
+        b = self.b.data
+        c = self.c.data
+        d = self.d.data
+        i = self.improper
+        abcd = np.stack((a ** 2, b ** 2, c ** 2, d ** 2, a * b, a * c, a * d,
+                         b * c, b * d, c * d, i), axis=-1).round(5)
+        return abcd
 
     def angle_with(self, other):
         other = check_quaternion(other)
