@@ -211,3 +211,33 @@ def test_proper_inversion_subgroup(symmetry, expected):
     print('Expected\n', expected)
     print('Calculated\n', symmetry.proper_inversion_subgroup)
     assert symmetry.proper_inversion_subgroup._tuples == expected._tuples
+
+
+@pytest.mark.parametrize('symmetry, expected', [
+    (C1, False),
+    (Ci, True),
+    (Cs, False),
+    (C2, False),
+    (C2h, True),
+    (D4, False),
+    (D2d, False),
+    (D3d, True),
+    (C6, False),
+    (C3h, False),
+    (Td, False),
+    (Oh, True),
+])
+def test_contains_inversion(symmetry, expected):
+    assert symmetry.contains_inversion == expected
+
+
+@pytest.mark.parametrize('symmetry, other, expected', [
+    (D2, C1, [C1]),
+    (C1, C1, [C1]),
+    (D2, C2, [C1, C2z]),
+    (C4, S4, [C1, C2z]),
+])
+def test_and(symmetry, other, expected):
+    overlap = symmetry & other
+    expected = Symmetry.from_generators(*expected)
+    assert overlap._tuples == expected._tuples

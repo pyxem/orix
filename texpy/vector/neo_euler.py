@@ -36,9 +36,7 @@ class NeoEuler(Vector3d, abc.ABC):
     @property
     def axis(self):
         """Vector3d : the axis of rotation"""
-        u = self.unit
-        u[u.norm.data == 0] = Vector3d.zvector()
-        return u
+        return Vector3d(self.unit)
 
 
 class Rodrigues(NeoEuler):
@@ -51,14 +49,16 @@ class Rodrigues(NeoEuler):
 
     @classmethod
     def from_rotation(cls, rotation):
-        a = rotation.a.data
-        a[np.isclose(a, 0)] = 1e-9
-        data = np.stack((
-            rotation.b.data / a,
-            rotation.c.data / a,
-            rotation.d.data / a
-        ), axis=-1)
-        return cls(data)
+        a = np.float64(rotation.a.data)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            data = np.stack((
+                rotation.b.data / a,
+                rotation.c.data / a,
+                rotation.d.data / a
+            ), axis=-1)
+        data[np.isnan(data)] = 0
+        r = cls(data)
+        return r
 
     @property
     def angle(self):
@@ -80,6 +80,10 @@ class AxAngle(NeoEuler):
     @property
     def angle(self):
         return Scalar(self.norm.data)
+
+    @property
+    def axis(self):
+        return Vector3d(self.unit)
 
     @classmethod
     def from_axes_angles(cls, axes, angles):

@@ -73,7 +73,6 @@ class Vector3d(Object3d):
     """
 
     dim = 3
-    data = None
     plot_type = VectorPlot
 
     def __neg__(self):

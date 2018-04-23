@@ -6,7 +6,7 @@ of a vector or the rotation angle of a quaternion.
 
 """
 import numpy as np
-from texpy.base import Object3d
+from texpy.base import Object3d, DimensionError
 from texpy.plot.scalar_plot import ScalarPlot
 
 
@@ -25,14 +25,24 @@ class Scalar(Object3d):
     """
 
     dim = 0
-    data = None
     plot_type = ScalarPlot
 
     def __init__(self, data):
-        if isinstance(data, self.__class__):
-            data = data.data
-        data = np.atleast_1d(data)
-        self.data = data
+        if isinstance(data, Object3d):
+            if data.dim != self.dim:
+                raise DimensionError(self, data.data)
+            self._data = data._data
+        else:
+            data = np.atleast_1d(data)
+            self._data = data
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        self._data = data
 
     def __neg__(self):
         return self.__class__(-self.data)
@@ -190,3 +200,7 @@ class Scalar(Object3d):
     def reshape(self, *args):
         """Returns a new Scalar containing the same data with a new shape."""
         return self.__class__(self.data.reshape(*args))
+
+    def flatten(self):
+        """Scalar : A new object with the same data in a single column."""
+        return self.__class__(self.data.T.flatten())

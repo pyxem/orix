@@ -13,10 +13,10 @@ def check(obj, cls):
 
 class DimensionError(Exception):
 
-    def __init__(self, object):
-        class_name = object.__class__.__name__
-        required_dimension = object.dim
-        received_dimension = object.shape[-1]
+    def __init__(self, this, data):
+        class_name = this.__class__.__name__
+        required_dimension = this.dim
+        received_dimension = data.shape[-1]
         super().__init__(
             "{} requires data of dimension {} "
             "but received dimension {}.".format(
@@ -32,7 +32,7 @@ class Object3d:
     dim = None
     """int : The number of dimensions for this object."""
 
-    data = None
+    _data = None
     """np.ndarray : Array holding this object's numerical data."""
 
     plot_type = None
@@ -40,11 +40,22 @@ class Object3d:
 
     def __init__(self, data=None):
         if isinstance(data, Object3d):
-            data = data.data
-        data = np.atleast_2d(data)
-        self.data = data
-        if data.shape[-1] != self.dim:
-            raise DimensionError(self)
+            if data.dim != self.dim:
+                raise DimensionError(self, data.data)
+            self._data = data.data
+        else:
+            data = np.atleast_2d(data)
+            if data.shape[-1] != self.dim:
+                raise DimensionError(self, data)
+            self._data = data
+
+    @property
+    def data(self):
+        return self._data[..., :self.dim]
+
+    @data.setter
+    def data(self, data):
+        self._data[..., :self.dim] = data
 
     def __repr__(self):
         name = self.__class__.__name__
@@ -53,8 +64,9 @@ class Object3d:
         return '\n'.join([name + ' ' + shape, data])
 
     def __getitem__(self, key):
-        data = self.data[key]
+        data = np.atleast_2d(self.data[key])
         obj = self.__class__(data)
+        obj._data = np.atleast_2d(self._data[key])
         return obj
 
     def __setitem__(self, key, value):
@@ -86,13 +98,19 @@ class Object3d:
 
     @classmethod
     def stack(cls, sequence):
-        sequence = [check(s, cls).data for s in sequence]
+        sequence = [s._data for s in sequence]
         stack = np.stack(sequence, axis=-2)
-        return cls(stack)
+        obj = cls(stack[..., :cls.dim])
+        obj._data = stack
+        return obj
 
     def flatten(self):
         """Object3d : A new object with the same data in a single column."""
-        return self.__class__(self.data.T.reshape(self.dim, -1).T)
+        obj = self.__class__(self.data.T.reshape(self.dim, -1).T)
+        real_dim = self._data.shape[-1]
+        obj._data = self._data.T.reshape(real_dim, -1).T
+        return obj
+
 
     def unique(self, return_index=False, return_inverse=False):
         """Returns a new object containing only this object's unique entries.
@@ -119,21 +137,21 @@ class Object3d:
             The indices of the (flattened) data in the unique array.
 
         """
-        data = self.flatten().data.round(9)
-        # Remove zeros
-        data = data[~np.all(np.isclose(data, 0), axis=1)]
+        data = self.flatten()._data.round(9)
+        data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
         if len(data) == 0:
             return self.__class__(data)
         _, idx, inv = np.unique(data.round(4), axis=0, return_index=True, return_inverse=True)
-        dat = self.__class__(data[np.sort(idx)])
+        obj = self.__class__(data[np.sort(idx), :self.dim])
+        obj._data = data[np.sort(idx)]
         if return_index and return_inverse:
-            return dat, idx, inv
+            return obj, idx, inv
         elif return_index and not return_inverse:
-            return dat, idx
+            return obj, idx
         elif return_inverse and not return_index:
-            return dat, inv
+            return obj, inv
         else:
-            return dat
+            return obj
 
     @property
     def norm(self):
@@ -143,16 +161,20 @@ class Object3d:
     @property
     def unit(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            return self.__class__(np.nan_to_num(self.data / self.norm.data[..., np.newaxis]))
+            obj = self.__class__(np.nan_to_num(self.data / self.norm.data[..., np.newaxis]))
+            return obj
 
     def numerical_sort(self):
         dat = self.data.round(4)
         ind = np.lexsort([dat[:, i] for i in range(self.dim - 1, -1, -1)])
-        return self.__class__(self.data[ind])
+        obj = self.__class__(self.data[ind])
+        obj._data = self._data[ind]
 
     def reshape(self, *args):
         """Returns a new object containing the same data with a new shape."""
-        return self.__class__(self.data.reshape(*args, self.dim))
+        obj = self.__class__(self.data.reshape(*args, self.dim))
+        obj._data = self._data.reshape(*args, -1)
+        return obj
 
     def plot(self, ax=None, figsize=(6, 6), **kwargs):
         plt = self.plot_type(self, ax=ax, figsize=figsize)

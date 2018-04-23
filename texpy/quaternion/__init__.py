@@ -54,7 +54,6 @@ class Quaternion(Object3d):
     """
 
     dim = 4
-    data = None
 
     @property
     def a(self):

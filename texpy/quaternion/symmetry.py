@@ -35,7 +35,11 @@ class Symmetry(Rotation):
         cls = self.__class__.__name__
         shape = str(self.shape)
         data = np.array_str(self.data, precision=4, suppress_small=True)
-        return '\n'.join([cls + ' ' + shape + ', ' + self.name, data])
+        rep = '{} {}{pad}{}\n{}'.format(cls, shape, self.name, data, pad=self.name and ' ')
+        return rep
+
+    def __and__(self, other):
+        return Symmetry.from_generators(*[g for g in self.subgroups if g in other.subgroups])
 
     @property
     def order(self):
@@ -50,7 +54,7 @@ class Symmetry(Rotation):
     @property
     def subgroups(self):
         """list of Symmetry : the groups that are subgroups of this group."""
-        return [g for g in _groups if g.tuples <= self._tuples]
+        return [g for g in _groups if g._tuples <= self._tuples]
 
     @property
     def proper_subgroups(self):
@@ -69,6 +73,10 @@ class Symmetry(Rotation):
         """Symmetry : the proper subgroup of this group plus inversion."""
         inversion_group = Symmetry.from_generators(self, Ci)
         return inversion_group.proper_subgroup
+
+    @property
+    def contains_inversion(self):
+        return Ci._tuples <= self._tuples
 
     @property
     def _tuples(self):
@@ -100,7 +108,7 @@ class Symmetry(Rotation):
         >>> myS4.improper = [0, 1]
         >>> mySymmetry = Symmetry.from_generators(myC2, myS4)
         >>> mySymmetry
-        Symmetry (8,),
+        Symmetry (8,)
         [[ 1.      0.      0.      0.    ]
          [ 0.      0.7071 -0.7071  0.    ]
          [ 0.7071  0.      0.      0.7071]
@@ -121,25 +129,36 @@ class Symmetry(Rotation):
             size_new = generator.size
         return generator
 
-
+# Triclinic
 C1 = Symmetry((1, 0, 0, 0)); C1.name = '1'
 Ci = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)]); Ci.improper = [0, 1]; Ci.name = '-1'
 
+# Special generators
+_mirror_xy = Symmetry([(1, 0, 0, 0), (0, 0.75**0.5, -0.75**0.5, 0)])
+_mirror_xy.improper = [0, 1]
+_cubic = Symmetry([(1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)])
+
+# 2-fold rotations
 C2x = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)]); C2x.name = '211'
 C2y = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)]); C2y.name = '121'
 C2z = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)]); C2z.name = '112'
 C2 = Symmetry(C2z); C2.name = '2'
 
+# Mirrors
 Csx = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)]); Csx.improper = [0, 1]; Csx.name = 'm11'
 Csy = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)]); Csy.improper = [0, 1]; Csy.name = '1m1'
 Csz = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)]); Csz.improper = [0, 1]; Csz.name = '11m'
 Cs = Symmetry(Csz); Cs.name = 'm'
 
+# Monoclinic
 C2h = Symmetry.from_generators(C2, Cs); C2h.name = '2/m'
+
+# Orthorhombic
 D2 = Symmetry.from_generators(C2z, C2x, C2y); D2.name = '222'
 C2v = Symmetry.from_generators(C2x, Csz); C2v.name = 'mm2'
 D2h = Symmetry.from_generators(Csz, Csx, Csy); D2h.name = 'mmm'
 
+# 4-fold rotations
 C4x = Symmetry([
     (1, 0, 0, 0),
     (0.5**0.5, 0.5**0.5, 0, 0),
@@ -160,23 +179,27 @@ C4z = Symmetry([
 ])
 C4 = Symmetry(C4z); C4.name = '4'
 
+# Tetragonal
 S4 = Symmetry.from_generators(C2, Ci); S4.name = '-4'
 C4h = Symmetry.from_generators(C4, Cs); C4h.name = '4/m'
 D4 = Symmetry.from_generators(C4, C2x, C2y); D4.name = '422'
 C4v = Symmetry.from_generators(C4, Csx); C4v.name = '4mm'
-D2d = Symmetry.from_generators(S4, C2x, Csy); D2d.name = '-42m'
+D2d = Symmetry.from_generators(D2, _mirror_xy); D2d.name = '-42m'
 D4h = Symmetry.from_generators(C4h, Csx, Csy); D4h.name = '4/mmm'
 
+# 3-fold rotations
 C3x = Symmetry([(1, 0, 0, 0), (0.5, 0.75**0.5, 0, 0), (-0.5, 0.75**0.5, 0, 0)])
 C3y = Symmetry([(1, 0, 0, 0), (0.5, 0, 0.75**0.5, 0), (-0.5, 0, 0.75**0.5, 0)])
 C3z = Symmetry([(1, 0, 0, 0), (0.5, 0, 0, 0.75**0.5), (-0.5, 0, 0, 0.75**0.5)])
 C3 = Symmetry(C3z); C3.name = '3'
 
+# Trigonal
 S6 = Symmetry.from_generators(C3, Ci); S6.name = '-3'
 D3 = Symmetry.from_generators(C3, C2x); D3.name = '32'
 C3v = Symmetry.from_generators(C3, Csx); C3v.name = '3m'
 D3d = Symmetry.from_generators(S6, Csx); D3d.name = '-3m'
 
+# Hexagonal
 C6 = Symmetry.from_generators(C3, C2); C6.name = '6'
 C3h = Symmetry.from_generators(C3, Cs); C3h.name = '-6'
 C6h = Symmetry.from_generators(C6, Cs); C6h.name = '6/m'
@@ -185,10 +208,7 @@ C6v = Symmetry.from_generators(C6, Csx); C6v.name = '6mm'
 D3h = Symmetry.from_generators(C3h, Csx, C2y); D3h.name = '-6m2'
 D6h = Symmetry.from_generators(C6h, Csx, Csy); D6h.name = '6/mmm'
 
-
-_mirror_xy = Symmetry([(1, 0, 0, 0), (0, 0.75**0.5, -0.75**0.5, 0)])
-_mirror_xy.improper = [0, 1]
-_cubic = Symmetry([(1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)])
+# Cubic
 T = Symmetry.from_generators(C2, _cubic); T.name = '23'
 Th = Symmetry.from_generators(T, Ci); Th.name = 'm-3'
 O = Symmetry.from_generators(C4, _cubic, C2x); O.name = '432'

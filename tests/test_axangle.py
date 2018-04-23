@@ -45,7 +45,6 @@ def test_angle(axangle):
 
 def test_axis(axangle):
     assert axangle.axis.shape == axangle.shape
-    assert np.allclose(axangle.axis.norm.data, 1)
 
 
 @pytest.mark.parametrize('axis, angle, expected_axis', [

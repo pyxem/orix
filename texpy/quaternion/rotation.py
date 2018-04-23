@@ -8,11 +8,11 @@ from texpy.plot.rotation_plot import RotationPlot, plot_pole_figure
 
 class Rotation(Quaternion):
 
-    _improper = None
     plot_type = RotationPlot
 
     def __init__(self, data):
         super(Rotation, self).__init__(data)
+        self._data = np.concatenate((self.data, np.zeros(self.shape + (1,))), axis=-1)
         if isinstance(data, Rotation):
             self.improper = data.improper
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -54,22 +54,14 @@ class Rotation(Quaternion):
         r.improper = self.improper
         return r
 
-    def __getitem__(self, key):
-        obj = super(Rotation, self).__getitem__(key)
-        i = self.improper[key]
-        obj.improper = np.atleast_1d(i)
-        return obj
-
-    def flatten(self):
-        r = super(Rotation, self).flatten()
-        r.improper = self.improper.flatten()
-        return r
-
-    def unique(self, return_index=False, return_inverse=False):
+    def unique(self, return_index=False, return_inverse=False, antipodal=True):
         if len(self.data) == 0:
             return self.__class__(self.data)
         rotation = self.flatten()
-        abcd = rotation.differentiators()
+        if antipodal:
+            abcd = rotation.differentiators()
+        else:
+            abcd = np.stack([rotation.a.data, rotation.b.data, rotation.c.data, rotation.d.data, rotation.improper], axis=-1).round(5)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         dat = rotation[np.sort(idx)]
         if return_index and return_inverse:
@@ -111,15 +103,11 @@ class Rotation(Quaternion):
 
     @property
     def improper(self):
-        if self._improper is None:
-            self._improper = np.zeros(self.shape, dtype=bool)
-        return self._improper.astype(bool)
+        return self._data[..., -1].astype(bool)
 
     @improper.setter
     def improper(self, value):
-        value = np.atleast_1d(value)
-        assert value.shape == self.shape, "Shape must be {}. (Gave {}).".format(self.shape, value.shape)
-        self._improper = value
+        self._data[..., -1] = value
 
     def dot_outer(self, other):
         cosines = np.abs(super(Rotation, self).dot_outer(other).data)
@@ -179,7 +167,7 @@ class Rotation(Quaternion):
         gamma = at1 + at2
         mask = np.isclose(beta, 0)
         alpha[mask] = 2 * np.arcsin(
-            np.maximum(-1, np.minimum(1, np.sign(self.a[mask].data) * self.d[mask].data)))
+            np.maximum(-1, np.minimum(1, np.sign(self.a.data[mask]) * self.d.data[mask])))
         gamma[mask] = 0
 
         if convention == 'bunge' or convention == 'zxz':
@@ -242,7 +230,7 @@ class Rotation(Quaternion):
         """Vector3d : the axis of rotation."""
         axis = Vector3d(np.stack((self.b.data, self.c.data, self.d.data), axis=-1))
         axis[self.a.data < -1e-6] = -axis[self.a.data < -1e-6]
-        axis[axis.norm.data == 0] = Vector3d.xvector()
+        axis[axis.norm.data == 0] = Vector3d.zvector()
         axis.data = axis.data / axis.norm.data[..., np.newaxis]
         return axis
 
@@ -250,3 +238,15 @@ class Rotation(Quaternion):
     def angle(self):
         """Scalar : the angle of rotation."""
         return Scalar(2 * np.nan_to_num(np.arccos(np.abs(self.a.data))))
+
+    @classmethod
+    def random(cls, shape=(1,), eps=1e-6):
+        shape = (shape,) if isinstance(shape, int) else shape
+        n = np.prod(shape)
+        rotations = []
+        while len(rotations) < n:
+            r = np.random.uniform(-1, 1, 4)
+            r2 = np.sum(np.square(r))
+            if eps ** 2 < r2 and r2 <= 1:
+                rotations.append(r / np.sqrt(r2))
+        return cls(np.array(rotations)).reshape(*shape)
