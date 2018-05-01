@@ -366,6 +366,25 @@ def test_dot_outer_quat(rotation, improper, quaternion, expected):
     assert np.allclose(cosines.data, expected, atol=1e-4)
 
 
+@pytest.mark.parametrize('rotation, expected', [
+    ([1, 0, 0, 0], [0, 0, 1]),
+    ([-1, 0, 0, 0], [0, 0, -1]),
+    ([0, 0.5**0.5, 0.5**0.5, 0], [0.5**0.5, 0.5**0.5, 0]),
+    (
+        [
+            [1, 0, 0, 0],
+            [-1, 0, 0, 0],
+        ],
+        [
+            [0, 0, 1],
+            [0, 0, -1]
+        ]
+    )
+], indirect=['rotation'])
+def test_axis(rotation, expected):
+    ax = rotation.axis
+    assert np.allclose(ax.data, expected)
+
 # def test_angle_with_self(rotation):
 #     a = quaternion.angle_with(quaternion)
 #     assert np.allclose(a.data, 0, atol=1e-6)

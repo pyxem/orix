@@ -230,7 +230,7 @@ class Rotation(Quaternion):
         """Vector3d : the axis of rotation."""
         axis = Vector3d(np.stack((self.b.data, self.c.data, self.d.data), axis=-1))
         axis[self.a.data < -1e-6] = -axis[self.a.data < -1e-6]
-        axis[axis.norm.data == 0] = Vector3d.zvector()
+        axis[axis.norm.data == 0] = Vector3d.zvector() * np.sign(self.a[axis.norm.data == 0].data)
         axis.data = axis.data / axis.norm.data[..., np.newaxis]
         return axis
 

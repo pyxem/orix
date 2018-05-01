@@ -22,6 +22,7 @@ combined with inversion.
 import numpy as np
 
 from texpy.quaternion.rotation import Rotation
+from texpy.vector import Vector3d
 
 
 class Symmetry(Rotation):
@@ -76,11 +77,12 @@ class Symmetry(Rotation):
 
     @property
     def contains_inversion(self):
+        """bool : True if this group contains inversion."""
         return Ci._tuples <= self._tuples
 
     @property
     def _tuples(self):
-        """set of tuple : the differentiators of this group"""
+        """set of tuple : the differentiators of this group.Z"""
         s = Rotation(self.flatten())
         tuples = set([tuple(d) for d in s.differentiators()])
         return tuples
@@ -128,6 +130,67 @@ class Symmetry(Rotation):
             generator = generator.outer(generator).unique()
             size_new = generator.size
         return generator
+
+    def get_axis_orders(self):
+        s = self[self.angle > 0]
+        if s.size == 0:
+            return {}
+        return {Vector3d(a): b+1 for a, b in
+                zip(*np.unique(s.axis.data, axis=0, return_counts=True))}
+
+    def get_highest_order_axis(self):
+        axis_orders = self.get_axis_orders()
+        if len(axis_orders) == 0:
+            return Vector3d.zvector(), np.infty
+        highest_order = max(axis_orders.values())
+        axes = Vector3d.stack([ao for ao in axis_orders if
+                               axis_orders[ao] == highest_order]).flatten()
+        return axes, highest_order
+
+    @property
+    def diads(self):
+        axis_orders = self.get_axis_orders()
+        diads = [ao for ao in axis_orders if axis_orders[ao] == 2]
+        if len(diads) == 0:
+            return Vector3d.empty()
+        return Vector3d.stack(diads).flatten()
+
+    def fundamental_sector(self):
+        from texpy.vector.neo_euler import AxAngle
+        from texpy.vector.spherical_region import SphericalRegion
+        symmetry = self.antipodal
+        symmetry = symmetry[symmetry.angle > 0]
+        axes, order = symmetry.get_highest_order_axis()
+        if order > 6:
+            return Vector3d.empty()
+        axis = Vector3d.zvector().get_nearest(axes, inclusive=True)
+        r = Rotation.from_neo_euler(
+            AxAngle.from_axes_angles(axis, 2 * np.pi / order))
+        diads = symmetry.diads
+        if diads is not None:
+            nearest_diad = axis.get_nearest(diads)
+            if nearest_diad.size == 0:
+                nearest_diad = axis.perpendicular
+        else:
+            nearest_diad = axis.perpendicular
+        n1 = axis.cross(nearest_diad).unit
+        n2 = - (r * n1)
+        next_diad = r * nearest_diad
+        n = Vector3d.stack((n1, n2)).flatten()
+        sr = SphericalRegion(n.unique())
+        inside = symmetry[symmetry.axis < sr]
+        if inside.size == 0:
+            return sr
+        axes, order = inside.get_highest_order_axis()
+        axis = axis.get_nearest(axes)
+        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2*np.pi / order))
+        nearest_diad = next_diad
+        n1 = axis.cross(nearest_diad).unit
+        n2 = - (r * n1)
+        n = Vector3d(np.concatenate((n.data, n1.data, n2.data)))
+        sr = SphericalRegion(n.unique())
+        return sr
+
 
 # Triclinic
 C1 = Symmetry((1, 0, 0, 0)); C1.name = '1'

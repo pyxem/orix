@@ -181,3 +181,7 @@ class Quaternion(Object3d):
             - q2a * q3b * q1c - q3a * q1b * q2c + q3a * q2b * q1c
         q = cls(np.vstack((a, b, c, d)).T)
         return q
+
+    @property
+    def antipodal(self):
+        return self.__class__(np.stack([self.data, -self.data], axis=0))

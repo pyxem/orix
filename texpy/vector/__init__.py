@@ -371,3 +371,45 @@ class Vector3d(Object3d):
     @classmethod
     def random(cls, shape=(1,)):
         return cls(np.random.rand(*shape, cls.dim))
+
+    @property
+    def perpendicular(self):
+        if np.any(self.x.data == 0) and np.any(self.y.data == 0):
+            if np.any(self.z.data == 0):
+                raise ValueError('Contains zero vectors!')
+            return Vector3d.xvector()
+        x = -self.y.data
+        y = self.x.data
+        z = np.zeros_like(x)
+        return Vector3d(np.stack((x, y, z), axis=-1))
+
+    def get_nearest(self, x, inclusive=False, tiebreak=None):
+        """The vector among x with the smallest angle to this one.
+
+        Parameters
+        ----------
+        x : Vector3d
+        inclusive : bool
+            if False (default) vectors exactly parallel to this will not be
+            considered.
+        tiebreak : Vector3d
+            If multiple vectors are equally close to this one, `tiebreak` will
+            be used as a secondary comparison. By default equal to (0, 0, 1).
+
+        Returns
+        -------
+        Vector3d
+
+        """
+        assert self.size == 1, "`get_nearest` only works for single vectors."
+        tiebreak = Vector3d.zvector() if tiebreak is None else tiebreak
+        eps = 1e-9 if inclusive else 0.
+        cosines = x.dot(self).data
+        mask = np.logical_and(-1 - eps < cosines, cosines < 1 + eps)
+        x = x[mask]
+        if x.size == 0:
+            return Vector3d.empty()
+        cosines = cosines[mask]
+        verticality = x.dot(tiebreak).data
+        order = np.lexsort((cosines, verticality))
+        return x[order[-1]]

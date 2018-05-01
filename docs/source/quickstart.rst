@@ -21,6 +21,7 @@ converted to :obj:`~texpy.quaternion.rotation.Rotation` objects, for example.
 The following code demonstrates a number of ways objects can be initialized.
 
 .. ipython::
+   :okexcept:
 
    In [1]: import numpy as np
 

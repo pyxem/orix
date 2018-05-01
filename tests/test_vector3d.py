@@ -142,6 +142,7 @@ def test_cross_error(vector, number):
 def test_polar(theta, phi, r, expected):
     assert np.allclose(Vector3d.from_polar(theta, phi, r).data, expected.data, atol=1e-5)
 
+
 @pytest.mark.parametrize('shape', [
     (1,),
     (2, 2),
@@ -151,6 +152,7 @@ def test_zero(shape):
     v = Vector3d.zero(shape)
     assert v.shape == shape
     assert v.data.shape[-1] == v.dim
+
 
 def test_angle_with(vector, something):
     a = vector.angle_with(vector).data
@@ -168,6 +170,7 @@ def test_mul_array(vector):
     assert isinstance(m2, Vector3d)
     assert np.all(m1.data == m2.data)
 
+
 @pytest.mark.parametrize('vector, x, y, z', [
     ([1, 2, 3], 1, 2, 3),
     ([[0, 2, 3], [2, 2, 3]], [0, 2], [2, 2], [3, 3]),
@@ -177,7 +180,6 @@ def test_xyz(vector, x, y, z):
     assert np.allclose(vx, x)
     assert np.allclose(vy, y)
     assert np.allclose(vz, z)
-
 
 
 @pytest.mark.parametrize('vector, rotation, expected', [
@@ -191,6 +193,7 @@ def test_rotate(vector, rotation, expected):
     assert isinstance(r, Vector3d)
     assert np.allclose(r.data, expected)
 
+
 @pytest.mark.parametrize('vector, data, expected', [
     ([1, 2, 3], 3, [3, 2, 3]),
     ([[0, 2, 3], [2, 2, 3]], 1, [[1, 2, 3], [1, 2, 3]]),
@@ -199,6 +202,7 @@ def test_rotate(vector, rotation, expected):
 def test_assign_x(vector, data, expected):
     vector.x = data
     assert np.allclose(vector.data, expected)
+
 
 @pytest.mark.parametrize('vector, data, expected', [
     ([1, 2, 3], 3, [1, 3, 3]),
@@ -209,6 +213,7 @@ def test_assign_y(vector, data, expected):
     vector.y = data
     assert np.allclose(vector.data, expected)
 
+
 @pytest.mark.parametrize('vector, data, expected', [
     ([1, 2, 3], 1, [1, 2, 1]),
     ([[0, 2, 3], [2, 2, 3]], 1, [[0, 2, 1], [2, 2, 1]]),
@@ -217,3 +222,11 @@ def test_assign_y(vector, data, expected):
 def test_assign_z(vector, data, expected):
     vector.z = data
     assert np.allclose(vector.data, expected)
+
+
+@pytest.mark.parametrize('vector', [
+    [(1, 0, 0)],
+    [(0.5, 0.5, 1.25), (-1, -1, -1)],
+], indirect=['vector'])
+def test_perpendicular(vector: Vector3d):
+    assert np.allclose(vector.dot(vector.perpendicular).data, 0)

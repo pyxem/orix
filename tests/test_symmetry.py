@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 
 from texpy.quaternion.symmetry import *
 from texpy.vector import Vector3d
@@ -241,3 +240,19 @@ def test_and(symmetry, other, expected):
     overlap = symmetry & other
     expected = Symmetry.from_generators(*expected)
     assert overlap._tuples == expected._tuples
+
+
+@pytest.mark.parametrize('symmetry, expected', [
+    (C2, [0, 1, 0]),
+    (D2, [[0, 1, 0], [0, 0, 1]]),
+    (T,
+     [
+         [0.5**0.5, -0.5**0.5, 0],
+         [0, -0.5**0.5, 0.5**0.5],
+         [0, 0.5**0.5, 0.5**0.5],
+         [0.5**0.5, 0.5**0.5, 0],
+     ])
+])
+def test_fundamental_sector(symmetry, expected):
+    fs = symmetry.fundamental_sector()
+    assert np.allclose(fs.data, expected)
