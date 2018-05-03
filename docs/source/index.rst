@@ -12,6 +12,7 @@ Welcome to texpy's documentation!
    :align: center
 
 .. toctree::
+   :maxdepth: 2
 
    installation
    quickstart
