@@ -17,6 +17,7 @@ Submodules
 
     rotation
     symmetry
+    orientation_region
 
 Members
 =======
