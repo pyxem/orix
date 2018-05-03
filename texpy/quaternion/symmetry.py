@@ -258,7 +258,9 @@ C3 = Symmetry(C3z); C3.name = '3'
 
 # Trigonal
 S6 = Symmetry.from_generators(C3, Ci); S6.name = '-3'
-D3 = Symmetry.from_generators(C3, C2x); D3.name = '32'
+D3x = Symmetry.from_generators(C3, C2x); D3x.name = '321'
+D3y = Symmetry.from_generators(C3, C2y); D3y.name = '312'
+D3 = Symmetry(D3x); D3.name = '32'
 C3v = Symmetry.from_generators(C3, Csx); C3v.name = '3m'
 D3d = Symmetry.from_generators(S6, Csx); D3d.name = '-3m'
 
@@ -268,7 +270,7 @@ C3h = Symmetry.from_generators(C3, Cs); C3h.name = '-6'
 C6h = Symmetry.from_generators(C6, Cs); C6h.name = '6/m'
 D6 = Symmetry.from_generators(C6, C2x, C2y); D6.name = '622'
 C6v = Symmetry.from_generators(C6, Csx); C6v.name = '6mm'
-D3h = Symmetry.from_generators(C3h, Csx, C2y); D3h.name = '-6m2'
+D3h = Symmetry.from_generators(C3, C2y, Csz); D3h.name = '-6m2'
 D6h = Symmetry.from_generators(C6h, Csx, Csy); D6h.name = '6/mmm'
 
 # Cubic
@@ -283,11 +285,11 @@ _groups = [
     C2x, C2y, C2z, Csx, Csy, Csz, C2h,  # monoclinic
     D2, C2v, D2h,  # orthorhombic
     C4, S4, C4h, D4, C4v, D2d, D4h,  # tetragonal
-    C3, S6, D3, C3v, D3d,  # trigonal
+    C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
     T, Th, O, Td, Oh  # cubic
 ]
-_proper_groups = [C1, C2, D2, C4, D4, C3, D3, C6, D6, T, O]
+_proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]
 
 
 

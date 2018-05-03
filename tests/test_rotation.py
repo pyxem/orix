@@ -385,6 +385,20 @@ def test_axis(rotation, expected):
     ax = rotation.axis
     assert np.allclose(ax.data, expected)
 
+
+@pytest.mark.parametrize('rotation, improper', [
+    ([(1, 0, 0, 0), (1, 0, 0, 0)], [0, 1]),
+    ([(0.5**0.5, 0, 0, 0.5**0.5)], [1]),
+])
+def test_antipodal(rotation, improper):
+    rotation = Rotation(rotation)
+    rotation.improper = improper
+    a = rotation.antipodal
+    assert np.allclose(a[0].data, rotation.data)
+    assert np.allclose(a[1].data, -rotation.data)
+    assert np.allclose(a[0].improper, rotation.improper)
+    assert np.allclose(a[1].improper, rotation.improper)
+
 # def test_angle_with_self(rotation):
 #     a = quaternion.angle_with(quaternion)
 #     assert np.allclose(a.data, 0, atol=1e-6)

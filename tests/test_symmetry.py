@@ -189,6 +189,7 @@ def test_proper_subgroups(symmetry, expected):
     (C4h, C4),
     (C3h, C3),
     (C6v, C6),
+    (D3h, D3y),
     (T, T),
     (Td, T),
     (Oh, O),
@@ -243,8 +244,10 @@ def test_and(symmetry, other, expected):
 
 
 @pytest.mark.parametrize('symmetry, expected', [
+    (C1, np.zeros((0, 3))),
     (C2, [0, 1, 0]),
     (D2, [[0, 1, 0], [0, 0, 1]]),
+    (C4, [[0, 1, 0], [1, 0, 0]]),
     (T,
      [
          [0.5**0.5, -0.5**0.5, 0],

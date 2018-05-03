@@ -250,3 +250,9 @@ class Rotation(Quaternion):
             if eps ** 2 < r2 and r2 <= 1:
                 rotations.append(r / np.sqrt(r2))
         return cls(np.array(rotations)).reshape(*shape)
+
+    @property
+    def antipodal(self):
+        r = self.__class__(np.stack([self.data, -self.data], axis=0))
+        r.improper = self.improper
+        return r
