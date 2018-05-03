@@ -3,7 +3,8 @@ import numpy
 
 from texpy.quaternion.symmetry import *
 
-from texpy.quaternion.orientation_region import get_distinguished_points, get_large_cell_normals
+from texpy.quaternion.orientation_region import _get_large_cell_normals
+from texpy.quaternion.symmetry import get_distinguished_points
 
 
 @pytest.mark.parametrize('s1, s2, expected', [
@@ -37,7 +38,7 @@ def test_get_distinguished_points(s1, s2, expected):
     (C3, C3, [[0.866, 0, 0, 0.5], [0.866, 0, 0, -0.5], [0.5, 0, 0, -0.866], [0.5, 0, 0, 0.866]])
 ])
 def test_get_large_cell_normals(s1, s2, expected):
-    n = get_large_cell_normals(s1, s2)
+    n = _get_large_cell_normals(s1, s2)
     assert np.allclose(n.data, expected, atol=1e-3)
 
 

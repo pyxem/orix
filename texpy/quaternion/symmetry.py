@@ -292,4 +292,17 @@ _groups = [
 _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]
 
 
+def get_distinguished_points(s1, s2=C1):
+    """Points symmetrically equivalent to identity with respect to `s1` and `s2`
 
+    Parameters
+    ----------
+    s1, s2 : Symmetry
+
+    Returns
+    -------
+    Rotation
+
+    """
+    distinguished_points = s1.outer(s2).antipodal.unique(antipodal=False)
+    return distinguished_points[distinguished_points.angle > 0]

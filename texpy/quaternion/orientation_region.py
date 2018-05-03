@@ -1,18 +1,32 @@
-import numpy as np
+"""An orientation region is some subset of the complete space of orientations.
+
+The complete orientation space represents every possible orientation of an
+object. The whole space is not always needed, for example if the orientation
+of an object is constrained or (most commonly) if the object is symmetrical. In
+this case, the space can be segmented using sets of Rotations representing
+boundaries in the space. This is clearest in the Rodrigues parametrisation,
+where the boundaries are planes, such as the example here: the asymmetric
+domain of an adjusted 432 symmetry.
+
+.. image:: /_static/img/orientation-region-Oq.png
+   :width: 200px
+   :alt: Boundaries of an orientation region in Rodrigues space.
+   :align: center
+
+Rotations or orientations can be inside or outside of an orientation region.
+
+"""
+
 import itertools
 
+import numpy as np
 from texpy.quaternion import Quaternion
 from texpy.quaternion.rotation import Rotation
-from texpy.quaternion.symmetry import C1
+from texpy.quaternion.symmetry import C1, get_distinguished_points
 from texpy.vector.neo_euler import Rodrigues, AxAngle
 
 
-def get_distinguished_points(s1, s2):
-    distinguished_points = s1.outer(s2).antipodal.unique(antipodal=False)
-    return distinguished_points[distinguished_points.angle > 0]
-
-
-def get_large_cell_normals(s1, s2):
+def _get_large_cell_normals(s1, s2):
     dp = get_distinguished_points(s1, s2)
     normals = Rodrigues.zero(dp.shape + (2,))
     planes1 = dp.axis * np.tan(dp.angle.data / 4)
@@ -62,11 +76,14 @@ def get_proper_groups(Gl, Gr):
 
 
 class OrientationRegion(Rotation):
+    """A set of :obj:`Rotation`s which are the normals of an orientation region.
+
+    """
 
     @classmethod
     def from_symmetry(cls, s1, s2=C1):
         s1, s2 = get_proper_groups(s1, s2)
-        large_cell_normals = get_large_cell_normals(s1, s2)
+        large_cell_normals = _get_large_cell_normals(s1, s2)
         disjoint = s1 & s2
         fundamental_sector = disjoint.fundamental_sector()
         fundamental_sector_normals = Rotation.from_neo_euler(
@@ -82,7 +99,9 @@ class OrientationRegion(Rotation):
             c2).flatten(), Rotation.stack(c3).flatten()
         v = Rotation.triple_cross(c1, c2, c3)
         v = v[~np.any(np.isnan(v.data), axis=-1)]
-        return v[v < self].unique()
+        v = v[v < self].unique()
+        surface = np.any(np.isclose(v.dot_outer(self).data, 0), axis=1)
+        return v[surface]
 
     def faces(self):
         normals = Rotation(self)
