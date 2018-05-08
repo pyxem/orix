@@ -12,6 +12,7 @@ setup(
     packages=find_packages(exclude=['texpy/tests']),
     install_requires=[
         "numpy",
+        "scipy",
         "matplotlib",
     ]
 )
