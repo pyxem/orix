@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import hyp0f1
 
 from texpy.quaternion import Quaternion
 from texpy.vector import Vector3d
@@ -7,8 +8,6 @@ from texpy.plot.rotation_plot import RotationPlot, plot_pole_figure
 
 
 class Rotation(Quaternion):
-
-    plot_type = RotationPlot
 
     def __init__(self, data):
         super(Rotation, self).__init__(data)
@@ -84,7 +83,7 @@ class Rotation(Quaternion):
         return abcd
 
     def angle_with(self, other):
-        other = check_quaternion(other)
+        other = Rotation(other)
         angles = Scalar(np.nan_to_num(np.arccos(2 * self.unit.dot(other.unit).data ** 2 - 1)))
         return angles
 
@@ -241,18 +240,86 @@ class Rotation(Quaternion):
 
     @classmethod
     def random(cls, shape=(1,), eps=1e-6):
+        """Uniformly distributed rotations.
+
+        Parameters
+        ----------
+        shape : int or tuple of int, optional
+            The shape of the required object.
+        eps : float
+            A small fixed variable.
+
+        """
         shape = (shape,) if isinstance(shape, int) else shape
-        n = np.prod(shape)
+        n = int(np.prod(shape))
         rotations = []
         while len(rotations) < n:
-            r = np.random.uniform(-1, 1, 4)
-            r2 = np.sum(np.square(r))
-            if eps ** 2 < r2 and r2 <= 1:
-                rotations.append(r / np.sqrt(r2))
-        return cls(np.array(rotations)).reshape(*shape)
+            r = np.random.uniform(-1, 1, (3*n, cls.dim))
+            r2 = np.sum(np.square(r), axis=1)
+            r = r[np.logical_and(eps ** 2 < r2, r2 <= 1)]
+            rotations += list(r)
+        return cls(np.array(rotations[:n])).reshape(*shape)
+
+    @classmethod
+    def random_vonmises(cls, shape=(1,), alpha=1., reference=(1, 0, 0, 0), eps=1e-6):
+        """Random rotations with a simplified Von Mises-Fisher distribution.
+
+        Parameters
+        ----------
+        shape : int or tuple of int, optional
+            The shape of the required object.
+        alpha : float
+            Parameter for the VM-F distribution. Lower values lead to "looser"
+            distributions.
+        reference : Rotation
+            The center of the distribution.
+        eps : float
+            A small fixed variable.
+
+        """
+        shape = (shape,) if isinstance(shape, int) else shape
+        reference = Rotation(reference)
+        n = int(np.prod(shape))
+        rotations = []
+        f_max = von_mises(reference, alpha, reference)
+        while len(rotations) < n:
+            rotation = cls.random(n)
+            f = von_mises(rotation, alpha, reference)
+            x = np.random.rand(n)
+            rotation = rotation[x * f_max < f]
+            rotations += list(rotation)
+        return cls.stack(rotations[:n]).reshape(*shape)
 
     @property
     def antipodal(self):
         r = self.__class__(np.stack([self.data, -self.data], axis=0))
         r.improper = self.improper
         return r
+
+
+def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
+    """A vastly simplified Von Mises-Fisher distribution calculation.
+
+    Parameters
+    ----------
+    x : Rotation
+    alpha : float
+        Lower values of alpha lead to "looser" distributions.
+    reference : Rotation
+
+    Notes
+    -----
+    This simplified version of the distribution is calculated using
+
+    .. math:: \frac{\exp\left(2\alpha\cos\left(\omega\right)\right)}{_0F_1\left(\frac{N}{2}, \alpha^2\right)}
+
+    where :math:`\omega` is the angle between orientations and :math:`N` is the
+    number of relevant dimensions, in this case 3.
+
+    Returns
+    -------
+    ndarray
+
+    """
+    angle = x.angle_with(reference)
+    return np.exp(2 * alpha * np.cos(angle.data)) / hyp0f1(1.5, alpha**2)

@@ -399,24 +399,11 @@ def test_antipodal(rotation, improper):
     assert np.allclose(a[0].improper, rotation.improper)
     assert np.allclose(a[1].improper, rotation.improper)
 
-# def test_angle_with_self(rotation):
-#     a = quaternion.angle_with(quaternion)
-#     assert np.allclose(a.data, 0, atol=1e-6)
-#
-#
-# def test_angle_with(rotation, something):
-#     a = quaternion.angle_with(something)
-#     assert np.all(a >= 0)
-#     assert np.all(a <= np.pi)
-#
-#
-# def test_axis(quaternion):
-#     axis = quaternion.axis
-#     assert isinstance(axis, Vector3d)
-#     assert np.all(axis.norm.data == 1)
-#
-#
-# def test_angle(quaternion):
-#     angle = quaternion.angle
-#     assert np.all(angle >= 0)
-#     assert np.all(angle <= np.pi)
+
+@pytest.mark.parametrize('shape, reference', [
+    ((1,), (1, 0, 0, 0))
+])
+def test_random_vonmises(shape, reference):
+    r = Rotation.random_vonmises(shape, 1., reference)
+    assert r.shape == shape
+    assert isinstance(r, Rotation)

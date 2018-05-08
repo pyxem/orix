@@ -9,7 +9,7 @@ where the boundaries are planes, such as the example here: the asymmetric
 domain of an adjusted 432 symmetry.
 
 .. image:: /_static/img/orientation-region-Oq.png
-   :width: 200px
+   :width: 300px
    :alt: Boundaries of an orientation region in Rodrigues space.
    :align: center
 

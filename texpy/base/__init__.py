@@ -35,7 +35,6 @@ class Object3d:
     _data = None
     """np.ndarray : Array holding this object's numerical data."""
 
-    plot_type = None
     __array_ufunc__ = None
 
     def __init__(self, data=None):
@@ -48,6 +47,10 @@ class Object3d:
             if data.shape[-1] != self.dim:
                 raise DimensionError(self, data)
             self._data = data
+        self.__finalize__(data)
+
+    def __finalize__(self, data):
+        pass
 
     @property
     def data(self):
@@ -65,7 +68,7 @@ class Object3d:
 
     def __getitem__(self, key):
         data = np.atleast_2d(self.data[key])
-        obj = self.__class__(data)
+        obj = self.__class__(self)
         obj._data = np.atleast_2d(self._data[key])
         return obj
 
@@ -170,10 +173,10 @@ class Object3d:
         obj = self.__class__(self.data[ind])
         obj._data = self._data[ind]
 
-    def reshape(self, *args):
+    def reshape(self, *shape):
         """Returns a new object containing the same data with a new shape."""
-        obj = self.__class__(self.data.reshape(*args, self.dim))
-        obj._data = self._data.reshape(*args, -1)
+        obj = self.__class__(self.data.reshape(*shape, self.dim))
+        obj._data = self._data.reshape(*shape, -1)
         return obj
 
     def plot(self, ax=None, figsize=(6, 6), **kwargs):
