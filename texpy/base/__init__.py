@@ -170,8 +170,13 @@ class Object3d:
     def numerical_sort(self):
         dat = self.data.round(4)
         ind = np.lexsort([dat[:, i] for i in range(self.dim - 1, -1, -1)])
-        obj = self.__class__(self.data[ind])
+        obj = self.__class__(self)
         obj._data = self._data[ind]
+
+    def squeeze(self):
+        obj = self.__class__(self)
+        obj._data = np.atleast_2d(np.squeeze(self._data))
+        return obj
 
     def reshape(self, *shape):
         """Returns a new object containing the same data with a new shape."""

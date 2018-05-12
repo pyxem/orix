@@ -20,7 +20,7 @@ class Rotation(Quaternion):
     def __mul__(self, other):
         if isinstance(other, Rotation):
             q = Quaternion(self) * Quaternion(other)
-            r = Rotation(q)
+            r = other.__class__(q)
             i = np.logical_xor(self.improper, other.improper)
             r.improper = i
             return r
