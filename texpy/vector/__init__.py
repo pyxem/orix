@@ -413,3 +413,10 @@ class Vector3d(Object3d):
         verticality = x.dot(tiebreak).data
         order = np.lexsort((cosines, verticality))
         return x[order[-1]]
+
+    @property
+    def _tuples(self):
+        """set of tuple : the set of comparable vectors."""
+        s = self.flatten()
+        tuples = set([tuple(d) for d in s.data])
+        return tuples

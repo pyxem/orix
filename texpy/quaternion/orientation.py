@@ -22,7 +22,7 @@ class Misorientation(Rotation):
         Gl, Gr = symmetry
         orientation_region = OrientationRegion.from_symmetry(*symmetry)
         o_inside = np.zeros_like(self.data)
-        o_equivalent = Gl.outer(self.outer(Gr))
+        o_equivalent = Gr.outer(self.outer(Gl))
         inside = np.where(np.logical_and(o_equivalent < orientation_region, ~o_equivalent.improper))
         o_inside[inside[1:-1]] = o_equivalent[inside].data
         o_inside = self.__class__(o_inside)
