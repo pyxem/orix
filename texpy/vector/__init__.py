@@ -21,7 +21,6 @@ Members
 """
 import numpy as np
 from texpy.base import check, Object3d
-from texpy.plot.vector3d_plot import VectorPlot
 from texpy.scalar import Scalar
 
 
@@ -73,7 +72,6 @@ class Vector3d(Object3d):
     """
 
     dim = 3
-    plot_type = VectorPlot
 
     def __neg__(self):
         return self.__class__(-self.data)

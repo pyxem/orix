@@ -7,7 +7,6 @@ of a vector or the rotation angle of a quaternion.
 """
 import numpy as np
 from texpy.base import Object3d, DimensionError
-from texpy.plot.scalar_plot import ScalarPlot
 
 
 class Scalar(Object3d):
@@ -25,7 +24,6 @@ class Scalar(Object3d):
     """
 
     dim = 0
-    plot_type = ScalarPlot
 
     def __init__(self, data):
         if isinstance(data, Object3d):

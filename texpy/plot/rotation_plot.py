@@ -1,24 +1,43 @@
-import matplotlib.pyplot as plt
-from texpy.plot.vector3d_plot import VectorPlot
+from matplotlib import projections
+from mpl_toolkits.mplot3d import Axes3D
+from texpy.vector.neo_euler import Rodrigues, AxAngle
 
 
-class RotationPlot(VectorPlot):
+class RotationPlot(Axes3D):
 
-    def __init__(self, rotation, ax=None, figsize=(6, 6)):
-        vector = rotation.to_axangle()
-        super(RotationPlot, self).__init__(vector, ax, figsize)
+    name = None
+    transformation_class = None
+
+    def scatter(self, xs, *args, **kwargs):
+        x, y, z = self.transform(xs)
+        super().scatter(x, y, z, *args, **kwargs)
+
+    def plot(self, xs, *args, **kwargs):
+        x, y, z = self.transform(xs)
+        super().plot(x, y, z, *args, **kwargs)
+
+    def transform(self, xs):
+        from texpy.quaternion.rotation import Rotation
+        if isinstance(xs, Rotation):
+            transformed = self.transformation_class.from_rotation(xs)
+        else:
+            transformed = self.transformation_class(xs)
+        x, y, z = transformed.x.data, transformed.y.data, transformed.z.data
+        return x, y, z
 
 
-def plot_pole_figure(rotation, **kwargs):
-    _, (ax_north, ax_south) = plt.subplots(1, 2)
-    ax_south.set_aspect('equal')
+class RodriguesPlot(RotationPlot):
+    """Plot rotations in a Rodrigues-Frank projection."""
+    name = 'rodrigues'
+    transformation_class = Rodrigues
 
-    ax_north.set_aspect('equal')
-    x, y, z = rotation.axis.xyz
-    north = z >= 0
-    south = z < 0
-    xn, yn = (x[north] / (1 + z[north]), y[north] / (1 + z[north]))
-    xs, ys = (x[south] / (1 - z[south]), y[south] / (1 - z[south]))
-    ax_north.scatter(xn, yn, **kwargs)
-    ax_south.scatter(xs, ys, **kwargs)
-    return ax_north, ax_south
+
+class AxAnglePlot(RotationPlot):
+    """Plot rotations in an Axes-Angle projection."""
+    name = 'axangle'
+    transformation_class = AxAngle
+
+
+projections.register_projection(RodriguesPlot)
+projections.register_projection(AxAnglePlot)
+

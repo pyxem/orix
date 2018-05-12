@@ -184,11 +184,6 @@ class Object3d:
         obj._data = self._data.reshape(*shape, -1)
         return obj
 
-    def plot(self, ax=None, figsize=(6, 6), **kwargs):
-        plt = self.plot_type(self, ax=ax, figsize=figsize)
-        plt.draw(**kwargs)
-        return plt.ax
-
     def sample(self, n=500):
         """Selects 'n' random values of this data.
 

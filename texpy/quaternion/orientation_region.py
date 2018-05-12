@@ -18,12 +18,14 @@ Rotations or orientations can be inside or outside of an orientation region.
 """
 
 import itertools
-
 import numpy as np
+import matplotlib.pyplot as plt
+
 from texpy.quaternion import Quaternion
 from texpy.quaternion.rotation import Rotation
 from texpy.quaternion.symmetry import C1, get_distinguished_points
 from texpy.vector.neo_euler import Rodrigues, AxAngle
+from texpy.plot import rotation_plot
 
 
 def _get_large_cell_normals(s1, s2):
@@ -110,11 +112,21 @@ class OrientationRegion(Rotation):
         for n in normals:
             faces.append(vertices[np.isclose(vertices.dot(n).data, 0)])
         faces = [f for f in faces if f.size > 2]
+        faces = [Rotation(np.concatenate([f.data, f[0].data])) for f in faces]
         return faces
 
     def __gt__(self, other):
         c = Quaternion(self).dot_outer(Quaternion(other))
         inside = np.all(c > -1e-9, axis=0) | np.all(c < 1e-9, axis=0)
         return inside
+
+    def plot(self, ax=None, projection='rodrigues', **kwargs):
+        if ax is None:
+            ax = plt.figure().add_subplot(111, projection=projection, aspect='equal')
+        faces = self.faces()
+        for f in faces:
+            ax.plot(f)
+        return ax
+
 
 

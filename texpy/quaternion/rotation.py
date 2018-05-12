@@ -1,10 +1,11 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.special import hyp0f1
 
 from texpy.quaternion import Quaternion
 from texpy.vector import Vector3d
 from texpy.scalar import Scalar
-from texpy.plot.rotation_plot import RotationPlot, plot_pole_figure
+from texpy.plot import rotation_plot
 
 
 class Rotation(Quaternion):
@@ -295,6 +296,12 @@ class Rotation(Quaternion):
         r = self.__class__(np.stack([self.data, -self.data], axis=0))
         r.improper = self.improper
         return r
+
+    def plot(self, ax=None, projection='rodrigues', **kwargs):
+        if ax is None:
+            ax = plt.figure().add_subplot(111, projection=projection, aspect='equal')
+        ax.scatter(self, **kwargs)
+        return ax
 
 
 def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
