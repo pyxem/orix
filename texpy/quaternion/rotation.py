@@ -203,7 +203,7 @@ class Rotation(Quaternion):
             np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)),
                      axis=-1))
         data = qalpha * qbeta * qgamma
-        rot = Rotation(data.data)
+        rot = cls(data.data)
         rot.improper = zero
         return rot
 
@@ -284,9 +284,9 @@ class Rotation(Quaternion):
         rotations = []
         f_max = von_mises(reference, alpha, reference)
         while len(rotations) < n:
-            rotation = cls.random(n)
+            rotation = cls.random(alpha * n)
             f = von_mises(rotation, alpha, reference)
-            x = np.random.rand(n)
+            x = np.random.rand(alpha * n)
             rotation = rotation[x * f_max < f]
             rotations += list(rotation)
         return cls.stack(rotations[:n]).reshape(*shape)
@@ -296,12 +296,6 @@ class Rotation(Quaternion):
         r = self.__class__(np.stack([self.data, -self.data], axis=0))
         r.improper = self.improper
         return r
-
-    def plot(self, ax=None, projection='rodrigues', **kwargs):
-        if ax is None:
-            ax = plt.figure().add_subplot(111, projection=projection, aspect='equal')
-        ax.scatter(self, **kwargs)
-        return ax
 
 
 def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):

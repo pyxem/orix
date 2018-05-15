@@ -8,21 +8,25 @@ class RotationPlot(Axes3D):
     name = None
     transformation_class = None
 
-    def scatter(self, xs, *args, **kwargs):
+    def scatter(self, xs, **kwargs):
         x, y, z = self.transform(xs)
-        super().scatter(x, y, z, *args, **kwargs)
+        super().scatter(x, y, z, **kwargs)
 
-    def plot(self, xs, *args, **kwargs):
+    def plot(self, xs, **kwargs):
         x, y, z = self.transform(xs)
-        super().plot(x, y, z, *args, **kwargs)
+        super().plot(x, y, z, **kwargs)
+
+    def plot_wireframe(self, xs, **kwargs):
+        x, y, z = self.transform(xs)
+        super().plot_wireframe(x, y, z, **kwargs)
 
     def transform(self, xs):
         from texpy.quaternion.rotation import Rotation
         if isinstance(xs, Rotation):
-            transformed = self.transformation_class.from_rotation(xs)
+            transformed = self.transformation_class.from_rotation(xs.get_plot_data())
         else:
             transformed = self.transformation_class(xs)
-        x, y, z = transformed.x.data, transformed.y.data, transformed.z.data
+        x, y, z = transformed.xyz
         return x, y, z
 
 

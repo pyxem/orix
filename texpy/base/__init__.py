@@ -197,3 +197,6 @@ class Object3d:
             n = self.size
         sample = np.random.choice(self.size, n, False)
         return self.flatten()[sample]
+
+    def get_plot_data(self):
+        return self

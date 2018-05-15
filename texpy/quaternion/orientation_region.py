@@ -55,8 +55,8 @@ def get_proper_groups(Gl, Gr):
     Raises
     ------
     NotImplementedError
-        If both groups are improper, special consideration is needed which is
-        not yet implemented in texpy.
+        If both groups are improper and neither contain an inversion, special
+        consideration is needed which is not yet implemented in texpy.
 
     """
     if Gl.is_proper and Gr.is_proper:
@@ -84,6 +84,13 @@ class OrientationRegion(Rotation):
 
     @classmethod
     def from_symmetry(cls, s1, s2=C1):
+        """The set of unique (mis)orientations of a symmetrical object.
+
+        Parameters
+        ----------
+        s1, s2 : Symmetry
+
+        """
         s1, s2 = get_proper_groups(s1, s2)
         large_cell_normals = _get_large_cell_normals(s1, s2)
         disjoint = s1 & s2
@@ -92,10 +99,23 @@ class OrientationRegion(Rotation):
             AxAngle.from_axes_angles(fundamental_sector, np.pi))
         normals = Rotation(np.concatenate(
             [large_cell_normals.data, fundamental_sector_normals.data]))
-        return cls(normals)
+        orientation_region = cls(normals)
+        vertices = orientation_region.vertices()
+        if vertices.size:
+            orientation_region = orientation_region[np.any(np.isclose(orientation_region.dot_outer(vertices).data, 0), axis=1)]
+        return orientation_region
 
     def vertices(self):
+        """The vertices of the asymmetric domain.
+
+        Returns
+        -------
+        Rotation
+
+        """
         normal_combinations = list(itertools.combinations(self, 3))
+        if len(normal_combinations) < 1:
+            return Rotation.empty()
         c1, c2, c3 = zip(*normal_combinations)
         c1, c2, c3 = Rotation.stack(c1).flatten(), Rotation.stack(
             c2).flatten(), Rotation.stack(c3).flatten()
@@ -112,7 +132,6 @@ class OrientationRegion(Rotation):
         for n in normals:
             faces.append(vertices[np.isclose(vertices.dot(n).data, 0)])
         faces = [f for f in faces if f.size > 2]
-        faces = [Rotation(np.concatenate([f.data, f[0].data])) for f in faces]
         return faces
 
     def __gt__(self, other):
@@ -120,13 +139,24 @@ class OrientationRegion(Rotation):
         inside = np.all(c > -1e-9, axis=0) | np.all(c < 1e-9, axis=0)
         return inside
 
-    def plot(self, ax=None, projection='rodrigues', **kwargs):
-        if ax is None:
-            ax = plt.figure().add_subplot(111, projection=projection, aspect='equal')
-        faces = self.faces()
-        for f in faces:
-            ax.plot(f)
-        return ax
+    def get_plot_data(self):
+        from texpy.vector import Vector3d
+        theta = np.linspace(0, 2 * np.pi + 1e-9, 72)
+        rho = np.linspace(0, np.pi, 37)
+        theta, rho = np.meshgrid(theta, rho)
+        g = Vector3d.from_polar(rho, theta)
+        n = Rodrigues.from_rotation(self).norm.data[:, np.newaxis, np.newaxis]
+        if n.size == 0:
+            return Rotation.from_neo_euler(AxAngle.from_axes_angles(g, np.pi))
+        d = (-self.axis).dot_outer(g.unit).data
+        x = n * d
+        x = 2 * np.arctan(x**-1)
+        x[x < 0] = np.pi
+        x = np.min(x, axis=0)
+        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(g.unit, x))
+        return r
+
+
 
 
 
