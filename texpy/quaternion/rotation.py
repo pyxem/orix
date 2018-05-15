@@ -281,12 +281,13 @@ class Rotation(Quaternion):
         shape = (shape,) if isinstance(shape, int) else shape
         reference = Rotation(reference)
         n = int(np.prod(shape))
+        sample_size = int(alpha) * n
         rotations = []
         f_max = von_mises(reference, alpha, reference)
         while len(rotations) < n:
-            rotation = cls.random(alpha * n)
+            rotation = cls.random(sample_size)
             f = von_mises(rotation, alpha, reference)
-            x = np.random.rand(alpha * n)
+            x = np.random.rand(sample_size)
             rotation = rotation[x * f_max < f]
             rotations += list(rotation)
         return cls.stack(rotations[:n]).reshape(*shape)
