@@ -77,7 +77,7 @@ class Object3d:
 
     @classmethod
     def empty(cls):
-        """Object3d : An empty object with the appropriate dimensions."""
+        """An empty object with the appropriate dimensions."""
         return cls(np.zeros((0, cls.dim)))
 
     @property
@@ -87,7 +87,7 @@ class Object3d:
 
     @property
     def data_dim(self):
-        """int : The dimensions of `data`.
+        """int : The dimensions of the data.
 
         For example, if `data` has shape (4, 4, 3), `data_dim` is 3.
 

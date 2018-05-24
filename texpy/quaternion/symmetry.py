@@ -84,7 +84,7 @@ class Symmetry(Rotation):
     def _tuples(self):
         """set of tuple : the differentiators of this group."""
         s = Rotation(self.flatten())
-        tuples = set([tuple(d) for d in s.differentiators()])
+        tuples = set([tuple(d) for d in s._differentiators()])
         return tuples
 
     @classmethod

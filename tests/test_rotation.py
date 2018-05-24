@@ -150,28 +150,6 @@ def test_neg(rotation, i, expected_i):
     r = -rotation
     assert np.allclose(r.improper, expected_i)
 
-min_axes = [
-    (0, 0, 1),
-    (-0.57735, -0.57735,  0.57735),
-    (0, 0, 1),
-    (0.57735, 0.57735, 0.57735),
-    np.array((
-        (-0.57735, -0.57735,  0.57735),
-        (0, 0, 1),
-    )),
-    np.array([
-        [0.371391, 0.557086, 0.742781],
-        [0.371391, 0.557086, 0.742781],
-    ]),
-    (0.801784, 0.534522, 0.267261),
-]
-
-
-@pytest.mark.parametrize('rotation, min_axes', zip(rotations, min_axes))
-def test_min_axes(rotation, min_axes):
-    ma = Rotation(rotation).min_axes()
-    assert np.allclose(ma.data, min_axes, atol=1e-3)
-
 
 @pytest.mark.parametrize('rotation, euler, convention', [
     ([0.408454, 0.500391, -0.761426, 0.054816], [310.956, 131.324, 64.3317], 'bunge'),
