@@ -6,10 +6,20 @@ handled as unit quaternions. Rotations can act on vectors, or other rotations,
 but not scalars. They are often most easily visualised as being a turn of a
 certain angle about a certain axis.
 
+.. image:: /_static/img/rotation.png
+   :width: 200px
+   :alt: Rotation of an object illustrated with an axis and rotation angle.
+   :align: center
+
 Rotations can also be *improper*. An improper rotation in texpy operates on
 vectors as a rotation by the unit quaternion, followed by inversion. Hence,
 a mirroring through the x-y plane can be considered an improper rotation of
-180° about the z-axis.
+180° about the z-axis, illustrated in the figure below.
+
+.. image:: /_static/img/inversion.png
+   :width: 200px
+   :alt: 180° rotation followed by inversion, leading to a mirror operation.
+   :align: center
 
 
 """
