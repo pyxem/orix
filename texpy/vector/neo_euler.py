@@ -35,8 +35,34 @@ class NeoEuler(Vector3d, abc.ABC):
 
     @property
     def axis(self):
-        """Vector3d : the axis of rotation"""
+        """Vector3d : the axis of rotation."""
         return Vector3d(self.unit)
+
+
+class Homochoric(NeoEuler):
+    """Equal-volume mapping of the unit quaternion hemisphere.
+
+    The homochoric vector representing a rotation with rotation angle
+    :math:`\\theta` has magnitude
+    :math:`\\left[\\frac{3}{4}(\\theta - \\sin\\theta)\\right]^{\\frac{1}{3}}`.
+
+    Notes
+    -----
+    The homochoric transformation has no analytical inverse.
+
+    """
+
+    @classmethod
+    def from_rotation(cls, rotation):
+        theta = rotation.angle.data
+        n = rotation.axis
+        magnitude = (0.75 * (theta - np.sin(theta)))**(1/3)
+        return cls(n * magnitude)
+
+    @property
+    def angle(self):
+        raise AttributeError("The angle of a homochoric vector cannot be determined analytically.")
+
 
 
 class Rodrigues(NeoEuler):
