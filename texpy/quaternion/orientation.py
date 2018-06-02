@@ -15,7 +15,7 @@ only by the inclusion of a notion of symmetry. Consider the following example:
 
 Both objects have undergone the same *rotations* with respect to the reference.
 However, because the square has fourfold symmetry, it is indistinguishable
-in both cases. It has the same orientation in both cases.
+in both cases, and hence has the same orientation.
 
 """
 
@@ -30,7 +30,7 @@ class Misorientation(Rotation):
     """Misorientation object.
 
     Misorientations represent transformations from one orientation,
-    :math:`o_1` to another, :math:`o_2`: :math:`o_2 * o_1^{-1}`.
+    :math:`o_1` to another, :math:`o_2`: :math:`o_2 \\cdot o_1^{-1}`.
 
     They have symmetries associated with each of the starting orientations.
 
@@ -142,7 +142,7 @@ class Orientation(Misorientation):
 
     def __sub__(self, other):
         if isinstance(other, Orientation):
-            misorientation = Misorientation(~self * other)
+            misorientation = Misorientation(self * ~other)
             m_inside = misorientation.set_symmetry((self.symmetry, other.symmetry)).squeeze()
             return m_inside
         return NotImplemented

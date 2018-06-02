@@ -11,6 +11,7 @@ Python 3 is the default version.
 
 texpy depends heavily on `numpy <http://www.numpy.org/>`_, and requires
 `matplotlib <https://matplotlib.org/>`_ for creating figures and images.
+One or two functions also require `scipy <https://scipy.org/>`_.
 These will be installed automatically alongside texpy.
 
 To build the documentation, you will need to manually install

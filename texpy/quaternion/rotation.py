@@ -98,8 +98,8 @@ class Rotation(Quaternion):
         Two rotations are not unique if:
 
             - they have the same propriety AND
-            - they have the same numerical value OR
-            - the numerical value of one is the negative of the other
+                - they have the same numerical value OR
+                - the numerical value of one is the negative of the other
 
         Parameters
         ----------

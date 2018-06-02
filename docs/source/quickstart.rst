@@ -95,8 +95,9 @@ or from other texpy objects with a different parametrisation. For example, a
 :obj:`~texpy.quaternion.rotation.Rotation` object has methods :meth:`~texpy
 .quaternion.rotation.Rotation.from_euler` to create from an array of Euler
 angles and :meth:`~texpy.quaternion.rotation.Rotation.from_neo_euler` to
-create from neo-Euler objects such as
-:obj:`~texpy.vector.neo_euler.AxAngle`.
+create from neo-Eulerian vectors such as
+:obj:`~texpy.vector.neo_euler.AxAngle`. The convention for such creation is to
+use :code:`NewObject.from_*` syntax.
 
 
 Array Manipulation
@@ -223,8 +224,7 @@ of compatible shape with the array being indexed.
 Plotting
 ~~~~~~~~
 
-Most texpy objects can be plotted using the :meth:`texpy.base.Object3d.plot`
-method. The type of plot depends on the object being plotted. For a more
+Most texpy objects can be plotted using custom projections. For a more
 complete explanation refer to :doc:`plotting`.
 
 
