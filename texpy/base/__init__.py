@@ -184,18 +184,25 @@ class Object3d:
         obj._data = self._data.reshape(*shape, -1)
         return obj
 
-    def sample(self, n=500):
+    def sample(self, n=500, return_mask=False):
         """Selects 'n' random values of this data.
 
         Parameters
         ----------
         n : int
             The number of samples to draw from this object.
+        return_mask : bool
+            If True, also returns the mask used to sample the data.
 
         """
         if n > self.size:
             n = self.size
         sample = np.random.choice(self.size, n, False)
+        mask = np.zeros(self.shape, dtype=bool).flatten()
+        mask[sample] = True
+        mask = mask.reshape(self.shape)
+        if return_mask:
+            return self.flatten()[sample], mask
         return self.flatten()[sample]
 
     def get_plot_data(self):
