@@ -162,9 +162,7 @@ class Quaternion(Object3d):
 
         Parameters
         ----------
-        q1 : Quaternion
-        q2 : Quaternion
-        q3 : Quaternion
+        q1, q2, q3 : Quaternion
             Three quaternions for which to find the "triple cross".
 
         Returns
@@ -189,3 +187,10 @@ class Quaternion(Object3d):
     @property
     def antipodal(self):
         return self.__class__(np.stack([self.data, -self.data], axis=0))
+
+    def mean(self):
+        q = self.flatten().data.T
+        qq = q.dot(q.T)
+        w, v = np.linalg.eig(qq)
+        w_max = np.argmax(w)
+        return self.__class__(v[:, w_max])
