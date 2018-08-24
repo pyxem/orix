@@ -19,13 +19,11 @@ Rotations or orientations can be inside or outside of an orientation region.
 
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt
 
 from texpy.quaternion import Quaternion
 from texpy.quaternion.rotation import Rotation
 from texpy.quaternion.symmetry import C1, get_distinguished_points
 from texpy.vector.neo_euler import Rodrigues, AxAngle
-from texpy.plot import rotation_plot
 
 
 def _get_large_cell_normals(s1, s2):
@@ -69,9 +67,9 @@ def get_proper_groups(Gl, Gr):
         if Gl.contains_inversion and Gr.contains_inversion:
             return Gl.proper_subgroup, Gr.proper_subgroup
         elif Gl.contains_inversion and not Gr.contains_inversion:
-            return Gl.proper_subgroup, Gr.proper_inversion_subgroup
+            return Gl.proper_subgroup, Gr.laue_proper_subgroup
         elif not Gl.contains_inversion and Gr.contains_inversion:
-            return Gl.proper_inversion_subgroup, Gr.proper_subgroup
+            return Gl.laue_proper_subgroup, Gr.proper_subgroup
         else:
             raise NotImplementedError('Both groups are improper, '
                                       'and do not contain inversion.')
@@ -94,6 +92,8 @@ class OrientationRegion(Rotation):
         s1, s2 = get_proper_groups(s1, s2)
         large_cell_normals = _get_large_cell_normals(s1, s2)
         disjoint = s1 & s2
+        # if s1._tuples == s2._tuples:
+        #     disjoint = disjoint.laue
         fundamental_sector = disjoint.fundamental_sector()
         fundamental_sector_normals = Rotation.from_neo_euler(
             AxAngle.from_axes_angles(fundamental_sector, np.pi))
@@ -135,14 +135,17 @@ class OrientationRegion(Rotation):
         return faces
 
     def __gt__(self, other):
-        c = Quaternion(self).dot_outer(Quaternion(other))
-        inside = np.all(c > -1e-9, axis=0) | np.all(c < 1e-9, axis=0)
+        c = Quaternion(self).dot_outer(Quaternion(other)).data
+        inside = np.logical_or(
+            np.all(np.greater_equal(c, 0), axis=0),
+            np.all(np.less_equal(c, 0), axis=0)
+        )
         return inside
 
     def get_plot_data(self):
         from texpy.vector import Vector3d
-        theta = np.linspace(0, 2 * np.pi + 1e-9, 72)
-        rho = np.linspace(0, np.pi, 37)
+        theta = np.linspace(0, 2 * np.pi + 1e-9, 361)
+        rho = np.linspace(0, np.pi, 181)
         theta, rho = np.meshgrid(theta, rho)
         g = Vector3d.from_polar(rho, theta)
         n = Rodrigues.from_rotation(self).norm.data[:, np.newaxis, np.newaxis]

@@ -48,6 +48,21 @@ class Misorientation(Rotation):
         """tuple of Symmetry"""
         return self._symmetry
 
+    @property
+    def equivalent(self):
+        """Equivalent misorientations
+
+        Returns
+        -------
+        Misorientation
+
+        """
+        Gl, Gr = self._symmetry
+        if Gl._tuples == Gr._tuples:  # Grain exchange case
+            orientations = Orientation.stack([self, ~self]).flatten()
+        equivalent = Gr.outer(orientations.outer(Gl))
+        return self.__class__(equivalent).flatten()
+
     def set_symmetry(self, symmetry):
         """Assign symmetries to this misorientation.
 

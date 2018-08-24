@@ -42,6 +42,13 @@ class Symmetry(Rotation):
     def __and__(self, other):
         return Symmetry.from_generators(*[g for g in self.subgroups if g in other.subgroups])
 
+    # def __eq__(self, other):
+    #     if isinstance(other, Symmetry):
+    #         if self._tuples == other._tuples:
+    #             return True
+    #         return False
+    #     return NotImplemented
+
     @property
     def order(self):
         """int : The number of elements of the group."""
@@ -70,10 +77,15 @@ class Symmetry(Rotation):
         return subgroups_sorted[-1]
 
     @property
-    def proper_inversion_subgroup(self):
+    def laue(self):
+        """Symmetry : this group plus inversion"""
+        laue_group = Symmetry.from_generators(self, Ci)
+        return laue_group
+
+    @property
+    def laue_proper_subgroup(self):
         """Symmetry : the proper subgroup of this group plus inversion."""
-        inversion_group = Symmetry.from_generators(self, Ci)
-        return inversion_group.proper_subgroup
+        return self.laue.proper_subgroup
 
     @property
     def contains_inversion(self):

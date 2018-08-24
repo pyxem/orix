@@ -10,15 +10,15 @@ class RotationPlot(Axes3D):
 
     def scatter(self, xs, **kwargs):
         x, y, z = self.transform(xs)
-        super().scatter(x, y, z, **kwargs)
+        return super().scatter(x, y, z, **kwargs)
 
     def plot(self, xs, **kwargs):
         x, y, z = self.transform(xs)
-        super().plot(x, y, z, **kwargs)
+        return super().plot(x, y, z, **kwargs)
 
     def plot_wireframe(self, xs, **kwargs):
         x, y, z = self.transform(xs)
-        super().plot_wireframe(x, y, z, **kwargs)
+        return super().plot_wireframe(x, y, z, **kwargs)
 
     def transform(self, xs):
         from texpy.quaternion.rotation import Rotation

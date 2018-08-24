@@ -121,7 +121,7 @@ class Rotation(Quaternion):
         if antipodal:
             abcd = rotation._differentiators()
         else:
-            abcd = np.stack([rotation.a.data, rotation.b.data, rotation.c.data, rotation.d.data, rotation.improper], axis=-1).round(5)
+            abcd = np.stack([rotation.a.data, rotation.b.data, rotation.c.data, rotation.d.data, rotation.improper], axis=-1).round(6)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         dat = rotation[np.sort(idx)]
         if return_index and return_inverse:
@@ -140,7 +140,7 @@ class Rotation(Quaternion):
         d = self.d.data
         i = self.improper
         abcd = np.stack((a ** 2, b ** 2, c ** 2, d ** 2, a * b, a * c, a * d,
-                         b * c, b * d, c * d, i), axis=-1).round(5)
+                         b * c, b * d, c * d, i), axis=-1).round(6)
         return abcd
 
     def angle_with(self, other):

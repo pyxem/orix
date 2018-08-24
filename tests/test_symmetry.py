@@ -200,6 +200,24 @@ def test_proper_subgroup(symmetry, expected):
 
 
 @pytest.mark.parametrize('symmetry, expected', [
+    (C1, Ci),
+    (Ci, Ci),
+    (C2, C2h),
+    (C2h, C2h),
+    (C4, C4h),
+    (C4h, C4h),
+    (D4, D4h),
+    (D4h, D4h),
+    (C6v, D6h),
+    (D6h, D6h),
+    (T, Th),
+    (Td, Oh),
+])
+def test_laue(symmetry, expected):
+    assert symmetry.laue._tuples == expected._tuples
+
+
+@pytest.mark.parametrize('symmetry, expected', [
     (Cs, C2),
     (C4v, D4),
     (Th, T),
@@ -209,8 +227,8 @@ def test_proper_subgroup(symmetry, expected):
 ])
 def test_proper_inversion_subgroup(symmetry, expected):
     print('Expected\n', expected)
-    print('Calculated\n', symmetry.proper_inversion_subgroup)
-    assert symmetry.proper_inversion_subgroup._tuples == expected._tuples
+    print('Calculated\n', symmetry.laue_proper_subgroup)
+    assert symmetry.laue_proper_subgroup._tuples == expected._tuples
 
 
 @pytest.mark.parametrize('symmetry, expected', [
@@ -241,6 +259,14 @@ def test_and(symmetry, other, expected):
     overlap = symmetry & other
     expected = Symmetry.from_generators(*expected)
     assert overlap._tuples == expected._tuples
+
+
+@pytest.mark.parametrize('symmetry, other, expected', [
+    (C1, C1, True),
+    (C1, C2, False),
+])
+def test_eq(symmetry, other, expected):
+    assert (symmetry == other) == expected
 
 
 @pytest.mark.parametrize('symmetry, expected', [
