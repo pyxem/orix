@@ -63,7 +63,7 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
-    def set_symmetry(self, symmetry):
+    def set_symmetry(self, Gl, Gr):
         """Assign symmetries to this misorientation.
 
         Computes equivalent transformations which have the smallest angle of
@@ -71,7 +71,7 @@ class Misorientation(Rotation):
 
         Parameters
         ----------
-        symmetry : tuple of Symmetry
+        Gl, Gr : Symmetry
 
         Returns
         -------
@@ -82,21 +82,20 @@ class Misorientation(Rotation):
         --------
         >>> from texpy.quaternion.symmetry import C4, C2
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> m = Misorientation(data).set_symmetry((C4, C2))
+        >>> m = Misorientation(data).set_symmetry(C4, C2)
         >>> m
         Misorientation (2,) 4, 2
         [[-0.7071  0.     -0.7071  0.    ]
          [ 0.      0.7071 -0.7071  0.    ]]
 
         """
-        Gl, Gr = symmetry
-        orientation_region = OrientationRegion.from_symmetry(*symmetry)
+        orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
         o_inside = np.zeros_like(self.data)
         o_equivalent = Gr.outer(self.outer(Gl))
         inside = np.where(np.logical_and(o_equivalent < orientation_region, ~o_equivalent.improper))
         o_inside[inside[1:-1]] = o_equivalent[inside].data
         o_inside = self.__class__(o_inside)
-        o_inside._symmetry = symmetry
+        o_inside._symmetry = (Gl, Gr)
         return o_inside
 
     def __repr__(self):
