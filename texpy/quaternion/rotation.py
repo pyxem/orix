@@ -123,11 +123,13 @@ class Rotation(Quaternion):
         else:
             abcd = np.stack([rotation.a.data, rotation.b.data, rotation.c.data, rotation.d.data, rotation.improper], axis=-1).round(6)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
-        dat = rotation[np.sort(idx)]
+        idx_sort = np.sort(idx)
+        dat = rotation[idx_sort]
+        dat.improper = rotation.improper[idx_sort]
         if return_index and return_inverse:
-            return dat, idx, inv
+            return dat, idx_sort, inv
         elif return_index and not return_inverse:
-            return dat, idx
+            return dat, idx_sort
         elif return_inverse and not return_index:
             return dat, inv
         else:

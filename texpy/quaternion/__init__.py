@@ -127,15 +127,15 @@ class Quaternion(Object3d):
         """Compute the outer product of this quaternion and the other object."""
         e = lambda x, y: np.multiply.outer(x, y)
         if isinstance(other, Quaternion):
-            sa, oa = self.a.data, other.a.data
-            sb, ob = self.b.data, other.b.data
-            sc, oc = self.c.data, other.c.data
-            sd, od = self.d.data, other.d.data
-            a = e(sa, oa) - e(sb, ob) - e(sc, oc) - e(sd, od)
-            b = e(sb, oa) + e(sa, ob) - e(sd, oc) + e(sc, od)
-            c = e(sc, oa) + e(sd, ob) + e(sa, oc) - e(sb, od)
-            d = e(sd, oa) - e(sc, ob) + e(sb, oc) + e(sa, od)
-            q = np.stack((a, b, c, d), axis=-1)
+            q = np.zeros(self.shape + other.shape + (4,), dtype=float)
+            sa, oa = self.data[..., 0], other.data[..., 0]
+            sb, ob = self.data[..., 1], other.data[..., 1]
+            sc, oc = self.data[..., 2], other.data[..., 2]
+            sd, od = self.data[..., 3], other.data[..., 3]
+            q[..., 0] = e(sa, oa) - e(sb, ob) - e(sc, oc) - e(sd, od)
+            q[..., 1] = e(sb, oa) + e(sa, ob) - e(sd, oc) + e(sc, od)
+            q[..., 2] = e(sc, oa) + e(sd, ob) + e(sa, oc) - e(sb, od)
+            q[..., 3] = e(sd, oa) - e(sc, ob) + e(sb, oc) + e(sa, od)
             return other.__class__(q)
         elif isinstance(other, Vector3d):
             a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data

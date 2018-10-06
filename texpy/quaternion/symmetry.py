@@ -283,7 +283,7 @@ C6h = Symmetry.from_generators(C6, Cs); C6h.name = '6/m'
 D6 = Symmetry.from_generators(C6, C2x, C2y); D6.name = '622'
 C6v = Symmetry.from_generators(C6, Csx); C6v.name = '6mm'
 D3h = Symmetry.from_generators(C3, C2y, Csz); D3h.name = '-6m2'
-D6h = Symmetry.from_generators(C6h, Csx, Csy); D6h.name = '6/mmm'
+D6h = Symmetry.from_generators(D6, Csz); D6h.name = '6/mmm'
 
 # Cubic
 T = Symmetry.from_generators(C2, _cubic); T.name = '23'

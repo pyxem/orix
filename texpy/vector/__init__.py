@@ -418,3 +418,7 @@ class Vector3d(Object3d):
         s = self.flatten()
         tuples = set([tuple(d) for d in s.data])
         return tuples
+
+    def mean(self):
+        axis = tuple(range(self.data_dim))
+        return self.__class__(self.data.mean(axis=axis))

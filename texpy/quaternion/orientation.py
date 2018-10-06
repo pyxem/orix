@@ -19,7 +19,9 @@ in both cases, and hence has the same orientation.
 
 """
 
+from itertools import product as iproduct
 import numpy as np
+import tqdm
 
 from texpy.quaternion.rotation import Rotation
 from texpy.quaternion.symmetry import C1
@@ -63,7 +65,7 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
-    def set_symmetry(self, Gl, Gr):
+    def set_symmetry(self, Gl, Gr, verbose=False):
         """Assign symmetries to this misorientation.
 
         Computes equivalent transformations which have the smallest angle of
@@ -89,12 +91,18 @@ class Misorientation(Rotation):
          [ 0.      0.7071 -0.7071  0.    ]]
 
         """
+        symmetry_pairs = iproduct(Gl, Gr)
+        if verbose:
+            symmetry_pairs = tqdm.tqdm(symmetry_pairs, total=Gl.size * Gr.size)
         orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
-        o_inside = np.zeros_like(self.data)
-        o_equivalent = Gr.outer(self.outer(Gl))
-        inside = np.where(np.logical_and(o_equivalent < orientation_region, ~o_equivalent.improper))
-        o_inside[inside[1:-1]] = o_equivalent[inside].data
-        o_inside = self.__class__(o_inside)
+        o_inside = self.__class__(np.zeros_like(self.data))
+        outside = ~(o_inside < orientation_region)
+        for gl, gr in symmetry_pairs:
+            o_transformed = gr * self[outside] * gl
+            o_inside[outside] = o_transformed
+            outside = ~(o_inside < orientation_region)
+            if not np.any(outside):
+                break
         o_inside._symmetry = (Gl, Gr)
         return o_inside
 
@@ -152,7 +160,7 @@ class Orientation(Misorientation):
          [ 0.     -0.7071 -0.7071  0.    ]]
 
         """
-        return super(Orientation, self).set_symmetry((symmetry, C1))
+        return super(Orientation, self).set_symmetry(symmetry, C1)
 
     def __sub__(self, other):
         if isinstance(other, Orientation):

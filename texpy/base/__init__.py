@@ -68,8 +68,7 @@ class Object3d:
 
     def __getitem__(self, key):
         data = np.atleast_2d(self.data[key])
-        obj = self.__class__(self)
-        obj._data = np.atleast_2d(self._data[key])
+        obj = self.__class__(data)
         return obj
 
     def __setitem__(self, key, value):
