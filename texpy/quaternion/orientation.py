@@ -21,7 +21,6 @@ in both cases, and hence has the same orientation.
 
 from itertools import product as iproduct
 import numpy as np
-import tqdm
 
 from texpy.quaternion.rotation import Rotation
 from texpy.quaternion.symmetry import C1
@@ -93,6 +92,7 @@ class Misorientation(Rotation):
         """
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
+            import tqdm
             symmetry_pairs = tqdm.tqdm(symmetry_pairs, total=Gl.size * Gr.size)
         orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
         o_inside = self.__class__.identity(self.shape)
