@@ -9,27 +9,31 @@ from texpy.quaternion.symmetry import *
 def vector(request):
     return Vector3d(request.param)
 
-
-@pytest.mark.parametrize('shape, symmetry', [
-    ((6,), C4),
-    ((3, 3), C4),
-    ((3, 3), C3v),
-])
-def test_set_symmetry_works(shape, symmetry):
-    o = Orientation.random(shape)
-    oe = o.set_symmetry(symmetry)
-    assert oe.shape == o.shape
+@pytest.fixture
+def orientation(request):
+    return Orientation(request.param)
 
 
-@pytest.mark.parametrize('symmetry', [
-    C1, C2, C4, C4v, C3, S6, D3, D6h, T, O, Oh
-])
-def test_set_symmetry(symmetry):
-    o = Orientation.random(10)
-    os = o.set_symmetry(symmetry)
-    for i, o_i in enumerate(o):
-        os_i = o_i.set_symmetry(symmetry)
-        assert np.allclose(os_i.data, os[i].data)
+@pytest.mark.parametrize('orientation, symmetry, expected', [
+    ([(1, 0, 0, 0)], C1, [(1, 0, 0, 0)]),
+    ([(1, 0, 0, 0)], C4, [(1, 0, 0, 0)]),
+    ([(1, 0, 0, 0)], D3, [(1, 0, 0, 0)]),
+    ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
+    ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
+
+    # 7pi/12 -C2-> # 7pi/12
+    ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
+    # 7pi/12 -C3-> # 7pi/12
+    ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
+    # 7pi/12 -C4-> # pi/12
+    ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
+    # 7pi/12 -O-> # pi/12
+    ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
+
+], indirect=['orientation'])
+def test_set_symmetry(orientation, symmetry, expected):
+    o = orientation.set_symmetry(symmetry)
+    assert np.allclose(o.data, expected, atol=1e-3)
 
 
 @pytest.mark.parametrize('symmetry, vector', [

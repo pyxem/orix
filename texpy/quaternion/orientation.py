@@ -96,7 +96,7 @@ class Misorientation(Rotation):
             symmetry_pairs = tqdm.tqdm(symmetry_pairs, total=Gl.size * Gr.size)
         orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
         o_inside = self.__class__.identity(self.shape)
-        outside = ~(o_inside < orientation_region)
+        outside = np.ones(self.shape, dtype=bool)
         for gl, gr in symmetry_pairs:
             o_transformed = gr * self[outside] * gl
             o_inside[outside] = o_transformed
