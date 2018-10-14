@@ -78,7 +78,7 @@ class Misorientation(Rotation):
         Returns
         -------
         Misorientation
-            The instance itself, with equivalent values.
+            A new misorientation object with the assigned symmetry.
 
         Examples
         --------

@@ -87,6 +87,11 @@ class Rotation(Quaternion):
         r.improper = np.logical_not(self.improper)
         return r
 
+    def __getitem__(self, key):
+        r = super(Rotation, self).__getitem__(key)
+        r.improper = self.improper[key]
+        return r
+
     def __invert__(self):
         r = super(Rotation, self).__invert__()
         r.improper = self.improper
