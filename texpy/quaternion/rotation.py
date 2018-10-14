@@ -281,16 +281,18 @@ class Rotation(Quaternion):
         return rot
 
     @classmethod
-    def identity(cls, N=1):
+    def identity(cls, shape=(1,)):
         """Create identity rotations.
 
         Parameters
         ----------
-        N : int
-            The number of rotations to create.
+        shape : tuple
+            The shape out of which to construct identity quaternions
 
         """
-        return cls(np.hstack([np.ones((N, 1)), np.zeros((N, 3))]))
+        data = np.zeros(shape + (4,))
+        data[..., 0] = 1
+        return cls(data)
 
     @property
     def axis(self):

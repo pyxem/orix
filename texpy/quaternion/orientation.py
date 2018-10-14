@@ -95,7 +95,7 @@ class Misorientation(Rotation):
         if verbose:
             symmetry_pairs = tqdm.tqdm(symmetry_pairs, total=Gl.size * Gr.size)
         orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
-        o_inside = self.__class__(np.zeros_like(self.data))
+        o_inside = self.__class__.identity(self.shape)
         outside = ~(o_inside < orientation_region)
         for gl, gr in symmetry_pairs:
             o_transformed = gr * self[outside] * gl
