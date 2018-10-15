@@ -106,6 +106,22 @@ class Misorientation(Rotation):
         o_inside._symmetry = (Gl, Gr)
         return o_inside
 
+    def distance(self):
+        from itertools import combinations_with_replacement as icombinations
+        misorientation = self
+        s_1, s_2 = self._symmetry
+        distance = np.empty((misorientation.size, misorientation.size))
+
+        for i, j in icombinations(range(misorientation.size), 2):
+            m_1, m_2 = misorientation[i], misorientation[j]
+            mis2orientation = (
+                s_2.outer(~m_1).outer(s_1).outer(s_1).outer(m_2).outer(s_2)
+            )
+            d = mis2orientation.angle.data.min(axis=(0, 2, 3, 5))
+            distance[i, j] = d
+            distance[j, i] = d
+        return distance
+
     def __repr__(self):
         cls = self.__class__.__name__
         shape = str(self.shape)
@@ -132,7 +148,7 @@ class Orientation(Misorientation):
     @property
     def symmetry(self):
         """Symmetry"""
-        return self._symmetry[0]
+        return self._symmetry[1]
 
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
@@ -160,7 +176,7 @@ class Orientation(Misorientation):
          [ 0.     -0.7071 -0.7071  0.    ]]
 
         """
-        return super(Orientation, self).set_symmetry(symmetry, C1)
+        return super(Orientation, self).set_symmetry(C1, symmetry)
 
     def __sub__(self, other):
         if isinstance(other, Orientation):

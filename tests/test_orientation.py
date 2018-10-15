@@ -51,3 +51,17 @@ def test_orientation_persistence(symmetry, vector):
     v2 = oc * v
     v2 = Vector3d(v2.data.round(4))
     assert v1._tuples == v2._tuples
+
+
+@pytest.mark.parametrize('orientation, symmetry, expected', [
+    ((1, 0, 0, 0), C1, [0]),
+    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi/2], [np.pi/2, 0]]),
+    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi/2], [np.pi/2, 0]]),
+    ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
+
+
+], indirect=['orientation'])
+def test_distance(orientation, symmetry, expected):
+    o = orientation.set_symmetry(symmetry)
+    distance = o.distance()
+    assert np.allclose(distance, expected)
