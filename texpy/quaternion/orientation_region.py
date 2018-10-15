@@ -34,7 +34,15 @@ def _get_large_cell_normals(s1, s2):
     planes2.data[np.isnan(planes2.data)] = 0
     normals[:, 0] = planes1
     normals[:, 1] = planes2
-    normals = Rotation.from_neo_euler(normals).flatten().unique(antipodal=False)
+    normals : Rotation = Rotation.from_neo_euler(normals).flatten().unique(antipodal=False)
+    _, inv = normals.axis.unique(return_inverse=True)
+    axes_unique = []
+    angles_unique = []
+    for i in np.unique(inv):
+        n = normals[inv == i]
+        axes_unique.append(n.axis.data[0])
+        angles_unique.append(n.angle.data.max())
+    normals = Rotation.from_neo_euler(AxAngle.from_axes_angles(np.array(axes_unique), angles_unique))
     return normals
 
 
