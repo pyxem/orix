@@ -35,6 +35,8 @@ def _get_large_cell_normals(s1, s2):
     normals[:, 0] = planes1
     normals[:, 1] = planes2
     normals : Rotation = Rotation.from_neo_euler(normals).flatten().unique(antipodal=False)
+    if not normals.size:
+        return normals
     _, inv = normals.axis.unique(return_inverse=True)
     axes_unique = []
     angles_unique = []
