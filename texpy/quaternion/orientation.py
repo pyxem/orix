@@ -39,10 +39,10 @@ class Misorientation(Rotation):
 
     _symmetry = (C1, C1)
 
-    def __finalize__(self, data):
-        super(Misorientation, self).__finalize__(data)
-        if isinstance(data, Misorientation):
-            self._symmetry = data._symmetry
+    def __getitem__(self, key):
+        m = super(Misorientation, self).__getitem__(key)
+        m._symmetry = self._symmetry
+        return m
 
     @property
     def symmetry(self):

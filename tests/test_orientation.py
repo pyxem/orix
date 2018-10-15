@@ -9,7 +9,7 @@ from texpy.quaternion.symmetry import *
 def vector(request):
     return Vector3d(request.param)
 
-@pytest.fixture
+@pytest.fixture(params=[(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)])
 def orientation(request):
     return Orientation(request.param)
 
@@ -101,4 +101,13 @@ def test_distance_2(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
     distance = o.distance(speed=2)
     assert np.allclose(distance, expected, atol=1e-3)
+
+
+@pytest.mark.parametrize('symmetry', [
+    C1, C2, C4, D2, D6, T, O
+])
+def test_getitem(orientation, symmetry):
+    o = orientation.set_symmetry(symmetry)
+    assert o[0].symmetry._tuples == symmetry._tuples
+
 
