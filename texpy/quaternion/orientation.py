@@ -204,7 +204,7 @@ def _distance_2(misorientation, verbose):
     if misorientation.size > 1e4:
         confirm = input('Large datasets may crash your RAM.\nAre you sure? (y/n) ')
         if confirm != 'y':
-            return 'Aborted'
+            raise InterruptedError('Aborted')
     from itertools import product as iproduct
     S_1, S_2 = misorientation._symmetry
     mis2orientation = (~misorientation).outer(S_1).outer(S_1).outer(misorientation)
