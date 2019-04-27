@@ -1,34 +1,22 @@
-texpy is a package under development for the handling of quaternion
-objects, built primarily on top of `numpy <http://www.numpy.org/>`__ and
-`matplotlib <https://matplotlib.org/>`__ and heavily inspired by the
-`MATLAB <https://www.mathworks.com/products/matlab.html>`__ package
-`MTEX <http://mtex-toolbox.github.io/>`__.
+|Travis|_ |Coveralls|_ 
 
-While developed and intended with crystallographic texture analysis in
-mind, the handling of vectors and quaternions is kept as general as
-possible to allow applications in other areas, given interest.
+.. |Travis| image:: https://travis-ci.org/pyxem/texpy.svg?branch=master
+.. _Travis: https://travis-ci.org/pyxem/texpy
 
-.. image:: https://travis-ci.org/bm424/texpy.svg?branch=master
-   :target: https://travis-ci.org/bm424/texpy
-.. image:: https://coveralls.io/repos/github/bm424/texpy/badge.svg?branch=master
-   :target: https://coveralls.io/github/bm424/texpy?branch=master
+.. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/texpy/badge.svg?branch=master
+.. _Coveralls: https://coveralls.io/github/pyxem/texpy?branch=master
 
+texpy is an open-source python library for crystal orientation analysis.
 
-Installation
-------------
+The package defines objects and functions for the analysis of crystal orientations represented as quaternions or 3D rotation vectors accounting for crystal symmetry. Functionality buils primarily on top of `numpy <http://www.numpy.org/>`__ and
+`matplotlib <https://matplotlib.org/>`__ and heavily inspired by the `MATLAB <https://www.mathworks.com/products/matlab.html>`__ package `MTEX <http://mtex-toolbox.github.io/>`__.
 
-There has been no official release of texpy as it is still under development.
-However, it is easily installed from GitHub using pip:
+**Installation instructions, documentation and tutorial examples are available** `here <http://pyxem.github.io/texpy>`__ .
 
-.. code:: shell
+If analysis using texpy forms a part of published work please cite the github repository.
 
-   > pip install git+https://github.com/bm424/texpy.git
+texpy is released under the MIT license. 
 
-This will
-always install the latest version. Given sufficient interest,
-specific versions may be released for backwards compatibility and
-citation purposes. For more detailed instructions refer to the
-`documentation <https://bm424.github.io/texpy/index.html>`_.
 
 Getting started
 ---------------
@@ -37,9 +25,8 @@ The use of texpy should feel familiar to the use of numpy, but rather
 than cells of numbers, the cells contain single 3d objects, such as
 vectors or quaternions. They can all be created using tuples, lists,
 numpy arrays, or other numpy-compatible iterables, and will raise an
-error if constructed with the incorrect number of dimensions. Here only
-a few basic examples are shown - a complete feature list will be
-available in future versions of the documentation.
+error if constructed with the incorrect number of dimensions. Basic
+examples are given below.
 
 Vectors
 ~~~~~~~
