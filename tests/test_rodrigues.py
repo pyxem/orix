@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 
-from texpy.vector.neo_euler import Rodrigues
-from texpy.quaternion.rotation import Rotation
+from orix.vector.neo_euler import Rodrigues
+from orix.quaternion.rotation import Rotation
 
 
 @pytest.mark.parametrize('rotation, expected', [

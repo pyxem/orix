@@ -2,8 +2,8 @@ from math import pi
 import numpy as np
 import pytest
 
-from texpy.vector import Vector3d
-from texpy.scalar import Scalar
+from orix.vector import Vector3d
+from orix.scalar import Scalar
 
 vectors = [
     (1, 0, 0),

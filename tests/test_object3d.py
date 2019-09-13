@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from texpy.base import DimensionError, Object3d
+from orix.base import DimensionError, Object3d
 
 
 @pytest.fixture(

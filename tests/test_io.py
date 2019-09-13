@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from texpy import io
+from orix import io
 
 
 @pytest.fixture(params=[

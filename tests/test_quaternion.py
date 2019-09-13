@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from texpy.base import DimensionError
-from texpy.quaternion import Quaternion
-from texpy.vector import Vector3d
+from orix.base import DimensionError
+from orix.quaternion import Quaternion
+from orix.vector import Vector3d
 
 values = [
     (0.707, 0., 0., 0.707),

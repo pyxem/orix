@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from math import cos, sin, pi
-from texpy.grid.s1grid import S1Grid
+from orix.grid.s1grid import S1Grid
 
 
 @pytest.fixture

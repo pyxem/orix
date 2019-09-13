@@ -1,10 +1,10 @@
 import pytest
 import numpy
 
-from texpy.quaternion.symmetry import *
+from orix.quaternion.symmetry import *
 
-from texpy.quaternion.orientation_region import _get_large_cell_normals
-from texpy.quaternion.symmetry import get_distinguished_points
+from orix.quaternion.orientation_region import _get_large_cell_normals
+from orix.quaternion.symmetry import get_distinguished_points
 
 
 @pytest.mark.parametrize('s1, s2, expected', [

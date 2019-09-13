@@ -1,7 +1,7 @@
 import pytest
 
-from texpy.quaternion.symmetry import *
-from texpy.vector import Vector3d
+from orix.quaternion.symmetry import *
+from orix.vector import Vector3d
 
 
 @pytest.fixture(params=[(1, 2, 3)])
