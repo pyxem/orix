@@ -9,7 +9,7 @@ setup(
     author=__author__,
     author_email=__author_email__,
     description=__description__,
-    packages=find_packages(exclude=['texpy/tests']),
+    packages=find_packages(exclude=['orix/tests']),
     install_requires=[
         "numpy",
         "scipy",
