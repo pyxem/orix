@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from texpy import __name__, __version__, __author__, __author_email__, __description__
+from orix import __name__, __version__, __author__, __author_email__, __description__
 
 
 setup(
