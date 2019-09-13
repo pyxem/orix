@@ -1,27 +1,25 @@
 |Travis|_ |Coveralls|_ 
 
-.. |Travis| image:: https://travis-ci.org/pyxem/texpy.svg?branch=master
-.. _Travis: https://travis-ci.org/pyxem/texpy
+.. |Travis| image:: https://travis-ci.org/pyxem/orix.svg?branch=master
+.. _Travis: https://travis-ci.org/pyxem/orix
 
-.. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/texpy/badge.svg?branch=master
-.. _Coveralls: https://coveralls.io/github/pyxem/texpy?branch=master
+.. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=master
+.. _Coveralls: https://coveralls.io/github/pyxem/orix?branch=master
 
-texpy is an open-source python library for crystal orientation analysis.
+orix (originally developed as 'texpy') is an open-source python library for crystal orientation analysis.
 
 The package defines objects and functions for the analysis of crystal orientations represented as quaternions or 3D rotation vectors accounting for crystal symmetry. Functionality buils primarily on top of `numpy <http://www.numpy.org/>`__ and
 `matplotlib <https://matplotlib.org/>`__ and heavily inspired by the `MATLAB <https://www.mathworks.com/products/matlab.html>`__ package `MTEX <http://mtex-toolbox.github.io/>`__.
 
-**Installation instructions, documentation and tutorial examples are available** `here <http://pyxem.github.io/texpy>`__ .
+If analysis using orix forms a part of published work please cite the github repository.
 
-If analysis using texpy forms a part of published work please cite the github repository.
-
-texpy is released under the MIT license. 
+orix (this version) is released under the MIT license. 
 
 
 Getting started
 ---------------
 
-The use of texpy should feel familiar to the use of numpy, but rather
+The use of orix should feel familiar to the use of numpy, but rather
 than cells of numbers, the cells contain single 3d objects, such as
 vectors or quaternions. They can all be created using tuples, lists,
 numpy arrays, or other numpy-compatible iterables, and will raise an
@@ -39,7 +37,7 @@ several further unique operations.
 .. code:: python
 
     >>> import numpy as np
-    >>> from texpy.vector import Vector3d
+    >>> from orix.vector import Vector3d
     >>> v = Vector3d((1, 1, -1))
     >>> w_array = np.array([[[1, 0, 0], [0, 0, -1]], [[1, 1, 0], [-1, 0, -1]]])
     >>> w = Vector3d(w_array)
@@ -82,7 +80,7 @@ is defined and can be applied to either other quaternions or vectors.
 
 .. code:: python
 
-    >>> from texpy.quaternion.rotation import Rotation
+    >>> from orix.quaternion.rotation import Rotation
     >>> p = Rotation([0.5, 0.5, 0.5, 0.5])
     >>> q = Rotation([0, 1, 0, 0])
     >>> p.axis
