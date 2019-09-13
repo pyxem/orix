@@ -21,7 +21,7 @@ array([ True, False,  True], dtype=bool)
 """
 import numpy as np
 
-from texpy.vector import Vector3d
+from orix.vector import Vector3d
 
 
 class SphericalRegion(Vector3d):

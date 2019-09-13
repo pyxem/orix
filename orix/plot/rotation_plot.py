@@ -1,6 +1,6 @@
 from matplotlib import projections
 from mpl_toolkits.mplot3d import Axes3D
-from texpy.vector.neo_euler import Rodrigues, AxAngle
+from orix.vector.neo_euler import Rodrigues, AxAngle
 
 
 class RotationPlot(Axes3D):
@@ -21,7 +21,7 @@ class RotationPlot(Axes3D):
         return super().plot_wireframe(x, y, z, **kwargs)
 
     def transform(self, xs):
-        from texpy.quaternion.rotation import Rotation
+        from orix.quaternion.rotation import Rotation
         if isinstance(xs, Rotation):
             transformed = self.transformation_class.from_rotation(xs.get_plot_data())
         else:

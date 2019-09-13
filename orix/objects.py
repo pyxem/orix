@@ -1,2 +1,2 @@
-from texpy.quaternion.orientation import Orientation, Misorientation
-from texpy.vector.neo_euler import *
+from orix.quaternion.orientation import Orientation, Misorientation
+from orix.vector.neo_euler import *

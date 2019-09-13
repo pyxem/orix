@@ -6,7 +6,7 @@ of a vector or the rotation angle of a quaternion.
 
 """
 import numpy as np
-from texpy.base import Object3d, DimensionError
+from orix.base import Object3d, DimensionError
 
 
 class Scalar(Object3d):

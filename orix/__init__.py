@@ -12,7 +12,7 @@ Submodules
 
 """
 
-__name__ = "texpy"
+__name__ = "orix"
 __version__ = 0.1
 __author__ = "Ben Martineau"
 __author_email__ = "pyxem.team@gmail.com"

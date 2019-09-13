@@ -4,7 +4,7 @@ An orientation is simply a rotation with respect to some reference frame. In
 this respect, an orientation is in fact a *misorientation* - a change of
 orientation - with respect to a reference of the identity rotation.
 
-In texpy, orientations and misorientations are distinguished from rotations
+In orix, orientations and misorientations are distinguished from rotations
 only by the inclusion of a notion of symmetry. Consider the following example:
 
 .. image:: /_static/img/orientation.png
@@ -22,9 +22,9 @@ in both cases, and hence has the same orientation.
 from itertools import product as iproduct
 import numpy as np
 
-from texpy.quaternion.rotation import Rotation
-from texpy.quaternion.symmetry import C1
-from texpy.quaternion.orientation_region import OrientationRegion
+from orix.quaternion.rotation import Rotation
+from orix.quaternion.symmetry import C1
+from orix.quaternion.orientation_region import OrientationRegion
 
 
 class Misorientation(Rotation):
@@ -81,7 +81,7 @@ class Misorientation(Rotation):
 
         Examples
         --------
-        >>> from texpy.quaternion.symmetry import C4, C2
+        >>> from orix.quaternion.symmetry import C4, C2
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> m = Misorientation(data).set_symmetry(C4, C2)
         >>> m
@@ -158,7 +158,7 @@ class Orientation(Misorientation):
 
         Examples
         --------
-        >>> from texpy.quaternion.symmetry import C4
+        >>> from orix.quaternion.symmetry import C4
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> o = Orientation(data).set_symmetry((C4))
         >>> o

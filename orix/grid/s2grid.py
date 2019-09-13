@@ -1,6 +1,6 @@
 import numpy as np
-from texpy.vector import Vector3d
-from texpy.grid.s1grid import S1Grid
+from orix.vector import Vector3d
+from orix.grid.s1grid import S1Grid
 
 
 class S2Grid:

@@ -1,2 +1,2 @@
-from texpy.quaternion.symmetry import *
-from texpy.quaternion.orientation_region import OrientationRegion
+from orix.quaternion.symmetry import *
+from orix.quaternion.orientation_region import OrientationRegion
