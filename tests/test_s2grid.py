@@ -1,7 +1,7 @@
 import pytest
 
-from texpy.grid.s1grid import S1Grid
-from texpy.grid.s2grid import S2Grid
+from orix.grid.s1grid import S1Grid
+from orix.grid.s2grid import S2Grid
 
 
 @pytest.fixture

@@ -21,8 +21,8 @@ combined with inversion.
 """
 import numpy as np
 
-from texpy.quaternion.rotation import Rotation
-from texpy.vector import Vector3d
+from orix.quaternion.rotation import Rotation
+from orix.vector import Vector3d
 
 
 class Symmetry(Rotation):
@@ -168,8 +168,8 @@ class Symmetry(Rotation):
         return Vector3d.stack(diads).flatten()
 
     def fundamental_sector(self):
-        from texpy.vector.neo_euler import AxAngle
-        from texpy.vector.spherical_region import SphericalRegion
+        from orix.vector.neo_euler import AxAngle
+        from orix.vector.spherical_region import SphericalRegion
         symmetry = self.antipodal
         symmetry = symmetry[symmetry.angle > 0]
         axes, order = symmetry.get_highest_order_axis()

@@ -25,9 +25,9 @@ Members
 
 """
 import numpy as np
-from texpy.base import check, Object3d
-from texpy.scalar import Scalar
-from texpy.vector import Vector3d
+from orix.base import check, Object3d
+from orix.scalar import Scalar
+from orix.vector import Vector3d
 
 
 def check_quaternion(obj):

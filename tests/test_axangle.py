@@ -2,9 +2,9 @@ import pytest
 import numpy as np
 import itertools
 
-from texpy.vector.neo_euler import AxAngle
-from texpy.vector import Vector3d
-from texpy.quaternion.rotation import Rotation
+from orix.vector.neo_euler import AxAngle
+from orix.vector import Vector3d
+from orix.quaternion.rotation import Rotation
 
 
 axes = [

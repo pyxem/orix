@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 
-from texpy.quaternion.orientation import Orientation
-from texpy.quaternion.symmetry import *
+from orix.quaternion.orientation import Orientation
+from orix.quaternion.symmetry import *
 
 
 @pytest.fixture

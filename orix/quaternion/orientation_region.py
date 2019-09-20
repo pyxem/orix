@@ -20,10 +20,10 @@ Rotations or orientations can be inside or outside of an orientation region.
 import itertools
 import numpy as np
 
-from texpy.quaternion import Quaternion
-from texpy.quaternion.rotation import Rotation
-from texpy.quaternion.symmetry import C1, get_distinguished_points
-from texpy.vector.neo_euler import Rodrigues, AxAngle
+from orix.quaternion import Quaternion
+from orix.quaternion.rotation import Rotation
+from orix.quaternion.symmetry import C1, get_distinguished_points
+from orix.vector.neo_euler import Rodrigues, AxAngle
 
 
 def _get_large_cell_normals(s1, s2):
@@ -64,7 +64,7 @@ def get_proper_groups(Gl, Gr):
     ------
     NotImplementedError
         If both groups are improper and neither contain an inversion, special
-        consideration is needed which is not yet implemented in texpy.
+        consideration is needed which is not yet implemented in orix.
 
     """
     if Gl.is_proper and Gr.is_proper:
@@ -153,7 +153,7 @@ class OrientationRegion(Rotation):
         return inside
 
     def get_plot_data(self):
-        from texpy.vector import Vector3d
+        from orix.vector import Vector3d
         theta = np.linspace(0, 2 * np.pi + 1e-9, 361)
         rho = np.linspace(0, np.pi, 181)
         theta, rho = np.meshgrid(theta, rho)

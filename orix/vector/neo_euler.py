@@ -12,8 +12,8 @@ about a fixed axis.
 import abc
 
 import numpy as np
-from texpy.scalar import Scalar
-from texpy.vector import Vector3d
+from orix.scalar import Scalar
+from orix.vector import Vector3d
 
 
 class NeoEuler(Vector3d, abc.ABC):

@@ -3,9 +3,9 @@ import numpy as np
 import pytest
 import itertools
 
-from texpy.quaternion import Quaternion
-from texpy.quaternion.rotation import Rotation
-from texpy.vector import Vector3d
+from orix.quaternion import Quaternion
+from orix.quaternion.rotation import Rotation
+from orix.vector import Vector3d
 
 rotations = [
     (0.707, 0., 0., 0.707),

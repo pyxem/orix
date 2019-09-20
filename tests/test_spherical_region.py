@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 
-from texpy.vector import Vector3d
-from texpy.vector.spherical_region import SphericalRegion
+from orix.vector import Vector3d
+from orix.vector.spherical_region import SphericalRegion
 
 
 @pytest.fixture(params=[(0, 0, 1)])

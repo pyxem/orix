@@ -1,7 +1,7 @@
 """Point transformations of objects.
 
 Rotations are transformations of three-dimensional space leaving the
-origin in place. Rotations can be parametrized numerous ways, but in texpy are
+origin in place. Rotations can be parametrized numerous ways, but in orix are
 handled as unit quaternions. Rotations can act on vectors, or other rotations,
 but not scalars. They are often most easily visualised as being a turn of a
 certain angle about a certain axis.
@@ -11,7 +11,7 @@ certain angle about a certain axis.
    :alt: Rotation of an object illustrated with an axis and rotation angle.
    :align: center
 
-Rotations can also be *improper*. An improper rotation in texpy operates on
+Rotations can also be *improper*. An improper rotation in orix operates on
 vectors as a rotation by the unit quaternion, followed by inversion. Hence,
 a mirroring through the x-y plane can be considered an improper rotation of
 180° about the z-axis, illustrated in the figure below.
@@ -26,9 +26,9 @@ a mirroring through the x-y plane can be considered an improper rotation of
 import numpy as np
 from scipy.special import hyp0f1
 
-from texpy.quaternion import Quaternion
-from texpy.vector import Vector3d
-from texpy.scalar import Scalar
+from orix.quaternion import Quaternion
+from orix.vector import Vector3d
+from orix.scalar import Scalar
 
 
 class Rotation(Quaternion):

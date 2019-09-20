@@ -2,7 +2,7 @@
 
 Vectors can represent positions in three-dimensional space and are also
 commonly associated with motion, possessing both a magnitude and a direction.
-In texpy they are often encountered as derived objects such as the rotation
+In orix they are often encountered as derived objects such as the rotation
 axis of a quaternion or the normal to the bounding planes of a spherical
 region.
 
@@ -20,8 +20,8 @@ Members
 
 """
 import numpy as np
-from texpy.base import check, Object3d
-from texpy.scalar import Scalar
+from orix.base import check, Object3d
+from orix.scalar import Scalar
 
 
 def check_vector(obj):
@@ -359,8 +359,8 @@ class Vector3d(Object3d):
 
 
         """
-        from texpy.quaternion.rotation import Rotation
-        from texpy.vector.neo_euler import AxAngle
+        from orix.quaternion.rotation import Rotation
+        from orix.vector.neo_euler import AxAngle
         axis = Vector3d.zvector() if axis is None else axis
         angle = 0 if angle is None else angle
         q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
