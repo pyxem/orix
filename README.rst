@@ -1,4 +1,4 @@
-|Travis|_ |Coveralls|_ 
+|Travis|_ |Coveralls|_
 
 .. |Travis| image:: https://travis-ci.org/pyxem/orix.svg?branch=master
 .. _Travis: https://travis-ci.org/pyxem/orix
@@ -6,14 +6,14 @@
 .. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=master
 .. _Coveralls: https://coveralls.io/github/pyxem/orix?branch=master
 
-orix (originally developed as 'texpy') is an open-source python library for crystal orientation analysis.
+orix is an open-source python library for analysing orientations and crystal symmetry.
 
-The package defines objects and functions for the analysis of crystal orientations represented as quaternions or 3D rotation vectors accounting for crystal symmetry. Functionality buils primarily on top of `numpy <http://www.numpy.org/>`__ and
+The package defines objects and functions for the analysis of orientations represented as quaternions or 3D rotation vectors accounting for crystal symmetry. Functionality buils primarily on top of `numpy <http://www.numpy.org/>`__ and
 `matplotlib <https://matplotlib.org/>`__ and heavily inspired by the `MATLAB <https://www.mathworks.com/products/matlab.html>`__ package `MTEX <http://mtex-toolbox.github.io/>`__.
 
 If analysis using orix forms a part of published work please cite the github repository.
 
-orix (this version) is released under the MIT license. 
+orix (this version) is released under the MIT license.
 
 
 Getting started
