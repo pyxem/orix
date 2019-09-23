@@ -1,7 +1,7 @@
 Plotting
 --------
 
-Data visualisation is as important as data handling. In texpy, this is still
+Data visualisation is as important as data handling. In orix, this is still
 a work in progress, but several tools are already available. The process builds
 upon the way data is plotted in `matplotlib <https://matplotlib.org/>`_.
 
