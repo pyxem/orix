@@ -5,14 +5,14 @@ Installation
 Requirements
 ============
 
-texpy is written in Python 3. The Anaconda installation instructions below
+orix is written in Python 3. The Anaconda installation instructions below
 will take care of this but if you wish to install some other way ensure
 Python 3 is the default version.
 
-texpy depends heavily on `numpy <http://www.numpy.org/>`_, and requires
+orix depends heavily on `numpy <http://www.numpy.org/>`_, and requires
 `matplotlib <https://matplotlib.org/>`_ for creating figures and images.
 One or two functions also require `scipy <https://scipy.org/>`_.
-These will be installed automatically alongside texpy.
+These will be installed automatically alongside orix.
 
 To build the documentation, you will need to manually install
 `Sphinx <http://www.sphinx-doc.org/en/stable/index.html>`_,
@@ -25,7 +25,7 @@ To run tests, install `pytest <https://docs.pytest.org/en/latest/>`_.
 Installation via Anaconda (Recommended)
 =======================================
 
-As texpy is still under development there has been no official release,
+As orix is still under development there has been no official release,
 but installation via GitHub is easy. It is recommended you install using
 `Anaconda <https://www.anaconda.com/download/>`_.
 
@@ -46,7 +46,7 @@ but installation via GitHub is easy. It is recommended you install using
       activating the environment, as virtual environments appear to be
       unsupported in Powershell.
 
-3. Install texpy from GitHub using pip:
+3. Install orix from GitHub using pip:
 
    .. code:: shell
 
@@ -63,7 +63,7 @@ Installation from source
    `here <https://github.com/pyxem/orix/archive/master.zip>`_ to download
    texpy as a zip file.
 2. Unzip the downloaded file to a convenient local directory.
-3. Open a terminal and navigate to the top level "texpy" directory.
+3. Open a terminal and navigate to the top level "orix" directory.
 4. Ensure you are using Python version 3.5 or higher:
 
    .. code:: shell
