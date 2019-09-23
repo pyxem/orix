@@ -34,13 +34,13 @@ but installation via GitHub is easy. It is recommended you install using
    instructions.
 2. Open a terminal (In Windows, open the start menu and search for
    "Command Prompt") and navigate a suitable local directory. Create and
-   activate a clean environment for texpy:
+   activate a clean environment for orix:
 
    .. code:: shell
 
-      > conda create --name texpy-env python=3
-      > activate texpy-env  # Windows
-      > source activate texpy-env  # Linux/MacOS
+      > conda create --name orix-env python=3
+      > activate orixenv  # Windows
+      > source activate orix-env  # Linux/MacOS
 
    .. note:: Windows Powershell users may have to run the command "cmd" before
       activating the environment, as virtual environments appear to be
@@ -50,7 +50,7 @@ but installation via GitHub is easy. It is recommended you install using
 
    .. code:: shell
 
-      > pip install git+https://github.com/bm424/texpy.git
+      > pip install git+https://github.com/pyxem/orix.git
 
    This will always install the latest version, alongside numpy and matplotlib.
 
@@ -58,9 +58,9 @@ but installation via GitHub is easy. It is recommended you install using
 Installation from source
 ========================
 
-1. Visit `the source code on GitHub <https://github.com/bm424/texpy>`_ and
+1. Visit `the source code on GitHub <https://github.com/pyxem/orix>`_ and
    download the zip file or simply click
-   `here <https://github.com/bm424/texpy/archive/master.zip>`_ to download
+   `here <https://github.com/pyxem/orix/archive/master.zip>`_ to download
    texpy as a zip file.
 2. Unzip the downloaded file to a convenient local directory.
 3. Open a terminal and navigate to the top level "texpy" directory.
