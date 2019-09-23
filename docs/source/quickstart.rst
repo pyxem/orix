@@ -1,23 +1,21 @@
 Getting Started
 ---------------
 
-texpy is a package for handling three-dimensional objects such as vectors
+orix is a package for handling three-dimensional objects such as vectors
 and quaternions, in particular where these quantities arise from
 spatially-resolved datasets, such as the orientation of crystals in a
-scanned sample, or the vector of fluid motion in a box simulation. As implied
-by the name, the main expected area of interest is for crystallographic
-texture analysis.
+scanned sample, or the vector of fluid motion in a box simulation.
 
-Whether quaternions, vectors, or scalars, texpy quantities are represented
+Whether quaternions, vectors, or scalars, orix quantities are represented
 as arrays of objects, and a few methods are common to all.
 
 Construction
 ~~~~~~~~~~~~
 
-All texpy objects can be initialized from raw data in the form of lists,
+All orix objects can be initialized from raw data in the form of lists,
 tuples, or numpy arrays. In addition, compatible data types can be formed
-from one another, so that :obj:`~texpy.quaternion.Quaternion` objects can be
-converted to :obj:`~texpy.quaternion.rotation.Rotation` objects, for example.
+from one another, so that :obj:`~orix.quaternion.Quaternion` objects can be
+converted to :obj:`~orix.quaternion.rotation.Rotation` objects, for example.
 The following code demonstrates a number of ways objects can be initialized.
 
 .. ipython::
@@ -25,7 +23,7 @@ The following code demonstrates a number of ways objects can be initialized.
 
    In [1]: import numpy as np
 
-   In [2]: from texpy.vector import Vector3d
+   In [2]: from orix.vector import Vector3d
 
    In [3]: v = Vector3d((1, 1, -2))
 
@@ -80,7 +78,7 @@ The following code demonstrates a number of ways objects can be initialized.
     [0.5863 0.3862 0.0422]
     [0.5205 0.6528 0.4024]]
 
-   In [13]: from texpy.vector.neo_euler import Rodrigues
+   In [13]: from orix.vector.neo_euler import Rodrigues
 
    In [14]: Rodrigues(w)  # Converting between vector types
    Out[14]:
@@ -90,26 +88,26 @@ The following code demonstrates a number of ways objects can be initialized.
     [0.5863 0.3862 0.0422]
     [0.5205 0.6528 0.4024]]
 
-In addition, many texpy objects can be created from other types of data,
-or from other texpy objects with a different parametrisation. For example, a
-:obj:`~texpy.quaternion.rotation.Rotation` object has methods :meth:`~texpy
+In addition, many orix objects can be created from other types of data,
+or from other orix objects with a different parametrisation. For example, a
+:obj:`~orix.quaternion.rotation.Rotation` object has methods :meth:`~orix
 .quaternion.rotation.Rotation.from_euler` to create from an array of Euler
-angles and :meth:`~texpy.quaternion.rotation.Rotation.from_neo_euler` to
+angles and :meth:`~orix.quaternion.rotation.Rotation.from_neo_euler` to
 create from neo-Eulerian vectors such as
-:obj:`~texpy.vector.neo_euler.AxAngle`. The convention for such creation is to
+:obj:`~orix.vector.neo_euler.AxAngle`. The convention for such creation is to
 use :code:`NewObject.from_*` syntax.
 
 
 Array Manipulation
 ~~~~~~~~~~~~~~~~~~
 
-All texpy arrays support slicing and indexing in the style of numpy.
+All orix arrays support slicing and indexing in the style of numpy.
 
 .. ipython::
 
    In [1]: import numpy as np
 
-   In [2]: from texpy.quaternion import Quaternion
+   In [2]: from orix.quaternion import Quaternion
 
    In [3]: p = Quaternion(np.arange(3 * 4 * 4).reshape(3, 4, 4))
 
@@ -217,29 +215,29 @@ of compatible shape with the array being indexed.
 
 .. note::
 
-   Unlike numpy, indexing an array in texpy does not return a view on the
+   Unlike numpy, indexing an array in orix does not return a view on the
    original array. It creates a new object.
 
 
 Plotting
 ~~~~~~~~
 
-Most texpy objects can be plotted using custom projections. For a more
+Most orix objects can be plotted using custom projections. For a more
 complete explanation refer to :doc:`plotting`.
 
 
 Maths
 ~~~~~
 
-Most texpy objects are mathematical.
+Most orix objects are mathematical.
 
-- :obj:`~texpy.scalar.Scalar` objects support operations like addition,
+- :obj:`~orix.scalar.Scalar` objects support operations like addition,
    subtraction, and so on.
-- :obj:`~texpy.vector.Vector3d` objects can combine with scalars and other
+- :obj:`~orix.vector.Vector3d` objects can combine with scalars and other
    number-like objects in intuitive ways and also with each other - dot
    products and cross products are allowed.
-- :obj:`texpy.quaternion.Quaternion` objects can be multiplied to
-   vectors, but more importantly so can :obj:`texpy.quaternion.rotation.Rotation`
+- :obj:`orix.quaternion.Quaternion` objects can be multiplied to
+   vectors, but more importantly so can :obj:`orix.quaternion.rotation.Rotation`
    objects, allowing vectors to be rotated. Quaternion objects can be
    multiplied together as well, and quaternion properties such as inversion and
    conjugation are accounted for.
