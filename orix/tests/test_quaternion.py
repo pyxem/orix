@@ -14,8 +14,8 @@ values = [
         (0., 0., 0., 1.),
     ),
     Quaternion([
-        [(0., 0., 0., 1.), (0.707, 0., 0., 0.707),],
-        [(1., 1., 1., 1.), (0.707, 0., 0., 0.707),]
+        [(0., 0., 0., 1.), (0.707, 0., 0., 0.707), ],
+        [(1., 1., 1., 1.), (0.707, 0., 0., 0.707), ]
     ]),
     np.array((4, 3, 2, 1))
 ]
@@ -30,6 +30,7 @@ def quaternion(request):
 def identity():
     return Quaternion((1, 0, 0, 0))
 
+
 singles = [
     (0.881, 0.665, 0.123, 0.517),
     (0.111, 0.222, 0.333, 0.444),
@@ -38,7 +39,7 @@ singles = [
         (3, 1, -1, -2),
     ),
     [
-        [[0.343, 0.343, 0, -0.333], [-7, -8, -9, -10],],
+        [[0.343, 0.343, 0, -0.333], [-7, -8, -9, -10], ],
         [[0.00001, -0.0001, 0.001, -0.01], [0, 0, 0, 0]]
     ]
 ]
@@ -76,9 +77,9 @@ def test_conj(quaternion):
 
 def test_mul(quaternion, something):
     sa, sb, sc, sd = something.a.data, something.b.data, \
-                     something.c.data, something.d.data
+        something.c.data, something.d.data
     qa, qb, qc, qd = quaternion.a.data, quaternion.b.data, \
-                     quaternion.c.data, quaternion.d.data
+        quaternion.c.data, quaternion.d.data
     q1 = quaternion * something
     assert isinstance(q1, Quaternion)
     assert np.allclose(q1.a.data, sa * qa - sb * qb - sc * qc - sd * qd)
@@ -118,9 +119,9 @@ def test_dot_outer(quaternion, something):
 
 @pytest.mark.parametrize('quaternion, vector, expected', [
     ((0.5, 0.5, 0.5, 0.5), (1, 0, 0), (0, 1, 0)),
-    ((np.sqrt(2)/2, 0, 0, np.sqrt(2)/2), (0, 1, 0), (-1, 0, 0)),
+    ((np.sqrt(2) / 2, 0, 0, np.sqrt(2) / 2), (0, 1, 0), (-1, 0, 0)),
     ((0, 1, 0, 0), (0, 1, 0), (0, -1, 0)),
-    ((0, np.sqrt(3)/3, np.sqrt(3)/3, -np.sqrt(3)/3), (1, 1, 0), (1/3, 1/3, -4/3)),
+    ((0, np.sqrt(3) / 3, np.sqrt(3) / 3, -np.sqrt(3) / 3), (1, 1, 0), (1 / 3, 1 / 3, -4 / 3)),
 
 ])
 def test_multiply_vector(quaternion, vector, expected):

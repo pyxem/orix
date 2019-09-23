@@ -39,6 +39,7 @@ numbers = [-12, 0.5, -0.333333333, 4]
 def vector(request):
     return Vector3d(request.param)
 
+
 @pytest.fixture(params=numbers)
 def scalar(request):
     return Scalar(request.param)
@@ -136,7 +137,7 @@ def test_cross_error(vector, number):
 
 
 @pytest.mark.parametrize('theta, phi, r, expected', [
-    (np.pi/4, np.pi/4, 1, Vector3d((0.5, 0.5, 0.707107))),
+    (np.pi / 4, np.pi / 4, 1, Vector3d((0.5, 0.5, 0.707107))),
     (2 * np.pi / 3, 7 * np.pi / 6, 1, Vector3d((-0.75, -0.433013, -0.5))),
 ])
 def test_polar(theta, phi, r, expected):
@@ -185,7 +186,7 @@ def test_xyz(vector, x, y, z):
 @pytest.mark.parametrize('vector, rotation, expected', [
     ((1, 0, 0), pi / 2, (0, 1, 0)),
     ((1, 1, 0), pi / 2, (-1, 1, 0)),
-    ((1, 1, 0), [pi/2, pi, 3*pi/2, 2*pi], [(-1, 1, 0), (-1, -1, 0), (1, -1, 0), (1, 1, 0)]),
+    ((1, 1, 0), [pi / 2, pi, 3 * pi / 2, 2 * pi], [(-1, 1, 0), (-1, -1, 0), (1, -1, 0), (1, 1, 0)]),
     ((1, 1, 1), -pi / 2, (1, -1, 1)),
 ], indirect=['vector'])
 def test_rotate(vector, rotation, expected):

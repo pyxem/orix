@@ -44,4 +44,3 @@ class AxAnglePlot(RotationPlot):
 
 projections.register_projection(RodriguesPlot)
 projections.register_projection(AxAnglePlot)
-

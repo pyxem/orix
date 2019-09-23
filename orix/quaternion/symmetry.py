@@ -147,7 +147,7 @@ class Symmetry(Rotation):
         s = self[self.angle > 0]
         if s.size == 0:
             return {}
-        return {Vector3d(a): b+1 for a, b in
+        return {Vector3d(a): b + 1 for a, b in
                 zip(*np.unique(s.axis.data, axis=0, return_counts=True))}
 
     def get_highest_order_axis(self):
@@ -195,7 +195,7 @@ class Symmetry(Rotation):
             return sr
         axes, order = inside.get_highest_order_axis()
         axis = axis.get_nearest(axes)
-        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2*np.pi / order))
+        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2 * np.pi / order))
         nearest_diad = next_diad
         n1 = axis.cross(nearest_diad).unit
         n2 = - (r * n1)
@@ -205,8 +205,11 @@ class Symmetry(Rotation):
 
 
 # Triclinic
-C1 = Symmetry((1, 0, 0, 0)); C1.name = '1'
-Ci = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)]); Ci.improper = [0, 1]; Ci.name = '-1'
+C1 = Symmetry((1, 0, 0, 0))
+C1.name = '1'
+Ci = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)])
+Ci.improper = [0, 1]
+Ci.name = '-1'
 
 # Special generators
 _mirror_xy = Symmetry([(1, 0, 0, 0), (0, 0.75**0.5, -0.75**0.5, 0)])
@@ -214,24 +217,39 @@ _mirror_xy.improper = [0, 1]
 _cubic = Symmetry([(1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)])
 
 # 2-fold rotations
-C2x = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)]); C2x.name = '211'
-C2y = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)]); C2y.name = '121'
-C2z = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)]); C2z.name = '112'
-C2 = Symmetry(C2z); C2.name = '2'
+C2x = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)])
+C2x.name = '211'
+C2y = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)])
+C2y.name = '121'
+C2z = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)])
+C2z.name = '112'
+C2 = Symmetry(C2z)
+C2.name = '2'
 
 # Mirrors
-Csx = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)]); Csx.improper = [0, 1]; Csx.name = 'm11'
-Csy = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)]); Csy.improper = [0, 1]; Csy.name = '1m1'
-Csz = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)]); Csz.improper = [0, 1]; Csz.name = '11m'
-Cs = Symmetry(Csz); Cs.name = 'm'
+Csx = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)])
+Csx.improper = [0, 1]
+Csx.name = 'm11'
+Csy = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)])
+Csy.improper = [0, 1]
+Csy.name = '1m1'
+Csz = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)])
+Csz.improper = [0, 1]
+Csz.name = '11m'
+Cs = Symmetry(Csz)
+Cs.name = 'm'
 
 # Monoclinic
-C2h = Symmetry.from_generators(C2, Cs); C2h.name = '2/m'
+C2h = Symmetry.from_generators(C2, Cs)
+C2h.name = '2/m'
 
 # Orthorhombic
-D2 = Symmetry.from_generators(C2z, C2x, C2y); D2.name = '222'
-C2v = Symmetry.from_generators(C2x, Csz); C2v.name = 'mm2'
-D2h = Symmetry.from_generators(Csz, Csx, Csy); D2h.name = 'mmm'
+D2 = Symmetry.from_generators(C2z, C2x, C2y)
+D2.name = '222'
+C2v = Symmetry.from_generators(C2x, Csz)
+C2v.name = 'mm2'
+D2h = Symmetry.from_generators(Csz, Csx, Csy)
+D2h.name = 'mmm'
 
 # 4-fold rotations
 C4x = Symmetry([
@@ -252,45 +270,71 @@ C4z = Symmetry([
     (0, 0, 0, 1),
     (-0.5**0.5, 0, 0, 0.5**0.5),
 ])
-C4 = Symmetry(C4z); C4.name = '4'
+C4 = Symmetry(C4z)
+C4.name = '4'
 
 # Tetragonal
-S4 = Symmetry.from_generators(C2, Ci); S4.name = '-4'
-C4h = Symmetry.from_generators(C4, Cs); C4h.name = '4/m'
-D4 = Symmetry.from_generators(C4, C2x, C2y); D4.name = '422'
-C4v = Symmetry.from_generators(C4, Csx); C4v.name = '4mm'
-D2d = Symmetry.from_generators(D2, _mirror_xy); D2d.name = '-42m'
-D4h = Symmetry.from_generators(C4h, Csx, Csy); D4h.name = '4/mmm'
+S4 = Symmetry.from_generators(C2, Ci)
+S4.name = '-4'
+C4h = Symmetry.from_generators(C4, Cs)
+C4h.name = '4/m'
+D4 = Symmetry.from_generators(C4, C2x, C2y)
+D4.name = '422'
+C4v = Symmetry.from_generators(C4, Csx)
+C4v.name = '4mm'
+D2d = Symmetry.from_generators(D2, _mirror_xy)
+D2d.name = '-42m'
+D4h = Symmetry.from_generators(C4h, Csx, Csy)
+D4h.name = '4/mmm'
 
 # 3-fold rotations
 C3x = Symmetry([(1, 0, 0, 0), (0.5, 0.75**0.5, 0, 0), (-0.5, 0.75**0.5, 0, 0)])
 C3y = Symmetry([(1, 0, 0, 0), (0.5, 0, 0.75**0.5, 0), (-0.5, 0, 0.75**0.5, 0)])
 C3z = Symmetry([(1, 0, 0, 0), (0.5, 0, 0, 0.75**0.5), (-0.5, 0, 0, 0.75**0.5)])
-C3 = Symmetry(C3z); C3.name = '3'
+C3 = Symmetry(C3z)
+C3.name = '3'
 
 # Trigonal
-S6 = Symmetry.from_generators(C3, Ci); S6.name = '-3'
-D3x = Symmetry.from_generators(C3, C2x); D3x.name = '321'
-D3y = Symmetry.from_generators(C3, C2y); D3y.name = '312'
-D3 = Symmetry(D3x); D3.name = '32'
-C3v = Symmetry.from_generators(C3, Csx); C3v.name = '3m'
-D3d = Symmetry.from_generators(S6, Csx); D3d.name = '-3m'
+S6 = Symmetry.from_generators(C3, Ci)
+S6.name = '-3'
+D3x = Symmetry.from_generators(C3, C2x)
+D3x.name = '321'
+D3y = Symmetry.from_generators(C3, C2y)
+D3y.name = '312'
+D3 = Symmetry(D3x)
+D3.name = '32'
+C3v = Symmetry.from_generators(C3, Csx)
+C3v.name = '3m'
+D3d = Symmetry.from_generators(S6, Csx)
+D3d.name = '-3m'
 
 # Hexagonal
-C6 = Symmetry.from_generators(C3, C2); C6.name = '6'
-C3h = Symmetry.from_generators(C3, Cs); C3h.name = '-6'
-C6h = Symmetry.from_generators(C6, Cs); C6h.name = '6/m'
-D6 = Symmetry.from_generators(C6, C2x, C2y); D6.name = '622'
-C6v = Symmetry.from_generators(C6, Csx); C6v.name = '6mm'
-D3h = Symmetry.from_generators(C3, C2y, Csz); D3h.name = '-6m2'
-D6h = Symmetry.from_generators(D6, Csz); D6h.name = '6/mmm'
+C6 = Symmetry.from_generators(C3, C2)
+C6.name = '6'
+C3h = Symmetry.from_generators(C3, Cs)
+C3h.name = '-6'
+C6h = Symmetry.from_generators(C6, Cs)
+C6h.name = '6/m'
+D6 = Symmetry.from_generators(C6, C2x, C2y)
+D6.name = '622'
+C6v = Symmetry.from_generators(C6, Csx)
+C6v.name = '6mm'
+D3h = Symmetry.from_generators(C3, C2y, Csz)
+D3h.name = '-6m2'
+D6h = Symmetry.from_generators(D6, Csz)
+D6h.name = '6/mmm'
 
 # Cubic
-T = Symmetry.from_generators(C2, _cubic); T.name = '23'
-Th = Symmetry.from_generators(T, Ci); Th.name = 'm-3'
-O = Symmetry.from_generators(C4, _cubic, C2x); O.name = '432'
-Td = Symmetry.from_generators(T, _mirror_xy); Td.name = '-43m'
-Oh = Symmetry.from_generators(O, Ci); Oh.name = 'm-3m'
+T = Symmetry.from_generators(C2, _cubic)
+T.name = '23'
+Th = Symmetry.from_generators(T, Ci)
+Th.name = 'm-3'
+O = Symmetry.from_generators(C4, _cubic, C2x)
+O.name = '432'
+Td = Symmetry.from_generators(T, _mirror_xy)
+Td.name = '-43m'
+Oh = Symmetry.from_generators(O, Ci)
+Oh.name = 'm-3m'
 
 _groups = [
     C1, Ci,  # triclinic

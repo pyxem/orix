@@ -219,6 +219,3 @@ def _distance_2(misorientation, verbose):
         angle = m.angle.data.min(axis=axis)
         distance = np.minimum(distance, angle)
     return distance
-
-
-

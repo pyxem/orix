@@ -5,9 +5,9 @@ def check(obj, cls):
     if not isinstance(obj, cls):
         try:
             obj = cls(obj)
-        except:
+        except BaseException:
             raise ValueError('Could not turn {} (type {}) into {}'.format(
-                        obj, obj.__class__.__name__, cls.__name__))
+                obj, obj.__class__.__name__, cls.__name__))
     return obj
 
 
@@ -112,7 +112,6 @@ class Object3d:
         real_dim = self._data.shape[-1]
         obj._data = self._data.T.reshape(real_dim, -1).T
         return obj
-
 
     def unique(self, return_index=False, return_inverse=False):
         """Returns a new object containing only this object's unique entries.

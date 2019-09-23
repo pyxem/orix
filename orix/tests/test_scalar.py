@@ -14,6 +14,7 @@ def scalar(request):
 def vector(request):
     return Vector3d(request.param)
 
+
 @pytest.mark.parametrize('data, expected', [
     ((5, 3), (5, 3)),
     ([[1], [2]], [[1], [2]]),
@@ -23,6 +24,7 @@ def vector(request):
 def test_init(data, expected):
     scalar = Scalar(data)
     assert np.allclose(scalar.data, expected)
+
 
 @pytest.mark.parametrize('scalar, expected', [
     (1, -1),
@@ -179,4 +181,3 @@ def test_stack(data, expected):
     assert isinstance(stack, Scalar)
     assert stack.shape[-1] == len(data)
     assert np.allclose(stack.data, expected)
-

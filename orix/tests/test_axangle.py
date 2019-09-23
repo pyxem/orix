@@ -24,7 +24,7 @@ angles = [
     np.pi / 3,
     3 * np.pi / 4,
     2 * np.pi,
-    np.pi/7,
+    np.pi / 7,
 ]
 
 axangles = [np.array(angle) * Vector3d(axis).unit for axis in axes for angle in
@@ -48,7 +48,7 @@ def test_axis(axangle):
 
 
 @pytest.mark.parametrize('axis, angle, expected_axis', [
-    ((2, 1, 1), np.pi/4, (0.816496, 0.408248, 0.408248)),
+    ((2, 1, 1), np.pi / 4, (0.816496, 0.408248, 0.408248)),
     (Vector3d((2, 0, 0)), -2 * np.pi, (-1, 0, 0))
 ])
 def test_from_axes_angles(axis, angle, expected_axis):

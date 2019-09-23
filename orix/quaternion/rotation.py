@@ -126,7 +126,8 @@ class Rotation(Quaternion):
         if antipodal:
             abcd = rotation._differentiators()
         else:
-            abcd = np.stack([rotation.a.data, rotation.b.data, rotation.c.data, rotation.d.data, rotation.improper], axis=-1).round(6)
+            abcd = np.stack([rotation.a.data, rotation.b.data, rotation.c.data,
+                             rotation.d.data, rotation.improper], axis=-1).round(6)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         idx_sort = np.sort(idx)
         dat = rotation[idx_sort]
@@ -254,7 +255,6 @@ class Rotation(Quaternion):
 
         return np.stack((alpha, beta, gamma), axis=-1)
 
-
     @classmethod
     def from_euler(cls, euler):
         """Creates a rotation from an array of Euler angles.
@@ -327,7 +327,7 @@ class Rotation(Quaternion):
         n = int(np.prod(shape))
         rotations = []
         while len(rotations) < n:
-            r = np.random.uniform(-1, 1, (3*n, cls.dim))
+            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
             r2 = np.sum(np.square(r), axis=1)
             r = r[np.logical_and(1e-9 ** 2 < r2, r2 <= 1)]
             rotations += list(r)
