@@ -39,7 +39,7 @@ install:
 
 script:
   - export MPLBACKEND=Agg
-  - pytest --pyargs pyxem --cov=orix
+  - pytest --pyargs orix --cov=orix
 
 after_success:
   - coveralls
