@@ -125,7 +125,7 @@ class Quaternion(Object3d):
 
     def outer(self, other):
         """Compute the outer product of this quaternion and the other object."""
-        e = lambda x, y: np.multiply.outer(x, y)
+        def e(x, y): return np.multiply.outer(x, y)
         if isinstance(other, Quaternion):
             q = np.zeros(self.shape + other.shape + (4,), dtype=float)
             sa, oa = self.data[..., 0], other.data[..., 0]

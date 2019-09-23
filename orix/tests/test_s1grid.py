@@ -10,8 +10,8 @@ def s1grid(request):
 
 
 @pytest.mark.parametrize('s1grid, minimum, maximum', [
-    (np.radians(np.linspace(0, 45, 10)), 0, pi/4),
-    (np.radians(np.linspace(-45, 45, 10)), -pi/4, pi/4),
+    (np.radians(np.linspace(0, 45, 10)), 0, pi / 4),
+    (np.radians(np.linspace(-45, 45, 10)), -pi / 4, pi / 4),
 ], indirect=['s1grid'])
 def test_min_max(s1grid, minimum, maximum):
     assert s1grid.minimum == minimum

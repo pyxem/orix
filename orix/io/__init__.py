@@ -51,4 +51,3 @@ def loadctf(file_string: str):
     euler = np.radians(data)
     rotation = Rotation.from_euler(euler)
     return rotation
-

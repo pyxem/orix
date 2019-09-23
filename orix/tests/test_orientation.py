@@ -9,6 +9,7 @@ from orix.quaternion.symmetry import *
 def vector(request):
     return Vector3d(request.param)
 
+
 @pytest.fixture(params=[(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)])
 def orientation(request):
     return Orientation(request.param)
@@ -55,8 +56,8 @@ def test_orientation_persistence(symmetry, vector):
 
 @pytest.mark.parametrize('orientation, symmetry, expected', [
     ((1, 0, 0, 0), C1, [0]),
-    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi/2], [np.pi/2, 0]]),
-    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi/2], [np.pi/2, 0]]),
+    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
+    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
     ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
     (
         [
@@ -64,10 +65,10 @@ def test_orientation_persistence(symmetry, vector):
             [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
         ],
         C4,
-        [[[[0, 0], [0, np.pi/4]],
-          [[0, 0], [0, np.pi/4]]],
-         [[[0, 0], [0, np.pi/4]],
-          [[np.pi/4, np.pi/4], [np.pi/4, 0]]]]
+        [[[[0, 0], [0, np.pi / 4]],
+          [[0, 0], [0, np.pi / 4]]],
+         [[[0, 0], [0, np.pi / 4]],
+          [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]]]
     ),
 
 
@@ -80,8 +81,8 @@ def test_distance_1(orientation, symmetry, expected):
 
 @pytest.mark.parametrize('orientation, symmetry, expected', [
     ((1, 0, 0, 0), C1, [0]),
-    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi/2], [np.pi/2, 0]]),
-    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi/2], [np.pi/2, 0]]),
+    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
+    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
     ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
     (
         [
@@ -89,10 +90,10 @@ def test_distance_1(orientation, symmetry, expected):
             [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
         ],
         C4,
-        [[[[0, 0], [0, np.pi/4]],
-          [[0, 0], [0, np.pi/4]]],
-         [[[0, 0], [0, np.pi/4]],
-          [[np.pi/4, np.pi/4], [np.pi/4, 0]]]]
+        [[[[0, 0], [0, np.pi / 4]],
+          [[0, 0], [0, np.pi / 4]]],
+         [[[0, 0], [0, np.pi / 4]],
+          [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]]]
     ),
 
 
@@ -109,5 +110,3 @@ def test_distance_2(orientation, symmetry, expected):
 def test_getitem(orientation, symmetry):
     o = orientation.set_symmetry(symmetry)
     assert o[0].symmetry._tuples == symmetry._tuples
-
-

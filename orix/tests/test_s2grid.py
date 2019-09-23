@@ -13,5 +13,3 @@ def s1grid(request):
 def s2grid(request):
     tg, rg = request.param
     return S2Grid(tg, rg)
-
-

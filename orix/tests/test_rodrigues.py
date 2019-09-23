@@ -15,7 +15,7 @@ def test_from_rotation(rotation, expected):
 
 
 @pytest.mark.parametrize('rodrigues, expected', [
-    (Rodrigues([0.2391, 0.2391, 0.2391]), np.pi/4),
+    (Rodrigues([0.2391, 0.2391, 0.2391]), np.pi / 4),
 ])
 def test_angle(rodrigues, expected):
     angle = rodrigues.angle

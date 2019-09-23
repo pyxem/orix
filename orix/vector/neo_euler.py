@@ -56,13 +56,12 @@ class Homochoric(NeoEuler):
     def from_rotation(cls, rotation):
         theta = rotation.angle.data
         n = rotation.axis
-        magnitude = (0.75 * (theta - np.sin(theta)))**(1/3)
+        magnitude = (0.75 * (theta - np.sin(theta)))**(1 / 3)
         return cls(n * magnitude)
 
     @property
     def angle(self):
         raise AttributeError("The angle of a homochoric vector cannot be determined analytically.")
-
 
 
 class Rodrigues(NeoEuler):
