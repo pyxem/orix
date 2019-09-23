@@ -1,4 +1,4 @@
 API Reference
 -------------
 
-.. automodule:: texpy
+.. automodule:: orix
