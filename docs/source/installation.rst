@@ -61,7 +61,7 @@ Installation from source
 1. Visit `the source code on GitHub <https://github.com/pyxem/orix>`_ and
    download the zip file or simply click
    `here <https://github.com/pyxem/orix/archive/master.zip>`_ to download
-   texpy as a zip file.
+   orix as a zip file.
 2. Unzip the downloaded file to a convenient local directory.
 3. Open a terminal and navigate to the top level "orix" directory.
 4. Ensure you are using Python version 3.5 or higher:
@@ -73,13 +73,10 @@ Installation from source
    If not, consider upgrading your python version, or start a virtual
    environment with Python 3.5 or higher.
 
-5. Install texpy:
+5. Install orix:
 
    .. code:: shell
 
       > pip install .
 
-   This will install texpy alongside numpy and matplotlib.
-
-
-
+   This will install orix alongside numpy and matplotlib.

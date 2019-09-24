@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# texpy documentation build configuration file, created by
+# orix documentation build configuration file, created by
 # sphinx-quickstart on Tue Mar 20 12:05:50 2018.
 #
 # This file is execfile()d with the current directory set to its
