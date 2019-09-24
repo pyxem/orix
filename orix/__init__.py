@@ -13,7 +13,7 @@ Submodules
 """
 
 __name__ = "orix"
-__version__ = "0.1.0dev"
+__version__ = "0.1.0"
 __author__ = "Ben Martineau"
 __author_email__ = "pyxem.team@gmail.com"
 __description__ = "Spatially-resolved quaternion, rotation, orientation handling in Python, developed for texture analysis."
