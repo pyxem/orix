@@ -13,7 +13,7 @@ Submodules
 """
 
 __name__ = "orix"
-__version__ = "0.1.1dev"
+__version__ = "0.1.1"
 __author__ = "Ben Martineau"
 __author_email__ = "pyxem.team@gmail.com"
 __description__ = "Orientation, rotation, quaternion, and crystal symmetry handling in Python."
