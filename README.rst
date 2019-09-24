@@ -1,10 +1,16 @@
-|Travis|_ |Coveralls|_
+|Travis|_ |Coveralls|_ |pypi_version|_  |doi|_
 
 .. |Travis| image:: https://travis-ci.org/pyxem/orix.svg?branch=master
 .. _Travis: https://travis-ci.org/pyxem/orix
 
 .. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=master
 .. _Coveralls: https://coveralls.io/github/pyxem/orix?branch=master
+
+.. |pypi_version| image:: http://img.shields.io/pypi/v/orix.svg?style=flat
+.. _pypi_version: https://pypi.python.org/pypi/orix
+
+.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3459662.svg
+.. _doi: https://doi.org/10.5281/zenodo.3459662
 
 orix is an open-source python library for analysing orientations and crystal symmetry.
 
