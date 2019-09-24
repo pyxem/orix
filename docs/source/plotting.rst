@@ -6,13 +6,13 @@ a work in progress, but several tools are already available. The process builds
 upon the way data is plotted in `matplotlib <https://matplotlib.org/>`_.
 
 Any plotting session will begin by importing both the matplotlib plotting API
-and the texpy plotting API.
+and the orix plotting API.
 
 .. ipython::
 
     In [1]: import matplotlib.pyplot as plt
 
-    In [2]: import texpy.plot
+    In [2]: import orix.plot
 
     In [3]: %matplotlib qt5  # Setting the backend.
 
@@ -35,9 +35,3 @@ simplest is:
 .. ipython::
 
     In [4]: ax = plt.figure().add_subplot(111)
-
-
-
-
-
-

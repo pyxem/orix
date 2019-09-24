@@ -59,7 +59,7 @@ The following code demonstrates a number of ways objects can be initialized.
    <ipython-input-10-422ccfdd4ab4> in <module>()
    ----> 1 w = Vector3d(np.random.random((4, 4)))
 
-   ~\Documents\phd\dev\texpy\texpy\base\__init__.py in __init__(self, data)
+   ~\Documents\phd\dev\orix\orix\base\__init__.py in __init__(self, data)
         41         self.data = data
         42         if data.shape[-1] != self.dim:
    ---> 43             raise DimensionError(self)
@@ -244,4 +244,3 @@ Most orix objects are mathematical.
 
 For a complete description of each object's mathematical properties, refer
 to the full :doc:`api`.
-
