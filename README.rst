@@ -13,7 +13,7 @@ The package defines objects and functions for the analysis of orientations repre
 
 If analysis using orix forms a part of published work please cite the github repository.
 
-orix (this version) is released under the MIT license.
+orix (this version) is released under the GPL v3 license.
 
 
 Getting started
