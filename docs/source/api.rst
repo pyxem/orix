@@ -1,4 +1,0 @@
-API Reference
--------------
-
-.. automodule:: orix
