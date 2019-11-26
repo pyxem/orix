@@ -359,10 +359,6 @@ class Vector3d(Object3d):
         q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
         return q * self
 
-    @classmethod
-    def random(cls, shape=(1,)):
-        return cls(np.random.rand(*shape, cls.dim))
-
     @property
     def perpendicular(self):
         if np.any(self.x.data == 0) and np.any(self.y.data == 0):
