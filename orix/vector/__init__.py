@@ -249,31 +249,6 @@ class Vector3d(Object3d):
         return other.__class__(np.cross(self.data, other.data))
 
     @classmethod
-    def from_polar(cls, theta, phi, r=1):
-        """Creates a Vector3d object from polar data.
-
-        Parameters
-        ----------
-        theta : array_like
-            The polar angle, in radians.
-        phi : array_like
-            The azimuthal angle, in radians.
-        r : array_like
-            The radial distance. Defaults to 1 to produce unit vectors.
-
-        Returns
-        -------
-        Vector3d
-
-        """
-        theta = np.atleast_1d(theta)
-        phi = np.atleast_1d(phi)
-        z = np.cos(theta)
-        y = np.sin(phi) * np.sin(theta)
-        x = np.cos(phi) * np.sin(theta)
-        return r * cls(np.stack((x, y, z), axis=-1))
-
-    @classmethod
     def zero(cls, shape=(1,)):
         """Returns zero vectors in the specified shape.
 
@@ -383,10 +358,6 @@ class Vector3d(Object3d):
         angle = 0 if angle is None else angle
         q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
         return q * self
-
-    @classmethod
-    def random(cls, shape=(1,)):
-        return cls(np.random.rand(*shape, cls.dim))
 
     @property
     def perpendicular(self):

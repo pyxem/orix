@@ -135,15 +135,6 @@ def test_cross_error(vector, number):
     with pytest.raises(AttributeError):
         vector.cross(number)
 
-
-@pytest.mark.parametrize('theta, phi, r, expected', [
-    (np.pi / 4, np.pi / 4, 1, Vector3d((0.5, 0.5, 0.707107))),
-    (2 * np.pi / 3, 7 * np.pi / 6, 1, Vector3d((-0.75, -0.433013, -0.5))),
-])
-def test_polar(theta, phi, r, expected):
-    assert np.allclose(Vector3d.from_polar(theta, phi, r).data, expected.data, atol=1e-5)
-
-
 @pytest.mark.parametrize('shape', [
     (1,),
     (2, 2),
