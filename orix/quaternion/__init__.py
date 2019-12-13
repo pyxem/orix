@@ -207,6 +207,13 @@ class Quaternion(Object3d):
         return self.__class__(np.stack([self.data, -self.data], axis=0))
 
     def mean(self):
+        """
+        Calculates the mean quarternion with unitary weights 
+        
+        Notes
+        -----
+        The method used here corresponds to the Equation (13) of http://www.acsu.buffalo.edu/~johnc/ave_quat07.pdf
+        """
         q = self.flatten().data.T
         qq = q.dot(q.T)
         w, v = np.linalg.eig(qq)
