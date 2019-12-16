@@ -16,5 +16,5 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from orix.quaternion.symmetry import *
+from orix.quaternion.symmetry import Symmetry, get_distinguished_points
 from orix.quaternion.orientation_region import OrientationRegion
