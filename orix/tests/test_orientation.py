@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from orix.quaternion.orientation import Orientation
+from orix.quaternion.orientation import Orientation,Misorientation
 from orix.quaternion.symmetry import *
 
 
@@ -110,3 +110,16 @@ def test_distance_2(orientation, symmetry, expected):
 def test_getitem(orientation, symmetry):
     o = orientation.set_symmetry(symmetry)
     assert o[0].symmetry._tuples == symmetry._tuples
+
+@pytest.mark.parametrize('Gl',[C4,C2])
+def test_equivalent(Gl):
+    """ Tests that the property Misorientation.equivalent runs without error
+
+    Cases
+    -----
+    Gl == C4 ~ "grain exchange"
+    Gl == C2 ~ "no grain exchange"
+    """
+    m = Misorientation([1,1,1,1]) # any will do
+    m.set_symmetry(Gl,C4)
+    _m = m.equivalent
