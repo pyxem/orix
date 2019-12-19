@@ -79,6 +79,8 @@ class Misorientation(Rotation):
         Gl, Gr = self._symmetry
         if Gl._tuples == Gr._tuples:  # Grain exchange case
             orientations = Orientation.stack([self, ~self]).flatten()
+        else:
+            orientations = Orientation(self)
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
