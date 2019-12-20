@@ -26,6 +26,15 @@ class RotationPlot(Axes3D):
     name = None
     transformation_class = None
 
+    def transform(self, xs):
+        from orix.quaternion.rotation import Rotation
+        if isinstance(xs, Rotation):
+            transformed = self.transformation_class.from_rotation(xs.get_plot_data())
+        else:
+            transformed = self.transformation_class(xs)
+        x, y, z = transformed.xyz
+        return x, y, z
+
     def scatter(self, xs, **kwargs):
         x, y, z = self.transform(xs)
         return super().scatter(x, y, z, **kwargs)
@@ -38,14 +47,6 @@ class RotationPlot(Axes3D):
         x, y, z = self.transform(xs)
         return super().plot_wireframe(x, y, z, **kwargs)
 
-    def transform(self, xs):
-        from orix.quaternion.rotation import Rotation
-        if isinstance(xs, Rotation):
-            transformed = self.transformation_class.from_rotation(xs.get_plot_data())
-        else:
-            transformed = self.transformation_class(xs)
-        x, y, z = transformed.xyz
-        return x, y, z
 
 
 class RodriguesPlot(RotationPlot):
