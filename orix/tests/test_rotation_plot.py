@@ -17,7 +17,12 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from matplotlib import pyplot as plt
+import numpy as np
+
 from orix.plot.rotation_plot import RotationPlot,RodriguesPlot,AxAnglePlot
+from orix.quaternion.orientation import Misorientation
+from orix.quaternion.symmetry import D6
+from orix.quaternion.orientation_region import OrientationRegion
 
 def test_init_RodriguesPlot():
     fig = plt.figure(figsize=(3, 3))
@@ -30,9 +35,16 @@ def test_init_AxAnglePlot():
     return None
 
 def test_RotationPlot_methods():
-    #ax = RotationPlot()
-    #ax.scatter()
-    #ax.plot()
-    #ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
-    #ax.transform()
+    """ This code is lifted from demo-3-v0.1 """
+    misori = Misorientation([1,1,1,1]) # any will do
+    fig = plt.figure(figsize=(6,3))
+    gridspec = plt.GridSpec(1, 1, left=0, right=1, bottom=0, top=1, hspace=0.05)
+    ax_misori = fig.add_subplot(gridspec[0], projection='axangle', proj_type='ortho', aspect='equal')
+    ax_misori.scatter(misori)
+    ax_misori.plot(misori)
+    ax_misori.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
+    plt.close('all')
+
+    #clear the edge case
+    ax_misori.transform(np.asarray([1,1,1]))
     return None
