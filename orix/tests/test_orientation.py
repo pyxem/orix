@@ -121,5 +121,6 @@ def test_equivalent(Gl):
     Gl == C2 ~ "no grain exchange"
     """
     m = Misorientation([1,1,1,1]) # any will do
-    m.set_symmetry(Gl,C4)
+    m.set_symmetry(Gl,C4,verbose=True)
+    m.symmetry
     _m = m.equivalent
