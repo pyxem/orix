@@ -75,7 +75,7 @@ def test_orientation_persistence(symmetry, vector):
 ], indirect=['orientation'])
 def test_distance_1(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
-    distance = o.distance(speed=1)
+    distance = o.distance(speed=1,verbose=True)
     assert np.allclose(distance, expected, atol=1e-3)
 
 
@@ -100,7 +100,7 @@ def test_distance_1(orientation, symmetry, expected):
 ], indirect=['orientation'])
 def test_distance_2(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
-    distance = o.distance(speed=2)
+    distance = o.distance(speed=2,verbose=True)
     assert np.allclose(distance, expected, atol=1e-3)
 
 
