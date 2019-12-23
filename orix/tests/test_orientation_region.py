@@ -3,7 +3,7 @@ import numpy
 
 from orix.quaternion.symmetry import *
 
-from orix.quaternion.orientation_region import _get_large_cell_normals
+from orix.quaternion.orientation_region import _get_large_cell_normals,get_proper_groups
 from orix.quaternion.symmetry import get_distinguished_points
 
 
@@ -81,3 +81,11 @@ def test_get_large_cell_normals(s1, s2, expected):
     n = _get_large_cell_normals(s1, s2)
     print(n)
     assert np.allclose(n.data, expected, atol=1e-3)
+
+@pytest.mark.parametrize('Gl,Gr',[(C1,Ci),(Ci,C1),
+                                  (C1,Csz),(Csz,C1),
+                                  (Ci,Csz),(Csz,Ci)])
+
+def test_get_proper_point_groups(Gl,Gr):
+    get_proper_groups(Gl,Gr)
+    return None
