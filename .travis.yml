@@ -2,7 +2,7 @@ language: python
 
 env:
   global:
-    - DEPS="ipython sphinx sphinx_rtd_theme autodocsumm"
+    - DEPS="ipython tqdm autodocsumm"
     - TEST_DEPS="pytest pytest-cov coveralls"
 
 matrix:
