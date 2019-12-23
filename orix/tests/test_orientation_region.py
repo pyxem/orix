@@ -2,8 +2,8 @@ import pytest
 import numpy
 
 from orix.quaternion.symmetry import *
-
-from orix.quaternion.orientation_region import _get_large_cell_normals,get_proper_groups
+from orix.quaternion.orientation import Orientation
+from orix.quaternion.orientation_region import _get_large_cell_normals,get_proper_groups,OrientationRegion
 from orix.quaternion.symmetry import get_distinguished_points
 
 
@@ -81,6 +81,11 @@ def test_get_large_cell_normals(s1, s2, expected):
     n = _get_large_cell_normals(s1, s2)
     print(n)
     assert np.allclose(n.data, expected, atol=1e-3)
+
+def test_coverage_on_faces():
+    o = OrientationRegion(Orientation([1,1,1,1]))
+    f = o.faces()
+    return None
 
 @pytest.mark.parametrize('Gl,Gr',[(C1,Ci),(Ci,C1),
                                   (C1,Csz),(Csz,C1),
