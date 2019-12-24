@@ -124,3 +124,15 @@ def test_equivalent(Gl):
     m.set_symmetry(Gl,C4,verbose=True)
     m.symmetry
     _m = m.equivalent
+
+def test_repr():
+    m = Misorientation([1,1,1,1]) # any will do
+    print(m) #hits __repr__
+    return None
+
+@pytest.mark.skip(reason="Currently under investigation")
+def test_sub():
+    m = Orientation([1,1,1,1]) # any will do
+    m.set_symmetry(C4) #only one as it a O
+    mis = m - m #this should give a set of zeroes
+    return None
