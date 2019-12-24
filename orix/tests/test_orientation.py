@@ -130,7 +130,6 @@ def test_repr():
     print(m) #hits __repr__
     return None
 
-@pytest.mark.skip(reason="Currently under investigation")
 def test_sub():
     m = Orientation([1,1,1,1]) # any will do
     m.set_symmetry(C4) #only one as it a O
