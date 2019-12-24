@@ -192,7 +192,7 @@ class Orientation(Misorientation):
     def __sub__(self, other):
         if isinstance(other, Orientation):
             misorientation = Misorientation(self * ~other)
-            m_inside = misorientation.set_symmetry((self.symmetry, other.symmetry)).squeeze()
+            m_inside = misorientation.set_symmetry(self.symmetry, other.symmetry).squeeze()
             return m_inside
         return NotImplemented
 
