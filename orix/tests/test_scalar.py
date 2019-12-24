@@ -9,12 +9,6 @@ from orix.vector import Vector3d
 def scalar(request):
     return Scalar(request.param)
 
-
-@pytest.fixture(params=[(1, 1, 1)])
-def vector(request):
-    return Vector3d(request.param)
-
-
 @pytest.mark.parametrize('data, expected', [
     ((5, 3), (5, 3)),
     ([[1], [2]], [[1], [2]]),

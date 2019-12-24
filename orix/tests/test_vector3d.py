@@ -39,12 +39,6 @@ numbers = [-12, 0.5, -0.333333333, 4]
 def vector(request):
     return Vector3d(request.param)
 
-
-@pytest.fixture(params=numbers)
-def scalar(request):
-    return Scalar(request.param)
-
-
 @pytest.fixture(params=singles)
 def something(request):
     return Vector3d(request.param)
