@@ -100,4 +100,3 @@ def test_get_proper_point_groups(Gl,Gr):
 def test_get_proper_point_group_not_implemented():
     """ Double inversion case not yet implemented """
     get_proper_groups(Csz,Csz)
-    return None

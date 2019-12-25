@@ -192,7 +192,7 @@ class Orientation(Misorientation):
     def __sub__(self, other):
         if isinstance(other, Orientation):
             misorientation = Misorientation(self * ~other)
-            m_inside = misorientation.set_symmetry((self.symmetry, other.symmetry)).squeeze()
+            m_inside = misorientation.set_symmetry(self.symmetry, other.symmetry).squeeze()
             return m_inside
         return NotImplemented
 
@@ -221,7 +221,7 @@ def _distance_1(misorientation, verbose):
 
 
 def _distance_2(misorientation, verbose):
-    if misorientation.size > 1e4:
+    if misorientation.size > 1e4: #pragma no cover
         confirm = input('Large datasets may crash your RAM.\nAre you sure? (y/n) ')
         if confirm != 'y':
             raise InterruptedError('Aborted')

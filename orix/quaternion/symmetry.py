@@ -60,13 +60,6 @@ class Symmetry(Rotation):
     def __and__(self, other):
         return Symmetry.from_generators(*[g for g in self.subgroups if g in other.subgroups])
 
-    # def __eq__(self, other):
-    #     if isinstance(other, Symmetry):
-    #         if self._tuples == other._tuples:
-    #             return True
-    #         return False
-    #     return NotImplemented
-
     @property
     def order(self):
         """int : The number of elements of the group."""
