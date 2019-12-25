@@ -3,7 +3,7 @@ language: python
 env:
   global:
     - DEPS="ipython tqdm autodocsumm"
-    - TEST_DEPS="pytest pytest-cov coveralls"
+    - TEST_DEPS="pytest pytest-cov coveralls<5"
 
 matrix:
   include:
