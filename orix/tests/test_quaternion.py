@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from orix.base import DimensionError
-from orix.quaternion import Quaternion
+from orix.quaternion import Quaternion, check_quaternion
 from orix.vector import Vector3d
 
 values = [
@@ -129,3 +129,16 @@ def test_multiply_vector(quaternion, vector, expected):
     v = Vector3d(vector)
     v_new = q * v
     assert np.allclose(v_new.data, expected)
+
+def test_check_quat():
+    """ check is an oddly named function"""
+    quat = Quaternion([2,2,2,2])
+    assert np.allclose(quat.data,check_quaternion(quat).data)
+
+def test_abcd():
+    quat = Quaternion([2,2,2,2])
+    quat.a = 1
+    quat.b = 1
+    quat.c = 1
+    quat.d = 1
+    assert np.allclose(quat.data,1)
