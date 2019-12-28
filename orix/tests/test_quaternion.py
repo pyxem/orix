@@ -142,3 +142,19 @@ def test_abcd():
     quat.c = 1
     quat.d = 1
     assert np.allclose(quat.data,1)
+
+def test_mean(quaternion):
+    _ = quaternion.mean()
+    return None
+
+def test_antipodal(quaternion):
+    _ = quaternion.antipodal
+    return None
+
+def test_neg(quaternion):
+    _ = -quaternion
+    return None
+
+@pytest.mark.xfail(strict=True,reason="NotImplemented")
+def test_mul(quaternion):
+    quaternion * 'cant-mult-by-this'
