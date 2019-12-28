@@ -183,9 +183,6 @@ class Object3d:
             obj = self.__class__(np.nan_to_num(self.data / self.norm.data[..., np.newaxis]))
             return obj
 
-    def numerical_sort(self):
-        raise NotImplementedError("This functionality does not exist at present")
-
     def squeeze(self):
         obj = self.__class__(self)
         obj._data = np.atleast_2d(np.squeeze(self._data))
