@@ -184,10 +184,7 @@ class Object3d:
             return obj
 
     def numerical_sort(self):
-        dat = self.data.round(4)
-        ind = np.lexsort([dat[:, i] for i in range(self.dim - 1, -1, -1)])
-        obj = self.__class__(self)
-        obj._data = self._data[ind]
+        raise NotImplementedError("This functionality does not exist at present")
 
     def squeeze(self):
         obj = self.__class__(self)

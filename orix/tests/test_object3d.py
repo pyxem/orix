@@ -135,3 +135,7 @@ def test_unique(test_object3d):
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
     assert np.allclose(idx, [0, 2, 3])
     assert np.allclose(inv, [0, 0, 1, 2, 2])
+
+@pytest.mark.xfail(stirct=True,raises=NotImplementedError)
+def test_numerical_sort(object3d):
+    t = object3d.numerical_sort()
