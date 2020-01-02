@@ -16,5 +16,5 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from orix.quaternion.symmetry import *
-from orix.quaternion.orientation_region import OrientationRegion
+from orix.quaternion.symmetry import * #pragma: no cover
+from orix.quaternion.orientation_region import OrientationRegion #pragma: no cover

@@ -183,12 +183,6 @@ class Object3d:
             obj = self.__class__(np.nan_to_num(self.data / self.norm.data[..., np.newaxis]))
             return obj
 
-    def numerical_sort(self):
-        dat = self.data.round(4)
-        ind = np.lexsort([dat[:, i] for i in range(self.dim - 1, -1, -1)])
-        obj = self.__class__(self)
-        obj._data = self._data[ind]
-
     def squeeze(self):
         obj = self.__class__(self)
         obj._data = np.atleast_2d(np.squeeze(self._data))

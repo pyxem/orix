@@ -16,5 +16,5 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from orix.quaternion.orientation import Orientation, Misorientation
-from orix.vector.neo_euler import NeoEuler, Homochoric, Rodrigues, AxAngle
+from orix.quaternion.orientation import Orientation, Misorientation #pragma: no cover
+from orix.vector.neo_euler import NeoEuler, Homochoric, Rodrigues, AxAngle #pragma: no cover
