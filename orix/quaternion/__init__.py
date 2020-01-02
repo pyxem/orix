@@ -176,7 +176,7 @@ class Quaternion(Object3d):
 
     @classmethod
     def triple_cross(cls, q1, q2, q3):
-        """Magic.
+        """Pointwise cross product of three quaternions.
 
         Parameters
         ----------
@@ -185,7 +185,7 @@ class Quaternion(Object3d):
 
         Returns
         -------
-        Quaternion
+        q : Quaternion
 
         """
         q1a, q1b, q1c, q1d = q1.a.data, q1.b.data, q1.c.data, q1.d.data
