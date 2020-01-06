@@ -230,3 +230,15 @@ def test_assign_z(vector, data, expected):
 ], indirect=['vector'])
 def test_perpendicular(vector: Vector3d):
     assert np.allclose(vector.dot(vector.perpendicular).data, 0)
+
+@pytest.mark.xfail(strict=True,reason=TypeError)
+class TestSpareNotImplemented():
+
+    def test_radd_notimplemented(self,vector):
+        'cantadd' + vector
+
+    def test_rsub_notimplemented(self,vector):
+        'cantsub' - vector
+
+    def test_rmul_notimplemented(self,vector):
+        'cantmul' * vector
