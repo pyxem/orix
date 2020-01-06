@@ -135,3 +135,8 @@ def test_sub():
     m.set_symmetry(C4) #only one as it a O
     mis = m - m #this should give a set of zeroes
     return None
+
+@pytest.mark.xfail(strict=True,reason=TypeError)
+def test_sub_orientation_and_other():
+    m = Orientation([1,1,1,1]) # any will do
+    mis = m - 3
