@@ -158,8 +158,6 @@ class Object3d:
         """
         data = self.flatten()._data.round(9)
         data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
-        if len(data) == 0:
-            return self.__class__(data)
         _, idx, inv = np.unique(data.round(4), axis=0, return_index=True, return_inverse=True)
         obj = self.__class__(data[np.sort(idx), :self.dim])
         obj._data = data[np.sort(idx)]
