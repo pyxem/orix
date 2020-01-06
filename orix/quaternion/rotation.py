@@ -89,10 +89,8 @@ class Rotation(Quaternion):
             improper = (self.improper * np.ones(other.shape)).astype(bool)
             v[improper] = -v[improper]
             return v
-        try:
+        if isinstance(other,int) or isinstance(other,list): #has to plus/minus 1
             other = np.atleast_1d(other).astype(int)
-        except ValueError:
-            pass
         if isinstance(other, np.ndarray):
             assert np.all(abs(other) == 1), "Rotations can only be multiplied by 1 or -1"
             r = Rotation(self.data)
