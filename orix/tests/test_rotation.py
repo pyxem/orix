@@ -229,6 +229,13 @@ def test_unique(rotation, improper, expected, improper_expected):
     assert np.allclose(u.data, expected, atol=1e-6)
     assert np.allclose(u.improper, improper_expected)
 
+def test_kwargs_unique(rotation):
+    """ return_index and return_inverse edge cases"""
+    rotation.unique(return_index=True,return_inverse=True)
+    rotation.unique(return_index=True,return_inverse=False)
+    rotation.unique(return_index=False,return_inverse=True)
+
+
 
 @pytest.mark.parametrize('rotation, improper, expected, improper_expected', [
     (
