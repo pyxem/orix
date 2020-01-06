@@ -188,10 +188,7 @@ class Scalar(Object3d):
     @classmethod
     def stack(cls, sequence):
         sequence = [s.data for s in sequence]
-        try:
-            stack = np.stack(sequence, axis=-1)
-        except ValueError:
-            raise
+        stack = np.stack(sequence, axis=-1)
         return cls(stack)
 
     @property
