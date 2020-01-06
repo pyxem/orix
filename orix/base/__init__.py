@@ -57,8 +57,6 @@ class Object3d:
 
     def __init__(self, data=None):
         if isinstance(data, Object3d):
-            if data.dim != self.dim:
-                raise DimensionError(self, data.data)
             self._data = data.data
         else:
             data = np.atleast_2d(data)
