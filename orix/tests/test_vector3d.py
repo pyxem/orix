@@ -231,6 +231,13 @@ def test_assign_z(vector, data, expected):
 def test_perpendicular(vector: Vector3d):
     assert np.allclose(vector.dot(vector.perpendicular).data, 0)
 
+def test_mean_xyz():
+    x = Vector3d.xvector()
+    y = Vector3d.yvector()
+    z = Vector3d.zvector()
+    t = Vector3d([3*x.data,3*y.data,3*z.data])
+    np.allclose(t.mean().data,1)
+
 @pytest.mark.xfail(strict=True,reason=TypeError)
 class TestSpareNotImplemented():
 
