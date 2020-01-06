@@ -238,6 +238,11 @@ def test_mean_xyz():
     t = Vector3d([3*x.data,3*y.data,3*z.data])
     np.allclose(t.mean().data,1)
 
+@pytest.mark.xfail(strict=True,reason=ValueError)
+def test_zero_perpendicular():
+    t = Vector3d(np.asarray([0,0,0]))
+    tperp = t.perpendicular()
+
 @pytest.mark.xfail(strict=True,reason=TypeError)
 class TestSpareNotImplemented():
 
