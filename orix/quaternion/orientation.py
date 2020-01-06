@@ -221,7 +221,7 @@ def _distance_1(misorientation, verbose):
 
 
 def _distance_2(misorientation, verbose):
-    if misorientation.size > 1e4: #pragma no cover
+    if misorientation.size > 1e4:  # pragma no cover
         confirm = input('Large datasets may crash your RAM.\nAre you sure? (y/n) ')
         if confirm != 'y':
             raise InterruptedError('Aborted')

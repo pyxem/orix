@@ -48,7 +48,6 @@ class RotationPlot(Axes3D):
         return super().plot_wireframe(x, y, z, **kwargs)
 
 
-
 class RodriguesPlot(RotationPlot):
     """Plot rotations in a Rodrigues-Frank projection."""
     name = 'rodrigues'

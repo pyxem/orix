@@ -53,7 +53,7 @@ class Scalar(Object3d):
     @property
     def data(self):
         return self._data
-        
+
     def __neg__(self):
         return self.__class__(-self.data)
 

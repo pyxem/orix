@@ -287,6 +287,7 @@ def test_fundamental_sector(symmetry, expected):
     fs = symmetry.fundamental_sector()
     assert np.allclose(fs.data, expected)
 
+
 def test_no_symm_fundemental_sector():
-    nosym = Symmetry.from_generators(Rotation([1,0,0,0]))
+    nosym = Symmetry.from_generators(Rotation([1, 0, 0, 0]))
     nosym.fundamental_sector()

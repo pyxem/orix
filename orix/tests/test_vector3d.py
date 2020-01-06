@@ -39,6 +39,7 @@ numbers = [-12, 0.5, -0.333333333, 4]
 def vector(request):
     return Vector3d(request.param)
 
+
 @pytest.fixture(params=singles)
 def something(request):
     return Vector3d(request.param)
@@ -50,8 +51,9 @@ def number(request):
 
 
 def test_check_vector():
-    vector3 = Vector3d([2,2,2])
-    assert np.allclose(vector3.data,check_vector(vector3).data)
+    vector3 = Vector3d([2, 2, 2])
+    assert np.allclose(vector3.data, check_vector(vector3).data)
+
 
 def test_neg(vector):
     assert np.all((-vector).data == -(vector.data))
@@ -140,7 +142,7 @@ def test_cross_error(vector, number):
 ])
 def test_polar(theta, phi, r, expected):
     assert np.allclose(Vector3d.from_polar(theta, phi, r).data,
-                                           expected.data, atol=1e-5)
+                       expected.data, atol=1e-5)
 
 
 @pytest.mark.parametrize('shape', [
@@ -231,26 +233,29 @@ def test_assign_z(vector, data, expected):
 def test_perpendicular(vector: Vector3d):
     assert np.allclose(vector.dot(vector.perpendicular).data, 0)
 
+
 def test_mean_xyz():
     x = Vector3d.xvector()
     y = Vector3d.yvector()
     z = Vector3d.zvector()
-    t = Vector3d([3*x.data,3*y.data,3*z.data])
-    np.allclose(t.mean().data,1)
+    t = Vector3d([3 * x.data, 3 * y.data, 3 * z.data])
+    np.allclose(t.mean().data, 1)
 
-@pytest.mark.xfail(strict=True,reason=ValueError)
+
+@pytest.mark.xfail(strict=True, reason=ValueError)
 def test_zero_perpendicular():
-    t = Vector3d(np.asarray([0,0,0]))
+    t = Vector3d(np.asarray([0, 0, 0]))
     tperp = t.perpendicular()
 
-@pytest.mark.xfail(strict=True,reason=TypeError)
+
+@pytest.mark.xfail(strict=True, reason=TypeError)
 class TestSpareNotImplemented():
 
-    def test_radd_notimplemented(self,vector):
+    def test_radd_notimplemented(self, vector):
         'cantadd' + vector
 
-    def test_rsub_notimplemented(self,vector):
+    def test_rsub_notimplemented(self, vector):
         'cantsub' - vector
 
-    def test_rmul_notimplemented(self,vector):
+    def test_rmul_notimplemented(self, vector):
         'cantmul' * vector

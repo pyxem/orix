@@ -60,9 +60,10 @@ def test_load_ang(angfile, expected_data):
     loaded_data = io.loadang(angfile)
     assert np.allclose(loaded_data.data, expected_data)
 
+
 def test_load_ctf():
     """ Crude test of the ctf loader """
-    z = np.random.rand(100,8)
-    np.savetxt('temp.ctf',z)
+    z = np.random.rand(100, 8)
+    np.savetxt('temp.ctf', z)
     z_loaded = io.loadctf('temp.ctf')
     os.remove('temp.ctf')

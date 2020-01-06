@@ -130,31 +130,37 @@ def test_multiply_vector(quaternion, vector, expected):
     v_new = q * v
     assert np.allclose(v_new.data, expected)
 
+
 def test_check_quat():
     """ check is an oddly named function"""
-    quat = Quaternion([2,2,2,2])
-    assert np.allclose(quat.data,check_quaternion(quat).data)
+    quat = Quaternion([2, 2, 2, 2])
+    assert np.allclose(quat.data, check_quaternion(quat).data)
+
 
 def test_abcd():
-    quat = Quaternion([2,2,2,2])
+    quat = Quaternion([2, 2, 2, 2])
     quat.a = 1
     quat.b = 1
     quat.c = 1
     quat.d = 1
-    assert np.allclose(quat.data,1)
+    assert np.allclose(quat.data, 1)
+
 
 def test_mean(quaternion):
     _ = quaternion.mean()
     return None
 
+
 def test_antipodal(quaternion):
     _ = quaternion.antipodal
     return None
 
-@pytest.mark.xfail(strict=True,reason="NotImplemented")
+
+@pytest.mark.xfail(strict=True, reason="NotImplemented")
 def test_edgecase_outer(quaternion):
-    threetwoq = quaternion.outer([3,2])
-    
-@pytest.mark.xfail(strict=True,reason="NotImplemented")
+    threetwoq = quaternion.outer([3, 2])
+
+
+@pytest.mark.xfail(strict=True, reason="NotImplemented")
 def test_failing_mul(quaternion):
     quaternion * 'cant-mult-by-this'
