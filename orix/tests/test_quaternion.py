@@ -152,5 +152,9 @@ def test_antipodal(quaternion):
     return None
 
 @pytest.mark.xfail(strict=True,reason="NotImplemented")
+def test_edgecase_outer(quaternion):
+    threetwoq = quaternion.outer([3,2])
+    
+@pytest.mark.xfail(strict=True,reason="NotImplemented")
 def test_failing_mul(quaternion):
     quaternion * 'cant-mult-by-this'
