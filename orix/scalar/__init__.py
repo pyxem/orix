@@ -45,8 +45,6 @@ class Scalar(Object3d):
 
     def __init__(self, data):
         if isinstance(data, Object3d):
-            if data.dim != self.dim:
-                raise DimensionError(self, data.data)
             self._data = data._data
         else:
             data = np.atleast_1d(data)
