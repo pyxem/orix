@@ -176,6 +176,11 @@ def test_stack(data, expected):
     assert stack.shape[-1] == len(data)
     assert np.allclose(stack.data, expected)
 
+def test_flatten(scalar):
+    scalar.flatten()
+    return None
+
+
 @pytest.mark.xfail(strict=True,reason=TypeError)
 class TestSpareNotImplemented():
 
