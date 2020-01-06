@@ -1,8 +1,11 @@
 import pytest
 import numpy as np
 
-from orix.base import DimensionError, Object3d
+from orix.base import DimensionError, Object3d, check
 
+@pytest.mark.xfail(strict=True,reason=ValueError)
+def test_check_failing():
+    check(np.asarray([1,1,1,1]),Object3d)
 
 @pytest.fixture(
     params=[
