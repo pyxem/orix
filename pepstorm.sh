@@ -1,7 +1,6 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-cd orix/tests
-cd ../
+cd orix/
 for folder in base grid io plot quaternion scalar tests vector
 	do
 	cd $folder
