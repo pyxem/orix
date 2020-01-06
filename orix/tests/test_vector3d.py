@@ -2,7 +2,7 @@ from math import pi
 import numpy as np
 import pytest
 
-from orix.vector import Vector3d
+from orix.vector import Vector3d, check_vector
 from orix.scalar import Scalar
 
 vectors = [
@@ -48,6 +48,10 @@ def something(request):
 def number(request):
     return request.param
 
+
+def test_check_vector():
+    vector3 = Vector3d([2,2,2])
+    assert np.allclose(vector3.data,check_vector(vector3).data)
 
 def test_neg(vector):
     assert np.all((-vector).data == -(vector.data))
