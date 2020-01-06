@@ -167,7 +167,7 @@ def test_neg(rotation, i, expected_i):
         [253.082, 74.862, 327.307],
         [271.495, 13.8528, 205.501],
         [197.023, 74.4216, 120.751],
-    ], 'zxz'),
+    ], 'bunge'),
 ], indirect=['rotation'])
 def test_to_euler(rotation, euler, convention):
     e = np.degrees(rotation.to_euler(convention=convention))

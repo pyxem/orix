@@ -239,8 +239,8 @@ class Rotation(Quaternion):
 
         Parameters
         ----------
-        convention : 'matthies' | 'bunge' | 'zxz'
-            The Euler angle convention used.
+        convention : 'bunge'
+            The Euler angle convention used. Only 'bunge' is supported as present
 
         Returns
         -------
@@ -259,7 +259,7 @@ class Rotation(Quaternion):
             np.maximum(-1, np.minimum(1, np.sign(self.a.data[mask]) * self.d.data[mask])))
         gamma[mask] = 0
 
-        if convention == 'bunge' or convention == 'zxz':
+        if convention == 'bunge':
             mask = ~np.isclose(beta, 0)
             alpha[mask] += np.pi / 2
             gamma[mask] += 3 * np.pi / 2
