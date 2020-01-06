@@ -142,6 +142,9 @@ def test_mul_number(rotation, i, number, expected_i):
     assert np.allclose(rotation.data, r.data)
     assert np.allclose(r.improper, expected_i)
 
+@pytest.mark.xfail(strict=True,reason=TypeError)
+def test_mul_failing(rotation):
+    _ = rotation * 'cant-mult-by-this'
 
 @pytest.mark.parametrize('rotation, i, expected_i', [
     ([0.5, 0.5, 0.5, 0.5], 0, 1),
