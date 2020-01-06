@@ -89,10 +89,8 @@ class Rotation(Quaternion):
             improper = (self.improper * np.ones(other.shape)).astype(bool)
             v[improper] = -v[improper]
             return v
-        try:
+        if isinstance(other,int) or isinstance(other,list): #has to plus/minus 1
             other = np.atleast_1d(other).astype(int)
-        except ValueError:
-            pass
         if isinstance(other, np.ndarray):
             assert np.all(abs(other) == 1), "Rotations can only be multiplied by 1 or -1"
             r = Rotation(self.data)
@@ -239,8 +237,8 @@ class Rotation(Quaternion):
 
         Parameters
         ----------
-        convention : 'matthies' | 'bunge' | 'zxz'
-            The Euler angle convention used.
+        convention : 'bunge'
+            The Euler angle convention used. Only 'bunge' is supported as present
 
         Returns
         -------
@@ -259,7 +257,7 @@ class Rotation(Quaternion):
             np.maximum(-1, np.minimum(1, np.sign(self.a.data[mask]) * self.d.data[mask])))
         gamma[mask] = 0
 
-        if convention == 'bunge' or convention == 'zxz':
+        if convention == 'bunge':
             mask = ~np.isclose(beta, 0)
             alpha[mask] += np.pi / 2
             gamma[mask] += 3 * np.pi / 2

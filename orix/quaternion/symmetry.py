@@ -189,13 +189,12 @@ class Symmetry(Rotation):
         axis = Vector3d.zvector().get_nearest(axes, inclusive=True)
         r = Rotation.from_neo_euler(
             AxAngle.from_axes_angles(axis, 2 * np.pi / order))
+
         diads = symmetry.diads
-        if diads is not None:
-            nearest_diad = axis.get_nearest(diads)
-            if nearest_diad.size == 0:
-                nearest_diad = axis.perpendicular
-        else:
+        nearest_diad = axis.get_nearest(diads)
+        if nearest_diad.size == 0:
             nearest_diad = axis.perpendicular
+
         n1 = axis.cross(nearest_diad).unit
         n2 = - (r * n1)
         next_diad = r * nearest_diad

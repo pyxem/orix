@@ -59,7 +59,7 @@ def test_init(input_length):
 
 
 def test_neg(quaternion):
-    assert np.all(-quaternion.data == -(quaternion.data))
+    assert np.all((-quaternion).data == -(quaternion.data))
 
 
 def test_norm(quaternion):
@@ -151,10 +151,10 @@ def test_antipodal(quaternion):
     _ = quaternion.antipodal
     return None
 
-def test_neg(quaternion):
-    _ = -quaternion
-    return None
-
+@pytest.mark.xfail(strict=True,reason="NotImplemented")
+def test_edgecase_outer(quaternion):
+    threetwoq = quaternion.outer([3,2])
+    
 @pytest.mark.xfail(strict=True,reason="NotImplemented")
 def test_failing_mul(quaternion):
     quaternion * 'cant-mult-by-this'

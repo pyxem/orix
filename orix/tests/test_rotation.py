@@ -142,6 +142,9 @@ def test_mul_number(rotation, i, number, expected_i):
     assert np.allclose(rotation.data, r.data)
     assert np.allclose(r.improper, expected_i)
 
+@pytest.mark.xfail(strict=True,reason=TypeError)
+def test_mul_failing(rotation):
+    _ = rotation * 'cant-mult-by-this'
 
 @pytest.mark.parametrize('rotation, i, expected_i', [
     ([0.5, 0.5, 0.5, 0.5], 0, 1),
@@ -167,7 +170,7 @@ def test_neg(rotation, i, expected_i):
         [253.082, 74.862, 327.307],
         [271.495, 13.8528, 205.501],
         [197.023, 74.4216, 120.751],
-    ], 'zxz'),
+    ], 'bunge'),
 ], indirect=['rotation'])
 def test_to_euler(rotation, euler, convention):
     e = np.degrees(rotation.to_euler(convention=convention))
@@ -228,6 +231,13 @@ def test_unique(rotation, improper, expected, improper_expected):
     u = rotation.unique()
     assert np.allclose(u.data, expected, atol=1e-6)
     assert np.allclose(u.improper, improper_expected)
+
+def test_kwargs_unique(rotation):
+    """ return_index and return_inverse edge cases"""
+    rotation.unique(return_index=True,return_inverse=True)
+    rotation.unique(return_index=True,return_inverse=False)
+    rotation.unique(return_index=False,return_inverse=True)
+
 
 
 @pytest.mark.parametrize('rotation, improper, expected, improper_expected', [

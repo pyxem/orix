@@ -121,9 +121,9 @@ def test_equivalent(Gl):
     Gl == C2 ~ "no grain exchange"
     """
     m = Misorientation([1,1,1,1]) # any will do
-    m.set_symmetry(Gl,C4,verbose=True)
-    m.symmetry
-    _m = m.equivalent
+    m_new = m.set_symmetry(Gl,C4,verbose=True)
+    m_new.symmetry
+    _m = m_new.equivalent
 
 def test_repr():
     m = Misorientation([1,1,1,1]) # any will do
@@ -135,3 +135,8 @@ def test_sub():
     m.set_symmetry(C4) #only one as it a O
     mis = m - m #this should give a set of zeroes
     return None
+
+@pytest.mark.xfail(strict=True,reason=TypeError)
+def test_sub_orientation_and_other():
+    m = Orientation([1,1,1,1]) # any will do
+    mis = m - 3

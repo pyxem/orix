@@ -2,7 +2,7 @@ from math import pi
 import numpy as np
 import pytest
 
-from orix.vector import Vector3d
+from orix.vector import Vector3d, check_vector
 from orix.scalar import Scalar
 
 vectors = [
@@ -48,6 +48,10 @@ def something(request):
 def number(request):
     return request.param
 
+
+def test_check_vector():
+    vector3 = Vector3d([2,2,2])
+    assert np.allclose(vector3.data,check_vector(vector3).data)
 
 def test_neg(vector):
     assert np.all((-vector).data == -(vector.data))
@@ -226,3 +230,27 @@ def test_assign_z(vector, data, expected):
 ], indirect=['vector'])
 def test_perpendicular(vector: Vector3d):
     assert np.allclose(vector.dot(vector.perpendicular).data, 0)
+
+def test_mean_xyz():
+    x = Vector3d.xvector()
+    y = Vector3d.yvector()
+    z = Vector3d.zvector()
+    t = Vector3d([3*x.data,3*y.data,3*z.data])
+    np.allclose(t.mean().data,1)
+
+@pytest.mark.xfail(strict=True,reason=ValueError)
+def test_zero_perpendicular():
+    t = Vector3d(np.asarray([0,0,0]))
+    tperp = t.perpendicular()
+
+@pytest.mark.xfail(strict=True,reason=TypeError)
+class TestSpareNotImplemented():
+
+    def test_radd_notimplemented(self,vector):
+        'cantadd' + vector
+
+    def test_rsub_notimplemented(self,vector):
+        'cantsub' - vector
+
+    def test_rmul_notimplemented(self,vector):
+        'cantmul' * vector

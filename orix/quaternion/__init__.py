@@ -163,7 +163,7 @@ class Quaternion(Object3d):
             z_new = e(a ** 2 - b ** 2 - c ** 2 + d ** 2, z) + 2 * (e(a * b + c * d, y) + e(b * d - a * c, x))
             v = np.stack((x_new, y_new, z_new), axis=-1)
             return other.__class__(v)
-        return super(Quaternion, self).outer(other)
+        raise NotImplementedError("This operation is currently not avaliable in orix, please use outer with other of type: Quaternion or Vector3d")
 
     def dot(self, other):
         """Scalar : the dot product of this quaternion and the other."""
@@ -208,8 +208,8 @@ class Quaternion(Object3d):
 
     def mean(self):
         """
-        Calculates the mean quarternion with unitary weights 
-        
+        Calculates the mean quarternion with unitary weights
+
         Notes
         -----
         The method used here corresponds to the Equation (13) of http://www.acsu.buffalo.edu/~johnc/ave_quat07.pdf

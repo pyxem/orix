@@ -21,7 +21,7 @@ import numpy as np
 
 from orix.plot.rotation_plot import RotationPlot,RodriguesPlot,AxAnglePlot
 from orix.quaternion.orientation import Misorientation
-from orix.quaternion.symmetry import D6
+from orix.quaternion.symmetry import D6,C1
 from orix.quaternion.orientation_region import OrientationRegion
 
 def test_init_RodriguesPlot():
@@ -48,3 +48,7 @@ def test_RotationPlot_methods():
     #clear the edge case
     ax_misori.transform(np.asarray([1,1,1]))
     return None
+
+def test_full_region_plot():
+    empty = OrientationRegion.from_symmetry(C1,C1)
+    plot_data = empty.get_plot_data()

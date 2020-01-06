@@ -57,8 +57,6 @@ class Object3d:
 
     def __init__(self, data=None):
         if isinstance(data, Object3d):
-            if data.dim != self.dim:
-                raise DimensionError(self, data.data)
             self._data = data.data
         else:
             data = np.atleast_2d(data)
@@ -158,8 +156,6 @@ class Object3d:
         """
         data = self.flatten()._data.round(9)
         data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
-        if len(data) == 0:
-            return self.__class__(data)
         _, idx, inv = np.unique(data.round(4), axis=0, return_index=True, return_inverse=True)
         obj = self.__class__(data[np.sort(idx), :self.dim])
         obj._data = data[np.sort(idx)]

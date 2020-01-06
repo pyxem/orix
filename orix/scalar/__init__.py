@@ -45,8 +45,6 @@ class Scalar(Object3d):
 
     def __init__(self, data):
         if isinstance(data, Object3d):
-            if data.dim != self.dim:
-                raise DimensionError(self, data.data)
             self._data = data._data
         else:
             data = np.atleast_1d(data)
@@ -55,11 +53,7 @@ class Scalar(Object3d):
     @property
     def data(self):
         return self._data
-
-    @data.setter
-    def data(self, data):
-        self._data = data
-
+        
     def __neg__(self):
         return self.__class__(-self.data)
 
@@ -75,9 +69,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __radd__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data + self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other + self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
@@ -97,9 +89,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __rsub__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data - self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other - self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
@@ -119,9 +109,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __rmul__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data * self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other * self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
@@ -196,10 +184,7 @@ class Scalar(Object3d):
     @classmethod
     def stack(cls, sequence):
         sequence = [s.data for s in sequence]
-        try:
-            stack = np.stack(sequence, axis=-1)
-        except ValueError:
-            raise
+        stack = np.stack(sequence, axis=-1)
         return cls(stack)
 
     @property

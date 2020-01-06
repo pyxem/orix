@@ -175,3 +175,23 @@ def test_stack(data, expected):
     assert isinstance(stack, Scalar)
     assert stack.shape[-1] == len(data)
     assert np.allclose(stack.data, expected)
+
+def test_flatten(scalar):
+    scalar.flatten()
+    return None
+
+
+@pytest.mark.xfail(strict=True,reason=TypeError)
+class TestSpareNotImplemented():
+
+    def test_radd_notimplemented(self,scalar):
+        'cantadd' + scalar
+
+    def test_rsub_notimplemented(self,scalar):
+        'cantsub' - scalar
+
+    def test_rmul_notimplemented(self,scalar):
+        'cantmul' * scalar
+
+    def test_lt_notimplemented(self,scalar):
+        scalar < 'cantlt'
