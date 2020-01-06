@@ -124,10 +124,6 @@ class AxAngle(NeoEuler):
     def angle(self):
         return Scalar(self.norm.data)
 
-    @property
-    def axis(self):
-        return Vector3d(self.unit)
-
     @classmethod
     def from_axes_angles(cls, axes, angles):
         """Create new AxAngle object explicitly from the given axes and angles.
