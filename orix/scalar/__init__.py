@@ -73,9 +73,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __radd__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data + self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other + self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
@@ -95,9 +93,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __rsub__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data - self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other - self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
@@ -117,9 +113,7 @@ class Scalar(Object3d):
         return NotImplemented
 
     def __rmul__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data * self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other * self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)

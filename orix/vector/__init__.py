@@ -108,9 +108,7 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __radd__(self, other):
-        if isinstance(other, Vector3d):
-            return self.__class__(other.data + self.data)
-        elif isinstance(other, Scalar):
+        if isinstance(other, Scalar):
             return self.__class__(other.data[..., np.newaxis] + self.data)
         elif isinstance(other, (int, float)):
             return self.__class__(other + self.data)
@@ -134,9 +132,7 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __rsub__(self, other):
-        if isinstance(other, Vector3d):
-            return self.__class__(other.data - self.data)
-        elif isinstance(other, Scalar):
+        if isinstance(other, Scalar):
             return self.__class__(other.data[..., np.newaxis] - self.data)
         elif isinstance(other, (int, float)):
             return self.__class__(other - self.data)
@@ -161,10 +157,7 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __rmul__(self, other):
-        if isinstance(other, Vector3d):
-            raise ValueError('Multiplying one vector with another is ambiguous. '
-                             'Try `.dot` or `.cross` instead.')
-        elif isinstance(other, Scalar):
+        if isinstance(other, Scalar):
             return self.__class__(other.data[..., np.newaxis] * self.data)
         elif isinstance(other, (int, float)):
             return self.__class__(other * self.data)
