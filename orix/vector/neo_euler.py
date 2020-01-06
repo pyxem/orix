@@ -41,13 +41,13 @@ class NeoEuler(Vector3d, abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_rotation(cls, rotation): #pragma: no cover
+    def from_rotation(cls, rotation):  # pragma: no cover
         """NeoEuler : Create a new vector from the given rotation."""
         pass
 
     @property
     @abc.abstractmethod
-    def angle(self): #pragma: no cover
+    def angle(self):  # pragma: no cover
         """Scalar : the angle of rotation."""
         pass
 

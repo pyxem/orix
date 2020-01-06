@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from orix.quaternion.orientation import Orientation,Misorientation
+from orix.quaternion.orientation import Orientation, Misorientation
 from orix.quaternion.symmetry import *
 
 
@@ -75,7 +75,7 @@ def test_orientation_persistence(symmetry, vector):
 ], indirect=['orientation'])
 def test_distance_1(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
-    distance = o.distance(speed=1,verbose=True)
+    distance = o.distance(speed=1, verbose=True)
     assert np.allclose(distance, expected, atol=1e-3)
 
 
@@ -100,7 +100,7 @@ def test_distance_1(orientation, symmetry, expected):
 ], indirect=['orientation'])
 def test_distance_2(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
-    distance = o.distance(speed=2,verbose=True)
+    distance = o.distance(speed=2, verbose=True)
     assert np.allclose(distance, expected, atol=1e-3)
 
 
@@ -111,7 +111,8 @@ def test_getitem(orientation, symmetry):
     o = orientation.set_symmetry(symmetry)
     assert o[0].symmetry._tuples == symmetry._tuples
 
-@pytest.mark.parametrize('Gl',[C4,C2])
+
+@pytest.mark.parametrize('Gl', [C4, C2])
 def test_equivalent(Gl):
     """ Tests that the property Misorientation.equivalent runs without error
 
@@ -120,23 +121,26 @@ def test_equivalent(Gl):
     Gl == C4 ~ "grain exchange"
     Gl == C2 ~ "no grain exchange"
     """
-    m = Misorientation([1,1,1,1]) # any will do
-    m_new = m.set_symmetry(Gl,C4,verbose=True)
+    m = Misorientation([1, 1, 1, 1])  # any will do
+    m_new = m.set_symmetry(Gl, C4, verbose=True)
     m_new.symmetry
     _m = m_new.equivalent
 
+
 def test_repr():
-    m = Misorientation([1,1,1,1]) # any will do
-    print(m) #hits __repr__
+    m = Misorientation([1, 1, 1, 1])  # any will do
+    print(m)  # hits __repr__
     return None
+
 
 def test_sub():
-    m = Orientation([1,1,1,1]) # any will do
-    m.set_symmetry(C4) #only one as it a O
-    mis = m - m #this should give a set of zeroes
+    m = Orientation([1, 1, 1, 1])  # any will do
+    m.set_symmetry(C4)  # only one as it a O
+    mis = m - m  # this should give a set of zeroes
     return None
 
-@pytest.mark.xfail(strict=True,reason=TypeError)
+
+@pytest.mark.xfail(strict=True, reason=TypeError)
 def test_sub_orientation_and_other():
-    m = Orientation([1,1,1,1]) # any will do
+    m = Orientation([1, 1, 1, 1])  # any will do
     mis = m - 3
