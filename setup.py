@@ -30,6 +30,6 @@ setup(
     ],
     package_data={
         "": ["LICENSE", "readme.rst"],
-        "diffsims": ["*.py"],
+        "orix": ["*.py"],
     },
 )
