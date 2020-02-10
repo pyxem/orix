@@ -17,7 +17,7 @@ orix is an open-source python library for analysing orientations and crystal sym
 The package defines objects and functions for the analysis of orientations represented as quaternions or 3D rotation vectors accounting for crystal symmetry. Functionality builds primarily on top of `numpy <http://www.numpy.org/>`__ and
 `matplotlib <https://matplotlib.org/>`__ and is heavily inspired by the `MATLAB <https://www.mathworks.com/products/matlab.html>`__ package `MTEX <http://mtex-toolbox.github.io/>`__.
 
-If analysis using orix forms a part of published work please cite the associated preprint, which can be found `here <https://arxiv.org/abs/2001.02716>`_.
+If analysis using orix forms a part of published work please cite the associated preprint, which can be found `here <https://arxiv.org/abs/2001.02716>`_. You can also find demos in the `orix-demos <https://github.com/pyxem/orix-demos>`_ repo
 
 orix is released under the GPL v3 license.
 
