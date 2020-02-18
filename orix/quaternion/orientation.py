@@ -134,12 +134,6 @@ class Misorientation(Rotation):
         Compute the shortest distance between all orientations considering
         symmetries.
 
-        Two implementations are available. Speed 1 uses less memory for very
-        small number of orientations. Speed 2 is significantly faster when the
-        number of orientations is higher, but uses more memory depending on the
-        `split_size` parameter. Speed 1 is deprecated in versions after `0.2.0`
-        since a new implementation of speed 2 was introduced.
-
         Parameters
         ---------
         speed : int
