@@ -37,7 +37,6 @@ in both cases, and hence has the same orientation.
 
 """
 
-from math import ceil
 from itertools import product as iproduct
 from itertools import combinations_with_replacement as icombinations
 import numpy as np
@@ -262,7 +261,7 @@ def _distance_2(misorientation, verbose, split_size=100):
     outer_range = range(0, num_orientations, split_size)
     if verbose:
         from tqdm import tqdm
-        outer_range = tqdm(outer_range, total=ceil(num_orientations / split_size))
+        outer_range = tqdm(outer_range, total=np.ceil(num_orientations / split_size))
     S_1_outer_S_1 = S_1.outer(S_1)
     # Calculate the upper half of the distance matrix block by block
     for start_index_b in outer_range:
