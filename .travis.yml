@@ -7,11 +7,15 @@ env:
 
 matrix:
   include:
-  - env: export PYTHON=3.7
-  - env: export PYTHON=3.6
-  - env: export PYTHON=3.7
+  - name: "Python 3.7 on Linux"
+    env: export PYTHON=3.7
+  - name: "Python 3.6 on Linux"
+    env: export PYTHON=3.6
+  - name: "Python on MacOS"
+    env: export PYTHON=3.7
     os: osx
-    language: generic
+    osx_image: xcode11.2
+    language: shell
 
 sudo: True #for Miniconda
 
