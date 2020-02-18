@@ -231,7 +231,6 @@ class Orientation(Misorientation):
 
 
 def _distance_1(misorientation, verbose):
-    from itertools import combinations_with_replacement as icombinations
     import warnings
     warnings.warn("Use _distance_2 instead", DeprecationWarning)
     s_1, s_2 = misorientation._symmetry
