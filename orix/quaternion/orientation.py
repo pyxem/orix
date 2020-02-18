@@ -41,6 +41,8 @@ from math import ceil
 from itertools import product as iproduct
 from itertools import combinations_with_replacement as icombinations
 import numpy as np
+import warnings
+
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1
@@ -231,7 +233,6 @@ class Orientation(Misorientation):
 
 
 def _distance_1(misorientation, verbose):
-    import warnings
     warnings.warn("Use _distance_2 instead", DeprecationWarning)
     s_1, s_2 = misorientation._symmetry
     distance = np.empty((misorientation.size, misorientation.size))
