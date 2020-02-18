@@ -263,8 +263,11 @@ def _distance_2(misorientation, verbose, split_size=100):
         from tqdm import tqdm
         outer_range = tqdm(outer_range, total=np.ceil(num_orientations / split_size))
     S_1_outer_S_1 = S_1.outer(S_1)
+
     # Calculate the upper half of the distance matrix block by block
+    # 'b' is the outer block, and 'a' the inner block
     for start_index_b in outer_range:
+        #we use slice object for compactness
         index_slice_b = slice(start_index_b, min(num_orientations, start_index_b + split_size))
         o_sub_b = misorientation[index_slice_b]
         for start_index_a in range(0, start_index_b + split_size, split_size):
@@ -272,6 +275,7 @@ def _distance_2(misorientation, verbose, split_size=100):
             o_sub_a = misorientation[index_slice_a]
             axis = (len(o_sub_a.shape), len(o_sub_a.shape) + 1)
             mis2orientation = (~o_sub_a).outer(S_1_outer_S_1).outer(o_sub_b)
+            # This works through all the identity rotations
             for s_2_1, s_2_2 in icombinations(S_2, 2):
                 m = s_2_1 * mis2orientation * s_2_2
                 angle = m.angle.data.min(axis=axis)
