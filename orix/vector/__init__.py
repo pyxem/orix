@@ -144,8 +144,10 @@ class Vector3d(Object3d):
 
     def __mul__(self, other):
         if isinstance(other, Vector3d):
-            raise ValueError('Multiplying one vector with another is ambiguous. '
-                             'Try `.dot` or `.cross` instead.')
+            raise ValueError(
+                "Multiplying one vector with another is ambiguous. "
+                "Try `.dot` or `.cross` instead."
+            )
         elif isinstance(other, Scalar):
             return self.__class__(self.data * other.data[..., np.newaxis])
         elif isinstance(other, (int, float)):
@@ -188,7 +190,7 @@ class Vector3d(Object3d):
         [ 0.5  0. ]
         """
         if not isinstance(other, Vector3d):
-            raise ValueError('{} is not a vector!'.format(other))
+            raise ValueError("{} is not a vector!".format(other))
         return Scalar(np.sum(self.data * other.data, axis=-1))
 
     def dot_outer(self, other):
@@ -369,6 +371,7 @@ class Vector3d(Object3d):
         """
         from orix.quaternion.rotation import Rotation
         from orix.vector.neo_euler import AxAngle
+
         axis = Vector3d.zvector() if axis is None else axis
         angle = 0 if angle is None else angle
         q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
@@ -378,7 +381,7 @@ class Vector3d(Object3d):
     def perpendicular(self):
         if np.any(self.x.data == 0) and np.any(self.y.data == 0):
             if np.any(self.z.data == 0):
-                raise ValueError('Contains zero vectors!')
+                raise ValueError("Contains zero vectors!")
             return Vector3d.xvector()
         x = -self.y.data
         y = self.x.data
@@ -405,7 +408,7 @@ class Vector3d(Object3d):
         """
         assert self.size == 1, "`get_nearest` only works for single vectors."
         tiebreak = Vector3d.zvector() if tiebreak is None else tiebreak
-        eps = 1e-9 if inclusive else 0.
+        eps = 1e-9 if inclusive else 0.0
         cosines = x.dot(self).data
         mask = np.logical_and(-1 - eps < cosines, cosines < 1 + eps)
         x = x[mask]

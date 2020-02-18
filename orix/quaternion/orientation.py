@@ -113,6 +113,7 @@ class Misorientation(Rotation):
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
             import tqdm
+
             symmetry_pairs = tqdm.tqdm(symmetry_pairs, total=Gl.size * Gr.size)
         orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
         o_inside = self.__class__.identity(self.shape)
@@ -137,10 +138,10 @@ class Misorientation(Rotation):
         cls = self.__class__.__name__
         shape = str(self.shape)
         s1, s2 = self._symmetry[0].name, self._symmetry[1].name
-        s2 = '' if s2 == '1' else s2
-        symm = s1 + (s2 and ', ') + s2
+        s2 = "" if s2 == "1" else s2
+        symm = s1 + (s2 and ", ") + s2
         data = np.array_str(self.data, precision=4, suppress_small=True)
-        rep = '{} {} {}\n{}'.format(cls, shape, symm, data)
+        rep = "{} {} {}\n{}".format(cls, shape, symm, data)
         return rep
 
 
@@ -192,26 +193,28 @@ class Orientation(Misorientation):
     def __sub__(self, other):
         if isinstance(other, Orientation):
             misorientation = Misorientation(self * ~other)
-            m_inside = misorientation.set_symmetry(self.symmetry, other.symmetry).squeeze()
+            m_inside = misorientation.set_symmetry(
+                self.symmetry, other.symmetry
+            ).squeeze()
             return m_inside
         return NotImplemented
 
 
 def _distance_1(misorientation, verbose):
     from itertools import combinations_with_replacement as icombinations
+
     s_1, s_2 = misorientation._symmetry
     distance = np.empty((misorientation.size, misorientation.size))
     index_pairs = icombinations(range(misorientation.size), 2)
     if verbose:
         from tqdm import tqdm
+
         index_pairs = tqdm(index_pairs, total=misorientation.size ** 2)
     for i, j in index_pairs:
         idxi = np.unravel_index(i, misorientation.shape)
         idxj = np.unravel_index(j, misorientation.shape)
         m_1, m_2 = misorientation[idxi], misorientation[idxj]
-        mis2orientation = (
-            s_2.outer(~m_1).outer(s_1).outer(s_1).outer(m_2).outer(s_2)
-        )
+        mis2orientation = s_2.outer(~m_1).outer(s_1).outer(s_1).outer(m_2).outer(s_2)
 
         axis = (0, len(misorientation.shape) + 1, len(misorientation.shape) + 2, -1)
         d = mis2orientation.angle.data.min(axis=axis)
@@ -222,16 +225,18 @@ def _distance_1(misorientation, verbose):
 
 def _distance_2(misorientation, verbose):
     if misorientation.size > 1e4:  # pragma no cover
-        confirm = input('Large datasets may crash your RAM.\nAre you sure? (y/n) ')
-        if confirm != 'y':
-            raise InterruptedError('Aborted')
+        confirm = input("Large datasets may crash your RAM.\nAre you sure? (y/n) ")
+        if confirm != "y":
+            raise InterruptedError("Aborted")
     from itertools import product as iproduct
+
     S_1, S_2 = misorientation._symmetry
     mis2orientation = (~misorientation).outer(S_1).outer(S_1).outer(misorientation)
     distance = np.full(misorientation.shape + misorientation.shape, np.infty)
     symmetry_pairs = iproduct(S_2, S_2)
     if verbose:
         from tqdm import tqdm
+
         symmetry_pairs = tqdm(symmetry_pairs, total=S_2.size ** 2)
     for s_1, s_2 in symmetry_pairs:
         m = s_1 * mis2orientation * s_2

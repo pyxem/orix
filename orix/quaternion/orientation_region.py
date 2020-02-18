@@ -52,7 +52,9 @@ def _get_large_cell_normals(s1, s2):
     planes2.data[np.isnan(planes2.data)] = 0
     normals[:, 0] = planes1
     normals[:, 1] = planes2
-    normals: Rotation = Rotation.from_neo_euler(normals).flatten().unique(antipodal=False)
+    normals: Rotation = Rotation.from_neo_euler(normals).flatten().unique(
+        antipodal=False
+    )
     if not normals.size:
         return normals
     _, inv = normals.axis.unique(return_inverse=True)
@@ -62,7 +64,9 @@ def _get_large_cell_normals(s1, s2):
         n = normals[inv == i]
         axes_unique.append(n.axis.data[0])
         angles_unique.append(n.angle.data.max())
-    normals = Rotation.from_neo_euler(AxAngle.from_axes_angles(np.array(axes_unique), angles_unique))
+    normals = Rotation.from_neo_euler(
+        AxAngle.from_axes_angles(np.array(axes_unique), angles_unique)
+    )
     return normals
 
 
@@ -99,8 +103,9 @@ def get_proper_groups(Gl, Gr):
         elif not Gl.contains_inversion and Gr.contains_inversion:
             return Gl.laue_proper_subgroup, Gr.proper_subgroup
         else:
-            raise NotImplementedError('Both groups are improper, '
-                                      'and do not contain inversion.')
+            raise NotImplementedError(
+                "Both groups are improper, " "and do not contain inversion."
+            )
 
 
 class OrientationRegion(Rotation):
@@ -124,13 +129,19 @@ class OrientationRegion(Rotation):
         #     disjoint = disjoint.laue
         fundamental_sector = disjoint.fundamental_sector()
         fundamental_sector_normals = Rotation.from_neo_euler(
-            AxAngle.from_axes_angles(fundamental_sector, np.pi))
-        normals = Rotation(np.concatenate(
-            [large_cell_normals.data, fundamental_sector_normals.data]))
+            AxAngle.from_axes_angles(fundamental_sector, np.pi)
+        )
+        normals = Rotation(
+            np.concatenate([large_cell_normals.data, fundamental_sector_normals.data])
+        )
         orientation_region = cls(normals)
         vertices = orientation_region.vertices()
         if vertices.size:
-            orientation_region = orientation_region[np.any(np.isclose(orientation_region.dot_outer(vertices).data, 0), axis=1)]
+            orientation_region = orientation_region[
+                np.any(
+                    np.isclose(orientation_region.dot_outer(vertices).data, 0), axis=1
+                )
+            ]
         return orientation_region
 
     def vertices(self):
@@ -145,8 +156,11 @@ class OrientationRegion(Rotation):
         if len(normal_combinations) < 1:
             return Rotation.empty()
         c1, c2, c3 = zip(*normal_combinations)
-        c1, c2, c3 = Rotation.stack(c1).flatten(), Rotation.stack(
-            c2).flatten(), Rotation.stack(c3).flatten()
+        c1, c2, c3 = (
+            Rotation.stack(c1).flatten(),
+            Rotation.stack(c2).flatten(),
+            Rotation.stack(c3).flatten(),
+        )
         v = Rotation.triple_cross(c1, c2, c3)
         v = v[~np.any(np.isnan(v.data), axis=-1)]
         v = v[v < self].unique()
@@ -165,13 +179,13 @@ class OrientationRegion(Rotation):
     def __gt__(self, other):
         c = Quaternion(self).dot_outer(Quaternion(other)).data
         inside = np.logical_or(
-            np.all(np.greater_equal(c, 0), axis=0),
-            np.all(np.less_equal(c, 0), axis=0)
+            np.all(np.greater_equal(c, 0), axis=0), np.all(np.less_equal(c, 0), axis=0)
         )
         return inside
 
     def get_plot_data(self):
         from orix.vector import Vector3d
+
         theta = np.linspace(0, 2 * np.pi + 1e-9, 361)
         rho = np.linspace(0, np.pi, 181)
         theta, rho = np.meshgrid(theta, rho)
@@ -181,7 +195,7 @@ class OrientationRegion(Rotation):
             return Rotation.from_neo_euler(AxAngle.from_axes_angles(g, np.pi))
         d = (-self.axis).dot_outer(g.unit).data
         x = n * d
-        x = 2 * np.arctan(x**-1)
+        x = 2 * np.arctan(x ** -1)
         x[x < 0] = np.pi
         x = np.min(x, axis=0)
         r = Rotation.from_neo_euler(AxAngle.from_axes_angles(g.unit, x))

@@ -135,15 +135,24 @@ class Quaternion(Object3d):
         elif isinstance(other, Vector3d):
             a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
             x, y, z = other.x.data, other.y.data, other.z.data
-            x_new = (a ** 2 + b ** 2 - c ** 2 - d ** 2) * x + 2 * ((a * c + b * d) * z + (b * c - a * d) * y)
-            y_new = (a ** 2 - b ** 2 + c ** 2 - d ** 2) * y + 2 * ((a * d + b * c) * x + (c * d - a * b) * z)
-            z_new = (a ** 2 - b ** 2 - c ** 2 + d ** 2) * z + 2 * ((a * b + c * d) * y + (b * d - a * c) * x)
+            x_new = (a ** 2 + b ** 2 - c ** 2 - d ** 2) * x + 2 * (
+                (a * c + b * d) * z + (b * c - a * d) * y
+            )
+            y_new = (a ** 2 - b ** 2 + c ** 2 - d ** 2) * y + 2 * (
+                (a * d + b * c) * x + (c * d - a * b) * z
+            )
+            z_new = (a ** 2 - b ** 2 - c ** 2 + d ** 2) * z + 2 * (
+                (a * b + c * d) * y + (b * d - a * c) * x
+            )
             return other.__class__(np.stack((x_new, y_new, z_new), axis=-1))
         return NotImplemented
 
     def outer(self, other):
         """Compute the outer product of this quaternion and the other object."""
-        def e(x, y): return np.multiply.outer(x, y)
+
+        def e(x, y):
+            return np.multiply.outer(x, y)
+
         if isinstance(other, Quaternion):
             q = np.zeros(self.shape + other.shape + (4,), dtype=float)
             sa, oa = self.data[..., 0], other.data[..., 0]
@@ -158,13 +167,20 @@ class Quaternion(Object3d):
         elif isinstance(other, Vector3d):
             a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
             x, y, z = other.x.data, other.y.data, other.z.data
-            x_new = e(a ** 2 + b ** 2 - c ** 2 - d ** 2, x) + 2 * (e(a * c + b * d, z) + e(b * c - a * d, y))
-            y_new = e(a ** 2 - b ** 2 + c ** 2 - d ** 2, y) + 2 * (e(a * d + b * c, x) + e(c * d - a * b, z))
-            z_new = e(a ** 2 - b ** 2 - c ** 2 + d ** 2, z) + 2 * (e(a * b + c * d, y) + e(b * d - a * c, x))
+            x_new = e(a ** 2 + b ** 2 - c ** 2 - d ** 2, x) + 2 * (
+                e(a * c + b * d, z) + e(b * c - a * d, y)
+            )
+            y_new = e(a ** 2 - b ** 2 + c ** 2 - d ** 2, y) + 2 * (
+                e(a * d + b * c, x) + e(c * d - a * b, z)
+            )
+            z_new = e(a ** 2 - b ** 2 - c ** 2 + d ** 2, z) + 2 * (
+                e(a * b + c * d, y) + e(b * d - a * c, x)
+            )
             v = np.stack((x_new, y_new, z_new), axis=-1)
             return other.__class__(v)
         raise NotImplementedError(
-            "This operation is currently not avaliable in orix, please use outer with other of type: Quaternion or Vector3d")
+            "This operation is currently not avaliable in orix, please use outer with other of type: Quaternion or Vector3d"
+        )
 
     def dot(self, other):
         """Scalar : the dot product of this quaternion and the other."""
@@ -192,14 +208,38 @@ class Quaternion(Object3d):
         q1a, q1b, q1c, q1d = q1.a.data, q1.b.data, q1.c.data, q1.d.data
         q2a, q2b, q2c, q2d = q2.a.data, q2.b.data, q2.c.data, q2.d.data
         q3a, q3b, q3c, q3d = q3.a.data, q3.b.data, q3.c.data, q3.d.data
-        a = + q1b * q2c * q3d - q1b * q3c * q2d - q2b * q1c * q3d \
-            + q2b * q3c * q1d + q3b * q1c * q2d - q3b * q2c * q1d
-        b = + q1a * q3c * q2d - q1a * q2c * q3d + q2a * q1c * q3d \
-            - q2a * q3c * q1d - q3a * q1c * q2d + q3a * q2c * q1d
-        c = + q1a * q2b * q3d - q1a * q3b * q2d - q2a * q1b * q3d \
-            + q2a * q3b * q1d + q3a * q1b * q2d - q3a * q2b * q1d
-        d = + q1a * q3b * q2c - q1a * q2b * q3c + q2a * q1b * q3c \
-            - q2a * q3b * q1c - q3a * q1b * q2c + q3a * q2b * q1c
+        a = (
+            +q1b * q2c * q3d
+            - q1b * q3c * q2d
+            - q2b * q1c * q3d
+            + q2b * q3c * q1d
+            + q3b * q1c * q2d
+            - q3b * q2c * q1d
+        )
+        b = (
+            +q1a * q3c * q2d
+            - q1a * q2c * q3d
+            + q2a * q1c * q3d
+            - q2a * q3c * q1d
+            - q3a * q1c * q2d
+            + q3a * q2c * q1d
+        )
+        c = (
+            +q1a * q2b * q3d
+            - q1a * q3b * q2d
+            - q2a * q1b * q3d
+            + q2a * q3b * q1d
+            + q3a * q1b * q2d
+            - q3a * q2b * q1d
+        )
+        d = (
+            +q1a * q3b * q2c
+            - q1a * q2b * q3c
+            + q2a * q1b * q3c
+            - q2a * q3b * q1c
+            - q3a * q1b * q2c
+            + q3a * q2b * q1c
+        )
         q = cls(np.vstack((a, b, c, d)).T)
         return q
 

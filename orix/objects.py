@@ -17,4 +17,9 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from orix.quaternion.orientation import Orientation, Misorientation  # pragma: no cover
-from orix.vector.neo_euler import NeoEuler, Homochoric, Rodrigues, AxAngle  # pragma: no cover
+from orix.vector.neo_euler import (
+    NeoEuler,
+    Homochoric,
+    Rodrigues,
+    AxAngle,
+)  # pragma: no cover
