@@ -3,7 +3,7 @@ language: python
 env:
   global:
     - DEPS="ipython tqdm"
-    - TEST_DEPS="pytest pytest-cov>2.8 coveralls coverage<5"
+    - TEST_DEPS="pytest>=5.0 pytest-cov>=2.8.1 coveralls>=1.10 coverage>=5.0"
 
 matrix:
   include:
