@@ -24,7 +24,7 @@ matrix:
 
 sudo: True #for Miniconda
 
-before_install:
+install:
   # Completes the installation of miniconda
   - chmod +x miniconda.sh;
   -  ./miniconda.sh -b -p $HOME/miniconda;
@@ -35,8 +35,6 @@ before_install:
   - conda config --append channels conda-forge;
   - conda create -n testenv --yes python=$PYTHON;
   - conda activate testenv;
-
-install:
   - conda install -y $DEPS $TEST_DEPS;
   - pip install .
 
