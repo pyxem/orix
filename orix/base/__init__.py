@@ -24,13 +24,15 @@ def check(obj, cls):
         try:
             obj = cls(obj)
         except BaseException:
-            raise ValueError('Could not turn {} (type {}) into {}'.format(
-                obj, obj.__class__.__name__, cls.__name__))
+            raise ValueError(
+                "Could not turn {} (type {}) into {}".format(
+                    obj, obj.__class__.__name__, cls.__name__
+                )
+            )
     return obj
 
 
 class DimensionError(Exception):
-
     def __init__(self, this, data):
         class_name = this.__class__.__name__
         required_dimension = this.dim
@@ -39,7 +41,8 @@ class DimensionError(Exception):
             "{} requires data of dimension {} "
             "but received dimension {}.".format(
                 class_name, required_dimension, received_dimension
-            ))
+            )
+        )
 
 
 class Object3d:
@@ -70,17 +73,17 @@ class Object3d:
 
     @property
     def data(self):
-        return self._data[..., :self.dim]
+        return self._data[..., : self.dim]
 
     @data.setter
     def data(self, data):
-        self._data[..., :self.dim] = data
+        self._data[..., : self.dim] = data
 
     def __repr__(self):
         name = self.__class__.__name__
         shape = str(self.shape)
         data = np.array_str(self.data, precision=4, suppress_small=True)
-        return '\n'.join([name + ' ' + shape, data])
+        return "\n".join([name + " " + shape, data])
 
     def __getitem__(self, key):
         data = np.atleast_2d(self.data[key])
@@ -118,7 +121,7 @@ class Object3d:
     def stack(cls, sequence):
         sequence = [s._data for s in sequence]
         stack = np.stack(sequence, axis=-2)
-        obj = cls(stack[..., :cls.dim])
+        obj = cls(stack[..., : cls.dim])
         obj._data = stack
         return obj
 
@@ -156,8 +159,10 @@ class Object3d:
         """
         data = self.flatten()._data.round(9)
         data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
-        _, idx, inv = np.unique(data.round(4), axis=0, return_index=True, return_inverse=True)
-        obj = self.__class__(data[np.sort(idx), :self.dim])
+        _, idx, inv = np.unique(
+            data.round(4), axis=0, return_index=True, return_inverse=True
+        )
+        obj = self.__class__(data[np.sort(idx), : self.dim])
         obj._data = data[np.sort(idx)]
         if return_index and return_inverse:
             return obj, idx, inv
@@ -171,12 +176,15 @@ class Object3d:
     @property
     def norm(self):
         from orix.scalar import Scalar
+
         return Scalar(np.sqrt(np.sum(np.square(self.data), axis=-1)))
 
     @property
     def unit(self):
-        with np.errstate(divide='ignore', invalid='ignore'):
-            obj = self.__class__(np.nan_to_num(self.data / self.norm.data[..., np.newaxis]))
+        with np.errstate(divide="ignore", invalid="ignore"):
+            obj = self.__class__(
+                np.nan_to_num(self.data / self.norm.data[..., np.newaxis])
+            )
             return obj
 
     def squeeze(self):

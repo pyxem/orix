@@ -16,9 +16,9 @@ axes = [
 ]
 
 angles = [
-    - 2 * np.pi,
-    - 5 * np.pi / 6,
-    - np.pi / 3,
+    -2 * np.pi,
+    -5 * np.pi / 6,
+    -np.pi / 3,
     0,
     np.pi / 12,
     np.pi / 3,
@@ -27,11 +27,12 @@ angles = [
     np.pi / 7,
 ]
 
-axangles = [np.array(angle) * Vector3d(axis).unit for axis in axes for angle in
-            angles]
-axangles += [np.array(angle) * Vector3d(axis).unit for axis in
-             itertools.combinations_with_replacement(axes, 2) for angle in
-             itertools.combinations_with_replacement(angles, 2)]
+axangles = [np.array(angle) * Vector3d(axis).unit for axis in axes for angle in angles]
+axangles += [
+    np.array(angle) * Vector3d(axis).unit
+    for axis in itertools.combinations_with_replacement(axes, 2)
+    for angle in itertools.combinations_with_replacement(angles, 2)
+]
 
 
 @pytest.fixture(params=axangles[:100])
@@ -47,20 +48,23 @@ def test_axis(axangle):
     assert axangle.axis.shape == axangle.shape
 
 
-@pytest.mark.parametrize('axis, angle, expected_axis', [
-    ((2, 1, 1), np.pi / 4, (0.816496, 0.408248, 0.408248)),
-    (Vector3d((2, 0, 0)), -2 * np.pi, (-1, 0, 0))
-])
+@pytest.mark.parametrize(
+    "axis, angle, expected_axis",
+    [
+        ((2, 1, 1), np.pi / 4, (0.816496, 0.408248, 0.408248)),
+        (Vector3d((2, 0, 0)), -2 * np.pi, (-1, 0, 0)),
+    ],
+)
 def test_from_axes_angles(axis, angle, expected_axis):
     ax = AxAngle.from_axes_angles(axis, angle)
     assert np.allclose(ax.axis.data, expected_axis)
     assert np.allclose(ax.angle.data, abs(angle))
 
 
-@pytest.mark.parametrize('rotation, expected', [
-    (Rotation([1, 0, 0, 0]), [0, 0, 0]),
-    (Rotation([0, 1, 0, 0]), [np.pi, 0, 0])
-])
+@pytest.mark.parametrize(
+    "rotation, expected",
+    [(Rotation([1, 0, 0, 0]), [0, 0, 0]), (Rotation([0, 1, 0, 0]), [np.pi, 0, 0])],
+)
 def test_from_rotation(rotation, expected):
     axangle = AxAngle.from_rotation(rotation)
     assert np.allclose(axangle.data, expected)
