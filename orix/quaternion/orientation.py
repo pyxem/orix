@@ -128,7 +128,7 @@ class Misorientation(Rotation):
         o_inside._symmetry = (Gl, Gr)
         return o_inside
 
-    def distance(self, speed=1, verbose=False, split_size=100):
+    def distance(self, speed=2, verbose=False, split_size=100):
         """Symmetry reduced distance
 
         Compute the shortest distance between all orientations considering
@@ -160,10 +160,10 @@ class Misorientation(Rotation):
         array([[3.14159265, 1.57079633],
                [1.57079633, 0.        ]])
         """
-        if speed == 2:
-            distance = _distance_2(self, verbose, split_size)
-        else:
+        if speed == 1:
             distance = _distance_1(self, verbose)
+        else:
+            distance = _distance_2(self, verbose, split_size)
         return distance.reshape(self.shape + self.shape)
 
     def __repr__(self):
