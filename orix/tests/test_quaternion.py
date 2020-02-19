@@ -5,19 +5,18 @@ from orix.quaternion import Quaternion, check_quaternion
 from orix.vector import Vector3d
 
 values = [
-    (0.707, 0., 0., 0.707),
+    (0.707, 0.0, 0.0, 0.707),
     (0.5, -0.5, -0.5, 0.5),
-    (0., 0., 0., 1.),
-    (1., 1., 1., 1.),
-    (
-        (0.5, -0.5, -0.5, 0.5),
-        (0., 0., 0., 1.),
+    (0.0, 0.0, 0.0, 1.0),
+    (1.0, 1.0, 1.0, 1.0),
+    ((0.5, -0.5, -0.5, 0.5), (0.0, 0.0, 0.0, 1.0),),
+    Quaternion(
+        [
+            [(0.0, 0.0, 0.0, 1.0), (0.707, 0.0, 0.0, 0.707),],
+            [(1.0, 1.0, 1.0, 1.0), (0.707, 0.0, 0.0, 0.707),],
+        ]
     ),
-    Quaternion([
-        [(0., 0., 0., 1.), (0.707, 0., 0., 0.707), ],
-        [(1., 1., 1., 1.), (0.707, 0., 0., 0.707), ]
-    ]),
-    np.array((4, 3, 2, 1))
+    np.array((4, 3, 2, 1)),
 ]
 
 
@@ -34,14 +33,11 @@ def identity():
 singles = [
     (0.881, 0.665, 0.123, 0.517),
     (0.111, 0.222, 0.333, 0.444),
-    (
-        (1, 0, 0.5, 0),
-        (3, 1, -1, -2),
-    ),
+    ((1, 0, 0.5, 0), (3, 1, -1, -2),),
     [
-        [[0.343, 0.343, 0, -0.333], [-7, -8, -9, -10], ],
-        [[0.00001, -0.0001, 0.001, -0.01], [0, 0, 0, 0]]
-    ]
+        [[0.343, 0.343, 0, -0.333], [-7, -8, -9, -10],],
+        [[0.00001, -0.0001, 0.001, -0.01], [0, 0, 0, 0]],
+    ],
 ]
 
 
@@ -50,9 +46,7 @@ def something(request):
     return Quaternion(request.param)
 
 
-@pytest.mark.parametrize("input_length", [
-    1, 2, 3, 5, 6, 8,
-])
+@pytest.mark.parametrize("input_length", [1, 2, 3, 5, 6, 8,])
 def test_init(input_length):
     with pytest.raises(DimensionError):
         Quaternion(tuple(range(input_length)))
@@ -63,7 +57,7 @@ def test_neg(quaternion):
 
 
 def test_norm(quaternion):
-    assert np.all(quaternion.norm.data == (quaternion.data**2).sum(axis=-1)**0.5)
+    assert np.all(quaternion.norm.data == (quaternion.data ** 2).sum(axis=-1) ** 0.5)
 
 
 def test_unit(quaternion):
@@ -76,10 +70,18 @@ def test_conj(quaternion):
 
 
 def test_mul(quaternion, something):
-    sa, sb, sc, sd = something.a.data, something.b.data, \
-        something.c.data, something.d.data
-    qa, qb, qc, qd = quaternion.a.data, quaternion.b.data, \
-        quaternion.c.data, quaternion.d.data
+    sa, sb, sc, sd = (
+        something.a.data,
+        something.b.data,
+        something.c.data,
+        something.d.data,
+    )
+    qa, qb, qc, qd = (
+        quaternion.a.data,
+        quaternion.b.data,
+        quaternion.c.data,
+        quaternion.d.data,
+    )
     q1 = quaternion * something
     assert isinstance(q1, Quaternion)
     assert np.allclose(q1.a.data, sa * qa - sb * qb - sc * qc - sd * qd)
@@ -105,7 +107,9 @@ def test_inverse(quaternion):
 
 
 def test_dot(quaternion, something):
-    assert np.all(quaternion.dot(quaternion).data == np.sum(quaternion.data ** 2, axis=-1))
+    assert np.all(
+        quaternion.dot(quaternion).data == np.sum(quaternion.data ** 2, axis=-1)
+    )
     assert np.all(quaternion.dot(something).data == something.dot(quaternion).data)
 
 
@@ -117,13 +121,19 @@ def test_dot_outer(quaternion, something):
             assert np.allclose(d[i + j].data, quaternion[i].dot(something[j]).data)
 
 
-@pytest.mark.parametrize('quaternion, vector, expected', [
-    ((0.5, 0.5, 0.5, 0.5), (1, 0, 0), (0, 1, 0)),
-    ((np.sqrt(2) / 2, 0, 0, np.sqrt(2) / 2), (0, 1, 0), (-1, 0, 0)),
-    ((0, 1, 0, 0), (0, 1, 0), (0, -1, 0)),
-    ((0, np.sqrt(3) / 3, np.sqrt(3) / 3, -np.sqrt(3) / 3), (1, 1, 0), (1 / 3, 1 / 3, -4 / 3)),
-
-])
+@pytest.mark.parametrize(
+    "quaternion, vector, expected",
+    [
+        ((0.5, 0.5, 0.5, 0.5), (1, 0, 0), (0, 1, 0)),
+        ((np.sqrt(2) / 2, 0, 0, np.sqrt(2) / 2), (0, 1, 0), (-1, 0, 0)),
+        ((0, 1, 0, 0), (0, 1, 0), (0, -1, 0)),
+        (
+            (0, np.sqrt(3) / 3, np.sqrt(3) / 3, -np.sqrt(3) / 3),
+            (1, 1, 0),
+            (1 / 3, 1 / 3, -4 / 3),
+        ),
+    ],
+)
 def test_multiply_vector(quaternion, vector, expected):
     q = Quaternion(quaternion)
     v = Vector3d(vector)
@@ -163,4 +173,4 @@ def test_edgecase_outer(quaternion):
 
 @pytest.mark.xfail(strict=True, reason="NotImplemented")
 def test_failing_mul(quaternion):
-    quaternion * 'cant-mult-by-this'
+    quaternion * "cant-mult-by-this"

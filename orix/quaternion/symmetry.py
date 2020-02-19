@@ -48,17 +48,21 @@ class Symmetry(Rotation):
 
     """
 
-    name = ''
+    name = ""
 
     def __repr__(self):
         cls = self.__class__.__name__
         shape = str(self.shape)
         data = np.array_str(self.data, precision=4, suppress_small=True)
-        rep = '{} {}{pad}{}\n{}'.format(cls, shape, self.name, data, pad=self.name and ' ')
+        rep = "{} {}{pad}{}\n{}".format(
+            cls, shape, self.name, data, pad=self.name and " "
+        )
         return rep
 
     def __and__(self, other):
-        return Symmetry.from_generators(*[g for g in self.subgroups if g in other.subgroups])
+        return Symmetry.from_generators(
+            *[g for g in self.subgroups if g in other.subgroups]
+        )
 
     @property
     def order(self):
@@ -158,16 +162,19 @@ class Symmetry(Rotation):
         s = self[self.angle > 0]
         if s.size == 0:
             return {}
-        return {Vector3d(a): b + 1 for a, b in
-                zip(*np.unique(s.axis.data, axis=0, return_counts=True))}
+        return {
+            Vector3d(a): b + 1
+            for a, b in zip(*np.unique(s.axis.data, axis=0, return_counts=True))
+        }
 
     def get_highest_order_axis(self):
         axis_orders = self.get_axis_orders()
         if len(axis_orders) == 0:
             return Vector3d.zvector(), np.infty
         highest_order = max(axis_orders.values())
-        axes = Vector3d.stack([ao for ao in axis_orders if
-                               axis_orders[ao] == highest_order]).flatten()
+        axes = Vector3d.stack(
+            [ao for ao in axis_orders if axis_orders[ao] == highest_order]
+        ).flatten()
         return axes, highest_order
 
     @property
@@ -181,14 +188,14 @@ class Symmetry(Rotation):
     def fundamental_sector(self):
         from orix.vector.neo_euler import AxAngle
         from orix.vector.spherical_region import SphericalRegion
+
         symmetry = self.antipodal
         symmetry = symmetry[symmetry.angle > 0]
         axes, order = symmetry.get_highest_order_axis()
         if order > 6:
             return Vector3d.empty()
         axis = Vector3d.zvector().get_nearest(axes, inclusive=True)
-        r = Rotation.from_neo_euler(
-            AxAngle.from_axes_angles(axis, 2 * np.pi / order))
+        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2 * np.pi / order))
 
         diads = symmetry.diads
         nearest_diad = axis.get_nearest(diads)
@@ -196,7 +203,7 @@ class Symmetry(Rotation):
             nearest_diad = axis.perpendicular
 
         n1 = axis.cross(nearest_diad).unit
-        n2 = - (r * n1)
+        n2 = -(r * n1)
         next_diad = r * nearest_diad
         n = Vector3d.stack((n1, n2)).flatten()
         sr = SphericalRegion(n.unique())
@@ -208,7 +215,7 @@ class Symmetry(Rotation):
         r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2 * np.pi / order))
         nearest_diad = next_diad
         n1 = axis.cross(nearest_diad).unit
-        n2 = - (r * n1)
+        n2 = -(r * n1)
         n = Vector3d(np.concatenate((n.data, n1.data, n2.data)))
         sr = SphericalRegion(n.unique())
         return sr
@@ -216,144 +223,181 @@ class Symmetry(Rotation):
 
 # Triclinic
 C1 = Symmetry((1, 0, 0, 0))
-C1.name = '1'
+C1.name = "1"
 Ci = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)])
 Ci.improper = [0, 1]
-Ci.name = '-1'
+Ci.name = "-1"
 
 # Special generators
-_mirror_xy = Symmetry([(1, 0, 0, 0), (0, 0.75**0.5, -0.75**0.5, 0)])
+_mirror_xy = Symmetry([(1, 0, 0, 0), (0, 0.75 ** 0.5, -(0.75 ** 0.5), 0)])
 _mirror_xy.improper = [0, 1]
 _cubic = Symmetry([(1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)])
 
 # 2-fold rotations
 C2x = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)])
-C2x.name = '211'
+C2x.name = "211"
 C2y = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)])
-C2y.name = '121'
+C2y.name = "121"
 C2z = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)])
-C2z.name = '112'
+C2z.name = "112"
 C2 = Symmetry(C2z)
-C2.name = '2'
+C2.name = "2"
 
 # Mirrors
 Csx = Symmetry([(1, 0, 0, 0), (0, 1, 0, 0)])
 Csx.improper = [0, 1]
-Csx.name = 'm11'
+Csx.name = "m11"
 Csy = Symmetry([(1, 0, 0, 0), (0, 0, 1, 0)])
 Csy.improper = [0, 1]
-Csy.name = '1m1'
+Csy.name = "1m1"
 Csz = Symmetry([(1, 0, 0, 0), (0, 0, 0, 1)])
 Csz.improper = [0, 1]
-Csz.name = '11m'
+Csz.name = "11m"
 Cs = Symmetry(Csz)
-Cs.name = 'm'
+Cs.name = "m"
 
 # Monoclinic
 C2h = Symmetry.from_generators(C2, Cs)
-C2h.name = '2/m'
+C2h.name = "2/m"
 
 # Orthorhombic
 D2 = Symmetry.from_generators(C2z, C2x, C2y)
-D2.name = '222'
+D2.name = "222"
 C2v = Symmetry.from_generators(C2x, Csz)
-C2v.name = 'mm2'
+C2v.name = "mm2"
 D2h = Symmetry.from_generators(Csz, Csx, Csy)
-D2h.name = 'mmm'
+D2h.name = "mmm"
 
 # 4-fold rotations
-C4x = Symmetry([
-    (1, 0, 0, 0),
-    (0.5**0.5, 0.5**0.5, 0, 0),
-    (0, 1, 0, 0),
-    (-0.5**0.5, 0.5**0.5, 0, 0),
-])
-C4y = Symmetry([
-    (1, 0, 0, 0),
-    (0.5**0.5, 0, 0.5**0.5, 0),
-    (0, 0, 1, 0),
-    (-0.5**0.5, 0, 0.5**0.5, 0),
-])
-C4z = Symmetry([
-    (1, 0, 0, 0),
-    (0.5**0.5, 0, 0, 0.5**0.5),
-    (0, 0, 0, 1),
-    (-0.5**0.5, 0, 0, 0.5**0.5),
-])
+C4x = Symmetry(
+    [
+        (1, 0, 0, 0),
+        (0.5 ** 0.5, 0.5 ** 0.5, 0, 0),
+        (0, 1, 0, 0),
+        (-(0.5 ** 0.5), 0.5 ** 0.5, 0, 0),
+    ]
+)
+C4y = Symmetry(
+    [
+        (1, 0, 0, 0),
+        (0.5 ** 0.5, 0, 0.5 ** 0.5, 0),
+        (0, 0, 1, 0),
+        (-(0.5 ** 0.5), 0, 0.5 ** 0.5, 0),
+    ]
+)
+C4z = Symmetry(
+    [
+        (1, 0, 0, 0),
+        (0.5 ** 0.5, 0, 0, 0.5 ** 0.5),
+        (0, 0, 0, 1),
+        (-(0.5 ** 0.5), 0, 0, 0.5 ** 0.5),
+    ]
+)
 C4 = Symmetry(C4z)
-C4.name = '4'
+C4.name = "4"
 
 # Tetragonal
 S4 = Symmetry.from_generators(C2, Ci)
-S4.name = '-4'
+S4.name = "-4"
 C4h = Symmetry.from_generators(C4, Cs)
-C4h.name = '4/m'
+C4h.name = "4/m"
 D4 = Symmetry.from_generators(C4, C2x, C2y)
-D4.name = '422'
+D4.name = "422"
 C4v = Symmetry.from_generators(C4, Csx)
-C4v.name = '4mm'
+C4v.name = "4mm"
 D2d = Symmetry.from_generators(D2, _mirror_xy)
-D2d.name = '-42m'
+D2d.name = "-42m"
 D4h = Symmetry.from_generators(C4h, Csx, Csy)
-D4h.name = '4/mmm'
+D4h.name = "4/mmm"
 
 # 3-fold rotations
-C3x = Symmetry([(1, 0, 0, 0), (0.5, 0.75**0.5, 0, 0), (-0.5, 0.75**0.5, 0, 0)])
-C3y = Symmetry([(1, 0, 0, 0), (0.5, 0, 0.75**0.5, 0), (-0.5, 0, 0.75**0.5, 0)])
-C3z = Symmetry([(1, 0, 0, 0), (0.5, 0, 0, 0.75**0.5), (-0.5, 0, 0, 0.75**0.5)])
+C3x = Symmetry([(1, 0, 0, 0), (0.5, 0.75 ** 0.5, 0, 0), (-0.5, 0.75 ** 0.5, 0, 0)])
+C3y = Symmetry([(1, 0, 0, 0), (0.5, 0, 0.75 ** 0.5, 0), (-0.5, 0, 0.75 ** 0.5, 0)])
+C3z = Symmetry([(1, 0, 0, 0), (0.5, 0, 0, 0.75 ** 0.5), (-0.5, 0, 0, 0.75 ** 0.5)])
 C3 = Symmetry(C3z)
-C3.name = '3'
+C3.name = "3"
 
 # Trigonal
 S6 = Symmetry.from_generators(C3, Ci)
-S6.name = '-3'
+S6.name = "-3"
 D3x = Symmetry.from_generators(C3, C2x)
-D3x.name = '321'
+D3x.name = "321"
 D3y = Symmetry.from_generators(C3, C2y)
-D3y.name = '312'
+D3y.name = "312"
 D3 = Symmetry(D3x)
-D3.name = '32'
+D3.name = "32"
 C3v = Symmetry.from_generators(C3, Csx)
-C3v.name = '3m'
+C3v.name = "3m"
 D3d = Symmetry.from_generators(S6, Csx)
-D3d.name = '-3m'
+D3d.name = "-3m"
 
 # Hexagonal
 C6 = Symmetry.from_generators(C3, C2)
-C6.name = '6'
+C6.name = "6"
 C3h = Symmetry.from_generators(C3, Cs)
-C3h.name = '-6'
+C3h.name = "-6"
 C6h = Symmetry.from_generators(C6, Cs)
-C6h.name = '6/m'
+C6h.name = "6/m"
 D6 = Symmetry.from_generators(C6, C2x, C2y)
-D6.name = '622'
+D6.name = "622"
 C6v = Symmetry.from_generators(C6, Csx)
-C6v.name = '6mm'
+C6v.name = "6mm"
 D3h = Symmetry.from_generators(C3, C2y, Csz)
-D3h.name = '-6m2'
+D3h.name = "-6m2"
 D6h = Symmetry.from_generators(D6, Csz)
-D6h.name = '6/mmm'
+D6h.name = "6/mmm"
 
 # Cubic
 T = Symmetry.from_generators(C2, _cubic)
-T.name = '23'
+T.name = "23"
 Th = Symmetry.from_generators(T, Ci)
-Th.name = 'm-3'
+Th.name = "m-3"
 O = Symmetry.from_generators(C4, _cubic, C2x)
-O.name = '432'
+O.name = "432"
 Td = Symmetry.from_generators(T, _mirror_xy)
-Td.name = '-43m'
+Td.name = "-43m"
 Oh = Symmetry.from_generators(O, Ci)
-Oh.name = 'm-3m'
+Oh.name = "m-3m"
 
 _groups = [
-    C1, Ci,  # triclinic
-    C2x, C2y, C2z, Csx, Csy, Csz, C2h,  # monoclinic
-    D2, C2v, D2h,  # orthorhombic
-    C4, S4, C4h, D4, C4v, D2d, D4h,  # tetragonal
-    C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
-    C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
-    T, Th, O, Td, Oh  # cubic
+    C1,
+    Ci,  # triclinic
+    C2x,
+    C2y,
+    C2z,
+    Csx,
+    Csy,
+    Csz,
+    C2h,  # monoclinic
+    D2,
+    C2v,
+    D2h,  # orthorhombic
+    C4,
+    S4,
+    C4h,
+    D4,
+    C4v,
+    D2d,
+    D4h,  # tetragonal
+    C3,
+    S6,
+    D3x,
+    D3y,
+    D3,
+    C3v,
+    D3d,  # trigonal
+    C6,
+    C3h,
+    C6h,
+    D6,
+    C6v,
+    D3h,
+    D6h,  # hexagonal
+    T,
+    Th,
+    O,
+    Td,
+    Oh,  # cubic
 ]
 _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]
 
