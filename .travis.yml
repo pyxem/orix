@@ -1,4 +1,4 @@
-language: python
+language: shell
 
 env:
   global:
@@ -8,21 +8,23 @@ env:
 matrix:
   include:
   - name: "Python 3.8 on Linux"
+    language: python
     env: export PYTHON=3.8
     before_install: wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   
   - name: "Python 3.7 on Linux"
+    language: python 
     env: export PYTHON=3.7
     before_install: wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   
   - name: "Python 3.6 on Linux"
+    language: python 
     env: export PYTHON=3.6
     before_install: wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   
   - name: "Python 3.7 on MacOS"
     env: export PYTHON=3.7
     os: osx
-    language: shell
     before_install: curl "https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" -o miniconda.sh
 
   - name: "Python 3.7 on Windows"
