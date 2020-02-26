@@ -47,7 +47,6 @@ sudo: True #for Miniconda
 
 install:
   # Completes the installation of miniconda
-  # if linux/osx
   # setup environment
   - source $HOME/miniconda/bin/activate root;
   - conda update -y conda;
