@@ -1,4 +1,4 @@
-|Travis|_ |Coveralls|_ |pypi_version|_  |doi|_
+|Travis|_ |Coveralls|_ |pypi_version|_  |doi|_ |black|_
 
 .. |Travis| image:: https://travis-ci.org/pyxem/orix.svg?branch=master
 .. _Travis: https://travis-ci.org/pyxem/orix
