@@ -42,11 +42,13 @@ def test_RotationPlot_methods():
     misori = Misorientation([1, 1, 1, 1])  # any will do
     fig = plt.figure(figsize=(6, 3))
     gridspec = plt.GridSpec(1, 1, left=0, right=1, bottom=0, top=1, hspace=0.05)
-    ax_misori = fig.add_subplot(gridspec[0], projection='axangle', proj_type='ortho', aspect='equal')
+    ax_misori = fig.add_subplot(
+        gridspec[0], projection="axangle", proj_type="ortho", aspect="equal"
+    )
     ax_misori.scatter(misori)
     ax_misori.plot(misori)
     ax_misori.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
-    plt.close('all')
+    plt.close("all")
 
     # clear the edge case
     ax_misori.transform(np.asarray([1, 1, 1]))

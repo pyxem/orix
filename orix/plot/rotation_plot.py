@@ -28,6 +28,7 @@ class RotationPlot(Axes3D):
 
     def transform(self, xs):
         from orix.quaternion.rotation import Rotation
+
         if isinstance(xs, Rotation):
             transformed = self.transformation_class.from_rotation(xs.get_plot_data())
         else:
@@ -50,13 +51,15 @@ class RotationPlot(Axes3D):
 
 class RodriguesPlot(RotationPlot):
     """Plot rotations in a Rodrigues-Frank projection."""
-    name = 'rodrigues'
+
+    name = "rodrigues"
     transformation_class = Rodrigues
 
 
 class AxAnglePlot(RotationPlot):
     """Plot rotations in an Axes-Angle projection."""
-    name = 'axangle'
+
+    name = "axangle"
     transformation_class = AxAngle
 
 

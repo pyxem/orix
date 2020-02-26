@@ -10,39 +10,40 @@ def vector(request):
     return Vector3d(request.param)
 
 
-@pytest.fixture(params=[(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)])
+@pytest.fixture(params=[(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)])
 def orientation(request):
     return Orientation(request.param)
 
 
-@pytest.mark.parametrize('orientation, symmetry, expected', [
-    ([(1, 0, 0, 0)], C1, [(1, 0, 0, 0)]),
-    ([(1, 0, 0, 0)], C4, [(1, 0, 0, 0)]),
-    ([(1, 0, 0, 0)], D3, [(1, 0, 0, 0)]),
-    ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
-    ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
-
-    # 7pi/12 -C2-> # 7pi/12
-    ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
-    # 7pi/12 -C3-> # 7pi/12
-    ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
-    # 7pi/12 -C4-> # pi/12
-    ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
-    # 7pi/12 -O-> # pi/12
-    ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
-
-], indirect=['orientation'])
+@pytest.mark.parametrize(
+    "orientation, symmetry, expected",
+    [
+        ([(1, 0, 0, 0)], C1, [(1, 0, 0, 0)]),
+        ([(1, 0, 0, 0)], C4, [(1, 0, 0, 0)]),
+        ([(1, 0, 0, 0)], D3, [(1, 0, 0, 0)]),
+        ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
+        ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
+        # 7pi/12 -C2-> # 7pi/12
+        ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
+        # 7pi/12 -C3-> # 7pi/12
+        ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
+        # 7pi/12 -C4-> # pi/12
+        ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
+        # 7pi/12 -O-> # pi/12
+        ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
+    ],
+    indirect=["orientation"],
+)
 def test_set_symmetry(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
     assert np.allclose(o.data, expected, atol=1e-3)
 
 
-@pytest.mark.parametrize('symmetry, vector', [
-    (C1, (1, 2, 3)),
-    (C2, (1, -1, 3)),
-    (C3, (1, 1, 1)),
-    (O, (0, 1, 0))
-], indirect=['vector'])
+@pytest.mark.parametrize(
+    "symmetry, vector",
+    [(C1, (1, 2, 3)), (C2, (1, -1, 3)), (C3, (1, 1, 1)), (O, (0, 1, 0))],
+    indirect=["vector"],
+)
 def test_orientation_persistence(symmetry, vector):
     v = symmetry.outer(vector).flatten()
     o = Orientation.random()
@@ -54,66 +55,70 @@ def test_orientation_persistence(symmetry, vector):
     assert v1._tuples == v2._tuples
 
 
-@pytest.mark.parametrize('orientation, symmetry, expected', [
-    ((1, 0, 0, 0), C1, [0]),
-    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
-    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
-    ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
-    (
-        [
-            [(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)],
-            [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
-        ],
-        C4,
-        [[[[0, 0], [0, np.pi / 4]],
-          [[0, 0], [0, np.pi / 4]]],
-         [[[0, 0], [0, np.pi / 4]],
-          [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]]]
-    ),
-
-
-], indirect=['orientation'])
-@pytest.mark.filterwarnings('ignore::DeprecationWarning') # speed=1 deprecated after 0.2.0
+@pytest.mark.parametrize(
+    "orientation, symmetry, expected",
+    [
+        ((1, 0, 0, 0), C1, [0]),
+        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
+        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
+        ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
+        (
+            [
+                [(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)],
+                [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
+            ],
+            C4,
+            [
+                [[[0, 0], [0, np.pi / 4]], [[0, 0], [0, np.pi / 4]]],
+                [[[0, 0], [0, np.pi / 4]], [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]],
+            ],
+        ),
+    ],
+    indirect=["orientation"],
+)
+@pytest.mark.filterwarnings(
+    "ignore::DeprecationWarning"
+)  # speed=1 deprecated, will be removed in 0.3.0
 def test_distance_1(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
     distance = o.distance(speed=1, verbose=True)
     assert np.allclose(distance, expected, atol=1e-3)
 
 
-@pytest.mark.parametrize('orientation, symmetry, expected', [
-    ((1, 0, 0, 0), C1, [0]),
-    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
-    ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
-    ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
-    (
-        [
-            [(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)],
-            [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
-        ],
-        C4,
-        [[[[0, 0], [0, np.pi / 4]],
-          [[0, 0], [0, np.pi / 4]]],
-         [[[0, 0], [0, np.pi / 4]],
-          [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]]]
-    ),
-
-
-], indirect=['orientation'])
+@pytest.mark.parametrize(
+    "orientation, symmetry, expected",
+    [
+        ((1, 0, 0, 0), C1, [0]),
+        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
+        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
+        ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
+        (
+            [
+                [(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)],
+                [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
+            ],
+            C4,
+            [
+                [[[0, 0], [0, np.pi / 4]], [[0, 0], [0, np.pi / 4]]],
+                [[[0, 0], [0, np.pi / 4]], [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]],
+            ],
+        ),
+    ],
+    indirect=["orientation"],
+)
 def test_distance_2(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
     distance = o.distance(speed=2, verbose=True)
     assert np.allclose(distance, expected, atol=1e-3)
 
 
-@pytest.mark.parametrize('symmetry', [
-    C1, C2, C4, D2, D6, T, O
-])
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
 def test_getitem(orientation, symmetry):
     o = orientation.set_symmetry(symmetry)
     assert o[0].symmetry._tuples == symmetry._tuples
 
 
-@pytest.mark.parametrize('Gl', [C4, C2])
+@pytest.mark.parametrize("Gl", [C4, C2])
 def test_equivalent(Gl):
     """ Tests that the property Misorientation.equivalent runs without error
 
