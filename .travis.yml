@@ -40,10 +40,8 @@ install:
   - if [[ "$TRAVIS_OS_NAME" =~ ^(linux|osx)$ ]]; then
        chmod +x miniconda.sh;
        ./miniconda.sh -b -p $HOME/miniconda;
+       source $HOME/miniconda/bin/activate root;
     fi
-  -  hash -r;
-  # setup environment
-  - source $HOME/miniconda/bin/activate root;
   - conda update -y conda;
   - conda config --append channels conda-forge;
   - conda create -n testenv --yes python=$PYTHON;
