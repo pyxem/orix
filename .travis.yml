@@ -29,8 +29,10 @@ sudo: True #for Miniconda
 
 install:
   # Completes the installation of miniconda
-  - chmod +x miniconda.sh;
-  -  ./miniconda.sh -b -p $HOME/miniconda;
+  - if [[ "$TRAVIS_OS_NAME" =~ ^(linux|osx)$ ]]; then
+       chmod +x miniconda.sh
+       ./miniconda.sh -b -p $HOME/miniconda
+    fi
   -  hash -r;
   # setup environment
   - source $HOME/miniconda/bin/activate root;
