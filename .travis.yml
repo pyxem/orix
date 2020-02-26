@@ -49,7 +49,7 @@ install:
   - conda create -n testenv --yes python=$PYTHON;
   - if [[ "$TRAVIS_OS_NAME" =~ ^(linux|osx)$ ]]; then
       conda activate testenv;
-    else # windows
+    else
       . activate testenv;
     fi
   - conda activate testenv;
