@@ -235,6 +235,7 @@ class Orientation(Misorientation):
 
 
 def _distance_1(misorientation, verbose):
+
     warnings.warn("Use _distance_2 instead", DeprecationWarning)
     s_1, s_2 = misorientation._symmetry
     distance = np.empty((misorientation.size, misorientation.size))
@@ -264,7 +265,6 @@ def _distance_2(misorientation, verbose, split_size=100):
     outer_range = range(0, num_orientations, split_size)
     if verbose:
         from tqdm import tqdm
-
         outer_range = tqdm(outer_range, total=np.ceil(num_orientations / split_size))
     S_1_outer_S_1 = S_1.outer(S_1)
 
@@ -292,4 +292,10 @@ def _distance_2(misorientation, verbose, split_size=100):
     # Symmetrize the matrix for convenience
     i_lower = np.tril_indices(distance.shape[0], -1)
     distance[i_lower] = distance.T[i_lower]
+    symmetry_pairs = tqdm(symmetry_pairs, total=S_2.size ** 2)
+    for s_1, s_2 in symmetry_pairs:
+        m = s_1 * mis2orientation * s_2
+        axis = (len(misorientation.shape), len(misorientation.shape) + 1)
+        angle = m.angle.data.min(axis=axis)
+        distance = np.minimum(distance, angle)
     return distance
