@@ -163,6 +163,7 @@ class Misorientation(Rotation):
                [1.57079633, 0.        ]])
         """
         if speed == 1:
+            warnings.warn("This method is inferior and be removed in 0.3.0; use speed=2 instead", RuntimeWarning)
             distance = _distance_1(self, verbose)
         else:
             distance = _distance_2(self, verbose, split_size)
