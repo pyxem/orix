@@ -2,7 +2,6 @@ language: shell
 
 env:
   global:
-    - DEPS="ipython tqdm"
     - TEST_DEPS="pytest>=5.0 pytest-cov>=2.8.1 coveralls>=1.10 coverage>=5.0"
 
 matrix:
@@ -53,7 +52,7 @@ install:
       . activate testenv;
     fi
   - conda activate testenv;
-  - conda install -y $DEPS $TEST_DEPS;
+  - conda install -y $TEST_DEPS;
   - pip install .
 
 script:
