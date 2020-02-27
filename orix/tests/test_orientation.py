@@ -76,6 +76,10 @@ def test_orientation_persistence(symmetry, vector):
     ],
     indirect=["orientation"],
 )
+@pytest.mark.filterwarnings(
+    "ignore::DeprecationWarning"
+)  # speed=1 deprecated, will be removed in 0.3.0
+
 def test_distance_1(orientation, symmetry, expected):
     o = orientation.set_symmetry(symmetry)
     distance = o.distance(speed=1, verbose=True)
