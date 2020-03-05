@@ -27,8 +27,7 @@ setup(
         "numpy",
         "scipy",
         "matplotlib",
-        "tqdm",
-        "h5py",
+        "tqdm"
     ],
     package_data={
         "": ["LICENSE", "readme.rst"],
