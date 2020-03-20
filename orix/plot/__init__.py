@@ -17,3 +17,4 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from .rotation_plot import RodriguesPlot
+from .crystal_map_plot import _plot_crystal_map

@@ -17,3 +17,4 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from .crystal_map import CrystalMap
+from .phase_list import Phase, PhaseList
