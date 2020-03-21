@@ -236,6 +236,12 @@ def convert_unit(value, unit):
 
     """
 
+    # If unit is 'px', we assume 'um', and revert unit in the end
+    unit_is_px = False
+    if unit == 'px':
+        unit = 'um'
+        unit_is_px = True
+
     # Create lookup-table with units and power
     lookup_table = []
     letters = 'yzafpnum kMGTPEZY'
@@ -256,5 +262,8 @@ def convert_unit(value, unit):
     new_value = value_in_metres / lookup_table[suitable_unit_idx][1]
     new_unit = lookup_table[suitable_unit_idx][0]
     factor = lookup_table[suitable_unit_idx][1] / lookup_table[new_unit_idx][1]
+
+    if unit_is_px:
+        new_unit = 'px'
 
     return new_value, new_unit, factor

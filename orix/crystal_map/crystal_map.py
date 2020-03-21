@@ -63,7 +63,7 @@ class CrystalMap:
     rotations : orix.quaternion.rotation.Rotation
         Rotations of each pixel. Always 1D.
     scan_unit : str
-        Length unit of map, default is 'um'.
+        Length unit of map, default is 'px'.
     shape : tuple
         Shape of map in pixels.
     size : int
@@ -104,7 +104,7 @@ class CrystalMap:
         """
         Parameters
         ----------
-        rotations : numpy.ndarray
+        rotations : orix.quaternion.rotation.Rotation
             Rotation of each pixel.
         phase_id : numpy.ndarray
             Phase ID of each pixel. The map shape is set to this array's
@@ -123,12 +123,8 @@ class CrystalMap:
 
         # Set rotations (always 1D, needed for masking)
         if not isinstance(rotations, Rotation):
-            try:
-                rotations = Rotation.from_euler(rotations)
-            except (IndexError, TypeError):
-                raise ValueError(
-                    f"rotations must be of type {np.ndarray} or {Rotation}, "
-                    f"not {type(rotations)}."
+            raise ValueError(
+                f"rotations must be of type {Rotation}, not {type(rotations)}."
                 )
         self._rotations = rotations.reshape(np.prod(rotations.shape))
 
@@ -170,7 +166,7 @@ class CrystalMap:
             self._indexed = indexed
 
         # Set scan unit
-        self._scan_unit = 'um'
+        self._scan_unit = 'px'
 
         # Set properties (calling prop.setter ensures reshaping to map shape)
         self.prop = {}
@@ -430,6 +426,7 @@ class CrystalMap:
             indexed=mask[slices],
             step_sizes=self.step_sizes,  # TODO: Slice when dimensions are lost
         )
+        new_map.scan_unit = self.scan_unit
 
         # Get new phase list
         new_phase_ids = np.unique(self.phase_id[mask])
