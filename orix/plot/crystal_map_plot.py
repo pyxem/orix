@@ -90,7 +90,7 @@ def _plot_crystal_map(
             axes=ax,
             map_width=crystal_map.shape[1],
             scan_unit=crystal_map.scan_unit,
-            step_size=crystal_map.dx[-1],
+            step_size=crystal_map.step_sizes[-1],
         )
 
     return fig, ax, im

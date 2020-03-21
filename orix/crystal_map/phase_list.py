@@ -32,6 +32,13 @@ for k, v in {**mcolors.BASE_COLORS, **mcolors.CSS4_COLORS}.items():
     ALL_COLORS[k] = mcolors.to_hex(v)
 ALL_COLORS.update(mcolors.XKCD_COLORS)
 
+# Point group alias mapping
+# Why is this needed? E.g., in EDAX TSL OIM Analysis 7.2, point group 432 is
+# entered as 43...
+POINT_GROUP_ALIASES = {
+    '432': '43',
+}
+
 
 class Phase:
     """Name, crystal symmetry, and color of a phase in a crystallographic
@@ -39,17 +46,35 @@ class Phase:
 
     Attributes
     ----------
-    name : str, None
+    name : str
         Phase name.
-    symmetry : orix.quaternion.symmetries.Symmetry, None
+    symmetry : orix.quaternion.symmetries.Symmetry
         Crystal symmetries of the phase.
     color : str
         Name of phase color in Matplotlib's list of named colors.
     color_rgb : tuple
         RGB values of phase color, obtained from the color name.
+
+    Methods
+    -------
+    deepcopy()
+        Return a deep copy using :py:func:`~copy.deepcopy` function.
     """
 
     def __init__(self, name=None, symmetry=None, color=None):
+        """
+        Parameters
+        ----------
+        name : str, optional
+            Phase name. If ``None`` is passed (default), name is set to
+            ``None``.
+        symmetry : str, optional
+            Point group of phase's crystal symmetry. If ``None`` is passed
+            (default), it set to ``None``.
+        color : str, optional
+            Phase color. If ``None`` is passed (default), it is set to
+            'tab:blue' (first among the default Matplotlib colors).
+        """
         self.name = name
         self.symmetry = symmetry
         if color is None:
@@ -98,12 +123,13 @@ class Phase:
     @symmetry.setter
     def symmetry(self, value):
         if isinstance(value, str):
-            # TODO: Mapping of more equivalent point group aliases
-            if value == '43':
-                value = '432'
-            for s in _groups:
-                if value.replace('-', '') == s.name.replace('-', ''):
-                    value = s
+            for correct, alias in POINT_GROUP_ALIASES.items():
+                if value == alias:
+                    value = correct
+                    break
+            for symmetry in _groups:
+                if value.replace('-', '') == symmetry.name.replace('-', ''):
+                    value = symmetry
                     break
         if not isinstance(value, Symmetry) and value is not None:
             raise ValueError(
@@ -124,13 +150,14 @@ class Phase:
         )
 
     def deepcopy(self):
+        """Return a deep copy using :py:func:`~copy.deepcopy` function."""
         return copy.deepcopy(self)
 
 
 class PhaseList:
-    """A dictionary of phases in a crystallographic map.
+    """A list of phases in a crystallographic map.
 
-    Each phase in the dictionary must has a unique phase id as key.
+    Each phase in the list must have a unique phase id as key.
 
     Attributes
     ----------
@@ -144,25 +171,52 @@ class PhaseList:
         List of tuples with three entries, RGB, defining phase colors.
     phase_ids : list of int
         List of unique phase indices in a crystallographic map as imported.
+
+    Methods
+    -------
+    deepcopy()
+        Return a deep copy using :py:func:`~copy.deepcopy` function.
     """
 
     def __init__(
             self,
-            phase=None,
+            phases=None,
             names=None,
             symmetries=None,
             colors=None,
             phase_ids=None,
     ):
+        """
+        Parameters
+        ----------
+        phases : orix.crystal_map.Phase, a list of orix.crystal_map.Phase\
+                or a dictionary of orix.crystal_map.Phase
+            A list or dict of phases or a single phase. The other arguments
+            are ignored if this is passed.
+        names : str or list of str
+            Phase names.
+        symmetries : str or list of str
+            Point group symmetries.
+        colors : str or list of str
+            Phase colors.
+        phase_ids : int, list of int or numpy.ndarray of int
+            Phase IDs.
+        """
         d = {}
-        if isinstance(phase, dict):
+        if isinstance(phases, list):
             try:
-                if isinstance(next(iter(phase.values())), Phase):
-                    d = phase
+                if isinstance(next(iter(phases)), Phase):
+                    d = dict(zip(np.arange(len(phases)), phases))
             except StopIteration:
                 pass
-        elif isinstance(phase, Phase):
-            d = {0: phase}
+        elif isinstance(phases, dict):
+            try:
+                if isinstance(next(iter(phases.values())), Phase):
+                    d = phases
+            except StopIteration:
+                pass
+        elif isinstance(phases, Phase):
+            d = {0: phases}
         else:
             # Ensure possible single strings have iterables of length 1
             if isinstance(names, str):
@@ -223,36 +277,32 @@ class PhaseList:
 
     @property
     def names(self):
-        """List of phase names in the list."""
-        # Also returns None
+        """Return a list of phase names in the list."""
         return [phase.name for _, phase in self]
 
     @property
     def symmetries(self):
-        """List of crystal symmetries of phases in the list."""
-        # Also returns None
+        """Return a list of crystal symmetries of phases in the list."""
         return [phase.symmetry for _, phase in self]
 
     @property
     def colors(self):
-        """List of phase color names in the list."""
-        # Also returns None
+        """Return a list of phase color names in the list."""
         return [phase.color for _, phase in self]
 
     @property
     def colors_rgb(self):
-        """List of phase color RGB values in the list."""
-        # Also returns None
+        """Return a list of phase color RGB values in the list."""
         return [phase.color_rgb for _, phase in self]
 
     @property
     def size(self):
-        """Number of phases in the list."""
+        """Return number of phases in the list."""
         return len(self._dict.items())
 
     @property
     def phase_ids(self):
-        """Unique phase IDs in the list of phases."""
+        """Return unique phase IDs in the list of phases."""
         return list(self._dict.keys())
 
     def __getitem__(self, key):
@@ -428,4 +478,5 @@ class PhaseList:
         return representation
 
     def deepcopy(self):
+        """Return a deep copy using :py:func:`~copy.deepcopy` function."""
         return copy.deepcopy(self)

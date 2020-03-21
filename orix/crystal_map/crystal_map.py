@@ -41,8 +41,6 @@ class CrystalMap:
     ----------
     all_indexed : bool
         Whether all pixels are indexed.
-    dx : numpy.ndarray
-        Step sizes in each map direction.
     indexed : numpy.ndarray
         Boolean array with True for indexed pixels.
     ndim : int
@@ -70,6 +68,8 @@ class CrystalMap:
         Shape of map in pixels.
     size : int
         Number of pixels in map.
+    step_sizes : numpy.ndarray of floats
+        An array of the step size in each map direction.
 
     Methods
     -------
@@ -93,82 +93,81 @@ class CrystalMap:
 
     def __init__(
             self,
-            rotations=None,
-            phase_id=None,
+            rotations,
+            phase_id,
             phase_name=None,
             symmetry=None,
             prop=None,
             indexed=None,
-            dx=None,
+            step_sizes=None,
     ):
         """
         Parameters
         ----------
-        rotations : numpy.ndarray, optional
+        rotations : numpy.ndarray
             Rotation of each pixel.
-        phase_id : numpy.ndarray, optional
-            Phase ID of each pixel.
+        phase_id : numpy.ndarray
+            Phase ID of each pixel. The map shape is set to this array's
+            shape.
         phase_name : str or list of str, optional
             Name of phases.
         symmetry : str or list of str, optional
             Point group of crystal symmetries of phases in the map.
         prop : dict of numpy.ndarray, optional
-            Dictionary of quality metrics or other properties of each
-            pixel.
+            Dictionary of properties of each pixel.
         indexed : numpy.ndarray
             Boolean array with True for indexed pixels.
-        dx : numpy.ndarray, optional
+        step_sizes : numpy.ndarray, optional
             Step sizes in each map direction.
         """
 
-        if phase_id is None:
-            phase_id = np.arange(rotations.size, dtype=int)
-
-        # Set phase ID
-        self._phase_id = phase_id.astype(int)
-
-        # Set map size, shape and number of dimensions
-        map_shape = phase_id.shape
-        map_ndim = phase_id.ndim
-
         # Set rotations (always 1D, needed for masking)
-        if rotations is not None and not isinstance(rotations, Rotation):
+        if not isinstance(rotations, Rotation):
             try:
                 rotations = Rotation.from_euler(rotations)
             except (IndexError, TypeError):
-                # TODO: Update error message with more detailed restrictions
                 raise ValueError(
-                    f"Rotations '{rotations}' must be of type numpy.ndarray."
+                    f"rotations must be of type {np.ndarray} or {Rotation}, "
+                    f"not {type(rotations)}."
                 )
         self._rotations = rotations.reshape(np.prod(rotations.shape))
 
-        # Set step sizes
-        if dx is None:
-            self._dx = np.ones(map_ndim)
-        elif isinstance(dx, Number):
-            # Assume same step size in all directions
-            self._dx = np.ones(map_ndim) * dx
-        elif len(dx) != map_ndim:
+        # Set phase ID
+        try:
+            self._phase_id = phase_id.astype(int)
+            map_shape = phase_id.shape
+            map_ndim = phase_id.ndim
+        except (TypeError, AttributeError):
             raise ValueError(
-                f"{dx} must have same number of entries as number of map "
-                f"dimensions {map_ndim}"
+                f"phase_id must be of type {np.ndarray}, not {type(phase_id)}.")
+
+        # Create phase list
+        unique_phase_ids = np.unique(phase_id).astype(int)
+        self.phases = PhaseList(
+            names=phase_name,
+            symmetries=symmetry,
+            phase_ids=unique_phase_ids,
+        )
+
+        # Set step sizes
+        if step_sizes is None:
+            self._step_sizes = np.ones(map_ndim)
+        elif isinstance(step_sizes, Number):
+            # Assume same step size in all directions
+            self._step_sizes = np.ones(map_ndim) * step_sizes
+        elif len(step_sizes) != map_ndim:
+            raise ValueError(
+                f"{step_sizes} must have same number of entries as number of "
+                f"map dimensions {map_ndim}"
             )
         else:
-            self._dx = dx
+            self._step_sizes = np.array(step_sizes)
 
         # Set whether pixels are indexed
         if indexed is None:
             self._indexed = np.ones(map_shape, dtype=bool)
         else:
             self._indexed = indexed
-
-        # Create phase list
-        phase_ids = np.unique(phase_id).astype(int)
-        self._phases = PhaseList(
-            names=phase_name,
-            symmetries=symmetry,
-            phase_ids=phase_ids,
-        )
 
         # Set scan unit
         self._scan_unit = 'um'
@@ -187,15 +186,10 @@ class CrystalMap:
             return self._phase_id
 
     @property
-    def phases(self):
-        """Return a list of phases in the map (and potentially more)."""
-        return self._phases
-
-    @property
     def phases_in_map(self):
         """Return a list of phases in the map."""
         # Since self.phases might contain phases not in the map
-        return self._phases[
+        return self.phases[
             np.intersect1d(np.unique(self._phase_id), self.phases.phase_ids)
         ]
 
@@ -211,7 +205,7 @@ class CrystalMap:
     @property
     def orientations(self):
         """Return an Orientation object, which is always 1D."""
-        phases = self._phases
+        phases = self.phases_in_map
         if phases.size == 1:
             phase = phases[int(phases.phase_ids[0])]
             return Orientation(self.rotations).set_symmetry(phase.symmetry)
@@ -272,24 +266,24 @@ class CrystalMap:
             return pixel_id
 
     @property
-    def dx(self):
+    def step_sizes(self):
         """Return pixel step size in each direction in scan units."""
-        return self._dx
+        return self._step_sizes
 
-    @dx.setter
-    def dx(self, value):
+    @step_sizes.setter
+    def step_sizes(self, value):
         """Set pixel step size in each direction in scan units."""
         ndim = self.ndim
         if isinstance(value, Number):
             # Assume same step size in all directions
-            self._dx = np.zeros(ndim) * value
+            self._step_sizes = np.ones(ndim) * value
         elif len(value) != ndim:
             raise ValueError(
                 f"{value} must have same number of entries as number of map "
                 f"dimensions {ndim}."
             )
         else:
-            self._dx = np.array(value)
+            self._step_sizes = np.array(value)
 
     @property
     def size(self):
@@ -355,7 +349,7 @@ class CrystalMap:
         # Set up necessary slices
         slices = list([0] * map_ndim)  # Ensure list to avoid potential errors
 
-        # Create mask
+        # Declare mask
         mask = np.zeros(map_shape, dtype=bool)
 
         if (
@@ -434,13 +428,13 @@ class CrystalMap:
             phase_id=self.phase_id[slices],
             prop={name: array[slices] for name, array in self.prop.items()},
             indexed=mask[slices],
-            dx=self.dx,  # TODO: Slice when dimensions are lost
+            step_sizes=self.step_sizes,  # TODO: Slice when dimensions are lost
         )
 
         # Get new phase list
         new_phase_ids = np.unique(self.phase_id[mask])
         new_phase_list = self.phases[new_phase_ids]
-        new_map._phases = new_phase_list
+        new_map.phases = new_phase_list
 
         return new_map
 
