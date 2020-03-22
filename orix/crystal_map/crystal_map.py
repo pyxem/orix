@@ -29,13 +29,13 @@ from orix.plot import _plot_crystal_map
 
 
 class CrystalMap:
-    """Crystallographic map storing rotations, phases and pixel properties.
+    """Crystallographic map of rotations, crystal phases and key
+     properties associated with every spatial coordinate in a 1D, 2D or 3D
+     space.
 
-    Phases and pixel properties are stored in the map shape, while
-    rotations are always stored as a 1D array.
-
-    This class is inspired by the EBSD class available in MTEX
-    [Bachmann2010]_.
+    Crystal phases and key properties are stored in the map shape, while
+    rotations are stored as a :class:`orix.quaternion.rotation.Rotation`
+    object with one spatial dimension.
 
     Attributes
     ----------
@@ -47,7 +47,7 @@ class CrystalMap:
         Number of map dimensions.
     orientations : orix.quaternion.orientation.Orientation
         Orientations of each pixel. Always 1D.
-    phase_id : numpy.ndarray
+    phase_id_map : numpy.ndarray
         Phase ID of each pixel as imported.
     phases : orix.crystal_map.PhaseList
         List of phases with their IDs, names, crystal symmetries and
@@ -55,8 +55,6 @@ class CrystalMap:
     phases_in_map : orix.crystal_map.PhaseList
         List of phases in the map, with their IDs, names, crystal
         symmetries and colors.
-    pixel_id : numpy.ndarray
-        ID of each map pixel.
     prop : dict
         Dictionary of numpy arrays of quality metrics or other properties
         of each pixel.
@@ -83,18 +81,12 @@ class CrystalMap:
         **kwargs)
         Return and plot map phases.
 
-    References
-    ----------
-    .. [Bachmann2010] F. Bachmann, R. Hielscher, H. Schaeben, "Texture\
-        Analysis with MTEX – Free and Open Source Software Toolbox," Solid
-        State Phenomena 160, 63–68, 2010.
-
     """
 
     def __init__(
             self,
             rotations,
-            phase_id,
+            phase_id_map,
             phase_name=None,
             symmetry=None,
             prop=None,
@@ -106,7 +98,7 @@ class CrystalMap:
         ----------
         rotations : orix.quaternion.rotation.Rotation
             Rotation of each pixel.
-        phase_id : numpy.ndarray
+        phase_id_map : numpy.ndarray
             Phase ID of each pixel. The map shape is set to this array's
             shape.
         phase_name : str or list of str, optional
@@ -130,15 +122,17 @@ class CrystalMap:
 
         # Set phase ID
         try:
-            self._phase_id = phase_id.astype(int)
-            map_shape = phase_id.shape
-            map_ndim = phase_id.ndim
+            self._phase_id = phase_id_map.astype(int)
+            map_shape = phase_id_map.shape
+            map_ndim = phase_id_map.ndim
         except (TypeError, AttributeError):
             raise ValueError(
-                f"phase_id must be of type {np.ndarray}, not {type(phase_id)}.")
+                f"phase_id_map must be of type {np.ndarray}, not"
+                f"{type(phase_id_map)}."
+            )
 
         # Create phase list
-        unique_phase_ids = np.unique(phase_id).astype(int)
+        unique_phase_ids = np.unique(phase_id_map).astype(int)
         self.phases = PhaseList(
             names=phase_name,
             symmetries=symmetry,
@@ -251,15 +245,6 @@ class CrystalMap:
                 raise ValueError(e)
 
         self._prop = reshaped_values
-
-    @property
-    def pixel_id(self):
-        """Return map pixel IDs as a numpy.ndarray of same shape as map."""
-        pixel_id = np.arange(self.size).reshape(self.shape)
-        if self.all_indexed is False:
-            return np.ma.masked_array(pixel_id, mask=~self.indexed)
-        else:
-            return pixel_id
 
     @property
     def step_sizes(self):
@@ -421,7 +406,7 @@ class CrystalMap:
         # Create new crystal map
         new_map = CrystalMap(
             rotations=self._rotations,  # Is sliced when calling self.rotations
-            phase_id=self.phase_id[slices],
+            phase_id_map=self.phase_id[slices],
             prop={name: array[slices] for name, array in self.prop.items()},
             indexed=mask[slices],
             step_sizes=self.step_sizes,  # TODO: Slice when dimensions are lost

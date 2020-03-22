@@ -260,7 +260,7 @@ class PhaseList:
                     color = all_colors[color_iter]
                     color_iter += 1
 
-                # Always return a unique phase_id
+                # Always return a unique phase_id_map
                 try:
                     phase_id = phase_ids[i]
                 except IndexError:
@@ -413,7 +413,7 @@ class PhaseList:
             return PhaseList(d)
 
     def __setitem__(self, key, value):
-        """Add phase to list with a key (phase_id) and value (symmetry)."""
+        """Add phase to list with a key (phase_id_map) and value (symmetry)."""
         if key not in self.names:
             # Make sure the new phase gets a new color
             color_new = None
@@ -447,16 +447,16 @@ class PhaseList:
         symmetry_names = ['None' if not i else i.name for i in self.symmetries]
 
         # Determine column widths (allowing PhaseList to be empty)
-        id_len = 3
-        name_len = 5
+        id_len = 2
+        name_len = 4
         if names:
-            name_len = max(max([len(i) for i in names]), 5)
+            name_len = max(max([len(i) for i in names]), name_len)
         sym_len = 8
         if symmetry_names:
-            sym_len = max(max([len(i) for i in symmetry_names]), 8)
-        col_len = 6
+            sym_len = max(max([len(i) for i in symmetry_names]), sym_len)
+        col_len = 5
         if self.colors:
-            col_len = max(max([len(i) for i in self.colors]), 6)
+            col_len = max(max([len(i) for i in self.colors]), col_len)
 
         # Header
         representation = (
