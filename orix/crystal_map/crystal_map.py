@@ -20,12 +20,10 @@ import copy
 from numbers import Number
 
 import numpy as np
-import matplotlib.patches as mpatches
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.orientation import Orientation
 from .phase_list import PhaseList
-from orix.plot import _plot_crystal_map
 
 
 class CrystalMap:
@@ -73,13 +71,6 @@ class CrystalMap:
     -------
     deepcopy()
         Return a deep copy using :py:func:`~copy.deepcopy` function.
-    plot_prop(
-        prop, colorbar=True, scalebar=True, padding=False, **kwargs)
-        Plot of a map property.
-    plot_phase(
-        overlay=None, legend=True, scalebar=True, padding=False,
-        **kwargs)
-        Return and plot map phases.
 
     """
 
@@ -109,27 +100,20 @@ class CrystalMap:
             Dictionary of properties of each pixel.
         indexed : numpy.ndarray
             Boolean array with True for indexed pixels.
-        step_sizes : numpy.ndarray, optional
+        step_sizes : float or iterable of floats, optional
             Step sizes in each map direction.
         """
 
         # Set rotations (always 1D, needed for masking)
         if not isinstance(rotations, Rotation):
             raise ValueError(
-                f"rotations must be of type {Rotation}, not {type(rotations)}."
-                )
+                f"rotations must be of type {Rotation}, not {type(rotations)}.")
         self._rotations = rotations.reshape(np.prod(rotations.shape))
 
         # Set phase ID
-        try:
-            self._phase_id = phase_id_map.astype(int)
-            map_shape = phase_id_map.shape
-            map_ndim = phase_id_map.ndim
-        except (TypeError, AttributeError):
-            raise ValueError(
-                f"phase_id_map must be of type {np.ndarray}, not"
-                f"{type(phase_id_map)}."
-            )
+        self._phase_id = phase_id_map.astype(int)
+        map_shape = phase_id_map.shape
+        map_ndim = phase_id_map.ndim
 
         # Create phase list
         unique_phase_ids = np.unique(phase_id_map).astype(int)
@@ -145,11 +129,6 @@ class CrystalMap:
         elif isinstance(step_sizes, Number):
             # Assume same step size in all directions
             self._step_sizes = np.ones(map_ndim) * step_sizes
-        elif len(step_sizes) != map_ndim:
-            raise ValueError(
-                f"{step_sizes} must have same number of entries as number of "
-                f"map dimensions {map_ndim}"
-            )
         else:
             self._step_sizes = np.array(step_sizes)
 
@@ -223,27 +202,11 @@ class CrystalMap:
     @prop.setter
     def prop(self, value):
         """Add a dict of properties of each pixel."""
-        e = (
-            f"{value} must be a dict with strings as keys and numpy.ndarrays as"
-            f" values of same size {self.size} as the map."
-        )
-        if not isinstance(value, dict):
-            raise ValueError(e)
-
         reshaped_values = {}
-        map_size = self.size
-        map_shape = self.shape
         for k, v in value.items():
             if not self.all_indexed:
                 v = np.ma.masked_array(v.ravel(), mask=~self.indexed.ravel())
-                v_size = v.compressed().size
-            else:
-                v_size = v.size
-            if isinstance(k, str) and v_size == map_size:
-                reshaped_values[k] = v.reshape(map_shape)
-            else:
-                raise ValueError(e)
-
+            reshaped_values[k] = v.reshape(self.shape)
         self._prop = reshaped_values
 
     @property
@@ -254,17 +217,9 @@ class CrystalMap:
     @step_sizes.setter
     def step_sizes(self, value):
         """Set pixel step size in each direction in scan units."""
-        ndim = self.ndim
-        if isinstance(value, Number):
-            # Assume same step size in all directions
-            self._step_sizes = np.ones(ndim) * value
-        elif len(value) != ndim:
-            raise ValueError(
-                f"{value} must have same number of entries as number of map "
-                f"dimensions {ndim}."
-            )
-        else:
-            self._step_sizes = np.array(value)
+        if isinstance(value, Number):  # Same step size in all directions
+            value = np.ones(self.ndim) * value
+        self._step_sizes = np.array(value)
 
     @property
     def size(self):
@@ -292,18 +247,7 @@ class CrystalMap:
     @indexed.setter
     def indexed(self, value):
         """Set boolean numpy.ndarray with indexed pixels set to True."""
-        if (
-                isinstance(value, np.ndarray)
-                and value.dtype == np.bool_
-                and value.size == self.size
-        ):
-            # Reshape if not same shape as map
-            self._indexed = value.reshape(self.shape)
-        else:
-            raise ValueError(
-                f"{value} must be a boolean array of same size as the map, "
-                f"{self.size}."
-            )
+        self._indexed = np.array(value.reshape(self.shape), dtype=bool)
 
     @property
     def all_indexed(self):
@@ -311,27 +255,92 @@ class CrystalMap:
         return np.count_nonzero(self._indexed) == self._indexed.size
 
     def __getattr__(self, item):
-        """Return class attribute or prop if item is in prop dict."""
-        prop = self.__getattribute__('_prop')
+        """Return class attribute or property if the attribute (`item`) is
+        in the `prop` dictionary.
+
+        The property array is masked if the crystal map is masked.
+        """
+        prop = self._prop
         if item in prop:
             if self.all_indexed is False:
                 return np.ma.masked_array(prop[item], mask=~self.indexed)
             else:
                 return prop[item]
-        else:  # Default behaviour
+        else:  # Python's default behaviour when looking up attributes
             return self.__getattribute__(item)
 
     def __getitem__(self, key):
-        # Get map shape, size and ndim once
+        """Return a new CrystalMap object.
+
+        Parameters
+        ----------
+        key : str, slice or boolean numpy.ndarray
+            If str, it must be a valid phase. If slice, it must be within
+            the map shape. If boolean array, it must be of map shape.
+
+        Examples
+        --------
+        A CrystalMap object can be indexed in multiple ways...
+
+        >>> cm
+        Phase  Orientations   Name       Symmetry  Color
+        1      5657 (48.4%)   austenite  432       tab:blue
+        2      6043 (51.6%)   ferrite    432       tab:orange
+        Properties: iq, ci, fit
+        Scan unit: um
+        >>> cm.shape
+        (100, 117)
+
+        ... by slicing
+
+        >>> cm2 = cm[20:40, 50:60]
+        >>> cm2
+        Phase  Orientations   Name       Symmetry  Color
+        1      148 (74.0%)    austenite  432       lime
+        2      52 (26.0%)     ferrite    432       r
+        Properties: iq, ci, fit, ci_times_iq
+        Scan unit: um
+        >>> cm2.shape
+        (20, 10)
+
+        ... by phase name(s)
+
+        >>> cm2 = cm["austenite"]
+        Phase  Orientations   Name       Symmetry  Color
+        1      5657 (100.0%)  austenite  432       tab:blue
+        Properties: iq, ci, fit
+        Scan unit: um
+        >>> cm2.shape
+        (100, 117)
+        >>> cm["austenite", "ferrite"]
+        Phase  Orientations   Name       Symmetry  Color
+        1      5657 (48.4%)   austenite  432       tab:blue
+        2      6043 (51.6%)   ferrite    432       tab:orange
+        Properties: iq, ci, fit
+        Scan unit: um
+
+        ... or by boolean arrays ((chained) conditional(s))
+
+        >>> cm[cm.ci > 0.81]
+        Phase  Orientations   Name       Symmetry  Color
+        1      4092 (44.8%)   austenite  432       tab:blue
+        2      5035 (55.2%)   ferrite    432       tab:orange
+        Properties: iq, ci, fit
+        Scan unit: um
+        >>> cm[(cm.iq > np.mean(cm.iq)) & (cm.phase_id == 1)]
+        Phase  Orientations   Name       Symmetry  Color
+        1      1890 (100.0%)  austenite  432       tab:blue
+        Properties: iq, ci, fit
+        Scan unit: um
+        """
+
+        # Get map shape and ndim
         map_shape = self.shape
-        map_size = self.size
         map_ndim = self.ndim
 
-        # Set up necessary slices
-        slices = list([0] * map_ndim)  # Ensure list to avoid potential errors
-
-        # Declare mask
+        # Set up necessary mask and slices
         mask = np.zeros(map_shape, dtype=bool)
+        slices = list([0] * map_ndim)  # Ensure list to avoid potential errors
 
         if (
                 isinstance(key, str) or
@@ -340,29 +349,13 @@ class CrystalMap:
             # Get data from phase(s)
             if not isinstance(key, tuple):  # Make single string iterable
                 key = (key,)
-
             for k in key:
-                match = False
                 for phase_id, phase in self.phases_in_map:
                     if k == phase.name:
                         mask[self.phase_id == phase_id] = True
-                        match = True
-                if match is False:
-                    raise IndexError(
-                        f"{k} is not among the available phases "
-                        f"{self.phases_in_map.names} in the map."
-                    )
         elif isinstance(key, np.ndarray) and key.dtype == np.bool_:
-            # Get data from conditional(s)
-            if key.size == map_size:
-                key = key.reshape(map_shape)
-            else:
-                raise IndexError(
-                    f"{key} must be of the same size as the map ({map_size}), "
-                    f"but is instead {key.size}."
-                )
-            if np.count_nonzero(key) == 0:
-                raise IndexError(f"Indexing condition match no map pixels.")
+            # Get data from boolean array
+            key = key.reshape(map_shape)
             mask = key
         elif (
                 isinstance(key, slice)
@@ -372,27 +365,11 @@ class CrystalMap:
                 )
         ):
             # Get data from slice(s)
-            if isinstance(key, tuple):
-                n_slices = len(key)
-                if n_slices > map_ndim:
-                    raise IndexError(
-                        f"Cannot slice {n_slices} dimensions when the map has "
-                        f"only {map_ndim}."
-                    )
-
-            # Overwrite entries in slices list
             if isinstance(key, slice):
                 key = (key,)
             for i, k in enumerate(key):
                 slices[i] = k
-            slices = tuple(slices)
-
-            # Slice mask
-            mask[slices] = True
-        else:
-            raise IndexError(
-                f"{key} must be a valid str, slice or boolean array."
-            )
+            mask[tuple(slices)] = True
 
         # Create slices if not created already
         if slices == list([0] * map_ndim):
@@ -401,11 +378,18 @@ class CrystalMap:
                 collapsed_dim = np.sum(mask, axis=dim_to_collapse)
                 non_zero = np.nonzero(collapsed_dim)
                 slices[i] = slice(np.min(non_zero), np.max(non_zero) + 1, None)
-            slices = tuple(slices)
+        slices = tuple(slices)
+
+        # Keep all rotations within slice. Pixels within slice where mask is
+        # False is masked out when calling self.rotations later
+        r = self._rotations.reshape(*map_shape)  # Same shape as mask
+        within_slice = np.zeros_like(mask)
+        within_slice[slices] = True
+        new_r = r[within_slice].flatten()  # 1D again
 
         # Create new crystal map
         new_map = CrystalMap(
-            rotations=self._rotations,  # Is sliced when calling self.rotations
+            rotations=new_r,
             phase_id_map=self.phase_id[slices],
             prop={name: array[slices] for name, array in self.prop.items()},
             indexed=mask[slices],
@@ -474,181 +458,3 @@ class CrystalMap:
     def deepcopy(self):
         """Return a deep copy using :py:func:`~copy.deepcopy` function."""
         return copy.deepcopy(self)
-
-    def plot_phase(
-            self,
-            overlay=None,
-            legend=True,
-            scalebar=True,
-            padding=True,
-            **kwargs,
-    ):
-        """Return and plot map phases.
-
-        Parameters
-        ----------
-        overlay : str, optional
-            Map property to use as alpha value. The property is adjusted
-            for maximum contrast.
-        legend : bool, optional
-            Whether to display a legend with phases in the map (default is
-            ``True``).
-        scalebar : bool, optional
-            Whether to add a scalebar (default is ``True``) along the last
-            map dimension.
-        padding : bool, optional
-            Whether to show white padding (default is ``True``). Setting
-            this to false removes all white padding outside of plot,
-            including pixel coordinate ticks.
-        **kwargs :
-            Optional keyword arguments passed to
-            :meth:`matplotlib.pyplot.imshow`.
-
-        Returns
-        -------
-        phase : numpy.ndarray
-            Phase array as passed to :meth:`matplotlib.pyplot.imshow` with
-            colors and potential alpha value if a valid `overlay` argument
-            was passed.
-        fig : matplotlib.figure.Figure
-            Top level container for all plot elements.
-        ax : matplotlib.axes.Axes
-            Axes object returned by :meth:`matplotlib.pyplot.subplots`.
-        im : matplotlib.image.AxesImage
-            Image object returned by :meth:`matplotlib.axes.Axes.imshow`.
-
-        Examples
-        --------
-        >>> cm
-        Phase  Orientations   Name       Symmetry  Color
-        1      5657 (48.4%)   austenite  432       tab:blue
-        2      6043 (51.6%)   ferrite    432       tab:orange
-        Properties: iq, ci, fit
-        Scan unit: um
-        >>> phase, fig, ax, im = cm.plot_phase(overlay='ci')
-        """
-
-        # Create 1D phase array and add RGB channels to each map pixel
-        n_channels = 3
-        phase = np.ones((np.prod(self.shape), n_channels))
-
-        # Color each map pixel with corresponding phase color RGB tuple
-        phase_id = self.phase_id.ravel()
-        for i, color in zip(np.unique(phase_id), self.phases.colors_rgb):
-            mask = phase_id == i
-            phase[mask] = phase[mask] * color
-
-        # Scale RGB values with gray scale from property
-        if overlay:
-            if overlay not in self.prop.keys():
-                raise ValueError(
-                    f"{overlay} is not among available properties "
-                    f"{list(self.prop.keys())}."
-                )
-            else:
-                prop = self.prop[overlay].ravel()
-
-                # Scale prop to [0, 1] to maximize image contrast
-                prop_min = prop.min()
-                prop = (prop - prop_min) / (prop.max() - prop_min)
-                for i in range(n_channels):
-                    phase[:, i] *= prop
-
-        # Create legend patches with phase color and name
-        patches = None
-        if legend:
-            patches = [
-                mpatches.Patch(color=p.color_rgb, label=p.name)
-                for _, p in self.phases_in_map
-            ]
-
-        # Reshape phase map to 2D + RGB channels
-        phase = phase.reshape(self.shape + (n_channels,))
-
-        # Set non-indexed points to white (or None for black)
-        phase[~self.indexed] = (1, 1, 1)
-
-        fig, ax, im = _plot_crystal_map(
-            crystal_map=self,
-            data=phase,
-            legend_patches=patches,
-            scalebar=scalebar,
-            padding=padding,
-            **kwargs,
-        )
-
-        # Should find some way to mute other than cm.plot_phase();
-        return phase, fig, ax, im
-
-    def plot_prop(
-            self,
-            prop,
-            colorbar=True,
-            scalebar=True,
-            padding=True,
-            **kwargs,
-    ):
-        """Plot of a map property.
-
-        Parameters
-        ----------
-        prop : str
-            The property in `prop` to plot.
-        colorbar : bool, optional
-            Whether to add a colorbar (default is ``True``).
-        scalebar : bool, optional
-            Whether to add a scalebar (default is ``True``) along the last
-            map dimension.
-        padding : bool, optional
-            Whether to show white padding (default is ``True``). Setting
-            this to ``False`` removes all white padding outside of plot,
-            including pixel coordinate ticks.
-        **kwargs :
-            Optional keyword arguments passed to
-            :meth:`matplotlib.pyplot.imshow`.
-
-        Returns
-        -------
-        fig : matplotlib.figure.Figure
-            Top level container for all plot elements.
-        ax : matplotlib.axes.Axes
-            Axes object returned by :meth:`matplotlib.pyplot.subplots`.
-        im : matplotlib.image.AxesImage
-            Image object returned by :meth:`matplotlib.axes.Axes.imshow`.
-        prop_to_plot : numpy.ndarray
-            Property array as passed to :meth:`matplotlib.pyplot.imshow`.
-
-        Examples
-        --------
-        >>> cm
-        Phase  Orientations   Name       Symmetry  Color
-        1      5657 (48.4%)   austenite  432       tab:blue
-        2      6043 (51.6%)   ferrite    432       tab:orange
-        Properties: iq, ci, fit
-        Scan unit: um
-        >>> data, fig, ax, im = cm.plot_prop('ci')
-        """
-
-        if prop not in self.prop:
-            raise ValueError(
-                f"{prop} is not among available properties "
-                f"{list(self.prop.keys())}."
-            )
-        else:
-            prop_to_plot = self.prop[prop]
-
-        fig, ax, im = _plot_crystal_map(
-            crystal_map=self,
-            data=prop_to_plot,
-            scalebar=scalebar,
-            cmap=kwargs.pop('cmap', 'gray'),
-            padding=padding,
-            **kwargs,
-        )
-
-        # Colorbar
-        if colorbar:
-            fig.colorbar(im, ax=ax)
-
-        # Should find some way to mute other than cm.plot_prop('ci');
-        return prop_to_plot, fig, ax, im

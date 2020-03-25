@@ -84,44 +84,43 @@ class Phase:
 
     @property
     def name(self):
+        """Return phase name."""
         return self._name
 
     @name.setter
     def name(self, value):
-        if not isinstance(value, str) and value is not None:
-            raise ValueError(f"Phase name {value} must be of type {str}.")
-        else:
-            self._name = value
+        """Set phase name as string."""
+        self._name = str(value)
 
     @property
     def color(self):
+        """Return phase color."""
         return self._color
 
     @color.setter
     def color(self, value):
-        if mcolors.is_color_like(value):
-            value_hex = mcolors.to_hex(value)
-            for name, color_hex in ALL_COLORS.items():
-                if color_hex == value_hex:
-                    self._color = name
-                    break
-        else:
-            raise ValueError(
-                f"{value} must be in the list of named Matplotlib colors or be "
-                "interpreted as an RGB(A) color by "
-                "matplotlib.colors.is_color_like()."
-            )
+        """Set phase color from something considered a valid color by
+        :func:`matplotlibcolors.is_color_like`.
+        """
+        value_hex = mcolors.to_hex(value)
+        for name, color_hex in ALL_COLORS.items():
+            if color_hex == value_hex:
+                self._color = name
+                break
 
     @property
     def color_rgb(self):
+        """Return phase color as RGB tuple."""
         return mcolors.to_rgb(self.color)
 
     @property
     def symmetry(self):
+        """Return the crystal symmetry of the phase."""
         return self._symmetry
 
     @symmetry.setter
     def symmetry(self, value):
+        """Set the crystal symmetry of the phase."""
         if isinstance(value, str):
             for correct, alias in POINT_GROUP_ALIASES.items():
                 if value == alias:
@@ -311,6 +310,7 @@ class PhaseList:
         Examples
         --------
         A PhaseList object can be indexed in multiple ways.
+
         >>> pl = PhaseList(names=['a', 'b'], symmetries=['1', '3'])
         >>> pl
         Id  Name  Symmetry  Color
@@ -366,17 +366,9 @@ class PhaseList:
                 isinstance(key_iter, tuple) and isinstance(key_iter[0], str))
         ):
             for key_name in list(set(key_iter)):  # Use set to remove duplicates
-                match = False
                 for i, phase in self._dict.items():
                     if key_name == phase.name:
                         d[i] = phase
-                        match = True
-                if not match:
-                    # Raises if any string in list of strings is not found
-                    raise IndexError(
-                        f"{key_name} is not among the available phases "
-                        f"{self.names}."
-                    )
         elif (
                 isinstance(key_iter, int)
                 or isinstance(key_iter, tuple)
@@ -384,27 +376,13 @@ class PhaseList:
                 or isinstance(key_iter, np.ndarray)
         ):
             for i in list(set(key_iter)):  # Use set to remove duplicates
-                try:
-                    d[i] = self._dict[i]
-                except KeyError:
-                    raise IndexError(
-                        f"{i} is not among the available phase IDs "
-                        f"{self.phase_ids}."
-                    )
+                d[i] = self._dict[i]
         elif isinstance(key_iter, slice):
             # Dicts cannot be sliced, hence this work-around
             id_arr = np.arange(max(self.phase_ids) + 1)
             sliced_arr = id_arr[key_iter]
             ids_in_slice = [i for i in sliced_arr if i in self.phase_ids]
-            if ids_in_slice:
-                d = {i: self._dict[i] for i in ids_in_slice}
-            else:
-                raise IndexError(
-                    f"{key} is not valid for the available phase IDs "
-                    f"{self.phase_ids}."
-                )
-        else:
-            raise IndexError(f"{key} is not a valid indexing value.")
+            d = {i: self._dict[i] for i in ids_in_slice}
 
         # Return a Phase object if only one phase was asked for
         if isinstance(key, int) or isinstance(key, str):
@@ -413,7 +391,8 @@ class PhaseList:
             return PhaseList(d)
 
     def __setitem__(self, key, value):
-        """Add phase to list with a key (phase_id_map) and value (symmetry)."""
+        """Add phase to list with a key (phase_id_map) and data (symmetry).
+        """
         if key not in self.names:
             # Make sure the new phase gets a new color
             color_new = None
