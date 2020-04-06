@@ -17,6 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import logging
 from itertools import islice
 from collections import OrderedDict
 
@@ -25,6 +26,7 @@ import numpy as np
 
 from orix.quaternion.symmetry import _groups, Symmetry
 
+_log = logging.getLogger(__name__)
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
@@ -33,10 +35,10 @@ for k, v in {**mcolors.BASE_COLORS, **mcolors.CSS4_COLORS}.items():
 ALL_COLORS.update(mcolors.XKCD_COLORS)
 
 # Point group alias mapping
-# Why is this needed? E.g., in EDAX TSL OIM Analysis 7.2, point group 432 is
+# Why is this needed? Well, e.g. in EDAX TSL OIM Analysis 7.2, point group 432 is
 # entered as 43...
 POINT_GROUP_ALIASES = {
-    '432': '43',
+    "432": "43",
 }
 
 
@@ -100,7 +102,7 @@ class Phase:
     @color.setter
     def color(self, value):
         """Set phase color from something considered a valid color by
-        :func:`matplotlibcolors.is_color_like`.
+        :func:`matplotlib.colors.is_color_like`.
         """
         value_hex = mcolors.to_hex(value)
         for name, color_hex in ALL_COLORS.items():
@@ -127,7 +129,7 @@ class Phase:
                     value = correct
                     break
             for symmetry in _groups:
-                if value.replace('-', '') == symmetry.name.replace('-', ''):
+                if value.replace("-", "") == symmetry.name.replace("-", ""):
                     value = symmetry
                     break
         if not isinstance(value, Symmetry) and value is not None:
@@ -144,8 +146,7 @@ class Phase:
         else:
             symmetry_name = self.symmetry  # Which should be None
         return (
-            f"<name: {self.name}. symmetry: {symmetry_name}. color: "
-            f"{self.color}>"
+            f"<name: {self.name}. symmetry: {symmetry_name}. color: " f"{self.color}>"
         )
 
     def deepcopy(self):
@@ -156,7 +157,7 @@ class Phase:
 class PhaseList:
     """A list of phases in a crystallographic map.
 
-    Each phase in the list must have a unique phase id as key.
+    Each phase in the list must have a unique phase id and name.
 
     Attributes
     ----------
@@ -175,15 +176,14 @@ class PhaseList:
     -------
     deepcopy()
         Return a deep copy using :py:func:`~copy.deepcopy` function.
+    add_not_indexed()
+        Add a dummy phase to assign to not indexed data points.
+    sort_by_id()
+        Sort list according to phase ID.
     """
 
     def __init__(
-            self,
-            phases=None,
-            names=None,
-            symmetries=None,
-            colors=None,
-            phase_ids=None,
+        self, phases=None, names=None, symmetries=None, colors=None, phase_ids=None,
     ):
         """
         Parameters
@@ -227,9 +227,9 @@ class PhaseList:
 
             # Get the maximum number of entries in the input lists (also
             # handling the case where some lists are None)
-            max_entries = max([
-                len(i) if i is not None else 0 for i in
-                [names, symmetries, phase_ids]])
+            max_entries = max(
+                [len(i) if i is not None else 0 for i in [names, symmetries, phase_ids]]
+            )
 
             if phase_ids is None:
                 phase_ids = list(np.arange(max_entries))
@@ -259,7 +259,7 @@ class PhaseList:
                     color = all_colors[color_iter]
                     color_iter += 1
 
-                # Always return a unique phase_id_map
+                # Always return a unique phase_id
                 try:
                     phase_id = phase_ids[i]
                 except IndexError:
@@ -348,32 +348,30 @@ class PhaseList:
         1   b     3         tab:orange
         """
 
-        # Make key iterable if it isn't already
+        # Make name iterable if it isn't already
         if (
-                not isinstance(key, tuple)
-                and not isinstance(key, slice)
-                and not isinstance(key, list)
-                and not isinstance(key, np.ndarray)
+            not isinstance(key, tuple)
+            and not isinstance(key, slice)
+            and not isinstance(key, list)
+            and not isinstance(key, np.ndarray)
         ):
             key_iter = (key,)
         else:
             key_iter = key
 
         d = {}
-        if (
-                isinstance(key_iter, str)
-                or (
-                isinstance(key_iter, tuple) and isinstance(key_iter[0], str))
+        if isinstance(key_iter, str) or (
+            isinstance(key_iter, tuple) and isinstance(key_iter[0], str)
         ):
             for key_name in list(set(key_iter)):  # Use set to remove duplicates
                 for i, phase in self._dict.items():
                     if key_name == phase.name:
                         d[i] = phase
         elif (
-                isinstance(key_iter, int)
-                or isinstance(key_iter, tuple)
-                or isinstance(key_iter, list)
-                or isinstance(key_iter, np.ndarray)
+            isinstance(key_iter, int)
+            or isinstance(key_iter, tuple)
+            or isinstance(key_iter, list)
+            or isinstance(key_iter, np.ndarray)
         ):
             for i in list(set(key_iter)):  # Use set to remove duplicates
                 d[i] = self._dict[i]
@@ -384,6 +382,9 @@ class PhaseList:
             ids_in_slice = [i for i in sliced_arr if i in self.phase_ids]
             d = {i: self._dict[i] for i in ids_in_slice}
 
+        # Ensure integer phase IDs
+        d = {int(i): p for i, p in d.items()}
+
         # Return a Phase object if only one phase was asked for
         if isinstance(key, int) or isinstance(key, str):
             return [i for i in d.values()][0]
@@ -391,7 +392,7 @@ class PhaseList:
             return PhaseList(d)
 
     def __setitem__(self, key, value):
-        """Add phase to list with a key (phase_id_map) and data (symmetry).
+        """Add phase to list with name (`phase_id`) and data (`symmetry`).
         """
         if key not in self.names:
             # Make sure the new phase gets a new color
@@ -407,23 +408,24 @@ class PhaseList:
             else:
                 new_phase_id = 0
 
-            self._dict[new_phase_id] = Phase(
-                name=key, symmetry=value, color=color_new)
+            self._dict[new_phase_id] = Phase(name=key, symmetry=value, color=color_new)
+            self.sort_by_id()
         else:
-            raise ValueError(
-                f"{key} is already in the phase list {self.names}.")
+            raise ValueError(f"{key} is already in the phase list {self.names}.")
 
     def __iter__(self):
-        # Returning keys() and values() might confuse the user since the class
-        # is called PhaseList. Could perhaps change class name to PhaseDict?
-        # Called it PhaseList since MTEX calls it that...
+        """Return a tuple with the phase ID and Phase object, in that
+        order.
+        """
         for phase_id, phase in self._dict.items():
             yield phase_id, phase
 
     def __repr__(self):
+        self.sort_by_id()
+
         # Ensure attributes set to None are treated OK
-        names = ['None' if not i else i for i in self.names]
-        symmetry_names = ['None' if not i else i.name for i in self.symmetries]
+        names = ["None" if not i else i for i in self.names]
+        symmetry_names = ["None" if not i else i.name for i in self.symmetries]
 
         # Determine column widths (allowing PhaseList to be empty)
         id_len = 2
@@ -437,25 +439,42 @@ class PhaseList:
         if self.colors:
             col_len = max(max([len(i) for i in self.colors]), col_len)
 
+        # Column alignment
+        align = ">"  # right: ">", left: "<"
+
         # Header
         representation = (
-            "{:<{width}} ".format("Id", width=id_len)
-            + "{:<{width}} ".format("Name", width=name_len)
-            + "{:<{width}} ".format("Symmetry", width=sym_len)
-            + "{:<{width}}\n".format("Color", width=col_len)
+            "{:{align}{width}}  ".format("Id", width=id_len, align=align)
+            + "{:{align}{width}}  ".format("Name", width=name_len, align=align)
+            + "{:{align}{width}}  ".format("Symmetry", width=sym_len, align=align)
+            + "{:{align}{width}}\n".format("Color", width=col_len, align=align)
         )
 
         # Overview of each phase
         for i, phase_id in enumerate(self.phase_ids):
             representation += (
-                    f"{phase_id:<{id_len}} "
-                    + f"{names[i]:<{name_len}} "
-                    + f"{symmetry_names[i]:<{sym_len}} "
-                    + f"{self.colors[i]:<{col_len}}\n"
+                f"{phase_id:{align}{id_len}}  "
+                + f"{names[i]:{align}{name_len}}  "
+                + f"{symmetry_names[i]:{align}{sym_len}}  "
+                + f"{self.colors[i]:{align}{col_len}}\n"
             )
 
         return representation
 
     def deepcopy(self):
-        """Return a deep copy using :py:func:`~copy.deepcopy` function."""
+        """Return a deep copy using :func:`copy.deepcopy` function."""
         return copy.deepcopy(self)
+
+    def add_not_indexed(self):
+        """Add a dummy phase to assign to not indexed data points.
+
+        The phase, named "not_indexed", has a "symmetry" equal to None, and
+        a white color when plotted.
+        """
+        _log.debug("add_not_indexed: Add a not indexed phase.")
+        self._dict[-1] = Phase(name="not_indexed", symmetry=None, color="white")
+
+    def sort_by_id(self):
+        """Sort list according to phase ID."""
+        _log.debug("sort_by_id: Sort phases by ID.")
+        self._dict = OrderedDict(sorted(self._dict.items()))

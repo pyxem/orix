@@ -27,6 +27,9 @@
 
 import numpy as np
 
+from .emsoft_h5ebsd import load_emsoft
+from .ang import load_ang
+
 
 def loadang(file_string: str):
     """Load ``.ang`` files.

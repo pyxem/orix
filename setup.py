@@ -9,7 +9,7 @@ setup(
     author=__author__,
     author_email=__author_email__,
     description=__description__,
-    long_description=open('README.rst').read(),
+    long_description=open("README.rst").read(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
@@ -22,15 +22,14 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
     ],
-    packages=find_packages(exclude=['orix/tests']),
+    packages=find_packages(exclude=["orix/tests"]),
+    # fmt: off
     install_requires=[
         "numpy",
         "scipy",
         "matplotlib",
-        "tqdm"
+        "tqdm",
     ],
-    package_data={
-        "": ["LICENSE", "readme.rst"],
-        "orix": ["*.py"],
-    },
+    # fmt: on
+    package_data={"": ["LICENSE", "readme.rst"], "orix": ["*.py"],},
 )
