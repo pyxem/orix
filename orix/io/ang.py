@@ -249,7 +249,7 @@ def _get_phases_from_header(header):
 
     # Check if formula is empty (sometimes the case for ASTAR Index)
     phase_names = phases["formula"]
-    if len(phase_names) == 0 or any([False if i is "" else True for i in phase_names]):
+    if len(phase_names) == 0 or any([False if i == "" else True for i in phase_names]):
         phase_names = phases["name"]
 
     return phase_names, phases["symmetry"]

@@ -29,6 +29,7 @@ setup(
         "scipy",
         "matplotlib",
         "tqdm",
+        "h5py",
     ],
     # fmt: on
     package_data={"": ["LICENSE", "readme.rst"], "orix": ["*.py"],},
