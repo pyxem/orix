@@ -342,13 +342,9 @@ class PhaseList:
         Id  Name  Symmetry  Color
         0   a     1         tab:blue
         1   b     3         tab:orange
-        >>> pl[np.array([0, 1])]  # Index with a numpy.ndarray
-        Id  Name  Symmetry  Color
-        0   a     1         tab:blue
-        1   b     3         tab:orange
         """
 
-        # Make name iterable if it isn't already
+        # Make key iterable if it isn't already
         if (
             not isinstance(key, tuple)
             and not isinstance(key, slice)
@@ -382,6 +378,11 @@ class PhaseList:
             ids_in_slice = [i for i in sliced_arr if i in self.phase_ids]
             d = {i: self._dict[i] for i in ids_in_slice}
 
+        # Raise KeyError if key is missing (not in the container), per Python docs:
+        # https://docs.python.org/3/reference/datamodel.html#object.__getitem__
+        if d == {}:
+            raise KeyError(f"{key} was not found in the phase list.")
+
         # Ensure integer phase IDs
         d = {int(i): p for i, p in d.items()}
 
@@ -413,6 +414,29 @@ class PhaseList:
         else:
             raise ValueError(f"{key} is already in the phase list {self.names}.")
 
+    def __delitem__(self, key):
+        """Delete a phase from the phase list.
+
+        Parameters
+        ----------
+        key : int or str
+            ID or name of a phase in the phase list.
+        """
+        if isinstance(key, int):
+            self._dict.pop(key)
+        elif isinstance(key, str):
+            matching_phase_id = None
+            for phase_id, phase in self._dict.items():
+                if key == phase.name:
+                    matching_phase_id = phase_id
+                    break
+            if matching_phase_id is None:
+                raise KeyError(f"{key} is not among the phase names {self.names}.")
+            else:
+                self._dict.pop(matching_phase_id)
+        else:
+            raise TypeError(f"{key} is an invalid phase.")
+
     def __iter__(self):
         """Return a tuple with the phase ID and Phase object, in that
         order.
@@ -421,8 +445,6 @@ class PhaseList:
             yield phase_id, phase
 
     def __repr__(self):
-        self.sort_by_id()
-
         # Ensure attributes set to None are treated OK
         names = ["None" if not i else i for i in self.names]
         symmetry_names = ["None" if not i else i.name for i in self.symmetries]
@@ -447,16 +469,16 @@ class PhaseList:
             "{:{align}{width}}  ".format("Id", width=id_len, align=align)
             + "{:{align}{width}}  ".format("Name", width=name_len, align=align)
             + "{:{align}{width}}  ".format("Symmetry", width=sym_len, align=align)
-            + "{:{align}{width}}\n".format("Color", width=col_len, align=align)
+            + "{:{align}{width}}".format("Color", width=col_len, align=align)
         )
 
         # Overview of each phase
         for i, phase_id in enumerate(self.phase_ids):
             representation += (
-                f"{phase_id:{align}{id_len}}  "
+                f"\n{phase_id:{align}{id_len}}  "
                 + f"{names[i]:{align}{name_len}}  "
                 + f"{symmetry_names[i]:{align}{sym_len}}  "
-                + f"{self.colors[i]:{align}{col_len}}\n"
+                + f"{self.colors[i]:{align}{col_len}}"
             )
 
         return representation
@@ -473,6 +495,7 @@ class PhaseList:
         """
         _log.debug("add_not_indexed: Add a not indexed phase.")
         self._dict[-1] = Phase(name="not_indexed", symmetry=None, color="white")
+        self.sort_by_id()
 
     def sort_by_id(self):
         """Sort list according to phase ID."""

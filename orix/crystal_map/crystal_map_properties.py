@@ -72,7 +72,14 @@ class CrystalMapProperties(dict):
         # This ensures that existing values in the entry aren't overwritten
         array = self.setdefault(key, np.zeros(self.is_in_data.size))
 
-        array[self.id] = np.ravel(value)  # Handles integer values
+        # Determine array data type from input
+        if hasattr(value, "__iter__"):
+            value_type = type(value[0])
+        else:
+            value_type = type(value)
+        array = array.astype(value_type)
+
+        array[self.id] = value
         _log.debug(f"setitem: Set/update {key} property")
         super().__setitem__(key, array)
 
