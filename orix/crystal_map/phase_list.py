@@ -17,7 +17,6 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import logging
 from itertools import islice
 from collections import OrderedDict
 
@@ -25,8 +24,6 @@ import matplotlib.colors as mcolors
 import numpy as np
 
 from orix.quaternion.symmetry import _groups, Symmetry
-
-_log = logging.getLogger(__name__)
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
@@ -61,6 +58,7 @@ class Phase:
     -------
     deepcopy()
         Return a deep copy using :py:func:`~copy.deepcopy` function.
+
     """
 
     def __init__(self, name=None, symmetry=None, color=None):
@@ -76,6 +74,7 @@ class Phase:
         color : str, optional
             Phase color. If ``None`` is passed (default), it is set to
             'tab:blue' (first among the default Matplotlib colors).
+
         """
         self.name = name
         self.symmetry = symmetry
@@ -103,6 +102,7 @@ class Phase:
     def color(self, value):
         """Set phase color from something considered a valid color by
         :func:`matplotlib.colors.is_color_like`.
+
         """
         value_hex = mcolors.to_hex(value)
         for name, color_hex in ALL_COLORS.items():
@@ -180,6 +180,7 @@ class PhaseList:
         Add a dummy phase to assign to not indexed data points.
     sort_by_id()
         Sort list according to phase ID.
+
     """
 
     def __init__(
@@ -200,6 +201,7 @@ class PhaseList:
             Phase colors.
         phase_ids : int, list of int or numpy.ndarray of int
             Phase IDs.
+
         """
         d = {}
         if isinstance(phases, list):
@@ -342,8 +344,8 @@ class PhaseList:
         Id  Name  Symmetry  Color
         0   a     1         tab:blue
         1   b     3         tab:orange
-        """
 
+        """
         # Make key iterable if it isn't already
         if (
             not isinstance(key, tuple)
@@ -393,7 +395,9 @@ class PhaseList:
             return PhaseList(d)
 
     def __setitem__(self, key, value):
-        """Add phase to list with name (`phase_id`) and data (`symmetry`).
+        """Add phase to list with name (`phase_id`) and data
+        (`symmetry`).
+
         """
         if key not in self.names:
             # Make sure the new phase gets a new color
@@ -421,6 +425,7 @@ class PhaseList:
         ----------
         key : int or str
             ID or name of a phase in the phase list.
+
         """
         if isinstance(key, int):
             self._dict.pop(key)
@@ -438,8 +443,8 @@ class PhaseList:
             raise TypeError(f"{key} is an invalid phase.")
 
     def __iter__(self):
-        """Return a tuple with the phase ID and Phase object, in that
-        order.
+        """Return a tuple with phase ID and Phase object, in that order.
+
         """
         for phase_id, phase in self._dict.items():
             yield phase_id, phase
@@ -492,12 +497,11 @@ class PhaseList:
 
         The phase, named "not_indexed", has a "symmetry" equal to None, and
         a white color when plotted.
+
         """
-        _log.debug("add_not_indexed: Add a not indexed phase.")
         self._dict[-1] = Phase(name="not_indexed", symmetry=None, color="white")
         self.sort_by_id()
 
     def sort_by_id(self):
         """Sort list according to phase ID."""
-        _log.debug("sort_by_id: Sort phases by ID.")
         self._dict = OrderedDict(sorted(self._dict.items()))

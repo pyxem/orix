@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import re
 import warnings
 
@@ -25,8 +24,6 @@ import numpy as np
 from orix.quaternion.rotation import Rotation
 from orix.crystal_map import CrystalMap
 
-_log = logging.getLogger(__name__)
-
 # MTEX has this format sorted out, check out their readers when fixing issues and
 # adapting to other versions of this file format in the future:
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ang.m
@@ -34,15 +31,24 @@ _log = logging.getLogger(__name__)
 
 
 def load_ang(filename):
-    """Return a :class:`orix.crystal_map.CrystalMap` object from EDAX TSL's
-    .ang file format. The map in the input file is assumed to be 2D.
+    """Return a :class:`orix.crystal_map.CrystalMap` object from EDAX
+    TSL's .ang file format. The map in the input file is assumed to be 2D.
+
+    Many vendors produce an .ang file. Supported vendors are:
+        * EDAX TSL
+        * NanoMegas ASTAR Index
+        * EMsoft (from program `EMdpmerge`)
+
+    All points satisfying the following criteria are classified as not
+    indexed:
+        * EDAX TSL: confidence index == -1
 
     Parameters
     ----------
     filename : str
         Path and file name.
-    """
 
+    """
     # Get file header
     with open(filename) as f:
         header = _get_header(f)
@@ -68,11 +74,10 @@ def load_ang(filename):
         "prop": {},
     }
     for column, name in enumerate(column_names):
-        for key, value in data.items():
-            if name == key:
-                data[key] = file_data[:, column]
-            elif name not in list(data.keys()):
-                data["prop"][name] = file_data[:, column]
+        if name in data.keys():
+            data[name] = file_data[:, column]
+        else:
+            data["prop"][name] = file_data[:, column]
 
     # Set which data points are not indexed
     if vendor == "tsl":
@@ -107,8 +112,8 @@ def _get_header(file):
     -------
     header : list
         List with header lines as individual elements.
+
     """
-    _log.debug(f"get_header: From {file.name}")
     header = []
     line = file.readline()
     while line.startswith("#"):
@@ -127,6 +132,7 @@ def _get_vendor_columns(header, n_cols_file):
         List with header lines as individual elements.
     n_cols_file : int
         Number of file columns.
+
     """
     # Assume EDAX TSL by default
     vendor = "tsl"
@@ -208,7 +214,6 @@ def _get_vendor_columns(header, n_cols_file):
             for i in range(n_cols_file - n_cols_expected):
                 column_names["unknown"].append("unknown" + str(i + 3))
 
-    _log.debug(f"get_vendor_columns: Vendor is {vendor}")
     return vendor, column_names[vendor]
 
 
@@ -234,6 +239,7 @@ def _get_phases_from_header(header):
     symmetry. This function have been tested with files from the following
     vendor's formats: EDAX TSL OIM Data Collection v7, ASTAR Index, and
     EMsoft v4.
+
     """
     regexps = {
         "name": "# MaterialName([ \t]+)([A-z0-9 ]+)",
@@ -249,7 +255,7 @@ def _get_phases_from_header(header):
 
     # Check if formula is empty (sometimes the case for ASTAR Index)
     phase_names = phases["formula"]
-    if len(phase_names) == 0 or any([False if i == "" else True for i in phase_names]):
+    if len(phase_names) == 0 or any([i != "" for i in phase_names]):
         phase_names = phases["name"]
 
     return phase_names, phases["symmetry"]

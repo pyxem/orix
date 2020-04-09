@@ -16,22 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import warnings
 
+import matplotlib.font_manager as fm
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.axes import Axes
 from matplotlib.projections import register_projection
-import matplotlib.patches as mpatches
-import matplotlib.font_manager as fm
-import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 
 from orix.scalar import Scalar
 from orix.vector import Vector3d
-
-_log = logging.getLogger(__name__)
 
 
 class CrystalMapPlot(Axes):
@@ -56,6 +53,7 @@ class CrystalMapPlot(Axes):
         Add an opinionated colorbar to the figure.
     remove_padding()
         Remove all white padding outside of the figure.
+
     """
 
     name = "plot_map"
@@ -117,15 +115,9 @@ class CrystalMapPlot(Axes):
         >>> from orix import plot
         >>> from orix.io import load_ang
 
-        Import a crystal map and inspect it
+        Import a crystal map
 
         >>> cm = load_ang("/some/directory/data.ang")
-        >>> cm
-        Phase  Orientations   Name       Symmetry  Color
-        1      5657 (48.4%)   austenite  432       tab:blue
-        2      6043 (51.6%)   ferrite    432       tab:orange
-        Properties: iq, dp
-        Scan unit: um
 
         Plot a phase map
 
@@ -145,7 +137,7 @@ class CrystalMapPlot(Axes):
 
         Add a colorbar
 
-        >>> cbar = ax.add_colorbar("Dot product")
+        >>> cbar = ax.add_colorbar("Dot product")  # Get colorbar
 
         Plot orientation angle in degrees of one phase
 
@@ -175,8 +167,6 @@ class CrystalMapPlot(Axes):
         """
         patches = None
         if value is None:  # Phase map
-            _log.debug("plot_map: Plot a phase map")
-
             # Color each map pixel with corresponding phase color RGB tuple
             phase_id = crystal_map.get_map_data("phase_id")
             unique_phase_ids = np.unique(phase_id[~np.isnan(phase_id)])
@@ -193,7 +183,6 @@ class CrystalMapPlot(Axes):
                 patches.append(mpatches.Patch(color=p.color_rgb, label=p.name))
         else:  # Create masked array of correct shape
             if isinstance(value, Scalar) or isinstance(value, Vector3d):
-                _log.debug(f"plot_map: Plot {type(value)} attribute data")
                 value = value.data
             data = crystal_map.get_map_data(value)
 
@@ -249,6 +238,7 @@ class CrystalMapPlot(Axes):
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(cm, scalebar=False)
         >>> sbar = ax.add_scalebar(cm, loc=4, frameon=False)
+
         """
         map_width = crystal_map.shape[-1]
         # TODO: Make this "dynamic"/dependable when enabling specimen reference frame
@@ -309,7 +299,6 @@ class CrystalMapPlot(Axes):
         bar.patch.set_alpha(0.6)
 
         self.axes.add_artist(bar)
-        _log.debug(f"add_scalebar: To {self.axes}")
 
         return bar
 
@@ -341,6 +330,7 @@ class CrystalMapPlot(Axes):
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(cm)
         >>> ax.add_overlay(cm, cm.dp)
+
         """
         image = self.images[0]
         image_data = image.get_array()
@@ -358,7 +348,6 @@ class CrystalMapPlot(Axes):
         for i in range(n_channels):
             image_data[:, :, i] *= rescaled_overlay
 
-        _log.debug(f"add_overlay: To {image}")
         image.set_data(image_data)
 
     def add_colorbar(self, title=None, **kwargs):
@@ -397,6 +386,7 @@ class CrystalMapPlot(Axes):
         updated
 
         >>> cbar.ax.set_ylabel(title="dp", rotation=90)
+
         """
         # Keyword arguments
         d = {"position": "right", "size": "5%", "pad": 0.1}
@@ -405,7 +395,6 @@ class CrystalMapPlot(Axes):
         # Add colorbar
         divider = make_axes_locatable(self)
         cax = divider.append_axes(**kwargs)
-        _log.debug(f"add_colorbar: To {self.figure}")
         cbar = self.figure.colorbar(self.images[0], cax=cax)
 
         # Set title with padding
@@ -432,6 +421,7 @@ class CrystalMapPlot(Axes):
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> ax.plot_map(cm)
         >>> ax.remove_padding()
+
         """
         self.set_axis_off()
         self.margins(0, 0)
@@ -442,7 +432,6 @@ class CrystalMapPlot(Axes):
             right = self.figure.subplotpars.right
         else:
             right = 1
-        _log.debug(f"remove_padding: From {self.figure}")
         self.figure.subplots_adjust(top=1, bottom=0, right=right, left=0)
 
     def _add_legend(self, patches, **kwargs):
@@ -463,7 +452,6 @@ class CrystalMapPlot(Axes):
             "prop": fm.FontProperties(size=11),
         }
         [kwargs.setdefault(k, v) for k, v in d.items()]
-        _log.debug(f"add_legend: To {self.axes}")
         self.legend(handles=patches, **kwargs)
 
     def _override_status_bar(self, image, crystal_map):
@@ -487,8 +475,8 @@ class CrystalMapPlot(Axes):
         -------
         image : matplotlib.images.AxesImage
             Image object where the above mentioned methods are overridden.
-        """
 
+        """
         # Get map shape
         map_shape = crystal_map._original_shape
         n_rows, n_cols = map_shape
@@ -536,7 +524,6 @@ class CrystalMapPlot(Axes):
         else:
             image.format_cursor_data = format_status_bar_data_scalar
 
-        _log.debug(f"override_status_bar: Of {self.axes}")
         return image
 
 
@@ -572,6 +559,7 @@ def convert_unit(value, unit):
     17.55 um 999.9999999999999
     >>> convert_unit(17.55 * 1e-3, 'mm')
     17.55 um 0.001
+
     """
     # If unit is 'px', we assume 'um', and revert unit in the end
     unit_is_px = False
@@ -603,8 +591,4 @@ def convert_unit(value, unit):
     if unit_is_px:
         new_unit = "px"
 
-    _log.debug(
-        f"convert_unit: From {value} {unit} to {new_value} {new_unit} with factor "
-        f"{factor}"
-    )
     return new_value, new_unit, factor

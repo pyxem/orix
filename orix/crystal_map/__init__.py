@@ -20,22 +20,7 @@
 Crystallographic map of rotations, crystal phases and key properties associated with
 every spatial coordinate in a 1D, 2D or 3D space.
 
-All properties are stored as 1D arrays, and reshaped when necessary.
-
-This module uses logging at the DEBUG level to keep track of manipulation and plotting
-of CrystalMap objects where the underlying behaviour might not be straight forward to
-analyse. Use the following in a script to see this logging:
-
-.. code-block:: python
-
-    >>> import logging
-    >>> logging.basicConfig(level=logging.DEBUG)
-
-And ensure matplotlib (and any other packages) doesn't clutter the debug log:
-
-.. code-block:: python
-
-    >>> logging.getLogger("matplotlib").setLevel(logging.WARNING)
+All map properties with a value in each data point are stored as 1D arrays.
 
 Submodules
 ==========

@@ -17,7 +17,6 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import logging
 
 import numpy as np
 
@@ -25,8 +24,6 @@ from orix.quaternion.rotation import Rotation
 from orix.quaternion.orientation import Orientation
 from .phase_list import PhaseList
 from .crystal_map_properties import CrystalMapProperties
-
-_log = logging.getLogger(__name__)
 
 
 class CrystalMap:
@@ -79,6 +76,7 @@ class CrystalMap:
     get_map_data(item, decimals=3, fill_value=None)
         Return an array of a class instance attribute, with masked values
         set to `fill_value`, of map shape.
+
     """
 
     def __init__(
@@ -121,8 +119,8 @@ class CrystalMap:
             Point group of crystal symmetries of phases in the map.
         prop : dict of numpy.ndarray, optional
             Dictionary of properties of each data point.
-        """
 
+        """
         # Set rotations
         if not isinstance(rotations, Rotation):
             raise ValueError(
@@ -186,6 +184,8 @@ class CrystalMap:
         self.scan_unit = "px"
 
         # Set properties
+        if prop is None:
+            prop = {}
         self._prop = CrystalMapProperties(prop, id=point_id)
 
         # Set original data shape (needed if data shape changes in__getitem__())
@@ -255,6 +255,7 @@ class CrystalMap:
 
         This is needed because it can be useful to have phases not in the
         data but in `self.phases`.
+
         """
         unique_ids = np.unique(self.phase_id)
         return self.phases[np.intersect1d(unique_ids, self.phases.phase_ids)]
@@ -302,6 +303,7 @@ class CrystalMap:
     def prop(self):
         """Return a :class:`~orix.crystal_map.CrystalMapProperties`
         dictionary with data properties.
+
         """
         self._prop.is_in_data = self.is_in_data
         self._prop.id = self.id
@@ -325,6 +327,7 @@ class CrystalMap:
 
         Called when the default attribute access fails with an
         AttributeError.
+
         """
         if item in self.__getattribute__("_prop"):
             return self.prop[item]  # Calls CrystalMapProperties.__getitem__()
@@ -412,6 +415,7 @@ class CrystalMap:
             1  1890 (100.0%)  austenite       432  tab:blue
         Properties: iq, dp
         Scan unit: um
+
         """
         # Initiate a mask to be added to the returned copy of the CrystalMap object, to
         # ensure that only the unmasked values are in the data of the copy (True in
@@ -467,7 +471,6 @@ class CrystalMap:
         new_map = copy.copy(self)
         new_map.is_in_data = new_is_in_data
 
-        _log.debug(f"getitem: Return a shallow copy with updated is_in_data")
         return new_map
 
     def __repr__(self):
@@ -547,6 +550,7 @@ class CrystalMap:
         output_array : numpy.ndarray
             Array of the class instance attribute with points not in data
             set to `fill_value`, of float data type.
+
         """
         # Get full map shape
         map_shape = self._original_shape
@@ -624,6 +628,7 @@ class CrystalMap:
         -------
         step_size : float
             Step size in `coordinates` array.
+
         """
         unique_sorted = np.sort(np.unique(coordinates))
         step_size = 0
@@ -640,6 +645,7 @@ class CrystalMap:
         slices : tuple of slices
             Data slice in each existing dimension, in (z, y, x) order. If
             data is not masked, the tuple is empty.
+
         """
         slices = []
 
@@ -664,6 +670,7 @@ class CrystalMap:
         -------
         data_shape : tuple of ints
             Shape of data in all existing dimensions, in (z, y, x) order.
+
         """
         data_shape = []
         for dim_slice in self._data_slices_from_coordinates():

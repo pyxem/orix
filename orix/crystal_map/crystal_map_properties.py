@@ -16,11 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-
 import numpy as np
-
-_log = logging.getLogger(__name__)
 
 
 class CrystalMapProperties(dict):
@@ -37,6 +33,7 @@ class CrystalMapProperties(dict):
     is_in_data : numpy.ndarray
         1D boolean array with True for points in the data, of the same size
         as the data.
+
     """
 
     def __init__(self, dictionary, id, is_in_data=None):
@@ -54,10 +51,8 @@ class CrystalMapProperties(dict):
             1D boolean array with True for points in the data. If ``None``
             is passed (default), all points are considered to be in the
             data.
+
         """
-        _log.debug(f"init: Create dict with {dictionary.keys()}")
-        if dictionary is None:
-            dictionary = {}
         super().__init__(**dictionary)
         self.id = id
         if is_in_data is None:
@@ -66,8 +61,10 @@ class CrystalMapProperties(dict):
             self.is_in_data = is_in_data
 
     def __setitem__(self, key, value):
-        """Add or update an entry to the dictionary, ensuring that only the
-        points in the data are set.
+        """Add an array to or update an existing array in the
+        dictionary. If `key` is the name of an existing array, only the
+        points in the data (where `self.is_in_data` is True) are set.
+
         """
         # This ensures that existing values in the entry aren't overwritten
         array = self.setdefault(key, np.zeros(self.is_in_data.size))
@@ -80,13 +77,12 @@ class CrystalMapProperties(dict):
         array = array.astype(value_type)
 
         array[self.id] = value
-        _log.debug(f"setitem: Set/update {key} property")
         super().__setitem__(key, array)
 
     def __getitem__(self, item):
         """Return a dictionary entry, ensuring that only points in the data
         are returned.
+
         """
         array = super().__getitem__(item)
-        _log.debug(f"getitem: Get {item} property")
         return array[self.is_in_data]
