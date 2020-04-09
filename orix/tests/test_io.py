@@ -1,37 +1,28 @@
-import pytest
-import numpy as np
+# -*- coding: utf-8 -*-
+# Copyright 2018-2020 The pyXem developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 
+import pytest
+import numpy as np
+
 from orix import io
-
-
-@pytest.fixture(
-    params=[
-        """4.485496 0.952426 0.791507     0.000     0.000   22.2  0.060  1       6
-1.343904 0.276111 0.825890    19.000     0.000   16.3  0.020  1       2""",
-    ]
-)
-def angfile(tmpdir, request):
-    f = tmpdir.mkdir("angfiles").join("angfile.ang")
-    f.write(
-        """# File created from ACOM RES results
-# ni-dislocations.res
-#
-#
-# MaterialName      Nickel
-# Formula
-# Symmetry          43
-# LatticeConstants  3.520  3.520  3.520  90.000  90.000  90.000
-# NumberFamilies    4
-# hklFamilies       1  1  1 1 0.000000
-# hklFamilies       2  0  0 1 0.000000
-# hklFamilies       2  2  0 1 0.000000
-# hklFamilies       3  1  1 1 0.000000
-#
-# GRID: SqrGrid#"""
-    )
-    f.write(request.param)
-    return str(f)
+from orix.io import load_ang, load_emsoft
 
 
 @pytest.mark.parametrize(
@@ -66,14 +57,44 @@ def angfile(tmpdir, request):
     ],
     indirect=["angfile"],
 )
-def test_load_ang(angfile, expected_data):
+def test_loadang(angfile, expected_data):
     loaded_data = io.loadang(angfile)
     assert np.allclose(loaded_data.data, expected_data)
 
 
-def test_load_ctf():
+def test_loadctf():
     """ Crude test of the ctf loader """
     z = np.random.rand(100, 8)
     np.savetxt("temp.ctf", z)
     z_loaded = io.loadctf("temp.ctf")
     os.remove("temp.ctf")
+
+
+class TestAngReader:
+    def test_load_ang_tsl(self):
+        pass
+
+    def test_load_ang_astar(self):
+        pass
+
+    def test_load_ang_emsoft(self):
+        pass
+
+    def test_get_header(self):
+        pass
+
+    # With different vendor header as input
+    def test_vendor_columns(self):
+        pass
+
+    # With different vendor header as input
+    def test_get_phases_from_header(self):
+        pass
+
+
+class TestEMsoftReader:
+    def test_load_emsoft(self):
+        pass
+
+    def test_get_properties(self):
+        pass
