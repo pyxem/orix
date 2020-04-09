@@ -22,11 +22,11 @@ import pytest
 import numpy as np
 
 from orix import io
-from orix.io import load_ang, load_emsoft
+from orix.io import load_ang
 
 
 @pytest.mark.parametrize(
-    "angfile, expected_data",
+    "angfile_astar, expected_data",
     [
         (
             """4.485496 0.952426 0.791507     0.000     0.000   22.2  0.060  1       6
@@ -55,10 +55,10 @@ from orix.io import load_ang, load_emsoft
             ),
         ),
     ],
-    indirect=["angfile"],
+    indirect=["angfile_astar"],
 )
-def test_loadang(angfile, expected_data):
-    loaded_data = io.loadang(angfile)
+def test_loadang(angfile_astar, expected_data):
+    loaded_data = io.loadang(angfile_astar)
     assert np.allclose(loaded_data.data, expected_data)
 
 
@@ -71,8 +71,73 @@ def test_loadctf():
 
 
 class TestAngReader:
-    def test_load_ang_tsl(self):
-        pass
+    @pytest.mark.parametrize(
+        "angfile_tsl, map_shape, step_sizes, phase_id, n_unknown_columns",
+        [
+            (
+                (
+                    (10, 10),  # map_shape
+                    (0.1, 0.1),  # step_sizes
+                    np.zeros(10 * 10, dtype=int),  # phase_id
+                    5,  # n_unknown_columns
+                ),
+                (10, 10),
+                (0.1, 0.1),
+                np.zeros(10 * 10, dtype=int),
+                5,
+            ),
+            (
+                (
+                    (23, 42),  # map_shape
+                    (1.5, 1.5),  # step_sizes
+                    np.zeros(23 * 42, dtype=int),  # phase_id
+                    5,  # n_unknown_columns
+                ),
+                (23, 42),
+                (1.5, 1.5),
+                np.zeros(23 * 42, dtype=int),
+                5,
+            ),
+        ],
+        indirect=["angfile_tsl"],
+    )
+    def test_load_ang_tsl(
+        self, angfile_tsl, map_shape, step_sizes, phase_id, n_unknown_columns
+    ):
+        cm = load_ang(angfile_tsl)
+
+        # Fraction of non-indexed points
+        non_indexed_fraction = int(np.prod(map_shape) * 0.1)
+        assert non_indexed_fraction == np.sum(~cm.is_indexed)
+
+        # Properties
+        assert list(cm.prop.keys()) == [
+            "iq",
+            "ci",
+            "unknown1",
+            "fit",
+            "unknown2",
+            "unknown3",
+            "unknown4",
+            "unknown5",
+        ]
+
+        # Coordinates
+        ny, nx = map_shape
+        dy, dx = step_sizes
+        assert np.allclose(cm.x, np.tile(np.arange(nx) * dx, ny))
+        assert np.allclose(cm.y, np.sort(np.tile(np.arange(ny) * dy, nx)))
+
+        # Ensure that values in columns are within expected ranges or have a certain
+        # value
+        assert cm.prop["ci"].max() <= 1
+        assert cm["indexed"].fit.max() <= 3
+        assert all(cm["not_indexed"].ci == -1)
+        assert np.allclose(
+            cm["not_indexed"].rotations.to_euler()[0],
+            np.array([np.pi, 0, np.pi]),
+            atol=1e-6,
+        )
 
     def test_load_ang_astar(self):
         pass

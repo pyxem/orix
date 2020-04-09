@@ -206,12 +206,13 @@ def _get_vendor_columns(header, n_cols_file):
             f"the expected number of columns, {n_cols_expected}, for the \n"
             f"assumed vendor '{vendor}'. Will therefore assume the following "
             "columns: euler1, euler2, euler3, x, y, unknown1, unknown2, "
-            "phase_id, etc."
+            "phase_id, unknown3, unknown4, etc."
         )
         vendor = "unknown"
-        if n_cols_file > n_cols_expected:
+        n_cols_unknown = len(column_names["unknown"])
+        if n_cols_file > n_cols_unknown:
             # Add potential extra columns to properties
-            for i in range(n_cols_file - n_cols_expected):
+            for i in range(n_cols_file - n_cols_unknown):
                 column_names["unknown"].append("unknown" + str(i + 3))
 
     return vendor, column_names[vendor]

@@ -657,7 +657,7 @@ class CrystalMap:
                 slices.append(
                     slice(
                         int(np.min(coordinates) / step),
-                        int(1 + np.max(coordinates) // step),
+                        int(np.ceil((np.max(coordinates) / step) + 1)),
                     )
                 )
 

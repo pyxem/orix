@@ -58,7 +58,7 @@ def load_emsoft(filename, refined=False, **kwargs):
     # see: https://github.com/EMsoft-org/EMsoft/blob/7762e1961508fe3e71d4702620764ceb98a78b9e/Source/EMsoftHDFLib/EMh5ebsd.f90#L1093)
     x = data_group["X Position"][:]
     # y = data_group["Y Position"][:]
-    y = np.sort(np.tile(np.linspace(0, (ny - 1) * step_y, ny), nx))
+    y = np.sort(np.tile(np.arange(ny) * step_y, nx))
 
     # Get number of top matches kept
     n_top_matches = f["NMLparameters/EBSDIndexingNameListType/nnk"][:][0]
