@@ -17,6 +17,8 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import random
+import string
 import tempfile
 
 import numpy as np
@@ -115,8 +117,11 @@ ANGFILE_EMSOFT_HEADER = (
 @pytest.fixture
 def temp_ang_file():
     with tempfile.TemporaryDirectory() as tempdir:
-        fname = os.path.join(tempdir, "angfile.ang")
-        f = open(fname, mode="w+")
+        random_fname = "".join(
+            [random.choice(string.ascii_letters + string.digits) for _ in range(10)]
+        )
+        fname_path = os.path.join(tempdir, random_fname)
+        f = open(fname_path, mode="w+")
         yield f
 
 
