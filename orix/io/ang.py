@@ -133,6 +133,13 @@ def _get_vendor_columns(header, n_cols_file):
     n_cols_file : int
         Number of file columns.
 
+    Returns
+    -------
+    vendor : str
+        Determined vendor ("tsl", "astar", or "emsoft").
+    column_names : list of str
+        List of column names.
+
     """
     # Assume EDAX TSL by default
     vendor = "tsl"
@@ -229,9 +236,9 @@ def _get_phases_from_header(header):
 
     Returns
     -------
-    phase_names : list
+    phase_names : list of str
         List of names of detected phases.
-    phase_symmetries : list
+    phase_symmetries : list of str
         List of symmetries of detected phase.
 
     Notes
