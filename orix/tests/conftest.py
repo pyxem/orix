@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import gc
 import os
 import random
 import string
@@ -120,9 +121,10 @@ def temp_ang_file():
         random_fname = "".join(
             [random.choice(string.ascii_letters + string.digits) for _ in range(10)]
         )
-        fname_path = os.path.join(tempdir, random_fname)
+        fname_path = os.path.join(tempdir, random_fname + ".ang")
         f = open(fname_path, mode="w+")
         yield f
+        gc.collect()
 
 
 @pytest.fixture(

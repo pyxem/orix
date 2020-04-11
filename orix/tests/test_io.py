@@ -483,7 +483,7 @@ class TestAngReader:
         ],
     )
     def test_get_phases_from_header(
-        self, temp_ang_file, header_phase_part, expected_names, expected_symmetries
+        self, header_phase_part, expected_names, expected_symmetries
     ):
         hkl_families = [
             "# NumberFamilies    4",
