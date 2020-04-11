@@ -485,18 +485,19 @@ class TestAngReader:
     def test_get_phases_from_header(
         self, header_phase_part, expected_names, expected_symmetries
     ):
+        # Create header from parts
+        header = [
+            "# File created from ACOM RES results",
+            "# ni-dislocations.res",
+            "#     ",
+            "#     ",
+        ]
         hkl_families = [
             "# NumberFamilies    4",
             "# hklFamilies       1  1  1 1 0.000000",
             "# hklFamilies       2  0  0 1 0.000000",
             "# hklFamilies       2  2  0 1 0.000000",
             "# hklFamilies       3  1  1 1 0.000000",
-        ]
-        header = [
-            "# File created from ACOM RES results",
-            "# ni-dislocations.res",
-            "#     ",
-            "#     ",
         ]
         for phase in header_phase_part:
             header += phase + hkl_families

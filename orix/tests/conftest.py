@@ -18,10 +18,12 @@
 
 import gc
 import os
-import random
-import string
-import tempfile
 
+# import random
+# import string
+from tempfile import TemporaryDirectory  # , TemporaryFile
+
+# from h5py import File
 import numpy as np
 import pytest
 
@@ -115,14 +117,13 @@ ANGFILE_EMSOFT_HEADER = (
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def temp_ang_file():
-    with tempfile.TemporaryDirectory() as tempdir:
-        random_fname = "".join(
-            [random.choice(string.ascii_letters + string.digits) for _ in range(10)]
-        )
-        fname_path = os.path.join(tempdir, random_fname + ".ang")
-        f = open(fname_path, mode="w+")
+    with TemporaryDirectory() as tempdir:
+        #        random_fname = "".join(
+        #            [random.choice(string.ascii_letters + string.digits) for _ in range(10)]
+        #        )
+        f = open(os.path.join(tempdir, "temp_ang_file.ang"), mode="w+")
         yield f
         gc.collect()
 
@@ -331,3 +332,9 @@ def angfile_emsoft(tmpdir, request):
     )
 
     return f
+
+
+# @pytest.fixture()
+# def temp_emsoft_h5ebsd_file():
+#    with TemporaryFile() as tf:
+#        f = File(tf, mode="w")
