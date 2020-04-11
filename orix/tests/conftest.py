@@ -16,14 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import gc
+from gc import collect
 import os
+from tempfile import TemporaryDirectory, TemporaryFile
 
-# import random
-# import string
-from tempfile import TemporaryDirectory  # , TemporaryFile
-
-# from h5py import File
+from h5py import File
 import numpy as np
 import pytest
 
@@ -120,12 +117,9 @@ ANGFILE_EMSOFT_HEADER = (
 @pytest.fixture()
 def temp_ang_file():
     with TemporaryDirectory() as tempdir:
-        #        random_fname = "".join(
-        #            [random.choice(string.ascii_letters + string.digits) for _ in range(10)]
-        #        )
         f = open(os.path.join(tempdir, "temp_ang_file.ang"), mode="w+")
         yield f
-        gc.collect()
+        collect()  # Garbage collection so that the file can be used by multiple tests
 
 
 @pytest.fixture(
@@ -164,7 +158,7 @@ def angfile_tsl(tmpdir, request):
         rows of Euler angle triplets.
 
     """
-    f = tmpdir.mkdir("angfiles").join("angfile_tsl.ang")
+    f = tmpdir.join("angfile_tsl.ang")
 
     # Unpack parameters
     (ny, nx), (dy, dx), phase_id, n_unknown_columns, example_rotations = request.param
@@ -237,7 +231,7 @@ def angfile_astar(tmpdir, request):
         rows of Euler angle triplets.
 
     """
-    f = tmpdir.mkdir("angfiles").join("angfile_astar.ang")
+    f = tmpdir.join("angfile_astar.ang")
 
     # Unpack parameters
     (ny, nx), (dy, dx), phase_id, example_rotations = request.param
@@ -302,7 +296,7 @@ def angfile_emsoft(tmpdir, request):
         rows of Euler angle triplets.
 
     """
-    f = tmpdir.mkdir("angfiles").join("angfile_emsoft.ang")
+    f = tmpdir.join("angfile_emsoft.ang")
 
     # Unpack parameters
     (ny, nx), (dy, dx), phase_id, example_rotations = request.param
@@ -334,7 +328,129 @@ def angfile_emsoft(tmpdir, request):
     return f
 
 
-# @pytest.fixture()
-# def temp_emsoft_h5ebsd_file():
-#    with TemporaryFile() as tf:
-#        f = File(tf, mode="w")
+@pytest.fixture(
+    params=[
+        # Tuple with default values for parameters: map_shape, step_sizes,
+        # example_rotations, n_top_matches, and refined (see docstring below)
+        (
+            (42, 13),  # map_shape
+            (1.5, 1.5),  # step_sizes
+            np.array(
+                [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
+            ),  # example_rotations as rows of Euler angle triplets
+            50,  # n_top_matches
+            True,  # refined
+        )
+    ]
+)
+def temp_emsoft_h5ebsd_file(tmpdir, request):
+    """Create a dummy EMsoft h5ebsd .h5 file from input.
+
+    Parameters expected in `request`
+    --------------------------------
+    map_shape : tuple of ints
+        Map shape to create.
+    step_sizes : tuple of floats
+        Step sizes in x and y coordinates in nanometres.
+    example_rotations : np.ndarray
+        A sample, smaller than the map size, of example rotations as
+        rows of Euler angle triplets.
+    n_top_matches : int
+        Number of top matching orientations per data point kept.
+    refined : bool
+        Whether refined Euler angles and dot products are read.
+
+    """
+    f = File(tmpdir.join("emsoft_h5ebsd_file.h5"), mode="w")
+
+    # Unpack parameters
+    map_shape, (dy, dx), example_rotations, n_top_matches, refined = request.param
+    ny, nx = map_shape
+    map_size = ny * nx
+
+    # Create groups used in reader
+    ebsd_group = f.create_group("Scan 1/EBSD")
+    data_group = ebsd_group.create_group("Data")
+    header_group = ebsd_group.create_group("Header")
+    phase_group = header_group.create_group("Phase/1")  # Always single phase
+
+    # Create `header_group` datasets used in reader
+    for name, data, dtype in zip(
+        ["nRows", "nColumns", "Step Y", "Step X"],
+        [ny, nx, dy, dx],
+        [np.int32, np.int32, np.float32, np.float32],
+    ):
+        header_group.create_dataset(name, data=np.array([data], dtype=dtype))
+
+    # Create `data_group` datasets, mostly quality metrics
+    data_group.create_dataset("X Position", data=np.tile(np.arange(nx) * dx, ny))
+    # Note that "Y Position" is wrongly written to their h5ebsd file by EMsoft
+    data_group.create_dataset(
+        "Y Position",
+        data=np.tile(np.arange(nx) * dx, ny),  # Wrong
+        #        data=np.sort(np.tile(np.arange(ny) * dy, nx),  # Correct
+    )
+    for name, shape, dtype in [
+        ("AvDotProductMap", map_shape, np.int32),
+        ("CI", map_size, np.float32),
+        ("CIMap", map_shape, np.int32),
+        ("IQ", map_size, np.float32),
+        ("IQMap", map_shape, np.int32),
+        ("ISM", map_size, np.float32),
+        ("ISMap", map_shape, np.int32),
+        ("KAM", map_shape, np.float32),
+        ("OSM", map_shape, np.float32),
+        ("Phase", map_size, np.uint8),
+    ]:
+        data_group.create_dataset(name, data=np.zeros(shape, dtype=dtype))
+
+    # `data_group` with rotations
+    if len(example_rotations) == map_size:
+        rot = example_rotations
+    else:
+        # Sample as many rotations from `example_rotations` as `map_size`
+        rot_idx = np.random.choice(np.arange(len(example_rotations)), map_size)
+        rot = example_rotations[rot_idx]
+    n_sampled_oris = 333227  # Cubic space group with Ncubochoric = 100
+    data_group.create_dataset("FZcnt", data=np.array([n_sampled_oris], dtype=np.int32))
+    data_group.create_dataset(
+        "TopMatchIndices",
+        data=np.vstack(
+            (np.random.choice(np.arange(n_sampled_oris), n_top_matches),) * map_size
+        ),
+        dtype=np.int32,
+    )
+    data_group.create_dataset(
+        "TopDotProductList",
+        data=np.vstack((np.random.random(size=n_top_matches),) * map_size),
+        dtype=np.float32,
+    )
+    data_group.create_dataset(
+        "DictionaryEulerAngles",
+        data=np.column_stack(
+            (np.random.uniform(low=0, high=2 * np.pi, size=n_sampled_oris),) * 3
+        ),
+        dtype=np.float32,
+    )
+
+    if refined:
+        data_group.create_dataset("RefinedEulerAngles", data=rot.astype(np.float32))
+        data_group.create_dataset(
+            "RefinedDotProducts", data=np.zeros(map_size, dtype=np.float32)
+        )
+
+    # Number of top matches kept
+    f.create_dataset(
+        "NMLparameters/EBSDIndexingNameListType/nnk",
+        data=np.array([n_top_matches], dtype=np.int32),
+    )
+
+    # `phase_group`
+    for name, data in [
+        ("Point Group", "Cubic (Oh) [m3m]"),
+        ("MaterialName", "austenite/austenite"),
+    ]:
+        phase_group.create_dataset(name, data=np.array([data], dtype=np.dtype("S")))
+
+    yield f
+    collect()

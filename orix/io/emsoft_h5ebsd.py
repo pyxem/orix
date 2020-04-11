@@ -60,13 +60,13 @@ def load_emsoft(filename, refined=False, **kwargs):
     # y = data_group["Y Position"][:]
     y = np.sort(np.tile(np.arange(ny) * step_y, nx))
 
-    # Get number of top matches kept
+    # Get number of top matches kept per data point
     n_top_matches = f["NMLparameters/EBSDIndexingNameListType/nnk"][:][0]
 
     # Get phase IDs
     phase_id = data_group["Phase"][:]
 
-    # Get phase name and phase's crystal symmetry
+    # Get phase name and crystal symmetry
     phase_name = re.search(
         r"([A-z0-9]+)", phase_group["MaterialName"][:][0].decode()
     ).group(1)

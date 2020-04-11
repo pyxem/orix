@@ -18,11 +18,12 @@
 
 import os
 
+import h5py
 import pytest
 import numpy as np
 
 from orix import io
-from orix.io import load_ang
+from orix.io import load_ang, load_emsoft
 from orix.io.ang import _get_header, _get_phases_from_header, _get_vendor_columns
 
 from orix.tests.conftest import (
@@ -512,8 +513,94 @@ class TestAngReader:
 
 
 class TestEMsoftReader:
-    def test_load_emsoft(self):
-        pass
+    @pytest.mark.parametrize(
+        (
+            "temp_emsoft_h5ebsd_file, map_shape, step_sizes, example_rot, "
+            "n_top_matches, refined"
+        ),
+        [
+            (
+                (
+                    (42, 13),  # map_shape
+                    (1.5, 1.5),  # step_sizes
+                    np.array(
+                        [
+                            [6.148271, 0.792205, 1.324879],
+                            [6.155951, 0.793078, 1.325229],
+                        ]
+                    ),  # example_rotations as rows of Euler angle triplets
+                    50,  # n_top_matches
+                    True,  # refined
+                ),
+                (42, 13),
+                (1.5, 1.5),
+                np.array(
+                    [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
+                ),
+                50,
+                True,
+            ),
+            (
+                (
+                    (5, 17),
+                    (0.5, 0.5),
+                    np.array(
+                        [
+                            [6.148271, 0.792205, 1.324879],
+                            [6.155951, 0.793078, 1.325229],
+                        ]
+                    ),
+                    20,
+                    False,
+                ),
+                (5, 17),
+                (0.5, 0.5),
+                np.array(
+                    [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
+                ),
+                20,
+                False,
+            ),
+        ],
+        indirect=["temp_emsoft_h5ebsd_file"],
+    )
+    def test_load_emsoft(
+        self,
+        temp_emsoft_h5ebsd_file,
+        map_shape,
+        step_sizes,
+        example_rot,
+        n_top_matches,
+        refined,
+    ):
+        cm = load_emsoft(temp_emsoft_h5ebsd_file.id, refined=refined)
+
+        assert cm.shape == map_shape
+        assert (cm.dy, cm.dx) == step_sizes
+        if refined:
+            n_top_matches = 1
+        assert cm.rotations_per_point == n_top_matches
+
+        # Properties
+        expected_props = [
+            "AvDotProductMap",
+            "CI",
+            "CIMap",
+            "IQ",
+            "IQMap",
+            "ISM",
+            "ISMap",
+            "KAM",
+            "OSM",
+            "TopDotProductList",
+            "TopMatchIndices",
+        ]
+        if refined:
+            expected_props += ["RefinedDotProducts"]
+        actual_props = list(cm.prop.keys())
+        actual_props.sort()
+        expected_props.sort()
+        assert actual_props == expected_props
 
     def test_get_properties(self):
         pass
