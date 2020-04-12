@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import copy
 from itertools import islice
-from collections import OrderedDict
+from numbers import Number
 
 import matplotlib.colors as mcolors
 import numpy as np
@@ -123,6 +124,8 @@ class Phase:
     @symmetry.setter
     def symmetry(self, value):
         """Set the crystal symmetry of the phase."""
+        if isinstance(value, Number):
+            value = str(value)
         if isinstance(value, str):
             for correct, alias in POINT_GROUP_ALIASES.items():
                 if value == alias:

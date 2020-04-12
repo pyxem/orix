@@ -96,17 +96,17 @@ class TestAngReader:
             (
                 # Read by angfile_tsl() via request.param (passed via `indirect` below)
                 (
-                    (10, 10),  # map_shape
+                    (5, 3),  # map_shape
                     (0.1, 0.1),  # step_sizes
-                    np.zeros(10 * 10, dtype=int),  # phase_id
+                    np.zeros(5 * 3, dtype=int),  # phase_id
                     5,  # n_unknown_columns
                     np.array(
                         [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628],]
                     ),  # example_rotations as rows of Euler angle triplets
                 ),
-                (10, 10),
+                (5, 3),
                 (0.1, 0.1),
-                np.zeros(10 * 10, dtype=int),
+                np.zeros(5 * 3, dtype=int),
                 5,
                 np.array(
                     [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628],]
@@ -114,17 +114,17 @@ class TestAngReader:
             ),
             (
                 (
-                    (23, 42),  # map_shape
+                    (8, 4),  # map_shape
                     (1.5, 1.5),  # step_sizes
-                    np.zeros(23 * 42, dtype=int),  # phase_id
+                    np.zeros(8 * 4, dtype=int),  # phase_id
                     5,  # n_unknown_columns
                     np.array(
                         [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702],]
                     ),  # example_rotations as rows of Euler angle triplets
                 ),
-                (23, 42),
+                (8, 4),
                 (1.5, 1.5),
-                np.zeros(23 * 42, dtype=int),
+                np.zeros(8 * 4, dtype=int),
                 5,
                 np.array(
                     [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702],]
@@ -203,9 +203,9 @@ class TestAngReader:
                 # Read by angfile_astar() via request.param (passed via `indirect`
                 # below)
                 (
-                    (10, 10),  # map_shape
+                    (9, 3),  # map_shape
                     (4.5, 4.5),  # step_sizes
-                    np.ones(10 * 10, dtype=int),  # phase_id
+                    np.ones(9 * 3, dtype=int),  # phase_id
                     np.array(
                         [
                             [1.895079, 0.739496, 1.413542],
@@ -213,18 +213,18 @@ class TestAngReader:
                         ]
                     ),
                 ),
-                (10, 10),
+                (9, 3),
                 (4.5, 4.5),
-                np.ones(10 * 10, dtype=int),
+                np.ones(9 * 3, dtype=int),
                 np.array(
                     [[1.895079, 0.739496, 1.413542], [1.897871, 0.742638, 1.413717],]
                 ),
             ),
             (
                 (
-                    (23, 42),  # map_shape
+                    (11, 13),  # map_shape
                     (10, 10),  # step_sizes
-                    np.ones(23 * 42, dtype=int),  # phase_id
+                    np.ones(11 * 13, dtype=int),  # phase_id
                     np.array(
                         [
                             [1.621760, 2.368935, 4.559324],
@@ -232,9 +232,9 @@ class TestAngReader:
                         ]
                     ),
                 ),
-                (23, 42),
+                (11, 13),
                 (10, 10),
-                np.ones(23 * 42, dtype=int),
+                np.ones(11 * 13, dtype=int),
                 np.array(
                     [[1.621760, 2.368935, 4.559324], [1.604481, 2.367539, 4.541870],]
                 ),
@@ -288,12 +288,12 @@ class TestAngReader:
                 # Read by angfile_emsoft() via request.param (passed via `indirect`
                 # below)
                 (
-                    (10, 10),  # map_shape
+                    (10, 11),  # map_shape
                     (4.5, 4.5),  # step_sizes
                     np.concatenate(
                         (
-                            np.ones(int(np.ceil((10 * 10) / 2))),
-                            np.ones(int(np.floor((10 * 10) / 2))) * 2,
+                            np.ones(int(np.ceil((10 * 11) / 2))),
+                            np.ones(int(np.floor((10 * 11) / 2))) * 2,
                         )
                     ),  # phase_id
                     np.array(
@@ -303,12 +303,12 @@ class TestAngReader:
                         ]
                     ),
                 ),
-                (10, 10),
+                (10, 11),
                 (4.5, 4.5),
                 np.concatenate(
                     (
-                        np.ones(int(np.ceil((10 * 10) / 2))),
-                        np.ones(int(np.floor((10 * 10) / 2))) * 2,
+                        np.ones(int(np.ceil((10 * 11) / 2))),
+                        np.ones(int(np.floor((10 * 11) / 2))) * 2,
                     )
                 ),
                 np.array(
@@ -317,12 +317,12 @@ class TestAngReader:
             ),
             (
                 (
-                    (23, 42),  # map_shape
+                    (3, 6),  # map_shape
                     (10, 10),  # step_sizes
                     np.concatenate(
                         (
-                            np.ones(int(np.ceil((23 * 42) / 2))),
-                            np.ones(int(np.floor((23 * 42) / 2))) * 2,
+                            np.ones(int(np.ceil((3 * 6) / 2))),
+                            np.ones(int(np.floor((3 * 6) / 2))) * 2,
                         )
                     ),  # phase_id
                     np.array(
@@ -332,12 +332,12 @@ class TestAngReader:
                         ]
                     ),
                 ),
-                (23, 42),
+                (3, 6),
                 (10, 10),
                 np.concatenate(
                     (
-                        np.ones(int(np.ceil((23 * 42) / 2))),
-                        np.ones(int(np.floor((23 * 42) / 2))) * 2,
+                        np.ones(int(np.ceil((3 * 6) / 2))),
+                        np.ones(int(np.floor((3 * 6) / 2))) * 2,
                     )
                 ),
                 np.array(
@@ -521,7 +521,7 @@ class TestEMsoftReader:
         [
             (
                 (
-                    (42, 13),  # map_shape
+                    (7, 3),  # map_shape
                     (1.5, 1.5),  # step_sizes
                     np.array(
                         [
@@ -532,7 +532,7 @@ class TestEMsoftReader:
                     50,  # n_top_matches
                     True,  # refined
                 ),
-                (42, 13),
+                (7, 3),
                 (1.5, 1.5),
                 np.array(
                     [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]

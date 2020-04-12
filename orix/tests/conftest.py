@@ -127,9 +127,9 @@ def temp_ang_file():
         # Tuple with default values for five parameters: map_shape, step_sizes,
         # phase_id, n_unknown_columns, and example_rotations (see docstring below)
         (
-            (13, 42),  # map_shape
+            (7, 13),  # map_shape
             (0.1, 0.1),  # step_sizes
-            np.random.choice([0], 13 * 42),  # phase_id
+            np.random.choice([0], 7 * 13),  # phase_id
             5,  # Number of unknown columns (one between ci and fit, the rest after fit)
             np.array(
                 [[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589],]
@@ -206,9 +206,9 @@ def angfile_tsl(tmpdir, request):
         # Tuple with default values for four parameters: map_shape, step_sizes,
         # phase_id, and example_rotations (see docstring below)
         (
-            (10, 10),  # map_shape
+            (7, 5),  # map_shape
             (2.86, 2.86),  # step_sizes
-            np.ones(10 * 10, dtype=int),  # phase_id
+            np.ones(7 * 5, dtype=int),  # phase_id
             np.array(
                 [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
             ),  # example_rotations as rows of Euler angle triplets
@@ -271,9 +271,9 @@ def angfile_astar(tmpdir, request):
         # Tuple with default values for four parameters: map_shape, step_sizes,
         # phase_id, and example_rotations (see docstring below)
         (
-            (42, 13),  # map_shape
+            (9, 7),  # map_shape
             (1.5, 1.5),  # step_sizes
-            np.random.choice([1, 2], 42 * 13),  # phase_id
+            np.random.choice([1, 2], 9 * 7),  # phase_id
             np.array(
                 [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
             ),  # example_rotations as rows of Euler angle triplets
@@ -309,13 +309,8 @@ def angfile_emsoft(tmpdir, request):
     dp = np.round(np.random.random(map_size), decimals=3)  # [0, 1]
 
     # Rotations
-    n_rotations = len(example_rotations)
-    if n_rotations == map_size:
-        rot = example_rotations
-    else:
-        # Sample as many rotations from `example_rotations` as `map_size`
-        rot_idx = np.random.choice(np.arange(len(example_rotations)), map_size)
-        rot = example_rotations[rot_idx]
+    rot_idx = np.random.choice(np.arange(len(example_rotations)), map_size)
+    rot = example_rotations[rot_idx]
 
     np.savetxt(
         fname=f,
@@ -333,7 +328,7 @@ def angfile_emsoft(tmpdir, request):
         # Tuple with default values for parameters: map_shape, step_sizes,
         # example_rotations, n_top_matches, and refined (see docstring below)
         (
-            (42, 13),  # map_shape
+            (13, 3),  # map_shape
             (1.5, 1.5),  # step_sizes
             np.array(
                 [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
@@ -405,12 +400,9 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         data_group.create_dataset(name, data=np.zeros(shape, dtype=dtype))
 
     # `data_group` with rotations
-    if len(example_rotations) == map_size:
-        rot = example_rotations
-    else:
-        # Sample as many rotations from `example_rotations` as `map_size`
-        rot_idx = np.random.choice(np.arange(len(example_rotations)), map_size)
-        rot = example_rotations[rot_idx]
+    # Sample as many rotations from `example_rotations` as `map_size`
+    rot_idx = np.random.choice(np.arange(len(example_rotations)), map_size)
+    rot = example_rotations[rot_idx]
     n_sampled_oris = 333227  # Cubic space group with Ncubochoric = 100
     data_group.create_dataset("FZcnt", data=np.array([n_sampled_oris], dtype=np.int32))
     data_group.create_dataset(
