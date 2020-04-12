@@ -18,13 +18,13 @@
 
 import os
 
-import h5py
 import pytest
 import numpy as np
 
 from orix import io
 from orix.io import load_ang, load_emsoft
 from orix.io.ang import _get_header, _get_phases_from_header, _get_vendor_columns
+from orix.io.emsoft_h5ebsd import _get_properties
 
 from orix.tests.conftest import (
     ANGFILE_TSL_HEADER,
@@ -601,6 +601,3 @@ class TestEMsoftReader:
         actual_props.sort()
         expected_props.sort()
         assert actual_props == expected_props
-
-    def test_get_properties(self):
-        pass
