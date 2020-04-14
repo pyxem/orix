@@ -18,11 +18,13 @@
 
 from gc import collect
 import os
-from tempfile import TemporaryDirectory, TemporaryFile
+from tempfile import TemporaryDirectory
 
 from h5py import File
 import numpy as np
 import pytest
+
+from orix.crystal_map.phase_list import PhaseList
 
 
 # TODO: Exchange for a multiphase header (change `phase_id` accordingly)
@@ -446,3 +448,12 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
 
     yield f
     collect()
+
+
+@pytest.fixture
+def phase_list():
+    names = ["a", "b", "c"]
+    symmetry_names = ["m-3m", "432", "3"]
+    colors = ["r", "g", "b"]
+
+    return PhaseList(names=names, symmetries=symmetry_names, colors=colors)

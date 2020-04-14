@@ -193,16 +193,16 @@ class PhaseList:
         Parameters
         ----------
         phases : orix.crystal_map.Phase, a list of orix.crystal_map.Phase\
-                or a dictionary of orix.crystal_map.Phase
+                or a dictionary of orix.crystal_map.Phase, optional
             A list or dict of phases or a single phase. The other arguments
             are ignored if this is passed.
-        names : str or list of str
+        names : str or list of str, optional
             Phase names.
-        symmetries : str or list of str
+        symmetries : str, int or list of str or int, optional
             Point group symmetries.
-        colors : str or list of str
+        colors : str or list of str, optional
             Phase colors.
-        phase_ids : int, list of int or numpy.ndarray of int
+        phase_ids : int, list of int or numpy.ndarray of int, optional
             Phase IDs.
 
         """
@@ -227,8 +227,12 @@ class PhaseList:
                 names = list((names,))
             if isinstance(symmetries, str):
                 symmetries = list((symmetries,))
-            if isinstance(colors, str):
+            if isinstance(colors, str) or isinstance(colors, tuple):
                 colors = list((colors,))
+            if isinstance(phase_ids, int):
+                phase_ids = [
+                    phase_ids,
+                ]
 
             # Get the maximum number of entries in the input lists (also
             # handling the case where some lists are None)
@@ -239,42 +243,48 @@ class PhaseList:
             if phase_ids is None:
                 phase_ids = list(np.arange(max_entries))
 
-            # Get first n entries in color list
-            all_colors = list(islice(ALL_COLORS.keys(), max_entries))
-
-            def get_entry_or_none(input_list, i):
-                """Return list entry if it exists, else return None."""
-                try:
-                    return input_list[i]
-                except (IndexError, TypeError):
-                    return None
+            # Get first 2 * n entries in color list (for good measure)
+            all_colors = list(islice(ALL_COLORS.keys(), 2 * max_entries))[::-1]
 
             # Create phase dictionary
             d = {}
-            color_iter = 0
             phase_id_iter = 0
+            used_colors = []
             for i in range(max_entries):
-                name = get_entry_or_none(names, i)
-                symmetry = get_entry_or_none(symmetries, i)
-
-                # Always return a color (possibly not unique)
+                # Get name or None
                 try:
-                    color = colors[i]
+                    name = names[i]
                 except (IndexError, TypeError):
-                    color = all_colors[color_iter]
-                    color_iter += 1
+                    name = None
 
-                # Always return a unique phase_id
+                # Get symmetry or None
+                try:
+                    symmetry = symmetries[i]
+                except (IndexError, TypeError):
+                    symmetry = None
+
+                # Get a color (always)
+                try:
+                    if colors[i] is not None:
+                        color = colors[i]
+                    else:
+                        color = all_colors.pop()
+                except (IndexError, TypeError):
+                    color = all_colors.pop()
+                while color in used_colors:
+                    color = all_colors.pop()
+
+                # Get a phase_id (always)
                 try:
                     phase_id = phase_ids[i]
                 except IndexError:
-                    if phase_ids is not None:
-                        phase_id = max(phase_ids) + phase_id_iter + 1
-                    else:
-                        phase_id = phase_id_iter
+                    phase_id = max(phase_ids) + phase_id_iter + 1
                     phase_id_iter += 1
 
                 d[phase_id] = Phase(name=name, symmetry=symmetry, color=color)
+
+                # To ensure color aliases are added to `used_colors`
+                used_colors.append(d[phase_id].color)
 
         # Finally create dictionary of phases
         self._dict = OrderedDict(sorted(d.items()))
@@ -310,7 +320,8 @@ class PhaseList:
         return list(self._dict.keys())
 
     def __getitem__(self, key):
-        """Return a PhaseList or a Phase object, depending on input.
+        """Return a PhaseList or a Phase object, depending on the number
+        of phases in the list matches the `key`.
 
         Examples
         --------
@@ -322,11 +333,13 @@ class PhaseList:
         0   a     1         tab:blue
         1   b     3         tab:orange
 
-        Return a Phase object
+        Return a Phase object if only one phase matches the key
 
         >>> pl[0]  # Index with a single phase id
         <name: a. symmetry: 1. color: tab:blue>
         >>> pl['b']  # Index with a phase name
+        <name: b. symmetry: 3. color: tab:orange>
+        >>> pl[:1]
         <name: b. symmetry: 3. color: tab:orange>
 
         Return a PhaseList object
@@ -362,7 +375,9 @@ class PhaseList:
 
         d = {}
         if isinstance(key_iter, str) or (
-            isinstance(key_iter, tuple) and isinstance(key_iter[0], str)
+            isinstance(key_iter, tuple)
+            and isinstance(key_iter[0], str)
+            or (isinstance(key_iter, list) and isinstance(key_iter[0], str))
         ):
             for key_name in list(set(key_iter)):  # Use set to remove duplicates
                 for i, phase in self._dict.items():
@@ -391,17 +406,14 @@ class PhaseList:
         # Ensure integer phase IDs
         d = {int(i): p for i, p in d.items()}
 
-        # Return a Phase object if only one phase was asked for
-        if isinstance(key, int) or isinstance(key, str):
+        # Return a Phase object if only one phase matches the key
+        if len(d) == 1:
             return [i for i in d.values()][0]
         else:
             return PhaseList(d)
 
     def __setitem__(self, key, value):
-        """Add phase to list with name (`phase_id`) and data
-        (`symmetry`).
-
-        """
+        """Add a phase to the list with a name and symmetry."""
         if key not in self.names:
             # Make sure the new phase gets a new color
             color_new = None
@@ -413,11 +425,10 @@ class PhaseList:
             # Create new ID
             if self.phase_ids:
                 new_phase_id = max(self.phase_ids) + 1
-            else:
+            else:  # `phase_ids` is an empty list
                 new_phase_id = 0
 
             self._dict[new_phase_id] = Phase(name=key, symmetry=value, color=color_new)
-            self.sort_by_id()
         else:
             raise ValueError(f"{key} is already in the phase list {self.names}.")
 
@@ -453,6 +464,9 @@ class PhaseList:
             yield phase_id, phase
 
     def __repr__(self):
+        if self.size == 0:
+            return "No phases."
+
         # Ensure attributes set to None are treated OK
         names = ["None" if not i else i for i in self.names]
         symmetry_names = ["None" if not i else i.name for i in self.symmetries]

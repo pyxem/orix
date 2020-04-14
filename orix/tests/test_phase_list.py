@@ -122,50 +122,319 @@ class TestPhase:
 
 
 class TestPhaseList:
-    def test_init_phaselist(self):
-        pass
+    @pytest.mark.parametrize("empty_input", [(), [], {}])
+    def test_init_phaselist_empty_input(self, empty_input):
+        pl = PhaseList(empty_input)
+        assert pl.__repr__() == "No phases."
+        pl["al"] = "m-3m"
+        assert pl.__repr__() == (
+            "Id  Name  Symmetry     Color\n 0    al      m-3m  tab:blue"
+        )
 
-    def test_get_phaselist_names(self):
-        pass
+    @pytest.mark.parametrize("phase_collection", ["dict", "list"])
+    def test_init_phaselist_from_phases(self, phase_collection):
+        p1 = Phase("austenite", 432, None)
+        p2 = Phase("ferrite", "432", "C1")
+        if phase_collection == "dict":
+            phases = {1: p1, 2: p2}
+        else:  # phase_collection == "list":
+            phases = [p1, p2]
 
-    def test_get_phaselist_colors(self):
-        pass
+        pl = PhaseList(phases)
+
+        assert pl.names == [p.name for p in [p1, p2]]
+        assert pl.symmetries == [p.symmetry for p in [p1, p2]]
+        assert pl.colors == [p.color for p in [p1, p2]]
+        assert pl.colors_rgb == [p.color_rgb for p in [p1, p2]]
+
+    def test_init_phaselist_from_phase(self):
+        p = Phase("austenite", "432", "C2")
+        pl = PhaseList(p)
+
+        assert pl.names == [p.name]
+        assert pl.symmetries == [p.symmetry]
+        assert pl.colors == [p.color]
+        assert pl.colors_rgb == [p.color_rgb]
+
+    @pytest.mark.parametrize(
+        (
+            "names, symmetries, colors, phase_ids, expected_names, "
+            "expected_symmetries, expected_colors, expected_phase_ids"
+        ),
+        [
+            (
+                ["al", "ni"],
+                [43,],
+                [None, "C1"],
+                [1,],
+                ["al", "ni"],
+                ["432", None],
+                ["tab:blue", "tab:orange"],
+                [1, 2],
+            ),
+            (
+                ["al", None],
+                [432, "m3m"],
+                (1, 0, 0),
+                [100,],
+                ["al", "None"],
+                ["432", "m-3m"],
+                ["r", "tab:blue"],
+                [100, 101],
+            ),
+            (
+                [None,],
+                [None, None],
+                ["green", "black"],
+                1,
+                ["None", "None"],
+                [None, None],
+                ["g", "k"],
+                [1, 2],
+            ),
+            (
+                ["al", "Ni"],
+                ["m-3m", 3, None],
+                ["C0", None, "C0"],
+                None,
+                ["al", "Ni", "None"],
+                ["m-3m", "3", None],
+                ["tab:blue", "tab:orange", "tab:blue"],
+                [0, 1, 2],
+            ),
+        ],
+    )
+    def test_init_phaselist_from_strings(
+        self,
+        names,
+        symmetries,
+        colors,
+        phase_ids,
+        expected_names,
+        expected_symmetries,
+        expected_colors,
+        expected_phase_ids,
+    ):
+        pl = PhaseList(
+            names=names, symmetries=symmetries, colors=colors, phase_ids=phase_ids,
+        )
+
+        actual_symmetry_names = []
+        for _, p in pl:
+            if p.symmetry is None:
+                actual_symmetry_names.append(None)
+            else:
+                actual_symmetry_names.append(p.symmetry.name)
+
+        assert pl.names == expected_names
+        assert actual_symmetry_names == expected_symmetries
+        assert pl.colors == expected_colors
+        assert pl.phase_ids == expected_phase_ids
 
     def test_get_phaselist_colors_rgb(self):
-        pass
+        pl = PhaseList(names=["a", "b", "c"], colors=["r", "g", (0, 0, 1)])
 
-    def test_get_phaselist_symmetries(self):
-        pass
+        assert pl.colors == ["r", "g", "b"]
+        assert np.allclose(pl.colors_rgb, [(1.0, 0.0, 0.0), [0, 0.5, 0], (0, 0, 1)])
 
-    def test_get_phaselist_size(self):
-        pass
+    @pytest.mark.parametrize("n_names", [1, 3])
+    def test_get_phaselist_size(self, n_names):
+        phase_names_pool = "abcd"
+        phase_names = [phase_names_pool[i] for i in range(n_names)]
 
-    def test_get_phaselist_ids(self):
-        pass
+        pl = PhaseList(names=phase_names)
 
-    def test_get_phase_from_phaselist(self):
-        pass
+        assert pl.size == n_names
 
-    def test_set_phase_in_phaselist(self):
-        pass
+    @pytest.mark.parametrize(
+        "n_names, phase_ids, expected_names, expected_phase_ids",
+        [
+            (2, [0, 2], ["a", "b"], [0, 2]),
+            (3, [1, 100, 2], ["a", "c", "b"], [1, 2, 100]),
+            (3, 100, ["a", "b", "c"], [100, 101, 102]),
+        ],
+    )
+    def test_get_phaselist_ids(
+        self, n_names, phase_ids, expected_names, expected_phase_ids
+    ):
+        phase_names_pool = "abc"
+        phase_names = [phase_names_pool[i] for i in range(n_names)]
 
-    def test_del_phase_in_phaselist(self):
-        pass
+        pl = PhaseList(names=phase_names, phase_ids=phase_ids)
+
+        assert pl.names == expected_names
+        assert pl.phase_ids == expected_phase_ids
+
+    @pytest.mark.parametrize(
+        "key_getter, name, symmetry, color",
+        [
+            (0, "a", "m-3m", "r"),
+            ("b", "b", "432", "g"),
+            (slice(2, None, None), "c", "3", "b"),  # equivalent to pl[2:]
+        ],
+    )
+    def test_get_phase_from_phaselist(
+        self, phase_list, key_getter, name, symmetry, color
+    ):
+        p = phase_list[key_getter]
+
+        assert p.__repr__() == (
+            "<name: " + name + ". symmetry: " + symmetry + ". color: " + color + ">"
+        )
+
+    @pytest.mark.parametrize(
+        "key_getter, names, symmetries, colors",
+        [
+            (
+                slice(0, None, None),
+                ["a", "b", "c"],
+                ["m-3m", "432", "3"],
+                ["r", "g", "b"],
+            ),
+            (("a", "b"), ["a", "b"], ["m-3m", "432"], ["r", "g"]),
+            (["a", "b"], ["a", "b"], ["m-3m", "432"], ["r", "g"]),
+            ((0, 2), ["a", "c"], ["m-3m", "3"], ["r", "b"]),
+            ([0, 2], ["a", "c"], ["m-3m", "3"], ["r", "b"]),
+        ],
+    )
+    def test_get_phases_from_phaselist(
+        self, phase_list, key_getter, names, symmetries, colors
+    ):
+        phases = phase_list[key_getter]
+
+        assert phases.names == names
+        assert [p.name for p in phases.symmetries] == symmetries
+        assert phases.colors == colors
+
+    @pytest.mark.parametrize("key_getter", ["d", 3, slice(3, None, None)])
+    def test_get_from_phaselist_error(self, phase_list, key_getter):
+        with pytest.raises(KeyError):
+            _ = phase_list[key_getter]
+
+    @pytest.mark.parametrize(
+        "key, value, already_there",
+        [("d", "m-3m", False), ("d", 432, False), ("c", 432, True),],
+    )
+    def test_set_phase_in_phaselist(self, phase_list, key, value, already_there):
+        if already_there:
+            with pytest.raises(ValueError, match=f"{key} is already in the phase "):
+                phase_list[key] = value
+        else:
+            expected_names = phase_list.names + [
+                key,
+            ]
+            expected_symmetry_names = [s.name for s in phase_list.symmetries] + [
+                str(value)
+            ]
+
+            phase_list[key] = value
+
+            assert phase_list.names == expected_names
+            assert [s.name for s in phase_list.symmetries] == expected_symmetry_names
+
+    def test_set_phase_in_empty_phaselist(self):
+        pl = PhaseList()
+
+        names = [0, 0]  # Use as names
+        symmetries = [432, "m-3m"]
+        for n, s in zip(names, symmetries):
+            pl[n] = str(s)
+
+        assert pl.phase_ids == [0, 1]
+        assert pl.names == [str(n) for n in names]
+        assert [s.name for s in pl.symmetries] == [str(s) for s in symmetries]
+
+    @pytest.mark.parametrize(
+        "key_del, invalid_phase, error_type, error_msg",
+        [
+            (0, False, None, None),
+            ("a", False, None, None),
+            (3, True, KeyError, "3"),
+            ("d", True, KeyError, "d is not among the phase names"),
+            ([0, 1], True, TypeError, ".* is an invalid phase."),
+        ],
+    )
+    def test_del_phase_in_phaselist(
+        self, phase_list, key_del, invalid_phase, error_type, error_msg
+    ):
+        if invalid_phase:
+            with pytest.raises(error_type, match=error_msg):
+                del phase_list[key_del]
+        else:
+            phase_ids = phase_list.phase_ids
+            names = phase_list.names
+
+            del phase_list[key_del]
+
+            if isinstance(key_del, int):
+                phase_ids.remove(key_del)
+                assert phase_list.phase_ids == phase_ids
+            elif isinstance(key_del, str):
+                names.remove(key_del)
+                assert phase_list.names == names
 
     def test_iterate_phaselist(self):
-        pass
+        names = ["al", "ni", "sigma"]
+        symmetries = [3, 432, "m-3m"]
+        colors = ["g", "b", "r"]
 
-    def test_phaselist_repr(self):
-        pass
+        pl = PhaseList(names=names, symmetries=symmetries, colors=colors)
 
-    def test_phaselist_deepcopy(self):
-        pass
+        for i, ((phase_id, phase), n, s, c) in enumerate(
+            zip(pl, names, symmetries, colors)
+        ):
+            assert phase_id == i
+            assert phase.name == n
+            assert phase.symmetry.name == str(s)
+            assert phase.color == c
 
-    def test_phaselist_shallowcopy(self):
-        pass
+    def test_phaselist_deepcopy(self, phase_list):
+        names = phase_list.names
+        symmetries = [s.name for s in phase_list.symmetries]
+        colors = phase_list.colors
 
-    def test_add_not_indexed_to_phaselist(self):
-        pass
+        pl2 = phase_list.deepcopy()
+        assert pl2.names == names
 
-    def test_sort_phaselist_by_id(self):
-        pass
+        phase_list["d"] = "m-3m"
+        phase_list["d"].color = "g"
+
+        assert phase_list.names == names + [
+            "d",
+        ]
+        assert [s.name for s in phase_list.symmetries] == symmetries + [
+            "m-3m",
+        ]
+        assert phase_list.colors == colors + [
+            "g",
+        ]
+
+        assert pl2.names == names
+        assert [s.name for s in pl2.symmetries] == symmetries
+        assert pl2.colors == colors
+
+    def test_phaselist_shallowcopy(self, phase_list):
+        pl2 = phase_list
+
+        phase_list["d"] = "m-3m"
+
+        assert pl2.names == phase_list.names
+        assert [s2.name for s2 in pl2.symmetries] == [
+            s.name for s in phase_list.symmetries
+        ]
+        assert pl2.colors == phase_list.colors
+
+    def test_make_not_indexed(self):
+        phase_names = ["a", "b", "c"]
+        phase_colors = ["r", "g", "b"]
+        pl = PhaseList(names=phase_names, colors=phase_colors, phase_ids=[-1, 0, 1])
+
+        assert pl.names == phase_names
+        assert pl.colors == phase_colors
+
+        pl.add_not_indexed()
+
+        phase_names[0] = "not_indexed"
+        phase_colors[0] = "w"
+        assert pl.names == phase_names
+        assert pl.colors == phase_colors
