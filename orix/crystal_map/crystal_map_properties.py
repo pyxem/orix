@@ -66,7 +66,7 @@ class CrystalMapProperties(dict):
         points in the data (where `self.is_in_data` is True) are set.
 
         """
-        # This ensures that existing values in the entry aren't overwritten
+        # Get array values if `key` already present, or zeros
         array = self.setdefault(key, np.zeros(self.is_in_data.size))
 
         # Determine array data type from input
@@ -76,7 +76,7 @@ class CrystalMapProperties(dict):
             value_type = type(value)
         array = array.astype(value_type)
 
-        array[self.id] = value
+        array[self.is_in_data] = value
         super().__setitem__(key, array)
 
     def __getitem__(self, item):
