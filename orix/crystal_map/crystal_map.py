@@ -22,7 +22,7 @@ import numpy as np
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.orientation import Orientation
-from .phase_list import PhaseList
+from .phase_list import PhaseList, Phase
 from .crystal_map_properties import CrystalMapProperties
 
 
@@ -146,7 +146,13 @@ class CrystalMap:
         # TODO: Enable setting these via a specimen_reference_frame attribute
         if x is None:
             x = np.arange(data_size)
+        elif len(np.unique(x)) == 1:
+            x = None
         self._x = x
+        if len(np.unique(y)) == 1:
+            y = None
+        if len(np.unique(z)) == 1:
+            z = None
         self._y = y
         self._z = z
 
@@ -215,8 +221,6 @@ class CrystalMap:
     def x(self):
         """Return x coordinates of points in data."""
         if self._x is None:
-            # Will never go here as the implementation is now, however might be the
-            # case when enabling setting a specimen reference frame
             return self._x
         else:
             return self._x[self.is_in_data]
@@ -258,7 +262,14 @@ class CrystalMap:
 
         """
         unique_ids = np.unique(self.phase_id)
-        return self.phases[np.intersect1d(unique_ids, self.phases.phase_ids)]
+        phase_list = self.phases[np.intersect1d(unique_ids, self.phases.phase_ids)]
+        if isinstance(phase_list, Phase):
+            # Get phase ID so it carries over to the new PhaseList object
+            phase = phase_list
+            phase_id = self.phases.id_from_name(phase.name)
+            return PhaseList(phases=phase, phase_ids=phase_id)
+        else:
+            return phase_list
 
     @property
     def rotations(self):
@@ -280,13 +291,11 @@ class CrystalMap:
                 rotations = self.rotations[:, 0]
             else:
                 rotations = self.rotations
-            # Get phase from phase ID
-            phase = phases[phases.phase_ids[0]]
-            return Orientation(rotations).set_symmetry(phase.symmetry)
+            return Orientation(rotations).set_symmetry(phases[:].symmetry)
         else:
             raise ValueError(
-                f"Map contains the phases {phases.names}, however, you are"
-                " executing a command that only permits one phase."
+                f"Data has the phases {phases.names}, however, you are executing a "
+                "command that only permits one phase."
             )
 
     @property
@@ -346,9 +355,10 @@ class CrystalMap:
 
         Parameters
         ----------
-        key : str, slice or boolean numpy.ndarray
-            If str, it must be a valid phase or "not_indexed" or "indexed".
-            If slice, it must be within the map shape. If boolean array, it
+        key : str, slice, int or boolean numpy.ndarray
+            If ``str``, it must be a valid phase or "not_indexed" or
+            "indexed". If ``slice``, it must be within the map shape. If
+            ``int``, it must be a valid ``self.id``. If boolean array, it
             must be of map shape.
 
         Examples
@@ -444,6 +454,8 @@ class CrystalMap:
         elif isinstance(key, np.ndarray) and key.dtype == np.bool_:
             # From boolean numpy array
             is_in_data = key
+        elif isinstance(key, int):
+            is_in_data[key] = True
         elif isinstance(key, slice) or (
             isinstance(key, tuple) and any([(isinstance(i, slice)) for i in key])
         ):
@@ -451,7 +463,7 @@ class CrystalMap:
             if isinstance(key, slice):  # Make iterable if single slice
                 key = (key,)
 
-            slices = list([0] * self.ndim)
+            slices = [slice(None, None, None)] * self.ndim
             for i, k in enumerate(key):
                 slices[i] = k
 

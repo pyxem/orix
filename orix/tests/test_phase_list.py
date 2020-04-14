@@ -98,7 +98,7 @@ class TestPhase:
         assert p.__repr__() == representation
         assert p.__str__() == representation
 
-    def test_phase_deepcopy(self):
+    def test_deepcopy_phase(self):
         p = Phase("al", "m-3m", "C1")
         p2 = p.deepcopy()
 
@@ -110,7 +110,7 @@ class TestPhase:
         assert p.__repr__() == "<name: austenite. symmetry: 432. color: tab:green>"
         assert p2.__repr__() == "<name: al. symmetry: m-3m. color: tab:orange>"
 
-    def test_phase_shallowcopy(self):
+    def test_shallowcopy_phase(self):
         p = Phase("al", "m-3m", "C1")
         p2 = p
 
@@ -123,13 +123,22 @@ class TestPhase:
 
 class TestPhaseList:
     @pytest.mark.parametrize("empty_input", [(), [], {}])
-    def test_init_phaselist_empty_input(self, empty_input):
+    def test_init_empty_phaselist(self, empty_input):
         pl = PhaseList(empty_input)
         assert pl.__repr__() == "No phases."
         pl["al"] = "m-3m"
         assert pl.__repr__() == (
             "Id  Name  Symmetry     Color\n 0    al      m-3m  tab:blue"
         )
+
+    def test_init_set_to_nones(self):
+        phase_ids = [1, 2]
+        pl = PhaseList(phase_ids=phase_ids)
+
+        assert pl.phase_ids == phase_ids
+        assert pl.names == ["None",] * 2
+        assert pl.symmetries == [None,] * 2
+        assert pl.colors == ["tab:blue", "tab:orange"]
 
     @pytest.mark.parametrize("phase_collection", ["dict", "list"])
     def test_init_phaselist_from_phases(self, phase_collection):
@@ -320,9 +329,7 @@ class TestPhaseList:
             with pytest.raises(ValueError, match=f"{key} is already in the phase "):
                 phase_list[key] = value
         else:
-            expected_names = phase_list.names + [
-                key,
-            ]
+            expected_names = phase_list.names + [key]
             expected_symmetry_names = [s.name for s in phase_list.symmetries] + [
                 str(value)
             ]
@@ -388,7 +395,7 @@ class TestPhaseList:
             assert phase.symmetry.name == str(s)
             assert phase.color == c
 
-    def test_phaselist_deepcopy(self, phase_list):
+    def test_deepcopy_phaselist(self, phase_list):
         names = phase_list.names
         symmetries = [s.name for s in phase_list.symmetries]
         colors = phase_list.colors
@@ -399,21 +406,15 @@ class TestPhaseList:
         phase_list["d"] = "m-3m"
         phase_list["d"].color = "g"
 
-        assert phase_list.names == names + [
-            "d",
-        ]
-        assert [s.name for s in phase_list.symmetries] == symmetries + [
-            "m-3m",
-        ]
-        assert phase_list.colors == colors + [
-            "g",
-        ]
+        assert phase_list.names == names + ["d"]
+        assert [s.name for s in phase_list.symmetries] == symmetries + ["m-3m"]
+        assert phase_list.colors == colors + ["g"]
 
         assert pl2.names == names
         assert [s.name for s in pl2.symmetries] == symmetries
         assert pl2.colors == colors
 
-    def test_phaselist_shallowcopy(self, phase_list):
+    def test_shallowcopy_phaselist(self, phase_list):
         pl2 = phase_list
 
         phase_list["d"] = "m-3m"
@@ -438,3 +439,10 @@ class TestPhaseList:
         phase_colors[0] = "w"
         assert pl.names == phase_names
         assert pl.colors == phase_colors
+
+    def test_phase_id_from_name(self, phase_list):
+        for phase_id, phase in phase_list:
+            assert phase_id == phase_list.id_from_name(phase.name)
+
+        with pytest.raises(KeyError, match="d is not among the phase names "):
+            _ = phase_list.id_from_name("d")

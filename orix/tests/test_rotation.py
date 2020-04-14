@@ -1,7 +1,6 @@
 from math import cos, sin, tan, pi
 import numpy as np
 import pytest
-import itertools
 
 from orix.quaternion import Quaternion
 from orix.quaternion.rotation import Rotation

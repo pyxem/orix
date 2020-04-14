@@ -46,14 +46,14 @@ class Phase:
 
     Attributes
     ----------
-    name : str
-        Phase name.
-    symmetry : orix.quaternion.symmetries.Symmetry
-        Crystal symmetries of the phase.
     color : str
         Name of phase color in Matplotlib's list of named colors.
     color_rgb : tuple
         RGB values of phase color, obtained from the color name.
+    name : str
+        Phase name.
+    symmetry : orix.quaternion.symmetries.Symmetry
+        Crystal symmetries of the phase.
 
     Methods
     -------
@@ -164,30 +164,32 @@ class PhaseList:
 
     Attributes
     ----------
-    size : int
-        Number of phases in list.
-    names : list of str
-        List of phase names.
-    symmetries : list of orix.quaternion.symmetry.Symmetry
-        List of phase crystal symmetries.
     colors : list of tuple
         List of tuples with three entries, RGB, defining phase colors.
+    names : list of str
+        List of phase names.
     phase_ids : list of int
         List of unique phase indices in a crystallographic map as imported.
+    size : int
+        Number of phases in list.
+    symmetries : list of orix.quaternion.symmetry.Symmetry
+        List of phase crystal symmetries.
 
     Methods
     -------
-    deepcopy()
-        Return a deep copy using :py:func:`~copy.deepcopy` function.
     add_not_indexed()
         Add a dummy phase to assign to not indexed data points.
+    deepcopy()
+        Return a deep copy using :py:func:`~copy.deepcopy` function.
+    id_from_name(name):
+        Get phase ID from phase name.
     sort_by_id()
         Sort list according to phase ID.
 
     """
 
     def __init__(
-        self, phases=None, names=None, symmetries=None, colors=None, phase_ids=None,
+        self, phases=None, names=None, symmetries=None, colors=None, phase_ids=None
     ):
         """
         Parameters
@@ -210,7 +212,9 @@ class PhaseList:
         if isinstance(phases, list):
             try:
                 if isinstance(next(iter(phases)), Phase):
-                    d = dict(zip(np.arange(len(phases)), phases))
+                    if phase_ids is None:
+                        phase_ids = np.arange(len(phases))
+                    d = dict(zip(phase_ids, phases))
             except StopIteration:
                 pass
         elif isinstance(phases, dict):
@@ -220,7 +224,9 @@ class PhaseList:
             except StopIteration:
                 pass
         elif isinstance(phases, Phase):
-            d = {0: phases}
+            if phase_ids is None:
+                phase_ids = 0
+            d = {phase_ids: phases}
         else:
             # Ensure possible single strings have iterables of length 1
             if isinstance(names, str):
@@ -352,7 +358,7 @@ class PhaseList:
         Id  Name  Symmetry  Color
         0   a     1         tab:blue
         1   b     3         tab:orange
-        >>> pl[0, 1]  # Index with a tuple of phase ids
+        >>> pl[0, 1]  # Index with a tuple of phase phase_ids
         Id  Name  Symmetry  Color
         0   a     1         tab:blue
         1   b     3         tab:orange
@@ -425,7 +431,7 @@ class PhaseList:
             # Create new ID
             if self.phase_ids:
                 new_phase_id = max(self.phase_ids) + 1
-            else:  # `phase_ids` is an empty list
+            else:  # `self.phase_ids` is an empty list
                 new_phase_id = 0
 
             self._dict[new_phase_id] = Phase(name=key, symmetry=value, color=color_new)
@@ -522,3 +528,17 @@ class PhaseList:
     def sort_by_id(self):
         """Sort list according to phase ID."""
         self._dict = OrderedDict(sorted(self._dict.items()))
+
+    def id_from_name(self, name):
+        """Get phase ID from phase name.
+
+        Parameters
+        ----------
+        name : str
+            Phase name.
+
+        """
+        for phase_id, phase in self:
+            if name == phase.name:
+                return phase_id
+        raise KeyError(f"{name} is not among the phase names {self.names}.")

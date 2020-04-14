@@ -24,7 +24,9 @@ from h5py import File
 import numpy as np
 import pytest
 
+from orix.crystal_map import CrystalMap
 from orix.crystal_map.phase_list import PhaseList
+from orix.quaternion.rotation import Rotation
 
 
 # TODO: Exchange for a multiphase header (change `phase_id` accordingly)
@@ -385,7 +387,7 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
     data_group.create_dataset(
         "Y Position",
         data=np.tile(np.arange(nx) * dx, ny),  # Wrong
-        #        data=np.sort(np.tile(np.arange(ny) * dy, nx),  # Correct
+        #        data=np.sort(np.tile(np.arange(ny) * dy, nx)),  # Correct
     )
     for name, shape, dtype in [
         ("AvDotProductMap", map_shape, np.int32),
@@ -457,3 +459,47 @@ def phase_list():
     colors = ["r", "g", "b"]
 
     return PhaseList(names=names, symmetries=symmetry_names, colors=colors)
+
+
+@pytest.fixture(
+    params=[
+        # Tuple with default values for parameters: map_shape, step_sizes, and
+        # n_rotations_per_point
+        (
+            (1, 4, 3),  # map_shape
+            (0, 1.5, 1.5),  # step_sizes
+            1,  # rotations_per_point
+        ),
+    ],
+)
+def crystal_map_input(request):
+    # Unpack parameters
+    (nz, ny, nx), (dz, dy, dx), rotations_per_point = request.param
+    map_size = nz * ny * nx
+
+    z = np.array([np.ones(ny * nx) * i * dz for i in range(nz)]).flatten()
+    y = np.tile(np.sort(np.tile(np.arange(ny) * dy, nx)), nz)
+    x = np.tile(np.arange(nx) * dx, ny * nz)
+
+    example_rotations = Rotation([(2, 4, 6, 8), (-1, -2, -3, -4)])
+    rot_idx = np.random.choice(
+        np.arange(example_rotations.size), map_size * rotations_per_point
+    )
+
+    data_shape = (map_size,)
+    if rotations_per_point > 1:
+        data_shape += (rotations_per_point,)
+
+    rotations = example_rotations[rot_idx].reshape(*data_shape)
+
+    return {
+        "rotations": rotations,
+        "z": z,
+        "y": y,
+        "x": x,
+    }
+
+
+@pytest.fixture
+def crystal_map(crystal_map_input):
+    return CrystalMap(**crystal_map_input)
