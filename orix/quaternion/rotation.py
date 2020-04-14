@@ -303,7 +303,7 @@ class Rotation(Quaternion):
         return np.stack((alpha, beta, gamma), axis=-1)
 
     @classmethod
-    def from_euler(cls, euler):
+    def from_euler(cls, euler, direction='crystal2lab'):
         """Creates a rotation from an array of Euler angles.
 
         Parameters
@@ -311,7 +311,11 @@ class Rotation(Quaternion):
         euler : array-like
             Euler angles in the Bunge convention.
 
+        direction : str
+            'lab2crystal' or 'crystal2lab'
         """
+        if direction not in ['lab2crystal','crystal2lab']:
+            raise ValueError()
         # Bunge convention
         euler = np.array(euler)
         n = euler.shape[:-1]
@@ -329,6 +333,10 @@ class Rotation(Quaternion):
             np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)), axis=-1)
         )
         data = qalpha * qbeta * qgamma
+
+        if direction == 'lab2crystal':
+          data = ~data
+
         rot = cls(data.data)
         rot.improper = zero
         return rot
