@@ -23,32 +23,32 @@ from orix.crystal_map import CrystalMap
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.rotation import Rotation
 
-
-ROTATIONS = Rotation([(2, 4, 6, 8), (-1, -2, -3, -4)])
-
 # Note that many parts of the CrystalMap() class are tested while testing IO and the
 # Phase() and PhaseList() classes
 
 
 class TestCrystalMapInit:
-    def test_minimal_init(self):
+    def test_minimal_init(self, rotations):
         map_size = 2
 
-        assert isinstance(ROTATIONS, Rotation)
+        assert isinstance(rotations, Rotation)
 
-        cm = CrystalMap(rotations=ROTATIONS)
+        cm = CrystalMap(rotations=rotations)
 
         assert cm.size == map_size
         assert cm.shape == (map_size,)
         assert cm.ndim
         assert np.allclose(cm.id, np.arange(map_size))
         assert isinstance(cm.rotations, Rotation)
-        assert np.allclose(cm.rotations.data, ROTATIONS.data)
+        assert np.allclose(cm.rotations.data, rotations.data)
 
-    @pytest.mark.parametrize("rotations", [ROTATIONS.data, list(ROTATIONS.data)])
-    def test_init_with_invalid_rotations(self, rotations):
+    @pytest.mark.parametrize("rotation_format", ["array", "list"])
+    def test_init_with_invalid_rotations(self, rotations, rotation_format):
         with pytest.raises(ValueError):
-            _ = CrystalMap(rotations=rotations)
+            if rotation_format == "array":
+                _ = CrystalMap(rotations=rotations.data)
+            else:  # rotation_format == "list"
+                _ = CrystalMap(rotations=list(rotations.data))
 
     @pytest.mark.parametrize(
         (
@@ -143,7 +143,7 @@ class TestCrystalMapGetItem:
             (
                 ((5, 5, 5), (1, 1, 1), 1),
                 (slice(1, 2, None), slice(None, None, None),),
-                (1, 5, 5),
+                (5, 5),
             ),
             (
                 ((2, 5, 5), (1, 1, 1), 1),
@@ -183,11 +183,47 @@ class TestCrystalMapGetItem:
             assert cm2.size == n_points
             assert cm2.phases_in_data.names == [expected_phase_name]
 
-    def test_get_by_indexed_not_indexed(self):
-        pass
+    def test_get_by_indexed_not_indexed(self, crystal_map):
+        cm = crystal_map
 
-    def test_get_by_condition(self):
-        pass
+        # Set some points to not_indexed
+        cm[2:4].phase_id = -1
+
+        indexed = cm["indexed"]
+        not_indexed = cm["not_indexed"]
+
+        assert indexed.size + not_indexed.size == cm.size
+        assert np.allclose(np.unique(not_indexed.phase_id), np.array([-1]))
+        assert np.allclose(np.unique(indexed.phase_id), np.array([1]))
+
+    def test_get_by_condition(self, crystal_map):
+        cm = crystal_map
+
+        cm.prop["dp"] = np.arange(cm.size)
+
+        n_points = 2
+        assert cm.ndim == 2  # Test code assumption
+        cm[0, :n_points].dp = -1
+        cm2 = cm[cm.dp < 0]
+
+        assert cm2.size == n_points
+        assert np.sum(cm2.dp) == -2
+
+    def test_get_by_multiple_conditions(self, crystal_map, phase_list):
+        cm = crystal_map
+
+        assert phase_list.phase_ids == [0, 1, 2]  # Test code assumption
+
+        cm.phases = phase_list
+        cm.prop["dp"] = np.arange(cm.size)
+        a_phase_id = phase_list.phase_ids[0]
+        cm[cm.dp > 3].phase_id = a_phase_id
+
+        condition1 = cm.dp > 3
+        condition2 = cm.phase_id == a_phase_id
+        cm2 = cm[condition1 & condition2]
+        assert cm2.size == np.sum(condition1 * condition2)
+        assert np.allclose(cm2.is_in_data, condition1 * condition2)
 
     @pytest.mark.parametrize("point_id, raises", [(0, False), (1, False), (1000, True)])
     def test_get_by_integer(self, crystal_map, point_id, raises):
@@ -350,7 +386,7 @@ class TestCrystalMapProp:
 
 
 class TestCrystalMapMasking:
-    def test_masking_props(self, crystal_map_input):
+    def test_getitem_with_masking(self, crystal_map_input):
         x = crystal_map_input["x"]
         props = {"iq": np.arange(x.size)}
         cm = CrystalMap(prop=props, **crystal_map_input)
@@ -362,9 +398,189 @@ class TestCrystalMapMasking:
 
 
 class TestCrystalMapGetMapData:
-    pass
+    @pytest.mark.parametrize(
+        "crystal_map_input, to_get, expected_array",
+        [
+            (
+                ((1, 4, 4), (0, 0.5, 1), 2),
+                "x",
+                np.array([0, 1, 2, 3] * 4).reshape((4, 4)),
+            ),
+            (
+                ((1, 4, 4), (0, 0.5, 1), 2),
+                "y",
+                np.array([[i * 0.5] * 4 for i in range(4)]),  # [0, 0, 0, 0, 0.5, ...]
+            ),
+            (
+                ((2, 4, 4), (0.28, 0.5, 1), 2),
+                "z",
+                np.stack((np.zeros((4, 4)), np.ones((4, 4)) * 0.28), axis=0),
+            ),
+        ],
+        indirect=["crystal_map_input"],
+    )
+    def test_get_coordinate_array(self, crystal_map_input, to_get, expected_array):
+        cm = CrystalMap(**crystal_map_input)
+
+        # Get via string
+        data_via_string = cm.get_map_data(to_get)
+        assert np.allclose(data_via_string, expected_array)
+
+        # Get via numpy array
+        if to_get == "x":
+            data_via_array = cm.get_map_data(cm.x)
+        elif to_get == "y":
+            data_via_array = cm.get_map_data(cm.y)
+        else:  # to_get == "z"
+            data_via_array = cm.get_map_data(cm.z)
+        assert np.allclose(data_via_array, expected_array)
+
+        # Make sure they are the same
+        assert np.allclose(data_via_array, data_via_string)
+
+    def test_get_none_raises(self, crystal_map):
+        item = "z"
+        with pytest.raises(ValueError, match=f"{item} is None."):
+            _ = crystal_map.get_map_data(item)
+
+    def test_get_property_array(self, crystal_map):
+        cm = crystal_map
+
+        expected_array = np.arange(cm.size)
+        prop_name = "iq"
+        cm.prop[prop_name] = expected_array
+
+        iq = cm.get_map_data(prop_name)
+
+        assert np.allclose(iq, expected_array.reshape(cm.shape))
+
+    @pytest.mark.parametrize(
+        "crystal_map_input",
+        [((1, 3, 2), (0, 1, 1), 3), ((2, 1, 2), (1, 1, 1), 1),],
+        indirect=["crystal_map_input"],
+    )
+    def test_get_orientations_array(self, crystal_map_input, phase_list):
+        cm = CrystalMap(**crystal_map_input)
+
+        cm[3].phase_id = 2
+        # Test code assumption
+        assert np.allclose(np.unique(cm.phase_id), np.array([1, 2]))
+        cm.phases = phase_list
+
+        # Get all with string
+        o = cm.get_map_data("orientations")
+
+        # Get per phase with string
+        o1 = cm[cm.phase_id == 1].get_map_data("orientations")
+        o2 = cm[cm.phase_id == 2].get_map_data("orientations")
+
+        # Merge the two orientation arrays
+        o3 = o1
+        mask = ~np.isnan(o2)
+        o3[mask] = o2[mask]
+
+        assert np.allclose(o, o3, atol=1e-3)
+
+        # Do calculations "manually"
+        data_shape = (cm.size, 3)
+        array = np.zeros(data_shape)
+
+        if cm.rotations_per_point > 1:
+            rotations = cm.rotations[:, 0]
+        else:
+            rotations = cm.rotations
+
+        for i, phase in cm.phases_in_data:
+            phase_mask = cm._phase_id == i
+            phase_mask_in_data = cm.phase_id == i
+            array[phase_mask] = (
+                Orientation(rotations[phase_mask_in_data])
+                .set_symmetry(phase.symmetry)
+                .to_euler()
+            )
+
+        assert np.allclose(o, array.reshape(o.shape), atol=1e-3)
+
+    @pytest.mark.parametrize(
+        "crystal_map_input",
+        [((1, 2, 2), (0, 1, 1), 2), ((3, 2, 2), (1, 1, 1), 1),],
+        indirect=["crystal_map_input"],
+    )
+    def test_get_rotations_array(self, crystal_map_input):
+        cm = CrystalMap(**crystal_map_input)
+
+        # Get with string
+        r = cm.get_map_data("rotations")
+
+        new_shape = cm.rotations_shape + (3,)
+        expected_array = cm.rotations.to_euler().reshape(*new_shape)
+        assert np.allclose(r, expected_array, atol=1e-3)
+
+        # Get with array (RGB)
+        new_shape2 = (cm.size, 3)
+        r2 = cm.get_map_data(r.reshape(*new_shape2))
+        assert np.allclose(r2, expected_array, atol=1e-3)
+
+
+class TestCrystalMapRepresentation:
+    def test_representation(self, crystal_map, phase_list):
+        cm = crystal_map
+        cm.phases = phase_list
+        cm.scan_unit = "nm"
+
+        assert phase_list.phase_ids == [0, 1, 2]  # Test code assumption
+
+        cm[0].phase_id = phase_list.phase_ids[0]
+        cm[1].phase_id = phase_list.phase_ids[2]
+
+        cm.prop["iq"] = np.arange(cm.size)
+
+        assert cm[cm.phase_id == -1].__repr__() == "No data."
+
+        print(cm.__repr__())
+
+        assert cm.__repr__() == (
+            "Phase   Orientations   Name  Symmetry   Color\n"
+            "    0       1 (8.3%)      a      m-3m       r\n"
+            "    1     10 (83.3%)      b       432       g\n"
+            "    2       1 (8.3%)      c         3       b\n"
+            "Properties: iq\n"
+            "Scan unit: nm"
+        )
 
 
 class TestCrystalMapCopying:
     def test_shallowcopy_crystal_map(self, crystal_map_input):
-        pass
+        map_size = crystal_map_input["x"].size
+        phase_ids = np.arange(map_size)
+
+        cm = CrystalMap(phase_id=phase_ids, **crystal_map_input)
+
+        cm2 = cm[:]  # Everything except `is_in_data` is shallow copied
+        cm3 = cm  # These are the same objects (of course)
+
+        assert np.may_share_memory(cm2._phase_id, cm._phase_id)
+        assert np.may_share_memory(cm2._rotations.data, cm._rotations.data)
+
+        cm[5].phase_id = -2
+        assert np.allclose(cm2.phase_id, cm.phase_id)
+        assert np.allclose(cm3.phase_id, cm.phase_id)
+
+        # The user is strictly speaking only supposed to change this via __getitem__()
+        cm.is_in_data[2] = False
+        assert cm2.size != cm.size
+        assert cm3.size == cm.size
+        assert np.allclose(cm2.is_in_data, cm.is_in_data) is False
+        assert np.may_share_memory(cm3.is_in_data, cm.is_in_data)
+
+    def test_deepcopy_crystal_map(self, crystal_map_input):
+        map_size = crystal_map_input["x"].size
+        phase_ids = np.arange(map_size)
+
+        cm = CrystalMap(phase_id=phase_ids, **crystal_map_input)
+
+        cm2 = cm.deepcopy()
+
+        cm[5].phase_id = -2
+        assert np.allclose(cm2.phase_id, cm.phase_id) is False
+        assert np.may_share_memory(cm2._phase_id, cm._phase_id) is False

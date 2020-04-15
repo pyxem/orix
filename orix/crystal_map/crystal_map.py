@@ -35,39 +35,41 @@ class CrystalMap:
     Attributes
     ----------
     all_indexed : bool
-        Whether all data points are indexed.
+        Whether all points in data are indexed.
     dx, dy, dz : float
         Step sizes in x, y and z directions.
     id : int
-        Data point ID.
+        ID of points in the data.
     is_indexed : numpy.ndarray
-        Boolean array with True for indexed data points.
+        Whether points in data are indexed.
     ndim : int
-        Number of map dimensions.
+        Number of data dimensions of points in data.
     orientations : orix.quaternion.orientation.Orientation
-        Orientation(s) of each data point.
+        Orientations in data.
     phase_id : numpy.ndarray
-        Phase ID of each data point.
+        Phase IDs of points in data.
     phases : orix.crystal_map.PhaseList
         List of phases with their IDs, names, crystal symmetries and
         colors (possibly more than are in the data).
     phases_in_data : orix.crystal_map.PhaseList
-        List of phases in the data, with their IDs, names, crystal
-        symmetries and colors.
-    prop : dict
-        Dictionary of numpy arrays of key properties of each data point.
+        List of phases in data with their IDs, names, crystal symmetries
+        and colors.
+    prop : orix.crystal_map.CrystalMapProperties
+        Dictionary with data properties in each data point.
     rotations : orix.quaternion.rotation.Rotation
-        Rotations of each data point.
+        Rotations in data.
     rotations_per_point : int
         Number of rotations per data point.
+    rotations_shape : tuple
+        Shape of the rotation object.
     scan_unit : str
         Length unit of data, default is 'px'.
     shape : tuple
-        Shape of data in points (pixels).
+        Shape of points in data.
     size : int
-        Number of data points.
+        Total number of points in data.
     x, y, z : float
-        Coordinates in each data direction.
+        Coordinates of points in data.
 
     Methods
     -------
@@ -199,27 +201,27 @@ class CrystalMap:
 
     @property
     def id(self):
-        """Return ID of points in the data."""
+        """ID of points in data."""
         return self._id[self.is_in_data]
 
     @property
     def size(self):
-        """Return total number of points in the data."""
+        """Total number of points in data."""
         return np.sum(self.is_in_data)
 
     @property
     def shape(self):
-        """Return shape of points in the data."""
+        """Shape of points in data."""
         return self._data_shape_from_coordinates()
 
     @property
     def ndim(self):
-        """Return number of data dimensions of points in the data."""
+        """Number of data dimensions of points in data."""
         return len(self.shape)
 
     @property
     def x(self):
-        """Return x coordinates of points in data."""
+        """X coordinates of points in data."""
         if self._x is None:
             return self._x
         else:
@@ -227,7 +229,7 @@ class CrystalMap:
 
     @property
     def y(self):
-        """Return y coordinates (possibly None) of points in the data."""
+        """Y coordinates of points in data."""
         if self._y is None:
             return self._y
         else:
@@ -235,7 +237,7 @@ class CrystalMap:
 
     @property
     def z(self):
-        """Return z coordinates (possibly None) of points in the data."""
+        """Z coordinates of points in data."""
         if self._z is None:
             return self._z
         else:
@@ -243,7 +245,7 @@ class CrystalMap:
 
     @property
     def phase_id(self):
-        """Return phase IDs of points in the data."""
+        """Phase IDs of points in data."""
         return self._phase_id[self.is_in_data]
 
     @phase_id.setter
@@ -255,7 +257,7 @@ class CrystalMap:
 
     @property
     def phases_in_data(self):
-        """Return a list of phases in the data.
+        """List of phases in data.
 
         This is needed because it can be useful to have phases not in the
         data but in `self.phases`.
@@ -273,17 +275,30 @@ class CrystalMap:
 
     @property
     def rotations(self):
-        """Return a Rotation object of rotations in the data."""
+        """Rotations in data."""
         return self._rotations[self.is_in_data]
 
     @property
     def rotations_per_point(self):
-        """Return number of rotations per data point."""
+        """Number of rotations per data point."""
         return self.rotations.size // self.is_indexed.size
 
     @property
+    def rotations_shape(self):
+        """Shape of the rotation object.
+
+        Map shape and possible multiple rotations per point are accounted
+        for. 1-dimensions are left out. Uses a generator expression (see
+        PEP 289).
+
+        """
+        return tuple(i for i in self.shape + (self.rotations_per_point,) if i != 1)
+
+    @property
     def orientations(self):
-        """Return an Orientation object of orientations in data."""
+        """Orientations in data."""
+        # TODO: Consider whether orientations should be calculated upon loading...
+        # TODO: ... since computing orientations are slow (should benefit from dask)
         phases = self.phases_in_data
         if phases.size == 1:
             # Extract top matching rotations per point, if more than one match
@@ -300,18 +315,18 @@ class CrystalMap:
 
     @property
     def is_indexed(self):
-        """Return whether points in data are indexed."""
+        """Whether points in data are indexed."""
         return self.phase_id != -1
 
     @property
     def all_indexed(self):
-        """Return whether all points in data are indexed."""
+        """Whether all points in data are indexed."""
         return np.count_nonzero(self.is_indexed) == self.is_indexed.size
 
     @property
     def prop(self):
-        """Return a :class:`~orix.crystal_map.CrystalMapProperties`
-        dictionary with data properties.
+        """:class:`~orix.crystal_map.CrystalMapProperties` dictionary with
+        data properties in each data point.
 
         """
         self._prop.is_in_data = self.is_in_data
@@ -320,13 +335,13 @@ class CrystalMap:
 
     @property
     def _coordinates(self):
-        """Return a dictionary of coordinates of points in the data."""
+        """Dictionary of coordinates of points in the data."""
         # TODO: Make this "dynamic"/dependable when enabling specimen reference frame
         return {"z": self.z, "y": self.y, "x": self.x}
 
     @property
     def _step_sizes(self):
-        """Return a dictionary of step sizes of dimensions in the data."""
+        """Dictionary of step sizes of dimensions in the data."""
         # TODO: Make this "dynamic"/dependable when enabling specimen reference frame
         return {"z": self.dz, "y": self.dy, "x": self.dx}
 
@@ -351,7 +366,7 @@ class CrystalMap:
             return object.__setattr__(self, name, value)
 
     def __getitem__(self, key):
-        """Return a masked copy of the CrystalMap object.
+        """Get a masked copy of the CrystalMap object.
 
         Parameters
         ----------
@@ -547,12 +562,16 @@ class CrystalMap:
         to ``False`` in ``self.is_in_data``set to `fill_value`, of map
         shape.
 
+        If `item` is "orientations"/"rotations" and there are multiple
+        rotations per point, only the first rotation is used.
+
         Parameters
         ----------
         item : str or numpy.ndarray
             Name of the class instance attribute or a numpy.ndarray.
         decimals : int, optional
-            How many decimals to round data point values to (default is 3).
+            How many decimals to round data point values to (default is
+            3).
         fill_value : None, optional
             Value to fill points not in the data with. If ``None``
             (default), np.nan is used.
@@ -568,6 +587,8 @@ class CrystalMap:
         map_shape = self._original_shape
 
         # Declare array of correct shape, accounting for RGB
+        # TODO: Better account for `item.shape`, e.g. quaternions (item.shape[-1] == 4)
+        # TODO: ... in a more general way than here (not more if/else)!
         array = np.zeros(np.prod(map_shape))
         if isinstance(item, np.ndarray):
             if item.shape[-1] == 3:  # Assume RGB
@@ -583,26 +604,29 @@ class CrystalMap:
         elif item in ["orientations", "rotations"]:
             # Use only the top matching rotation per point
             if self.rotations_per_point > 1:
-                rotations = self._rotations[:, 0]
+                rotations = self.rotations[:, 0]
             else:
-                rotations = self._rotations
+                rotations = self.rotations
 
             # Fill in orientations or rotations per phase
             # TODO: Consider whether orientations should be calculated upon loading
             for i, phase in self.phases_in_data:
-                phase_mask = self.phase_id == i
-                data_point_id = self[phase_mask]._id
+                phase_mask = self._phase_id == i  # All points
+                phase_mask_in_data = self.phase_id == i  # Only those in data
                 if item == "orientations":
-                    array[data_point_id] = (
-                        Orientation(rotations[data_point_id])
+                    array[phase_mask] = (
+                        Orientation(rotations[phase_mask_in_data])
                         .set_symmetry(phase.symmetry)
                         .to_euler()
                     )
                 else:  # item == "rotations"
-                    array[data_point_id] = rotations[data_point_id].to_euler()
+                    array[phase_mask] = rotations[phase_mask_in_data].to_euler()
         else:  # String
-            item = self.__getattr__(item)
-            array[self.is_in_data] = item
+            data = self.__getattr__(item)
+            if data is None:
+                raise ValueError(f"{item} is {data}.")
+            else:
+                array[self.is_in_data] = data
 
         # Round values
         rounded_array = np.round(array, decimals=decimals)
@@ -666,12 +690,11 @@ class CrystalMap:
             self._coordinates.values(), self._step_sizes.values()
         ):
             if coordinates is not None:
-                slices.append(
-                    slice(
-                        int(np.min(coordinates) / step),
-                        int(np.ceil((np.max(coordinates) / step) + 1)),
+                c_min, c_max = np.min(coordinates), np.max(coordinates)
+                if c_min != c_max:
+                    slices.append(
+                        slice(int(c_min / step), int(np.ceil((c_max / step) + 1)))
                     )
-                )
 
         return tuple(slices)
 

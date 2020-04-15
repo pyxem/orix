@@ -102,7 +102,7 @@ class TestAngReader:
                     5,  # n_unknown_columns
                     np.array(
                         [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628],]
-                    ),  # example_rotations as rows of Euler angle triplets
+                    ),  # rotations as rows of Euler angle triplets
                 ),
                 (5, 3),
                 (0.1, 0.1),
@@ -110,7 +110,7 @@ class TestAngReader:
                 5,
                 np.array(
                     [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628],]
-                ),  # example_rotations as rows of Euler angle triplets
+                ),  # rotations as rows of Euler angle triplets
             ),
             (
                 (
@@ -120,7 +120,7 @@ class TestAngReader:
                     5,  # n_unknown_columns
                     np.array(
                         [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702],]
-                    ),  # example_rotations as rows of Euler angle triplets
+                    ),  # rotations as rows of Euler angle triplets
                 ),
                 (8, 4),
                 (1.5, 1.5),
@@ -128,7 +128,7 @@ class TestAngReader:
                 5,
                 np.array(
                     [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702],]
-                ),  # example_rotations as rows of Euler angle triplets
+                ),  # rotations as rows of Euler angle triplets
             ),
         ],
         indirect=["angfile_tsl"],
@@ -528,7 +528,7 @@ class TestEMsoftReader:
                             [6.148271, 0.792205, 1.324879],
                             [6.155951, 0.793078, 1.325229],
                         ]
-                    ),  # example_rotations as rows of Euler angle triplets
+                    ),  # rotations as rows of Euler angle triplets
                     50,  # n_top_matches
                     True,  # refined
                 ),

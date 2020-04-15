@@ -129,7 +129,7 @@ def temp_ang_file():
 @pytest.fixture(
     params=[
         # Tuple with default values for five parameters: map_shape, step_sizes,
-        # phase_id, n_unknown_columns, and example_rotations (see docstring below)
+        # phase_id, n_unknown_columns, and rotations (see docstring below)
         (
             (7, 13),  # map_shape
             (0.1, 0.1),  # step_sizes
@@ -137,7 +137,7 @@ def temp_ang_file():
             5,  # Number of unknown columns (one between ci and fit, the rest after fit)
             np.array(
                 [[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589],]
-            ),  # example_rotations as rows of Euler angle triplets
+            ),  # rotations as rows of Euler angle triplets
         )
     ]
 )
@@ -157,7 +157,7 @@ def angfile_tsl(tmpdir, request):
         Array of map size with phase IDs in header.
     n_unknown_columns : int
         Number of columns with unknown values.
-    example_rotations : np.ndarray
+    rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
 
@@ -208,14 +208,14 @@ def angfile_tsl(tmpdir, request):
 @pytest.fixture(
     params=[
         # Tuple with default values for four parameters: map_shape, step_sizes,
-        # phase_id, and example_rotations (see docstring below)
+        # phase_id, and rotations (see docstring below)
         (
             (7, 5),  # map_shape
             (2.86, 2.86),  # step_sizes
             np.ones(7 * 5, dtype=int),  # phase_id
             np.array(
                 [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
-            ),  # example_rotations as rows of Euler angle triplets
+            ),  # rotations as rows of Euler angle triplets
         )
     ]
 )
@@ -230,7 +230,7 @@ def angfile_astar(tmpdir, request):
         Step sizes in x and y coordinates in nanometres.
     phase_id : np.ndarray
         Array of map size with phase IDs in header.
-    example_rotations : np.ndarray
+    rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
 
@@ -253,7 +253,7 @@ def angfile_astar(tmpdir, request):
     if n_rotations == map_size:
         rot = example_rotations
     else:
-        # Sample as many rotations from `example_rotations` as `map_size`
+        # Sample as many rotations from `rotations` as `map_size`
         rot_idx = np.random.choice(np.arange(len(example_rotations)), map_size)
         rot = example_rotations[rot_idx]
 
@@ -273,14 +273,14 @@ def angfile_astar(tmpdir, request):
 @pytest.fixture(
     params=[
         # Tuple with default values for four parameters: map_shape, step_sizes,
-        # phase_id, and example_rotations (see docstring below)
+        # phase_id, and rotations (see docstring below)
         (
             (9, 7),  # map_shape
             (1.5, 1.5),  # step_sizes
             np.random.choice([1, 2], 9 * 7),  # phase_id
             np.array(
                 [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
-            ),  # example_rotations as rows of Euler angle triplets
+            ),  # rotations as rows of Euler angle triplets
         )
     ]
 )
@@ -295,7 +295,7 @@ def angfile_emsoft(tmpdir, request):
         Step sizes in x and y coordinates in nanometres.
     phase_id : np.ndarray
         Array of map size with phase IDs in header.
-    example_rotations : np.ndarray
+    rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
 
@@ -330,13 +330,13 @@ def angfile_emsoft(tmpdir, request):
 @pytest.fixture(
     params=[
         # Tuple with default values for parameters: map_shape, step_sizes,
-        # example_rotations, n_top_matches, and refined (see docstring below)
+        # rotations, n_top_matches, and refined (see docstring below)
         (
             (13, 3),  # map_shape
             (1.5, 1.5),  # step_sizes
             np.array(
                 [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
-            ),  # example_rotations as rows of Euler angle triplets
+            ),  # rotations as rows of Euler angle triplets
             50,  # n_top_matches
             True,  # refined
         )
@@ -351,7 +351,7 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         Map shape to create.
     step_sizes : tuple of floats
         Step sizes in x and y coordinates in nanometres.
-    example_rotations : np.ndarray
+    rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
     n_top_matches : int
@@ -404,7 +404,7 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         data_group.create_dataset(name, data=np.zeros(shape, dtype=dtype))
 
     # `data_group` with rotations
-    # Sample as many rotations from `example_rotations` as `map_size`
+    # Sample as many rotations from `rotations` as `map_size`
     rot_idx = np.random.choice(np.arange(len(example_rotations)), map_size)
     rot = example_rotations[rot_idx]
     n_sampled_oris = 333227  # Cubic space group with Ncubochoric = 100
@@ -472,7 +472,7 @@ def phase_list():
         ),
     ],
 )
-def crystal_map_input(request):
+def crystal_map_input(request, rotations):
     # Unpack parameters
     (nz, ny, nx), (dz, dy, dx), rotations_per_point = request.param
     map_size = nz * ny * nx
@@ -481,16 +481,15 @@ def crystal_map_input(request):
     y = np.tile(np.sort(np.tile(np.arange(ny) * dy, nx)), nz)
     x = np.tile(np.arange(nx) * dx, ny * nz)
 
-    example_rotations = Rotation([(2, 4, 6, 8), (-1, -2, -3, -4)])
     rot_idx = np.random.choice(
-        np.arange(example_rotations.size), map_size * rotations_per_point
+        np.arange(rotations.size), map_size * rotations_per_point
     )
 
     data_shape = (map_size,)
     if rotations_per_point > 1:
         data_shape += (rotations_per_point,)
 
-    rotations = example_rotations[rot_idx].reshape(*data_shape)
+    rotations = rotations[rot_idx].reshape(*data_shape)
 
     return {
         "rotations": rotations,
@@ -503,3 +502,8 @@ def crystal_map_input(request):
 @pytest.fixture
 def crystal_map(crystal_map_input):
     return CrystalMap(**crystal_map_input)
+
+
+@pytest.fixture
+def rotations():
+    return Rotation([(2, 4, 6, 8), (-1, -2, -3, -4)])

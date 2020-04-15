@@ -61,7 +61,7 @@ class CrystalMapProperties(dict):
             self.is_in_data = is_in_data
 
     def __setitem__(self, key, value):
-        """Add an array to or update an existing array in the
+        """Add a 1D array to or update an existing array in the
         dictionary. If `key` is the name of an existing array, only the
         points in the data (where `self.is_in_data` is True) are set.
 

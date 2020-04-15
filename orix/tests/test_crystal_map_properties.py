@@ -31,7 +31,7 @@ class TestCrystalMapProperties:
             ({}, np.arange(5), np.array([1, 1, 0, 1, 1], dtype=bool)),
         ],
     )
-    def test_init_crystal_map_properties(self, dictionary, id, is_in_data):
+    def test_init_properties(self, dictionary, id, is_in_data):
         props = CrystalMapProperties(
             dictionary=dictionary, id=id, is_in_data=is_in_data
         )
@@ -42,7 +42,7 @@ class TestCrystalMapProperties:
             is_in_data = np.ones(id.size, dtype=bool)
         assert np.allclose(props.is_in_data, is_in_data)
 
-    def test_set_crystal_map_property_item(self):
+    def test_set_item(self):
         map_size = 10
         is_in_data = np.ones(map_size, dtype=bool)
         is_in_data[5] = False
@@ -61,13 +61,21 @@ class TestCrystalMapProperties:
         expected_array2[5] = expected_array[5]
         assert np.allclose(props.get("iq"), expected_array2)
 
-    def test_set_crystal_map_property_item_error(self):
+    def test_set_item_error(self):
         map_size = 10
         is_in_data = np.ones(map_size, dtype=bool)
-        is_in_data[5] = False
+        id_to_change = 3
+        is_in_data[id_to_change] = False
+
         d = {"iq": np.arange(map_size)}
         props = CrystalMapProperties(d, id=np.arange(map_size), is_in_data=is_in_data)
 
         # Set array with an array
         with pytest.raises(ValueError, match="NumPy boolean array indexing assignment"):
             props["iq"] = np.arange(map_size) + 1
+
+        # Set new 2D array
+        props.is_in_data[id_to_change] = True
+        with pytest.raises(TypeError, match="NumPy boolean array indexing assignment"):
+            new_shape = (10 // 2, 10 // 5)
+            props["dp"] = np.arange(map_size).reshape(new_shape)
