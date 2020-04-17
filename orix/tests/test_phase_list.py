@@ -20,6 +20,7 @@ import numpy as np
 import pytest
 
 from orix.crystal_map.phase_list import Phase, PhaseList
+from orix.quaternion.symmetry import Symmetry, O
 
 
 class TestPhase:
@@ -29,7 +30,7 @@ class TestPhase:
             (None, "m-3m", None, "tab:blue", (0.121568, 0.466666, 0.705882)),
             (None, "1", "blue", "b", (0, 0, 1)),
             ("al", "43", "xkcd:salmon", "xkcd:salmon", (1, 0.474509, 0.423529)),
-            ("My awes0me phase!", "432", "C1", "tab:orange", (1, 0.498039, 0.054901)),
+            ("My awes0me phase!", O, "C1", "tab:orange", (1, 0.498039, 0.054901)),
         ],
     )
     def test_init_phase(self, name, symmetry, color, color_alias, color_rgb):
@@ -39,6 +40,8 @@ class TestPhase:
 
         if symmetry == "43":
             symmetry = "432"
+        if isinstance(symmetry, Symmetry):
+            symmetry = symmetry.name
         assert p.symmetry.name == symmetry
 
         assert p.color == color_alias

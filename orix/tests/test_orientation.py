@@ -1,8 +1,9 @@
-import pytest
 import numpy as np
+import pytest
 
 from orix.quaternion.orientation import Orientation, Misorientation
-from orix.quaternion.symmetry import *
+from orix.quaternion.symmetry import C1, C2, C3, C4, D2, D3, D6, T, O
+from orix.vector import Vector3d
 
 
 @pytest.fixture
@@ -142,11 +143,11 @@ def test_repr():
 def test_sub():
     m = Orientation([1, 1, 1, 1])  # any will do
     m.set_symmetry(C4)  # only one as it a O
-    mis = m - m  # this should give a set of zeroes
+    _ = m - m  # this should give a set of zeroes
     return None
 
 
 @pytest.mark.xfail(strict=True, reason=TypeError)
 def test_sub_orientation_and_other():
     m = Orientation([1, 1, 1, 1])  # any will do
-    mis = m - 3
+    _ = m - 3

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from gc import collect
+import gc
 import os
 from tempfile import TemporaryDirectory
 
@@ -123,7 +123,7 @@ def temp_ang_file():
     with TemporaryDirectory() as tempdir:
         f = open(os.path.join(tempdir, "temp_ang_file.ang"), mode="w+")
         yield f
-        collect()  # Garbage collection so that the file can be used by multiple tests
+        gc.collect()  # Garbage collection so that file can be used by multiple tests
 
 
 @pytest.fixture(
@@ -449,7 +449,7 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         phase_group.create_dataset(name, data=np.array([data], dtype=np.dtype("S")))
 
     yield f
-    collect()
+    gc.collect()
 
 
 @pytest.fixture
@@ -477,9 +477,13 @@ def crystal_map_input(request, rotations):
     (nz, ny, nx), (dz, dy, dx), rotations_per_point = request.param
     map_size = nz * ny * nx
 
-    z = np.array([np.ones(ny * nx) * i * dz for i in range(nz)]).flatten()
-    y = np.tile(np.sort(np.tile(np.arange(ny) * dy, nx)), nz)
-    x = np.tile(np.arange(nx) * dx, ny * nz)
+    d = {"x": None, "y": None, "z": None, "rotations": None}
+    if nx > 1:
+        d["x"] = np.tile(np.arange(nx) * dx, ny * nz)
+    if ny > 1:
+        d["y"] = np.tile(np.sort(np.tile(np.arange(ny) * dy, nx)), nz)
+    if nz > 1:
+        d["z"] = np.array([np.ones(ny * nx) * i * dz for i in range(nz)]).flatten()
 
     rot_idx = np.random.choice(
         np.arange(rotations.size), map_size * rotations_per_point
@@ -489,14 +493,9 @@ def crystal_map_input(request, rotations):
     if rotations_per_point > 1:
         data_shape += (rotations_per_point,)
 
-    rotations = rotations[rot_idx].reshape(*data_shape)
+    d["rotations"] = rotations[rot_idx].reshape(*data_shape)
 
-    return {
-        "rotations": rotations,
-        "z": z,
-        "y": y,
-        "x": x,
-    }
+    return d
 
 
 @pytest.fixture

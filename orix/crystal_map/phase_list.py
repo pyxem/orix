@@ -52,7 +52,7 @@ class Phase:
         RGB values of phase color, obtained from the color name.
     name : str
         Phase name.
-    symmetry : orix.quaternion.symmetries.Symmetry
+    symmetry : orix.quaternion.symmetry.Symmetry
         Crystal symmetries of the phase.
 
     Methods
@@ -69,7 +69,7 @@ class Phase:
         name : str, optional
             Phase name. If ``None`` is passed (default), name is set to
             ``None``.
-        symmetry : str, optional
+        symmetry : str or orix.quaternion.symmetry.Symmetry, optional
             Point group of phase's crystal symmetry. If ``None`` is passed
             (default), it set to ``None``.
         color : str, optional
@@ -86,7 +86,7 @@ class Phase:
 
     @property
     def name(self):
-        """Return phase name."""
+        """Phase name."""
         return self._name
 
     @name.setter
@@ -96,7 +96,7 @@ class Phase:
 
     @property
     def color(self):
-        """Return phase color."""
+        """Name of phase color."""
         return self._color
 
     @color.setter
@@ -113,17 +113,17 @@ class Phase:
 
     @property
     def color_rgb(self):
-        """Return phase color as RGB tuple."""
+        """Phase color as RGB tuple."""
         return mcolors.to_rgb(self.color)
 
     @property
     def symmetry(self):
-        """Return the crystal symmetry of the phase."""
+        """Crystal symmetry of phase."""
         return self._symmetry
 
     @symmetry.setter
     def symmetry(self, value):
-        """Set the crystal symmetry of the phase."""
+        """Set crystal symmetry of phase."""
         if isinstance(value, Number):
             value = str(value)
         if isinstance(value, str):
@@ -200,7 +200,8 @@ class PhaseList:
             are ignored if this is passed.
         names : str or list of str, optional
             Phase names.
-        symmetries : str, int or list of str or int, optional
+        symmetries : str, int, orix.quaternion.symmetry.Symmetry or list\
+                of str, int or orix.quaternion.symmetry.Symmetry, optional
             Point group symmetries.
         colors : str or list of str, optional
             Phase colors.
@@ -231,7 +232,7 @@ class PhaseList:
             # Ensure possible single strings have iterables of length 1
             if isinstance(names, str):
                 names = list((names,))
-            if isinstance(symmetries, str):
+            if isinstance(symmetries, str) or isinstance(symmetries, Symmetry):
                 symmetries = list((symmetries,))
             if isinstance(colors, str) or isinstance(colors, tuple):
                 colors = list((colors,))
@@ -297,32 +298,32 @@ class PhaseList:
 
     @property
     def names(self):
-        """Return a list of phase names in the list."""
+        """List of phase names in the list."""
         return [phase.name for _, phase in self]
 
     @property
     def symmetries(self):
-        """Return a list of crystal symmetries of phases in the list."""
+        """List of crystal symmetries of phases in the list."""
         return [phase.symmetry for _, phase in self]
 
     @property
     def colors(self):
-        """Return a list of phase color names in the list."""
+        """List of phase color names in the list."""
         return [phase.color for _, phase in self]
 
     @property
     def colors_rgb(self):
-        """Return a list of phase color RGB values in the list."""
+        """List of phase color RGB values in the list."""
         return [phase.color_rgb for _, phase in self]
 
     @property
     def size(self):
-        """Return number of phases in the list."""
+        """Number of phases in the list."""
         return len(self._dict.items())
 
     @property
     def phase_ids(self):
-        """Return unique phase IDs in the list of phases."""
+        """Unique phase IDs in the list of phases."""
         return list(self._dict.keys())
 
     def __getitem__(self, key):
