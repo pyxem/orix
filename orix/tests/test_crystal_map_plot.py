@@ -435,6 +435,10 @@ class TestStatusBar:
         # Call our custom cursor data function
         cursor_data = im.get_cursor_data(cursor_event)
 
+        # Check status bar data formatting
+        data_format = im.format_cursor_data(cursor_data)
+        expected_format = f"(y,x):({data_idx[0]},{data_idx[1]})"
+
         # Get crystal map data
         point = crystal_map[data_idx]
         r = point.rotations.to_euler()
@@ -446,6 +450,12 @@ class TestStatusBar:
             assert np.allclose(cursor_data[3], point.phases_in_data.colors_rgb)
         else:  # scalar
             assert np.allclose(cursor_data[3], point.id)
+            expected_format += " val: {:.1f}".format(point.id[0])
+
+        expected_format += " rot:({:.3f},{:.3f},{:.3f})".format(
+            r[0, 0], r[0, 1], r[0, 2]
+        )
+        assert data_format == expected_format
 
         plt.close("all")
 
