@@ -393,9 +393,6 @@ class TestStatusBar:
 
         _ = ax._override_status_bar(im, crystal_map)
 
-        # Check that silencing of default status bar is successful
-        assert ax.format_coord(0, 0) == ""
-
         plt.close("all")
 
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
@@ -414,7 +411,9 @@ class TestStatusBar:
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
 
-        fig.canvas.draw()
+        f = plt.gcf()
+        f.canvas.draw()
+        f.canvas.flush_events()
 
         if to_plot == "rgb":
             im = ax.plot_map(crystal_map)
@@ -427,10 +426,10 @@ class TestStatusBar:
 
         # Mock a mouse event
         plt.matplotlib.backends.backend_agg.FigureCanvasBase.motion_notify_event(
-            fig.canvas, x, y
+            f.canvas, x, y
         )
         cursor_event = plt.matplotlib.backend_bases.MouseEvent(
-            "motion_notify_event", fig.canvas, x, y
+            "motion_notify_event", f.canvas, x, y
         )
 
         # Call our custom cursor data function
