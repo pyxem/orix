@@ -72,6 +72,8 @@ class TestCrystalMapPlot:
         assert np.allclose(image_data.shape, expected_data_shape)
         assert np.allclose(image_data, expected_data)
 
+        plt.close("all")
+
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_plot_property(self, crystal_map):
         cm = crystal_map
@@ -85,6 +87,8 @@ class TestCrystalMapPlot:
         im = ax.plot_map(cm, cm.iq)
 
         assert np.allclose(im.get_array(), prop_data.reshape(cm.shape))
+
+        plt.close("all")
 
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_plot_scalar(self, crystal_map):
@@ -104,6 +108,8 @@ class TestCrystalMapPlot:
         im2 = ax2.plot_map(cm, cm.rotations.angle)
 
         assert np.allclose(im2.get_array(), angles.reshape(cm.shape), atol=1e-3)
+
+        plt.close("all")
 
     @pytest.mark.parametrize(
         "crystal_map_input",
@@ -130,6 +136,8 @@ class TestCrystalMapPlot:
             fig = plt.figure()
             ax = fig.add_subplot(projection=PLOT_MAP)
             _ = ax.plot_map(cm[cm.phase_id == i])
+
+        plt.close("all")
 
     @pytest.mark.parametrize(
         "crystal_map_input",
@@ -160,6 +168,8 @@ class TestCrystalMapPlot:
         assert np.allclose(im1_data, expected_data_im1)
         assert np.allclose(im2_data, expected_data_im2)
 
+        plt.close("all")
+
 
 class TestCrystalMapPlotUtilities:
     def test_init_projection(self):
@@ -171,6 +181,8 @@ class TestCrystalMapPlotUtilities:
         # Option 2 (`label` to suppress warning of non-unique figure objects)
         ax2 = plt.subplot(projection=PLOT_MAP, label="unique")
         assert isinstance(ax2, CrystalMapPlot)
+
+        plt.close("all")
 
     @pytest.mark.parametrize(
         "crystal_map_input, idx_to_change, axes, depth, expected_plot_shape",
@@ -196,6 +208,8 @@ class TestCrystalMapPlotUtilities:
 
         assert ax._data_shape == expected_plot_shape
         assert np.allclose(np.unique(im.get_array()), np.array([0, 1]))
+
+        plt.close("all")
 
     @pytest.mark.parametrize("to_plot", ["scalar", "rgb"])
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
@@ -229,6 +243,8 @@ class TestCrystalMapPlotUtilities:
             im_data[:, :, i] *= rescaled_overlay
 
         assert np.allclose(im_data, im_data2)
+
+        plt.close("all")
 
     @pytest.mark.parametrize(
         "phase_names, phase_colors, legend_properties",
@@ -268,6 +284,8 @@ class TestCrystalMapPlotUtilities:
 
         for k, v in legend_properties.items():
             assert legend.__getattribute__(k) == v
+
+        plt.close("all")
 
     @pytest.mark.parametrize("with_colorbar", [True, False])
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
@@ -311,6 +329,8 @@ class TestCrystalMapPlotUtilities:
             subplot_params.left,
         ) == expected_subplot_params
 
+        plt.close("all")
+
     @pytest.mark.parametrize("cmap", ["viridis", "cividis", "inferno"])
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_set_colormap(self, crystal_map, cmap):
@@ -319,6 +339,8 @@ class TestCrystalMapPlotUtilities:
         im = ax.plot_map(crystal_map, cmap=cmap)
 
         assert im.cmap.name == cmap
+
+        plt.close("all")
 
     @pytest.mark.parametrize(
         "cmap, label, position",
@@ -342,6 +364,8 @@ class TestCrystalMapPlotUtilities:
         assert cbar.ax.get_ylabel() == new_label
 
         assert cbar.ax.yaxis.labelpad == 15
+
+        plt.close("all")
 
     @pytest.mark.parametrize(
         "value, unit, expected_value, expected_unit, expected_factor",
@@ -372,6 +396,8 @@ class TestStatusBar:
         # Check that silencing of default status bar is successful
         assert ax.format_coord(0, 0) == ""
 
+        plt.close("all")
+
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_status_bar_silence_default_format_coord(self, crystal_map):
         fig = plt.figure()
@@ -380,11 +406,15 @@ class TestStatusBar:
 
         assert ax.format_coord(0, 0) == ""
 
+        plt.close("all")
+
     @pytest.mark.parametrize("to_plot", ["rgb", "scalar"])
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_status_bar(self, crystal_map, to_plot):
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
+
+        fig.canvas.draw()
 
         if to_plot == "rgb":
             im = ax.plot_map(crystal_map)
@@ -417,6 +447,8 @@ class TestStatusBar:
             assert np.allclose(cursor_data[3], point.phases_in_data.colors_rgb)
         else:  # scalar
             assert np.allclose(cursor_data[3], point.id)
+
+        plt.close("all")
 
 
 class TestScalebar:
@@ -472,6 +504,8 @@ class TestScalebar:
                 sbar_attr = sbar.__getattribute__(attr_loc)
             assert sbar_attr == v
 
+        plt.close("all")
+
     @pytest.mark.parametrize(
         (
             "crystal_map_input, unit, expected_coordinate_axes, expected_width_px, "
@@ -525,6 +559,8 @@ class TestScalebar:
             == f"{expected_width_unit} {expected_unit}"
         )
 
+        plt.close("all")
+
     @pytest.mark.parametrize(
         "crystal_map_input, warns",
         [
@@ -544,3 +580,5 @@ class TestScalebar:
                 _ = ax.plot_map(cm)
         else:
             _ = ax.plot_map(cm)
+
+        plt.close("all")

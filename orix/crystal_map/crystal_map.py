@@ -390,6 +390,7 @@ class CrystalMap:
             1   5657 (48.4%)  austenite       432    tab:blue
             2   6043 (51.6%)    ferrite       432  tab:orange
         Properties: iq, dp
+        Scan unit: um
         >>> cm.shape
         (100, 117)
 
