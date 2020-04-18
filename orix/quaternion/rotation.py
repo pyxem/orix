@@ -320,26 +320,55 @@ class Rotation(Quaternion):
         # Bunge convention
         euler = np.array(euler)
         n = euler.shape[:-1]
-        alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
-        alpha -= np.pi / 2
-        gamma -= 3 * np.pi / 2
-        zero = np.zeros(n)
-        qalpha = Quaternion(
-            np.stack((np.cos(alpha / 2), zero, zero, np.sin(alpha / 2)), axis=-1)
-        )
-        qbeta = Quaternion(
-            np.stack((np.cos(beta / 2), zero, np.sin(beta / 2), zero), axis=-1)
-        )
-        qgamma = Quaternion(
-            np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)), axis=-1)
-        )
-        data = qalpha * qbeta * qgamma
+
+        # This is a port from transform3d, TODO: Factorise
+        ai = euler[..., 0]
+        aj = euler[..., 1]
+        ak = euler[..., 2]
+
+        # Hardcoding Bunge convention
+        _NEXT_AXIS = [1, 2, 0, 1]
+        axes = 'rzxz'
+
+        if  axes == "rzxz":
+            firstaxis, parity, repetition, frame = 2, 0, 1, 1
+
+        i = firstaxis + 1
+        j = _NEXT_AXIS[i + parity - 1] + 1
+        k = _NEXT_AXIS[i - parity] + 1
+
+        if frame:
+            ai, ak = ak, ai
+
+        ai = np.divide(ai, 2.0)
+        aj = np.divide(aj, 2.0)
+        ak = np.divide(ak, 2.0)
+        ci = np.cos(ai)
+        si = np.sin(ai)
+        cj = np.cos(aj)
+        sj = np.sin(aj)
+        ck = np.cos(ak)
+        sk = np.sin(ak)
+        cc = ci * ck
+        cs = ci * sk
+        sc = si * ck
+        ss = si * sk
+
+        q = np.empty((ai.shape[0], 4))
+
+        if repetition:
+            q[:, 0] = cj * (cc - ss)
+            q[:, i] = cj * (cs + sc)
+            q[:, j] = sj * (cc + ss)
+            q[:, k] = sj * (cs - sc)
+
+        data = Quaternion(q)
 
         if direction == 'lab2crystal':
           data = ~data
 
         rot = cls(data.data)
-        rot.improper = zero
+        rot.improper = np.zeros((n))
         return rot
 
     @classmethod
