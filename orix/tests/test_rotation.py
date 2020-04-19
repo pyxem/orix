@@ -226,7 +226,13 @@ def test_to_euler(rotation, euler, convention):
     e = np.degrees(rotation.to_euler(convention=convention))
     assert np.allclose(e, euler, atol=1e-3)
 
-
+def test_to_from_euler():
+    """ Checks that going euler2quat2euler gives no change """
+    e = np.random.rand(10,3)
+    r = Rotation.from_euler(e)
+    e2 = r.to_euler()
+    assert np.allclose(e,e2)
+    
 @pytest.mark.parametrize(
     "rotation, improper, expected, improper_expected",
     [
