@@ -189,30 +189,36 @@ def test_neg(rotation, i, expected_i):
     r = -rotation
     assert np.allclose(r.improper, expected_i)
 
+
 """ these tests address .to_euler() and .from_euler()"""
+
 
 def test_to_from_euler():
     """ Checks that going euler2quat2euler gives no change """
-    e = np.random.rand(10,3)
+    e = np.random.rand(10, 3)
     r = Rotation.from_euler(e)
     e2 = r.to_euler()
-    assert np.allclose(e.data,e2.data)
+    assert np.allclose(e.data, e2.data)
+
 
 def test_direction_kwarg():
-    e = np.random.rand(10,3)
-    r = Rotation.from_euler(e,direction='lab2crystal')
+    e = np.random.rand(10, 3)
+    r = Rotation.from_euler(e, direction="lab2crystal")
+
 
 @pytest.mark.xfail()
 def test_direction_kwarg_dumb():
-    e = np.random.rand(10,3)
-    r = Rotation.from_euler(e,direction='dumb_direction')
+    e = np.random.rand(10, 3)
+    r = Rotation.from_euler(e, direction="dumb_direction")
+
 
 def test_edge_cases_to_euler():
-    x = np.sqrt(1/2)
-    q = Rotation(np.asarray([x,0,0,x]))
+    x = np.sqrt(1 / 2)
+    q = Rotation(np.asarray([x, 0, 0, x]))
     e = q.to_euler()
-    q = Rotation(np.asarray([0,x,0,0]))
+    q = Rotation(np.asarray([0, x, 0, 0]))
     e = q.to_euler()
+
 
 @pytest.mark.parametrize(
     "rotation, improper, expected, improper_expected",
