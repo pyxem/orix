@@ -272,35 +272,45 @@ class Rotation(Quaternion):
             Array of Euler angles in radians.
 
         """
-        at1 = np.arctan2(self.d.data, self.a.data)
-        at2 = np.arctan2(self.b.data, self.c.data)
-        alpha = at1 - at2
-        beta = 2 * np.arctan2(
-            np.sqrt(self.b.data ** 2 + self.c.data ** 2),
-            np.sqrt(self.a.data ** 2 + self.d.data ** 2),
-        )
-        gamma = at1 + at2
-        mask = np.isclose(beta, 0)
-        alpha[mask] = 2 * np.arcsin(
-            np.maximum(
-                -1, np.minimum(1, np.sign(self.a.data[mask]) * self.d.data[mask])
-            )
-        )
-        gamma[mask] = 0
+        #A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
+        n = self.data.shape[:-1]
+        e = np.zeros(n + (3,))
 
-        if convention == "bunge":
-            mask = ~np.isclose(beta, 0)
-            alpha[mask] += np.pi / 2
-            gamma[mask] += 3 * np.pi / 2
-        else:
-            raise NotImplementedError(
-                "{} is not an implemented convention. See docstring.".format(convention)
-            )
+        # move into pure numpy
+        a,b,c,d = self.a.data,self.b.data,self.c.data,self.d.data
 
-        alpha = np.mod(alpha, 2 * np.pi)
-        gamma = np.mod(gamma, 2 * np.pi)
+        q_zero_three = a**2 + d**2
+        q_one_two = b**2 + c**2
+        chi = np.sqrt(q_zero_three*q_one_two)
 
-        return np.stack((alpha, beta, gamma), axis=-1)
+        # P = 1
+
+        if np.sum(q_one_two==0) > 0: #checks that this occurs somewhere in data
+            alpha = np.arctan2(-2*a*d,a**2-d**2)
+            cond = [q_one_two == 0]
+            e[...,0] = np.where(cond,alpha,e[...,0])
+            e[...,1] = np.where(cond,0,e[...,1])
+            e[...,2] = np.where(cond,0,e[...,2])
+
+        if np.sum(q_zero_three==0) > 0:
+            alpha = np.arctan2(2*b*c,b**2-c**2)
+            cond = [q_zero_three == 0]
+            e[...,0] = np.where(cond,alpha,e[...,0])
+            e[...,1] = np.where(cond,np.pi,e[...,1])
+            e[...,2] = np.where(cond,0,e[...,2])
+
+        if np.sum(chi!=0) > 0:
+            alpha = np.arctan2(np.divide(b*d-a*c,chi),
+                             np.divide(-a*b-c*d,chi))
+            beta =  np.arctan2(2*chi,q_zero_three-q_one_two)
+            gamma = np.arctan2(np.divide(a*c+b*d,chi),
+                             np.divide(c*d-a*b,chi))
+
+            e[...,0] = np.where(chi!=0,alpha,e[...,0])
+            e[...,1] = np.where(chi!=0,beta,e[...,1])
+            e[...,2] = np.where(chi!=0,gamma,e[...,2])
+
+        return e
 
     @classmethod
     def from_euler(cls, euler, direction='crystal2lab'):
@@ -317,50 +327,29 @@ class Rotation(Quaternion):
         if direction not in ['lab2crystal','crystal2lab']:
             raise ValueError("The chosen direction is not one of the allowed options")
 
-        # Bunge convention
         euler = np.array(euler)
         n = euler.shape[:-1]
 
-        # This is a port from transform3d, TODO: Factorise
-        ai = euler[..., 0]
-        aj = euler[..., 1]
-        ak = euler[..., 2]
+        # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
 
-        # Hardcoding Bunge convention
-        _NEXT_AXIS = [1, 2, 0, 1]
-        axes = 'rzxz'
+        alpha = euler[..., 0] #psi1
+        beta = euler[..., 1]  #Psi
+        gamma = euler[..., 2] #psi3
 
-        if  axes == "rzxz":
-            firstaxis, parity, repetition, frame = 2, 0, 1, 1
+        sigma = 0.5 * np.add(alpha,gamma)
+        delta = 0.5 * np.subtract(alpha,gamma)
+        c = np.cos(beta/2)
+        s = np.sin(beta/2)
 
-        i = firstaxis + 1
-        j = _NEXT_AXIS[i + parity - 1] + 1
-        k = _NEXT_AXIS[i - parity] + 1
+        # Using P = 1 from A.6
+        q = np.zeros(n + (4,))
+        q[...,0] =  c*np.cos(sigma)
+        q[...,1] = -s*np.cos(delta)
+        q[...,2] = -s*np.sin(delta)
+        q[...,3] = -c*np.sin(sigma)
 
-        if frame:
-            ai, ak = ak, ai
-
-        ai = np.divide(ai, 2.0)
-        aj = np.divide(aj, 2.0)
-        ak = np.divide(ak, 2.0)
-        ci = np.cos(ai)
-        si = np.sin(ai)
-        cj = np.cos(aj)
-        sj = np.sin(aj)
-        ck = np.cos(ak)
-        sk = np.sin(ak)
-        cc = ci * ck
-        cs = ci * sk
-        sc = si * ck
-        ss = si * sk
-
-        q = np.empty((ai.shape[0], 4))
-
-        if repetition:
-            q[:, 0] = cj * (cc - ss)
-            q[:, i] = cj * (cs + sc)
-            q[:, j] = sj * (cc + ss)
-            q[:, k] = sj * (cs - sc)
+        for i in [1,2,3,0]: #flip the zero element last
+            q[...,i] = np.where(q[...,0] < 0,-q[...,i],q[...,i])
 
         data = Quaternion(q)
 
