@@ -192,23 +192,25 @@ def test_neg(rotation, i, expected_i):
 
 """ these tests address .to_euler() and .from_euler()"""
 
-
-def test_to_from_euler():
-    """ Checks that going euler2quat2euler gives no change """
+@pytest.fixture()
+def e():
     e = np.random.rand(10, 3)
+    return e
+
+def test_to_from_euler(e):
+    """ Checks that going euler2quat2euler gives no change """
+    #e = np.random.rand(10, 3)
     r = Rotation.from_euler(e)
     e2 = r.to_euler()
     assert np.allclose(e.data, e2.data)
 
-
-def test_direction_kwarg():
-    e = np.random.rand(10, 3)
+def test_direction_kwarg(e):
+    #e = np.random.rand(10, 3)
     r = Rotation.from_euler(e, direction="lab2crystal")
 
-
 @pytest.mark.xfail()
-def test_direction_kwarg_dumb():
-    e = np.random.rand(10, 3)
+def test_direction_kwarg_dumb(e):
+    #e = np.random.rand(10, 3)
     r = Rotation.from_euler(e, direction="dumb_direction")
 
 

@@ -272,6 +272,8 @@ class Rotation(Quaternion):
             Array of Euler angles in radians.
 
         """
+        if convention != "bunge":
+            raise ValueError("The convention you have specified is not supported")
         # A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
         n = self.data.shape[:-1]
         e = np.zeros(n + (3,))
@@ -315,17 +317,20 @@ class Rotation(Quaternion):
         return e
 
     @classmethod
-    def from_euler(cls, euler, direction="crystal2lab"):
+    def from_euler(cls, euler, convention="bunge", direction="crystal2lab"):
         """Creates a rotation from an array of Euler angles.
 
         Parameters
         ----------
         euler : array-like
             Euler angles in the Bunge convention.
-
+        convention : str
+            Only 'bunge' is currently suppported
         direction : str
             'lab2crystal' or 'crystal2lab'
         """
+        if convention != "bunge":
+            raise ValuerError("Only 'bunge' is an acceptable convention")
         if direction not in ["lab2crystal", "crystal2lab"]:
             raise ValueError("The chosen direction is not one of the allowed options")
 
