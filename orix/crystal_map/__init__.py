@@ -33,6 +33,6 @@ Submodules
     phase_list
 """
 
-from .crystal_map import CrystalMap
-from .phase_list import Phase, PhaseList
-from .crystal_map_properties import CrystalMapProperties
+from orix.crystal_map.crystal_map import CrystalMap
+from orix.crystal_map.phase_list import Phase, PhaseList
+from orix.crystal_map.crystal_map_properties import CrystalMapProperties

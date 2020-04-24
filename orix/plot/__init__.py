@@ -16,5 +16,5 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from .rotation_plot import RodriguesPlot
-from .crystal_map_plot import CrystalMapPlot
+from orix.plot.rotation_plot import RodriguesPlot
+from orix.plot.crystal_map_plot import CrystalMapPlot

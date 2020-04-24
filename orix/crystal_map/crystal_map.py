@@ -22,8 +22,8 @@ import numpy as np
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.orientation import Orientation
-from .phase_list import PhaseList, Phase
-from .crystal_map_properties import CrystalMapProperties
+from orix.crystal_map.phase_list import PhaseList, Phase
+from orix.crystal_map.crystal_map_properties import CrystalMapProperties
 
 
 class CrystalMap:
@@ -39,7 +39,7 @@ class CrystalMap:
         Whether all points in data are indexed.
     dz, dy, dx : float
         Step sizes in z, y and x directions.
-    id : int
+    id : numpy.ndarray
         ID of points in the data.
     is_indexed : numpy.ndarray
         Whether points in data are indexed.
@@ -155,13 +155,6 @@ class CrystalMap:
         self._y = y
         self._z = z
 
-        # Set step sizes
-        # TODO: Enable updating these if the spatial coordinate arrays are updated
-        # TODO: Can be done via CrystalMap._step_size_from_coordinates()
-        self.dx = self._step_size_from_coordinates(x)
-        self.dy = self._step_size_from_coordinates(y)
-        self.dz = self._step_size_from_coordinates(z)
-
         # Create phase list
         unique_phase_ids = np.unique(phase_id)  # Sorted in ascending order
         include_not_indexed = False
@@ -241,13 +234,25 @@ class CrystalMap:
             return self._z[self.is_in_data]
 
     @property
+    def dx(self):
+        return self._step_size_from_coordinates(self._x)
+
+    @property
+    def dy(self):
+        return self._step_size_from_coordinates(self._y)
+
+    @property
+    def dz(self):
+        return self._step_size_from_coordinates(self._z)
+
+    @property
     def phase_id(self):
         """Phase IDs of points in data."""
         return self._phase_id[self.is_in_data]
 
     @phase_id.setter
     def phase_id(self, value):
-        """Set phase ID of points in data."""
+        """Set phase ID of points in data by passing an int to `value`."""
         self._phase_id[self.is_in_data] = value
         if value == -1 and "not_indexed" not in self.phases.names:
             self.phases.add_not_indexed()
@@ -262,12 +267,12 @@ class CrystalMap:
         """
         unique_ids = np.unique(self.phase_id)
         phase_list = self.phases[np.intersect1d(unique_ids, self.phases.phase_ids)]
-        if isinstance(phase_list, Phase):
+        if isinstance(phase_list, Phase):  # One phase in data
             # Get phase ID so it carries over to the new `PhaseList` object
             phase = phase_list  # Since it's actually a single phase
             phase_id = self.phases.id_from_name(phase.name)
             return PhaseList(phases=phase, phase_ids=phase_id)
-        else:
+        else:  # Multiple phases in data
             return phase_list
 
     @property
@@ -292,7 +297,7 @@ class CrystalMap:
 
     @property
     def orientations(self):
-        """Orientations in data."""
+        """Rotations, respecting symmetry, in data."""
         # TODO: Consider whether orientations should be calculated upon loading...
         # TODO: ... since computing orientations are slow (should benefit from dask!)
         phases = self.phases_in_data

@@ -27,8 +27,8 @@
 
 import numpy as np
 
-from .emsoft_h5ebsd import load_emsoft
-from .ang import load_ang
+from orix.io.emsoft_h5ebsd import load_emsoft
+from orix.io.ang import load_ang
 
 
 def loadang(file_string: str):

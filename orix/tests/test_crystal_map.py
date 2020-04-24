@@ -295,6 +295,10 @@ class TestCrystalMapSetAttributes:
         if set_phase_id == -1:
             assert "not_indexed" in cm.phases.names
 
+    def test_set_phase_ids_raises(self, crystal_map):
+        with pytest.raises(ValueError, match="NumPy boolean array indexing assignment"):
+            crystal_map[1, 1].phase_id = -1 * np.ones(10)
+
     @pytest.mark.parametrize("set_phase_id, index_error", [(-1, False), (1, True)])
     def test_set_phase_id_with_unknown_id(self, crystal_map, set_phase_id, index_error):
         cm = crystal_map

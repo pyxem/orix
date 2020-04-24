@@ -29,6 +29,11 @@ from orix.crystal_map.phase_list import PhaseList
 from orix.quaternion.rotation import Rotation
 
 
+@pytest.fixture
+def rotations():
+    return Rotation([(2, 4, 6, 8), (-1, -2, -3, -4)])
+
+
 # TODO: Exchange for a multiphase header (change `phase_id` accordingly)
 ANGFILE_TSL_HEADER = (
     "# TEM_PIXperUM          1.000000\n"
@@ -501,8 +506,3 @@ def crystal_map_input(request, rotations):
 @pytest.fixture
 def crystal_map(crystal_map_input):
     return CrystalMap(**crystal_map_input)
-
-
-@pytest.fixture
-def rotations():
-    return Rotation([(2, 4, 6, 8), (-1, -2, -3, -4)])
