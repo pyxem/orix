@@ -163,7 +163,10 @@ class Misorientation(Rotation):
                [1.57079633, 0.        ]])
         """
         if speed == 1:
-            warnings.warn("This method is inferior and be removed in 0.3.0; use speed=2 instead", RuntimeWarning)
+            warnings.warn(
+                "This method is inferior and be removed in 0.3.0; use speed=2 instead",
+                RuntimeWarning,
+            )
             distance = _distance_1(self, verbose)
         else:
             distance = _distance_2(self, verbose, split_size)
@@ -266,6 +269,7 @@ def _distance_2(misorientation, verbose, split_size=100):
     outer_range = range(0, num_orientations, split_size)
     if verbose:
         from tqdm import tqdm
+
         outer_range = tqdm(outer_range, total=np.ceil(num_orientations / split_size))
     S_1_outer_S_1 = S_1.outer(S_1)
 

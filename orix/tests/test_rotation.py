@@ -190,41 +190,48 @@ def test_neg(rotation, i, expected_i):
     assert np.allclose(r.improper, expected_i)
 
 
-@pytest.mark.parametrize(
-    "rotation, euler, convention",
-    [
-        (
-            [0.408454, 0.500391, -0.761426, 0.054816],
-            [310.956, 131.324, 64.3317],
-            "bunge",
-        ),
-        pytest.param(
-            [-0.155403, -0.493385, -0.0692231, -0.853012],
-            [87.6616, 59.7643, 71.6884],
-            "xyz",
-            marks=pytest.mark.xfail,
-        ),
-        (
-            [
-                [0.636895, -0.258037, 0.616387, -0.38451],
-                [-0.274124, -0.484693, 0.366742, 0.745271],
-                [0.518714, -0.101143, -0.065675, 0.8464],
-                [0.742955, -0.475664, -0.373451, -0.286873],
-            ],
-            [
-                [81.5951, 83.8595, 216.164],
-                [253.082, 74.862, 327.307],
-                [271.495, 13.8528, 205.501],
-                [197.023, 74.4216, 120.751],
-            ],
-            "bunge",
-        ),
-    ],
-    indirect=["rotation"],
-)
-def test_to_euler(rotation, euler, convention):
-    e = np.degrees(rotation.to_euler(convention=convention))
-    assert np.allclose(e, euler, atol=1e-3)
+""" these tests address .to_euler() and .from_euler()"""
+
+
+@pytest.fixture()
+def e():
+    e = np.random.rand(10, 3)
+    return e
+
+
+def test_to_from_euler(e):
+    """ Checks that going euler2quat2euler gives no change """
+    r = Rotation.from_euler(e)
+    e2 = r.to_euler()
+    assert np.allclose(e.data, e2.data)
+
+
+def test_direction_kwarg(e):
+    r = Rotation.from_euler(e, direction="lab2crystal")
+
+
+@pytest.mark.xfail()
+def test_direction_kwarg_dumb(e):
+    r = Rotation.from_euler(e, direction="dumb_direction")
+
+
+@pytest.mark.xfail()
+def test_unsupported_conv_to(e):
+    r = Rotation.from_euler(e)
+    r.to_euler(convention="unsupported")
+
+
+@pytest.mark.xfail()
+def test_unsupported_conv_from(e):
+    r = Rotation.from_euler(e, convention="unsupported")
+
+
+def test_edge_cases_to_euler():
+    x = np.sqrt(1 / 2)
+    q = Rotation(np.asarray([x, 0, 0, x]))
+    e = q.to_euler()
+    q = Rotation(np.asarray([0, x, 0, 0]))
+    e = q.to_euler()
 
 
 @pytest.mark.parametrize(
