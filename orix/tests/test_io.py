@@ -57,16 +57,16 @@ from orix.tests.conftest import (
             ),
             np.array(
                 [
-                    [0.77861956, 0.12501022, -0.44104243, -0.42849224],
-                    [-0.46256046, -0.13302712, -0.03524667, -0.87584204],
-                    [-0.46256046, -0.13302712, -0.03524667, -0.87584204],
-                    [-0.46256046, -0.13302712, -0.03524667, -0.87584204],
-                    [0.05331986, -0.95051048, -0.28534763, 0.11074093],
-                    [-0.45489991, -0.13271448, -0.03640618, -0.87984517],
-                    [0.8752001, 0.02905178, -0.10626836, -0.47104969],
-                    [0.3039118, -0.01972273, 0.92612154, -0.22259272],
-                    [0.3039118, -0.01972273, 0.92612154, -0.22259272],
-                    [0.8752001, 0.02905178, -0.10626836, -0.47104969],
+                    [0.77861956, -0.12501022, 0.44104243, 0.42849224],
+                    [0.46256046, -0.13302712, -0.03524667, -0.87584204],
+                    [0.46256046, -0.13302712, -0.03524667, -0.87584204],
+                    [0.46256046, -0.13302712, -0.03524667, -0.87584204],
+                    [0.05331986, 0.95051048, 0.28534763, -0.11074093],
+                    [0.45489991, -0.13271448, -0.03640618, -0.87984517],
+                    [0.8752001, -0.02905178, 0.10626836, 0.47104969],
+                    [0.3039118, 0.01972273, -0.92612154, 0.22259272],
+                    [0.3039118, 0.01972273, -0.92612154, 0.22259272],
+                    [0.8752001, -0.02905178, 0.10626836, 0.47104969],
                 ]
             ),
         ),
@@ -76,11 +76,6 @@ from orix.tests.conftest import (
 def test_loadang(angfile_astar, expected_data):
     loaded_data = io.loadang(angfile_astar)
     assert np.allclose(loaded_data.data, expected_data)
-
-
-def test_load_ang(angfile):
-    """ This testing is improved in v0.3.0"""
-    loaded_data = io.loadang(angfile)
 
 
 def test_loadctf():
@@ -113,7 +108,7 @@ class TestAngReader:
                 np.zeros(5 * 3, dtype=int),
                 5,
                 np.array(
-                    [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628],]
+                    [[1.59942, 2.37748, -1.74690], [1.59331, 2.37417, -1.74899],]
                 ),  # rotations as rows of Euler angle triplets
             ),
             (
@@ -131,7 +126,7 @@ class TestAngReader:
                 np.zeros(8 * 4, dtype=int),
                 5,
                 np.array(
-                    [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702],]
+                    [[-0.12113, 2.34188, 1.31702], [-0.47211, 0.79936, -1.80973],]
                 ),  # rotations as rows of Euler angle triplets
             ),
         ],
@@ -186,11 +181,12 @@ class TestAngReader:
 
         # Rotations
         rot_unique = np.unique(cm["indexed"].rotations.to_euler(), axis=0)
-        assert np.allclose(np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0))
+        assert np.allclose(
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5)
         assert np.allclose(
             cm["not_indexed"].rotations.to_euler()[0],
             np.array([np.pi, 0, np.pi]),
-            atol=1e-6,
+            atol=1e-5,
         )
 
         # Phases
@@ -240,7 +236,7 @@ class TestAngReader:
                 (10, 10),
                 np.ones(11 * 13, dtype=int),
                 np.array(
-                    [[1.621760, 2.368935, 4.559324], [1.604481, 2.367539, 4.541870],]
+                    [[1.621760, 2.368935, -1.723861], [1.604481, 2.367539, -1.741315],]
                 ),
             ),
         ],
@@ -276,7 +272,8 @@ class TestAngReader:
 
         # Rotations
         rot_unique = np.unique(cm.rotations.to_euler(), axis=0)
-        assert np.allclose(np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0))
+        assert np.allclose(
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-6)
 
         # Phases
         assert cm.phases.size == 1
@@ -331,8 +328,8 @@ class TestAngReader:
                     ),  # phase_id
                     np.array(
                         [
-                            [1.621760, 2.368935, 4.559324],
-                            [1.604481, 2.367539, 4.541870],
+                            [1.62176, 2.36894, -1.72386],
+                            [1.60448, 2.36754, -1.72386],
                         ]
                     ),
                 ),
@@ -345,7 +342,7 @@ class TestAngReader:
                     )
                 ),
                 np.array(
-                    [[1.621760, 2.368935, 4.559324], [1.604481, 2.367539, 4.541870],]
+                    [[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]
                 ),
             ),
         ],
@@ -378,7 +375,8 @@ class TestAngReader:
 
         # Rotations
         rot_unique = np.unique(cm.rotations.to_euler(), axis=0)
-        assert np.allclose(np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0))
+        assert np.allclose(
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5)
 
         # Phases (change if file header is changed!)
         phases_in_data = cm["indexed"].phases_in_data
