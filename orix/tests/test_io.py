@@ -24,7 +24,6 @@ import numpy as np
 from orix import io
 from orix.io import load_ang, load_emsoft
 from orix.io.ang import _get_header, _get_phases_from_header, _get_vendor_columns
-from orix.io.emsoft_h5ebsd import _get_properties
 
 from orix.tests.conftest import (
     ANGFILE_TSL_HEADER,
@@ -77,6 +76,11 @@ from orix.tests.conftest import (
 def test_loadang(angfile_astar, expected_data):
     loaded_data = io.loadang(angfile_astar)
     assert np.allclose(loaded_data.data, expected_data)
+
+
+def test_load_ang(angfile):
+    """ This testing is improved in v0.3.0"""
+    loaded_data = io.loadang(angfile)
 
 
 def test_loadctf():

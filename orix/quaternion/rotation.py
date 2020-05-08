@@ -272,65 +272,99 @@ class Rotation(Quaternion):
             Array of Euler angles in radians.
 
         """
-        at1 = np.arctan2(self.d.data, self.a.data)
-        at2 = np.arctan2(self.b.data, self.c.data)
-        alpha = at1 - at2
-        beta = 2 * np.arctan2(
-            np.sqrt(self.b.data ** 2 + self.c.data ** 2),
-            np.sqrt(self.a.data ** 2 + self.d.data ** 2),
-        )
-        gamma = at1 + at2
-        mask = np.isclose(beta, 0)
-        alpha[mask] = 2 * np.arcsin(
-            np.maximum(
-                -1, np.minimum(1, np.sign(self.a.data[mask]) * self.d.data[mask])
+        if convention != "bunge":
+            raise ValueError("The convention you have specified is not supported")
+        # A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
+        n = self.data.shape[:-1]
+        e = np.zeros(n + (3,))
+
+        # move into pure numpy
+        a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
+
+        q_zero_three = a ** 2 + d ** 2
+        q_one_two = b ** 2 + c ** 2
+        chi = np.sqrt(q_zero_three * q_one_two)
+
+        # P = 1
+
+        if np.sum(q_one_two == 0) > 0:  # checks that this occurs somewhere in data
+            alpha = np.arctan2(-2 * a * d, a ** 2 - d ** 2)
+            cond = [q_one_two == 0]
+            e[..., 0] = np.where(cond, alpha, e[..., 0])
+            e[..., 1] = np.where(cond, 0, e[..., 1])
+            e[..., 2] = np.where(cond, 0, e[..., 2])
+
+        if np.sum(q_zero_three == 0) > 0:
+            alpha = np.arctan2(2 * b * c, b ** 2 - c ** 2)
+            cond = [q_zero_three == 0]
+            e[..., 0] = np.where(cond, alpha, e[..., 0])
+            e[..., 1] = np.where(cond, np.pi, e[..., 1])
+            e[..., 2] = np.where(cond, 0, e[..., 2])
+
+        if np.sum(chi != 0) > 0:
+            alpha = np.arctan2(
+                np.divide(b * d - a * c, chi), np.divide(-a * b - c * d, chi)
             )
-        )
-        gamma[mask] = 0
-
-        if convention == "bunge":
-            mask = ~np.isclose(beta, 0)
-            alpha[mask] += np.pi / 2
-            gamma[mask] += 3 * np.pi / 2
-        else:
-            raise NotImplementedError(
-                "{} is not an implemented convention. See docstring.".format(convention)
+            beta = np.arctan2(2 * chi, q_zero_three - q_one_two)
+            gamma = np.arctan2(
+                np.divide(a * c + b * d, chi), np.divide(c * d - a * b, chi)
             )
 
-        alpha = np.mod(alpha, 2 * np.pi)
-        gamma = np.mod(gamma, 2 * np.pi)
+            e[..., 0] = np.where(chi != 0, alpha, e[..., 0])
+            e[..., 1] = np.where(chi != 0, beta, e[..., 1])
+            e[..., 2] = np.where(chi != 0, gamma, e[..., 2])
 
-        return np.stack((alpha, beta, gamma), axis=-1)
+        return e
 
     @classmethod
-    def from_euler(cls, euler):
+    def from_euler(cls, euler, convention="bunge", direction="crystal2lab"):
         """Creates a rotation from an array of Euler angles.
 
         Parameters
         ----------
         euler : array-like
             Euler angles in the Bunge convention.
-
+        convention : str
+            Only 'bunge' is currently suppported
+        direction : str
+            'lab2crystal' or 'crystal2lab'
         """
-        # Bunge convention
+        if convention != "bunge":
+            raise ValuerError("Only 'bunge' is an acceptable convention")
+        if direction not in ["lab2crystal", "crystal2lab"]:
+            raise ValueError("The chosen direction is not one of the allowed options")
+
         euler = np.array(euler)
         n = euler.shape[:-1]
-        alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
-        alpha -= np.pi / 2
-        gamma -= 3 * np.pi / 2
-        zero = np.zeros(n)
-        qalpha = Quaternion(
-            np.stack((np.cos(alpha / 2), zero, zero, np.sin(alpha / 2)), axis=-1)
-        )
-        qbeta = Quaternion(
-            np.stack((np.cos(beta / 2), zero, np.sin(beta / 2), zero), axis=-1)
-        )
-        qgamma = Quaternion(
-            np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)), axis=-1)
-        )
-        data = qalpha * qbeta * qgamma
+
+        # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
+
+        alpha = euler[..., 0]  # psi1
+        beta = euler[..., 1]  # Psi
+        gamma = euler[..., 2]  # psi3
+
+        sigma = 0.5 * np.add(alpha, gamma)
+        delta = 0.5 * np.subtract(alpha, gamma)
+        c = np.cos(beta / 2)
+        s = np.sin(beta / 2)
+
+        # Using P = 1 from A.6
+        q = np.zeros(n + (4,))
+        q[..., 0] = c * np.cos(sigma)
+        q[..., 1] = -s * np.cos(delta)
+        q[..., 2] = -s * np.sin(delta)
+        q[..., 3] = -c * np.sin(sigma)
+
+        for i in [1, 2, 3, 0]:  # flip the zero element last
+            q[..., i] = np.where(q[..., 0] < 0, -q[..., i], q[..., i])
+
+        data = Quaternion(q)
+
+        if direction == "lab2crystal":
+            data = ~data
+
         rot = cls(data.data)
-        rot.improper = zero
+        rot.improper = np.zeros((n))
         return rot
 
     @classmethod
