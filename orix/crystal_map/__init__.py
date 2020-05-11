@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2019 The pyXem developers
+# Copyright 2018-2020 The pyXem developers
 #
 # This file is part of orix.
 #
@@ -16,5 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from orix.plot.rotation_plot import RodriguesPlot
-from orix.plot.crystal_map_plot import CrystalMapPlot
+"""
+Crystallographic map of rotations, crystal phases and key properties associated with
+every spatial coordinate in a 1D, 2D or 3D space.
+
+All map properties with a value in each data point are stored as 1D arrays.
+
+Submodules
+==========
+
+.. autosummary::
+    :toctree: _autosummary
+
+    crystal_map
+    crystal_map_properties
+    phase_list
+"""
+
+from orix.crystal_map.crystal_map import CrystalMap
+from orix.crystal_map.phase_list import Phase, PhaseList
+from orix.crystal_map.crystal_map_properties import CrystalMapProperties
