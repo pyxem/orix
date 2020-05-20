@@ -264,7 +264,8 @@ class Rotation(Quaternion):
         Parameters
         ----------
         convention : 'bunge'
-            The Euler angle convention used. Only 'bunge' is supported as present
+            The Euler angle convention used. Only 'bunge'
+            is supported as present
 
         Returns
         -------
@@ -325,10 +326,33 @@ class Rotation(Quaternion):
         euler : array-like
             Euler angles in the Bunge convention.
         convention : str
-            Only 'bunge' is currently suppported
+            Only 'bunge' is currently suppported for new data
         direction : str
             'lab2crystal' or 'crystal2lab'
         """
+        if convention == "Krakow_Hielscher":
+            # To be applied to the data found at:
+            # https://www.repository.cam.ac.uk/handle/1810/263510
+            euler = np.array(euler)
+            n = euler.shape[:-1]
+            alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
+            alpha -= np.pi / 2
+            gamma -= 3 * np.pi / 2
+            zero = np.zeros(n)
+            qalpha = Quaternion(
+                np.stack((np.cos(alpha / 2), zero, zero, np.sin(alpha / 2)), axis=-1)
+            )
+            qbeta = Quaternion(
+                np.stack((np.cos(beta / 2), zero, np.sin(beta / 2), zero), axis=-1)
+            )
+            qgamma = Quaternion(
+                np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)), axis=-1)
+            )
+            data = qalpha * qbeta * qgamma
+            rot = cls(data.data)
+            rot.improper = zero
+            return rot
+
         if convention != "bunge":
             raise ValuerError("Only 'bunge' is an acceptable convention")
         if direction not in ["lab2crystal", "crystal2lab"]:

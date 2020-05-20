@@ -43,6 +43,8 @@ from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, get_distinguished_points
 from orix.vector.neo_euler import Rodrigues, AxAngle
 
+EPSILON = 1e-9  # small number to avoid round off problems
+
 
 def _get_large_cell_normals(s1, s2):
     dp = get_distinguished_points(s1, s2)
@@ -179,15 +181,16 @@ class OrientationRegion(Rotation):
     def __gt__(self, other):
         c = Quaternion(self).dot_outer(Quaternion(other)).data
         inside = np.logical_or(
-            np.all(np.greater_equal(c, 0), axis=0), np.all(np.less_equal(c, 0), axis=0)
+            np.all(np.greater_equal(c, -EPSILON), axis=0),
+            np.all(np.less_equal(c, +EPSILON), axis=0),
         )
         return inside
 
     def get_plot_data(self):
         from orix.vector import Vector3d
 
-        theta = np.linspace(0, 2 * np.pi + 1e-9, 361)
-        rho = np.linspace(0, np.pi, 181)
+        theta = np.linspace(0, 2 * np.pi - EPSILON, 361)
+        rho = np.linspace(0, np.pi - EPSILON, 181)
         theta, rho = np.meshgrid(theta, rho)
         g = Vector3d.from_polar(rho, theta)
         n = Rodrigues.from_rotation(self).norm.data[:, np.newaxis, np.newaxis]

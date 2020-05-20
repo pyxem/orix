@@ -209,6 +209,10 @@ def test_direction_kwarg(e):
     r = Rotation.from_euler(e, direction="lab2crystal")
 
 
+def test_Krakow_Hielscher(e):
+    r = Rotation.from_euler(e, convention="Krakow_Hielscher")
+
+
 @pytest.mark.xfail()
 def test_direction_kwarg_dumb(e):
     r = Rotation.from_euler(e, direction="dumb_direction")
