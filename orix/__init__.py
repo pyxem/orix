@@ -1,5 +1,5 @@
 __name__ = "orix"
-__version__ = "0.2.3dev"
+__version__ = "0.2.3"
 __author__ = "Ben Martineau, Phillip Crout"
 __author_email__ = "pyxem.team@gmail.com"
 __description__ = (
