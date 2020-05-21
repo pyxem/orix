@@ -189,8 +189,8 @@ class StereographicAxes(Axes):
         return False
 
     def transform(self, xs):
-        from texpy.quaternion.rotation import Rotation
-        from texpy.vector import Vector3d
+        from orix.quaternion.rotation import Rotation
+        from orix.vector import Vector3d
         if isinstance(xs, Rotation):
             x, y, z = (xs * Vector3d.zvector()).xyz
         else:
