@@ -18,3 +18,4 @@
 
 from orix.plot.rotation_plot import RodriguesPlot
 from orix.plot.crystal_map_plot import CrystalMapPlot
+from orix.plot.sterographic_projection import StereographicAxes
