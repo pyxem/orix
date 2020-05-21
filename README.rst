@@ -9,11 +9,14 @@
 .. |pypi_version| image:: http://img.shields.io/pypi/v/orix.svg?style=flat
 .. _pypi_version: https://pypi.python.org/pypi/orix
 
-.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3459662.svg
-.. _doi: https://doi.org/10.5281/zenodo.3459662
+.. |downloads| image:: https://anaconda.org/conda-forge/orix/badges/downloads.svg
+.. _downloads: https://anaconda.org/conda-forge/orix
 
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
 .. _black: https://github.com/psf/black
+
+.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3459662.svg
+.. _doi: https://doi.org/10.5281/zenodo.3459662
 
 orix is an open-source python library for analysing orientations and crystal symmetry.
 
