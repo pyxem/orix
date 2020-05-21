@@ -20,6 +20,7 @@
 
 from orix.plot.crystal_map_plot import convert_unit, CrystalMapPlot
 from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
+from orix.plot.stereographic_projection import StereographicAxes
 
 # Lists what will be imported when calling "from orix.plot import *"
 __all__ = [
