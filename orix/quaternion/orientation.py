@@ -130,7 +130,7 @@ class Misorientation(Rotation):
         o_inside._symmetry = (Gl, Gr)
         return o_inside
 
-    def distance(self, speed=2, verbose=False, split_size=100):
+    def distance(self, verbose=False, split_size=100):
         """Symmetry reduced distance
 
         Compute the shortest distance between all orientations considering
@@ -138,8 +138,6 @@ class Misorientation(Rotation):
 
         Parameters
         ---------
-        speed : int
-            Variant of distance function to use.
         verbose : bool
             Output progress bar while computing.
         split_size : int
@@ -162,14 +160,7 @@ class Misorientation(Rotation):
         array([[3.14159265, 1.57079633],
                [1.57079633, 0.        ]])
         """
-        if speed == 1:
-            warnings.warn(
-                "This method is inferior and be removed in 0.3.0; use speed=2 instead",
-                RuntimeWarning,
-            )
-            distance = _distance_1(self, verbose)
-        else:
-            distance = _distance_2(self, verbose, split_size)
+        distance = _distance_2(self, verbose, split_size)
         return distance.reshape(self.shape + self.shape)
 
     def __repr__(self):
@@ -236,30 +227,6 @@ class Orientation(Misorientation):
             ).squeeze()
             return m_inside
         return NotImplemented
-
-
-def _distance_1(misorientation, verbose):
-
-    warnings.warn("Use _distance_2 instead", DeprecationWarning)
-    s_1, s_2 = misorientation._symmetry
-    distance = np.empty((misorientation.size, misorientation.size))
-    index_pairs = icombinations(range(misorientation.size), 2)
-    if verbose:
-        from tqdm import tqdm
-
-        index_pairs = tqdm(index_pairs, total=misorientation.size ** 2)
-    for i, j in index_pairs:
-        idxi = np.unravel_index(i, misorientation.shape)
-        idxj = np.unravel_index(j, misorientation.shape)
-        m_1, m_2 = misorientation[idxi], misorientation[idxj]
-        mis2orientation = s_2.outer(~m_1).outer(s_1).outer(s_1).outer(m_2).outer(s_2)
-
-        axis = (0, len(misorientation.shape) + 1, len(misorientation.shape) + 2, -1)
-        d = mis2orientation.angle.data.min(axis=axis)
-        distance[i, j] = d
-        distance[j, i] = d
-    return distance
-
 
 def _distance_2(misorientation, verbose, split_size=100):
     num_orientations = misorientation.shape[0]
