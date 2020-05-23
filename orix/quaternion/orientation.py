@@ -50,6 +50,24 @@ from orix.quaternion.orientation_region import OrientationRegion
 
 
 def _distance(misorientation, verbose, split_size=100):
+    """ private function to find the symmetry reduced distance between all
+    pairs of (mis)orientations
+    
+    Parameters
+    ----------
+    misorientation : orix.Misorientation object
+        The misorientation to be considered.
+    verbose : bool
+        Output progress bar while computing.
+    split_size : int
+        Size of block to compute at a time.
+
+    Returns
+    -------
+    distance : np.array
+        2D matrix containing the angular distance between every
+        orientation, considering symmetries.
+    """
     num_orientations = misorientation.shape[0]
     S_1, S_2 = misorientation._symmetry
     distance = np.full(misorientation.shape + misorientation.shape, np.infty)
