@@ -41,6 +41,7 @@ from itertools import product as iproduct
 from itertools import combinations_with_replacement as icombinations
 import numpy as np
 import warnings
+from tqdm import tqdm
 
 
 from orix.quaternion.rotation import Rotation
@@ -55,9 +56,8 @@ def _distance(misorientation, verbose, split_size=100):
     split_size = split_size // S_1.shape[0]
     outer_range = range(0, num_orientations, split_size)
     if verbose:
-        from tqdm import tqdm
-
         outer_range = tqdm(outer_range, total=np.ceil(num_orientations / split_size))
+
     S_1_outer_S_1 = S_1.outer(S_1)
 
     # Calculate the upper half of the distance matrix block by block
