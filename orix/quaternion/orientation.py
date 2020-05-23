@@ -154,9 +154,8 @@ class Misorientation(Rotation):
         """
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
-            import tqdm
-
             symmetry_pairs = tqdm.tqdm(symmetry_pairs, total=Gl.size * Gr.size)
+
         orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
         o_inside = self.__class__.identity(self.shape)
         outside = np.ones(self.shape, dtype=bool)
