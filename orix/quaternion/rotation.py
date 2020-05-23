@@ -355,9 +355,6 @@ class Rotation(Quaternion):
             )
             data = qalpha * qbeta * qgamma
 
-            if direction == "lab2crystal":
-                data = ~data
-
             rot = cls(data.data)
             rot.improper = zero
             return rot
