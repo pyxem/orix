@@ -127,8 +127,6 @@ class OrientationRegion(Rotation):
         s1, s2 = get_proper_groups(s1, s2)
         large_cell_normals = _get_large_cell_normals(s1, s2)
         disjoint = s1 & s2
-        # if s1._tuples == s2._tuples:
-        #     disjoint = disjoint.laue
         fundamental_sector = disjoint.fundamental_sector()
         fundamental_sector_normals = Rotation.from_neo_euler(
             AxAngle.from_axes_angles(fundamental_sector, np.pi)
