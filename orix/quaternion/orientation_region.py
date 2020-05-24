@@ -112,7 +112,6 @@ def get_proper_groups(Gl, Gr):
 
 class OrientationRegion(Rotation):
     """A set of :obj:`Rotation`s which are the normals of an orientation region.
-
     """
 
     @classmethod
@@ -177,6 +176,11 @@ class OrientationRegion(Rotation):
         return faces
 
     def __gt__(self, other):
+        """
+        overidden greater than method. Applying this to an Orientation
+        will return only orientations those that lie within the OrientationRegion
+        """
+
         c = Quaternion(self).dot_outer(Quaternion(other)).data
         inside = np.logical_or(
             np.all(np.greater_equal(c, -EPSILON), axis=0),

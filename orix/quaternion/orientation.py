@@ -52,7 +52,7 @@ from orix.quaternion.orientation_region import OrientationRegion
 def _distance(misorientation, verbose, split_size=100):
     """ private function to find the symmetry reduced distance between all
     pairs of (mis)orientations
-    
+
     Parameters
     ----------
     misorientation : orix.Misorientation object
@@ -172,7 +172,7 @@ class Misorientation(Rotation):
         """
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
-            symmetry_pairs = tqdm.tqdm(symmetry_pairs, total=Gl.size * Gr.size)
+            symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
 
         orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
         o_inside = self.__class__.identity(self.shape)
