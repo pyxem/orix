@@ -137,6 +137,40 @@ class CrystalMap:
             phase.
         prop : dict of numpy.ndarray, optional
             Dictionary of properties of each data point.
+
+        Examples
+        --------
+        >>> from diffpy.structure import Atom, Lattice, Structure
+        >>> import numpy as np
+        >>> from orix.crystal_map import CrystalMap
+        >>> from orix.quaternion.rotation import Rotation
+        >>> euler1, euler2, euler3, x, y, iq, dp, phase_id = np.loadtxt(
+        ...     "/some/file.ang", unpack=True)
+        >>> euler_angles = np.column_stack((euler1, euler2, euler3))
+        >>> rotations = Rotation.from_euler(euler_angles)
+        >>> properties = {"iq": iq, "dp": dp}
+        >>> structures = [
+        ...     Structure(
+        ...         title="austenite",
+        ...         atoms=[Atom("fe", [0] * 3)],
+        ...         lattice=Lattice(0.360, 0.360, 0.360, 90, 90, 90)
+        ...     ),
+        ...     Structure(
+        ...         title="ferrite",
+        ...         atoms=[Atom("fe", [0] * 3)],
+        ...         lattice=Lattice(0.287, 0.287, 0.287, 90, 90, 90)
+        ...     )
+        ... ]
+        >>> cm = CrystalMap(
+        ...     rotations=rotations,
+        ...     phase_id=phase_id,
+        ...     x=x,
+        ...     y=y,
+        ...     phase_name=["austenite", "ferrite"],  # Overridden by Structure.title
+        ...     symmetry=["432", "432"],
+        ...     structure=structures,
+        ...     prop=properties,
+        ... )
         """
         # Set rotations
         if not isinstance(rotations, Rotation):

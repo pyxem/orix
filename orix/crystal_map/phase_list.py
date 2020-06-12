@@ -87,6 +87,25 @@ class Phase:
         color : str, optional
             Phase color. If None is passed (default), it is set to
             'tab:blue' (first among the default Matplotlib colors).
+
+        Examples
+        --------
+        >>> from diffpy.structure import Atom, Lattice, Structure
+        >>> from orix.crystal_map import Phase
+        >>> p = Phase(
+        ...     name="al",
+        ...     symmetry="m-3m",
+        ...     structure=Structure(
+        ...         atoms=[Atom("al", [0, 0, 0])],
+        ...         lattice=Lattice(0.405, 0.405, 0.405, 90, 90, 90)
+        ...     )
+        ... )
+        >>> p
+        <name: al. symmetry: m-3m. color: tab:blue>
+        >>> p.structure
+        [al   0.000000 0.000000 0.000000 1.0000]
+        >>> p.structure.lattice
+        Lattice(a=0.405, b=0.405, c=0.405, alpha=90, beta=90, gamma=90)
         """
         self.structure = structure if structure is not None else Structure()
         if name is not None:
@@ -245,6 +264,31 @@ class PhaseList:
             is passed (default), a default
             :class:`diffpy.structure.Structure` object is created for each
             phase.
+
+        Examples
+        --------
+        >>> from diffpy.structure import Atom, Lattice, Structure
+        >>> from orix.crystal_map import Phase, PhaseList
+        >>> pl = PhaseList(
+        ...     names=["al", "cu"],
+        ...     symmetries=["m-3m"] * 2,
+        ...     structures=[
+        ...         Structure(
+        ...             atoms=[Atom("al", [0] * 3)],
+        ...             lattice=Lattice(0.405, 0.405, 0.405, 90, 90, 90)
+        ...         ),
+        ...         Structure(
+        ...             atoms=[Atom("cu", [0] * 3)],
+        ...             lattice=Lattice(0.361, 0.361, 0.361, 90, 90, 90)
+        ...         ),
+        ...     ]
+        ... )
+        >>> pl
+        Id  Name  Symmetry       Color
+         0    al      m-3m    tab:blue
+         1    cu      m-3m  tab:orange
+        >>> pl["al"].structure
+        [al   0.000000 0.000000 0.000000 1.0000]
         """
         d = {}
         if isinstance(phases, list):
