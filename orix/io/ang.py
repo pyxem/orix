@@ -273,7 +273,6 @@ def _get_phases_from_header(
                 group = re.split("[ \t]", match.group(2).lstrip(" ").rstrip(" "))
                 group = list(filter(None, group))
                 if key == "lattice_constants":
-                    print(group)
                     group = [float(i) for i in group]
                 else:
                     group = group[0]
