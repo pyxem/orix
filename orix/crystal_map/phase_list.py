@@ -122,6 +122,8 @@ class Phase:
     def structure(self, value: Structure):
         """Set phase structure."""
         if isinstance(value, Structure):
+            if value.title == "" and hasattr(self, "_structure"):
+                value.title = self.name
             self._structure = value
         else:
             raise ValueError(f"{value} must be a diffpy.structure.Structure object.")
@@ -424,7 +426,7 @@ class PhaseList:
         """List of phase structures."""
         return [phase.structure for _, phase in self]
 
-    def __getitem__(self, key: Union[int, str, slice, Tuple, List[int], np.ndarray]):
+    def __getitem__(self, key: Union[int, str, slice, Tuple, List[int]]):
         """Return a PhaseList or a Phase object, depending on the number
         of phases in the list matches the `key`.
 
@@ -518,8 +520,8 @@ class PhaseList:
         else:
             return PhaseList(d)
 
-    def __setitem__(self, key: str, value: Union[None, str, Symmetry]):
-        """Add a phase to the list with a name and symmetry."""
+    def __setitem__(self, key: Union[int, str], value: Union[None, str, Symmetry]):
+        """Add a phase to the list with a name, symmetry and structure."""
         if key not in self.names:
             # Make sure the new phase gets a new color
             color_new = None

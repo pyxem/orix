@@ -129,6 +129,13 @@ class TestPhase:
 
         assert p.structure == structure
 
+    def test_set_structure_phase_name(self):
+        name = "al"
+        p = Phase(name=name)
+        p.structure = Structure(lattice=Lattice(*([0.405] * 3 + [90] * 3)))
+        assert p.name == name
+        assert p.structure.title == name
+
     def test_set_structure_raises(self):
         p = Phase()
         with pytest.raises(ValueError, match=".* must be a diffpy.structure.Structure"):
@@ -400,6 +407,7 @@ class TestPhaseList:
         assert pl.phase_ids == [0, 1]
         assert pl.names == [str(n) for n in names]
         assert [s.name for s in pl.symmetries] == [str(s) for s in symmetries]
+        assert pl.structures == [Structure()] * 2
 
     @pytest.mark.parametrize(
         "key_del, invalid_phase, error_type, error_msg",
