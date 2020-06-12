@@ -18,6 +18,7 @@
 
 import os
 
+from diffpy.structure import Lattice, Structure
 import pytest
 import numpy as np
 
@@ -182,7 +183,8 @@ class TestAngReader:
         # Rotations
         rot_unique = np.unique(cm["indexed"].rotations.to_euler(), axis=0)
         assert np.allclose(
-            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5)
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5
+        )
         assert np.allclose(
             cm["not_indexed"].rotations.to_euler()[0],
             np.array([np.pi, 0, np.pi]),
@@ -273,7 +275,8 @@ class TestAngReader:
         # Rotations
         rot_unique = np.unique(cm.rotations.to_euler(), axis=0)
         assert np.allclose(
-            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-6)
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-6
+        )
 
         # Phases
         assert cm.phases.size == 1
@@ -327,10 +330,7 @@ class TestAngReader:
                         )
                     ),  # phase_id
                     np.array(
-                        [
-                            [1.62176, 2.36894, -1.72386],
-                            [1.60448, 2.36754, -1.72386],
-                        ]
+                        [[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]
                     ),
                 ),
                 (3, 6),
@@ -341,9 +341,7 @@ class TestAngReader:
                         np.ones(int(np.floor((3 * 6) / 2))) * 2,
                     )
                 ),
-                np.array(
-                    [[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]
-                ),
+                np.array([[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]),
             ),
         ],
         indirect=["angfile_emsoft"],
@@ -376,7 +374,8 @@ class TestAngReader:
         # Rotations
         rot_unique = np.unique(cm.rotations.to_euler(), axis=0)
         assert np.allclose(
-            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5)
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5
+        )
 
         # Phases (change if file header is changed!)
         phases_in_data = cm["indexed"].phases_in_data
@@ -463,7 +462,8 @@ class TestAngReader:
             assert column_names == expected_columns
 
     @pytest.mark.parametrize(
-        "header_phase_part, expected_names, expected_symmetries",
+        "header_phase_part, expected_names, expected_symmetries, "
+        "expected_lattice_constants",
         [
             (
                 [
@@ -471,22 +471,29 @@ class TestAngReader:
                         "# MaterialName      Nickel",
                         "# Formula",
                         "# Symmetry          43",
-                        "# LatticeConstants  3.520  3.520  3.520  90.000  90.000  90.000",
+                        "# LatticeConstants  3.520  3.520  3.520  90.000  90.000  "
+                        "90.000",
                     ],
                     [
                         "# MaterialName      Aluminium",
                         "# Formula  Al",
                         "# Symmetry          m3m",
-                        "# LatticeConstants  3.520  3.520  3.520  90.000  90.000  90.000",
+                        "# LatticeConstants  3.520  3.520  3.520  90.000  90.000  "
+                        "90.000",
                     ],
                 ],
                 ["Nickel", "Aluminium"],
                 ["43", "m3m"],
+                [[3.52, 3.52, 3.52, 90, 90, 90], [3.52, 3.52, 3.52, 90, 90, 90]],
             ),
         ],
     )
     def test_get_phases_from_header(
-        self, header_phase_part, expected_names, expected_symmetries
+        self,
+        header_phase_part,
+        expected_names,
+        expected_symmetries,
+        expected_lattice_constants,
     ):
         # Create header from parts
         header = [
@@ -508,10 +515,11 @@ class TestAngReader:
             "#",
             "# GRID: SqrGrid#",
         ]
-        names, symmetries = _get_phases_from_header(header)
+        names, symmetries, lattice_constants = _get_phases_from_header(header)
 
         assert names == expected_names
         assert symmetries == expected_symmetries
+        assert np.allclose(lattice_constants, expected_lattice_constants)
 
 
 class TestEMsoftReader:
@@ -603,3 +611,8 @@ class TestEMsoftReader:
         actual_props.sort()
         expected_props.sort()
         assert actual_props == expected_props
+
+        assert cm.phases["austenite"].structure == Structure(
+            title="austenite",
+            lattice=Lattice(a=3.595, b=3.595, c=3.595, alpha=90, beta=90, gamma=90),
+        )

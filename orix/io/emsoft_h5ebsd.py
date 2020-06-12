@@ -17,7 +17,9 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from typing import Tuple
 
+from diffpy.structure import Lattice, Structure
 import h5py
 import numpy as np
 
@@ -25,7 +27,7 @@ from orix.quaternion.rotation import Rotation
 from orix.crystal_map import CrystalMap
 
 
-def load_emsoft(filename, refined=False, **kwargs):
+def load_emsoft(filename: str, refined: bool = False, **kwargs) -> CrystalMap:
     """Return a CrystalMap object from EMsoft's dictionary indexing dot
     product files.
 
@@ -37,8 +39,11 @@ def load_emsoft(filename, refined=False, **kwargs):
         Whether to return refined orientations (default is ``False``).
     kwargs :
         Keyword arguments passed to :func:`h5py.File`.
-    """
 
+    Returns
+    -------
+    CrystalMap
+    """
     mode = kwargs.pop("mode", "r")
     f = h5py.File(filename, mode=mode, **kwargs)
 
@@ -66,13 +71,8 @@ def load_emsoft(filename, refined=False, **kwargs):
     # Get phase IDs
     phase_id = data_group["Phase"][:]
 
-    # Get phase name and crystal symmetry
-    phase_name = re.search(
-        r"([A-z0-9]+)", phase_group["MaterialName"][:][0].decode()
-    ).group(1)
-    symmetry = re.search(
-        r"\[([A-z0-9]+)\]", phase_group["Point Group"][:][0].decode()
-    ).group(1)
+    # Get phase name, crystal symmetry and atoms
+    phase_name, symmetry, structure = _get_phase(phase_group)
 
     # Get rotations
     if refined:
@@ -95,11 +95,12 @@ def load_emsoft(filename, refined=False, **kwargs):
         y=y,
         phase_name=phase_name,
         symmetry=symmetry,
+        structure=structure,
         prop=properties,
     )
 
 
-def _get_properties(data_group, n_top_matches, map_size):
+def _get_properties(data_group: h5py.Group, n_top_matches: int, map_size: int) -> dict:
     """Return a dictionary of properties within an EMsoft h5ebsd file, with
     property names as the dictionary key and arrays as the values.
 
@@ -144,3 +145,35 @@ def _get_properties(data_group, n_top_matches, map_size):
             properties[property_name] = prop
 
     return properties
+
+
+def _get_phase(data_group: h5py.Group) -> Tuple[str, str, Structure]:
+    """Return phase information from a phase data group in an EMsoft dot
+    product file.
+
+    Parameters
+    ----------
+    data_group : h5py.Group
+        HDF5 group with the property data sets.
+
+    Returns
+    -------
+    name : str
+        Phase name.
+    symmetry : str
+        Phase symmetry.
+    structure : diffpy.structure.Structure
+        Phase structure.
+    """
+    name = re.search(r"([A-z0-9]+)", data_group["MaterialName"][:][0].decode()).group(1)
+    symmetry = re.search(
+        r"\[([A-z0-9]+)\]", data_group["Point Group"][:][0].decode()
+    ).group(1)
+    lattice = Lattice(
+        *tuple(
+            data_group[f"Lattice Constant {i}"][:]
+            for i in ["a", "b", "c", "alpha", "beta", "gamma"]
+        )
+    )
+    structure = Structure(title=name, lattice=lattice)
+    return name, symmetry, structure
