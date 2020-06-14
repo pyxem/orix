@@ -131,6 +131,18 @@ def temp_ang_file():
         gc.collect()  # Garbage collection so that file can be used by multiple tests
 
 
+@pytest.fixture(params=["h5"])
+def temp_file_path(request):
+    """Temporary file in a temporary directory for use when tests need
+    to write, and sometimes read again, a signal to, and from, a file.
+    """
+    ext = request.param
+    with TemporaryDirectory() as tmp:
+        file_path = os.path.join(tmp, "data_temp." + ext)
+        yield file_path
+        gc.collect()
+
+
 @pytest.fixture(
     params=[
         # Tuple with default values for five parameters: map_shape, step_sizes,
@@ -165,7 +177,6 @@ def angfile_tsl(tmpdir, request):
     rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
-
     """
     f = tmpdir.join("angfile_tsl.ang")
 
@@ -238,7 +249,6 @@ def angfile_astar(tmpdir, request):
     rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
-
     """
     f = tmpdir.join("angfile_astar.ang")
 
@@ -303,7 +313,6 @@ def angfile_emsoft(tmpdir, request):
     rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
-
     """
     f = tmpdir.join("angfile_emsoft.ang")
 
@@ -363,7 +372,6 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         Number of top matching orientations per data point kept.
     refined : bool
         Whether refined Euler angles and dot products are read.
-
     """
     f = File(tmpdir.join("emsoft_h5ebsd_file.h5"), mode="w")
 

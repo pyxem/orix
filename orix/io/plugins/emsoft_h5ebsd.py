@@ -24,8 +24,12 @@ import numpy as np
 from orix.quaternion.rotation import Rotation
 from orix.crystal_map import CrystalMap
 
+# Plugin description
+format_name = "emsoft_h5ebsd"
+file_extensions = ["h5", "hdf5", "h5ebsd"]
 
-def load_emsoft(filename, refined=False, **kwargs):
+
+def file_reader(filename: str, refined: bool = False, **kwargs) -> CrystalMap:
     """Return a CrystalMap object from EMsoft's dictionary indexing dot
     product files.
 
@@ -35,10 +39,13 @@ def load_emsoft(filename, refined=False, **kwargs):
         Path and file name.
     refined : bool, optional
         Whether to return refined orientations (default is ``False``).
-    kwargs :
+    kwargs
         Keyword arguments passed to :func:`h5py.File`.
-    """
 
+    Returns
+    -------
+    CrystalMap
+    """
     mode = kwargs.pop("mode", "r")
     f = h5py.File(filename, mode=mode, **kwargs)
 
@@ -99,7 +106,7 @@ def load_emsoft(filename, refined=False, **kwargs):
     )
 
 
-def _get_properties(data_group, n_top_matches, map_size):
+def _get_properties(data_group: h5py.Group, n_top_matches: int, map_size: int) -> dict:
     """Return a dictionary of properties within an EMsoft h5ebsd file, with
     property names as the dictionary key and arrays as the values.
 

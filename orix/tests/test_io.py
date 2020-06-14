@@ -22,14 +22,31 @@ import pytest
 import numpy as np
 
 from orix import io
-from orix.io import load_ang, load_emsoft
-from orix.io.ang import _get_header, _get_phases_from_header, _get_vendor_columns
+from orix.io import load
+from orix.io.plugins.ang import (
+    _get_header,
+    _get_phases_from_header,
+    _get_vendor_columns,
+)
 
 from orix.tests.conftest import (
     ANGFILE_TSL_HEADER,
     ANGFILE_ASTAR_HEADER,
     ANGFILE_EMSOFT_HEADER,
 )
+
+
+class TestGeneralIO:
+    def test_load_no_filename_match(self):
+        fname = "what_is_hip.ang"
+        with pytest.raises(IOError, match=f"No filename matches '{fname}'."):
+            _ = load(fname)
+
+    @pytest.mark.parametrize("temp_file_path", ["ctf"], indirect=["temp_file_path"])
+    def test_load_unsupported_format(self, temp_file_path):
+        np.savetxt(temp_file_path, X=np.random.rand(100, 8))
+        with pytest.raises(IOError, match=f"Could not read '{temp_file_path}'. If the"):
+            _ = load(temp_file_path)
 
 
 @pytest.mark.parametrize(
@@ -141,7 +158,7 @@ class TestAngReader:
         n_unknown_columns,
         example_rot,
     ):
-        cm = load_ang(angfile_tsl)
+        cm = load(angfile_tsl)
 
         # Fraction of non-indexed points
         non_indexed_fraction = int(np.prod(map_shape) * 0.1)
@@ -182,7 +199,8 @@ class TestAngReader:
         # Rotations
         rot_unique = np.unique(cm["indexed"].rotations.to_euler(), axis=0)
         assert np.allclose(
-            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5)
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5
+        )
         assert np.allclose(
             cm["not_indexed"].rotations.to_euler()[0],
             np.array([np.pi, 0, np.pi]),
@@ -245,7 +263,7 @@ class TestAngReader:
     def test_load_ang_astar(
         self, angfile_astar, map_shape, step_sizes, phase_id, example_rot,
     ):
-        cm = load_ang(angfile_astar)
+        cm = load(angfile_astar)
 
         # Properties
         assert list(cm.prop.keys()) == ["ind", "rel", "relx100"]
@@ -273,7 +291,8 @@ class TestAngReader:
         # Rotations
         rot_unique = np.unique(cm.rotations.to_euler(), axis=0)
         assert np.allclose(
-            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-6)
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-6
+        )
 
         # Phases
         assert cm.phases.size == 1
@@ -327,10 +346,7 @@ class TestAngReader:
                         )
                     ),  # phase_id
                     np.array(
-                        [
-                            [1.62176, 2.36894, -1.72386],
-                            [1.60448, 2.36754, -1.72386],
-                        ]
+                        [[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]
                     ),
                 ),
                 (3, 6),
@@ -341,9 +357,7 @@ class TestAngReader:
                         np.ones(int(np.floor((3 * 6) / 2))) * 2,
                     )
                 ),
-                np.array(
-                    [[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]
-                ),
+                np.array([[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]),
             ),
         ],
         indirect=["angfile_emsoft"],
@@ -351,7 +365,7 @@ class TestAngReader:
     def test_load_ang_emsoft(
         self, angfile_emsoft, map_shape, step_sizes, phase_id, example_rot,
     ):
-        cm = load_ang(angfile_emsoft)
+        cm = load(angfile_emsoft)
 
         # Properties
         assert list(cm.prop.keys()) == ["iq", "dp"]
@@ -376,7 +390,8 @@ class TestAngReader:
         # Rotations
         rot_unique = np.unique(cm.rotations.to_euler(), axis=0)
         assert np.allclose(
-            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5)
+            np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5
+        )
 
         # Phases (change if file header is changed!)
         phases_in_data = cm["indexed"].phases_in_data
@@ -575,7 +590,7 @@ class TestEMsoftReader:
         n_top_matches,
         refined,
     ):
-        cm = load_emsoft(temp_emsoft_h5ebsd_file.id, refined=refined)
+        cm = load(temp_emsoft_h5ebsd_file.filename, refined=refined)
 
         assert cm.shape == map_shape
         assert (cm.dy, cm.dx) == step_sizes

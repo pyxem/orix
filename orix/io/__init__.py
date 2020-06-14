@@ -25,10 +25,12 @@
 
 """
 
+import os
+
 import numpy as np
 
-from orix.io.emsoft_h5ebsd import load_emsoft
-from orix.io.ang import load_ang
+from orix.crystal_map import CrystalMap
+from orix.io.plugins import plugins
 
 
 def loadang(file_string: str):
@@ -74,3 +76,41 @@ def loadctf(file_string: str):
     euler = np.radians(data)
     rotation = Rotation.from_euler(euler)
     return rotation
+
+
+def load(filename: str, **kwargs) -> CrystalMap:
+    """Load data from a supported file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of file to load.
+    kwargs
+        Keyword arguments passed to the corresponding orix reader. See
+        their individual docstrings for available options.
+    Returns
+    -------
+    data : CrystalMap
+        Crystal map read from the file.
+    """
+    if not os.path.isfile(filename):
+        raise IOError(f"No filename matches '{filename}'.")
+
+    # Find matching reader for file extension
+    extension = os.path.splitext(filename)[1][1:]
+    readers = []
+    for plugin in plugins:
+        if extension.lower() in plugin.file_extensions:
+            readers.append(plugin)
+    if len(readers) == 0:
+        raise IOError(
+            f"Could not read '{filename}'. If the file format is supported, please "
+            "report this error."
+        )
+    else:
+        reader = readers[0]
+
+    # Read data from file
+    data = reader.file_reader(filename, **kwargs)
+
+    return data

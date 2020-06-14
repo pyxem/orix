@@ -29,8 +29,12 @@ from orix.crystal_map import CrystalMap
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ang.m
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ACOM.m
 
+# Plugin description
+format_name = "ang"
+file_extensions = ["ang"]
 
-def load_ang(filename):
+
+def file_reader(filename: str) -> CrystalMap:
     """Return a :class:`orix.crystal_map.CrystalMap` object from EDAX
     TSL's .ang file format. The map in the input file is assumed to be 2D.
 
@@ -48,6 +52,9 @@ def load_ang(filename):
     filename : str
         Path and file name.
 
+    Returns
+    -------
+    CrystalMap
     """
     # Get file header
     with open(filename) as f:
