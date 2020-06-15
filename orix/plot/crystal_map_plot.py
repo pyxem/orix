@@ -16,22 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional, Tuple
 import warnings
 
-from matplotlib import colorbar
 import matplotlib.font_manager as fm
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
-from matplotlib.patches import Patch
 from matplotlib.projections import register_projection
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import numpy as np
 
-from orix.crystal_map import CrystalMap
 from orix.scalar import Scalar
 from orix.vector import Vector3d
 
@@ -68,14 +64,14 @@ class CrystalMapPlot(Axes):
 
     def plot_map(
         self,
-        crystal_map: CrystalMap,
-        value: Optional[np.ndarray] = None,
-        scalebar: bool = True,
-        scalebar_properties: Optional[dict] = None,
-        legend: bool = True,
-        legend_properties: Optional[dict] = None,
-        axes: Optional[Tuple[int, ...]] = None,
-        depth: Optional[int] = None,
+        crystal_map,
+        value=None,
+        scalebar=True,
+        scalebar_properties=None,
+        legend=True,
+        legend_properties=None,
+        axes=None,
+        depth=None,
         **kwargs,
     ) -> AxesImage:
         """Plot a 2D map with any CrystalMap attribute as map values.
@@ -228,7 +224,7 @@ class CrystalMapPlot(Axes):
 
         return im
 
-    def add_scalebar(self, crystal_map: CrystalMap, **kwargs) -> AnchoredSizeBar:
+    def add_scalebar(self, crystal_map, **kwargs):
         """Add a scalebar to the axes object via `AnchoredSizeBar`.
 
         To find an appropriate scalebar width, this snippet from MTEX
@@ -331,7 +327,7 @@ class CrystalMapPlot(Axes):
 
         return bar
 
-    def add_overlay(self, crystal_map: CrystalMap, item: str):
+    def add_overlay(self, crystal_map, item):
         """Use a crystal map property as gray scale values of a phase map.
 
         The property's range is adjusted to [0, 1] for maximum contrast.
@@ -379,10 +375,10 @@ class CrystalMapPlot(Axes):
 
         image.set_data(image_data)
 
-    def add_colorbar(self, label: Optional[str] = None, **kwargs) -> colorbar:
+    def add_colorbar(self, label=None, **kwargs):
         """Add an opinionated colorbar to the figure.
 
-        Parameters ko   
+        Parameters
         ----------
         label : str, optional
             Colorbar title, default is ``None``.
@@ -461,12 +457,7 @@ class CrystalMapPlot(Axes):
             right = 1
         self.figure.subplots_adjust(top=1, bottom=0, right=right, left=0)
 
-    def _set_plot_shape(
-        self,
-        crystal_map: CrystalMap,
-        axes: Optional[List[int]] = None,
-        depth: Optional[int] = None,
-    ):
+    def _set_plot_shape(self, crystal_map, axes=None, depth=None):
         """Set `CrystalMapPlot` attributes describing which data axes to
         plot.
 
@@ -509,7 +500,7 @@ class CrystalMapPlot(Axes):
         self._data_slices = tuple(slices)
         self._data_shape = tuple(data_shape)
 
-    def _add_legend(self, patches: List[Patch], **kwargs):
+    def _add_legend(self, patches, **kwargs):
         """Add a legend to the axes object.
 
         Parameters
@@ -529,9 +520,7 @@ class CrystalMapPlot(Axes):
         [kwargs.setdefault(k, v) for k, v in d.items()]
         self.legend(handles=patches, **kwargs)
 
-    def _override_status_bar(
-        self, image: AxesImage, crystal_map: CrystalMap
-    ) -> AxesImage:
+    def _override_status_bar(self, image, crystal_map):
         """Display coordinates, a property value (if scalar values are
         plotted), and Euler angles (in radians) per data point in the
         status bar.
@@ -607,7 +596,7 @@ class CrystalMapPlot(Axes):
 register_projection(CrystalMapPlot)
 
 
-def convert_unit(value: float, unit: str) -> Tuple[float, str, float]:
+def convert_unit(value, unit):
     """Return the data with a suitable, not too large, unit.
 
     This algorithm is taken directly from MTEX [Bachmann2010]_

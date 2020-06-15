@@ -17,7 +17,6 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Tuple
 
 from diffpy.structure import Lattice, Structure
 import h5py
@@ -27,7 +26,7 @@ from orix.quaternion.rotation import Rotation
 from orix.crystal_map import CrystalMap
 
 
-def load_emsoft(filename: str, refined: bool = False, **kwargs) -> CrystalMap:
+def load_emsoft(filename, refined=False, **kwargs):
     """Return a CrystalMap object from EMsoft's dictionary indexing dot
     product files.
 
@@ -100,7 +99,7 @@ def load_emsoft(filename: str, refined: bool = False, **kwargs) -> CrystalMap:
     )
 
 
-def _get_properties(data_group: h5py.Group, n_top_matches: int, map_size: int) -> dict:
+def _get_properties(data_group, n_top_matches, map_size):
     """Return a dictionary of properties within an EMsoft h5ebsd file, with
     property names as the dictionary key and arrays as the values.
 
@@ -147,7 +146,7 @@ def _get_properties(data_group: h5py.Group, n_top_matches: int, map_size: int) -
     return properties
 
 
-def _get_phase(data_group: h5py.Group) -> Tuple[str, str, Structure]:
+def _get_phase(data_group):
     """Return phase information from a phase data group in an EMsoft dot
     product file.
 

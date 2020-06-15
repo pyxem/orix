@@ -20,8 +20,6 @@ from collections import OrderedDict
 import copy
 from itertools import islice
 
-from typing import Any, List, Optional, Tuple, Union
-
 from diffpy.structure import Structure
 import matplotlib.colors as mcolors
 import numpy as np
@@ -65,13 +63,7 @@ class Phase:
         Return a deep copy using :py:func:`~copy.deepcopy` function.
     """
 
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        structure: Optional[Structure] = None,
-        symmetry: Union[None, str, int, Symmetry] = None,
-        color: Optional[str] = None,
-    ):
+    def __init__(self, name=None, structure=None, symmetry=None, color=None):
         """
         Parameters
         ----------
@@ -114,12 +106,12 @@ class Phase:
         self.color = color if color is not None else "tab:blue"
 
     @property
-    def structure(self) -> Structure:
+    def structure(self):
         """Phase unit cell."""
         return self._structure
 
     @structure.setter
-    def structure(self, value: Structure):
+    def structure(self, value):
         """Set phase structure."""
         if isinstance(value, Structure):
             if value.title == "" and hasattr(self, "_structure"):
@@ -129,22 +121,22 @@ class Phase:
             raise ValueError(f"{value} must be a diffpy.structure.Structure object.")
 
     @property
-    def name(self) -> str:
+    def name(self):
         """Phase name."""
         return self.structure.title
 
     @name.setter
-    def name(self, value: Any):
+    def name(self, value):
         """Set phase name as string."""
         self.structure.title = str(value)
 
     @property
-    def color(self) -> str:
+    def color(self):
         """Name of phase color."""
         return self._color
 
     @color.setter
-    def color(self, value: str):
+    def color(self, value):
         """Set phase color from something considered a valid color by
         :func:`matplotlib.colors.is_color_like`.
         """
@@ -155,17 +147,17 @@ class Phase:
                 break
 
     @property
-    def color_rgb(self) -> Tuple[float]:
+    def color_rgb(self):
         """Phase color as RGB tuple."""
         return mcolors.to_rgb(self.color)
 
     @property
-    def symmetry(self) -> Union[None, Symmetry]:
+    def symmetry(self):
         """Crystal symmetry of phase."""
         return self._symmetry
 
     @symmetry.setter
-    def symmetry(self, value: Union[None, int, str, Symmetry]):
+    def symmetry(self, value):
         """Set crystal symmetry of phase."""
         if isinstance(value, int):
             value = str(value)
@@ -186,7 +178,7 @@ class Phase:
         else:
             self._symmetry = value
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         if self.symmetry:
             symmetry_name = self.symmetry.name
         else:
@@ -235,14 +227,12 @@ class PhaseList:
 
     def __init__(
         self,
-        phases: Union[None, Phase, List[Phase], dict] = None,
-        names: Union[None, str, List[str]] = None,
-        symmetries: Union[
-            None, str, int, Symmetry, List[Union[str, int, Symmetry]]
-        ] = None,
-        colors: Union[None, str, List[str]] = None,
-        phase_ids: Union[None, int, List[int], np.ndarray] = None,
-        structures: Union[None, Structure, List[Structure]] = None,
+        phases=None,
+        names=None,
+        symmetries=None,
+        colors=None,
+        phase_ids=None,
+        structures=None,
     ):
         """
         Parameters
@@ -392,41 +382,41 @@ class PhaseList:
         self._dict = OrderedDict(sorted(d.items()))
 
     @property
-    def names(self) -> List[str]:
+    def names(self):
         """List of phase names in the list."""
         return [phase.name for _, phase in self]
 
     @property
-    def symmetries(self) -> List[Union[None, Symmetry]]:
+    def symmetries(self):
         """List of crystal symmetries of phases in the list."""
         return [phase.symmetry for _, phase in self]
 
     @property
-    def colors(self) -> List[str]:
+    def colors(self):
         """List of phase color names in the list."""
         return [phase.color for _, phase in self]
 
     @property
-    def colors_rgb(self) -> List[Tuple[float]]:
+    def colors_rgb(self):
         """List of phase color RGB values in the list."""
         return [phase.color_rgb for _, phase in self]
 
     @property
-    def size(self) -> int:
+    def size(self):
         """Number of phases in the list."""
         return len(self._dict.items())
 
     @property
-    def phase_ids(self) -> List[int]:
+    def phase_ids(self):
         """Unique phase IDs in the list of phases."""
         return list(self._dict.keys())
 
     @property
-    def structures(self) -> List[Structure]:
+    def structures(self):
         """List of phase structures."""
         return [phase.structure for _, phase in self]
 
-    def __getitem__(self, key: Union[int, str, slice, Tuple, List[int]]):
+    def __getitem__(self, key):
         """Return a PhaseList or a Phase object, depending on the number
         of phases in the list matches the `key`.
 
@@ -520,7 +510,7 @@ class PhaseList:
         else:
             return PhaseList(d)
 
-    def __setitem__(self, key: Union[int, str], value: Union[None, str, Symmetry]):
+    def __setitem__(self, key, value):
         """Add a phase to the list with a name, symmetry and structure."""
         if key not in self.names:
             # Make sure the new phase gets a new color
@@ -540,7 +530,7 @@ class PhaseList:
         else:
             raise ValueError(f"{key} is already in the phase list {self.names}.")
 
-    def __delitem__(self, key: Union[int, str]):
+    def __delitem__(self, key):
         """Delete a phase from the phase list.
 
         Parameters
@@ -563,13 +553,13 @@ class PhaseList:
         else:
             raise TypeError(f"{key} is an invalid phase.")
 
-    def __iter__(self) -> Tuple[int, Phase]:
+    def __iter__(self):
         """Return a tuple with phase ID and Phase object, in that order.
         """
         for phase_id, phase in self._dict.items():
             yield phase_id, phase
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         if self.size == 0:
             return "No phases."
 
@@ -628,7 +618,7 @@ class PhaseList:
         """Sort list according to phase ID."""
         self._dict = OrderedDict(sorted(self._dict.items()))
 
-    def id_from_name(self, name: str) -> int:
+    def id_from_name(self, name):
         """Get phase ID from phase name.
 
         Parameters

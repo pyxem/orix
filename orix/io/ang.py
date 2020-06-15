@@ -17,7 +17,6 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import List, Tuple
 import warnings
 
 from diffpy.structure import Lattice, Structure
@@ -32,7 +31,7 @@ from orix.crystal_map import CrystalMap
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ACOM.m
 
 
-def load_ang(filename: str) -> CrystalMap:
+def load_ang(filename):
     """Return a :class:`orix.crystal_map.CrystalMap` object from EDAX
     TSL's .ang file format. The map in the input file is assumed to be 2D.
 
@@ -109,7 +108,7 @@ def load_ang(filename: str) -> CrystalMap:
     )
 
 
-def _get_header(file) -> List[str]:
+def _get_header(file):
     """Return the first lines starting with '#' in an .ang file.
 
     Parameters
@@ -130,7 +129,7 @@ def _get_header(file) -> List[str]:
     return header
 
 
-def _get_vendor_columns(header: list, n_cols_file: int) -> Tuple[str, List[str]]:
+def _get_vendor_columns(header, n_cols_file):
     """Return the .ang file column names and vendor, determined from the
     header.
 
@@ -232,9 +231,7 @@ def _get_vendor_columns(header: list, n_cols_file: int) -> Tuple[str, List[str]]
     return vendor, column_names[vendor]
 
 
-def _get_phases_from_header(
-    header: list,
-) -> Tuple[List[str], List[str], List[List[float]]]:
+def _get_phases_from_header(header):
     """Return phase names and symmetries detected in an .ang file
     header.
 

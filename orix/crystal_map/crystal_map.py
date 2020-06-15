@@ -17,7 +17,6 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-from typing import Any, Dict, List, Optional, Tuple, Union
 
 from diffpy.structure import Structure
 import numpy as np
@@ -88,17 +87,15 @@ class CrystalMap:
 
     def __init__(
         self,
-        rotations: Rotation,
-        phase_id: Optional[np.ndarray] = None,
-        x: Optional[np.ndarray] = None,
-        y: Optional[np.ndarray] = None,
-        z: Optional[np.ndarray] = None,
-        phase_name: Union[None, str, List[str]] = None,
-        symmetry: Union[
-            None, str, int, Symmetry, List[Union[str, list, Symmetry]]
-        ] = None,
-        structure: Union[None, Structure, List[Structure]] = None,
-        prop: Optional[Dict[str, np.ndarray]] = None,
+        rotations,
+        phase_id=None,
+        x=None,
+        y=None,
+        z=None,
+        phase_name=None,
+        symmetry=None,
+        structure=None,
+        prop=None,
     ):
         """
         Parameters
@@ -240,27 +237,27 @@ class CrystalMap:
         self._original_shape = self._data_shape_from_coordinates()
 
     @property
-    def id(self) -> np.ndarray:
+    def id(self):
         """ID of points in data."""
         return self._id[self.is_in_data]
 
     @property
-    def size(self) -> int:
+    def size(self):
         """Total number of points in data."""
         return np.count_nonzero(self.is_in_data)
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self):
         """Shape of points in data."""
         return self._data_shape_from_coordinates()
 
     @property
-    def ndim(self) -> int:
+    def ndim(self):
         """Number of data dimensions of points in data."""
         return len(self.shape)
 
     @property
-    def x(self) -> Union[None, np.ndarray]:
+    def x(self):
         """X coordinates of points in data."""
         if self._x is None or len(np.unique(self._x)) == 1:
             return None
@@ -268,7 +265,7 @@ class CrystalMap:
             return self._x[self.is_in_data]
 
     @property
-    def y(self) -> Union[None, np.ndarray]:
+    def y(self):
         """Y coordinates of points in data."""
         if self._y is None or len(np.unique(self._y)) == 1:
             return None
@@ -276,7 +273,7 @@ class CrystalMap:
             return self._y[self.is_in_data]
 
     @property
-    def z(self) -> Union[None, np.ndarray]:
+    def z(self):
         """Z coordinates of points in data."""
         if self._z is None or len(np.unique(self._z)) == 1:
             return None
@@ -284,31 +281,31 @@ class CrystalMap:
             return self._z[self.is_in_data]
 
     @property
-    def dx(self) -> float:
+    def dx(self):
         return self._step_size_from_coordinates(self._x)
 
     @property
-    def dy(self) -> float:
+    def dy(self):
         return self._step_size_from_coordinates(self._y)
 
     @property
-    def dz(self) -> float:
+    def dz(self):
         return self._step_size_from_coordinates(self._z)
 
     @property
-    def phase_id(self) -> np.ndarray:
+    def phase_id(self):
         """Phase IDs of points in data."""
         return self._phase_id[self.is_in_data]
 
     @phase_id.setter
-    def phase_id(self, value: Union[np.ndarray, int]):
+    def phase_id(self, value):
         """Set phase ID of points in data by passing an int to `value`."""
         self._phase_id[self.is_in_data] = value
         if value == -1 and "not_indexed" not in self.phases.names:
             self.phases.add_not_indexed()
 
     @property
-    def phases_in_data(self) -> PhaseList:
+    def phases_in_data(self):
         """List of phases in data.
 
         Needed because it can be useful to have phases not in data but in
@@ -325,17 +322,17 @@ class CrystalMap:
             return phase_list
 
     @property
-    def rotations(self) -> Rotation:
+    def rotations(self):
         """Rotations in data."""
         return self._rotations[self.is_in_data]
 
     @property
-    def rotations_per_point(self) -> int:
+    def rotations_per_point(self):
         """Number of rotations per data point in data."""
         return self.rotations.size // self.is_indexed.size
 
     @property
-    def rotations_shape(self) -> tuple:
+    def rotations_shape(self):
         """Shape of rotation object.
 
         Map shape and possible multiple rotations per point are accounted
@@ -344,7 +341,7 @@ class CrystalMap:
         return tuple(i for i in self.shape + (self.rotations_per_point,) if i != 1)
 
     @property
-    def orientations(self) -> Orientation:
+    def orientations(self):
         """Rotations, respecting symmetry, in data."""
         # TODO: Consider whether orientations should be calculated upon
         #  loading since computing orientations are slow (should benefit
@@ -364,17 +361,17 @@ class CrystalMap:
             )
 
     @property
-    def is_indexed(self) -> bool:
+    def is_indexed(self):
         """Whether points in data are indexed."""
         return self.phase_id != -1
 
     @property
-    def all_indexed(self) -> bool:
+    def all_indexed(self):
         """Whether all points in data are indexed."""
         return np.count_nonzero(self.is_indexed) == self.is_indexed.size
 
     @property
-    def prop(self) -> CrystalMapProperties:
+    def prop(self):
         """:class:`~orix.crystal_map.CrystalMapProperties` dictionary with
         data properties in each data point.
         """
@@ -383,28 +380,28 @@ class CrystalMap:
         return self._prop
 
     @property
-    def _coordinates(self) -> dict:
+    def _coordinates(self):
         """Dictionary of coordinates of points in data."""
         # TODO: Make this "dynamic"/dependable when enabling specimen
         #  reference frame
         return {"z": self.z, "y": self.y, "x": self.x}
 
     @property
-    def _step_sizes(self) -> dict:
+    def _step_sizes(self):
         """Dictionary of step sizes of dimensions in data."""
         # TODO: Make this "dynamic"/dependable when enabling specimen
         #  reference frame
         return {"z": self.dz, "y": self.dy, "x": self.dx}
 
     @property
-    def _coordinate_axes(self) -> dict:
+    def _coordinate_axes(self):
         """Dictionary of which data axis corresponds to which cartesian
         coordinate.
         """
         present_coordinates = [k for k, v in self._coordinates.items() if v is not None]
         return {i: coord for i, coord in zip(range(self.ndim), present_coordinates)}
 
-    def __getattr__(self, item: str):
+    def __getattr__(self, item):
         """Get an attribute in the `prop` dictionary directly from the
         CrystalMap object.
 
@@ -417,7 +414,7 @@ class CrystalMap:
         else:
             return object.__getattribute__(self, item)
 
-    def __setattr__(self, name: str, value: Any):
+    def __setattr__(self, name, value):
         """Set a class instance attribute."""
         if hasattr(self, "_prop") and name in self._prop:
             # Calls CrystalMapProperties.__setitem__()
@@ -425,7 +422,7 @@ class CrystalMap:
         else:
             return object.__setattr__(self, name, value)
 
-    def __getitem__(self, key: Union[str, slice, tuple, int, np.ndarray]):
+    def __getitem__(self, key):
         """Get a masked copy of the CrystalMap object.
 
         Parameters
@@ -585,7 +582,7 @@ class CrystalMap:
 
         return new_map
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         """Print a nice representation of the data."""
         if self.size == 0:
             return "No data."
@@ -642,12 +639,7 @@ class CrystalMap:
 
         return representation
 
-    def get_map_data(
-        self,
-        item: Union[str, np.ndarray],
-        decimals: int = 3,
-        fill_value: Union[None, int, float] = None,
-    ) -> np.ndarray:
+    def get_map_data(self, item, decimals=3, fill_value=None):
         """Return an array of a class instance attribute, with values
         equal to ``False`` in ``self.is_in_data`` set to `fill_value`, of
         map data shape.
@@ -741,7 +733,7 @@ class CrystalMap:
         return copy.deepcopy(self)
 
     @staticmethod
-    def _step_size_from_coordinates(coordinates: np.ndarray) -> float:
+    def _step_size_from_coordinates(coordinates):
         """Return step size in input `coordinates` array.
 
         Parameters
@@ -760,7 +752,7 @@ class CrystalMap:
             step_size = unique_sorted[1] - unique_sorted[0]
         return step_size
 
-    def _data_slices_from_coordinates(self) -> Tuple[slice, ...]:
+    def _data_slices_from_coordinates(self):
         """Return a tuple of slices defining the current data extent in
         all directions.
 
@@ -783,7 +775,7 @@ class CrystalMap:
 
         return tuple(slices)
 
-    def _data_shape_from_coordinates(self) -> Tuple[int, ...]:
+    def _data_shape_from_coordinates(self):
         """Return data shape based upon coordinate arrays.
 
         Returns
