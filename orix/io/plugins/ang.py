@@ -22,7 +22,6 @@ import warnings
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.crystal_map import CrystalMap
 
 # MTEX has this format sorted out, check out their readers when fixing issues and
 # adapting to other versions of this file format in the future:
@@ -32,9 +31,11 @@ from orix.crystal_map import CrystalMap
 # Plugin description
 format_name = "ang"
 file_extensions = ["ang"]
+format_type = "CrystalMap"
+writes = False
 
 
-def file_reader(filename: str) -> CrystalMap:
+def file_reader(filename):
     """Return a :class:`orix.crystal_map.CrystalMap` object from EDAX
     TSL's .ang file format. The map in the input file is assumed to be 2D.
 
@@ -54,7 +55,7 @@ def file_reader(filename: str) -> CrystalMap:
 
     Returns
     -------
-    CrystalMap
+    dict
     """
     # Get file header
     with open(filename) as f:
@@ -71,7 +72,7 @@ def file_reader(filename: str) -> CrystalMap:
     vendor, column_names = _get_vendor_columns(header, n_cols)
 
     # Data needed to create a CrystalMap object
-    data = {
+    data_dict = {
         "euler1": None,
         "euler2": None,
         "euler3": None,
@@ -79,32 +80,30 @@ def file_reader(filename: str) -> CrystalMap:
         "y": None,
         "phase_id": None,
         "prop": {},
+        "phase_name": phase_names,
+        "symmetry": symmetries,
     }
     for column, name in enumerate(column_names):
-        if name in data.keys():
-            data[name] = file_data[:, column]
+        if name in data_dict.keys():
+            data_dict[name] = file_data[:, column]
         else:
-            data["prop"][name] = file_data[:, column]
+            data_dict["prop"][name] = file_data[:, column]
 
     # Set which data points are not indexed
     if vendor == "tsl":
-        data["phase_id"][np.where(data["prop"]["ci"] == -1)] = -1
+        data_dict["phase_id"][np.where(data_dict["prop"]["ci"] == -1)] = -1
     # TODO: Add not-indexed convention for INDEX ASTAR
 
     # Create rotations
-    rotations = Rotation.from_euler(
-        np.column_stack((data["euler1"], data["euler2"], data["euler3"]))
+    data_dict["rotations"] = Rotation.from_euler(
+        np.column_stack(
+            (data_dict.pop("euler1"),
+             data_dict.pop("euler2"),
+             data_dict.pop("euler3"))
+        )
     )
 
-    return CrystalMap(
-        rotations=rotations,
-        phase_id=data["phase_id"],
-        x=data["x"],
-        y=data["y"],
-        phase_name=phase_names,
-        symmetry=symmetries,
-        prop=data["prop"],
-    )
+    return data_dict
 
 
 def _get_header(file):

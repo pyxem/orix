@@ -24,6 +24,7 @@ from orix.quaternion.rotation import Rotation
 from orix.quaternion.orientation import Orientation
 from orix.crystal_map.phase_list import PhaseList, Phase
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
+from orix.io import _save
 
 
 class CrystalMap:
@@ -740,3 +741,19 @@ class CrystalMap:
         for dim_slice in self._data_slices_from_coordinates():
             data_shape.append(dim_slice.stop - dim_slice.start)
         return tuple(data_shape)
+
+    def save(self, filename, overwrite=None, **kwargs):
+        """Write the crystal map to a supported file format.
+
+        Parameters
+        ----------
+        filename : str
+            Name of file to write to.
+        overwrite : bool, optional
+            If None and the file exists, the user is queried. If True
+            (False) the file is (not) overwritten if it exists.
+        kwargs
+            Keyword arguments passed to the corresponding orix writer. See
+            their individual docstrings for available arguments.
+        """
+        _save(filename=filename, object2write=self, overwrite=overwrite, **kwargs)
