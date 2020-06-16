@@ -163,7 +163,7 @@ class CrystalMap:
         ...     phase_id=phase_id,
         ...     x=x,
         ...     y=y,
-        ...     phase_name=["austenite", "ferrite"],  # Overridden by Structure.title
+        ...     phase_name=["austenite", "ferrite"],  # Overwrites Structure.title
         ...     symmetry=["432", "432"],
         ...     structure=structures,
         ...     prop=properties,
