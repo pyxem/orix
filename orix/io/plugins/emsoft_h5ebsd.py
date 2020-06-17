@@ -18,6 +18,7 @@
 
 import re
 
+from diffpy.structure import Lattice, Structure
 import h5py
 import numpy as np
 
@@ -147,3 +148,35 @@ def _get_properties(data_group, n_top_matches, map_size):
             properties[property_name] = prop
 
     return properties
+
+
+def _get_phase(data_group):
+    """Return phase information from a phase data group in an EMsoft dot
+    product file.
+
+    Parameters
+    ----------
+    data_group : h5py.Group
+        HDF5 group with the property data sets.
+
+    Returns
+    -------
+    name : str
+        Phase name.
+    symmetry : str
+        Phase symmetry.
+    structure : diffpy.structure.Structure
+        Phase structure.
+    """
+    name = re.search(r"([A-z0-9]+)", data_group["MaterialName"][:][0].decode()).group(1)
+    symmetry = re.search(
+        r"\[([A-z0-9]+)\]", data_group["Point Group"][:][0].decode()
+    ).group(1)
+    lattice = Lattice(
+        *tuple(
+            data_group[f"Lattice Constant {i}"][:]
+            for i in ["a", "b", "c", "alpha", "beta", "gamma"]
+        )
+    )
+    structure = Structure(title=name, lattice=lattice)
+    return name, symmetry, structure

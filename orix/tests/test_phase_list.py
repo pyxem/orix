@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from diffpy.structure import Lattice, Structure
 import numpy as np
 import pytest
 
@@ -25,18 +26,42 @@ from orix.quaternion.symmetry import Symmetry, O
 
 class TestPhase:
     @pytest.mark.parametrize(
-        "name, symmetry, color, color_alias, color_rgb",
+        "name, symmetry, color, color_alias, color_rgb, structure",
         [
-            (None, "m-3m", None, "tab:blue", (0.121568, 0.466666, 0.705882)),
-            (None, "1", "blue", "b", (0, 0, 1)),
-            ("al", "43", "xkcd:salmon", "xkcd:salmon", (1, 0.474509, 0.423529)),
-            ("My awes0me phase!", O, "C1", "tab:orange", (1, 0.498039, 0.054901)),
+            (
+                None,
+                "m-3m",
+                None,
+                "tab:blue",
+                (0.121568, 0.466666, 0.705882),
+                Structure(title="Super", lattice=Lattice(1, 1, 1, 90, 90, 90)),
+            ),
+            (None, "1", "blue", "b", (0, 0, 1), Structure()),
+            (
+                "al",
+                "43",
+                "xkcd:salmon",
+                "xkcd:salmon",
+                (1, 0.474509, 0.423529),
+                Structure(title="ni", lattice=Lattice(1, 2, 3, 90, 90, 90)),
+            ),
+            (
+                "My awes0me phase!",
+                O,
+                "C1",
+                "tab:orange",
+                (1, 0.498039, 0.054901),
+                None,
+            ),
         ],
     )
-    def test_init_phase(self, name, symmetry, color, color_alias, color_rgb):
-        p = Phase(name, symmetry, color)
+    def test_init_phase(self, name, symmetry, color, color_alias, color_rgb, structure):
+        p = Phase(name=name, symmetry=symmetry, structure=structure, color=color)
 
-        assert p.name == str(name)
+        if name is None:
+            assert p.name == structure.title
+        else:
+            assert p.name == str(name)
 
         if symmetry == "43":
             symmetry = "432"
@@ -47,9 +72,16 @@ class TestPhase:
         assert p.color == color_alias
         assert np.allclose(p.color_rgb, color_rgb, atol=1e-6)
 
+        if structure is not None:
+            assert p.structure == structure
+        else:
+            assert p.structure == Structure()
+
     @pytest.mark.parametrize("name", [None, "al", 1, np.arange(2)])
     def test_set_phase_name(self, name):
         p = Phase(name=name)
+        if name is None:
+            name = ""
         assert p.name == str(name)
 
     @pytest.mark.parametrize(
@@ -88,7 +120,28 @@ class TestPhase:
             p.symmetry = symmetry
             assert p.symmetry.name == symmetry_name
 
-    @pytest.mark.parametrize("name, symmetry", [("al", None), (None, "m-3m")])
+    @pytest.mark.parametrize(
+        "structure", [Structure(), Structure(lattice=Lattice(1, 2, 3, 90, 120, 90))]
+    )
+    def test_set_structure(self, structure):
+        p = Phase()
+        p.structure = structure
+
+        assert p.structure == structure
+
+    def test_set_structure_phase_name(self):
+        name = "al"
+        p = Phase(name=name)
+        p.structure = Structure(lattice=Lattice(*([0.405] * 3 + [90] * 3)))
+        assert p.name == name
+        assert p.structure.title == name
+
+    def test_set_structure_raises(self):
+        p = Phase()
+        with pytest.raises(ValueError, match=".* must be a diffpy.structure.Structure"):
+            p.structure = [1, 2, 3, 90, 90, 90]
+
+    @pytest.mark.parametrize("name, symmetry", [("al", None), ("", "m-3m")])
     def test_phase_repr_str(self, name, symmetry):
         p = Phase(name=name, symmetry=symmetry, color="C0")
         representation = (
@@ -102,7 +155,7 @@ class TestPhase:
         assert p.__str__() == representation
 
     def test_deepcopy_phase(self):
-        p = Phase("al", "m-3m", "C1")
+        p = Phase(name="al", symmetry="m-3m", color="C1")
         p2 = p.deepcopy()
 
         assert p.__repr__() == "<name: al. symmetry: m-3m. color: tab:orange>"
@@ -114,7 +167,7 @@ class TestPhase:
         assert p2.__repr__() == "<name: al. symmetry: m-3m. color: tab:orange>"
 
     def test_shallowcopy_phase(self):
-        p = Phase("al", "m-3m", "C1")
+        p = Phase(name="al", symmetry="m-3m", color="C1")
         p2 = p
 
         p2.name = "austenite"
@@ -139,14 +192,15 @@ class TestPhaseList:
         pl = PhaseList(phase_ids=phase_ids)
 
         assert pl.phase_ids == phase_ids
-        assert pl.names == ["None",] * 2
-        assert pl.symmetries == [None,] * 2
+        assert pl.names == [""] * 2
+        assert pl.symmetries == [None] * 2
         assert pl.colors == ["tab:blue", "tab:orange"]
+        assert pl.structures == [Structure()] * 2
 
     @pytest.mark.parametrize("phase_collection", ["dict", "list"])
     def test_init_phaselist_from_phases(self, phase_collection):
-        p1 = Phase("austenite", 432, None)
-        p2 = Phase("ferrite", "432", "C1")
+        p1 = Phase(name="austenite", symmetry=432, color=None)
+        p2 = Phase(name="ferrite", symmetry="432", color="C1")
         if phase_collection == "dict":
             phases = {1: p1, 2: p2}
         else:  # phase_collection == "list":
@@ -160,7 +214,7 @@ class TestPhaseList:
         assert pl.colors_rgb == [p.color_rgb for p in [p1, p2]]
 
     def test_init_phaselist_from_phase(self):
-        p = Phase("austenite", "432", "C2")
+        p = Phase(name="austenite", symmetry="432", color="C2")
         pl = PhaseList(p)
 
         assert pl.names == [p.name]
@@ -176,9 +230,9 @@ class TestPhaseList:
         [
             (
                 ["al", "ni"],
-                [43,],
+                [43],
                 [None, "C1"],
-                [1,],
+                [1],
                 ["al", "ni"],
                 ["432", None],
                 ["tab:blue", "tab:orange"],
@@ -188,18 +242,18 @@ class TestPhaseList:
                 ["al", None],
                 [432, "m3m"],
                 (1, 0, 0),
-                [100,],
-                ["al", "None"],
+                [100],
+                ["al", ""],
                 ["432", "m-3m"],
                 ["r", "tab:blue"],
                 [100, 101],
             ),
             (
-                [None,],
+                [None],
                 [None, None],
                 ["green", "black"],
                 1,
-                ["None", "None"],
+                ["", ""],
                 [None, None],
                 ["g", "k"],
                 [1, 2],
@@ -209,7 +263,7 @@ class TestPhaseList:
                 ["m-3m", 3, None],
                 ["C0", None, "C0"],
                 None,
-                ["al", "Ni", "None"],
+                ["al", "Ni", ""],
                 ["m-3m", "3", None],
                 ["tab:blue", "tab:orange", "tab:blue"],
                 [0, 1, 2],
@@ -353,6 +407,7 @@ class TestPhaseList:
         assert pl.phase_ids == [0, 1]
         assert pl.names == [str(n) for n in names]
         assert [s.name for s in pl.symmetries] == [str(s) for s in symmetries]
+        assert pl.structures == [Structure()] * 2
 
     @pytest.mark.parametrize(
         "key_del, invalid_phase, error_type, error_msg",
@@ -387,16 +442,24 @@ class TestPhaseList:
         names = ["al", "ni", "sigma"]
         symmetries = [3, 432, "m-3m"]
         colors = ["g", "b", "r"]
+        structures = [
+            Structure(),
+            Structure(lattice=Lattice(1, 2, 3, 90, 90, 90)),
+            Structure(),
+        ]
 
-        pl = PhaseList(names=names, symmetries=symmetries, colors=colors)
+        pl = PhaseList(
+            names=names, symmetries=symmetries, colors=colors, structures=structures
+        )
 
-        for i, ((phase_id, phase), n, s, c) in enumerate(
-            zip(pl, names, symmetries, colors)
+        for i, ((phase_id, phase), n, s, c, structure) in enumerate(
+            zip(pl, names, symmetries, colors, structures)
         ):
             assert phase_id == i
             assert phase.name == n
             assert phase.symmetry.name == str(s)
             assert phase.color == c
+            assert phase.structure == structure
 
     def test_deepcopy_phaselist(self, phase_list):
         names = phase_list.names

@@ -19,6 +19,7 @@
 import re
 import warnings
 
+from diffpy.structure import Lattice, Structure
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
@@ -63,7 +64,10 @@ def file_reader(filename):
         header = _get_header(f)
 
     # Get phase names and crystal symmetries from header (potentially empty)
-    phase_names, symmetries = _get_phases_from_header(header)
+    phase_names, symmetries, lattice_constants = _get_phases_from_header(header)
+    structures = []
+    for name, abcABG in zip(phase_names, lattice_constants):
+        structures.append(Structure(title=name, lattice=Lattice(*abcABG)))
 
     # Read all file data
     file_data = np.loadtxt(filename)
@@ -119,7 +123,6 @@ def _get_header(file):
     -------
     header : list
         List with header lines as individual elements.
-
     """
     header = []
     line = file.readline()
@@ -146,7 +149,6 @@ def _get_vendor_columns(header, n_cols_file):
         Determined vendor ("tsl", "astar", or "emsoft").
     column_names : list of str
         List of column names.
-
     """
     # Assume EDAX TSL by default
     vendor = "tsl"
@@ -247,30 +249,38 @@ def _get_phases_from_header(header):
         List of names of detected phases.
     phase_symmetries : list of str
         List of symmetries of detected phase.
+    lattice_constants : list of list of floats
+        List of list of lattice parameters of detected phases.
 
     Notes
     -----
     Regular expressions are used to collect phase name, formula and
     symmetry. This function have been tested with files from the following
     vendor's formats: EDAX TSL OIM Data Collection v7, ASTAR Index, and
-    EMsoft v4.
-
+    EMsoft v4/v5.
     """
     regexps = {
         "name": "# MaterialName([ \t]+)([A-z0-9 ]+)",
         "formula": "# Formula([ \t]+)([A-z0-9 ]+)",
         "symmetry": "# Symmetry([ \t]+)([A-z0-9 ]+)",
+        "lattice_constants": r"# LatticeConstants([ \t+])(.*)",
     }
-    phases = {"name": [], "formula": [], "symmetry": []}
+    phases = {"name": [], "formula": [], "symmetry": [], "lattice_constants": []}
     for line in header:
         for key, exp in regexps.items():
             match = re.search(exp, line)
             if match:
-                phases[key].append(match.group(2))
+                group = re.split("[ \t]", match.group(2).lstrip(" ").rstrip(" "))
+                group = list(filter(None, group))
+                if key == "lattice_constants":
+                    group = [float(i) for i in group]
+                else:
+                    group = group[0]
+                phases[key].append(group)
 
     # Check if formula is empty (sometimes the case for ASTAR Index)
-    phase_names = phases["formula"]
-    if len(phase_names) == 0 or any([i != "" for i in phase_names]):
-        phase_names = phases["name"]
+    names = phases["formula"]
+    if len(names) == 0 or any([i != "" for i in names]):
+        names = phases["name"]
 
-    return phase_names, phases["symmetry"]
+    return names, phases["symmetry"], phases["lattice_constants"]

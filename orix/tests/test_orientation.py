@@ -55,6 +55,7 @@ def test_orientation_persistence(symmetry, vector):
     v2 = Vector3d(v2.data.round(4))
     assert v1._tuples == v2._tuples
 
+
 @pytest.mark.parametrize(
     "orientation, symmetry, expected",
     [
