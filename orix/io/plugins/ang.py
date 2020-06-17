@@ -31,6 +31,7 @@ from orix.quaternion.rotation import Rotation
 # Plugin description
 format_name = "ang"
 file_extensions = ["ang"]
+module = "orix.crystal_map"
 format_type = "CrystalMap"
 writes = False
 

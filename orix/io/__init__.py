@@ -25,13 +25,12 @@
 
 """
 
-from inspect import getmembers
+from importlib import import_module
 import os
 from warnings import warn
 
 import numpy as np
 
-from orix import crystal_map
 from orix.io.plugins import plugins
 
 extensions = [plugin.file_extensions for plugin in plugins if plugin.writes]
@@ -119,7 +118,7 @@ def load(filename, **kwargs):
     data_dict = reader.file_reader(filename, **kwargs)
 
     # Get class to return
-    class_to_use = dict(getmembers(crystal_map))[reader.format_type]
+    class_to_use = getattr(import_module(reader.module), reader.format_type)
 
     return class_to_use(**data_dict)
 

@@ -25,11 +25,12 @@ import numpy as np
 # Plugin description
 format_name = "orix_hdf5"
 file_extensions = ["h5", "hdf5"]
+module = "orix.crystal_map"
 format_type = "CrystalMap"
 writes = True
 
 
-def file_writer(filename, object2write, **kwargs):
+def file_writer(filename, crystal_map, **kwargs):
     """Write a :class:`~orix.crystal_map.CrystalMap` object to an HDF5
     file.
 
@@ -37,33 +38,55 @@ def file_writer(filename, object2write, **kwargs):
     ----------
     filename : str
         Name of file to write to.
-    object2write : CrystalMap
+    crystal_map : CrystalMap
         Object to write to file.
     kwargs
         Keyword arguments passed to :meth:`h5py:Group.require_dataset`.
     """
-    # Set manufacturer and version to use in the file
-    from orix import __version__
-    man_ver_dict = {"manufacturer": "orix", "version": __version__}
-
     # Open file in correct mode
     try:
         f = File(filename, mode="w")
     except OSError:
         raise OSError(f"Cannot write to the already open file '{filename}'.")
 
-    # Add manufacturer and version to top group
-    dict2hdf5group(man_ver_dict, f["/"], **kwargs)
+    from orix import __version__
 
-    # Create scan group
-    scan_group = f.create_group("scan1/crystal_map")
-
-    # Data group with arrays with values per point
-    data_group = scan_group.create_group("data")
+    eulers = crystal_map._rotations.to_euler()
+    file_dict = {
+        "manufacturer": "orix",
+        "version": __version__,
+        "crystal_map": {
+            "data": {
+                "z": crystal_map._z,
+                "y": crystal_map._y,
+                "x": crystal_map._x,
+                "phi1": eulers[:, 0],
+                "Phi": eulers[:, 1],
+                "phi2": eulers[:, 2],
+                "phase_id": crystal_map._phase_id,
+                "id": crystal_map._id,
+                "is_in_data": crystal_map.is_in_data,
+            },
+            "header": {
+                "grid_type": "square",
+                "nz": len(crystal_map._z) if hasattr(crystal_map._z, "__iter__") else 1,
+                "ny": len(crystal_map._y) if hasattr(crystal_map._y, "__iter__") else 1,
+                "nx": len(crystal_map._x) if hasattr(crystal_map._x, "__iter__") else 1,
+                "z_step": crystal_map.dz,
+                "y_step": crystal_map.dy,
+                "x_step": crystal_map.dx,
+                "rotations_per_point": crystal_map.rotations_per_point,
+                "scan_unit": crystal_map.scan_unit,
+            }
+        }
+    }
+    dict2hdf5group(file_dict, f["/"], **kwargs)
 
     # Header group with all other information
-    header_group = scan_group.create_group("header")
-    header = _get_phase_list_dict(object2write.phases)
+#    header_group = scan_group.create_group("header")
+#    header = _get_phase_list_dict(crystal_map.phases)
+
+    f.close()
 
 
 def dict2hdf5group(dictionary, group, **kwargs):

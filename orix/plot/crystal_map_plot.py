@@ -127,11 +127,11 @@ class CrystalMapPlot(Axes):
         >>> import matplotlib.pyplot as plt
         >>> import numpy as np
         >>> from orix import plot
-        >>> from orix.io import load_ang
+        >>> from orix.io import load
 
         Import a crystal map
 
-        >>> cm = load_ang("/some/directory/data.ang")
+        >>> cm = load("/some/directory/data.ang")
 
         Plot a phase map
 

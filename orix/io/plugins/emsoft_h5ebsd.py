@@ -26,6 +26,7 @@ from orix.quaternion.rotation import Rotation
 # Plugin description
 format_name = "emsoft_h5ebsd"
 file_extensions = ["h5", "hdf5", "h5ebsd"]
+module = "orix.crystal_map"
 format_type = "CrystalMap"
 writes = False
 
