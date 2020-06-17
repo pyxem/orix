@@ -18,9 +18,8 @@
 
 from warnings import warn
 
-from h5py import File
+from h5py import File, Group
 import numpy as np
-
 
 # Plugin description
 format_name = "orix_hdf5"
@@ -30,9 +29,75 @@ format_type = "CrystalMap"
 writes = True
 
 
+def file_reader(filename, **kwargs):
+    """Return a dictionary with items to initialize a
+    :class:`~orix.crystal_map.crystal_map.CrystalMap` object from orix'
+    HDF5 format.
+
+    Parameters
+    ----------
+    filename : str
+        Path and file name.
+    kwargs
+        Keyword arguments passed to :func:`h5py.File`.
+
+    Returns
+    -------
+    dict
+    """
+    mode = kwargs.pop("mode", "r")
+    f = File(filename, mode=mode, **kwargs)
+
+    return
+
+
+def hdf5group2dict(group, dictionary=None, recursive=False):
+    """Return a dictionary with values from datasets in a group in an
+    opened HDF5 file.
+
+    Parameters
+    ----------
+    group : h5py:Group
+        HDF5 group object.
+    dictionary : dict, optional
+        To fill dataset values into. If None (default), a new dictionary
+        is created.
+    recursive : bool, optional
+        Whether to add subgroups to dictionary. Default is False.
+
+    Returns
+    -------
+    dictionary : dict
+        Dataset values in group (and subgroups if recursive=True).
+    """
+    if dictionary is None:
+        dictionary = {}
+    for key, val in group.items():
+        # Check whether to extract subgroup or write value the dictionary
+        if isinstance(val, Group):
+            if recursive:
+                dictionary[key] = {}
+                hdf5group2dict(
+                    group=group[key],
+                    dictionary=dictionary[key],
+                    recursive=recursive,
+                )
+            else:
+                dictionary[key] = val
+        else:
+            val = val[()]
+            # Prepare value for entry in dictionary
+            if isinstance(val, np.ndarray) and len(val) == 1:
+                val = val[0]
+            if isinstance(val, bytes):
+                val = val.decode("latin-1")
+            dictionary[key] = val
+    return dictionary
+
+
 def file_writer(filename, crystal_map, **kwargs):
-    """Write a :class:`~orix.crystal_map.CrystalMap` object to an HDF5
-    file.
+    """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` object to
+    an HDF5 file.
 
     Parameters
     ----------
@@ -50,43 +115,69 @@ def file_writer(filename, crystal_map, **kwargs):
         raise OSError(f"Cannot write to the already open file '{filename}'.")
 
     from orix import __version__
-
-    eulers = crystal_map._rotations.to_euler()
     file_dict = {
         "manufacturer": "orix",
         "version": __version__,
-        "crystal_map": {
-            "data": {
-                "z": crystal_map._z,
-                "y": crystal_map._y,
-                "x": crystal_map._x,
-                "phi1": eulers[:, 0],
-                "Phi": eulers[:, 1],
-                "phi2": eulers[:, 2],
-                "phase_id": crystal_map._phase_id,
-                "id": crystal_map._id,
-                "is_in_data": crystal_map.is_in_data,
-            },
-            "header": {
-                "grid_type": "square",
-                "nz": len(crystal_map._z) if hasattr(crystal_map._z, "__iter__") else 1,
-                "ny": len(crystal_map._y) if hasattr(crystal_map._y, "__iter__") else 1,
-                "nx": len(crystal_map._x) if hasattr(crystal_map._x, "__iter__") else 1,
-                "z_step": crystal_map.dz,
-                "y_step": crystal_map.dy,
-                "x_step": crystal_map.dx,
-                "rotations_per_point": crystal_map.rotations_per_point,
-                "scan_unit": crystal_map.scan_unit,
-            }
-        }
+        "crystal_map": crystalmap2dict(crystal_map),
     }
     dict2hdf5group(file_dict, f["/"], **kwargs)
 
-    # Header group with all other information
-#    header_group = scan_group.create_group("header")
-#    header = _get_phase_list_dict(crystal_map.phases)
-
     f.close()
+
+
+def crystalmap2dict(crystal_map, dictionary=None):
+    """Get a dictionary from a
+    :class:`~orix.crystal_map.crystal_map.CrystalMap` object with `data`
+    and `header` keys with values.
+
+    Parameters
+    ----------
+    crystal_map : CrystalMap
+        Crystal map.
+    dictionary : dict, optional
+        Dictionary to update with crystal map information. If None
+        (default), a new dictionary is created.
+
+    Returns
+    -------
+    dictionary : dict
+        Dictionary with crystal map information.
+    """
+    if dictionary is None:
+        dictionary = {}
+
+    # Get data cube coordinates in step size
+    z, y, x = [0 if i is None else i for i in crystal_map._coordinates.values()]
+    # Get euler angles phi1, Phi, phi2
+    eulers = crystal_map._rotations.to_euler()
+    dictionary.update({
+        "data": {
+            "z": z,
+            "y": y,
+            "x": x,
+            "phi1": eulers[:, 0],
+            "Phi": eulers[:, 1],
+            "phi2": eulers[:, 2],
+            "phase_id": crystal_map._phase_id,
+            "id": crystal_map._id,
+            "is_in_data": crystal_map.is_in_data,
+        },
+        "header": {
+            "grid_type": "square",
+            "nz": z.size if isinstance(z, np.ndarray) else 1,
+            "ny": y.size if isinstance(y, np.ndarray) else 1,
+            "nx": x.size if isinstance(x, np.ndarray) else 1,
+            "z_step": crystal_map.dz,
+            "y_step": crystal_map.dy,
+            "x_step": crystal_map.dx,
+            "rotations_per_point": crystal_map.rotations_per_point,
+            "scan_unit": crystal_map.scan_unit,
+        }
+    })
+    dictionary["data"].update(crystal_map.prop)
+    dictionary["header"].update(phaselist2dict(crystal_map.phases))
+
+    return dictionary
 
 
 def dict2hdf5group(dictionary, group, **kwargs):
@@ -120,7 +211,6 @@ def dict2hdf5group(dictionary, group, **kwargs):
                 dshape = np.shape(val)
             except TypeError:
                 warn(
-                    UserWarning,
                     "The hdf5 writer could not write the following information "
                     f"to the file '{key} : {val}'."
                 )
@@ -129,34 +219,135 @@ def dict2hdf5group(dictionary, group, **kwargs):
         group[key][()] = val
 
 
-def _get_phase_list_dict(phases, dictionary=None):
-    """Get a dictionary of phases to write to an HDF5 group.
+def phaselist2dict(phases, dictionary=None):
+    """Get a dictionary of phases.
 
     Parameters
     ----------
     phases : PhaseList
         Phases to write to file.
-    dictionary : dict
-        Dictionary to update with phase information. If None (default),
-        a new dictionary is created.
+    dictionary : dict, optional
+        Dictionary to update with information from multiple phases. If
+        None (default), a new dictionary is created.
 
     Returns
     -------
     dictionary : dict
-        Dictionary of phase information to write to the HDF5 group.
+        Dictionary with information from multiple phases.
+    """
+    if dictionary is None:
+        dictionary = {}
+    dictionary["phases"] = {str(i): phase2dict(p) for i, p in phases}
+    return dictionary
+
+
+def phase2dict(phase, dictionary=None):
+    """Get a dictionary of a phase.
+
+    Parameters
+    __________
+    phase : Phase
+        Phase to write to file.
+    dictionary : dict, optional
+        Dictionary to update with information from a single phase. If None
+        (default), a new dictionary is created.
+
+    Returns
+    -------
+    dictionary : dict
+        Dictionary with information from a single phase.
     """
     if dictionary is None:
         dictionary = {}
 
-    dictionary["phases"] = {}
-    for i, p in phases:
-        phase_dict = dictionary["phases"][i]
-        phase_dict["name"] = p.name
-        if hasattr(p.symmetry, "name"):
-            symmetry = p.symmetry.name
-        else:
-            symmetry = "None"
-        phase_dict["symmetry"] = symmetry
-        phase_dict["color"] = p.color
+    dictionary["name"] = phase.name
+    if hasattr(phase.symmetry, "name"):
+        symmetry = phase.symmetry.name
+    else:
+        symmetry = "None"
+    dictionary["symmetry"] = symmetry
+    dictionary["color"] = phase.color
+    dictionary["structure"] = structure2dict(phase.structure)
 
+    return dictionary
+
+
+def structure2dict(structure, dictionary=None):
+    """Get a dictionary of a phase's
+    :class:`diffpy.structure.Structure` content.
+
+    Only values necessary to initialize a structure object are returned.
+
+    Parameters
+    ----------
+    structure : diffpy.structure.Structure
+        Phase structure with a lattice and atoms.
+    dictionary : dict, optional
+        Dictionary to update with structure information. If None
+        (default), a new dictionary is created.
+
+    Returns
+    -------
+    dictionary : dict
+        Dictionary with structure information.
+    """
+    if dictionary is None:
+        dictionary = {}
+    dictionary["lattice"] = lattice2dict(structure.lattice)
+    atoms = structure.tolist()
+    dictionary["atoms"] = {str(i): atom2dict(atom) for i, atom in enumerate(atoms)}
+    return dictionary
+
+
+def lattice2dict(lattice, dictionary=None):
+    """Get a dictionary of a structure's
+    :class:`diffpy.structure.Structure.lattice` content.
+
+    Only values necessary to initialize a lattice object are returned.
+
+    Parameters
+    ----------
+    lattice : diffpy.structure.Structure.lattice
+        Structure lattice.
+    dictionary : dict, optional
+        Dictionary to update with structure lattice information. If None
+        (default), a new dictionary is created.
+
+    Returns
+    -------
+    dictionary : dict
+        Dictionary with structure lattice information.
+    """
+    if dictionary is None:
+        dictionary = {}
+    dictionary["abcABG"] = np.array(lattice.abcABG())
+    dictionary["baserot"] = lattice.baserot
+    return dictionary
+
+
+def atom2dict(atom, dictionary=None):
+    """Get a dictionary of one of a structure's
+    :class:`diffpy.structure.Structure.atoms` content.
+
+    Only values necessary to initialize an atom object are returned.
+
+    Parameters
+    ----------
+    atom : diffpy.structure.Structure.atom
+        Atom in a structure.
+    dictionary : dict, optional
+        Dictionary to update with structure atom information. If None
+        (default), a new dictionary is created.
+
+    Returns
+    -------
+    dictionary : dict
+        Dictionary with structure atoms information.
+    """
+    if dictionary is None:
+        dictionary = {}
+    dictionary.update(
+        {attribute: atom.__getattribute__(attribute) for attribute in
+         ["element", "label", "occupancy", "xyz", "U"]}
+    )
     return dictionary

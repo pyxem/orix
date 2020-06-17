@@ -24,8 +24,8 @@ import numpy as np
 
 from orix.quaternion.rotation import Rotation
 
-# MTEX has this format sorted out, check out their readers when fixing issues and
-# adapting to other versions of this file format in the future:
+# MTEX has this format sorted out, check out their readers when fixing
+# issues and adapting to other versions of this file format in the future:
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ang.m
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ACOM.m
 
@@ -38,7 +38,8 @@ writes = False
 
 
 def file_reader(filename):
-    """Return a :class:`orix.crystal_map.CrystalMap` object from EDAX
+    """Return a dictionary with items to initialize a
+    :class:`~orix.crystal_map.crystal_map.CrystalMap` object from EDAX
     TSL's .ang file format. The map in the input file is assumed to be 2D.
 
     Many vendors produce an .ang file. Supported vendors are:
@@ -87,6 +88,7 @@ def file_reader(filename):
         "prop": {},
         "phase_name": phase_names,
         "symmetry": symmetries,
+        "structure": structures,
     }
     for column, name in enumerate(column_names):
         if name in data_dict.keys():

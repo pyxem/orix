@@ -19,7 +19,7 @@
 import re
 
 from diffpy.structure import Lattice, Structure
-import h5py
+from h5py import File
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
@@ -33,8 +33,9 @@ writes = False
 
 
 def file_reader(filename, refined=False, **kwargs):
-    """Return a CrystalMap object from EMsoft's dictionary indexing dot
-    product files.
+    """Return a dictionary with items to initialize a
+    :class:`~orix.crystal_map.crystal_map.CrystalMap` object from EMsoft's
+    dictionary indexing dot product files.
 
     Parameters
     ----------
@@ -50,7 +51,7 @@ def file_reader(filename, refined=False, **kwargs):
     dict
     """
     mode = kwargs.pop("mode", "r")
-    f = h5py.File(filename, mode=mode, **kwargs)
+    f = File(filename, mode=mode, **kwargs)
 
     # Get groups for convenience
     ebsd_group = f["Scan 1/EBSD"]
@@ -65,6 +66,7 @@ def file_reader(filename, refined=False, **kwargs):
     map_size = ny * nx
 
     # Some of the data needed to create a CrystalMap object
+    phase_name, symmetry, structure = _get_phase(phase_group)
     data_dict = {
         # Get map coordinates ("Y Position" data set is not correct in EMsoft as of
         # 2020-04, see:
@@ -74,13 +76,10 @@ def file_reader(filename, refined=False, **kwargs):
         "y": np.sort(np.tile(np.arange(ny) * step_y, nx)),
         # Get phase IDs
         "phase_id": data_group["Phase"][:],
-        # Get phase name and crystal symmetry
-        "phase_name": re.search(
-            r"([A-z0-9]+)", phase_group["MaterialName"][:][0].decode()
-        ).group(1),
-        "symmetry": re.search(
-            r"\[([A-z0-9]+)\]", phase_group["Point Group"][:][0].decode()
-        ).group(1)
+        # Get phase name, crystal symmetry and structure (lattice)
+        "phase_name": phase_name,
+        "symmetry": symmetry,
+        "structure": structure,
     }
 
     # Get rotations
@@ -99,6 +98,8 @@ def file_reader(filename, refined=False, **kwargs):
     data_dict["prop"] = _get_properties(
         data_group=data_group, n_top_matches=n_top_matches, map_size=map_size,
     )
+
+    f.close()
 
     return data_dict
 

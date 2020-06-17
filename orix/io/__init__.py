@@ -25,6 +25,8 @@
 
 """
 
+# Use import_module to avoid circular imports since e.g. the crystal_map
+# package imports the _save() method from this file
 from importlib import import_module
 import os
 from warnings import warn
@@ -117,7 +119,7 @@ def load(filename, **kwargs):
     # Read dictionary with arguments to create an object from file
     data_dict = reader.file_reader(filename, **kwargs)
 
-    # Get class to return
+    # Get class to return. This setup avoids circular imports.
     class_to_use = getattr(import_module(reader.module), reader.format_type)
 
     return class_to_use(**data_dict)
@@ -141,14 +143,12 @@ def _save(filename, object2write, overwrite=None, **kwargs):
     """
     ext = os.path.splitext(filename)[1][1:]
 
-    format_type = type(object2write)
-
     writer = None
     for p in plugins:
         if (
                 ext.lower() in p.file_extensions
                 and p.writes
-                and p.format_type == format_type
+                and p.format_type == object2write.__class__.__name__  # E.g. CrystalMap
         ):
             writer = p
             break
@@ -199,7 +199,6 @@ def _overwrite_or_not(filename):
                 overwrite = False
         except:
             warn(
-                UserWarning,
                 "Your terminal does not support raw input, not overwriting. To "
                 "overwrite the file, use `overwrite=True`."
             )
