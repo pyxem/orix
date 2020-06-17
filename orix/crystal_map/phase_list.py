@@ -19,8 +19,8 @@
 from collections import OrderedDict
 import copy
 from itertools import islice
-from numbers import Number
 
+from diffpy.structure import Structure
 import matplotlib.colors as mcolors
 import numpy as np
 
@@ -33,8 +33,8 @@ for k, v in {**mcolors.BASE_COLORS, **mcolors.CSS4_COLORS}.items():
 ALL_COLORS.update(mcolors.XKCD_COLORS)
 
 # Point group alias mapping
-# Why is this needed? Well, e.g. in EDAX TSL OIM Analysis 7.2, point group 432 is
-# entered as 43...
+# Why is this needed? Well, e.g. in EDAX TSL OIM Analysis 7.2, point
+# group 432 is entered as 43...
 POINT_GROUP_ALIASES = {
     "432": "43",
 }
@@ -52,6 +52,8 @@ class Phase:
         RGB values of phase color, obtained from the color name.
     name : str
         Phase name.
+    structure : diffpy.structure.Structure
+        Unit cell with atoms and lattice.
     symmetry : orix.quaternion.symmetry.Symmetry
         Crystal symmetries of the phase.
 
@@ -59,40 +61,74 @@ class Phase:
     -------
     deepcopy()
         Return a deep copy using :py:func:`~copy.deepcopy` function.
-
     """
 
-    def __init__(self, name=None, symmetry=None, color=None):
+    def __init__(self, name=None, structure=None, symmetry=None, color=None):
         """
         Parameters
         ----------
         name : str, optional
-            Phase name. If ``None`` is passed (default), name is set to
-            ``None``.
+            Phase name. Overwrites the name in the `structure` object.
+        structure : diffpy.structure.Structure, optional
+            Unit cell with atoms and a lattice. If None is passed
+            (default), a default :class:`diffpy.structure.Structure`
+            object is created.
         symmetry : str or orix.quaternion.symmetry.Symmetry, optional
-            Point group of phase's crystal symmetry. If ``None`` is passed
-            (default), it set to ``None``.
+            Point group of phase's crystal symmetry. If None is passed
+            (default), it set to None.
         color : str, optional
-            Phase color. If ``None`` is passed (default), it is set to
+            Phase color. If None is passed (default), it is set to
             'tab:blue' (first among the default Matplotlib colors).
 
+        Examples
+        --------
+        >>> from diffpy.structure import Atom, Lattice, Structure
+        >>> from orix.crystal_map import Phase
+        >>> p = Phase(
+        ...     name="al",
+        ...     symmetry="m-3m",
+        ...     structure=Structure(
+        ...         atoms=[Atom("al", [0, 0, 0])],
+        ...         lattice=Lattice(0.405, 0.405, 0.405, 90, 90, 90)
+        ...     )
+        ... )
+        >>> p
+        <name: al. symmetry: m-3m. color: tab:blue>
+        >>> p.structure
+        [al   0.000000 0.000000 0.000000 1.0000]
+        >>> p.structure.lattice
+        Lattice(a=0.405, b=0.405, c=0.405, alpha=90, beta=90, gamma=90)
         """
-        self.name = name
+        self.structure = structure if structure is not None else Structure()
+        if name is not None:
+            self.name = name
         self.symmetry = symmetry
-        if color is None:
-            self.color = "tab:blue"
+        self.color = color if color is not None else "tab:blue"
+
+    @property
+    def structure(self):
+        """Phase unit cell."""
+        return self._structure
+
+    @structure.setter
+    def structure(self, value):
+        """Set phase structure."""
+        if isinstance(value, Structure):
+            if value.title == "" and hasattr(self, "_structure"):
+                value.title = self.name
+            self._structure = value
         else:
-            self.color = color
+            raise ValueError(f"{value} must be a diffpy.structure.Structure object.")
 
     @property
     def name(self):
         """Phase name."""
-        return self._name
+        return self.structure.title
 
     @name.setter
     def name(self, value):
         """Set phase name as string."""
-        self._name = str(value)
+        self.structure.title = str(value)
 
     @property
     def color(self):
@@ -103,7 +139,6 @@ class Phase:
     def color(self, value):
         """Set phase color from something considered a valid color by
         :func:`matplotlib.colors.is_color_like`.
-
         """
         value_hex = mcolors.to_hex(value)
         for name, color_hex in ALL_COLORS.items():
@@ -124,7 +159,7 @@ class Phase:
     @symmetry.setter
     def symmetry(self, value):
         """Set crystal symmetry of phase."""
-        if isinstance(value, Number):
+        if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):
             for correct, alias in POINT_GROUP_ALIASES.items():
@@ -169,9 +204,12 @@ class PhaseList:
     names : list of str
         List of phase names.
     phase_ids : list of int
-        List of unique phase indices in a crystallographic map as imported.
+        List of unique phase indices in a crystallographic map as
+        imported.
     size : int
         Number of phases in list.
+    structures : list of diffpy.structure.Structure
+        List of unit cells with atoms and the lattice of phase.
     symmetries : list of orix.quaternion.symmetry.Symmetry
         List of phase crystal symmetries.
 
@@ -185,21 +223,26 @@ class PhaseList:
         Get phase ID from phase name.
     sort_by_id()
         Sort list according to phase ID.
-
     """
 
     def __init__(
-        self, phases=None, names=None, symmetries=None, colors=None, phase_ids=None
+        self,
+        phases=None,
+        names=None,
+        symmetries=None,
+        colors=None,
+        phase_ids=None,
+        structures=None,
     ):
         """
         Parameters
         ----------
         phases : orix.crystal_map.Phase, a list of orix.crystal_map.Phase\
                 or a dictionary of orix.crystal_map.Phase, optional
-            A list or dict of phases or a single phase. The other arguments
-            are ignored if this is passed.
+            A list or dict of phases or a single phase. The other
+            arguments are ignored if this is passed.
         names : str or list of str, optional
-            Phase names.
+            Phase names. Overwrites the names in the `structure` objects.
         symmetries : str, int, orix.quaternion.symmetry.Symmetry or list\
                 of str, int or orix.quaternion.symmetry.Symmetry, optional
             Point group symmetries.
@@ -207,7 +250,37 @@ class PhaseList:
             Phase colors.
         phase_ids : int, list of int or numpy.ndarray of int, optional
             Phase IDs.
+        structures : diffpy.structure.Structure or list of
+                diffpy.structure.Structure, optional
+            Unit cells with atoms and a lattice of each phase. If None
+            is passed (default), a default
+            :class:`diffpy.structure.Structure` object is created for each
+            phase.
 
+        Examples
+        --------
+        >>> from diffpy.structure import Atom, Lattice, Structure
+        >>> from orix.crystal_map import Phase, PhaseList
+        >>> pl = PhaseList(
+        ...     names=["al", "cu"],
+        ...     symmetries=["m-3m"] * 2,
+        ...     structures=[
+        ...         Structure(
+        ...             atoms=[Atom("al", [0] * 3)],
+        ...             lattice=Lattice(0.405, 0.405, 0.405, 90, 90, 90)
+        ...         ),
+        ...         Structure(
+        ...             atoms=[Atom("cu", [0] * 3)],
+        ...             lattice=Lattice(0.361, 0.361, 0.361, 90, 90, 90)
+        ...         ),
+        ...     ]
+        ... )
+        >>> pl
+        Id  Name  Symmetry       Color
+         0    al      m-3m    tab:blue
+         1    cu      m-3m  tab:orange
+        >>> pl["al"].structure
+        [al   0.000000 0.000000 0.000000 1.0000]
         """
         d = {}
         if isinstance(phases, list):
@@ -229,7 +302,8 @@ class PhaseList:
                 phase_ids = 0
             d = {phase_ids: phases}
         else:
-            # Ensure possible single strings have iterables of length 1
+            # Ensure possible single strings or single objects have
+            # iterables of length 1
             if isinstance(names, str):
                 names = list((names,))
             if isinstance(symmetries, str) or isinstance(symmetries, Symmetry):
@@ -237,14 +311,17 @@ class PhaseList:
             if isinstance(colors, str) or isinstance(colors, tuple):
                 colors = list((colors,))
             if isinstance(phase_ids, int):
-                phase_ids = [
-                    phase_ids,
-                ]
+                phase_ids = [phase_ids]
+            if isinstance(structures, Structure):
+                structures = [structures]
 
             # Get the maximum number of entries in the input lists (also
             # handling the case where some lists are None)
             max_entries = max(
-                [len(i) if i is not None else 0 for i in [names, symmetries, phase_ids]]
+                [
+                    len(i) if i is not None else 0
+                    for i in [names, symmetries, phase_ids, structures]
+                ]
             )
 
             if phase_ids is None:
@@ -288,7 +365,15 @@ class PhaseList:
                     phase_id = max(phase_ids) + phase_id_iter + 1
                     phase_id_iter += 1
 
-                d[phase_id] = Phase(name=name, symmetry=symmetry, color=color)
+                # Get a structure or None
+                try:
+                    structure = structures[i]
+                except (IndexError, TypeError):
+                    structure = None
+
+                d[phase_id] = Phase(
+                    name=name, symmetry=symmetry, color=color, structure=structure
+                )
 
                 # To ensure color aliases are added to `used_colors`
                 used_colors.append(d[phase_id].color)
@@ -325,6 +410,11 @@ class PhaseList:
     def phase_ids(self):
         """Unique phase IDs in the list of phases."""
         return list(self._dict.keys())
+
+    @property
+    def structures(self):
+        """List of phase structures."""
+        return [phase.structure for _, phase in self]
 
     def __getitem__(self, key):
         """Return a PhaseList or a Phase object, depending on the number
@@ -367,7 +457,6 @@ class PhaseList:
         Id  Name  Symmetry  Color
         0   a     1         tab:blue
         1   b     3         tab:orange
-
         """
         # Make key iterable if it isn't already
         if (
@@ -386,7 +475,8 @@ class PhaseList:
             and isinstance(key_iter[0], str)
             or (isinstance(key_iter, list) and isinstance(key_iter[0], str))
         ):
-            for key_name in list(set(key_iter)):  # Use set to remove duplicates
+            # Use set to remove duplicates
+            for key_name in list(set(key_iter)):
                 for i, phase in self._dict.items():
                     if key_name == phase.name:
                         d[i] = phase
@@ -405,7 +495,8 @@ class PhaseList:
             ids_in_slice = [i for i in sliced_arr if i in self.phase_ids]
             d = {i: self._dict[i] for i in ids_in_slice}
 
-        # Raise KeyError if key is missing (not in the container), per Python docs:
+        # Raise KeyError if key is missing (not in the container), per
+        # Python docs:
         # https://docs.python.org/3/reference/datamodel.html#object.__getitem__
         if d == {}:
             raise KeyError(f"{key} was not found in the phase list.")
@@ -420,7 +511,7 @@ class PhaseList:
             return PhaseList(d)
 
     def __setitem__(self, key, value):
-        """Add a phase to the list with a name and symmetry."""
+        """Add a phase to the list with a name, symmetry and structure."""
         if key not in self.names:
             # Make sure the new phase gets a new color
             color_new = None
@@ -446,7 +537,6 @@ class PhaseList:
         ----------
         key : int or str
             ID or name of a phase in the phase list.
-
         """
         if isinstance(key, int):
             self._dict.pop(key)
@@ -465,7 +555,6 @@ class PhaseList:
 
     def __iter__(self):
         """Return a tuple with phase ID and Phase object, in that order.
-
         """
         for phase_id, phase in self._dict.items():
             yield phase_id, phase
@@ -519,9 +608,8 @@ class PhaseList:
     def add_not_indexed(self):
         """Add a dummy phase to assign to not indexed data points.
 
-        The phase, named "not_indexed", has a "symmetry" equal to None, and
-        a white color when plotted.
-
+        The phase, named "not_indexed", has a "symmetry" equal to None,
+        and a white color when plotted.
         """
         self._dict[-1] = Phase(name="not_indexed", symmetry=None, color="white")
         self.sort_by_id()
@@ -537,7 +625,6 @@ class PhaseList:
         ----------
         name : str
             Phase name.
-
         """
         for phase_id, phase in self:
             if name == phase.name:

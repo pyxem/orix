@@ -31,7 +31,7 @@ from orix.io.emsoft_h5ebsd import load_emsoft
 from orix.io.ang import load_ang
 
 
-def loadang(file_string: str):
+def loadang(file_string):
     """Load ``.ang`` files.
 
     Parameters
@@ -53,7 +53,7 @@ def loadang(file_string: str):
     return rotation
 
 
-def loadctf(file_string: str):
+def loadctf(file_string):
     """Load ``.ang`` files.
 
     Parameters

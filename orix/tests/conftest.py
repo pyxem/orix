@@ -450,6 +450,12 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
     for name, data in [
         ("Point Group", "Cubic (Oh) [m3m]"),
         ("MaterialName", "austenite/austenite"),
+        ("Lattice Constant a", "3.595"),
+        ("Lattice Constant b", "3.595"),
+        ("Lattice Constant c", "3.595"),
+        ("Lattice Constant alpha", "90.000"),
+        ("Lattice Constant beta", "90.000"),
+        ("Lattice Constant gamma", "90.000"),
     ]:
         phase_group.create_dataset(name, data=np.array([data], dtype=np.dtype("S")))
 

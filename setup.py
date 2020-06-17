@@ -25,11 +25,12 @@ setup(
     packages=find_packages(exclude=["orix/tests"]),
     # fmt: off
     install_requires=[
+        "diffpy.structure >= 3",
+        "h5py",
+        "matplotlib",
         "numpy",
         "scipy",
-        "matplotlib",
         "tqdm",
-        "h5py",
     ],
     # fmt: on
     package_data={"": ["LICENSE", "readme.rst"], "orix": ["*.py"],},

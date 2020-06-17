@@ -326,12 +326,12 @@ class Rotation(Quaternion):
         euler : array-like
             Euler angles in the Bunge convention.
         convention : str
-            Only 'bunge' is currently suppported for new data
+            Only 'bunge' is currently supported for new data
         direction : str
             'lab2crystal' or 'crystal2lab'
         """
-        if convention not in  ["bunge","Krakow_Hielscher"]:
-            raise ValuerError("The chosen convention is not one of the allowed options")
+        if convention not in ["bunge", "Krakow_Hielscher"]:
+            raise ValueError("The chosen convention is not one of the allowed options")
         if direction not in ["lab2crystal", "crystal2lab"]:
             raise ValueError("The chosen direction is not one of the allowed options")
 
