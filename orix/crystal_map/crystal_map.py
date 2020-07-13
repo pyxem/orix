@@ -122,8 +122,9 @@ class CrystalMap:
             map is assumed to be 2D or 1D, and it is set to None.
         phase_list : PhaseList, optional
             A list of phases in the data with their with names,
-            symmetries and structures. The order of the phases in the
-            list, and not the IDs, is used to link the phases to the input
+            symmetries and structures. The order in which the phases
+            appear in the list is important, as it is this, and not the
+            phases' IDs, that is used to link the phases to the input
             `phase_id` if the IDs aren't exactly the same as in
             `phase_id`. If None (default), a phase list with as many
             phases as there are unique phase IDs in `phase_id` is created.
@@ -210,7 +211,7 @@ class CrystalMap:
             phase_ids = phase_list.ids
             n_different = len(phase_ids) - len(unique_phase_ids)
             if n_different > 0:
-                # Remove superfluous phase IDs
+                # Remove superfluous phases
                 for i in phase_list.ids[::-1][:n_different]:
                     del phase_list[i]
             elif n_different < 0:
@@ -223,6 +224,9 @@ class CrystalMap:
                     structures=phase_list.structures,
                     ids=unique_phase_ids,
                 )
+            # Ensure phase list IDs correspond to IDs in phase_id array
+            new_ids = list(unique_phase_ids.astype(int))
+            phase_list._dict = dict(zip(new_ids, phase_list._dict.values()))
             self.phases = phase_list
 
         # Set whether measurements are indexed

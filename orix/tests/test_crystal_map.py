@@ -147,7 +147,7 @@ class TestCrystalMapInit:
         [
             ((1, 4, 3), (0, 1.5, 1.5), 1, [0, 1, 2]),
             ((1, 4, 3), (0, 1.5, 1.5), 1, [0, 1, 2, 3]),
-            ((1, 4, 3), (0, 1.5, 1.5), 1, [0, 1]),
+            ((1, 4, 3), (0, 1.5, 1.5), 1, [2, 42]),
         ],
         indirect=["crystal_map_input"],
     )
@@ -162,6 +162,9 @@ class TestCrystalMapInit:
         if n_different < 0:
             symmetries += [None] * abs(n_different)
         assert [cm.phases.symmetries[i] == symmetries[i] for i in range(n_phase_ids)]
+
+        unique_phase_ids = list(np.unique(crystal_map_input["phase_id"]).astype(int))
+        assert cm.phases.ids == unique_phase_ids
 
     def test_init_with_single_symmetry(self, crystal_map_input):
         symmetry = O
