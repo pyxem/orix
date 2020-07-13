@@ -22,7 +22,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pytest
 
-from orix import plot  # Needed for projection="plot_map"? Might be imported via below
 from orix.plot import CrystalMapPlot
 from orix.plot.crystal_map_plot import convert_unit
 from orix.crystal_map import CrystalMap
@@ -41,8 +40,8 @@ class TestCrystalMapPlot:
     @pytest.mark.parametrize(
         "crystal_map_input, expected_data_shape",
         [
-            (((1, 10, 20), (0, 1.5, 1.5), 1), (10, 20, 3)),
-            (((1, 4, 3), (0, 0.1, 0.1), 1), (4, 3, 3)),
+            (((1, 10, 20), (0, 1.5, 1.5), 1, [0]), (10, 20, 3)),
+            (((1, 4, 3), (0, 0.1, 0.1), 1, [0]), (4, 3, 3)),
         ],
         indirect=["crystal_map_input"],
     )
@@ -51,7 +50,7 @@ class TestCrystalMapPlot:
         cm = CrystalMap(**crystal_map_input)
 
         assert np.unique(cm.phase_id) == np.array([0])  # Test code assumption
-        assert phase_list.phase_ids == [0, 1, 2]
+        assert phase_list.ids == [0, 1, 2]
         cm.phases = phase_list
         cm[0, 0].phase_id = 0
         cm[1, 1].phase_id = 2
@@ -113,7 +112,7 @@ class TestCrystalMapPlot:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((2, 9, 3), (1, 1.5, 1.5), 1), ((2, 10, 5), (1, 0.1, 0.1), 1)],
+        [((2, 9, 3), (1, 1.5, 1.5), 1, [0]), ((2, 10, 5), (1, 0.1, 0.1), 1, [0])],
         indirect=["crystal_map_input"],
     )
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
@@ -122,7 +121,7 @@ class TestCrystalMapPlot:
 
         # Test code assumptions
         assert np.unique(cm.phase_id) == np.array([0])
-        assert phase_list.phase_ids == [0, 1, 2]
+        assert phase_list.ids == [0, 1, 2]
         assert cm.ndim == 3
 
         cm.phases = phase_list
@@ -141,7 +140,7 @@ class TestCrystalMapPlot:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((2, 9, 6), (1, 1.5, 1.5), 2), ((2, 10, 5), (1, 0.1, 0.1), 1)],
+        [((2, 9, 6), (1, 1.5, 1.5), 2, [0]), ((2, 10, 5), (1, 0.1, 0.1), 1, [0])],
         indirect=["crystal_map_input"],
     )
     @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
@@ -187,9 +186,9 @@ class TestCrystalMapPlotUtilities:
     @pytest.mark.parametrize(
         "crystal_map_input, idx_to_change, axes, depth, expected_plot_shape",
         [
-            (((2, 10, 20), (1, 1.5, 1.5), 1), (1, 5, 4), (1, 2), 1, (10, 20)),
-            (((4, 4, 3), (0.1, 0.1, 0.1), 1), (0, 0, 2), (0, 1), 2, (4, 4)),
-            (((10, 10, 10), (1, 1, 1), 2), (-1, 8, -1), (0, 2), 8, (10, 10)),
+            (((2, 10, 20), (1, 1.5, 1.5), 1, [0]), (1, 5, 4), (1, 2), 1, (10, 20)),
+            (((4, 4, 3), (0.1, 0.1, 0.1), 1, [0]), (0, 0, 2), (0, 1), 2, (4, 4)),
+            (((10, 10, 10), (1, 1, 1), 2, [0]), (-1, 8, -1), (0, 2), 8, (10, 10)),
         ],
         indirect=["crystal_map_input"],
     )
@@ -464,9 +463,9 @@ class TestScalebar:
     @pytest.mark.parametrize(
         "crystal_map_input, scalebar_properties, artist_attribute",
         [
-            (((1, 10, 30), (0, 1, 1), 1), {}, {}),  # Default
+            (((1, 10, 30), (0, 1, 1), 1, [0]), {}, {}),  # Default
             (
-                ((1, 10, 30), (0, 1, 1), 1),
+                ((1, 10, 30), (0, 1, 1), 1, [0]),
                 {
                     "loc": 4,
                     "frameon": False,
@@ -521,12 +520,12 @@ class TestScalebar:
             "expected_width_unit, expected_unit"
         ),
         [
-            (((10, 20, 1), (1, 1, 0), 1), "px", {0: "z", 1: "y"}, 2, 2, "px"),
-            (((1, 10, 30), (0, 1, 1), 1), "px", {0: "y", 1: "x"}, 2, 2, "px"),
-            (((1, 10, 40), (0, 1, 1), 1), "px", {0: "y", 1: "x"}, 5, 5, "px"),
-            (((20, 1, 10), (1, 1, 1), 1), "um", {0: "z", 1: "x"}, 1, 1, "um"),
+            (((10, 20, 1), (1, 1, 0), 1, [0]), "px", {0: "z", 1: "y"}, 2, 2, "px"),
+            (((1, 10, 30), (0, 1, 1), 1, [0]), "px", {0: "y", 1: "x"}, 2, 2, "px"),
+            (((1, 10, 40), (0, 1, 1), 1, [0]), "px", {0: "y", 1: "x"}, 5, 5, "px"),
+            (((20, 1, 10), (1, 1, 1), 1, [0]), "um", {0: "z", 1: "x"}, 1, 1, "um"),
             (
-                ((1, 100, 117), (0, 1.5, 1.5), 1),
+                ((1, 100, 117), (0, 1.5, 1.5), 1, [0]),
                 "nm",
                 {0: "y", 1: "x"},
                 13.33,
@@ -573,8 +572,8 @@ class TestScalebar:
     @pytest.mark.parametrize(
         "crystal_map_input, warns",
         [
-            (((1, 10, 20), (0, 1.5, 1.5), 1), False),
-            (((1, 4, 3), (0, 0.1, 0.1), 1), True),
+            (((1, 10, 20), (0, 1.5, 1.5), 1, [0]), False),
+            (((1, 4, 3), (0, 0.1, 0.1), 1, [0]), True),
         ],
         indirect=["crystal_map_input"],
     )

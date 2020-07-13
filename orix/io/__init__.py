@@ -25,17 +25,15 @@
 
 """
 
-# Use import_module to avoid circular imports since e.g. the crystal_map
-# package imports the _save() method from this file
-from importlib import import_module
 import os
 from warnings import warn
 
+from h5py import File, Group, is_hdf5
 import numpy as np
 
-from orix.io.plugins import plugins
+from orix.io.plugins import plugin_list
 
-extensions = [plugin.file_extensions for plugin in plugins if plugin.writes]
+extensions = [plugin.file_extensions for plugin in plugin_list if plugin.writes]
 
 
 def loadang(file_string):
@@ -105,27 +103,81 @@ def load(filename, **kwargs):
     # Find matching reader for file extension
     extension = os.path.splitext(filename)[1][1:]
     readers = []
-    for plugin in plugins:
+    for plugin in plugin_list:
         if extension.lower() in plugin.file_extensions:
             readers.append(plugin)
-    if len(readers) == 0:
+
+    n_matching_readers = len(readers)
+    if n_matching_readers == 0:
         raise IOError(
             f"Could not read '{filename}'. If the file format is supported, please "
             "report this error."
         )
+    elif n_matching_readers > 1 and is_hdf5(filename):
+        reader = _plugin_from_footprints(filename, readers)
     else:
         reader = readers[0]
 
-    # Read dictionary with arguments to create an object from file
-    data_dict = reader.file_reader(filename, **kwargs)
-
-    # Get class to return. This setup avoids circular imports.
-    class_to_use = getattr(import_module(reader.module), reader.format_type)
-
-    return class_to_use(**data_dict)
+    return reader.file_reader(filename, **kwargs)
 
 
-def _save(filename, object2write, overwrite=None, **kwargs):
+def _plugin_from_footprints(filename, plugins):
+    """Get correct HDF5 plugin from a list of potential plugins based on
+    their unique footprints.
+
+    The unique footprint is a list of strings that can take on either of
+    two formats:
+        * group/dataset names separated by "/", indicating nested
+          groups/datasets
+        * single group/dataset name indicating that the groups/datasets
+          are in the top group
+
+    Parameters
+    ----------
+    filename : str
+        Input file name.
+    plugins : list
+        List of potential plugins.
+
+    Returns
+    -------
+    plugin
+        One of the potential plugins, or None if no footprint was found.
+    """
+
+    def _hdfgroups2dict(group):
+        d = {}
+        for key, val in group.items():
+            key = key.lstrip().lower()
+            if isinstance(val, Group):
+                d[key] = _hdfgroups2dict(val)
+            else:
+                d[key] = 1
+        return d
+
+    def _exists(obj, chain):
+        key = chain.pop(0)
+        if key in obj:
+            return _exists(obj[key], chain) if chain else obj[key]
+
+    with File(filename, mode="r") as f:
+        d = _hdfgroups2dict(f["/"])
+        plugin = None
+        plugins_with_footprints = [p for p in plugins if hasattr(p, "footprint")]
+        for p in plugins_with_footprints:
+            n_matches = 0
+            n_desired_matches = len(p.footprint)
+            for fp in p.footprint:
+                fp = fp.lower().split("/")
+                if _exists(d, fp) is not None:
+                    n_matches += 1
+            if n_matches == n_desired_matches:
+                plugin = p
+
+    return plugin
+
+
+def save(filename, object2write, overwrite=None, **kwargs):
     """Write data to a supported file format.
 
     Parameters
@@ -144,11 +196,11 @@ def _save(filename, object2write, overwrite=None, **kwargs):
     ext = os.path.splitext(filename)[1][1:]
 
     writer = None
-    for p in plugins:
+    for p in plugin_list:
         if (
-                ext.lower() in p.file_extensions
-                and p.writes
-                and p.format_type == object2write.__class__.__name__  # E.g. CrystalMap
+            ext.lower() in p.file_extensions
+            and p.writes
+            and isinstance(object2write, p.writes_this)
         ):
             writer = p
             break
@@ -177,6 +229,8 @@ def _overwrite_or_not(filename):
     """If the file exists, ask the user for overwriting and return True or
     False, else return True.
 
+    This function is adapted from HyperSpy.
+
     Parameters
     ----------
     filename : str
@@ -192,14 +246,14 @@ def _overwrite_or_not(filename):
         message = "Overwrite '%s' (y/n)?\n" % filename
         try:
             answer = input(message).lower()
-            while (answer != 'y') and (answer != 'n'):
-                print('Please answer y or n.')
+            while (answer != "y") and (answer != "n"):
+                print("Please answer y or n.")
                 answer = input(message).lower()
             if answer == "n":
                 overwrite = False
-        except:
+        except OSError:
             warn(
-                "Your terminal does not support raw input, not overwriting. To "
+                "Not overwriting, since your terminal does not support raw input. To "
                 "overwrite the file, use `overwrite=True`."
             )
             overwrite = False

@@ -18,7 +18,7 @@
 
 from orix.io.plugins import ang, emsoft_h5ebsd, orix_hdf5
 
-plugins = [
+plugin_list = [
     ang,
     emsoft_h5ebsd,
     orix_hdf5,

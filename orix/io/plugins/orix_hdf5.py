@@ -16,17 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 from warnings import warn
 
+from diffpy.structure import Atom, Lattice, Structure
 from h5py import File, Group
 import numpy as np
+
+from orix.crystal_map import CrystalMap, Phase, PhaseList
+from orix.quaternion.rotation import Rotation
 
 # Plugin description
 format_name = "orix_hdf5"
 file_extensions = ["h5", "hdf5"]
-module = "orix.crystal_map"
-format_type = "CrystalMap"
 writes = True
+writes_this = CrystalMap
+footprint = ["crystal_map"]  # Unique HDF5 footprint
+# TODO: Extend reader/writer to Phase and PhaseList objects
 
 
 def file_reader(filename, **kwargs):
@@ -44,11 +50,12 @@ def file_reader(filename, **kwargs):
     Returns
     -------
     dict
+        Dictionary with items to initialize a CrystalMap.
     """
     mode = kwargs.pop("mode", "r")
-    f = File(filename, mode=mode, **kwargs)
-
-    return
+    with File(filename, mode=mode, **kwargs) as f:
+        file_dict = hdf5group2dict(f["/"], recursive=True)
+    return dict2crystalmap(file_dict["crystal_map"])
 
 
 def hdf5group2dict(group, dictionary=None, recursive=False):
@@ -78,9 +85,7 @@ def hdf5group2dict(group, dictionary=None, recursive=False):
             if recursive:
                 dictionary[key] = {}
                 hdf5group2dict(
-                    group=group[key],
-                    dictionary=dictionary[key],
-                    recursive=recursive,
+                    group=group[key], dictionary=dictionary[key], recursive=recursive,
                 )
             else:
                 dictionary[key] = val
@@ -93,6 +98,149 @@ def hdf5group2dict(group, dictionary=None, recursive=False):
                 val = val.decode("latin-1")
             dictionary[key] = val
     return dictionary
+
+
+def dict2crystalmap(dictionary):
+    """Get a crystal map from necessary items in a dictionary.
+
+    Parameters
+    ----------
+    dictionary : dict
+        Dictionary with crystal map information.
+
+    Returns
+    -------
+    CrystalMap
+    """
+    dictionary = copy.deepcopy(dictionary)
+
+    data = dictionary["data"]
+    header = dictionary["header"]
+
+    # New dictionary with CrystalMap initialization arguments as keys
+    crystal_map_dict = {
+        # Use dstack and squeeze to allow more rotations per data point
+        "rotations": Rotation.from_euler(
+            np.dstack((data.pop("phi1"), data.pop("Phi"), data.pop("phi2"))).squeeze(),
+        ),
+        "scan_unit": header["scan_unit"],
+        "phase_list": dict2phaselist(header["phases"]),
+        "phase_id": data.pop("phase_id"),
+        "is_in_data": data.pop("is_in_data"),
+    }
+    # Add standard items by updating the new dictionary
+    for direction in ["z", "y", "x"]:
+        this_direction = data.pop(direction)
+        if hasattr(this_direction, "__iter__") is False:
+            this_direction = None
+        crystal_map_dict[direction] = this_direction
+    _ = [data.pop(i) for i in ["id"]]
+    # What's left should be properties like quality metrics etc.
+    crystal_map_dict.update({"prop": data})
+
+    return CrystalMap(**crystal_map_dict)
+
+
+def dict2phaselist(dictionary):
+    """Get a :class:`~orix.crystal_map.phase_list.PhaseList` object from a
+    dictionary.
+
+    Parameters
+    ----------
+    dictionary : dict
+        Dictionary with phase list information.
+
+    Returns
+    -------
+    PhaseList
+    """
+    dictionary = copy.deepcopy(dictionary)
+    return PhaseList(phases={int(k): dict2phase(v) for k, v in dictionary.items()})
+
+
+def dict2phase(dictionary):
+    """Get a :class:`~orix.crystal_map.phase_list.Phase` object from a
+    dictionary.
+
+    Parameters
+    ----------
+    dictionary : dict
+        Dictionary with phase information.
+
+    Returns
+    -------
+    Phase
+    """
+    dictionary = copy.deepcopy(dictionary)
+    structure = dict2structure(dictionary["structure"])
+    structure.title = dictionary["name"]
+    symmetry = dictionary["symmetry"]
+    if symmetry == "None":
+        symmetry = None
+    return Phase(
+        name=dictionary["name"],
+        color=dictionary["color"],
+        symmetry=symmetry,
+        structure=structure,
+    )
+
+
+def dict2structure(dictionary):
+    """Get a :class:`diffpy.structure.Structure` object from a dictionary.
+
+    Parameters
+    ----------
+    dictionary : dict
+        Dictionary with structure information.
+
+    Returns
+    -------
+    Structure
+    """
+    dictionary = copy.deepcopy(dictionary)
+    return Structure(
+        lattice=dict2lattice(dictionary["lattice"]),
+        atoms=[dict2atom(atom) for atom in dictionary["atoms"].values()],
+    )
+
+
+def dict2lattice(dictionary):
+    """Get a :class:`diffpy.structure.Lattice` object from a dictionary.
+
+    Parameters
+    ----------
+    dictionary : dict
+        Dictionary with lattice information.
+
+    Returns
+    -------
+    Lattice
+    """
+    dictionary = copy.deepcopy(dictionary)
+    lattice_dict = {
+        k: v
+        for k, v in zip(["a", "b", "c", "alpha", "beta", "gamma"], dictionary["abcABG"])
+    }
+    lattice_dict["baserot"] = dictionary["baserot"]
+    return Lattice(**lattice_dict)
+
+
+def dict2atom(dictionary):
+    """Get a :class:`diffpy.structure.Atom.atom` object from a dictionary.
+
+    Parameters
+    ----------
+    dictionary : dict
+        Dictionary with atom information.
+
+    Returns
+    -------
+    Atom
+    """
+    dictionary = copy.deepcopy(dictionary)
+    atom_dict = {"atype": dictionary.pop("element")}
+    atom_dict.update(dictionary)
+    return Atom(**atom_dict)
 
 
 def file_writer(filename, crystal_map, **kwargs):
@@ -115,6 +263,7 @@ def file_writer(filename, crystal_map, **kwargs):
         raise OSError(f"Cannot write to the already open file '{filename}'.")
 
     from orix import __version__
+
     file_dict = {
         "manufacturer": "orix",
         "version": __version__,
@@ -150,32 +299,34 @@ def crystalmap2dict(crystal_map, dictionary=None):
     z, y, x = [0 if i is None else i for i in crystal_map._coordinates.values()]
     # Get euler angles phi1, Phi, phi2
     eulers = crystal_map._rotations.to_euler()
-    dictionary.update({
-        "data": {
-            "z": z,
-            "y": y,
-            "x": x,
-            "phi1": eulers[:, 0],
-            "Phi": eulers[:, 1],
-            "phi2": eulers[:, 2],
-            "phase_id": crystal_map._phase_id,
-            "id": crystal_map._id,
-            "is_in_data": crystal_map.is_in_data,
-        },
-        "header": {
-            "grid_type": "square",
-            "nz": z.size if isinstance(z, np.ndarray) else 1,
-            "ny": y.size if isinstance(y, np.ndarray) else 1,
-            "nx": x.size if isinstance(x, np.ndarray) else 1,
-            "z_step": crystal_map.dz,
-            "y_step": crystal_map.dy,
-            "x_step": crystal_map.dx,
-            "rotations_per_point": crystal_map.rotations_per_point,
-            "scan_unit": crystal_map.scan_unit,
+    dictionary.update(
+        {
+            "data": {
+                "z": z,
+                "y": y,
+                "x": x,
+                "phi1": eulers[..., 0],
+                "Phi": eulers[..., 1],
+                "phi2": eulers[..., 2],
+                "phase_id": crystal_map._phase_id,
+                "id": crystal_map._id,
+                "is_in_data": crystal_map.is_in_data,
+            },
+            "header": {
+                "grid_type": "square",
+                "nz": z.size if isinstance(z, np.ndarray) else 1,
+                "ny": y.size if isinstance(y, np.ndarray) else 1,
+                "nx": x.size if isinstance(x, np.ndarray) else 1,
+                "z_step": crystal_map.dz,
+                "y_step": crystal_map.dy,
+                "x_step": crystal_map.dx,
+                "rotations_per_point": crystal_map.rotations_per_point,
+                "scan_unit": crystal_map.scan_unit,
+            },
         }
-    })
+    )
     dictionary["data"].update(crystal_map.prop)
-    dictionary["header"].update(phaselist2dict(crystal_map.phases))
+    dictionary["header"].update({"phases": phaselist2dict(crystal_map.phases)})
 
     return dictionary
 
@@ -211,8 +362,8 @@ def dict2hdf5group(dictionary, group, **kwargs):
                 dshape = np.shape(val)
             except TypeError:
                 warn(
-                    "The hdf5 writer could not write the following information "
-                    f"to the file '{key} : {val}'."
+                    "The orix HDF5 writer could not write the following information to "
+                    f"the file '{key} : {val}'."
                 )
                 break
         group.create_dataset(key, shape=dshape, dtype=ddtype, **kwargs)
@@ -237,7 +388,7 @@ def phaselist2dict(phases, dictionary=None):
     """
     if dictionary is None:
         dictionary = {}
-    dictionary["phases"] = {str(i): phase2dict(p) for i, p in phases}
+    dictionary.update({str(i): phase2dict(p) for i, p in phases})
     return dictionary
 
 
@@ -347,7 +498,9 @@ def atom2dict(atom, dictionary=None):
     if dictionary is None:
         dictionary = {}
     dictionary.update(
-        {attribute: atom.__getattribute__(attribute) for attribute in
-         ["element", "label", "occupancy", "xyz", "U"]}
+        {
+            attribute: atom.__getattribute__(attribute)
+            for attribute in ["element", "label", "occupancy", "xyz", "U"]
+        }
     )
     return dictionary

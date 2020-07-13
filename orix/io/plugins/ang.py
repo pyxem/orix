@@ -22,6 +22,7 @@ import warnings
 from diffpy.structure import Lattice, Structure
 import numpy as np
 
+from orix.crystal_map import CrystalMap, PhaseList
 from orix.quaternion.rotation import Rotation
 
 # MTEX has this format sorted out, check out their readers when fixing
@@ -32,9 +33,8 @@ from orix.quaternion.rotation import Rotation
 # Plugin description
 format_name = "ang"
 file_extensions = ["ang"]
-module = "orix.crystal_map"
-format_type = "CrystalMap"
 writes = False
+writes_this = CrystalMap
 
 
 def file_reader(filename):
@@ -86,9 +86,6 @@ def file_reader(filename):
         "y": None,
         "phase_id": None,
         "prop": {},
-        "phase_name": phase_names,
-        "symmetry": symmetries,
-        "structure": structures,
     }
     for column, name in enumerate(column_names):
         if name in data_dict.keys():
@@ -96,21 +93,35 @@ def file_reader(filename):
         else:
             data_dict["prop"][name] = file_data[:, column]
 
+    # Add phase list to dictionary
+    unique_phase_ids = np.unique(data_dict["phase_id"]).astype(int)
+    data_dict["phase_list"] = PhaseList(
+        names=phase_names,
+        symmetries=symmetries,
+        structures=structures,
+        ids=unique_phase_ids,
+    )
+
     # Set which data points are not indexed
     if vendor == "tsl":
         data_dict["phase_id"][np.where(data_dict["prop"]["ci"] == -1)] = -1
     # TODO: Add not-indexed convention for INDEX ASTAR
 
+    # Set scan unit
+    if vendor in ["tsl", "emsoft"]:
+        scan_unit = "um"
+    else:  # NanoMegas
+        scan_unit = "nm"
+    data_dict["scan_unit"] = scan_unit
+
     # Create rotations
     data_dict["rotations"] = Rotation.from_euler(
         np.column_stack(
-            (data_dict.pop("euler1"),
-             data_dict.pop("euler2"),
-             data_dict.pop("euler3"))
+            (data_dict.pop("euler1"), data_dict.pop("euler2"), data_dict.pop("euler3"))
         )
     )
 
-    return data_dict
+    return CrystalMap(**data_dict)
 
 
 def _get_header(file):

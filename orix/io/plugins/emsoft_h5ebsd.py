@@ -22,14 +22,15 @@ from diffpy.structure import Lattice, Structure
 from h5py import File
 import numpy as np
 
+from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.quaternion.rotation import Rotation
 
 # Plugin description
 format_name = "emsoft_h5ebsd"
 file_extensions = ["h5", "hdf5", "h5ebsd"]
-module = "orix.crystal_map"
-format_type = "CrystalMap"
 writes = False
+writes_this = CrystalMap
+footprint = ["Scan 1"]  # Unique HDF5 footprint
 
 
 def file_reader(filename, refined=False, **kwargs):
@@ -77,9 +78,10 @@ def file_reader(filename, refined=False, **kwargs):
         # Get phase IDs
         "phase_id": data_group["Phase"][:],
         # Get phase name, crystal symmetry and structure (lattice)
-        "phase_name": phase_name,
-        "symmetry": symmetry,
-        "structure": structure,
+        "phase_list": PhaseList(
+            Phase(name=phase_name, symmetry=symmetry, structure=structure)
+        ),
+        "scan_unit": "um",
     }
 
     # Get rotations
@@ -101,7 +103,7 @@ def file_reader(filename, refined=False, **kwargs):
 
     f.close()
 
-    return data_dict
+    return CrystalMap(**data_dict)
 
 
 def _get_properties(data_group, n_top_matches, map_size):
