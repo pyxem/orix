@@ -36,9 +36,8 @@ footprint = ["crystal_map"]  # Unique HDF5 footprint
 
 
 def file_reader(filename, **kwargs):
-    """Return a dictionary with items to initialize a
-    :class:`~orix.crystal_map.crystal_map.CrystalMap` object from orix'
-    HDF5 format.
+    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
+    from a file in orix' HDF5 file format.
 
     Parameters
     ----------
@@ -49,8 +48,7 @@ def file_reader(filename, **kwargs):
 
     Returns
     -------
-    dict
-        Dictionary with items to initialize a CrystalMap.
+    CrystalMap
     """
     mode = kwargs.pop("mode", "r")
     with File(filename, mode=mode, **kwargs) as f:

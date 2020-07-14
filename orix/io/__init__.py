@@ -122,8 +122,9 @@ def load(filename, **kwargs):
 
 
 def _plugin_from_footprints(filename, plugins):
-    """Get correct HDF5 plugin from a list of potential plugins based on
-    their unique footprints.
+    """Find the correct plugin in a list of HDF5 plugins to read a file's
+    content by finding a matching pattern between a plugin's "footprint"
+    and the file.
 
     The unique footprint is a list of strings that can take on either of
     two formats:
@@ -135,9 +136,9 @@ def _plugin_from_footprints(filename, plugins):
     Parameters
     ----------
     filename : str
-        Input file name.
+        Name of the file to find the correct plugin for.
     plugins : list
-        List of potential plugins.
+        List of potential HDF5 plugins.
 
     Returns
     -------

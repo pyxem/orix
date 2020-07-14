@@ -34,22 +34,21 @@ footprint = ["Scan 1"]  # Unique HDF5 footprint
 
 
 def file_reader(filename, refined=False, **kwargs):
-    """Return a dictionary with items to initialize a
-    :class:`~orix.crystal_map.crystal_map.CrystalMap` object from EMsoft's
-    dictionary indexing dot product files.
+    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
+    from a file in EMsoft's dictionary indexing dot product file format.
 
     Parameters
     ----------
     filename : str
         Path and file name.
     refined : bool, optional
-        Whether to return refined orientations (default is ``False``).
+        Whether to return refined orientations (default is False).
     kwargs
         Keyword arguments passed to :func:`h5py.File`.
 
     Returns
     -------
-    dict
+    CrystalMap
     """
     mode = kwargs.pop("mode", "r")
     f = File(filename, mode=mode, **kwargs)

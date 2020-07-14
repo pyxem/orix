@@ -38,9 +38,9 @@ writes_this = CrystalMap
 
 
 def file_reader(filename):
-    """Return a dictionary with items to initialize a
-    :class:`~orix.crystal_map.crystal_map.CrystalMap` object from EDAX
-    TSL's .ang file format. The map in the input file is assumed to be 2D.
+    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
+    from a file in EDAX TLS's .ang format. The map in the input is assumed
+    to be 2D.
 
     Many vendors produce an .ang file. Supported vendors are:
         * EDAX TSL
@@ -58,7 +58,7 @@ def file_reader(filename):
 
     Returns
     -------
-    dict
+    CrystalMap
     """
     # Get file header
     with open(filename) as f:
