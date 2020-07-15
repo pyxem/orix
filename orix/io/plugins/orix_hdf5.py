@@ -294,7 +294,9 @@ def crystalmap2dict(crystal_map, dictionary=None):
         dictionary = {}
 
     # Get data cube coordinates in step size
-    z, y, x = [0 if i is None else i for i in crystal_map._coordinates.values()]
+    z, y, x = [
+        0 if i is None else i for i in [crystal_map._z, crystal_map._y, crystal_map._x]
+    ]
     # Get euler angles phi1, Phi, phi2
     eulers = crystal_map._rotations.to_euler()
     dictionary.update(

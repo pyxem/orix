@@ -770,6 +770,27 @@ class TestOrixHDF5Plugin:
             assert f["manufacturer"][()][0].decode() == "orix"
             assert f["version"][()][0].decode() == orix_version
 
+    @pytest.mark.parametrize(
+        "crystal_map_input",
+        [
+            ((4, 4, 3), (1, 1.5, 1.5), 1, [0, 1]),
+            ((2, 4, 3), (1, 1.5, 1.5), 2, [0, 1, 2]),
+        ],
+        indirect=["crystal_map_input"],
+    )
+    def test_write_read_masked(self, crystal_map_input, temp_file_path):
+        cm = CrystalMap(**crystal_map_input)
+        save(filename=temp_file_path, object2write=cm[cm.x > 2])
+        cm2 = load(temp_file_path)
+
+        assert cm2.size != cm.size
+        with pytest.raises(ValueError, match="operands could not be broadcast"):
+            _ = np.allclose(cm2.x, cm.x)
+
+        cm2.is_in_data = cm.is_in_data
+        assert cm2.size == cm.size
+        assert np.allclose(cm2.x, cm.x)
+
     def test_file_writer_raises(self, temp_file_path, crystal_map):
         with pytest.raises(OSError, match="Cannot write to the already open file "):
             with File(temp_file_path, mode="w") as _:
