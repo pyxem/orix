@@ -306,13 +306,9 @@ class PhaseList:
             # iterables of length 1
             if isinstance(names, str):
                 names = list((names,))
-            if (
-                isinstance(symmetries, str)
-                or isinstance(symmetries, Symmetry)
-                or isinstance(symmetries, int)
-            ):
+            if isinstance(symmetries, (str, Symmetry, int)):
                 symmetries = list((symmetries,))
-            if isinstance(colors, str) or isinstance(colors, tuple):
+            if isinstance(colors, (str, tuple)):
                 colors = list((colors,))
             if isinstance(ids, int):
                 ids = [ids]
@@ -463,12 +459,7 @@ class PhaseList:
         1   b     3         tab:orange
         """
         # Make key iterable if it isn't already
-        if (
-            not isinstance(key, tuple)
-            and not isinstance(key, slice)
-            and not isinstance(key, list)
-            and not isinstance(key, np.ndarray)
-        ):
+        if not isinstance(key, (tuple, slice, list, np.ndarray)):
             key_iter = (key,)
         else:
             key_iter = key
@@ -484,12 +475,7 @@ class PhaseList:
                 for i, phase in self._dict.items():
                     if key_name == phase.name:
                         d[i] = phase
-        elif (
-            isinstance(key_iter, int)
-            or isinstance(key_iter, tuple)
-            or isinstance(key_iter, list)
-            or isinstance(key_iter, np.ndarray)
-        ):
+        elif isinstance(key_iter, (int, tuple, list, np.ndarray)):
             for i in list(set(key_iter)):  # Use set to remove duplicates
                 d[i] = self._dict[i]
         elif isinstance(key_iter, slice):

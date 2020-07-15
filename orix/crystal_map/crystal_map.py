@@ -569,16 +569,12 @@ class CrystalMap:
         elif isinstance(key, np.ndarray) and key.dtype == np.bool_:
             # From boolean numpy array
             is_in_data = key
-        elif (
-            isinstance(key, slice)
-            or isinstance(key, int)
-            or (
-                isinstance(key, tuple)
-                and any([(isinstance(i, slice) or isinstance(i, int)) for i in key])
-            )
+        elif isinstance(key, (slice, int)) or (
+            isinstance(key, tuple)
+            and any([(isinstance(i, slice) or isinstance(i, int)) for i in key])
         ):
             # From slice(s) or int
-            if isinstance(key, slice) or isinstance(key, int):
+            if isinstance(key, (slice, int)):
                 key = (key,)
 
             slices = [slice(None, None, None)] * self.ndim
