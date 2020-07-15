@@ -128,11 +128,11 @@ class CrystalMapPlot(Axes):
         >>> import matplotlib.pyplot as plt
         >>> import numpy as np
         >>> from orix import plot
-        >>> from orix.io import load_ang
+        >>> from orix.io import load
 
         Import a crystal map
 
-        >>> cm = load_ang("/some/directory/data.ang")
+        >>> cm = load("/some/directory/data.ang")
 
         Plot a phase map
 
@@ -199,7 +199,7 @@ class CrystalMapPlot(Axes):
             for _, p in crystal_map.phases_in_data:
                 patches.append(mpatches.Patch(color=p.color_rgb, label=p.name))
         else:  # Create masked array of correct shape
-            if isinstance(value, Scalar) or isinstance(value, Vector3d):
+            if isinstance(value, (Scalar, Vector3d)):
                 value = value.data
             data = crystal_map.get_map_data(value)
             data = data[self._data_slices]

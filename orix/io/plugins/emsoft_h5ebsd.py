@@ -19,24 +19,31 @@
 import re
 
 from diffpy.structure import Lattice, Structure
-import h5py
+from h5py import File
 import numpy as np
 
+from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.quaternion.rotation import Rotation
-from orix.crystal_map import CrystalMap
+
+# Plugin description
+format_name = "emsoft_h5ebsd"
+file_extensions = ["h5", "hdf5", "h5ebsd"]
+writes = False
+writes_this = CrystalMap
+footprint = ["Scan 1"]  # Unique HDF5 footprint
 
 
-def load_emsoft(filename, refined=False, **kwargs):
-    """Return a CrystalMap object from EMsoft's dictionary indexing dot
-    product files.
+def file_reader(filename, refined=False, **kwargs):
+    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
+    from a file in EMsoft's dictionary indexing dot product file format.
 
     Parameters
     ----------
     filename : str
         Path and file name.
     refined : bool, optional
-        Whether to return refined orientations (default is ``False``).
-    kwargs :
+        Whether to return refined orientations (default is False).
+    kwargs
         Keyword arguments passed to :func:`h5py.File`.
 
     Returns
@@ -44,7 +51,7 @@ def load_emsoft(filename, refined=False, **kwargs):
     CrystalMap
     """
     mode = kwargs.pop("mode", "r")
-    f = h5py.File(filename, mode=mode, **kwargs)
+    f = File(filename, mode=mode, **kwargs)
 
     # Get groups for convenience
     ebsd_group = f["Scan 1/EBSD"]
@@ -58,20 +65,23 @@ def load_emsoft(filename, refined=False, **kwargs):
     step_y = header_group["Step Y"][:][0]
     map_size = ny * nx
 
-    # Get map coordinates ("Y Position" data set is not correct in EMsoft as of 2020-04,
-    # see: https://github.com/EMsoft-org/EMsoft/blob/7762e1961508fe3e71d4702620764ceb98a78b9e/Source/EMsoftHDFLib/EMh5ebsd.f90#L1093)
-    x = data_group["X Position"][:]
-    # y = data_group["Y Position"][:]
-    y = np.sort(np.tile(np.arange(ny) * step_y, nx))
-
-    # Get number of top matches kept per data point
-    n_top_matches = f["NMLparameters/EBSDIndexingNameListType/nnk"][:][0]
-
-    # Get phase IDs
-    phase_id = data_group["Phase"][:]
-
-    # Get phase name, crystal symmetry and atoms
+    # Some of the data needed to create a CrystalMap object
     phase_name, symmetry, structure = _get_phase(phase_group)
+    data_dict = {
+        # Get map coordinates ("Y Position" data set is not correct in EMsoft as of
+        # 2020-04, see:
+        # https://github.com/EMsoft-org/EMsoft/blob/7762e1961508fe3e71d4702620764ceb98a78b9e/Source/EMsoftHDFLib/EMh5ebsd.f90#L1093)
+        "x": data_group["X Position"][:],
+        # y = data_group["Y Position"][:]
+        "y": np.sort(np.tile(np.arange(ny) * step_y, nx)),
+        # Get phase IDs
+        "phase_id": data_group["Phase"][:],
+        # Get phase name, crystal symmetry and structure (lattice)
+        "phase_list": PhaseList(
+            Phase(name=phase_name, symmetry=symmetry, structure=structure)
+        ),
+        "scan_unit": "um",
+    }
 
     # Get rotations
     if refined:
@@ -81,22 +91,18 @@ def load_emsoft(filename, refined=False, **kwargs):
         dictionary_size = data_group["FZcnt"][:][0]
         dictionary_euler = data_group["DictionaryEulerAngles"][:][:dictionary_size]
         euler = dictionary_euler[top_match_idx, :]
-    rotations = Rotation.from_euler(euler)
+    data_dict["rotations"] = Rotation.from_euler(euler)
 
-    properties = _get_properties(
+    # Get number of top matches kept per data point
+    n_top_matches = f["NMLparameters/EBSDIndexingNameListType/nnk"][:][0]
+
+    data_dict["prop"] = _get_properties(
         data_group=data_group, n_top_matches=n_top_matches, map_size=map_size,
     )
 
-    return CrystalMap(
-        rotations=rotations,
-        phase_id=phase_id,
-        x=x,
-        y=y,
-        phase_name=phase_name,
-        symmetry=symmetry,
-        structure=structure,
-        prop=properties,
-    )
+    f.close()
+
+    return CrystalMap(**data_dict)
 
 
 def _get_properties(data_group, n_top_matches, map_size):

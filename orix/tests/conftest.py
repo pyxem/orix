@@ -20,6 +20,7 @@ import gc
 import os
 from tempfile import TemporaryDirectory
 
+from diffpy.structure import Atom, Lattice, Structure
 from h5py import File
 import numpy as np
 import pytest
@@ -31,7 +32,7 @@ from orix.quaternion.rotation import Rotation
 
 @pytest.fixture
 def rotations():
-    return Rotation([(2, 4, 6, 8), (-1, -2, -3, -4)])
+    return Rotation([(2, 4, 6, 8), (-1, -3, -5, -7)])
 
 
 # TODO: Exchange for a multiphase header (change `phase_id` accordingly)
@@ -131,6 +132,18 @@ def temp_ang_file():
         gc.collect()  # Garbage collection so that file can be used by multiple tests
 
 
+@pytest.fixture(params=["h5"])
+def temp_file_path(request):
+    """Temporary file in a temporary directory for use when tests need
+    to write, and sometimes read again, data to, and from, a file.
+    """
+    ext = request.param
+    with TemporaryDirectory() as tmp:
+        file_path = os.path.join(tmp, "data_temp." + ext)
+        yield file_path
+        gc.collect()
+
+
 @pytest.fixture(
     params=[
         # Tuple with default values for five parameters: map_shape, step_sizes,
@@ -165,7 +178,6 @@ def angfile_tsl(tmpdir, request):
     rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
-
     """
     f = tmpdir.join("angfile_tsl.ang")
 
@@ -238,7 +250,6 @@ def angfile_astar(tmpdir, request):
     rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
-
     """
     f = tmpdir.join("angfile_astar.ang")
 
@@ -303,7 +314,6 @@ def angfile_emsoft(tmpdir, request):
     rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
-
     """
     f = tmpdir.join("angfile_emsoft.ang")
 
@@ -363,7 +373,6 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         Number of top matching orientations per data point kept.
     refined : bool
         Whether refined Euler angles and dot products are read.
-
     """
     f = File(tmpdir.join("emsoft_h5ebsd_file.h5"), mode="w")
 
@@ -463,29 +472,41 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
     gc.collect()
 
 
-@pytest.fixture
-def phase_list():
-    names = ["a", "b", "c"]
-    symmetry_names = ["m-3m", "432", "3"]
-    colors = ["r", "g", "b"]
-
-    return PhaseList(names=names, symmetries=symmetry_names, colors=colors)
+@pytest.fixture(
+    params=[
+        (
+            ["a", "b", "c"],
+            ["m-3m", "432", "3"],
+            ["r", "g", "b"],
+            [Lattice()] * 3,
+            [[Atom()]] * 3,
+        )
+    ]
+)
+def phase_list(request):
+    names, symmetry_names, colors, lattices, atoms = request.param
+    # Apparently diffpy.structure don't allow iteration over a list of lattices
+    structures = [Structure(lattice=lattices[i], atoms=a) for i, a in enumerate(atoms)]
+    return PhaseList(
+        names=names, symmetries=symmetry_names, colors=colors, structures=structures
+    )
 
 
 @pytest.fixture(
     params=[
-        # Tuple with default values for parameters: map_shape, step_sizes, and
-        # n_rotations_per_point
         (
+            # Tuple with default values for parameters: map_shape, step_sizes,
+            # and n_rotations_per_point
             (1, 4, 3),  # map_shape
             (0, 1.5, 1.5),  # step_sizes
             1,  # rotations_per_point
-        ),
+            [0],  # unique phase IDs
+        )
     ],
 )
 def crystal_map_input(request, rotations):
     # Unpack parameters
-    (nz, ny, nx), (dz, dy, dx), rotations_per_point = request.param
+    (nz, ny, nx), (dz, dy, dx), rotations_per_point, unique_phase_ids = request.param
     map_size = nz * ny * nx
 
     d = {"x": None, "y": None, "z": None, "rotations": None}
@@ -499,12 +520,12 @@ def crystal_map_input(request, rotations):
     rot_idx = np.random.choice(
         np.arange(rotations.size), map_size * rotations_per_point
     )
-
     data_shape = (map_size,)
     if rotations_per_point > 1:
         data_shape += (rotations_per_point,)
-
     d["rotations"] = rotations[rot_idx].reshape(*data_shape)
+
+    d["phase_id"] = np.random.choice(unique_phase_ids, map_size)
 
     return d
 

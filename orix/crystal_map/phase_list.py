@@ -172,7 +172,7 @@ class Phase:
                     break
         if not isinstance(value, Symmetry) and value is not None:
             raise ValueError(
-                f"{value} must be of type {Symmetry}, the name of a valid point"
+                f"'{value}' must be of type {Symmetry}, the name of a valid point"
                 " group as a string, or None."
             )
         else:
@@ -203,7 +203,7 @@ class PhaseList:
         List of tuples with three entries, RGB, defining phase colors.
     names : list of str
         List of phase names.
-    phase_ids : list of int
+    ids : list of int
         List of unique phase indices in a crystallographic map as
         imported.
     size : int
@@ -231,7 +231,7 @@ class PhaseList:
         names=None,
         symmetries=None,
         colors=None,
-        phase_ids=None,
+        ids=None,
         structures=None,
     ):
         """
@@ -248,7 +248,7 @@ class PhaseList:
             Point group symmetries.
         colors : str or list of str, optional
             Phase colors.
-        phase_ids : int, list of int or numpy.ndarray of int, optional
+        ids : int, list of int or numpy.ndarray of int, optional
             Phase IDs.
         structures : diffpy.structure.Structure or list of
                 diffpy.structure.Structure, optional
@@ -286,9 +286,9 @@ class PhaseList:
         if isinstance(phases, list):
             try:
                 if isinstance(next(iter(phases)), Phase):
-                    if phase_ids is None:
-                        phase_ids = np.arange(len(phases))
-                    d = dict(zip(phase_ids, phases))
+                    if ids is None:
+                        ids = np.arange(len(phases))
+                    d = dict(zip(ids, phases))
             except StopIteration:
                 pass
         elif isinstance(phases, dict):
@@ -298,20 +298,20 @@ class PhaseList:
             except StopIteration:
                 pass
         elif isinstance(phases, Phase):
-            if phase_ids is None:
-                phase_ids = 0
-            d = {phase_ids: phases}
+            if ids is None:
+                ids = 0
+            d = {ids: phases}
         else:
             # Ensure possible single strings or single objects have
             # iterables of length 1
             if isinstance(names, str):
                 names = list((names,))
-            if isinstance(symmetries, str) or isinstance(symmetries, Symmetry):
+            if isinstance(symmetries, (str, Symmetry, int)):
                 symmetries = list((symmetries,))
-            if isinstance(colors, str) or isinstance(colors, tuple):
+            if isinstance(colors, (str, tuple)):
                 colors = list((colors,))
-            if isinstance(phase_ids, int):
-                phase_ids = [phase_ids]
+            if isinstance(ids, int):
+                ids = [ids]
             if isinstance(structures, Structure):
                 structures = [structures]
 
@@ -320,12 +320,12 @@ class PhaseList:
             max_entries = max(
                 [
                     len(i) if i is not None else 0
-                    for i in [names, symmetries, phase_ids, structures]
+                    for i in [names, symmetries, ids, structures]
                 ]
             )
 
-            if phase_ids is None:
-                phase_ids = list(np.arange(max_entries))
+            if ids is None:
+                ids = list(np.arange(max_entries))
 
             # Get first 2 * n entries in color list (for good measure)
             all_colors = list(islice(ALL_COLORS.keys(), 2 * max_entries))[::-1]
@@ -360,9 +360,9 @@ class PhaseList:
 
                 # Get a phase_id (always)
                 try:
-                    phase_id = phase_ids[i]
+                    phase_id = ids[i]
                 except IndexError:
-                    phase_id = max(phase_ids) + phase_id_iter + 1
+                    phase_id = max(ids) + phase_id_iter + 1
                     phase_id_iter += 1
 
                 # Get a structure or None
@@ -407,7 +407,7 @@ class PhaseList:
         return len(self._dict.items())
 
     @property
-    def phase_ids(self):
+    def ids(self):
         """Unique phase IDs in the list of phases."""
         return list(self._dict.keys())
 
@@ -459,12 +459,7 @@ class PhaseList:
         1   b     3         tab:orange
         """
         # Make key iterable if it isn't already
-        if (
-            not isinstance(key, tuple)
-            and not isinstance(key, slice)
-            and not isinstance(key, list)
-            and not isinstance(key, np.ndarray)
-        ):
+        if not isinstance(key, (tuple, slice, list, np.ndarray)):
             key_iter = (key,)
         else:
             key_iter = key
@@ -480,19 +475,15 @@ class PhaseList:
                 for i, phase in self._dict.items():
                     if key_name == phase.name:
                         d[i] = phase
-        elif (
-            isinstance(key_iter, int)
-            or isinstance(key_iter, tuple)
-            or isinstance(key_iter, list)
-            or isinstance(key_iter, np.ndarray)
-        ):
+        elif isinstance(key_iter, (int, tuple, list, np.ndarray)):
             for i in list(set(key_iter)):  # Use set to remove duplicates
                 d[i] = self._dict[i]
         elif isinstance(key_iter, slice):
             # Dicts cannot be sliced, hence this work-around
-            id_arr = np.arange(max(self.phase_ids) + 1)
+            id_arr_start = -1 if self.ids[0] == -1 else 0
+            id_arr = np.arange(id_arr_start, max(self.ids) + 1)
             sliced_arr = id_arr[key_iter]
-            ids_in_slice = [i for i in sliced_arr if i in self.phase_ids]
+            ids_in_slice = [i for i in sliced_arr if i in self.ids]
             d = {i: self._dict[i] for i in ids_in_slice}
 
         # Raise KeyError if key is missing (not in the container), per
@@ -521,8 +512,8 @@ class PhaseList:
                     break
 
             # Create new ID
-            if self.phase_ids:
-                new_phase_id = max(self.phase_ids) + 1
+            if self.ids:
+                new_phase_id = max(self.ids) + 1
             else:  # `self.phase_ids` is an empty list
                 new_phase_id = 0
 
@@ -538,7 +529,7 @@ class PhaseList:
         key : int or str
             ID or name of a phase in the phase list.
         """
-        if isinstance(key, int):
+        if np.issubdtype(type(key), np.signedinteger):
             self._dict.pop(key)
         elif isinstance(key, str):
             matching_phase_id = None
@@ -551,7 +542,7 @@ class PhaseList:
             else:
                 self._dict.pop(matching_phase_id)
         else:
-            raise TypeError(f"{key} is an invalid phase.")
+            raise TypeError(f"{key} is an invalid phase ID or name.")
 
     def __iter__(self):
         """Return a tuple with phase ID and Phase object, in that order.
@@ -591,7 +582,7 @@ class PhaseList:
         )
 
         # Overview of each phase
-        for i, phase_id in enumerate(self.phase_ids):
+        for i, phase_id in enumerate(self.ids):
             representation += (
                 f"\n{phase_id:{align}{id_len}}  "
                 + f"{names[i]:{align}{name_len}}  "
@@ -629,4 +620,4 @@ class PhaseList:
         for phase_id, phase in self:
             if name == phase.name:
                 return phase_id
-        raise KeyError(f"{name} is not among the phase names {self.names}.")
+        raise KeyError(f"'{name}' is not among the phase names {self.names}.")

@@ -114,7 +114,7 @@ class TestPhase:
     def test_set_phase_symmetry(self, symmetry, symmetry_name, fails):
         p = Phase()
         if fails:
-            with pytest.raises(ValueError, match=f"{symmetry} must be of type"):
+            with pytest.raises(ValueError, match=f"'{symmetry}' must be of type"):
                 p.symmetry = symmetry
         else:
             p.symmetry = symmetry
@@ -189,9 +189,9 @@ class TestPhaseList:
 
     def test_init_set_to_nones(self):
         phase_ids = [1, 2]
-        pl = PhaseList(phase_ids=phase_ids)
+        pl = PhaseList(ids=phase_ids)
 
-        assert pl.phase_ids == phase_ids
+        assert pl.ids == phase_ids
         assert pl.names == [""] * 2
         assert pl.symmetries == [None] * 2
         assert pl.colors == ["tab:blue", "tab:orange"]
@@ -268,6 +268,7 @@ class TestPhaseList:
                 ["tab:blue", "tab:orange", "tab:blue"],
                 [0, 1, 2],
             ),
+            ("al", 43, "C0", [0], ["al"], ["432"], ["tab:blue"], [0]),
         ],
     )
     def test_init_phaselist_from_strings(
@@ -282,7 +283,7 @@ class TestPhaseList:
         expected_phase_ids,
     ):
         pl = PhaseList(
-            names=names, symmetries=symmetries, colors=colors, phase_ids=phase_ids,
+            names=names, symmetries=symmetries, colors=colors, ids=phase_ids,
         )
 
         actual_symmetry_names = []
@@ -295,7 +296,15 @@ class TestPhaseList:
         assert pl.names == expected_names
         assert actual_symmetry_names == expected_symmetries
         assert pl.colors == expected_colors
-        assert pl.phase_ids == expected_phase_ids
+        assert pl.ids == expected_phase_ids
+
+    def test_init_with_single_structure(self):
+        structure = Structure()
+        names = ["a", "b"]
+        pl = PhaseList(names=names, structures=structure)
+
+        assert pl.names == names
+        assert pl.structures == [structure] * 2
 
     def test_get_phaselist_colors_rgb(self):
         pl = PhaseList(names=["a", "b", "c"], colors=["r", "g", (0, 0, 1)])
@@ -326,10 +335,10 @@ class TestPhaseList:
         phase_names_pool = "abc"
         phase_names = [phase_names_pool[i] for i in range(n_names)]
 
-        pl = PhaseList(names=phase_names, phase_ids=phase_ids)
+        pl = PhaseList(names=phase_names, ids=phase_ids)
 
         assert pl.names == expected_names
-        assert pl.phase_ids == expected_phase_ids
+        assert pl.ids == expected_phase_ids
 
     @pytest.mark.parametrize(
         "key_getter, name, symmetry, color",
@@ -372,10 +381,20 @@ class TestPhaseList:
         assert [p.name for p in phases.symmetries] == symmetries
         assert phases.colors == colors
 
-    @pytest.mark.parametrize("key_getter", ["d", 3, slice(3, None, None)])
+    @pytest.mark.parametrize("key_getter", ["d", 3, slice(3, None)])
     def test_get_from_phaselist_error(self, phase_list, key_getter):
         with pytest.raises(KeyError):
             _ = phase_list[key_getter]
+
+    @pytest.mark.parametrize(
+        "add_not_indexed, expected_ids", [(True, [-1, 0, 1]), (False, [0, 1, 2])]
+    )
+    def test_get_from_phaselist_not_indexed(
+        self, phase_list, add_not_indexed, expected_ids
+    ):
+        if add_not_indexed:
+            phase_list.add_not_indexed()
+        assert phase_list[:3].ids == expected_ids
 
     @pytest.mark.parametrize(
         "key, value, already_there",
@@ -404,7 +423,7 @@ class TestPhaseList:
         for n, s in zip(names, symmetries):
             pl[n] = str(s)
 
-        assert pl.phase_ids == [0, 1]
+        assert pl.ids == [0, 1]
         assert pl.names == [str(n) for n in names]
         assert [s.name for s in pl.symmetries] == [str(s) for s in symmetries]
         assert pl.structures == [Structure()] * 2
@@ -416,7 +435,7 @@ class TestPhaseList:
             ("a", False, None, None),
             (3, True, KeyError, "3"),
             ("d", True, KeyError, "d is not among the phase names"),
-            ([0, 1], True, TypeError, ".* is an invalid phase."),
+            ([0, 1], True, TypeError, ".* is an invalid phase ID or"),
         ],
     )
     def test_del_phase_in_phaselist(
@@ -426,14 +445,14 @@ class TestPhaseList:
             with pytest.raises(error_type, match=error_msg):
                 del phase_list[key_del]
         else:
-            phase_ids = phase_list.phase_ids
+            phase_ids = phase_list.ids
             names = phase_list.names
 
             del phase_list[key_del]
 
             if isinstance(key_del, int):
                 phase_ids.remove(key_del)
-                assert phase_list.phase_ids == phase_ids
+                assert phase_list.ids == phase_ids
             elif isinstance(key_del, str):
                 names.remove(key_del)
                 assert phase_list.names == names
@@ -494,7 +513,7 @@ class TestPhaseList:
     def test_make_not_indexed(self):
         phase_names = ["a", "b", "c"]
         phase_colors = ["r", "g", "b"]
-        pl = PhaseList(names=phase_names, colors=phase_colors, phase_ids=[-1, 0, 1])
+        pl = PhaseList(names=phase_names, colors=phase_colors, ids=[-1, 0, 1])
 
         assert pl.names == phase_names
         assert pl.colors == phase_colors
@@ -510,5 +529,12 @@ class TestPhaseList:
         for phase_id, phase in phase_list:
             assert phase_id == phase_list.id_from_name(phase.name)
 
-        with pytest.raises(KeyError, match="d is not among the phase names "):
+        with pytest.raises(KeyError, match="'d' is not among the phase names "):
             _ = phase_list.id_from_name("d")
+
+    @pytest.mark.parametrize("phase_slice", [slice(0, 3), slice(1, 3), slice(0, 11)])
+    def test_get_item_not_indexed(self, phase_slice):
+        ids = np.arange(-1, 9)  # [-1, 0, 1, 2, ...]
+        pl = PhaseList(ids=ids)  # [-1, 0, 1, 2, ...]
+        pl.add_not_indexed()  # [-1, 0, 1, 2, ...]
+        assert np.allclose(pl[phase_slice].ids, ids[phase_slice])

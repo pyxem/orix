@@ -25,7 +25,6 @@ from orix.crystal_map.crystal_map_properties import CrystalMapProperties
 from orix.crystal_map.phase_list import Phase, PhaseList
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.rotation import Rotation
-from orix.symmetry import Symmetry
 
 
 class CrystalMap:
@@ -92,10 +91,10 @@ class CrystalMap:
         x=None,
         y=None,
         z=None,
-        phase_name=None,
-        symmetry=None,
-        structure=None,
+        phase_list=None,
         prop=None,
+        scan_unit=None,
+        is_in_data=None,
     ):
         """
         Parameters
@@ -108,32 +107,33 @@ class CrystalMap:
             axis' size.
         phase_id : numpy.ndarray, optional
             Phase ID of each pixel. IDs equal to -1 are considered not
-            indexed. If ``None`` is passed (default), all points are
+            indexed. If None is passed (default), all points are
             considered to belong to one phase with ID 0.
         x : numpy.ndarray, optional
-            Map x coordinate of each data point. If ``None`` is passed,
+            Map x coordinate of each data point. If None is passed,
             the map is assumed to be 1D, and it is set to an array of
             increasing integers from 0 to the length of the `phase_id`
             array.
         y : numpy.ndarray, optional
-            Map y coordinate of each data point. If ``None`` is passed,
-            the map is assumed to be 1D, and it is set to ``None``.
+            Map y coordinate of each data point. If None is passed,
+            the map is assumed to be 1D, and it is set to None.
         z : numpy.ndarray, optional
-            Map z coordinate of each data point. If ``None`` is passed,
-            the map is assumed to be 2D or 1D, and it is set to ``None``.
-        phase_name : str or list of str, optional
-            Name of phase(s).
-        symmetry : str, int, orix.quaternion.symmetry.Symmetry or list\
-                of str, int or orix.quaternion.symmetry.Symmetry, optional
-            Point group of crystal symmetries of phases in the map.
-        structure : diffpy.structure.Structure or list of
-                diffpy.structure.Structure, optional
-            Unit cells with atoms and a lattice of each phase. If None
-            is passed (default), a default
-            :class:`diffpy.structure.Structure` object is created for each
-            phase.
+            Map z coordinate of each data point. If None is passed, the
+            map is assumed to be 2D or 1D, and it is set to None.
+        phase_list : PhaseList, optional
+            A list of phases in the data with their with names,
+            symmetries and structures. The order in which the phases
+            appear in the list is important, as it is this, and not the
+            phases' IDs, that is used to link the phases to the input
+            `phase_id` if the IDs aren't exactly the same as in
+            `phase_id`. If None (default), a phase list with as many
+            phases as there are unique phase IDs in `phase_id` is created.
         prop : dict of numpy.ndarray, optional
             Dictionary of properties of each data point.
+        scan_unit : str, optional
+            Length unit of the data. If None (default), "px" is used.
+        is_in_data : np.ndarray, optional
+            Array of booleans signifying whether a point is in the data.
 
         Examples
         --------
@@ -204,12 +204,30 @@ class CrystalMap:
             include_not_indexed = True
             unique_phase_ids = unique_phase_ids[1:]
         # Also sorted in ascending order
-        self.phases = PhaseList(
-            names=phase_name,
-            symmetries=symmetry,
-            phase_ids=unique_phase_ids,
-            structures=structure,
-        )
+        if phase_list is None:
+            self.phases = PhaseList(ids=unique_phase_ids)
+        else:
+            phase_list = copy.deepcopy(phase_list)
+            phase_ids = phase_list.ids
+            n_different = len(phase_ids) - len(unique_phase_ids)
+            if n_different > 0:
+                # Remove superfluous phases
+                for i in phase_list.ids[::-1][:n_different]:
+                    del phase_list[i]
+            elif n_different < 0:
+                # Create new phase list adding the missing phases with
+                # default initial values
+                phase_list = PhaseList(
+                    names=phase_list.names,
+                    symmetries=phase_list.symmetries,
+                    colors=phase_list.colors,
+                    structures=phase_list.structures,
+                    ids=unique_phase_ids,
+                )
+            # Ensure phase list IDs correspond to IDs in phase_id array
+            new_ids = list(unique_phase_ids.astype(int))
+            phase_list._dict = dict(zip(new_ids, phase_list._dict.values()))
+            self.phases = phase_list
 
         # Set whether measurements are indexed
         is_indexed = np.ones(data_size, dtype=bool)
@@ -222,10 +240,14 @@ class CrystalMap:
             self._phase_id[~is_indexed] = -1
 
         # Set array with True for points in data
-        self.is_in_data = np.ones(data_size, dtype=bool)
+        if is_in_data is None:
+            is_in_data = np.ones(data_size, dtype=bool)
+        self.is_in_data = is_in_data
 
         # Set scan unit
-        self.scan_unit = "px"
+        if scan_unit is None:
+            scan_unit = "px"
+        self.scan_unit = scan_unit
 
         # Set properties
         if prop is None:
@@ -312,12 +334,12 @@ class CrystalMap:
         `self.phases`.
         """
         unique_ids = np.unique(self.phase_id)
-        phase_list = self.phases[np.intersect1d(unique_ids, self.phases.phase_ids)]
+        phase_list = self.phases[np.intersect1d(unique_ids, self.phases.ids)]
         if isinstance(phase_list, Phase):  # One phase in data
             # Get phase ID so it carries over to the new `PhaseList` object
             phase = phase_list  # Since it's actually a single phase
             phase_id = self.phases.id_from_name(phase.name)
-            return PhaseList(phases=phase, phase_ids=phase_id)
+            return PhaseList(phases=phase, ids=phase_id)
         else:  # Multiple phases in data
             return phase_list
 
@@ -547,16 +569,12 @@ class CrystalMap:
         elif isinstance(key, np.ndarray) and key.dtype == np.bool_:
             # From boolean numpy array
             is_in_data = key
-        elif (
-            isinstance(key, slice)
-            or isinstance(key, int)
-            or (
-                isinstance(key, tuple)
-                and any([(isinstance(i, slice) or isinstance(i, int)) for i in key])
-            )
+        elif isinstance(key, (slice, int)) or (
+            isinstance(key, tuple)
+            and any([(isinstance(i, slice) or isinstance(i, int)) for i in key])
         ):
             # From slice(s) or int
-            if isinstance(key, slice) or isinstance(key, int):
+            if isinstance(key, (slice, int)):
                 key = (key,)
 
             slices = [slice(None, None, None)] * self.ndim
@@ -645,7 +663,8 @@ class CrystalMap:
         map data shape.
 
         If `item` is "orientations"/"rotations" and there are multiple
-        rotations per point, only the first rotation is used.
+        rotations per point, only the first rotation is used. Rotations
+        are returned as Euler angles.
 
         Parameters
         ----------
