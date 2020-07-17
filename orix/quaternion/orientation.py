@@ -127,7 +127,7 @@ class Misorientation(Rotation):
         """tuple of Symmetry"""
         return self._symmetry
 
-    @property
+    #@property
     def equivalent(self,grain_exchange=False):
         """Equivalent misorientations
 

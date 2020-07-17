@@ -91,17 +91,17 @@ def test_getitem(orientation, symmetry):
 
 @pytest.mark.parametrize("Gl", [C4, C2])
 def test_equivalent(Gl):
-    """ Tests that the property Misorientation.equivalent runs without error
+    """ Tests that the property Misorientation.equivalent runs without error,
+    use grain_exchange=True as this falls back to grain_exchange=False when
+    Gl!=Gr:
 
-    Cases
-    -----
-    Gl == C4 ~ "grain exchange"
-    Gl == C2 ~ "no grain exchange"
+    Gl == C4 is grain exchange
+    Gl == C2 is no grain exchange
     """
     m = Misorientation([1, 1, 1, 1])  # any will do
     m_new = m.set_symmetry(Gl, C4, verbose=True)
     m_new.symmetry
-    _m = m_new.equivalent
+    _m = m_new.equivalent(grain_exchange=True)
 
 
 def test_repr():
