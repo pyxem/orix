@@ -127,12 +127,11 @@ class Misorientation(Rotation):
         """tuple of Symmetry"""
         return self._symmetry
 
-    #@property
     def equivalent(self,grain_exchange=False):
         """Equivalent misorientations
 
         grain_exchange : bool
-            If true the rotation g and g^{-1} are considered the identical
+            If true the rotation g and g^{-1} are considered to be identical
 
         Returns
         -------
