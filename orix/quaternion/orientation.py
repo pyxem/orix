@@ -166,8 +166,8 @@ class Misorientation(Rotation):
         >>> m = Misorientation(data).set_symmetry(C4, C2)
         >>> m
         Misorientation (2,) 4, 2
-        [[-0.7071  0.     -0.7071  0.    ]
-         [ 0.      0.7071 -0.7071  0.    ]]
+        [[-0.7071  0.7071  0.      0.    ]
+        [ 0.      1.      0.      0.    ]]
 
         """
         symmetry_pairs = iproduct(Gl, Gr)
@@ -270,7 +270,7 @@ class Orientation(Misorientation):
         >>> o
         Orientation (2,) 4
         [[-0.7071  0.     -0.7071  0.    ]
-         [ 0.     -0.7071 -0.7071  0.    ]]
+        [ 0.      1.      0.      0.    ]]
 
         """
         return super(Orientation, self).set_symmetry(C1, symmetry)
