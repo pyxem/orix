@@ -127,7 +127,7 @@ class Misorientation(Rotation):
         """tuple of Symmetry"""
         return self._symmetry
 
-    def equivalent(self,grain_exchange=False):
+    def equivalent(self, grain_exchange=False):
         """Equivalent misorientations
 
         grain_exchange : bool
@@ -141,7 +141,7 @@ class Misorientation(Rotation):
         Gl, Gr = self._symmetry
 
         if grain_exchange and (Gl._tuples == Gr._tuples):
-             orientations = Orientation.stack([self, ~self]).flatten()
+            orientations = Orientation.stack([self, ~self]).flatten()
         else:
             orientations = Orientation(self)
 
