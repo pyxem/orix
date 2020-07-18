@@ -127,9 +127,11 @@ class Misorientation(Rotation):
         """tuple of Symmetry"""
         return self._symmetry
 
-    @property
-    def equivalent(self):
+    def equivalent(self, grain_exchange=False):
         """Equivalent misorientations
+
+        grain_exchange : bool
+            If true the rotation g and g^{-1} are considered to be identical
 
         Returns
         -------
@@ -137,10 +139,12 @@ class Misorientation(Rotation):
 
         """
         Gl, Gr = self._symmetry
-        if Gl._tuples == Gr._tuples:  # Grain exchange case
+
+        if grain_exchange and (Gl._tuples == Gr._tuples):
             orientations = Orientation.stack([self, ~self]).flatten()
         else:
             orientations = Orientation(self)
+
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
@@ -166,8 +170,8 @@ class Misorientation(Rotation):
         >>> m = Misorientation(data).set_symmetry(C4, C2)
         >>> m
         Misorientation (2,) 4, 2
-        [[-0.7071  0.     -0.7071  0.    ]
-         [ 0.      0.7071 -0.7071  0.    ]]
+        [[-0.7071  0.7071  0.      0.    ]
+        [ 0.      1.      0.      0.    ]]
 
         """
         symmetry_pairs = iproduct(Gl, Gr)
@@ -270,7 +274,7 @@ class Orientation(Misorientation):
         >>> o
         Orientation (2,) 4
         [[-0.7071  0.     -0.7071  0.    ]
-         [ 0.     -0.7071 -0.7071  0.    ]]
+        [ 0.      1.      0.      0.    ]]
 
         """
         return super(Orientation, self).set_symmetry(C1, symmetry)
