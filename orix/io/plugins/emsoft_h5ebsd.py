@@ -87,7 +87,7 @@ def file_reader(filename, refined=False, **kwargs):
     if refined:
         euler = data_group["RefinedEulerAngles"][:]
     else:  # Get n top matches for each pixel
-        top_match_idx = data_group["TopMatchIndices"][:][:map_size]
+        top_match_idx = data_group["TopMatchIndices"][:][:map_size] - 1
         dictionary_size = data_group["FZcnt"][:][0]
         dictionary_euler = data_group["DictionaryEulerAngles"][:][:dictionary_size]
         euler = dictionary_euler[top_match_idx, :]
