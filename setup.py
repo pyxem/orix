@@ -26,7 +26,7 @@ setup(
     install_requires=[
         "numpy",
         "scipy",
-        "matplotlib",
+        "matplotlib < 3.3",
         "tqdm"
     ],
     package_data={
