@@ -468,14 +468,12 @@ class TestScalebar:
                 ((1, 10, 30), (0, 1, 1), 1, [0]),
                 {
                     "loc": 4,
-                    "frameon": False,
                     "sep": 6,
                     "size_vertical": 0.2,
                     "alpha": 0.8,
                 },
                 {
                     "loc": "loc",
-                    "frameon": ["patch", "_visible"],
                     "sep": ["_box", "sep"],
                     "size_vertical": ["size_bar", "_children", 0, "_height"],
                     "alpha": ["patch", "_alpha"],
