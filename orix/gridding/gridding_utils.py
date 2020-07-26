@@ -15,3 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
+""" This file contains functions (broadly internal ones) that support
+the grid generation within rotation space """
