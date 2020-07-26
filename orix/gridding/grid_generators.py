@@ -17,3 +17,9 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 """ This user facing code generates 'grids' in orientation spaces """
+
+def get_grid_fundamental():
+    pass
+
+def get_grid_local():
+    pass
