@@ -19,6 +19,14 @@
 """ This file contains functions (broadly internal ones) that support
 the grid generation within rotation space """
 
+def create_equispaced_grid():
+    """
+    Returns rotations that are evenly spaced according to the Harr measure of
+    SO3
+
+    """
+    pass
+
 def get_proper_point_group_string(space_group_number):
     """
     Maps a space-group-number to a point group
