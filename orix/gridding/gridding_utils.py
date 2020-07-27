@@ -30,6 +30,11 @@ def create_equispaced_grid(resolution):
     Returns rotations that are evenly spaced according to the Harr measure of
     SO3
 
+    Parameters
+    ----------
+
+    Returns
+    -------
     """
     num_steps = int(np.ceil(360 / resolution))
 
