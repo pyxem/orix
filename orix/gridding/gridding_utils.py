@@ -19,13 +19,31 @@
 """ This file contains functions (broadly internal ones) that support
 the grid generation within rotation space """
 
-def create_equispaced_grid():
+import numpy as np
+from itertools import product
+
+from orix.quaternion.rotation import Rotation
+
+
+def create_equispaced_grid(resolution):
     """
     Returns rotations that are evenly spaced according to the Harr measure of
     SO3
 
     """
-    pass
+    num_steps = int(np.ceil(360 / resolution))
+
+    alpha = np.linspace(0, np.pi, num=num_steps, endpoint=False)
+    beta = np.arcos(np.linspace(1, -1, num=num_steps, endpoint=False))
+    gamma = np.linspace(0, np.pi, num=num_steps, endpoint=False)
+    q = np.asarray(list(product(alpha, beta, gamma)))
+
+    # convert to quaternions
+    q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")
+    # remove duplicates
+    q = q.unique()
+    return q
+
 
 def get_proper_point_group_string(space_group_number):
     """
