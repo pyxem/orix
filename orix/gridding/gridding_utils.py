@@ -27,7 +27,7 @@ from orix.quaternion.rotation import Rotation
 
 def create_equispaced_grid(resolution):
     """
-    Returns rotations that are evenly spaced according to the Harr measure of
+    Returns rotations that are evenly spaced according to the Harr measure on
     SO3
 
     Parameters
