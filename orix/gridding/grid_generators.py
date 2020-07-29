@@ -20,7 +20,7 @@
 
 from orix.gridding.gridding_utils import (
     create_equispaced_grid,
-    get_proper_point_group_string,
+    get_proper_point_group,
 )
 
 
@@ -44,7 +44,7 @@ def get_grid_fundamental(resolution, point_group=None, space_group=None):
     orix.gridding.utils.create_equispaced_grid
     """
     if point_group is None:
-        point_group = get_proper_point_group_string(space_group)
+        point_group = get_proper_point_group(space_group)
 
     q = create_equispaced_grid(resolution)
     q = q < point_group

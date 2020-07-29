@@ -23,6 +23,7 @@ import numpy as np
 from itertools import product
 
 from orix.quaternion.rotation import Rotation
+from orix.quaternion.symmetry import C1,C2,C3,C4,C6,D2,D3,D4,D6,O,T
 
 
 def create_equispaced_grid(resolution):
@@ -50,7 +51,7 @@ def create_equispaced_grid(resolution):
     return q
 
 
-def get_proper_point_group_string(space_group_number):
+def get_proper_point_group(space_group_number):
     """
     Maps a space-group-number to a point group
 
@@ -60,37 +61,36 @@ def get_proper_point_group_string(space_group_number):
 
     Returns
     -------
-    point_group_str : str
-        The proper point group string in --- convention
+    point_group :
 
     Notes
     -----
     This function enumerates the list on https://en.wikipedia.org/wiki/List_of_space_groups
-    Point groups (32) are converted to proper point groups (11) using the Schoenflies
+    Point groups (32) are then converted to proper point groups (11) using the Schoenflies
     representations given in that table.
     """
 
     if space_group_number in [1, 2]:
-        return "1"  # triclinic
+        return C1  # triclinic
     if 2 < space_group_number < 16:
-        return "2"  # monoclinic
+        return C2  # monoclinic
     if 15 < space_group_number < 75:
-        return "222"  # orthorhomic
+        return D2  # orthorhomic
     if 74 < space_group_number < 143:  # tetragonal
         if (74 < space_group_number < 89) or (99 < space_group_number < 110):
-            return "4"  # cyclic
+            return C4
         else:
-            return "422"  # dihedral
+            return D4
     if 142 < space_group_number < 168:  # trigonal
         if 142 < space_group_number < 148 or 156 < space_group_number < 161:
-            return "3"  # cyclic
+            return C3
         else:
-            return "32"  # dihedral
+            return D3
     if 167 < space_group_number < 194:  # hexagonal
         if 167 < space_group_number < 176 or space_group_number in [183, 184, 185, 186]:
-            return "6"  # cyclic
+            return C6
         else:
-            return "622"  # dihedral
+            return D6
     if 193 < space_group_number < 231:  # cubic
         if 193 < space_group_number < 207 or space_group_number in [
             215,
@@ -100,6 +100,6 @@ def get_proper_point_group_string(space_group_number):
             219,
             220,
         ]:
-            return "432"  # oct
+            return O  # oct
         else:
-            return "23"  # tet
+            return T  # tet
