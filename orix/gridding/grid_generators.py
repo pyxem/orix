@@ -32,9 +32,9 @@ def get_grid_fundamental(resolution, point_group=None, space_group=None):
     ----------
     resolution:
 
-    point_group:
+    point_group: orix.symmettry
 
-    space_group:
+    space_group: int
 
     Returns
     -------
@@ -42,6 +42,9 @@ def get_grid_fundamental(resolution, point_group=None, space_group=None):
     See Also
     --------
     orix.gridding.utils.create_equispaced_grid
+
+    Examples
+    --------
     """
     if point_group is None:
         point_group = get_proper_point_group(space_group)
