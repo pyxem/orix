@@ -92,14 +92,9 @@ def get_proper_point_group(space_group_number):
         else:
             return D6
     if 193 < space_group_number < 231:  # cubic
-        if 193 < space_group_number < 207 or space_group_number in [
-            215,
-            216,
-            217,
-            218,
-            219,
-            220,
-        ]:
-            return O  # oct
+        if 193 < space_group_number < 207:
+            return O
+        elif: 214 < space_group_number < 221:
+            return O
         else:
-            return T  # tet
+            return T
