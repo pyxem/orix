@@ -83,9 +83,8 @@ def get_grid_local(resolution, center, grid_width):
     --------
     orix.gridding_utils.create_equispaced_grid
     """
-    q = create_equispaced_grid(resolution)
-    q = ~center * q
-    q = q[q.angle < grid_width]
-    q = center * q
 
+    q = create_equispaced_grid(resolution)
+    q = q[q.angle < grid_width]
+    q = center * q #check this for rotation order
     return q

@@ -23,9 +23,27 @@ from orix.gridding.gridding_utils import (
     create_equispaced_grid,
     _get_proper_point_group,
 )
+from orix.gridding.gridding_generators import get_grid_fundamental, get_grid_local
 
 def test_get_proper_point_group():
     """ Makes sure all the ints from 1 to 230 give answers"""
     for _space_group in np.arange(1, 231):
         point_group = _get_proper_point_group(_space_group)
         assert point_group in [C1,C2,C3,C4,C6,D2,D3,D4,D6,O,T]
+
+# make a grid fixture
+
+def test_create_equispaced_grid_regions():
+    """ Checks that different regions have the same density"""
+    pass
+
+def test_create_equispaced_grid_resolution():
+    """ Checks that doubling resolution doubles density """
+    pass
+
+def test_get_grid_local_width():
+    """ Checks that doubling the width doubles the number of points """
+    pass
+
+def test_get_grid_fundemental_zone():
+    """ Cross check point counts to group order terms """    
