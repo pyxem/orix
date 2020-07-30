@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import numpy as np
+
 from orix.quaternion.symmetry import C1,C2,C3,C4,C6,D2,D3,D4,D6,O,T
 from orix.gridding.gridding_utils import (
     create_equispaced_grid,
