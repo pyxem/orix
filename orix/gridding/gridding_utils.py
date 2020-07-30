@@ -77,16 +77,18 @@ def create_equispaced_grid(resolution):
 
     Parameters
     ----------
-
+    resolution : float
+        The smallest distance between a rotation and its neighbour (degrees)
     Returns
     -------
+    q : orix.Rotation
     """
     num_steps = int(np.ceil(360 / resolution))
 
-    alpha = np.linspace(0, np.pi, num=num_steps, endpoint=False)
+    alpha = np.linspace(0, 2*np.pi, num=num_steps, endpoint=False)
     beta = np.arcos(np.linspace(1, -1, num=num_steps, endpoint=False))
-    gamma = np.linspace(0, np.pi, num=num_steps, endpoint=False)
-    q = np.asarray(list(product(alpha, beta, gamma)))
+    gamma = np.linspace(0, 2*np.pi, num=num_steps, endpoint=False)
+    q = np.deg2rad(np.asarray(list(product(alpha, beta, gamma))))
 
     # convert to quaternions
     q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")
