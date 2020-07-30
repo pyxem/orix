@@ -21,11 +21,11 @@ import numpy as np
 from orix.quaternion.symmetry import C1,C2,C3,C4,C6,D2,D3,D4,D6,O,T
 from orix.gridding.gridding_utils import (
     create_equispaced_grid,
-    get_proper_point_group,
+    _get_proper_point_group,
 )
 
 def test_get_proper_point_group():
     """ Makes sure all the ints from 1 to 230 give answers"""
     for _space_group in np.arange(1, 231):
-        point_group = get_proper_point_group(_space_group)
+        point_group = _get_proper_point_group(_space_group)
         assert point_group in [C1,C2,C3,C4,C6,D2,D3,D4,D6,O,T]

@@ -30,12 +30,12 @@ def get_grid_fundamental(resolution, point_group=None, space_group=None):
 
     Parameters
     ----------
-    resolution:
-
-    point_group: orix.symmettry
-
+    resolution : float
+        The smallest distance between a rotation and its neighbour (degrees)
+    point_group : orix.symmettry
+        One of the 11 proper point groups as
     space_group: int
-
+        Between 1 and 231
     Returns
     -------
 
@@ -45,6 +45,14 @@ def get_grid_fundamental(resolution, point_group=None, space_group=None):
 
     Examples
     --------
+    >>> from orix.quaternion.symmetry import C2,C4
+    >>> grid = get_grid_fundamental(1,point_group=C2)
+    >>> grid.shape()
+    ...
+    >>> grid = get_grid_fundamental(1,point_group=C4)
+    >>> grid.shape()
+    ...
+
     """
     if point_group is None:
         point_group = get_proper_point_group(space_group)
@@ -61,7 +69,13 @@ def get_grid_local(resolution, center, grid_width):
 
     Parameters
     ----------
+    resolution : float
+        The smallest distance between a rotation and its neighbour (degrees)
 
+    center :
+
+    grid_width :
+        The largest angle of rotation away from center that is acceptable (degrees)
     Returns
     -------
 

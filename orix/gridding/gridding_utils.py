@@ -97,18 +97,18 @@ def create_equispaced_grid(resolution):
     return q
 
 
-def get_proper_point_group(space_group_number):
+def _get_proper_point_group(space_group_number):
     """
-    Maps a space-group-number to a point group
+    Maps a space group number to a point group
 
     Parameters
     ----------
     space_group_number : int
-
+        Between 1 and 231
     Returns
     -------
-    point_group :
-
+    point_group : orix.symmetry
+        One of the 11 proper point groups
     """
     spg = GetSpaceGroup(space_group_number)
     pgn = spg.point_group_name
