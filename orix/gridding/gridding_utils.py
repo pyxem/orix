@@ -22,8 +22,52 @@ the grid generation within rotation space """
 import numpy as np
 from itertools import product
 
+from diffpy.structure.spacegroups import GetSpaceGroup
+
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1,C2,C3,C4,C6,D2,D3,D4,D6,O,T
+from orix.quaternion.symmetry import C1, C2, C3, C4, C6, D2, D3, D4, D6, O, T
+
+conversion_dict = {
+    "PG1": C1,
+    "PG1bar": C1,
+    "PG2": C2,
+    "PGm": C2,
+    "PG2/m": C2,
+    "PG222": D2,
+    "PGmm2": C2,
+    "PGmmm": D2,
+    "PG4": C4,
+    "PG4bar": C4,
+    "PG4/m": C4,
+    "PG422": D4,
+    "PG4mm": C4,
+    "PG4bar2m": D4,
+    "PG4barm2": D4,
+    "PG4/mmm": D4,
+    "PG3": C3,
+    "PG3bar": C3,
+    "PG312": D3,
+    "PG321": D3,
+    "PG3m1": C3,
+    "PG31m": C3,
+    "PG3m": C3,
+    "PG3bar1m": D3,
+    "PG3barm1": D3,
+    "PG3barm": D3,
+    "PG6": C6,
+    "PG6bar": C6,
+    "PG6/m": C6,
+    "PG622": D6,
+    "PG6mm": C6,
+    "PG6barm2": D6,
+    "PG6bar2m": D6,
+    "PG6/mmm": D6,
+    "PG23": T,
+    "PGm3bar": T,
+    "PG432": O,
+    "PG4bar3m": T,
+    "PGm3barm": O,
+}
 
 
 def create_equispaced_grid(resolution):
@@ -63,38 +107,8 @@ def get_proper_point_group(space_group_number):
     -------
     point_group :
 
-    Notes
-    -----
-    This function enumerates the list on https://en.wikipedia.org/wiki/List_of_space_groups
-    Point groups (32) are then converted to proper point groups (11) using the Schoenflies
-    representations given in that table.
     """
+    spg = GetSpaceGroup(space_group_number)
+    pgn = spg.point_group_name
 
-    if space_group_number in [1, 2]:
-        return C1  # triclinic
-    if 2 < space_group_number < 16:
-        return C2  # monoclinic
-    if 15 < space_group_number < 75:
-        return D2  # orthorhomic
-    if 74 < space_group_number < 143:  # tetragonal
-        if (74 < space_group_number < 89) or (99 < space_group_number < 110):
-            return C4
-        else:
-            return D4
-    if 142 < space_group_number < 168:  # trigonal
-        if 142 < space_group_number < 148 or 156 < space_group_number < 161:
-            return C3
-        else:
-            return D3
-    if 167 < space_group_number < 194:  # hexagonal
-        if 167 < space_group_number < 176 or space_group_number in [183, 184, 185, 186]:
-            return C6
-        else:
-            return D6
-    if 193 < space_group_number < 231:  # cubic
-        if 193 < space_group_number < 207:
-            return O
-        elif: 214 < space_group_number < 221:
-            return O
-        else:
-            return T
+    return conversion_dict[pgn]
