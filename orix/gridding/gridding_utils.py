@@ -79,9 +79,11 @@ def create_equispaced_grid(resolution):
     ----------
     resolution : float
         The smallest distance between a rotation and its neighbour (degrees)
+
     Returns
     -------
     q : orix.Rotation
+        grid containing appropriate rotations
     """
     num_steps = int(np.ceil(360 / resolution))
 
@@ -105,6 +107,7 @@ def _get_proper_point_group(space_group_number):
     ----------
     space_group_number : int
         Between 1 and 231
+        
     Returns
     -------
     point_group : orix.symmetry

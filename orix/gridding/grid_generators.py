@@ -35,7 +35,7 @@ def get_grid_fundamental(resolution, point_group=None, space_group=None):
     resolution : float
         The smallest distance between a rotation and its neighbour (degrees)
     point_group : orix.symmettry
-        One of the 11 proper point groups as
+        One of the 11 proper point groups
     space_group: int
         Between 1 and 231
 
@@ -74,8 +74,11 @@ def get_grid_local(resolution, center, grid_width):
         The rotation to act as the center of the grid
     grid_width :
         The largest angle of rotation away from center that is acceptable (degrees)
+        
     Returns
     -------
+    q : orix.Rotation
+        grid of rotations the lie within grid_width of center
 
     See Also
     --------
@@ -85,5 +88,5 @@ def get_grid_local(resolution, center, grid_width):
     q = create_equispaced_grid(resolution)
     grid_cosine = np.arccos(np.deg2rad(grid_width/2))
     q = q[q.a > grid_cosine]
-    q = center * q #check this for rotation order
+    q = center * q
     return q
