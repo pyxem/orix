@@ -18,11 +18,13 @@
 
 """ This user facing code generates 'grids' in orientation spaces """
 
+import numpy as np
+
 from orix.gridding.gridding_utils import (
     create_equispaced_grid,
     _get_proper_point_group,
 )
-
+from orix.quaternion.orientation_region import OrientationRegion
 
 def get_grid_fundamental(resolution, point_group=None, space_group=None):
     """
@@ -36,8 +38,11 @@ def get_grid_fundamental(resolution, point_group=None, space_group=None):
         One of the 11 proper point groups as
     space_group: int
         Between 1 and 231
+
     Returns
     -------
+    q : orix.Rotation
+        grid of rotations the lie within the specified fundamental zone
 
     See Also
     --------
@@ -47,20 +52,13 @@ def get_grid_fundamental(resolution, point_group=None, space_group=None):
     --------
     >>> from orix.quaternion.symmetry import C2,C4
     >>> grid = get_grid_fundamental(1,point_group=C2)
-    >>> grid.shape()
-    ...
-    >>> grid = get_grid_fundamental(1,point_group=C4)
-    >>> grid.shape()
-    ...
-
     """
     if point_group is None:
         point_group = _get_proper_point_group(space_group)
 
     q = create_equispaced_grid(resolution)
-    q = q < point_group
-
-    return q
+    fundamental_region = OrientationRegion.from_symmetry(point_group)
+    return q[q < fundamental_region]
 
 
 def get_grid_local(resolution, center, grid_width):
@@ -72,8 +70,8 @@ def get_grid_local(resolution, center, grid_width):
     resolution : float
         The smallest distance between a rotation and its neighbour (degrees)
 
-    center :
-
+    center : orix.Rotation
+        The rotation to act as the center of the grid
     grid_width :
         The largest angle of rotation away from center that is acceptable (degrees)
     Returns
@@ -85,6 +83,7 @@ def get_grid_local(resolution, center, grid_width):
     """
 
     q = create_equispaced_grid(resolution)
-    q = q[q.angle < grid_width]
+    grid_cosine = np.arccos(np.deg2rad(grid_width/2))
+    q = q[q.a > grid_cosine]
     q = center * q #check this for rotation order
     return q

@@ -88,7 +88,7 @@ def create_equispaced_grid(resolution):
     alpha = np.linspace(0, 2*np.pi, num=num_steps, endpoint=False)
     beta = np.arccos(np.linspace(1, -1, num=num_steps, endpoint=False))
     gamma = np.linspace(0, 2*np.pi, num=num_steps, endpoint=False)
-    q = np.deg2rad(np.asarray(list(product(alpha, beta, gamma))))
+    q = np.asarray(list(product(alpha, beta, gamma)))
 
     # convert to quaternions
     q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")

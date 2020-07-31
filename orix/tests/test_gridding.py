@@ -34,25 +34,51 @@ def test_get_proper_point_group():
         point_group = _get_proper_point_group(_space_group)
         assert point_group in [C1,C2,C3,C4,C6,D2,D3,D4,D6,O,T]
 
-# make a grid fixture
 @pytest.fixture(scope="session")
 def grid():
     return create_equispaced_grid(2)
 
-def test_create_equispaced_grid_regions(grid):
+@pytest.fixture(scope="session")
+def fr():
+    """ fixed rotation """
+    r = Rotation([0.5,0.5,0,0])
+    return r
+
+def test_create_equispaced_grid_regions(grid,fr):
     """ Checks that different regions have the same density"""
-    pass
+    around_zero = grid[grid.a > 0.9]
+    moved = fr * grid
+    elsewhere   = moved[grid.a > 0.9]
+    # extra line simplifies the stacktrack
+    x,y = around_zero.size, elsewhere.size
+    assert np.isclose(x,y,rtol=0.01)
 
 def test_create_equispaced_grid_resolution(grid):
-    """ Checks that doubling resolution doubles density """
-    pass
+    """ Checks that doubling resolution doubles density (8-fold counts) """
+    lower = create_equispaced_grid(4)
+    x,y = lower.size * 8, grid.size
+    assert np.isclose(x,y,rtol=0.01)
 
-def test_get_grid_local_width():
-    """ Checks that doubling the width doubles the number of points """
-    r = Rotation([1,0,0,0])
-    x = get_grid_local(5,r,3)
-    y = get_grid_local(5,r,6)
-    pass
+def test_get_grid_local_width(fr):
+    """ Checks that doubling the width 8 folds the number of points """
+    x = get_grid_local(np.pi,fr,15).size * 8
+    y = get_grid_local(np.pi,fr,30).size
+    assert np.isclose(x,y,rtol=0.01)
 
-def test_get_grid_fundemental_zone():
+@pytest.fixture(scope="session")
+def C6_grid():
+    return get_grid_fundamental(4,point_group=C6)
+
+def test_get_grid_fundamental_zone_order(C6_grid):
     """ Cross check point counts to group order terms """
+    D6_grid = get_grid_fundamental(4,point_group=D6)
+    ratio = C6_grid.size / D6_grid.size
+    assert np.isclose(ratio,2,rtol=0.01)
+
+def test_get_grid_fundamental_space_group(C6_grid):
+    """ Going via the space_group route """
+    # assert that space group #3 is has pg C2
+    assert C2 == _get_proper_point_group(3)
+    C2_grid = get_grid_fundamental(4,space_group=3)
+    ratio = C2_grid.size / C6_grid.size
+    assert np.isclose(ratio,3,rtol=0.01)
