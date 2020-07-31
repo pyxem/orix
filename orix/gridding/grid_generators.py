@@ -69,12 +69,11 @@ def get_grid_local(resolution, center, grid_width):
     ----------
     resolution : float
         The smallest distance between a rotation and its neighbour (degrees)
-
     center : orix.Rotation
         The rotation to act as the center of the grid
     grid_width :
         The largest angle of rotation away from center that is acceptable (degrees)
-        
+
     Returns
     -------
     q : orix.Rotation
