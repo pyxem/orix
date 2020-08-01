@@ -51,7 +51,7 @@ def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
     Examples
     --------
     >>> from orix.quaternion.symmetry import C2,C4
-    >>> grid = get_grid_fundamental(1,point_group=C2)
+    >>> grid = get_grid_fundamental(1, point_group=C2)
     """
     if point_group is None:
         point_group = _get_proper_point_group(space_group)
