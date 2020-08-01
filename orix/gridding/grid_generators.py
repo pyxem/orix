@@ -34,14 +34,14 @@ def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
     ----------
     resolution : float
         The smallest distance between a rotation and its neighbour (degrees)
-    point_group : orix.symmettry
+    point_group : orix.quaternion.symmetry.Symmetry
         One of the 11 proper point groups
     space_group: int
         Between 1 and 231
 
     Returns
     -------
-    q : orix.Rotation
+    q : orix.quaternion.rotation.Rotation
         grid of rotations the lie within the specified fundamental zone
 
     See Also
@@ -69,14 +69,14 @@ def get_grid_local(resolution=2, center=None, grid_width=10):
     ----------
     resolution : float
         The smallest distance between a rotation and its neighbour (degrees)
-    center : orix.Rotation
+    center : orix.quaternion.rotation.Rotation
         The rotation to act as the center of the grid. If none uses the identity
     grid_width :
         The largest angle of rotation away from center that is acceptable (degrees)
 
     Returns
     -------
-    q : orix.Rotation
+    q : orix.quaternion.rotation.Rotation
         grid of rotations the lie within grid_width of center
 
     See Also

@@ -82,7 +82,7 @@ def create_equispaced_grid(resolution):
 
     Returns
     -------
-    q : orix.Rotation
+    q : orix.quaternion.rotation.Rotation
         grid containing appropriate rotations
     """
     num_steps = int(np.ceil(360 / resolution))
@@ -107,10 +107,10 @@ def _get_proper_point_group(space_group_number):
     ----------
     space_group_number : int
         Between 1 and 231
-        
+
     Returns
     -------
-    point_group : orix.symmetry
+    point_group : orix.quaternion.symmetry.Symmetry
         One of the 11 proper point groups
     """
     spg = GetSpaceGroup(space_group_number)
