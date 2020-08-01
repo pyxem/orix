@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-""" This user facing code generates 'grids' in orientation spaces """
+"""Module for generating grids in orientation spaces."""
 
 import numpy as np
 
@@ -28,7 +28,7 @@ from orix.quaternion.orientation_region import OrientationRegion
 
 def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
     """
-    Generates a grid of rotations that lie within a fundamental zone
+    Generates an equispaced grid of rotations within a fundamental zone.
 
     Parameters
     ----------
@@ -42,7 +42,7 @@ def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
     Returns
     -------
     q : orix.quaternion.rotation.Rotation
-        grid of rotations the lie within the specified fundamental zone
+        Grid of rotations lying within the specified fundamental zone
 
     See Also
     --------
@@ -70,14 +70,14 @@ def get_grid_local(resolution=2, center=None, grid_width=10):
     resolution : float
         The smallest distance between a rotation and its neighbour (degrees)
     center : orix.quaternion.rotation.Rotation
-        The rotation to act as the center of the grid. If none uses the identity
-    grid_width :
+        The rotation at which the grid is centered. If None uses the identity
+    grid_width : float
         The largest angle of rotation away from center that is acceptable (degrees)
 
     Returns
     -------
     q : orix.quaternion.rotation.Rotation
-        grid of rotations the lie within grid_width of center
+        Grid of rotations lying within grid_width of center
 
     See Also
     --------
