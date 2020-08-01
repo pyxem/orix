@@ -26,6 +26,7 @@ from orix.gridding.gridding_utils import (
 )
 from orix.quaternion.orientation_region import OrientationRegion
 
+
 def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
     """
     Generates an equispaced grid of rotations within a fundamental zone.
@@ -85,7 +86,7 @@ def get_grid_local(resolution=2, center=None, grid_width=10):
     """
 
     q = create_equispaced_grid(resolution)
-    grid_cosine = np.arccos(np.deg2rad(grid_width/2))
+    grid_cosine = np.arccos(np.deg2rad(grid_width / 2))
     q = q[q.a > grid_cosine]
     if center is not None:
         q = center * q

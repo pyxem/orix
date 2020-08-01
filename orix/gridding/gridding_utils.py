@@ -87,9 +87,9 @@ def create_equispaced_grid(resolution):
     """
     num_steps = int(np.ceil(360 / resolution))
 
-    alpha = np.linspace(0, 2*np.pi, num=num_steps, endpoint=False)
+    alpha = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
     beta = np.arccos(np.linspace(1, -1, num=num_steps, endpoint=False))
-    gamma = np.linspace(0, 2*np.pi, num=num_steps, endpoint=False)
+    gamma = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
     q = np.asarray(list(product(alpha, beta, gamma)))
 
     # convert to quaternions
