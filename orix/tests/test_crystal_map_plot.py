@@ -267,7 +267,7 @@ class TestCrystalMapPlotUtilities:
     ):
         cm = crystal_map
         cm[0, 0].phase_id = 1
-        cm.phases = PhaseList(names=phase_names, symmetries=[3, 3], colors=phase_colors)
+        cm.phases = PhaseList(names=phase_names, point_groups=[3, 3], colors=phase_colors)
 
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)

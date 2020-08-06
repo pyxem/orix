@@ -484,11 +484,14 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
     ]
 )
 def phase_list(request):
-    names, symmetry_names, colors, lattices, atoms = request.param
+    names, point_group_names, colors, lattices, atoms = request.param
     # Apparently diffpy.structure don't allow iteration over a list of lattices
     structures = [Structure(lattice=lattices[i], atoms=a) for i, a in enumerate(atoms)]
     return PhaseList(
-        names=names, symmetries=symmetry_names, colors=colors, structures=structures
+        names=names,
+        point_groups=point_group_names,
+        colors=colors,
+        structures=structures
     )
 
 

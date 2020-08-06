@@ -66,7 +66,7 @@ def file_reader(filename, refined=False, **kwargs):
     map_size = ny * nx
 
     # Some of the data needed to create a CrystalMap object
-    phase_name, symmetry, structure = _get_phase(phase_group)
+    phase_name, point_group, structure = _get_phase(phase_group)
     data_dict = {
         # Get map coordinates ("Y Position" data set is not correct in EMsoft as of
         # 2020-04, see:
@@ -76,9 +76,9 @@ def file_reader(filename, refined=False, **kwargs):
         "y": np.sort(np.tile(np.arange(ny) * step_y, nx)),
         # Get phase IDs
         "phase_id": data_group["Phase"][:],
-        # Get phase name, crystal symmetry and structure (lattice)
+        # Get phase name, point group and structure (lattice)
         "phase_list": PhaseList(
-            Phase(name=phase_name, symmetry=symmetry, structure=structure)
+            Phase(name=phase_name, point_group=point_group, structure=structure)
         ),
         "scan_unit": "um",
     }
@@ -165,13 +165,13 @@ def _get_phase(data_group):
     -------
     name : str
         Phase name.
-    symmetry : str
-        Phase symmetry.
+    point_group : str
+        Phase point group.
     structure : diffpy.structure.Structure
         Phase structure.
     """
     name = re.search(r"([A-z0-9]+)", data_group["MaterialName"][:][0].decode()).group(1)
-    symmetry = re.search(
+    point_group = re.search(
         r"\[([A-z0-9]+)\]", data_group["Point Group"][:][0].decode()
     ).group(1)
     lattice = Lattice(
@@ -181,4 +181,4 @@ def _get_phase(data_group):
         )
     )
     structure = Structure(title=name, lattice=lattice)
-    return name, symmetry, structure
+    return name, point_group, structure

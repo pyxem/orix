@@ -340,7 +340,7 @@ class TestAngPlugin:
         assert cm.phases.ids == [-1, 0]
         phase = cm.phases[0]
         assert phase.name == "Aluminum"
-        assert phase.symmetry.name == "432"
+        assert phase.point_group.name == "432"
 
     @pytest.mark.parametrize(
         "angfile_astar, map_shape, step_sizes, phase_id, example_rot",
@@ -427,7 +427,7 @@ class TestAngPlugin:
         assert cm.phases.ids == [1]
         phase = cm.phases[1]
         assert phase.name == "Nickel"
-        assert phase.symmetry.name == "432"
+        assert phase.point_group.name == "432"
 
     @pytest.mark.parametrize(
         "angfile_emsoft, map_shape, step_sizes, phase_id, example_rot",
@@ -526,7 +526,7 @@ class TestAngPlugin:
         assert phases_in_data.size == 2
         assert phases_in_data.ids == [1, 2]
         assert phases_in_data.names == ["austenite", "ferrite"]
-        assert [i.name for i in phases_in_data.symmetries] == ["432",] * 2
+        assert [i.name for i in phases_in_data.point_groups] == ["432", ] * 2
 
     def test_get_header(self, temp_ang_file):
         temp_ang_file.write(ANGFILE_ASTAR_HEADER)
@@ -606,7 +606,7 @@ class TestAngPlugin:
             assert column_names == expected_columns
 
     @pytest.mark.parametrize(
-        "header_phase_part, expected_names, expected_symmetries, "
+        "header_phase_part, expected_names, expected_point_groups, "
         "expected_lattice_constants",
         [
             (
@@ -636,7 +636,7 @@ class TestAngPlugin:
         self,
         header_phase_part,
         expected_names,
-        expected_symmetries,
+        expected_point_groups,
         expected_lattice_constants,
     ):
         # Create header from parts
@@ -659,10 +659,10 @@ class TestAngPlugin:
             "#",
             "# GRID: SqrGrid#",
         ]
-        names, symmetries, lattice_constants = _get_phases_from_header(header)
+        names, point_groups, lattice_constants = _get_phases_from_header(header)
 
         assert names == expected_names
-        assert symmetries == expected_symmetries
+        assert point_groups == expected_point_groups
         assert np.allclose(lattice_constants, expected_lattice_constants)
 
 
@@ -874,7 +874,7 @@ class TestOrixHDF5Plugin:
         assert phase_list.colors == phase_list2.colors
         assert [
             s1.name == s2.name
-            for s1, s2 in zip(phase_list.symmetries, phase_list2.symmetries)
+            for s1, s2 in zip(phase_list.point_groups, phase_list2.point_groups)
         ]
 
     def test_dict2phase(self, phase_list):
@@ -883,7 +883,7 @@ class TestOrixHDF5Plugin:
 
         assert phase1.name == phase2.name
         assert phase1.color == phase2.color
-        assert phase1.symmetry.name == phase2.symmetry.name
+        assert phase1.point_group.name == phase2.point_group.name
         assert phase1.structure.lattice.abcABG() == phase2.structure.lattice.abcABG()
 
     def test_dict2structure(self, phase_list):

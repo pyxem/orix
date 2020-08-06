@@ -97,7 +97,7 @@ def file_reader(filename):
     unique_phase_ids = np.unique(data_dict["phase_id"]).astype(int)
     data_dict["phase_list"] = PhaseList(
         names=phase_names,
-        symmetries=symmetries,
+        point_groups=symmetries,
         structures=structures,
         ids=unique_phase_ids,
     )
@@ -260,25 +260,25 @@ def _get_phases_from_header(header):
     -------
     phase_names : list of str
         List of names of detected phases.
-    phase_symmetries : list of str
-        List of symmetries of detected phase.
+    phase_point_groups : list of str
+        List of point groups of detected phase.
     lattice_constants : list of list of floats
         List of list of lattice parameters of detected phases.
 
     Notes
     -----
     Regular expressions are used to collect phase name, formula and
-    symmetry. This function have been tested with files from the following
-    vendor's formats: EDAX TSL OIM Data Collection v7, ASTAR Index, and
-    EMsoft v4/v5.
+    point group. This function have been tested with files from the
+    following vendor's formats: EDAX TSL OIM Data Collection v7, ASTAR
+    Index, and EMsoft v4/v5.
     """
     regexps = {
         "name": "# MaterialName([ \t]+)([A-z0-9 ]+)",
         "formula": "# Formula([ \t]+)([A-z0-9 ]+)",
-        "symmetry": "# Symmetry([ \t]+)([A-z0-9 ]+)",
+        "point_group": "# Symmetry([ \t]+)([A-z0-9 ]+)",
         "lattice_constants": r"# LatticeConstants([ \t+])(.*)",
     }
-    phases = {"name": [], "formula": [], "symmetry": [], "lattice_constants": []}
+    phases = {"name": [], "formula": [], "point_group": [], "lattice_constants": []}
     for line in header:
         for key, exp in regexps.items():
             match = re.search(exp, line)
@@ -296,4 +296,4 @@ def _get_phases_from_header(header):
     if len(names) == 0 or any([i != "" for i in names]):
         names = phases["name"]
 
-    return names, phases["symmetry"], phases["lattice_constants"]
+    return names, phases["point_group"], phases["lattice_constants"]
