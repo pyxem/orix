@@ -72,7 +72,7 @@ conversion_dict = {
 
 def uniform_SO3_sample(resolution):
     """
-    Returns rotations that are evenly spaced according to the Harr measure on
+    Returns rotations that are evenly spaced according to the Haar measure on
     SO3
 
     Parameters
