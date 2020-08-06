@@ -1,6 +1,16 @@
+from itertools import chain
 from setuptools import setup, find_packages
 from orix import __name__, __version__, __author__, __author_email__, __description__
 
+# Projects with optional features for building the documentation and running
+# tests. From setuptools:
+# https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
+extra_feature_requirements = {
+    "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"]
+}
+extra_feature_requirements["dev"] = ["black >= 19.3b0", "pre-commit >= 1.16",] + list(
+    chain(*list(extra_feature_requirements.values()))
+)
 
 setup(
     name=__name__,
@@ -24,6 +34,7 @@ setup(
         "Topic :: Scientific/Engineering :: Physics",
     ],
     packages=find_packages(exclude=["orix/tests"]),
+    extras_require=extra_feature_requirements,
     # fmt: off
     install_requires=[
         "diffpy.structure >= 3",
