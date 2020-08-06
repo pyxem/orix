@@ -64,13 +64,7 @@ class Phase:
         Return a deep copy using :py:func:`~copy.deepcopy` function.
     """
 
-    def __init__(
-        self,
-        name=None,
-        structure=None,
-        point_group=None,
-        color=None
-    ):
+    def __init__(self, name=None, structure=None, point_group=None, color=None):
         """
         Parameters
         ----------

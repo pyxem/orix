@@ -161,7 +161,9 @@ class TestCrystalMapInit:
         n_different = n_point_groups - n_phase_ids
         if n_different < 0:
             point_groups += [None] * abs(n_different)
-        assert [cm.phases.point_groups[i] == point_groups[i] for i in range(n_phase_ids)]
+        assert [
+            cm.phases.point_groups[i] == point_groups[i] for i in range(n_phase_ids)
+        ]
 
         unique_phase_ids = list(np.unique(crystal_map_input["phase_id"]).astype(int))
         assert cm.phases.ids == unique_phase_ids

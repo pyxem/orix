@@ -491,7 +491,7 @@ def phase_list(request):
         names=names,
         point_groups=point_group_names,
         colors=colors,
-        structures=structures
+        structures=structures,
     )
 
 

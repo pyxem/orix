@@ -416,8 +416,8 @@ class TestPhaseList:
 
             assert phase_list.names == expected_names
             assert [
-                       s.name for s in phase_list.point_groups
-                   ] == expected_point_group_names
+                s.name for s in phase_list.point_groups
+            ] == expected_point_group_names
 
     def test_set_phase_in_empty_phaselist(self):
         pl = PhaseList()

@@ -245,7 +245,7 @@ class TestAngPlugin:
                     np.zeros(5 * 3, dtype=int),  # phase_id
                     5,  # n_unknown_columns
                     np.array(
-                        [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628],]
+                        [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628]]
                     ),  # rotations as rows of Euler angle triplets
                 ),
                 (5, 3),
@@ -253,7 +253,7 @@ class TestAngPlugin:
                 np.zeros(5 * 3, dtype=int),
                 5,
                 np.array(
-                    [[1.59942, 2.37748, -1.74690], [1.59331, 2.37417, -1.74899],]
+                    [[1.59942, 2.37748, -1.74690], [1.59331, 2.37417, -1.74899]]
                 ),  # rotations as rows of Euler angle triplets
             ),
             (
@@ -263,7 +263,7 @@ class TestAngPlugin:
                     np.zeros(8 * 4, dtype=int),  # phase_id
                     5,  # n_unknown_columns
                     np.array(
-                        [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702],]
+                        [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702]]
                     ),  # rotations as rows of Euler angle triplets
                 ),
                 (8, 4),
@@ -271,7 +271,7 @@ class TestAngPlugin:
                 np.zeros(8 * 4, dtype=int),
                 5,
                 np.array(
-                    [[-0.12113, 2.34188, 1.31702], [-0.47211, 0.79936, -1.80973],]
+                    [[-0.12113, 2.34188, 1.31702], [-0.47211, 0.79936, -1.80973]]
                 ),  # rotations as rows of Euler angle triplets
             ),
         ],
@@ -363,7 +363,7 @@ class TestAngPlugin:
                 (4.5, 4.5),
                 np.ones(9 * 3, dtype=int),
                 np.array(
-                    [[1.895079, 0.739496, 1.413542], [1.897871, 0.742638, 1.413717],]
+                    [[1.895079, 0.739496, 1.413542], [1.897871, 0.742638, 1.413717]]
                 ),
             ),
             (
@@ -382,7 +382,7 @@ class TestAngPlugin:
                 (10, 10),
                 np.ones(11 * 13, dtype=int),
                 np.array(
-                    [[1.621760, 2.368935, -1.723861], [1.604481, 2.367539, -1.741315],]
+                    [[1.621760, 2.368935, -1.723861], [1.604481, 2.367539, -1.741315]]
                 ),
             ),
         ],
@@ -460,7 +460,7 @@ class TestAngPlugin:
                     )
                 ),
                 np.array(
-                    [[1.895079, 0.739496, 1.413542], [1.897871, 0.742638, 1.413717],]
+                    [[1.895079, 0.739496, 1.413542], [1.897871, 0.742638, 1.413717]]
                 ),
             ),
             (
@@ -474,7 +474,7 @@ class TestAngPlugin:
                         )
                     ),  # phase_id
                     np.array(
-                        [[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]
+                        [[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386]]
                     ),
                 ),
                 (3, 6),
@@ -485,7 +485,7 @@ class TestAngPlugin:
                         np.ones(int(np.floor((3 * 6) / 2))) * 2,
                     )
                 ),
-                np.array([[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386],]),
+                np.array([[1.62176, 2.36894, -1.72386], [1.60448, 2.36754, -1.72386]]),
             ),
         ],
         indirect=["angfile_emsoft"],
@@ -526,7 +526,7 @@ class TestAngPlugin:
         assert phases_in_data.size == 2
         assert phases_in_data.ids == [1, 2]
         assert phases_in_data.names == ["austenite", "ferrite"]
-        assert [i.name for i in phases_in_data.point_groups] == ["432", ] * 2
+        assert [i.name for i in phases_in_data.point_groups] == ["432"] * 2
 
     def test_get_header(self, temp_ang_file):
         temp_ang_file.write(ANGFILE_ASTAR_HEADER)
