@@ -22,11 +22,11 @@ import numpy as np
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, C2, C3, C4, C6, D2, D3, D4, D6, O, T
-from orix.gridding.gridding_utils import (
-    create_equispaced_grid,
+from orix.sampling.sampling_utils import (
+    uniform_SO3_sample,
     _get_proper_point_group,
 )
-from orix.gridding.grid_generators import get_grid_fundamental, get_grid_local
+from orix.sampling.sample_generators import get_grid_fundamental, get_grid_local
 
 
 def test_get_proper_point_group():
@@ -38,7 +38,7 @@ def test_get_proper_point_group():
 
 @pytest.fixture(scope="session")
 def grid():
-    return create_equispaced_grid(2)
+    return uniform_SO3_sample(2)
 
 
 @pytest.fixture(scope="session")
@@ -48,7 +48,7 @@ def fr():
     return r
 
 
-def test_create_equispaced_grid_regions(grid, fr):
+def test_uniform_SO3_sample_regions(grid, fr):
     """ Checks that different regions have the same density"""
     around_zero = grid[grid.a > 0.9]
     moved = fr * grid
@@ -58,9 +58,9 @@ def test_create_equispaced_grid_regions(grid, fr):
     assert np.isclose(x, y, rtol=0.01)
 
 
-def test_create_equispaced_grid_resolution(grid):
+def test_uniform_SO3_sample_resolution(grid):
     """ Checks that doubling resolution doubles density (8-fold counts) """
-    lower = create_equispaced_grid(4)
+    lower = uniform_SO3_sample(4)
     x, y = lower.size * 8, grid.size
     assert np.isclose(x, y, rtol=0.01)
 

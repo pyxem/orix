@@ -20,8 +20,8 @@
 
 import numpy as np
 
-from orix.gridding.gridding_utils import (
-    create_equispaced_grid,
+from orix.sampling.sampling_utils import (
+    uniform_SO3_sample,
     _get_proper_point_group,
 )
 from orix.quaternion.orientation_region import OrientationRegion
@@ -47,7 +47,7 @@ def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
 
     See Also
     --------
-    orix.gridding.utils.create_equispaced_grid
+    orix.sampling.utils.uniform_SO3_sample
 
     Examples
     --------
@@ -57,7 +57,7 @@ def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
     if point_group is None:
         point_group = _get_proper_point_group(space_group)
 
-    q = create_equispaced_grid(resolution)
+    q = uniform_SO3_sample(resolution)
     fundamental_region = OrientationRegion.from_symmetry(point_group)
     return q[q < fundamental_region]
 
@@ -82,10 +82,10 @@ def get_grid_local(resolution=2, center=None, grid_width=10):
 
     See Also
     --------
-    orix.gridding_utils.create_equispaced_grid
+    orix.sampling_utils.uniform_SO3_sample
     """
 
-    q = create_equispaced_grid(resolution)
+    q = uniform_SO3_sample(resolution)
     grid_cosine = np.arccos(np.deg2rad(grid_width / 2))
     q = q[q.a > grid_cosine]
     if center is not None:
