@@ -911,3 +911,22 @@ class TestOrixHDF5Plugin:
 
         assert str(atom.element) == str(atom2.element)
         assert np.allclose(atom.xyz, atom2.xyz)
+
+    def test_read_point_group_from_v0_3_x(self, temp_file_path, crystal_map):
+        crystal_map.phases[0].point_group = "1"
+        save(filename=temp_file_path, object2write=crystal_map)
+
+        # First, ensure point group data set name is named "symmetry", as in v0.3.0
+        with File(temp_file_path, mode="r+") as f:
+            for phase in f["crystal_map/header/phases"].values():
+                phase["symmetry"] = phase["point_group"]
+                del phase["point_group"]
+
+        # Then, make sure it can still be read
+        cm2 = load(filename=temp_file_path)
+        # And that the symmetry operations are the same, for good measure
+        print(crystal_map)
+        print(cm2)
+        assert np.allclose(
+            crystal_map.phases[0].point_group.data, cm2.phases[0].point_group.data
+        )

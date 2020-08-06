@@ -164,6 +164,8 @@ def dict2phase(dictionary):
     ----------
     dictionary : dict
         Dictionary with phase information.
+    version : list, optional
+        orix version. If None (default), the current version is assumed.
 
     Returns
     -------
@@ -172,7 +174,11 @@ def dict2phase(dictionary):
     dictionary = copy.deepcopy(dictionary)
     structure = dict2structure(dictionary["structure"])
     structure.title = dictionary["name"]
-    point_group = dictionary["point_group"]
+    # TODO: Remove this check in v0.6.0
+    try:
+        point_group = dictionary["point_group"]
+    except KeyError:  # v0.3.0
+        point_group = dictionary["symmetry"]
     if point_group == "None":
         point_group = None
     return Phase(
