@@ -26,7 +26,7 @@ from orix.sampling.sampling_utils import (
     uniform_SO3_sample,
     _get_proper_point_group,
 )
-from orix.sampling.sample_generators import get_grid_fundamental, get_grid_local
+from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
 
 
 def test_get_proper_point_group():
@@ -37,7 +37,7 @@ def test_get_proper_point_group():
 
 
 @pytest.fixture(scope="session")
-def grid():
+def sample():
     return uniform_SO3_sample(2)
 
 
@@ -48,46 +48,46 @@ def fr():
     return r
 
 
-def test_uniform_SO3_sample_regions(grid, fr):
+def test_uniform_SO3_sample_regions(sample, fr):
     """ Checks that different regions have the same density"""
-    around_zero = grid[grid.a > 0.9]
-    moved = fr * grid
-    elsewhere = moved[grid.a > 0.9]
+    around_zero = sample[sample.a > 0.9]
+    moved = fr * sample
+    elsewhere = moved[sample.a > 0.9]
     # extra line simplifies the stacktrack
     x, y = around_zero.size, elsewhere.size
     assert np.isclose(x, y, rtol=0.01)
 
 
-def test_uniform_SO3_sample_resolution(grid):
+def test_uniform_SO3_sample_resolution(sample):
     """ Checks that doubling resolution doubles density (8-fold counts) """
     lower = uniform_SO3_sample(4)
-    x, y = lower.size * 8, grid.size
+    x, y = lower.size * 8, sample.size
     assert np.isclose(x, y, rtol=0.01)
 
 
-def test_get_grid_local_width(fr):
+def test_get_sample_local_width(fr):
     """ Checks that doubling the width 8 folds the number of points """
-    x = get_grid_local(np.pi, fr, 15).size * 8
-    y = get_grid_local(np.pi, fr, 30).size
+    x = get_sample_local(np.pi, fr, 15).size * 8
+    y = get_sample_local(np.pi, fr, 30).size
     assert np.isclose(x, y, rtol=0.01)
 
 
 @pytest.fixture(scope="session")
-def C6_grid():
-    return get_grid_fundamental(4, point_group=C6)
+def C6_sample():
+    return get_sample_fundamental(4, point_group=C6)
 
 
-def test_get_grid_fundamental_zone_order(C6_grid):
+def test_get_sample_fundamental_zone_order(C6_sample):
     """ Cross check point counts to group order terms """
-    D6_grid = get_grid_fundamental(4, point_group=D6)
-    ratio = C6_grid.size / D6_grid.size
+    D6_sample = get_sample_fundamental(4, point_group=D6)
+    ratio = C6_sample.size / D6_sample.size
     assert np.isclose(ratio, 2, rtol=0.01)
 
 
-def test_get_grid_fundamental_space_group(C6_grid):
+def test_get_sample_fundamental_space_group(C6_sample):
     """ Going via the space_group route """
     # assert that space group #3 is has pg C2
     assert C2 == _get_proper_point_group(3)
-    C2_grid = get_grid_fundamental(4, space_group=3)
-    ratio = C2_grid.size / C6_grid.size
+    C2_sample = get_sample_fundamental(4, space_group=3)
+    ratio = C2_sample.size / C6_sample.size
     assert np.isclose(ratio, 3, rtol=0.01)

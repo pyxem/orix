@@ -27,7 +27,7 @@ from orix.sampling.sampling_utils import (
 from orix.quaternion.orientation_region import OrientationRegion
 
 
-def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
+def get_sample_fundamental(resolution=2, point_group=None, space_group=None):
     """
     Generates an equispaced grid of rotations within a fundamental zone.
 
@@ -62,7 +62,7 @@ def get_grid_fundamental(resolution=2, point_group=None, space_group=None):
     return q[q < fundamental_region]
 
 
-def get_grid_local(resolution=2, center=None, grid_width=10):
+def get_sample_local(resolution=2, center=None, grid_width=10):
     """
     Generates a grid of rotations about a given rotation
 
