@@ -466,12 +466,7 @@ class TestScalebar:
             (((1, 10, 30), (0, 1, 1), 1, [0]), {}, {}),  # Default
             (
                 ((1, 10, 30), (0, 1, 1), 1, [0]),
-                {
-                    "loc": 4,
-                    "sep": 6,
-                    "size_vertical": 0.2,
-                    "alpha": 0.8,
-                },
+                {"loc": 4, "sep": 6, "size_vertical": 0.2, "alpha": 0.8,},
                 {
                     "loc": "loc",
                     "sep": ["_box", "sep"],
