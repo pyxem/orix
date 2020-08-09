@@ -55,21 +55,21 @@ def test_uniform_SO3_sample_regions(sample, fr):
     elsewhere = moved[sample.a > 0.9]
     # extra line simplifies the stacktrack
     x, y = around_zero.size, elsewhere.size
-    assert np.isclose(x, y, rtol=0.01)
+    assert np.isclose(x, y, rtol=0.025)
 
 
 def test_uniform_SO3_sample_resolution(sample):
     """ Checks that doubling resolution doubles density (8-fold counts) """
     lower = uniform_SO3_sample(4)
     x, y = lower.size * 8, sample.size
-    assert np.isclose(x, y, rtol=0.01)
+    assert np.isclose(x, y, rtol=0.025)
 
 
 def test_get_sample_local_width(fr):
     """ Checks that doubling the width 8 folds the number of points """
     x = get_sample_local(np.pi, fr, 15).size * 8
     y = get_sample_local(np.pi, fr, 30).size
-    assert np.isclose(x, y, rtol=0.01)
+    assert np.isclose(x, y, rtol=0.025)
 
 
 @pytest.fixture(scope="session")
@@ -81,7 +81,7 @@ def test_get_sample_fundamental_zone_order(C6_sample):
     """ Cross check point counts to group order terms """
     D6_sample = get_sample_fundamental(4, point_group=D6)
     ratio = C6_sample.size / D6_sample.size
-    assert np.isclose(ratio, 2, rtol=0.01)
+    assert np.isclose(ratio, 2, rtol=0.025)
 
 
 def test_get_sample_fundamental_space_group(C6_sample):
@@ -90,4 +90,4 @@ def test_get_sample_fundamental_space_group(C6_sample):
     assert C2 == _get_proper_point_group(3)
     C2_sample = get_sample_fundamental(4, space_group=3)
     ratio = C2_sample.size / C6_sample.size
-    assert np.isclose(ratio, 3, rtol=0.01)
+    assert np.isclose(ratio, 3, rtol=0.025)
