@@ -86,9 +86,12 @@ def uniform_SO3_sample(resolution):
         grid containing appropriate rotations
     """
     num_steps = int(np.ceil(360 / resolution))
+    if num_steps%2==1:
+        num_steps=int(num_steps+1)
+    half_steps = int(num_steps/2)
 
     alpha = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
-    beta = np.arccos(np.linspace(1, -1, num=num_steps, endpoint=False))
+    beta = np.arccos(np.linspace(1, -1, num=half_steps, endpoint=False))
     gamma = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
     q = np.asarray(list(product(alpha, beta, gamma)))
 
