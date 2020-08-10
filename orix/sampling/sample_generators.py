@@ -33,12 +33,12 @@ def get_sample_fundamental(resolution=2, point_group=None, space_group=None):
 
     Parameters
     ----------
-    resolution : float
-        The smallest distance between a rotation and its neighbour (degrees)
-    point_group : orix.quaternion.symmetry.Symmetry
-        One of the 11 proper point groups
-    space_group: int
-        Between 1 and 231
+    resolution : float, optional
+        The characteristic distance between a rotation and its neighbour (degrees)
+    point_group : orix.quaternion.symmetry.Symmetry, optional
+        One of the 11 proper point groups, defaults to None
+    space_group: int, optional
+        Between 1 and 231, defaults to None
 
     Returns
     -------
@@ -68,11 +68,11 @@ def get_sample_local(resolution=2, center=None, grid_width=10):
 
     Parameters
     ----------
-    resolution : float
-        The smallest distance between a rotation and its neighbour (degrees)
-    center : orix.quaternion.rotation.Rotation
-        The rotation at which the grid is centered. If None uses the identity
-    grid_width : float
+    resolution : float, optional
+        The characteristic distance between a rotation and its neighbour (degrees)
+    center : orix.quaternion.rotation.Rotation, optional
+        The rotation at which the grid is centered. If None (default) uses the identity
+    grid_width : float, optional
         The largest angle of rotation away from center that is acceptable (degrees)
 
     Returns
