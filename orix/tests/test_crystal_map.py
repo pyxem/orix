@@ -152,25 +152,27 @@ class TestCrystalMapInit:
         indirect=["crystal_map_input"],
     )
     def test_init_with_phase_list(self, crystal_map_input):
-        symmetries = [C2, C3, C4]
-        phase_list = PhaseList(symmetries=symmetries)
+        point_groups = [C2, C3, C4]
+        phase_list = PhaseList(point_groups=point_groups)
         cm = CrystalMap(phase_list=phase_list, **crystal_map_input)
 
-        n_symmetries = len(symmetries)
+        n_point_groups = len(point_groups)
         n_phase_ids = len(cm.phases.ids)
-        n_different = n_symmetries - n_phase_ids
+        n_different = n_point_groups - n_phase_ids
         if n_different < 0:
-            symmetries += [None] * abs(n_different)
-        assert [cm.phases.symmetries[i] == symmetries[i] for i in range(n_phase_ids)]
+            point_groups += [None] * abs(n_different)
+        assert [
+            cm.phases.point_groups[i] == point_groups[i] for i in range(n_phase_ids)
+        ]
 
         unique_phase_ids = list(np.unique(crystal_map_input["phase_id"]).astype(int))
         assert cm.phases.ids == unique_phase_ids
 
-    def test_init_with_single_symmetry(self, crystal_map_input):
-        symmetry = O
-        phase_list = PhaseList(symmetries=symmetry)
+    def test_init_with_single_point_group(self, crystal_map_input):
+        point_group = O
+        phase_list = PhaseList(point_groups=point_group)
         cm = CrystalMap(phase_list=phase_list, **crystal_map_input)
-        assert np.allclose(cm.phases.symmetries[0].data, symmetry.data)
+        assert np.allclose(cm.phases.point_groups[0].data, point_group.data)
 
 
 class TestCrystalMapGetItem:
@@ -400,7 +402,7 @@ class TestCrystalMapOrientations:
         assert orientations_size == cm.size
 
     @pytest.mark.parametrize(
-        "symmetry, rotation, expected_orientation",
+        "point_group, rotation, expected_orientation",
         [
             (C2, [(0.6088, 0, 0, 0.7934)], [(-0.7934, 0, 0, 0.6088)]),
             (C3, [(0.6088, 0, 0, 0.7934)], [(-0.9914, 0, 0, 0.1305)]),
@@ -408,22 +410,22 @@ class TestCrystalMapOrientations:
             (O, [(0.6088, 0, 0, 0.7934)], [(-0.9914, 0, 0, -0.1305)]),
         ],
     )
-    def test_orientations_symmetry(self, symmetry, rotation, expected_orientation):
+    def test_orientations_symmetry(self, point_group, rotation, expected_orientation):
         r = Rotation(rotation)
         cm = CrystalMap(rotations=r, phase_id=np.array([0]))
-        cm.phases = PhaseList(Phase("a", symmetry=symmetry))
+        cm.phases = PhaseList(Phase("a", point_group=point_group))
 
         o = cm.orientations
 
         assert np.allclose(
-            o.data, Orientation(r).set_symmetry(symmetry).data, atol=1e-3
+            o.data, Orientation(r).set_symmetry(point_group).data, atol=1e-3
         )
         assert np.allclose(o.data, expected_orientation, atol=1e-3)
 
     def test_orientations_none_symmetry_raises(self, crystal_map_input):
         cm = CrystalMap(**crystal_map_input)
 
-        assert cm.phases.symmetries == [None]
+        assert cm.phases.point_groups == [None]
 
         with pytest.raises(TypeError, match="'NoneType' object is not iterable"):
             _ = cm.orientations
@@ -448,7 +450,7 @@ class TestCrystalMapOrientations:
         cm = CrystalMap(**crystal_map_input)
 
         assert cm.phases.ids == [0]  # Test code assumption
-        cm.phases[0].symmetry = "m-3m"
+        cm.phases[0].point_group = "m-3m"
 
         assert cm.rotations_per_point == rotations_per_point
         assert cm.orientations.size == cm.size
@@ -594,7 +596,7 @@ class TestCrystalMapGetMapData:
             phase_mask_in_data = cm.phase_id == i
             array[phase_mask] = (
                 Orientation(rotations[phase_mask_in_data])
-                .set_symmetry(phase.symmetry)
+                .set_symmetry(phase.point_group)
                 .to_euler()
             )
 
@@ -667,10 +669,10 @@ class TestCrystalMapRepresentation:
         print(cm.__repr__())
 
         assert cm.__repr__() == (
-            "Phase   Orientations   Name  Symmetry   Color\n"
-            "    0     10 (83.3%)      a      m-3m       r\n"
-            "    1       1 (8.3%)      b       432       g\n"
-            "    2       1 (8.3%)      c         3       b\n"
+            "Phase  Orientations  Name  Point group  Color\n"
+            "    0    10 (83.3%)     a         m-3m      r\n"
+            "    1      1 (8.3%)     b          432      g\n"
+            "    2      1 (8.3%)     c            3      b\n"
             "Properties: iq\n"
             "Scan unit: nm"
         )

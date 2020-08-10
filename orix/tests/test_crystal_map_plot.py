@@ -267,7 +267,9 @@ class TestCrystalMapPlotUtilities:
     ):
         cm = crystal_map
         cm[0, 0].phase_id = 1
-        cm.phases = PhaseList(names=phase_names, symmetries=[3, 3], colors=phase_colors)
+        cm.phases = PhaseList(
+            names=phase_names, point_groups=[3, 3], colors=phase_colors
+        )
 
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
@@ -466,12 +468,7 @@ class TestScalebar:
             (((1, 10, 30), (0, 1, 1), 1, [0]), {}, {}),  # Default
             (
                 ((1, 10, 30), (0, 1, 1), 1, [0]),
-                {
-                    "loc": 4,
-                    "sep": 6,
-                    "size_vertical": 0.2,
-                    "alpha": 0.8,
-                },
+                {"loc": 4, "sep": 6, "size_vertical": 0.2, "alpha": 0.8,},
                 {
                     "loc": "loc",
                     "sep": ["_box", "sep"],

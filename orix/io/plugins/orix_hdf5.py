@@ -172,13 +172,17 @@ def dict2phase(dictionary):
     dictionary = copy.deepcopy(dictionary)
     structure = dict2structure(dictionary["structure"])
     structure.title = dictionary["name"]
-    symmetry = dictionary["symmetry"]
-    if symmetry == "None":
-        symmetry = None
+    # TODO: Remove this check in v0.6.0
+    try:
+        point_group = dictionary["point_group"]
+    except KeyError:  # v0.3.0
+        point_group = dictionary["symmetry"]
+    if point_group == "None":
+        point_group = None
     return Phase(
         name=dictionary["name"],
         color=dictionary["color"],
-        symmetry=symmetry,
+        point_group=point_group,
         structure=structure,
     )
 
@@ -412,11 +416,11 @@ def phase2dict(phase, dictionary=None):
         dictionary = {}
 
     dictionary["name"] = phase.name
-    if hasattr(phase.symmetry, "name"):
-        symmetry = phase.symmetry.name
+    if hasattr(phase.point_group, "name"):
+        point_group = phase.point_group.name
     else:
-        symmetry = "None"
-    dictionary["symmetry"] = symmetry
+        point_group = "None"
+    dictionary["point_group"] = point_group
     dictionary["color"] = phase.color
     dictionary["structure"] = structure2dict(phase.structure)
 
