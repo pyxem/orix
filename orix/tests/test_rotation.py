@@ -453,3 +453,13 @@ def test_random_vonmises(shape, reference):
     r = Rotation.random_vonmises(shape, 1.0, reference)
     assert r.shape == shape
     assert isinstance(r, Rotation)
+
+
+def test_to_matrix():
+    r = Rotation([[1, 0, 0, 0], [0, 1, 0, 0]])
+    assert np.allclose(r.to_matrix(), [np.eye(3), np.diag([1, -1, -1])])
+
+
+def test_from_matrix():
+    om = np.array([np.eye(3), np.diag([1, -1, -1])])
+    assert np.allclose(Rotation.from_matrix(om).to_matrix(), om)
