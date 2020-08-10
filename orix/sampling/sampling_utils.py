@@ -78,7 +78,7 @@ def uniform_SO3_sample(resolution):
     Parameters
     ----------
     resolution : float
-        The smallest distance between a rotation and its neighbour (degrees)
+        The characteristic distance between a rotation and its neighbour (degrees)
 
     Returns
     -------
@@ -104,7 +104,7 @@ def uniform_SO3_sample(resolution):
 
 def _get_proper_point_group(space_group_number):
     """
-    Maps a space group number to a point group
+    Maps a space group number to its proper point group
 
     Parameters
     ----------
