@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2019 The pyXem developers
+# Copyright 2018-2020 The pyXem developers
 #
 # This file is part of orix.
 #
@@ -326,10 +326,15 @@ class Rotation(Quaternion):
         euler : array-like
             Euler angles in the Bunge convention.
         convention : str
-            Only 'bunge' is currently suppported for new data
+            Only 'bunge' is currently supported for new data
         direction : str
             'lab2crystal' or 'crystal2lab'
         """
+        if convention not in ["bunge", "Krakow_Hielscher"]:
+            raise ValueError("The chosen convention is not one of the allowed options")
+        if direction not in ["lab2crystal", "crystal2lab"]:
+            raise ValueError("The chosen direction is not one of the allowed options")
+
         if convention == "Krakow_Hielscher":
             # To be applied to the data found at:
             # https://www.repository.cam.ac.uk/handle/1810/263510
@@ -349,47 +354,44 @@ class Rotation(Quaternion):
                 np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)), axis=-1)
             )
             data = qalpha * qbeta * qgamma
+
             rot = cls(data.data)
             rot.improper = zero
             return rot
 
-        if convention != "bunge":
-            raise ValuerError("Only 'bunge' is an acceptable convention")
-        if direction not in ["lab2crystal", "crystal2lab"]:
-            raise ValueError("The chosen direction is not one of the allowed options")
+        elif convention == "bunge":
+            euler = np.array(euler)
+            n = euler.shape[:-1]
 
-        euler = np.array(euler)
-        n = euler.shape[:-1]
+            # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
 
-        # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
+            alpha = euler[..., 0]  # psi1
+            beta = euler[..., 1]  # Psi
+            gamma = euler[..., 2]  # psi3
 
-        alpha = euler[..., 0]  # psi1
-        beta = euler[..., 1]  # Psi
-        gamma = euler[..., 2]  # psi3
+            sigma = 0.5 * np.add(alpha, gamma)
+            delta = 0.5 * np.subtract(alpha, gamma)
+            c = np.cos(beta / 2)
+            s = np.sin(beta / 2)
 
-        sigma = 0.5 * np.add(alpha, gamma)
-        delta = 0.5 * np.subtract(alpha, gamma)
-        c = np.cos(beta / 2)
-        s = np.sin(beta / 2)
+            # Using P = 1 from A.6
+            q = np.zeros(n + (4,))
+            q[..., 0] = c * np.cos(sigma)
+            q[..., 1] = -s * np.cos(delta)
+            q[..., 2] = -s * np.sin(delta)
+            q[..., 3] = -c * np.sin(sigma)
 
-        # Using P = 1 from A.6
-        q = np.zeros(n + (4,))
-        q[..., 0] = c * np.cos(sigma)
-        q[..., 1] = -s * np.cos(delta)
-        q[..., 2] = -s * np.sin(delta)
-        q[..., 3] = -c * np.sin(sigma)
+            for i in [1, 2, 3, 0]:  # flip the zero element last
+                q[..., i] = np.where(q[..., 0] < 0, -q[..., i], q[..., i])
 
-        for i in [1, 2, 3, 0]:  # flip the zero element last
-            q[..., i] = np.where(q[..., 0] < 0, -q[..., i], q[..., i])
+            data = Quaternion(q)
 
-        data = Quaternion(q)
+            if direction == "lab2crystal":
+                data = ~data
 
-        if direction == "lab2crystal":
-            data = ~data
-
-        rot = cls(data.data)
-        rot.improper = np.zeros((n))
-        return rot
+            rot = cls(data.data)
+            rot.improper = np.zeros((n))
+            return rot
 
     @classmethod
     def identity(cls, shape=(1,)):

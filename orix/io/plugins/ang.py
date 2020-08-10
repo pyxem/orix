@@ -19,20 +19,28 @@
 import re
 import warnings
 
+from diffpy.structure import Lattice, Structure
 import numpy as np
 
+from orix.crystal_map import CrystalMap, PhaseList
 from orix.quaternion.rotation import Rotation
-from orix.crystal_map import CrystalMap
 
-# MTEX has this format sorted out, check out their readers when fixing issues and
-# adapting to other versions of this file format in the future:
+# MTEX has this format sorted out, check out their readers when fixing
+# issues and adapting to other versions of this file format in the future:
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ang.m
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ACOM.m
 
+# Plugin description
+format_name = "ang"
+file_extensions = ["ang"]
+writes = False
+writes_this = CrystalMap
 
-def load_ang(filename):
-    """Return a :class:`orix.crystal_map.CrystalMap` object from EDAX
-    TSL's .ang file format. The map in the input file is assumed to be 2D.
+
+def file_reader(filename):
+    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
+    from a file in EDAX TLS's .ang format. The map in the input is assumed
+    to be 2D.
 
     Many vendors produce an .ang file. Supported vendors are:
         * EDAX TSL
@@ -48,13 +56,19 @@ def load_ang(filename):
     filename : str
         Path and file name.
 
+    Returns
+    -------
+    CrystalMap
     """
     # Get file header
     with open(filename) as f:
         header = _get_header(f)
 
     # Get phase names and crystal symmetries from header (potentially empty)
-    phase_names, symmetries = _get_phases_from_header(header)
+    phase_names, symmetries, lattice_constants = _get_phases_from_header(header)
+    structures = []
+    for name, abcABG in zip(phase_names, lattice_constants):
+        structures.append(Structure(title=name, lattice=Lattice(*abcABG)))
 
     # Read all file data
     file_data = np.loadtxt(filename)
@@ -64,7 +78,7 @@ def load_ang(filename):
     vendor, column_names = _get_vendor_columns(header, n_cols)
 
     # Data needed to create a CrystalMap object
-    data = {
+    data_dict = {
         "euler1": None,
         "euler2": None,
         "euler3": None,
@@ -74,30 +88,40 @@ def load_ang(filename):
         "prop": {},
     }
     for column, name in enumerate(column_names):
-        if name in data.keys():
-            data[name] = file_data[:, column]
+        if name in data_dict.keys():
+            data_dict[name] = file_data[:, column]
         else:
-            data["prop"][name] = file_data[:, column]
+            data_dict["prop"][name] = file_data[:, column]
+
+    # Add phase list to dictionary
+    unique_phase_ids = np.unique(data_dict["phase_id"]).astype(int)
+    data_dict["phase_list"] = PhaseList(
+        names=phase_names,
+        point_groups=symmetries,
+        structures=structures,
+        ids=unique_phase_ids,
+    )
 
     # Set which data points are not indexed
     if vendor == "tsl":
-        data["phase_id"][np.where(data["prop"]["ci"] == -1)] = -1
+        data_dict["phase_id"][np.where(data_dict["prop"]["ci"] == -1)] = -1
     # TODO: Add not-indexed convention for INDEX ASTAR
 
+    # Set scan unit
+    if vendor in ["tsl", "emsoft"]:
+        scan_unit = "um"
+    else:  # NanoMegas
+        scan_unit = "nm"
+    data_dict["scan_unit"] = scan_unit
+
     # Create rotations
-    rotations = Rotation.from_euler(
-        np.column_stack((data["euler1"], data["euler2"], data["euler3"]))
+    data_dict["rotations"] = Rotation.from_euler(
+        np.column_stack(
+            (data_dict.pop("euler1"), data_dict.pop("euler2"), data_dict.pop("euler3"))
+        )
     )
 
-    return CrystalMap(
-        rotations=rotations,
-        phase_id=data["phase_id"],
-        x=data["x"],
-        y=data["y"],
-        phase_name=phase_names,
-        symmetry=symmetries,
-        prop=data["prop"],
-    )
+    return CrystalMap(**data_dict)
 
 
 def _get_header(file):
@@ -112,7 +136,6 @@ def _get_header(file):
     -------
     header : list
         List with header lines as individual elements.
-
     """
     header = []
     line = file.readline()
@@ -139,7 +162,6 @@ def _get_vendor_columns(header, n_cols_file):
         Determined vendor ("tsl", "astar", or "emsoft").
     column_names : list of str
         List of column names.
-
     """
     # Assume EDAX TSL by default
     vendor = "tsl"
@@ -238,32 +260,40 @@ def _get_phases_from_header(header):
     -------
     phase_names : list of str
         List of names of detected phases.
-    phase_symmetries : list of str
-        List of symmetries of detected phase.
+    phase_point_groups : list of str
+        List of point groups of detected phase.
+    lattice_constants : list of list of floats
+        List of list of lattice parameters of detected phases.
 
     Notes
     -----
     Regular expressions are used to collect phase name, formula and
-    symmetry. This function have been tested with files from the following
-    vendor's formats: EDAX TSL OIM Data Collection v7, ASTAR Index, and
-    EMsoft v4.
-
+    point group. This function have been tested with files from the
+    following vendor's formats: EDAX TSL OIM Data Collection v7, ASTAR
+    Index, and EMsoft v4/v5.
     """
     regexps = {
         "name": "# MaterialName([ \t]+)([A-z0-9 ]+)",
         "formula": "# Formula([ \t]+)([A-z0-9 ]+)",
-        "symmetry": "# Symmetry([ \t]+)([A-z0-9 ]+)",
+        "point_group": "# Symmetry([ \t]+)([A-z0-9 ]+)",
+        "lattice_constants": r"# LatticeConstants([ \t+])(.*)",
     }
-    phases = {"name": [], "formula": [], "symmetry": []}
+    phases = {"name": [], "formula": [], "point_group": [], "lattice_constants": []}
     for line in header:
         for key, exp in regexps.items():
             match = re.search(exp, line)
             if match:
-                phases[key].append(match.group(2))
+                group = re.split("[ \t]", match.group(2).lstrip(" ").rstrip(" "))
+                group = list(filter(None, group))
+                if key == "lattice_constants":
+                    group = [float(i) for i in group]
+                else:
+                    group = group[0]
+                phases[key].append(group)
 
     # Check if formula is empty (sometimes the case for ASTAR Index)
-    phase_names = phases["formula"]
-    if len(phase_names) == 0 or any([i != "" for i in phase_names]):
-        phase_names = phases["name"]
+    names = phases["formula"]
+    if len(names) == 0 or any([i != "" for i in names]):
+        names = phases["name"]
 
-    return phase_names, phases["symmetry"]
+    return names, phases["point_group"], phases["lattice_constants"]

@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from orix.plot.rotation_plot import RodriguesPlot
-from orix.plot.crystal_map_plot import CrystalMapPlot
-from orix.plot.stereographic_projection import StereographicAxes
+from orix.io.plugins import ang, emsoft_h5ebsd, orix_hdf5
+
+plugin_list = [
+    ang,
+    emsoft_h5ebsd,
+    orix_hdf5,
+]

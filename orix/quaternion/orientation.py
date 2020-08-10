@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2019 The pyXem developers
+# Copyright 2018-2020 The pyXem developers
 #
 # This file is part of orix.
 #
@@ -41,11 +41,68 @@ from itertools import product as iproduct
 from itertools import combinations_with_replacement as icombinations
 import numpy as np
 import warnings
+from tqdm import tqdm
 
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1
 from orix.quaternion.orientation_region import OrientationRegion
+
+
+def _distance(misorientation, verbose, split_size=100):
+    """ private function to find the symmetry reduced distance between all
+    pairs of (mis)orientations
+
+    Parameters
+    ----------
+    misorientation : orix.Misorientation object
+        The misorientation to be considered.
+    verbose : bool
+        Output progress bar while computing.
+    split_size : int
+        Size of block to compute at a time.
+
+    Returns
+    -------
+    distance : np.array
+        2D matrix containing the angular distance between every
+        orientation, considering symmetries.
+    """
+    num_orientations = misorientation.shape[0]
+    S_1, S_2 = misorientation._symmetry
+    distance = np.full(misorientation.shape + misorientation.shape, np.infty)
+    split_size = split_size // S_1.shape[0]
+    outer_range = range(0, num_orientations, split_size)
+    if verbose:
+        outer_range = tqdm(outer_range, total=np.ceil(num_orientations / split_size))
+
+    S_1_outer_S_1 = S_1.outer(S_1)
+
+    # Calculate the upper half of the distance matrix block by block
+    for start_index_b in outer_range:
+        # we use slice object for compactness
+        index_slice_b = slice(
+            start_index_b, min(num_orientations, start_index_b + split_size)
+        )
+        o_sub_b = misorientation[index_slice_b]
+        for start_index_a in range(0, start_index_b + split_size, split_size):
+            index_slice_a = slice(
+                start_index_a, min(num_orientations, start_index_a + split_size)
+            )
+            o_sub_a = misorientation[index_slice_a]
+            axis = (len(o_sub_a.shape), len(o_sub_a.shape) + 1)
+            mis2orientation = (~o_sub_a).outer(S_1_outer_S_1).outer(o_sub_b)
+            # This works through all the identity rotations
+            for s_2_1, s_2_2 in icombinations(S_2, 2):
+                m = s_2_1 * mis2orientation * s_2_2
+                angle = m.angle.data.min(axis=axis)
+                distance[index_slice_a, index_slice_b] = np.minimum(
+                    distance[index_slice_a, index_slice_b], angle
+                )
+    # Symmetrize the matrix for convenience
+    i_lower = np.tril_indices(distance.shape[0], -1)
+    distance[i_lower] = distance.T[i_lower]
+    return distance
 
 
 class Misorientation(Rotation):
@@ -70,9 +127,11 @@ class Misorientation(Rotation):
         """tuple of Symmetry"""
         return self._symmetry
 
-    @property
-    def equivalent(self):
+    def equivalent(self, grain_exchange=False):
         """Equivalent misorientations
+
+        grain_exchange : bool
+            If true the rotation g and g^{-1} are considered to be identical
 
         Returns
         -------
@@ -80,10 +139,12 @@ class Misorientation(Rotation):
 
         """
         Gl, Gr = self._symmetry
-        if Gl._tuples == Gr._tuples:  # Grain exchange case
+
+        if grain_exchange and (Gl._tuples == Gr._tuples):
             orientations = Orientation.stack([self, ~self]).flatten()
         else:
             orientations = Orientation(self)
+
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
@@ -109,15 +170,14 @@ class Misorientation(Rotation):
         >>> m = Misorientation(data).set_symmetry(C4, C2)
         >>> m
         Misorientation (2,) 4, 2
-        [[-0.7071  0.     -0.7071  0.    ]
-         [ 0.      0.7071 -0.7071  0.    ]]
+        [[-0.7071  0.7071  0.      0.    ]
+        [ 0.      1.      0.      0.    ]]
 
         """
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
-            import tqdm
+            symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
 
-            symmetry_pairs = tqdm.tqdm(symmetry_pairs, total=Gl.size * Gr.size)
         orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
         o_inside = self.__class__.identity(self.shape)
         outside = np.ones(self.shape, dtype=bool)
@@ -130,7 +190,7 @@ class Misorientation(Rotation):
         o_inside._symmetry = (Gl, Gr)
         return o_inside
 
-    def distance(self, speed=2, verbose=False, split_size=100):
+    def distance(self, verbose=False, split_size=100):
         """Symmetry reduced distance
 
         Compute the shortest distance between all orientations considering
@@ -138,8 +198,6 @@ class Misorientation(Rotation):
 
         Parameters
         ---------
-        speed : int
-            Variant of distance function to use.
         verbose : bool
             Output progress bar while computing.
         split_size : int
@@ -162,14 +220,7 @@ class Misorientation(Rotation):
         array([[3.14159265, 1.57079633],
                [1.57079633, 0.        ]])
         """
-        if speed == 1:
-            warnings.warn(
-                "This method is inferior and be removed in 0.3.0; use speed=2 instead",
-                RuntimeWarning,
-            )
-            distance = _distance_1(self, verbose)
-        else:
-            distance = _distance_2(self, verbose, split_size)
+        distance = _distance(self, verbose, split_size)
         return distance.reshape(self.shape + self.shape)
 
     def __repr__(self):
@@ -223,7 +274,7 @@ class Orientation(Misorientation):
         >>> o
         Orientation (2,) 4
         [[-0.7071  0.     -0.7071  0.    ]
-         [ 0.     -0.7071 -0.7071  0.    ]]
+        [ 0.      1.      0.      0.    ]]
 
         """
         return super(Orientation, self).set_symmetry(C1, symmetry)
@@ -236,65 +287,3 @@ class Orientation(Misorientation):
             ).squeeze()
             return m_inside
         return NotImplemented
-
-
-def _distance_1(misorientation, verbose):
-
-    warnings.warn("Use _distance_2 instead", DeprecationWarning)
-    s_1, s_2 = misorientation._symmetry
-    distance = np.empty((misorientation.size, misorientation.size))
-    index_pairs = icombinations(range(misorientation.size), 2)
-    if verbose:
-        from tqdm import tqdm
-
-        index_pairs = tqdm(index_pairs, total=misorientation.size ** 2)
-    for i, j in index_pairs:
-        idxi = np.unravel_index(i, misorientation.shape)
-        idxj = np.unravel_index(j, misorientation.shape)
-        m_1, m_2 = misorientation[idxi], misorientation[idxj]
-        mis2orientation = s_2.outer(~m_1).outer(s_1).outer(s_1).outer(m_2).outer(s_2)
-
-        axis = (0, len(misorientation.shape) + 1, len(misorientation.shape) + 2, -1)
-        d = mis2orientation.angle.data.min(axis=axis)
-        distance[i, j] = d
-        distance[j, i] = d
-    return distance
-
-
-def _distance_2(misorientation, verbose, split_size=100):
-    num_orientations = misorientation.shape[0]
-    S_1, S_2 = misorientation._symmetry
-    distance = np.full(misorientation.shape + misorientation.shape, np.infty)
-    split_size = split_size // S_1.shape[0]
-    outer_range = range(0, num_orientations, split_size)
-    if verbose:
-        from tqdm import tqdm
-
-        outer_range = tqdm(outer_range, total=np.ceil(num_orientations / split_size))
-    S_1_outer_S_1 = S_1.outer(S_1)
-
-    # Calculate the upper half of the distance matrix block by block
-    for start_index_b in outer_range:
-        # we use slice object for compactness
-        index_slice_b = slice(
-            start_index_b, min(num_orientations, start_index_b + split_size)
-        )
-        o_sub_b = misorientation[index_slice_b]
-        for start_index_a in range(0, start_index_b + split_size, split_size):
-            index_slice_a = slice(
-                start_index_a, min(num_orientations, start_index_a + split_size)
-            )
-            o_sub_a = misorientation[index_slice_a]
-            axis = (len(o_sub_a.shape), len(o_sub_a.shape) + 1)
-            mis2orientation = (~o_sub_a).outer(S_1_outer_S_1).outer(o_sub_b)
-            # This works through all the identity rotations
-            for s_2_1, s_2_2 in icombinations(S_2, 2):
-                m = s_2_1 * mis2orientation * s_2_2
-                angle = m.angle.data.min(axis=axis)
-                distance[index_slice_a, index_slice_b] = np.minimum(
-                    distance[index_slice_a, index_slice_b], angle
-                )
-    # Symmetrize the matrix for convenience
-    i_lower = np.tril_indices(distance.shape[0], -1)
-    distance[i_lower] = distance.T[i_lower]
-    return distance

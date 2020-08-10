@@ -22,6 +22,7 @@ import matplotlib.font_manager as fm
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.image import AxesImage
 from matplotlib.projections import register_projection
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
@@ -72,7 +73,7 @@ class CrystalMapPlot(Axes):
         axes=None,
         depth=None,
         **kwargs,
-    ):
+    ) -> AxesImage:
         """Plot a 2D map with any CrystalMap attribute as map values.
 
         Wraps :meth:`matplotlib.axes.Axes.imshow`, see that method for
@@ -83,30 +84,30 @@ class CrystalMapPlot(Axes):
         crystal_map : orix.crystal_map.CrystalMap
             Crystal map object to obtain data to plot from.
         value : numpy.ndarray, optional
-            Attribute array to plot. If value is ``None`` (default), a
-            phase map is plotted.
+            Attribute array to plot. If value is None (default), a phase
+            map is plotted.
         scalebar : bool, optional
-            Whether to add a scalebar (default is ``True``) along the
+            Whether to add a scalebar (default is True) along the
             horizontal map dimension.
         scalebar_properties : dict
             Dictionary of keyword arguments passed to
             :func:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
         legend : bool, optional
-            Whether to add a legend to the plot. This is only implemented for
-            a phase plot (in which case default is ``True``).
+            Whether to add a legend to the plot. This is only implemented
+            for a phase plot (in which case default is True).
         legend_properties : dict
             Dictionary of keyword arguments passed to
             :meth:`matplotlib.axes.legend`.
         axes : tuple of ints, optional
             Which data axes to plot if data has more than two dimensions.
             The index of data to plot in the final dimension is determined
-            by `depth`. If ``None`` (default), data along the two last
-            axes is plotted.
+            by `depth`. If None (default), data along the two last axes is
+            plotted.
         depth : int, optional
             Which layer along the third axis to plot if data has more than
-            two dimensions. If ``None`` (default), data in the first index
+            two dimensions. If None (default), data in the first index
             (layer) is plotted.
-        kwargs :
+        kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.imshow`.
 
@@ -127,11 +128,11 @@ class CrystalMapPlot(Axes):
         >>> import matplotlib.pyplot as plt
         >>> import numpy as np
         >>> from orix import plot
-        >>> from orix.io import load_ang
+        >>> from orix.io import load
 
         Import a crystal map
 
-        >>> cm = load_ang("/some/directory/data.ang")
+        >>> cm = load("/some/directory/data.ang")
 
         Plot a phase map
 
@@ -177,9 +178,8 @@ class CrystalMapPlot(Axes):
         Write un-annotated image to file
 
         >>> plt.imsave("/some/directory/image2.png", im.get_array())
-
         """
-        self._get_plot_shape(crystal_map=crystal_map, axes=axes, depth=depth)
+        self._set_plot_shape(crystal_map=crystal_map, axes=axes, depth=depth)
 
         patches = None
         if value is None:  # Phase map
@@ -199,7 +199,7 @@ class CrystalMapPlot(Axes):
             for _, p in crystal_map.phases_in_data:
                 patches.append(mpatches.Patch(color=p.color_rgb, label=p.name))
         else:  # Create masked array of correct shape
-            if isinstance(value, Scalar) or isinstance(value, Vector3d):
+            if isinstance(value, (Scalar, Vector3d)):
                 value = value.data
             data = crystal_map.get_map_data(value)
             data = data[self._data_slices]
@@ -235,7 +235,7 @@ class CrystalMapPlot(Axes):
         ----------
         crystal_map : orix.crystal_map.CrystalMap
             Crystal map object to obtain necessary data from.
-        **kwargs : dict
+        kwargs
             Keyword arguments passed to
             :func:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
             `alpha` can also be passed, to set the scalebar transparency.
@@ -260,7 +260,6 @@ class CrystalMapPlot(Axes):
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(cm, scalebar=False)
         >>> sbar = ax.add_scalebar(cm, loc=4, frameon=False)
-
         """
         last_axis = crystal_map.ndim - 1
         horizontal = crystal_map._coordinate_axes[last_axis]  # Get whether z, y or x
@@ -383,7 +382,7 @@ class CrystalMapPlot(Axes):
         ----------
         label : str, optional
             Colorbar title, default is ``None``.
-        kwargs :
+        kwargs
             Keyword arguments passed to
             :meth:`mpl_toolkits.axes_grid1.make_axes_locatable.append_axes`.
 
@@ -412,7 +411,6 @@ class CrystalMapPlot(Axes):
         updated
 
         >>> cbar.ax.set_ylabel(ylabel="dp", rotation=90)
-
         """
         # Keyword arguments
         d = {"position": "right", "size": "5%", "pad": 0.1}
@@ -447,20 +445,19 @@ class CrystalMapPlot(Axes):
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> ax.plot_map(cm)
         >>> ax.remove_padding()
-
         """
         self.set_axis_off()
         self.margins(0, 0)
 
         # Tune subplot layout
-        colorbar = self.images[0].colorbar
-        if colorbar is not None:
+        cbar = self.images[0].colorbar
+        if cbar is not None:
             right = self.figure.subplotpars.right
         else:
             right = 1
         self.figure.subplots_adjust(top=1, bottom=0, right=right, left=0)
 
-    def _get_plot_shape(self, crystal_map, axes=None, depth=None):
+    def _set_plot_shape(self, crystal_map, axes=None, depth=None):
         """Set `CrystalMapPlot` attributes describing which data axes to
         plot.
 
@@ -475,7 +472,6 @@ class CrystalMapPlot(Axes):
             Which data layer to plot along the final axis not in `axes` if
             data is 3D. If ``None``, this is set to zero, i.e. the first
             layer (default).
-
         """
         ndim = crystal_map.ndim
 
@@ -511,9 +507,8 @@ class CrystalMapPlot(Axes):
         ----------
         patches : list of matplotlib.patches.Patch
             Patches with color code and name.
-        **kwargs :
+        kwargs
             Keyword arguments passed to :meth:`matplotlib.axes.legend`.
-
         """
         d = {
             "borderpad": 0.3,
@@ -546,13 +541,13 @@ class CrystalMapPlot(Axes):
         -------
         image : matplotlib.images.AxesImage
             Image object where the above mentioned methods are overridden.
-
         """
         # Get data shape to plot
         n_rows, n_cols = self._data_shape
 
         # Get rotations, ensuring correct masking
-        # TODO: Show orientations in Euler angles (computationally intensive...)
+        # TODO: Show orientations in Euler angles (computationally
+        #  intensive...)
         r = crystal_map.get_map_data("rotations", decimals=3)
         r = r[self._data_slices].squeeze()
 
@@ -605,8 +600,7 @@ def convert_unit(value, unit):
     """Return the data with a suitable, not too large, unit.
 
     This algorithm is taken directly from MTEX [Bachmann2010]_
-    https://github.com/mtex-toolbox/mtex/blob/a74545383160610796b9525eedf50a241800ffae/plotting/plotting_tools/switchUnit.m,
-    written by Ralf Hielscher.
+    https://github.com/mtex-toolbox/mtex/blob/a74545383160610796b9525eedf50a241800ffae/plotting/plotting_tools/switchUnit.m.
 
     Parameters
     ----------
@@ -630,7 +624,6 @@ def convert_unit(value, unit):
     17.55 um 999.9999999999999
     >>> convert_unit(17.55 * 1e-3, 'mm')
     17.55 um 0.001
-
     """
     unit_is_px = False
     if unit == "px":

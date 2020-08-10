@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2019 The pyXem developers
+# Copyright 2018-2020 The pyXem developers
 #
 # This file is part of orix.
 #
@@ -43,7 +43,7 @@ def test_RotationPlot_methods():
     fig = plt.figure(figsize=(6, 3))
     gridspec = plt.GridSpec(1, 1, left=0, right=1, bottom=0, top=1, hspace=0.05)
     ax_misori = fig.add_subplot(
-        gridspec[0], projection="axangle", proj_type="ortho", aspect="equal"
+        gridspec[0], projection="axangle", proj_type="ortho", aspect="auto"
     )
     ax_misori.scatter(misori)
     ax_misori.plot(misori)
