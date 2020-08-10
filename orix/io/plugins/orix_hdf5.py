@@ -164,8 +164,6 @@ def dict2phase(dictionary):
     ----------
     dictionary : dict
         Dictionary with phase information.
-    version : list, optional
-        orix version. If None (default), the current version is assumed.
 
     Returns
     -------
