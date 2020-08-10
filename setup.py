@@ -39,7 +39,7 @@ setup(
     install_requires=[
         "diffpy.structure >= 3",
         "h5py",
-        "matplotlib",
+        "matplotlib >= 3.3",
         "numpy",
         "scipy",
         "tqdm",
