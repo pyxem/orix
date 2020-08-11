@@ -1,4 +1,3 @@
-# from diffpy.structure.spacegroups import
 from math import cos, sin, tan, pi
 import numpy as np
 import pytest
