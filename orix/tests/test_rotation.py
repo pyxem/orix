@@ -1,3 +1,4 @@
+# from diffpy.structure.spacegroups import
 from math import cos, sin, tan, pi
 import numpy as np
 import pytest
@@ -455,11 +456,32 @@ def test_random_vonmises(shape, reference):
     assert isinstance(r, Rotation)
 
 
-def test_to_matrix():
-    r = Rotation([[1, 0, 0, 0], [0, 1, 0, 0]])
-    assert np.allclose(r.to_matrix(), [np.eye(3), np.diag([1, -1, -1])])
+class TestFromToMatrix:
+    def test_to_matrix(self):
+        r = Rotation([[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]]).reshape(
+            2, 2
+        )
+        om = np.array(
+            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
+        )
+        assert np.allclose(r.to_matrix(), om.reshape((2, 2, 3, 3)))
 
+    def test_from_matrix(self):
+        r = Rotation([[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]])
+        om = np.array(
+            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
+        )
+        assert np.allclose(Rotation.from_matrix(om).data, r.data)
+        assert np.allclose(
+            Rotation.from_matrix(om.reshape((2, 2, 3, 3))).data, r.reshape(2, 2).data
+        )
 
-def test_from_matrix():
-    om = np.array([np.eye(3), np.diag([1, -1, -1])])
-    assert np.allclose(Rotation.from_matrix(om).to_matrix(), om)
+    def test_from_to_matrix(self):
+        om = np.array(
+            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
+        )
+        assert np.allclose(Rotation.from_matrix(om).to_matrix(), om)
+
+    def test_from_to_matrix2(self, e):
+        r = Rotation.from_euler(e.reshape((5, 2, 3)))
+        assert np.allclose(Rotation.from_matrix(r.to_matrix()).data, r.data)
