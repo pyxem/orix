@@ -462,10 +462,10 @@ class Rotation(Quaternion):
         >>> import numpy as np
         >>> from orix.quaternion.rotation import Rotation
         >>> r = Rotation.from_matrix(np.eye(3))
-        >>> np.allclose(r, [1, 0, 0, 0])
+        >>> np.allclose(r.data, [1, 0, 0, 0])
         True
         >>> r = Rotation.from_matrix(np.diag([1, -1, -1]))
-        >>> np.allclose(r, [0, 1, 0, 0])
+        >>> np.allclose(r.data, [0, 1, 0, 0])
         True
         """
         om = np.asarray(matrix)
