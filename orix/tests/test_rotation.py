@@ -1,4 +1,4 @@
-from diffpy.structure.spacegroups import GetSpaceGroup
+from diffpy.structure.spacegroups import sg225
 from math import cos, sin, tan, pi
 import numpy as np
 import pytest
@@ -490,7 +490,5 @@ class TestFromToMatrix:
         """Checking that getting rotation matrices from diffpy.structure
         works without issue.
         """
-        number = np.random.randint(low=1, high=231)  # High is exclusive
-        sg = GetSpaceGroup(number)
-        r = Rotation.from_matrix([i.R for i in sg.symop_list])
+        r = Rotation.from_matrix([i.R for i in sg225.symop_list])
         assert not np.isnan(r.data).any()
