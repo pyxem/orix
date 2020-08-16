@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
 from diffpy.structure import Lattice, Structure
 import numpy as np
 import pytest
@@ -26,11 +27,12 @@ from orix.quaternion.symmetry import Symmetry, O
 
 class TestPhase:
     @pytest.mark.parametrize(
-        "name, point_group, color, color_alias, color_rgb, structure",
+        "name, point_group, space_group, color, color_alias, color_rgb, structure",
         [
             (
                 None,
                 "m-3m",
+                None,
                 None,
                 "tab:blue",
                 (0.121568, 0.466666, 0.705882),
@@ -40,6 +42,7 @@ class TestPhase:
             (
                 "al",
                 "43",
+                207,
                 "xkcd:salmon",
                 "xkcd:salmon",
                 (1, 0.474509, 0.423529),
@@ -48,6 +51,7 @@ class TestPhase:
             (
                 "My awes0me phase!",
                 O,
+                211,
                 "C1",
                 "tab:orange",
                 (1, 0.498039, 0.054901),
@@ -56,14 +60,25 @@ class TestPhase:
         ],
     )
     def test_init_phase(
-        self, name, point_group, color, color_alias, color_rgb, structure
+        self, name, point_group, space_group, color, color_alias, color_rgb, structure
     ):
-        p = Phase(name=name, point_group=point_group, structure=structure, color=color)
+        p = Phase(
+            name=name,
+            point_group=point_group,
+            space_group=space_group,
+            structure=structure,
+            color=color,
+        )
 
         if name is None:
             assert p.name == structure.title
         else:
             assert p.name == str(name)
+
+        if space_group is None:
+            assert p.space_group is None
+        else:
+            assert p.space_group.number == space_group
 
         if point_group == "43":
             point_group = "432"
@@ -143,30 +158,39 @@ class TestPhase:
         with pytest.raises(ValueError, match=".* must be a diffpy.structure.Structure"):
             p.structure = [1, 2, 3, 90, 90, 90]
 
-    @pytest.mark.parametrize("name, point_group", [("al", None), ("", "m-3m")])
-    def test_phase_repr_str(self, name, point_group):
+    @pytest.mark.parametrize(
+        "name, space_group, point_group",
+        [("al", None, None), ("", 207, "432"), ("ni", 225, None)],
+    )
+    def test_phase_repr_str(self, name, space_group, point_group):
         p = Phase(name=name, point_group=point_group, color="C0")
         representation = (
             "<name: "
             + str(name)
-            + ". point group: "
-            + str(point_group)
+            + ". space/point group: "
+            + f"{str(point_group)}/{str(space_group)}"
             + ". color: tab:blue>"
         )
         assert p.__repr__() == representation
         assert p.__str__() == representation
 
     def test_deepcopy_phase(self):
-        p = Phase(name="al", point_group="m-3m", color="C1")
+        p = Phase(name="al", space_group=225, color="C1")
         p2 = p.deepcopy()
 
-        assert p.__repr__() == "<name: al. point group: m-3m. color: tab:orange>"
+        assert p.__repr__() == (
+            "<name: al. space/point group: Fm-3m/432. color: tab:orange>"
+        )
         p.name = "austenite"
-        p.point_group = 43
+        p.point_group = 432
         p.color = "C2"
 
-        assert p.__repr__() == "<name: austenite. point group: 432. color: tab:green>"
-        assert p2.__repr__() == "<name: al. point group: m-3m. color: tab:orange>"
+        assert p.__repr__() == (
+            "<name: austenite. space/point group: Fm-3m/432. color: tab:green>"
+        )
+        assert p2.__repr__() == (
+            "<name: al. space/point group: Fm-3m/432. color: tab:orange>"
+        )
 
     def test_shallowcopy_phase(self):
         p = Phase(name="al", point_group="m-3m", color="C1")
