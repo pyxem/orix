@@ -426,25 +426,25 @@ class Rotation(Quaternion):
         a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
         om = np.zeros(self.shape + (3, 3))
 
-        q11 = b ** 2
-        q22 = c ** 2
-        q33 = d ** 2
-        qq = a ** 2 - (q11 + q22 + q33)
-        q12 = b * c
-        q03 = a * d
-        q13 = b * d
-        q02 = a * c
-        q23 = c * d
-        q01 = a * b
-        om[..., 0, 0] = qq + 2 * q11
-        om[..., 0, 1] = 2 * (q12 - q03)
-        om[..., 0, 2] = 2 * (q13 + q02)
-        om[..., 1, 0] = 2 * (q12 + q03)
-        om[..., 1, 1] = qq + 2 * q22
-        om[..., 1, 2] = 2 * (q23 - q01)
-        om[..., 2, 0] = 2 * (q13 - q02)
-        om[..., 2, 1] = 2 * (q23 + q01)
-        om[..., 2, 2] = qq + 2 * q33
+        bb = b ** 2
+        cc = c ** 2
+        dd = d ** 2
+        qq = a ** 2 - (bb + cc + dd)
+        bc = b * c
+        ad = a * d
+        bd = b * d
+        ac = a * c
+        cd = c * d
+        ab = a * b
+        om[..., 0, 0] = qq + 2 * bb
+        om[..., 0, 1] = 2 * (bc - ad)
+        om[..., 0, 2] = 2 * (bd + ac)
+        om[..., 1, 0] = 2 * (bc + ad)
+        om[..., 1, 1] = qq + 2 * cc
+        om[..., 1, 2] = 2 * (cd - ab)
+        om[..., 2, 0] = 2 * (bd - ac)
+        om[..., 2, 1] = 2 * (cd + ab)
+        om[..., 2, 2] = qq + 2 * dd
 
         return om
 
@@ -473,10 +473,11 @@ class Rotation(Quaternion):
         q = np.zeros(n + (4,))
 
         # Compute quaternion components
-        q[..., 0] = 0.5 * np.sqrt(1 + om[..., 0, 0] + om[..., 1, 1] + om[..., 2, 2])
+        q0_almost = 1 + om[..., 0, 0] + om[..., 1, 1] + om[..., 2, 2]
         q1_almost = 1 + om[..., 0, 0] - om[..., 1, 1] - om[..., 2, 2]
         q2_almost = 1 - om[..., 0, 0] + om[..., 1, 1] - om[..., 2, 2]
         q3_almost = 1 - om[..., 0, 0] - om[..., 1, 1] + om[..., 2, 2]
+        q[..., 0] = 0.5 * np.sqrt(np.where(q0_almost < _FLOAT_EPS, 0, q0_almost))
         q[..., 1] = 0.5 * np.sqrt(np.where(q1_almost < _FLOAT_EPS, 0, q1_almost))
         q[..., 2] = 0.5 * np.sqrt(np.where(q2_almost < _FLOAT_EPS, 0, q2_almost))
         q[..., 3] = 0.5 * np.sqrt(np.where(q3_almost < _FLOAT_EPS, 0, q3_almost))

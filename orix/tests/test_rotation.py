@@ -1,3 +1,4 @@
+from diffpy.structure.spacegroups import sg225
 from math import cos, sin, tan, pi
 import numpy as np
 import pytest
@@ -484,3 +485,10 @@ class TestFromToMatrix:
     def test_from_to_matrix2(self, e):
         r = Rotation.from_euler(e.reshape((5, 2, 3)))
         assert np.allclose(Rotation.from_matrix(r.to_matrix()).data, r.data)
+
+    def test_get_rotation_matrix_from_diffpy(self):
+        """Checking that getting rotation matrices from diffpy.structure
+        works without issue.
+        """
+        r = Rotation.from_matrix([i.R for i in sg225.symop_list])
+        assert not np.isnan(r.data).any()
