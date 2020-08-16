@@ -18,7 +18,6 @@
 
 import copy
 
-from diffpy.structure import Structure
 import numpy as np
 
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
@@ -51,8 +50,8 @@ class CrystalMap:
     phase_id : numpy.ndarray
         Phase IDs of points in data.
     phases : orix.crystal_map.PhaseList
-        List of phases with their IDs, names, point groups and colors
-        (possibly more than are in the data).
+        List of phases with their IDs, names, space groups, point groups
+        and colors (possibly more than are in the data).
     phases_in_data : orix.crystal_map.PhaseList
         List of phases in data with their IDs, names, point groups and
         colors.
@@ -122,10 +121,10 @@ class CrystalMap:
             map is assumed to be 2D or 1D, and it is set to None.
         phase_list : PhaseList, optional
             A list of phases in the data with their with names,
-            point groups and structures. The order in which the phases
-            appear in the list is important, as it is this, and not the
-            phases' IDs, that is used to link the phases to the input
-            `phase_id` if the IDs aren't exactly the same as in
+            space groups, point groups, and structures. The order in which
+            the phases appear in the list is important, as it is this, and
+            not the phases' IDs, that is used to link the phases to the
+            input `phase_id` if the IDs aren't exactly the same as in
             `phase_id`. If None (default), a phase list with as many
             phases as there are unique phase IDs in `phase_id` is created.
         prop : dict of numpy.ndarray, optional
@@ -219,6 +218,7 @@ class CrystalMap:
                 # default initial values
                 phase_list = PhaseList(
                     names=phase_list.names,
+                    space_groups=phase_list.space_groups,
                     point_groups=phase_list.point_groups,
                     colors=phase_list.colors,
                     structures=phase_list.structures,
@@ -610,9 +610,10 @@ class CrystalMap:
 
         # Ensure attributes set to None are treated OK
         names = ["None" if not name else name for name in phases.names]
-        point_group_names = [
-            "None" if not sym else sym.name for sym in phases.point_groups
+        space_group_names = [
+            "None" if not i else i.short_name for i in phases.space_groups
         ]
+        point_group_names = ["None" if not i else i.name for i in phases.point_groups]
 
         # Determine column widths
         unique_phases = np.unique(phase_ids)
@@ -620,7 +621,9 @@ class CrystalMap:
         id_len = 5
         ori_len = max(max([len(str(p_size)) for p_size in p_sizes]) + 8, 12)
         name_len = max(max([len(n) for n in names]), 4)
-        pg_len = max(max([len(sn) for sn in point_group_names]), 11)
+        pg_len_max = max([len(i) for i in point_group_names])
+        sg_len_max = max([len(i) for i in space_group_names])
+        sg_pg_len = max(pg_len_max + sg_len_max + 1, 17)
         col_len = max(max([len(i) for i in phases.colors]), 5)
 
         # Column alignment
@@ -631,7 +634,9 @@ class CrystalMap:
             "{:{align}{width}}  ".format("Phase", width=id_len, align=align)
             + "{:{align}{width}}  ".format("Orientations", width=ori_len, align=align)
             + "{:{align}{width}}  ".format("Name", width=name_len, align=align)
-            + "{:{align}{width}}  ".format("Point group", width=pg_len, align=align)
+            + "{:{align}{width}}  ".format(
+                "Space/point group", width=sg_pg_len, align=align
+            )
             + "{:{align}{width}}\n".format("Color", width=col_len, align=align)
         )
 
@@ -640,11 +645,12 @@ class CrystalMap:
             p_size = np.where(phase_ids == phase_id)[0].size
             p_fraction = 100 * p_size / self.size
             ori_str = f"{p_size} ({p_fraction:.1f}%)"
+            sg_pg = f"{space_group_names[i]}/{point_group_names[i]}"
             representation += (
                 f"{phase_id:{align}{id_len}}  "
                 + f"{ori_str:{align}{ori_len}}  "
                 + f"{names[i]:{align}{name_len}}  "
-                + f"{point_group_names[i]:{align}{pg_len}}  "
+                + f"{sg_pg:{align}{sg_pg_len}}  "
                 + f"{phases.colors[i]:{align}{col_len}}\n"
             )
 
