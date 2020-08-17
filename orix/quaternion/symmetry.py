@@ -37,6 +37,7 @@ improper rotations. A mirror symmetry is equivalent to a 2-fold rotation
 combined with inversion.
 
 """
+from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
@@ -416,3 +417,70 @@ def get_distinguished_points(s1, s2=C1):
     """
     distinguished_points = s1.outer(s2).antipodal.unique(antipodal=False)
     return distinguished_points[distinguished_points.angle > 0]
+
+
+spacegroup2pointgroup_dict = {
+    "PG1": {"proper": C1, "improper": C1},
+    "PG1bar": {"proper": C1, "improper": Ci},
+    "PG2": {"proper": C2, "improper": C2},
+    "PGm": {"proper": C2, "improper": Cs},
+    "PG2/m": {"proper": C2, "improper": C2h},
+    "PG222": {"proper": D2, "improper": D2},
+    "PGmm2": {"proper": C2, "improper": C2v},
+    "PGmmm": {"proper": D2, "improper": D2h},
+    "PG4": {"proper": C4, "improper": C4},
+    "PG4bar": {"proper": C4, "improper": S4},
+    "PG4/m": {"proper": C4, "improper": C4h},
+    "PG422": {"proper": D4, "improper": D4},
+    "PG4mm": {"proper": C4, "improper": C4v},
+    "PG4bar2m": {"proper": D4, "improper": D2d},
+    "PG4barm2": {"proper": D4, "improper": D2d},
+    "PG4/mmm": {"proper": D4, "improper": D4h},
+    "PG3": {"proper": C3, "improper": C3},
+    "PG3bar": {"proper": C3, "improper": S6},  # Improper also known as C3i
+    "PG312": {"proper": D3, "improper": D3},
+    "PG321": {"proper": D3, "improper": D3},
+    "PG3m1": {"proper": C3, "improper": C3v},
+    "PG31m": {"proper": C3, "improper": C3v},
+    "PG3m": {"proper": C3, "improper": C3v},
+    "PG3bar1m": {"proper": D3, "improper": D3d},
+    "PG3barm1": {"proper": D3, "improper": D3d},
+    "PG3barm": {"proper": D3, "improper": D3d},
+    "PG6": {"proper": C6, "improper": C6},
+    "PG6bar": {"proper": C6, "improper": C3h},
+    "PG6/m": {"proper": C6, "improper": C6h},
+    "PG622": {"proper": D6, "improper": D6},
+    "PG6mm": {"proper": C6, "improper": C6v},
+    "PG6barm2": {"proper": D6, "improper": D3h},
+    "PG6bar2m": {"proper": D6, "improper": D3h},
+    "PG6/mmm": {"proper": D6, "improper": D6h},
+    "PG23": {"proper": T, "improper": T},
+    "PGm3bar": {"proper": T, "improper": Th},
+    "PG432": {"proper": O, "improper": O},
+    "PG4bar3m": {"proper": T, "improper": Td},
+    "PGm3barm": {"proper": O, "improper": Oh},
+}
+
+
+def _get_point_group(space_group_number, proper=False):
+    """Maps a space group number to its (proper) point group.
+
+    Parameters
+    ----------
+    space_group_number : int
+        Between 1 and 231.
+    proper : bool, optional
+        Whether to return the point group with proper rotations only
+        (True), or just the point group (False). Default is False.
+
+    Returns
+    -------
+    point_group : orix.quaternion.symmetry.Symmetry
+        One of the 11 proper or 32 point groups.
+    """
+    spg = GetSpaceGroup(space_group_number)
+    pgn = spg.point_group_name
+    if proper:
+        return spacegroup2pointgroup_dict[pgn]["proper"]
+    else:
+        return spacegroup2pointgroup_dict[pgn]["improper"]

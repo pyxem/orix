@@ -1,7 +1,8 @@
+from diffpy.structure.spacegroups import GetSpaceGroup
 import pytest
 
 from orix.quaternion.symmetry import *
-from orix.vector import Vector3d
+from orix.quaternion.symmetry import _get_point_group, spacegroup2pointgroup_dict
 
 
 @pytest.fixture(params=[(1, 2, 3)])
@@ -309,3 +310,15 @@ def test_fundamental_sector(symmetry, expected):
 def test_no_symm_fundemental_sector():
     nosym = Symmetry.from_generators(Rotation([1, 0, 0, 0]))
     nosym.fundamental_sector()
+
+
+def test_get_point_group():
+    """Makes sure all the ints from 1 to 230 give answers."""
+    for sg_number in np.arange(1, 231):
+        proper_pg = _get_point_group(sg_number, proper=True)
+        assert proper_pg in [C1, C2, C3, C4, C6, D2, D3, D4, D6, O, T]
+
+        sg = GetSpaceGroup(sg_number)
+        pg = _get_point_group(sg_number, proper=False)
+        assert proper_pg == spacegroup2pointgroup_dict[sg.point_group_name]["proper"]
+        assert pg == spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
