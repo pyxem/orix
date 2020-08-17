@@ -477,6 +477,16 @@ def _get_point_group(space_group_number, proper=False):
     -------
     point_group : orix.quaternion.symmetry.Symmetry
         One of the 11 proper or 32 point groups.
+
+    Examples
+    --------
+    >>> from orix.quaternion.symmetry import _get_point_group
+    >>> pgOh = _get_point_group(225)
+    >>> pgOh.name
+    'm-3m'
+    >>> pgO = _get_point_group(225, proper=True)
+    >>> pgO.name
+    '432'
     """
     spg = GetSpaceGroup(space_group_number)
     pgn = spg.point_group_name
