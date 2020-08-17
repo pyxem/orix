@@ -1,10 +1,12 @@
 language: shell
+os: linux
+dist: bionic
 
 env:
   global:
     - TEST_DEPS="pytest>=5.0 pytest-cov>=2.8.1 coveralls>=1.10 coverage>=5.0"
 
-matrix:
+jobs:
   include:
   - name: "Python 3.8 on Linux"
     env: export PYTHON=3.8
@@ -33,8 +35,6 @@ matrix:
     env: EXPORT PYTHON=3.7; PATH="/c/tools/miniconda3/:/c/tools/miniconda3/Scripts:$PATH"
     before_install: choco install -y miniconda3 openssl.light
 
-
-sudo: True #for Miniconda
 
 install:
   # Completes the installation of miniconda
