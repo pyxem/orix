@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 
 from orix.crystal_map.phase_list import Phase, PhaseList
-from orix.quaternion.symmetry import Symmetry, O
+from orix.quaternion.symmetry import Symmetry, O, _get_point_group
 
 
 class TestPhase:
@@ -38,7 +38,7 @@ class TestPhase:
                 (0.121568, 0.466666, 0.705882),
                 Structure(title="Super", lattice=Lattice(1, 1, 1, 90, 90, 90)),
             ),
-            (None, "1", "blue", "b", (0, 0, 1), Structure()),
+            (None, "1", 1, "blue", "b", (0, 0, 1), Structure()),
             (
                 "al",
                 "43",
@@ -159,38 +159,45 @@ class TestPhase:
             p.structure = [1, 2, 3, 90, 90, 90]
 
     @pytest.mark.parametrize(
-        "name, space_group, point_group",
-        [("al", None, None), ("", 207, "432"), ("ni", 225, None)],
+        "name, space_group, point_group, desired_sg_str, desired_pg_str",
+        [
+            ("al", None, None, "None", "None"),
+            ("", 207, "432", "P432", "432"),
+            ("ni", 225, None, "Fm-3m", "m-3m"),
+        ],
     )
-    def test_phase_repr_str(self, name, space_group, point_group):
-        p = Phase(name=name, point_group=point_group, color="C0")
-        representation = (
+    def test_phase_repr_str(
+        self, name, space_group, point_group, desired_sg_str, desired_pg_str
+    ):
+        p = Phase(
+            name=name, space_group=space_group, point_group=point_group, color="C0"
+        )
+        desired = (
             "<name: "
             + str(name)
             + ". space/point group: "
-            + f"{str(point_group)}/{str(space_group)}"
+            + f"{desired_sg_str}/{desired_pg_str}"
             + ". color: tab:blue>"
         )
-        assert p.__repr__() == representation
-        assert p.__str__() == representation
+        assert p.__repr__() == desired
+        assert p.__str__() == desired
 
     def test_deepcopy_phase(self):
         p = Phase(name="al", space_group=225, color="C1")
         p2 = p.deepcopy()
 
-        assert p.__repr__() == (
-            "<name: al. space/point group: Fm-3m/432. color: tab:orange>"
-        )
+        desired_p_repr = "<name: al. space/point group: Fm-3m/m-3m. color: tab:orange>"
+        assert p.__repr__() == desired_p_repr
+
         p.name = "austenite"
-        p.point_group = 432
+        p.space_group = 229
         p.color = "C2"
 
-        assert p.__repr__() == (
-            "<name: austenite. space/point group: Fm-3m/432. color: tab:green>"
+        new_desired_p_repr = (
+            "<name: austenite. space/point group: Im-3m/m-3m. color: tab:green>"
         )
-        assert p2.__repr__() == (
-            "<name: al. space/point group: Fm-3m/432. color: tab:orange>"
-        )
+        assert p.__repr__() == new_desired_p_repr
+        assert p2.__repr__() == desired_p_repr
 
     def test_shallowcopy_phase(self):
         p = Phase(name="al", point_group="m-3m", color="C1")
@@ -202,6 +209,10 @@ class TestPhase:
 
         assert p.__repr__() == p2.__repr__()
 
+    def test_phase_init_non_matching_space_group_point_group(self):
+        with pytest.warns(UserWarning, match="Setting space group to 'None', as"):
+            _ = Phase(space_group=225, point_group="432")
+
 
 class TestPhaseList:
     @pytest.mark.parametrize("empty_input", [(), [], {}])
@@ -210,7 +221,8 @@ class TestPhaseList:
         assert pl.__repr__() == "No phases."
         pl["al"] = "m-3m"
         assert pl.__repr__() == (
-            "Id  Name  Point group     Color\n 0    al         m-3m  tab:blue"
+            "Id  Name  Space/point group     Color\n 0    al          None/m-3m  "
+            "tab:blue"
         )
 
     def test_init_set_to_nones(self):
@@ -380,7 +392,7 @@ class TestPhaseList:
         p = phase_list[key_getter]
 
         assert p.__repr__() == (
-            f"<name: {name}. point group: {point_group}. color: {color}>"
+            f"<name: {name}. space/point group: None/{point_group}. color: {color}>"
         )
 
     @pytest.mark.parametrize(

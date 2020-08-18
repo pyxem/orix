@@ -669,10 +669,10 @@ class TestCrystalMapRepresentation:
         print(cm.__repr__())
 
         assert cm.__repr__() == (
-            "Phase  Orientations  Name  Point group  Color\n"
-            "    0    10 (83.3%)     a         m-3m      r\n"
-            "    1      1 (8.3%)     b          432      g\n"
-            "    2      1 (8.3%)     c            3      b\n"
+            "Phase  Orientations  Name  Space/point group  Color\n"
+            "    0    10 (83.3%)     a          None/m-3m      r\n"
+            "    1      1 (8.3%)     b           None/432      g\n"
+            "    2      1 (8.3%)     c             None/3      b\n"
             "Properties: iq\n"
             "Scan unit: nm"
         )
