@@ -22,52 +22,7 @@ the grid generation within rotation space """
 import numpy as np
 from itertools import product
 
-from diffpy.structure.spacegroups import GetSpaceGroup
-
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, C2, C3, C4, C6, D2, D3, D4, D6, O, T
-
-conversion_dict = {
-    "PG1": C1,
-    "PG1bar": C1,
-    "PG2": C2,
-    "PGm": C2,
-    "PG2/m": C2,
-    "PG222": D2,
-    "PGmm2": C2,
-    "PGmmm": D2,
-    "PG4": C4,
-    "PG4bar": C4,
-    "PG4/m": C4,
-    "PG422": D4,
-    "PG4mm": C4,
-    "PG4bar2m": D4,
-    "PG4barm2": D4,
-    "PG4/mmm": D4,
-    "PG3": C3,
-    "PG3bar": C3,
-    "PG312": D3,
-    "PG321": D3,
-    "PG3m1": C3,
-    "PG31m": C3,
-    "PG3m": C3,
-    "PG3bar1m": D3,
-    "PG3barm1": D3,
-    "PG3barm": D3,
-    "PG6": C6,
-    "PG6bar": C6,
-    "PG6/m": C6,
-    "PG622": D6,
-    "PG6mm": C6,
-    "PG6barm2": D6,
-    "PG6bar2m": D6,
-    "PG6/mmm": D6,
-    "PG23": T,
-    "PGm3bar": T,
-    "PG432": O,
-    "PG4bar3m": T,
-    "PGm3barm": O,
-}
 
 
 def uniform_SO3_sample(resolution):
@@ -100,23 +55,3 @@ def uniform_SO3_sample(resolution):
     # remove duplicates
     q = q.unique()
     return q
-
-
-def _get_proper_point_group(space_group_number):
-    """
-    Maps a space group number to its proper point group
-
-    Parameters
-    ----------
-    space_group_number : int
-        Between 1 and 231
-
-    Returns
-    -------
-    point_group : orix.quaternion.symmetry.Symmetry
-        One of the 11 proper point groups
-    """
-    spg = GetSpaceGroup(space_group_number)
-    pgn = spg.point_group_name
-
-    return conversion_dict[pgn]
