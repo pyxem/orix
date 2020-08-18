@@ -54,11 +54,11 @@ class Phase:
     name : str
         Phase name.
     point_group : orix.quaternion.symmetry.Symmetry
-        Point group describing the symmetry elements of the phase's
+        Point group describing the symmetry operations of the phase's
         crystal structure, according to the International Tables of
         Crystallography.
     space_group : diffpy.structure.spacegroups.SpaceGroup
-        Space group describing the symmetry elements resulting from
+        Space group describing the symmetry operations resulting from
         associating the point group with a Bravais lattice, according to
         the International Tables of Crystallography.
     structure : diffpy.structure.Structure
@@ -80,7 +80,7 @@ class Phase:
             Phase name. Overwrites the name in the `structure` object.
         space_group : int or diffpy.structure.spacegroups.SpaceGroup,\
                 optional
-            Space group describing the symmetry elements resulting from
+            Space group describing the symmetry operations resulting from
             associating the point group with a Bravais lattice, according
             to the International Tables of Crystallography. If None is
             passed (default), it is set to None.
