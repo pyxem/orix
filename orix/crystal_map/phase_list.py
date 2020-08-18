@@ -106,14 +106,14 @@ class Phase:
         >>> from orix.crystal_map import Phase
         >>> p = Phase(
         ...     name="al",
-        ...     point_group="m-3m",
+        ...     space_group=225,
         ...     structure=Structure(
         ...         atoms=[Atom("al", [0, 0, 0])],
         ...         lattice=Lattice(0.405, 0.405, 0.405, 90, 90, 90)
         ...     )
         ... )
         >>> p
-        <name: al. point group: m-3m. color: tab:blue>
+        <name: al. space/point group: Fm-3m/m-3m. color: tab:blue>
         >>> p.structure
         [al   0.000000 0.000000 0.000000 1.0000]
         >>> p.structure.lattice
@@ -325,7 +325,7 @@ class PhaseList:
         >>> from orix.crystal_map import Phase, PhaseList
         >>> pl = PhaseList(
         ...     names=["al", "cu"],
-        ...     point_groups=["m-3m"] * 2,
+        ...     space_groups=[225] * 2,
         ...     structures=[
         ...         Structure(
         ...             atoms=[Atom("al", [0] * 3)],
@@ -338,9 +338,9 @@ class PhaseList:
         ...     ]
         ... )
         >>> pl
-        Id  Name  Point groups       Color
-         0    al          m-3m    tab:blue
-         1    cu          m-3m  tab:orange
+        Id  Name  Space/point groups       Color
+         0    al          Fm-3m/m-3m    tab:blue
+         1    cu          Fm-3m/m-3m  tab:orange
         >>> pl["al"].structure
         [al   0.000000 0.000000 0.000000 1.0000]
         """
@@ -503,39 +503,39 @@ class PhaseList:
         --------
         A PhaseList object can be indexed in multiple ways.
 
-        >>> pl = PhaseList(names=['a', 'b'], point_groups=['1', '3'])
+        >>> pl = PhaseList(names=['a', 'b'], space_groups=[200, 220])
         >>> pl
-        Id  Name  Point group       Color
-         0     a            1    tab:blue
-         1     b            3  tab:orange
+        Id  Name  Space/point group       Color
+         0     a           Pm-3/m-3    tab:blue
+         1     b         I-43d/-43m  tab:orange
 
         Return a Phase object if only one phase matches the key
 
         >>> pl[0]  # Index with a single phase id
-        <name: a. point group: 1. color: tab:blue>
+        <name: a. space/point group: Pm-3/m-3. color: tab:blue>
         >>> pl['b']  # Index with a phase name
-        <name: b. point group: 3. color: tab:orange>
+        <name: b. space/point group: I-43d/-43m. color: tab:orange>
         >>> pl[:1]
-        <name: b. point group: 3. color: tab:orange>
+        <name: b. space/point group: I-43d/-43m. color: tab:orange>
 
         Return a PhaseList object
 
         >>> pl[0:]  # Index with slices
-        Id  Name  Point group       Color
-         0    a             1    tab:blue
-         1    b             3  tab:orange
+        Id  Name  Space/point group       Color
+         0    a            Pm-3/m-3    tab:blue
+         1    b          I-43d/-43m  tab:orange
         >>> pl['a', 'b']  # Index with a tuple of phase names
-        Id  Name  Point group       Color
-         0    a             1    tab:blue
-         1    b             3  tab:orange
+        Id  Name  Space/point group       Color
+         0    a            Pm-3/m-3    tab:blue
+         1    b          I-43d/-43m  tab:orange
         >>> pl[0, 1]  # Index with a tuple of phase phase_ids
-        Id  Name  Point group       Color
-         0     a            1    tab:blue
-         1     b            3  tab:orange
+        Id  Name  Space/point group       Color
+         0    a            Pm-3/m-3    tab:blue
+         1    b          I-43d/-43m  tab:orange
         >>> pl[[0, 1]]  # Index with a list of phase_ids
-        Id  Name  Point group       Color
-         0     a            1    tab:blue
-         1     b            3  tab:orange
+        Id  Name  Space/point group       Color
+         0    a            Pm-3/m-3    tab:blue
+         1    b          I-43d/-43m  tab:orange
         """
         # Make key iterable if it isn't already
         if not isinstance(key, (tuple, slice, list, np.ndarray)):
