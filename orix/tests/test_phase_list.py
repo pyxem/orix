@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
 from diffpy.structure import Lattice, Structure
 import numpy as np
 import pytest
 
 from orix.crystal_map.phase_list import Phase, PhaseList
-from orix.quaternion.symmetry import Symmetry, O, _get_point_group
+from orix.quaternion.symmetry import Symmetry, O
 
 
 class TestPhase:
@@ -213,6 +212,22 @@ class TestPhase:
         with pytest.warns(UserWarning, match="Setting space group to 'None', as"):
             _ = Phase(space_group=225, point_group="432")
 
+    @pytest.mark.parametrize(
+        "space_group_no, desired_point_group_name",
+        [(1, "1"), (50, "mmm"), (100, "4mm"), (150, "32"), (200, "m-3"), (225, "m-3m")],
+    )
+    def test_point_group_derived_from_space_group(
+        self, space_group_no, desired_point_group_name
+    ):
+        p = Phase(space_group=space_group_no)
+        assert p.point_group.name == desired_point_group_name
+
+    def test_set_space_group_raises(self):
+        space_group = "outer-space"
+        with pytest.raises(ValueError, match=f"'{space_group}' must be of type "):
+            p = Phase()
+            p.space_group = space_group
+
 
 class TestPhaseList:
     @pytest.mark.parametrize("empty_input", [(), [], {}])
@@ -232,6 +247,7 @@ class TestPhaseList:
         assert pl.ids == phase_ids
         assert pl.names == [""] * 2
         assert pl.point_groups == [None] * 2
+        assert pl.space_groups == [None] * 2
         assert pl.colors == ["tab:blue", "tab:orange"]
         assert pl.structures == [Structure()] * 2
 
@@ -248,6 +264,7 @@ class TestPhaseList:
 
         assert pl.names == [p.name for p in [p1, p2]]
         assert pl.point_groups == [p.point_group for p in [p1, p2]]
+        assert pl.space_groups == [p.space_group for p in [p1, p2]]
         assert pl.colors == [p.color for p in [p1, p2]]
         assert pl.colors_rgb == [p.color_rgb for p in [p1, p2]]
 
@@ -257,31 +274,37 @@ class TestPhaseList:
 
         assert pl.names == [p.name]
         assert pl.point_groups == [p.point_group]
+        assert pl.space_groups == [p.space_group]
         assert pl.colors == [p.color]
         assert pl.colors_rgb == [p.color_rgb]
 
     @pytest.mark.parametrize(
         (
-            "names, point_groups, colors, phase_ids, expected_names, "
-            "expected_point_groups, expected_colors, expected_phase_ids"
+            "names, space_groups, point_groups, colors, phase_ids, desired_names, "
+            "desired_space_groups, desired_point_groups, desired_colors, "
+            "desired_phase_ids"
         ),
         [
             (
                 ["al", "ni"],
+                [210],
                 [43],
                 [None, "C1"],
                 [1],
                 ["al", "ni"],
+                ["F4132", None],
                 ["432", None],
                 ["tab:blue", "tab:orange"],
                 [1, 2],
             ),
             (
                 ["al", None],
+                [210, 225],
                 [432, "m3m"],
                 (1, 0, 0),
                 [100],
                 ["al", ""],
+                ["F4132", "Fm-3m"],
                 ["432", "m-3m"],
                 ["r", "tab:blue"],
                 [100, 101],
@@ -289,52 +312,68 @@ class TestPhaseList:
             (
                 [None],
                 [None, None],
+                [None, None],
                 ["green", "black"],
                 1,
                 ["", ""],
+                [None, None],
                 [None, None],
                 ["g", "k"],
                 [1, 2],
             ),
             (
                 ["al", "Ni"],
+                [225, 145, None],
                 ["m-3m", 3, None],
                 ["C0", None, "C0"],
                 None,
                 ["al", "Ni", ""],
+                ["Fm-3m", "P32", None],
                 ["m-3m", "3", None],
                 ["tab:blue", "tab:orange", "tab:blue"],
                 [0, 1, 2],
             ),
-            ("al", 43, "C0", [0], ["al"], ["432"], ["tab:blue"], [0]),
+            ("al", 210, 43, "C0", [0], ["al"], ["F4132"], ["432"], ["tab:blue"], [0]),
         ],
     )
     def test_init_phaselist_from_strings(
         self,
         names,
+        space_groups,
         point_groups,
         colors,
         phase_ids,
-        expected_names,
-        expected_point_groups,
-        expected_colors,
-        expected_phase_ids,
+        desired_names,
+        desired_space_groups,
+        desired_point_groups,
+        desired_colors,
+        desired_phase_ids,
     ):
         pl = PhaseList(
-            names=names, point_groups=point_groups, colors=colors, ids=phase_ids,
+            names=names,
+            space_groups=space_groups,
+            point_groups=point_groups,
+            colors=colors,
+            ids=phase_ids,
         )
 
         actual_point_group_names = []
+        actual_space_group_names = []
         for _, p in pl:
             if p.point_group is None:
                 actual_point_group_names.append(None)
             else:
                 actual_point_group_names.append(p.point_group.name)
+            if p.space_group is None:
+                actual_space_group_names.append(None)
+            else:
+                actual_space_group_names.append(p.space_group.short_name)
 
-        assert pl.names == expected_names
-        assert actual_point_group_names == expected_point_groups
-        assert pl.colors == expected_colors
-        assert pl.ids == expected_phase_ids
+        assert pl.names == desired_names
+        assert actual_space_group_names == desired_space_groups
+        assert actual_point_group_names == desired_point_groups
+        assert pl.colors == desired_colors
+        assert pl.ids == desired_phase_ids
 
     def test_init_with_single_structure(self):
         structure = Structure()
@@ -360,7 +399,7 @@ class TestPhaseList:
         assert pl.size == n_names
 
     @pytest.mark.parametrize(
-        "n_names, phase_ids, expected_names, expected_phase_ids",
+        "n_names, phase_ids, desired_names, desired_phase_ids",
         [
             (2, [0, 2], ["a", "b"], [0, 2]),
             (3, [1, 100, 2], ["a", "c", "b"], [1, 2, 100]),
@@ -368,15 +407,15 @@ class TestPhaseList:
         ],
     )
     def test_get_phaselist_ids(
-        self, n_names, phase_ids, expected_names, expected_phase_ids
+        self, n_names, phase_ids, desired_names, desired_phase_ids
     ):
         phase_names_pool = "abc"
         phase_names = [phase_names_pool[i] for i in range(n_names)]
 
         pl = PhaseList(names=phase_names, ids=phase_ids)
 
-        assert pl.names == expected_names
-        assert pl.ids == expected_phase_ids
+        assert pl.names == desired_names
+        assert pl.ids == desired_phase_ids
 
     @pytest.mark.parametrize(
         "key_getter, name, point_group, color",
@@ -425,14 +464,14 @@ class TestPhaseList:
             _ = phase_list[key_getter]
 
     @pytest.mark.parametrize(
-        "add_not_indexed, expected_ids", [(True, [-1, 0, 1]), (False, [0, 1, 2])]
+        "add_not_indexed, desired_ids", [(True, [-1, 0, 1]), (False, [0, 1, 2])]
     )
     def test_get_from_phaselist_not_indexed(
-        self, phase_list, add_not_indexed, expected_ids
+        self, phase_list, add_not_indexed, desired_ids
     ):
         if add_not_indexed:
             phase_list.add_not_indexed()
-        assert phase_list[:3].ids == expected_ids
+        assert phase_list[:3].ids == desired_ids
 
     @pytest.mark.parametrize(
         "key, value, already_there",
@@ -443,17 +482,17 @@ class TestPhaseList:
             with pytest.raises(ValueError, match=f"{key} is already in the phase "):
                 phase_list[key] = value
         else:
-            expected_names = phase_list.names + [key]
-            expected_point_group_names = [s.name for s in phase_list.point_groups] + [
+            desired_names = phase_list.names + [key]
+            desired_point_group_names = [s.name for s in phase_list.point_groups] + [
                 str(value)
             ]
 
             phase_list[key] = value
 
-            assert phase_list.names == expected_names
+            assert phase_list.names == desired_names
             assert [
                 s.name for s in phase_list.point_groups
-            ] == expected_point_group_names
+            ] == desired_point_group_names
 
     def test_set_phase_in_empty_phaselist(self):
         pl = PhaseList()
