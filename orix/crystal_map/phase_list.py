@@ -19,12 +19,14 @@
 from collections import OrderedDict
 import copy
 from itertools import islice
+import warnings
 
 from diffpy.structure import Structure
+from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
 import matplotlib.colors as mcolors
 import numpy as np
 
-from orix.quaternion.symmetry import _groups, Symmetry
+from orix.quaternion.symmetry import _groups, _get_point_group, Symmetry
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
@@ -41,7 +43,7 @@ POINT_GROUP_ALIASES = {
 
 
 class Phase:
-    """Name, point group, and color of a phase in a crystallographic map.
+    """Name, symmetry, and color of a phase in a crystallographic map.
 
     Attributes
     ----------
@@ -51,12 +53,16 @@ class Phase:
         RGB values of phase color, obtained from the color name.
     name : str
         Phase name.
-    structure : diffpy.structure.Structure
-        Unit cell with atoms and lattice.
     point_group : orix.quaternion.symmetry.Symmetry
         Point group describing the symmetry operations of the phase's
         crystal structure, according to the International Tables of
         Crystallography.
+    space_group : diffpy.structure.spacegroups.SpaceGroup
+        Space group describing the symmetry operations resulting from
+        associating the point group with a Bravais lattice, according to
+        the International Tables of Crystallography.
+    structure : diffpy.structure.Structure
+        Unit cell with atoms and lattice.
 
     Methods
     -------
@@ -64,20 +70,32 @@ class Phase:
         Return a deep copy using :py:func:`~copy.deepcopy` function.
     """
 
-    def __init__(self, name=None, structure=None, point_group=None, color=None):
+    def __init__(
+        self, name=None, space_group=None, point_group=None, structure=None, color=None
+    ):
         """
         Parameters
         ----------
         name : str, optional
             Phase name. Overwrites the name in the `structure` object.
+        space_group : int or diffpy.structure.spacegroups.SpaceGroup,\
+                optional
+            Space group describing the symmetry operations resulting from
+            associating the point group with a Bravais lattice, according
+            to the International Tables of Crystallography. If None is
+            passed (default), it is set to None.
+        point_group : str or orix.quaternion.symmetry.Symmetry, optional
+            Point group describing the symmetry operations of the phase's
+            crystal structure, according to the International Tables of
+            Crystallography. If None is passed (default) and `space_group`
+            is None, it set to None. If None is passed but `space_group`
+            is not None, it is derived from the space group. If both
+            `point_group` and `space_group` is not None, the space group
+            needs to be derived from the point group.
         structure : diffpy.structure.Structure, optional
             Unit cell with atoms and a lattice. If None is passed
             (default), a default :class:`diffpy.structure.Structure`
             object is created.
-        point_group : str or orix.quaternion.symmetry.Symmetry, optional
-            Point group describing the symmetry operations of the phase's
-            crystal structure, according to the International Tables of
-            Crystallography. If None is passed (default), it set to None.
         color : str, optional
             Phase color. If None is passed (default), it is set to
             'tab:blue' (first among the default Matplotlib colors).
@@ -88,14 +106,15 @@ class Phase:
         >>> from orix.crystal_map import Phase
         >>> p = Phase(
         ...     name="al",
-        ...     point_group="m-3m",
+        ...     space_group=225,
         ...     structure=Structure(
         ...         atoms=[Atom("al", [0, 0, 0])],
         ...         lattice=Lattice(0.405, 0.405, 0.405, 90, 90, 90)
         ...     )
         ... )
         >>> p
-        <name: al. point group: m-3m. color: tab:blue>
+        <name: al. space group: Fm-3m. point group: m-3m. proper point \
+        ... group: 432. color: tab:blue>
         >>> p.structure
         [al   0.000000 0.000000 0.000000 1.0000]
         >>> p.structure.lattice
@@ -104,6 +123,7 @@ class Phase:
         self.structure = structure if structure is not None else Structure()
         if name is not None:
             self.name = name
+        self.space_group = space_group  # Needs to be set before point group
         self.point_group = point_group
         self.color = color if color is not None else "tab:blue"
 
@@ -154,9 +174,28 @@ class Phase:
         return mcolors.to_rgb(self.color)
 
     @property
+    def space_group(self):
+        """Space group of phase."""
+        return self._space_group
+
+    @space_group.setter
+    def space_group(self, value):
+        """Set space group of phase."""
+        if isinstance(value, int):
+            value = GetSpaceGroup(value)
+        if not isinstance(value, SpaceGroup) and value is not None:
+            raise ValueError(
+                f"'{value}' must be of type {SpaceGroup}, an integer 1-230, or None."
+            )
+        self._space_group = value  # Overwrites any point group set before
+
+    @property
     def point_group(self):
         """Point group of phase."""
-        return self._point_group
+        if self.space_group is not None:
+            return _get_point_group(self.space_group.number)
+        else:
+            return self._point_group
 
     @point_group.setter
     def point_group(self, value):
@@ -178,16 +217,31 @@ class Phase:
                 " group as a string, or None."
             )
         else:
+            if self.space_group is not None and value is not None:
+                old_point_group_name = self.point_group.name
+                if old_point_group_name != value.name:
+                    warnings.warn(
+                        "Setting space group to 'None', as current space group "
+                        f"'{self.space_group.short_name}' is derived from current point"
+                        f" group '{old_point_group_name}'."
+                    )
+                    self.space_group = None
             self._point_group = value
 
     def __repr__(self):
-        if self.point_group:
-            point_group_name = self.point_group.name
+        if self.point_group is not None:
+            pg_name = self.point_group.name
+            ppg_name = self.point_group.proper_subgroup.name
         else:
-            point_group_name = self.point_group  # Which should be None
+            pg_name = self.point_group  # Should be None
+            ppg_name = None
+        if self.space_group is not None:
+            sg_name = self.space_group.short_name
+        else:
+            sg_name = self.space_group  # Should be None
         return (
-            f"<name: {self.name}. point group: {point_group_name}. color: "
-            f"{self.color}>"
+            f"<name: {self.name}. space group: {sg_name}. point group: {pg_name}. "
+            f"proper point group: {ppg_name}. color: {self.color}>"
         )
 
     def deepcopy(self):
@@ -209,12 +263,14 @@ class PhaseList:
     ids : list of int
         List of unique phase indices in a crystallographic map as
         imported.
-    size : int
-        Number of phases in list.
-    structures : list of diffpy.structure.Structure
-        List of unit cells with atoms and the lattice of phase.
     point_groups : list of orix.quaternion.symmetry.Symmetry
         List of phase point groups.
+    size : int
+        Number of phases in list.
+    space_groups : list of diffpy.structure.spacegroups.SpaceGroup
+        List of phase space groups.
+    structures : list of diffpy.structure.Structure
+        List of unit cells with atoms and the lattice of phase.
 
     Methods
     -------
@@ -232,6 +288,7 @@ class PhaseList:
         self,
         phases=None,
         names=None,
+        space_groups=None,
         point_groups=None,
         colors=None,
         ids=None,
@@ -246,6 +303,10 @@ class PhaseList:
             arguments are ignored if this is passed.
         names : str or list of str, optional
             Phase names. Overwrites the names in the `structure` objects.
+        space_groups : int, diffpy.structure.spacegroups.SpaceGroup or\
+                list of int or diffpy.structure.spacegroups.SpaceGroup,\
+                optional
+            Space groups.
         point_groups : str, int, orix.quaternion.symmetry.Symmetry or\
                 list of str, int or orix.quaternion.symmetry.Symmetry,\
                 optional
@@ -267,7 +328,7 @@ class PhaseList:
         >>> from orix.crystal_map import Phase, PhaseList
         >>> pl = PhaseList(
         ...     names=["al", "cu"],
-        ...     point_groups=["m-3m"] * 2,
+        ...     space_groups=[225] * 2,
         ...     structures=[
         ...         Structure(
         ...             atoms=[Atom("al", [0] * 3)],
@@ -280,9 +341,9 @@ class PhaseList:
         ...     ]
         ... )
         >>> pl
-        Id  Name  Point groups       Color
-         0    al          m-3m    tab:blue
-         1    cu          m-3m  tab:orange
+        Id  Name  Space group  Point group  Proper point group     Color
+         0    al        Fm-3m         m-3m                 432  tab:blue
+         1    cu        Fm-3m         m-3m                 432  tab:blue
         >>> pl["al"].structure
         [al   0.000000 0.000000 0.000000 1.0000]
         """
@@ -310,6 +371,8 @@ class PhaseList:
             # iterables of length 1
             if isinstance(names, str):
                 names = list((names,))
+            if isinstance(space_groups, (SpaceGroup, int)):
+                space_groups = list((space_groups,))
             if isinstance(point_groups, (str, Symmetry, int)):
                 point_groups = list((point_groups,))
             if isinstance(colors, (str, tuple)):
@@ -324,7 +387,7 @@ class PhaseList:
             max_entries = max(
                 [
                     len(i) if i is not None else 0
-                    for i in [names, point_groups, ids, structures]
+                    for i in [names, space_groups, point_groups, ids, structures]
                 ]
             )
 
@@ -344,6 +407,12 @@ class PhaseList:
                     name = names[i]
                 except (IndexError, TypeError):
                     name = None
+
+                # Get space group or None
+                try:
+                    space_group = space_groups[i]
+                except (IndexError, TypeError):
+                    space_group = None
 
                 # Get point group or None
                 try:
@@ -376,7 +445,11 @@ class PhaseList:
                     structure = None
 
                 d[phase_id] = Phase(
-                    name=name, point_group=point_group, color=color, structure=structure
+                    name=name,
+                    space_group=space_group,
+                    point_group=point_group,
+                    color=color,
+                    structure=structure,
                 )
 
                 # To ensure color aliases are added to `used_colors`
@@ -389,6 +462,11 @@ class PhaseList:
     def names(self):
         """List of phase names in the list."""
         return [phase.name for _, phase in self]
+
+    @property
+    def space_groups(self):
+        """List of space groups of phases in the list."""
+        return [phase.space_group for _, phase in self]
 
     @property
     def point_groups(self):
@@ -428,39 +506,42 @@ class PhaseList:
         --------
         A PhaseList object can be indexed in multiple ways.
 
-        >>> pl = PhaseList(names=['a', 'b'], point_groups=['1', '3'])
+        >>> pl = PhaseList(names=['a', 'b'], space_groups=[200, 220])
         >>> pl
-        Id  Name  Point group       Color
-         0     a            1    tab:blue
-         1     b            3  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
 
         Return a Phase object if only one phase matches the key
 
         >>> pl[0]  # Index with a single phase id
-        <name: a. point group: 1. color: tab:blue>
+        <name: a. space group: Pm-3. point group: m-3. proper point \
+        ... group: 23. color: tab:blue>
         >>> pl['b']  # Index with a phase name
-        <name: b. point group: 3. color: tab:orange>
+        <name: b. space group: I-43d. point group: -43m. proper point \
+        ... group: 23. color: tab:orange>
         >>> pl[:1]
-        <name: b. point group: 3. color: tab:orange>
+        <name: b. space group: I-43d. point group: -43m. proper point \
+        ... group: 23. color: tab:orange>
 
         Return a PhaseList object
 
         >>> pl[0:]  # Index with slices
-        Id  Name  Point group       Color
-         0    a             1    tab:blue
-         1    b             3  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
         >>> pl['a', 'b']  # Index with a tuple of phase names
-        Id  Name  Point group       Color
-         0    a             1    tab:blue
-         1    b             3  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
         >>> pl[0, 1]  # Index with a tuple of phase phase_ids
-        Id  Name  Point group       Color
-         0     a            1    tab:blue
-         1     b            3  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
         >>> pl[[0, 1]]  # Index with a list of phase_ids
-        Id  Name  Point group       Color
-         0     a            1    tab:blue
-         1     b            3  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
         """
         # Make key iterable if it isn't already
         if not isinstance(key, (tuple, slice, list, np.ndarray)):
@@ -564,19 +645,19 @@ class PhaseList:
 
         # Ensure attributes set to None are treated OK
         names = ["None" if not i else i for i in self.names]
-        point_group_names = ["None" if not i else i.name for i in self.point_groups]
+        sg_names = ["None" if not i else i.short_name for i in self.space_groups]
+        pg_names = ["None" if not i else i.name for i in self.point_groups]
+        ppg_names = [
+            "None" if not i else i.proper_subgroup.name for i in self.point_groups
+        ]
 
         # Determine column widths (allowing PhaseList to be empty)
         id_len = 2
-        name_len = 4
-        if names:
-            name_len = max(max([len(i) for i in names]), name_len)
-        pg_len = 11
-        if point_group_names:
-            pg_len = max(max([len(i) for i in point_group_names]), pg_len)
-        col_len = 5
-        if self.colors:
-            col_len = max(max([len(i) for i in self.colors]), col_len)
+        name_len = max(max([len(i) for i in names]), 4)
+        sg_len = max(max([len(i) for i in sg_names]), 11)
+        pg_len = max(max([len(i) for i in pg_names]), 11)
+        ppg_len = max(max([len(i) for i in ppg_names]), 18)
+        col_len = max(max([len(i) for i in self.colors]), 5)
 
         # Column alignment
         align = ">"  # right: ">", left: "<"
@@ -585,7 +666,11 @@ class PhaseList:
         representation = (
             "{:{align}{width}}  ".format("Id", width=id_len, align=align)
             + "{:{align}{width}}  ".format("Name", width=name_len, align=align)
+            + "{:{align}{width}}  ".format("Space group", width=sg_len, align=align)
             + "{:{align}{width}}  ".format("Point group", width=pg_len, align=align)
+            + "{:{align}{width}}  ".format(
+                "Proper point group", width=ppg_len, align=align
+            )
             + "{:{align}{width}}".format("Color", width=col_len, align=align)
         )
 
@@ -594,7 +679,9 @@ class PhaseList:
             representation += (
                 f"\n{phase_id:{align}{id_len}}  "
                 + f"{names[i]:{align}{name_len}}  "
-                + f"{point_group_names[i]:{align}{pg_len}}  "
+                + f"{sg_names[i]:{align}{sg_len}}  "
+                + f"{pg_names[i]:{align}{pg_len}}  "
+                + f"{ppg_names[i]:{align}{ppg_len}}  "
                 + f"{self.colors[i]:{align}{col_len}}"
             )
 
@@ -610,7 +697,7 @@ class PhaseList:
         The phase, named "not_indexed", has a `point_group` equal to None,
         and a white color when plotted.
         """
-        self._dict[-1] = Phase(name="not_indexed", point_group=None, color="white")
+        self._dict[-1] = Phase(name="not_indexed", color="white")
         self.sort_by_id()
 
     def sort_by_id(self):
