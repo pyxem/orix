@@ -21,7 +21,7 @@ import pytest
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C2, C6, D6, _get_point_group
+from orix.quaternion.symmetry import C2, C6, D6, get_point_group
 from orix.sampling.sampling_utils import uniform_SO3_sample
 from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
 
@@ -77,7 +77,7 @@ def test_get_sample_fundamental_zone_order(C6_sample):
 def test_get_sample_fundamental_space_group(C6_sample):
     """ Going via the space_group route """
     # assert that space group #3 is has pg C2
-    assert C2 == _get_point_group(3, proper=True)
+    assert C2 == get_point_group(3, proper=True)
     C2_sample = get_sample_fundamental(4, space_group=3)
     ratio = C2_sample.size / C6_sample.size
     assert np.isclose(ratio, 3, rtol=0.025)

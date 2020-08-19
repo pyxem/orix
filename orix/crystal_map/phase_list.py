@@ -26,7 +26,7 @@ from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
 import matplotlib.colors as mcolors
 import numpy as np
 
-from orix.quaternion.symmetry import _groups, _get_point_group, Symmetry
+from orix.quaternion.symmetry import _groups, get_point_group, Symmetry
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
@@ -193,7 +193,7 @@ class Phase:
     def point_group(self):
         """Point group of phase."""
         if self.space_group is not None:
-            return _get_point_group(self.space_group.number)
+            return get_point_group(self.space_group.number)
         else:
             return self._point_group
 
