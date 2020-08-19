@@ -664,18 +664,16 @@ class TestCrystalMapRepresentation:
 
         cm.prop["iq"] = np.arange(cm.size)
 
-        assert cm[cm.phase_id == -1].__repr__() == "No data."
+        assert repr(cm[cm.phase_id == -1]) == "No data."
 
-        print(cm.__repr__())
-
-        assert cm.__repr__() == (
+        assert repr(cm) == (
             "Phase  Orientations  Name  Space group  Point group  Proper point group  "
             "Color\n"
-            "    0    10 (83.3%)     a         None         m-3m                 432  "
+            "    0    10 (83.3%)     a        Im-3m         m-3m                 432  "
             "    r\n"
-            "    1      1 (8.3%)     b         None          432                 432  "
+            "    1      1 (8.3%)     b         P432          432                 432  "
             "    g\n"
-            "    2      1 (8.3%)     c         None            3                   3  "
+            "    2      1 (8.3%)     c           P3            3                   3  "
             "    b\n"
             "Properties: iq\n"
             "Scan unit: nm"

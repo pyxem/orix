@@ -172,7 +172,16 @@ def dict2phase(dictionary):
     dictionary = copy.deepcopy(dictionary)
     structure = dict2structure(dictionary["structure"])
     structure.title = dictionary["name"]
-    # TODO: Remove this check in v0.6.0
+    # TODO: Remove this check in v0.6.0, since space_group was introduced in v0.4.0
+    try:
+        space_group = dictionary["space_group"]  # Either "None" or int
+    except KeyError:  # v0.3.0
+        space_group = "None"
+    if space_group == "None":
+        space_group = None
+    else:
+        space_group = int(space_group)
+    # TODO: Remove this check in v0.6.0, since name change was introduced in v0.4.0
     try:
         point_group = dictionary["point_group"]
     except KeyError:  # v0.3.0
@@ -181,9 +190,10 @@ def dict2phase(dictionary):
         point_group = None
     return Phase(
         name=dictionary["name"],
-        color=dictionary["color"],
+        space_group=space_group,
         point_group=point_group,
         structure=structure,
+        color=dictionary["color"],
     )
 
 
@@ -416,10 +426,15 @@ def phase2dict(phase, dictionary=None):
         dictionary = {}
 
     dictionary["name"] = phase.name
+    if hasattr(phase.space_group, "number"):
+        space_group = phase.space_group.number
+    else:
+        space_group = "None"
     if hasattr(phase.point_group, "name"):
         point_group = phase.point_group.name
     else:
         point_group = "None"
+    dictionary["space_group"] = space_group
     dictionary["point_group"] = point_group
     dictionary["color"] = phase.color
     dictionary["structure"] = structure2dict(phase.structure)
