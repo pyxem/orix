@@ -113,7 +113,8 @@ class Phase:
         ...     )
         ... )
         >>> p
-        <name: al. space/point group: Fm-3m/m-3m. color: tab:blue>
+        <name: al. space group: Fm-3m. point group: m-3m. proper point \
+        ... group: 432. color: tab:blue>
         >>> p.structure
         [al   0.000000 0.000000 0.000000 1.0000]
         >>> p.structure.lattice
@@ -230,15 +231,17 @@ class Phase:
     def __repr__(self):
         if self.point_group is not None:
             pg_name = self.point_group.name
+            ppg_name = self.point_group.proper_subgroup.name
         else:
-            pg_name = self.point_group  # Which should be None
+            pg_name = self.point_group  # Should be None
+            ppg_name = None
         if self.space_group is not None:
             sg_name = self.space_group.short_name
         else:
-            sg_name = self.space_group  # Which should be None
+            sg_name = self.space_group  # Should be None
         return (
-            f"<name: {self.name}. space/point group: {sg_name}/{pg_name}. color: "
-            f"{self.color}>"
+            f"<name: {self.name}. space group: {sg_name}. point group: {pg_name}. "
+            f"proper point group: {ppg_name}. color: {self.color}>"
         )
 
     def deepcopy(self):
@@ -338,9 +341,9 @@ class PhaseList:
         ...     ]
         ... )
         >>> pl
-        Id  Name  Space/point groups       Color
-         0    al          Fm-3m/m-3m    tab:blue
-         1    cu          Fm-3m/m-3m  tab:orange
+        Id  Name  Space group  Point group  Proper point group     Color
+         0    al        Fm-3m         m-3m                 432  tab:blue
+         1    cu        Fm-3m         m-3m                 432  tab:blue
         >>> pl["al"].structure
         [al   0.000000 0.000000 0.000000 1.0000]
         """
@@ -505,37 +508,40 @@ class PhaseList:
 
         >>> pl = PhaseList(names=['a', 'b'], space_groups=[200, 220])
         >>> pl
-        Id  Name  Space/point group       Color
-         0     a           Pm-3/m-3    tab:blue
-         1     b         I-43d/-43m  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
 
         Return a Phase object if only one phase matches the key
 
         >>> pl[0]  # Index with a single phase id
-        <name: a. space/point group: Pm-3/m-3. color: tab:blue>
+        <name: a. space group: Pm-3. point group: m-3. proper point \
+        ... group: 23. color: tab:blue>
         >>> pl['b']  # Index with a phase name
-        <name: b. space/point group: I-43d/-43m. color: tab:orange>
+        <name: b. space group: I-43d. point group: -43m. proper point \
+        ... group: 23. color: tab:orange>
         >>> pl[:1]
-        <name: b. space/point group: I-43d/-43m. color: tab:orange>
+        <name: b. space group: I-43d. point group: -43m. proper point \
+        ... group: 23. color: tab:orange>
 
         Return a PhaseList object
 
         >>> pl[0:]  # Index with slices
-        Id  Name  Space/point group       Color
-         0    a            Pm-3/m-3    tab:blue
-         1    b          I-43d/-43m  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
         >>> pl['a', 'b']  # Index with a tuple of phase names
-        Id  Name  Space/point group       Color
-         0    a            Pm-3/m-3    tab:blue
-         1    b          I-43d/-43m  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
         >>> pl[0, 1]  # Index with a tuple of phase phase_ids
-        Id  Name  Space/point group       Color
-         0    a            Pm-3/m-3    tab:blue
-         1    b          I-43d/-43m  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
         >>> pl[[0, 1]]  # Index with a list of phase_ids
-        Id  Name  Space/point group       Color
-         0    a            Pm-3/m-3    tab:blue
-         1    b          I-43d/-43m  tab:orange
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         Pm-3          m-3                  23    tab:blue
+         1     b        I-43d         -43m                  23  tab:orange
         """
         # Make key iterable if it isn't already
         if not isinstance(key, (tuple, slice, list, np.ndarray)):
@@ -639,26 +645,19 @@ class PhaseList:
 
         # Ensure attributes set to None are treated OK
         names = ["None" if not i else i for i in self.names]
-        space_group_names = [
-            "None" if not i else i.short_name for i in self.space_groups
+        sg_names = ["None" if not i else i.short_name for i in self.space_groups]
+        pg_names = ["None" if not i else i.name for i in self.point_groups]
+        ppg_names = [
+            "None" if not i else i.proper_subgroup.name for i in self.point_groups
         ]
-        point_group_names = ["None" if not i else i.name for i in self.point_groups]
 
         # Determine column widths (allowing PhaseList to be empty)
         id_len = 2
-        name_len = 4
-        if names:
-            name_len = max(max([len(i) for i in names]), name_len)
-        pg_len_max = 0
-        if point_group_names:
-            pg_len_max = max([len(i) for i in point_group_names])
-        sg_len_max = 0
-        if space_group_names:
-            sg_len_max = max([len(i) for i in space_group_names])
-        sg_pg_len = max(pg_len_max + sg_len_max + 1, 17)
-        col_len = 5
-        if self.colors:
-            col_len = max(max([len(i) for i in self.colors]), col_len)
+        name_len = max(max([len(i) for i in names]), 4)
+        sg_len = max(max([len(i) for i in sg_names]), 11)
+        pg_len = max(max([len(i) for i in pg_names]), 11)
+        ppg_len = max(max([len(i) for i in ppg_names]), 18)
+        col_len = max(max([len(i) for i in self.colors]), 5)
 
         # Column alignment
         align = ">"  # right: ">", left: "<"
@@ -667,19 +666,22 @@ class PhaseList:
         representation = (
             "{:{align}{width}}  ".format("Id", width=id_len, align=align)
             + "{:{align}{width}}  ".format("Name", width=name_len, align=align)
+            + "{:{align}{width}}  ".format("Space group", width=sg_len, align=align)
+            + "{:{align}{width}}  ".format("Point group", width=pg_len, align=align)
             + "{:{align}{width}}  ".format(
-                "Space/point group", width=sg_pg_len, align=align
+                "Proper point group", width=ppg_len, align=align
             )
             + "{:{align}{width}}".format("Color", width=col_len, align=align)
         )
 
         # Overview of each phase
         for i, phase_id in enumerate(self.ids):
-            sg_pg = f"{space_group_names[i]}/{point_group_names[i]}"
             representation += (
                 f"\n{phase_id:{align}{id_len}}  "
                 + f"{names[i]:{align}{name_len}}  "
-                + f"{sg_pg:{align}{sg_pg_len}}  "
+                + f"{sg_names[i]:{align}{sg_len}}  "
+                + f"{pg_names[i]:{align}{pg_len}}  "
+                + f"{ppg_names[i]:{align}{ppg_len}}  "
                 + f"{self.colors[i]:{align}{col_len}}"
             )
 

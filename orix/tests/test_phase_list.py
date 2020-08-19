@@ -158,25 +158,23 @@ class TestPhase:
             p.structure = [1, 2, 3, 90, 90, 90]
 
     @pytest.mark.parametrize(
-        "name, space_group, point_group, desired_sg_str, desired_pg_str",
+        "name, space_group, desired_sg_str, desired_pg_str, desired_ppg_str",
         [
-            ("al", None, None, "None", "None"),
-            ("", 207, "432", "P432", "432"),
-            ("ni", 225, None, "Fm-3m", "m-3m"),
+            ("al", None, "None", "None", "None"),
+            ("", 207, "P432", "432", "432"),
+            ("ni", 225, "Fm-3m", "m-3m", "432"),
         ],
     )
     def test_phase_repr_str(
-        self, name, space_group, point_group, desired_sg_str, desired_pg_str
+        self, name, space_group, desired_sg_str, desired_pg_str, desired_ppg_str,
     ):
-        p = Phase(
-            name=name, space_group=space_group, point_group=point_group, color="C0"
-        )
+        p = Phase(name=name, space_group=space_group, color="C0")
         desired = (
-            "<name: "
-            + str(name)
-            + ". space/point group: "
-            + f"{desired_sg_str}/{desired_pg_str}"
-            + ". color: tab:blue>"
+            f"<name: {name}. "
+            + f"space group: {desired_sg_str}. "
+            + f"point group: {desired_pg_str}. "
+            + f"proper point group: {desired_ppg_str}. "
+            + "color: tab:blue>"
         )
         assert p.__repr__() == desired
         assert p.__str__() == desired
@@ -185,7 +183,10 @@ class TestPhase:
         p = Phase(name="al", space_group=225, color="C1")
         p2 = p.deepcopy()
 
-        desired_p_repr = "<name: al. space/point group: Fm-3m/m-3m. color: tab:orange>"
+        desired_p_repr = (
+            "<name: al. space group: Fm-3m. point group: m-3m. proper point group: 432."
+            " color: tab:orange>"
+        )
         assert p.__repr__() == desired_p_repr
 
         p.name = "austenite"
@@ -193,7 +194,8 @@ class TestPhase:
         p.color = "C2"
 
         new_desired_p_repr = (
-            "<name: austenite. space/point group: Im-3m/m-3m. color: tab:green>"
+            "<name: austenite. space group: Im-3m. point group: m-3m. proper point "
+            "group: 432. color: tab:green>"
         )
         assert p.__repr__() == new_desired_p_repr
         assert p2.__repr__() == desired_p_repr
@@ -236,8 +238,8 @@ class TestPhaseList:
         assert pl.__repr__() == "No phases."
         pl["al"] = "m-3m"
         assert pl.__repr__() == (
-            "Id  Name  Space/point group     Color\n 0    al          None/m-3m  "
-            "tab:blue"
+            "Id  Name  Space group  Point group  Proper point group     Color\n"
+            " 0    al         None         m-3m                 432  tab:blue"
         )
 
     def test_init_set_to_nones(self):
@@ -418,24 +420,35 @@ class TestPhaseList:
         assert pl.ids == desired_phase_ids
 
     @pytest.mark.parametrize(
-        "key_getter, name, point_group, color",
+        (
+            "key_getter, desired_name, desired_point_group, desired_proper_point_group,"
+            "desired_color"
+        ),
         [
-            (0, "a", "m-3m", "r"),
-            ("b", "b", "432", "g"),
-            (slice(2, None, None), "c", "3", "b"),  # equivalent to pl[2:]
+            (0, "a", "m-3m", "432", "r"),
+            ("b", "b", "432", "432", "g"),
+            (slice(2, None, None), "c", "3", "3", "b"),  # equivalent to pl[2:]
         ],
     )
     def test_get_phase_from_phaselist(
-        self, phase_list, key_getter, name, point_group, color
+        self,
+        phase_list,
+        key_getter,
+        desired_name,
+        desired_point_group,
+        desired_proper_point_group,
+        desired_color,
     ):
         p = phase_list[key_getter]
 
         assert p.__repr__() == (
-            f"<name: {name}. space/point group: None/{point_group}. color: {color}>"
+            f"<name: {desired_name}. space group: None. point group: "
+            f"{desired_point_group}. proper point group: {desired_proper_point_group}. "
+            f"color: {desired_color}>"
         )
 
     @pytest.mark.parametrize(
-        "key_getter, names, point_groups, colors",
+        "key_getter, desired_names, desired_point_groups, desired_colors",
         [
             (
                 slice(0, None, None),
@@ -450,13 +463,18 @@ class TestPhaseList:
         ],
     )
     def test_get_phases_from_phaselist(
-        self, phase_list, key_getter, names, point_groups, colors
+        self,
+        phase_list,
+        key_getter,
+        desired_names,
+        desired_point_groups,
+        desired_colors,
     ):
         phases = phase_list[key_getter]
 
-        assert phases.names == names
-        assert [p.name for p in phases.point_groups] == point_groups
-        assert phases.colors == colors
+        assert phases.names == desired_names
+        assert [p.name for p in phases.point_groups] == desired_point_groups
+        assert phases.colors == desired_colors
 
     @pytest.mark.parametrize("key_getter", ["d", 3, slice(3, None)])
     def test_get_from_phaselist_error(self, phase_list, key_getter):

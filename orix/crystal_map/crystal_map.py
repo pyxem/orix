@@ -459,9 +459,9 @@ class CrystalMap:
         A CrystalMap object can be indexed in multiple ways...
 
         >>> cm
-        Phase   Orientations       Name  Space/point group       Color
-            1   5657 (48.4%)  austenite         Fm-3m/m-3m    tab:blue
-            2   6043 (51.6%)    ferrite         Im-3m/m-3m  tab:orange
+        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+            1  5657 (48.4%)  austenite         None          432                 432    tab:blue
+            2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
         >>> cm.shape
@@ -471,18 +471,18 @@ class CrystalMap:
 
         >>> cm2 = cm[20:40, 50:60]
         >>> cm2
-        Phase  Orientations       Name  Space/point group       Color
-            1   148 (74.0%)  austenite         Fm-3m/m-3m    tab:blue
-            2    52 (26.0%)    ferrite         Im-3m/m-3m  tab:orange
+        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+            1   148 (74.0%)  austenite         None          432                 432    tab:blue
+            2    52 (26.0%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
         >>> cm2.shape
         (20, 10)
         >>> cm2 = cm[20:40, 3]
         >>> cm2
-        Phase  Orientations       Name  Space/point group       Color
-            1    16 (80.0%)  austenite         Fm-3m/m-3m    tab:blue
-            2     4 (20.0%)    ferrite         Im-3m/m-3m  tab:orange
+        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+            1    16 (80.0%)  austenite         None          432                 432    tab:blue
+            2     4 (20.0%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
         >>> cm2.shape
@@ -492,8 +492,8 @@ class CrystalMap:
 
         >>> cm2 = cm[10, 10]
         >>> cm2
-        Phase  Orientations     Name  Space/point group       Color
-            2    1 (100.0%)  ferrite         Im-3m/m-3m  tab:orange
+        Phase  Orientations     Name  Space group  Point group  Proper point group       Color
+            2    1 (100.0%)  ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
         >>> cm.shape
@@ -502,26 +502,26 @@ class CrystalMap:
         ... by phase name(s)
 
         >>> cm2 = cm["austenite"]
-        Phase   Orientations       Name  Space/point group     Color
-            1  5657 (100.0%)  austenite         Fm-3m/m-3m  tab:blue
+        Phase  Orientations       Name  Space group  Point group  Proper point group     Color
+            1  5657 (100.0%)  austenite         None          432                 432  tab:blue
         Properties: iq, dp
         Scan unit: um
         >>> cm2.shape
         (100, 117)
         >>> cm["austenite", "ferrite"]
-        Phase  Orientations       Name  Space/point group       Color
-            1  5657 (48.4%)  austenite         Fm-3m/m-3m    tab:blue
-            2  6043 (51.6%)    ferrite         Im-3m/m-3m  tab:orange
-        Properties: dp, iq
+        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+            1  5657 (48.4%)  austenite         None          432                 432    tab:blue
+            2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
+        Properties: iq, dp
         Scan unit: um
 
         ... by "indexed" and "not_indexed"
 
         >>> cm["indexed"]
-        Phase  Orientations       Name  Space/point group       Color
-            1  5657 (48.4%)  austenite         Fm-3m/m-3m    tab:blue
-            2  6043 (51.6%)    ferrite         Im-3m/m-3m  tab:orange
-        Properties: dp, iq
+        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+            1  5657 (48.4%)  austenite         None          432                 432    tab:blue
+            2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
+        Properties: iq, dp
         Scan unit: um
         >>> cm["not_indexed"]
         No data.
@@ -529,14 +529,14 @@ class CrystalMap:
         ... or by boolean arrays ((chained) conditional(s))
 
         >>> cm[cm.dp > 0.81]
-        Phase  Orientations       Name  Space/point group       Color
-            1  4092 (44.8%)  austenite         Fm-3m/m-3m    tab:blue
-            2  5035 (55.2%)    ferrite         Im-3m/m-3m  tab:orange
+        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+            1  4092 (44.8%)  austenite         None          432                 432    tab:blue
+            2  5035 (55.2%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
         >>> cm[(cm.iq > np.mean(cm.iq)) & (cm.phase_id == 1)]
-        Phase   Orientations       Name  Space/point group     Color
-            1  1890 (100.0%)  austenite         Fm-3m/m-3m  tab:blue
+        Phase  Orientations       Name  Space group  Point group  Proper point group     Color
+            1  1890 (100.0%)  austenite         None          432                 432  tab:blue
         Properties: iq, dp
         Scan unit: um
         """
@@ -609,10 +609,11 @@ class CrystalMap:
 
         # Ensure attributes set to None are treated OK
         names = ["None" if not name else name for name in phases.names]
-        space_group_names = [
-            "None" if not i else i.short_name for i in phases.space_groups
+        sg_names = ["None" if not i else i.short_name for i in phases.space_groups]
+        pg_names = ["None" if not i else i.name for i in phases.point_groups]
+        ppg_names = [
+            "None" if not i else i.proper_subgroup.name for i in phases.point_groups
         ]
-        point_group_names = ["None" if not i else i.name for i in phases.point_groups]
 
         # Determine column widths
         unique_phases = np.unique(phase_ids)
@@ -620,9 +621,9 @@ class CrystalMap:
         id_len = 5
         ori_len = max(max([len(str(p_size)) for p_size in p_sizes]) + 8, 12)
         name_len = max(max([len(n) for n in names]), 4)
-        pg_len_max = max([len(i) for i in point_group_names])
-        sg_len_max = max([len(i) for i in space_group_names])
-        sg_pg_len = max(pg_len_max + sg_len_max + 1, 17)
+        sg_len = max(max([len(i) for i in sg_names]), 11)
+        pg_len = max(max([len(i) for i in pg_names]), 11)
+        ppg_len = max(max([len(i) for i in ppg_names]), 18)
         col_len = max(max([len(i) for i in phases.colors]), 5)
 
         # Column alignment
@@ -633,8 +634,10 @@ class CrystalMap:
             "{:{align}{width}}  ".format("Phase", width=id_len, align=align)
             + "{:{align}{width}}  ".format("Orientations", width=ori_len, align=align)
             + "{:{align}{width}}  ".format("Name", width=name_len, align=align)
+            + "{:{align}{width}}  ".format("Space group", width=sg_len, align=align)
+            + "{:{align}{width}}  ".format("Point group", width=pg_len, align=align)
             + "{:{align}{width}}  ".format(
-                "Space/point group", width=sg_pg_len, align=align
+                "Proper point group", width=ppg_len, align=align
             )
             + "{:{align}{width}}\n".format("Color", width=col_len, align=align)
         )
@@ -644,12 +647,13 @@ class CrystalMap:
             p_size = np.where(phase_ids == phase_id)[0].size
             p_fraction = 100 * p_size / self.size
             ori_str = f"{p_size} ({p_fraction:.1f}%)"
-            sg_pg = f"{space_group_names[i]}/{point_group_names[i]}"
             representation += (
                 f"{phase_id:{align}{id_len}}  "
                 + f"{ori_str:{align}{ori_len}}  "
                 + f"{names[i]:{align}{name_len}}  "
-                + f"{sg_pg:{align}{sg_pg_len}}  "
+                + f"{sg_names[i]:{align}{sg_len}}  "
+                + f"{pg_names[i]:{align}{pg_len}}  "
+                + f"{ppg_names[i]:{align}{ppg_len}}  "
                 + f"{phases.colors[i]:{align}{col_len}}\n"
             )
 
