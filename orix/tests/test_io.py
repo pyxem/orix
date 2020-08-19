@@ -24,6 +24,7 @@ import os
 import sys
 
 from diffpy.structure import Lattice, Structure
+from diffpy.structure.spacegroups import GetSpaceGroup
 from h5py import File
 import pytest
 import numpy as np
@@ -833,6 +834,22 @@ class TestOrixHDF5Plugin:
 
         assert_dictionaries_are_equal(phase_dict, this_dict)
 
+    def test_phase2dict_spacegroup(self):
+        """Space group is written to dict as an int or "None"."""
+        sg100 = 100
+        phase = Phase(space_group=sg100)
+        phase_dict1 = phase2dict(phase)
+        assert phase_dict1["space_group"] == sg100
+
+        sg200 = GetSpaceGroup(200)
+        phase.space_group = sg200
+        phase_dict2 = phase2dict(phase)
+        assert phase_dict2["space_group"] == sg200.number
+
+        phase.space_group = None
+        phase_dict3 = phase2dict(phase)
+        assert phase_dict3["space_group"] == "None"
+
     def test_structure2dict(self, phase_list):
         structure = phase_list[0].structure
         structure_dict = structure2dict(structure)
@@ -883,8 +900,21 @@ class TestOrixHDF5Plugin:
 
         assert phase1.name == phase2.name
         assert phase1.color == phase2.color
+        assert phase1.space_group.number == phase2.space_group.number
         assert phase1.point_group.name == phase2.point_group.name
         assert phase1.structure.lattice.abcABG() == phase2.structure.lattice.abcABG()
+
+    def test_dict2phase_spacegroup(self):
+        """Space group number int or None is properly parsed from a dict.
+        """
+        phase1 = Phase(space_group=200)
+        phase_dict = phase2dict(phase1)
+        phase2 = dict2phase(phase_dict)
+        assert phase1.space_group.number == phase2.space_group.number
+
+        phase_dict.pop("space_group")
+        phase3 = dict2phase(phase_dict)
+        assert phase3.space_group is None
 
     def test_dict2structure(self, phase_list):
         structure1 = phase_list[0].structure
