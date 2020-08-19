@@ -462,7 +462,7 @@ spacegroup2pointgroup_dict = {
 }
 
 
-def _get_point_group(space_group_number, proper=False):
+def get_point_group(space_group_number, proper=False):
     """Maps a space group number to its (proper) point group.
 
     Parameters
@@ -480,11 +480,11 @@ def _get_point_group(space_group_number, proper=False):
 
     Examples
     --------
-    >>> from orix.quaternion.symmetry import _get_point_group
-    >>> pgOh = _get_point_group(225)
+    >>> from orix.quaternion.symmetry import get_point_group
+    >>> pgOh = get_point_group(225)
     >>> pgOh.name
     'm-3m'
-    >>> pgO = _get_point_group(225, proper=True)
+    >>> pgO = get_point_group(225, proper=True)
     >>> pgO.name
     '432'
     """

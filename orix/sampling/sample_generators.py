@@ -22,7 +22,7 @@ import numpy as np
 
 from orix.sampling.sampling_utils import uniform_SO3_sample
 from orix.quaternion.orientation_region import OrientationRegion
-from orix.quaternion.symmetry import _get_point_group
+from orix.quaternion.symmetry import get_point_group
 
 
 def get_sample_fundamental(resolution=2, point_group=None, space_group=None):
@@ -53,7 +53,7 @@ def get_sample_fundamental(resolution=2, point_group=None, space_group=None):
     >>> grid = get_sample_fundamental(1, point_group=C2)
     """
     if point_group is None:
-        point_group = _get_point_group(space_group, proper=True)
+        point_group = get_point_group(space_group, proper=True)
 
     q = uniform_SO3_sample(resolution)
     fundamental_region = OrientationRegion.from_symmetry(point_group)
