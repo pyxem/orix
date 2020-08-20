@@ -17,6 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from diffpy.structure import Lattice, Structure
+from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
 
@@ -235,9 +236,9 @@ class TestPhaseList:
     @pytest.mark.parametrize("empty_input", [(), [], {}])
     def test_init_empty_phaselist(self, empty_input):
         pl = PhaseList(empty_input)
-        assert pl.__repr__() == "No phases."
-        pl["al"] = "m-3m"
-        assert pl.__repr__() == (
+        assert repr(pl) == "No phases."
+        pl.add(Phase("al", point_group="m-3m"))
+        assert repr(pl) == (
             "Id  Name  Space group  Point group  Proper point group     Color\n"
             " 0    al         None         m-3m                 432  tab:blue"
         )
@@ -492,39 +493,63 @@ class TestPhaseList:
             phase_list.add_not_indexed()
         assert phase_list[:3].ids == desired_ids
 
-    @pytest.mark.parametrize(
-        "key, value, already_there",
-        [("d", "m-3m", False), ("d", 432, False), ("c", 432, True),],
-    )
-    def test_set_phase_in_phaselist(self, phase_list, key, value, already_there):
-        if already_there:
-            with pytest.raises(ValueError, match=f"{key} is already in the phase "):
-                phase_list[key] = value
-        else:
-            desired_names = phase_list.names + [key]
-            desired_point_group_names = [s.name for s in phase_list.point_groups] + [
-                str(value)
-            ]
-
-            phase_list[key] = value
-
-            assert phase_list.names == desired_names
-            assert [
-                s.name for s in phase_list.point_groups
-            ] == desired_point_group_names
-
-    def test_set_phase_in_empty_phaselist(self):
+    def test_add_phase_in_empty_phaselist(self):
+        """Add Phase to empty PhaseList."""
+        sg_no = 10
+        name = "a"
         pl = PhaseList()
+        pl.add(Phase(name, space_group=sg_no))
+        assert pl.ids == [0]
+        assert pl.names == [name]
+        assert pl.space_groups == [GetSpaceGroup(sg_no)]
+        assert pl.structures == [Structure()]
 
-        names = [0, 0]  # Use as names
-        point_groups = [432, "m-3m"]
-        for n, s in zip(names, point_groups):
-            pl[n] = str(s)
+    def test_add_list_phases_to_phaselist(self):
+        """Add a list of Phase objects to PhaseList, also ensuring that
+        unique colors are given.
+        """
+        names = ["a", "b"]
+        sg_no = [10, 20]
+        colors = ["tab:blue", "tab:orange"]
+        pl = PhaseList(names=names, space_groups=sg_no)
+        assert pl.colors == colors
 
-        assert pl.ids == [0, 1]
-        assert pl.names == [str(n) for n in names]
-        assert [s.name for s in pl.point_groups] == [str(s) for s in point_groups]
-        assert pl.structures == [Structure()] * 2
+        new_names = ["c", "d"]
+        new_sg_no = [30, 40]
+        pl.add([Phase(name=n, space_group=i) for n, i in zip(new_names, new_sg_no)])
+        assert pl.names == names + new_names
+        assert pl.space_groups == (
+            [GetSpaceGroup(i) for i in sg_no] + [GetSpaceGroup(i) for i in new_sg_no]
+        )
+        assert pl.colors == colors + ["tab:green", "tab:red"]
+
+    def test_add_phaselist_to_phaselist(self):
+        """Add a PhaseList to a PhaseList, also ensuring that new IDs are
+        given.
+        """
+        names = ["a", "b"]
+        sg_no = [10, 20]
+        pl1 = PhaseList(names=names, space_groups=sg_no)
+        assert pl1.ids == [0, 1]
+
+        names2 = ["c", "d"]
+        sg_no2 = [30, 40]
+        ids = [4, 5]
+        pl2 = PhaseList(names=names2, space_groups=sg_no2, ids=ids)
+        pl1.add(pl2)
+        assert pl1.names == names + names2
+        assert pl1.space_groups == (
+            [GetSpaceGroup(i) for i in sg_no] + [GetSpaceGroup(i) for i in sg_no2]
+        )
+        assert pl1.ids == [0, 1, 2, 3]
+
+    def test_add_to_phaselist_raises(self):
+        """Trying to add a Phase with a name already in the PhaseList
+        raises a ValueError.
+        """
+        pl = PhaseList(names=["a"])
+        with pytest.raises(ValueError, match="'a' is already in the phase list"):
+            pl.add(Phase("a"))
 
     @pytest.mark.parametrize(
         "key_del, invalid_phase, error_type, error_msg",
@@ -586,7 +611,7 @@ class TestPhaseList:
         pl2 = phase_list.deepcopy()
         assert pl2.names == names
 
-        phase_list["d"] = "m-3m"
+        phase_list.add(Phase("d", point_group="m-3m"))
         phase_list["d"].color = "g"
 
         assert phase_list.names == names + ["d"]
@@ -600,7 +625,7 @@ class TestPhaseList:
     def test_shallowcopy_phaselist(self, phase_list):
         pl2 = phase_list
 
-        phase_list["d"] = "m-3m"
+        phase_list.add(Phase("d", point_group="m-3m"))
 
         assert pl2.names == phase_list.names
         assert [s2.name for s2 in pl2.point_groups] == [
