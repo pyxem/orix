@@ -22,25 +22,10 @@ In a simplified sense, quaternions are an extension of the concept of complex
 numbers, represented by :math:`a + bi + cj + dk` where :math:`i`, :math:`j`, and
 :math:`k` are quaternion units and :math:`i^2 = j^2 = k^2 = ijk = -1`. For
 further reference see
-`the Wikipedia article <https://en.wikipedia.org/wiki/Quaternion>`_
+`the Wikipedia article <https://en.wikipedia.org/wiki/Quaternion>`_.
 
 Unit quaternions are efficient objects for representing rotations, and hence
 orientations.
-
-Submodules
-==========
-
-.. autosummary::
-    :toctree: _autosummary
-
-    rotation
-    symmetry
-    orientation
-    orientation_region
-
-Members
-=======
-
 """
 import numpy as np
 from orix.base import check, Object3d

@@ -43,32 +43,7 @@ POINT_GROUP_ALIASES = {
 
 
 class Phase:
-    """Name, symmetry, and color of a phase in a crystallographic map.
-
-    Attributes
-    ----------
-    color : str
-        Name of phase color in Matplotlib's list of named colors.
-    color_rgb : tuple
-        RGB values of phase color, obtained from the color name.
-    name : str
-        Phase name.
-    point_group : orix.quaternion.symmetry.Symmetry
-        Point group describing the symmetry operations of the phase's
-        crystal structure, according to the International Tables of
-        Crystallography.
-    space_group : diffpy.structure.spacegroups.SpaceGroup
-        Space group describing the symmetry operations resulting from
-        associating the point group with a Bravais lattice, according to
-        the International Tables of Crystallography.
-    structure : diffpy.structure.Structure
-        Unit cell with atoms and lattice.
-
-    Methods
-    -------
-    deepcopy()
-        Return a deep copy using :py:func:`~copy.deepcopy` function.
-    """
+    """Name, symmetry, and color of a phase in a crystallographic map."""
 
     def __init__(
         self, name=None, space_group=None, point_group=None, structure=None, color=None
@@ -253,35 +228,6 @@ class PhaseList:
     """A list of phases in a crystallographic map.
 
     Each phase in the list must have a unique phase id and name.
-
-    Attributes
-    ----------
-    colors : list of tuple
-        List of tuples with three entries, RGB, defining phase colors.
-    names : list of str
-        List of phase names.
-    ids : list of int
-        List of unique phase indices in a crystallographic map as
-        imported.
-    point_groups : list of orix.quaternion.symmetry.Symmetry
-        List of phase point groups.
-    size : int
-        Number of phases in list.
-    space_groups : list of diffpy.structure.spacegroups.SpaceGroup
-        List of phase space groups.
-    structures : list of diffpy.structure.Structure
-        List of unit cells with atoms and the lattice of phase.
-
-    Methods
-    -------
-    add_not_indexed()
-        Add a dummy phase to assign to not indexed data points.
-    deepcopy()
-        Return a deep copy using :py:func:`~copy.deepcopy` function.
-    id_from_name(name):
-        Get phase ID from phase name.
-    sort_by_id()
-        Sort list according to phase ID.
     """
 
     def __init__(

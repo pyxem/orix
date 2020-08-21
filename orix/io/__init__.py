@@ -16,14 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Load and save utilities.
-
-.. warning::
-
-   These functions are far from complete or universally useful. Use at your
-   own risk.
-
-"""
+"""Load and save utilities."""
 
 import os
 from warnings import warn

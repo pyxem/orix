@@ -23,19 +23,6 @@ commonly associated with motion, possessing both a magnitude and a direction.
 In orix they are often encountered as derived objects such as the rotation
 axis of a quaternion or the normal to the bounding planes of a spherical
 region.
-
-Submodules
-==========
-
-.. autosummary::
-    :toctree: _autosummary
-
-    neo_euler
-    spherical_region
-
-Members
-=======
-
 """
 import numpy as np
 from orix.base import check, Object3d
