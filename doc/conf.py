@@ -20,7 +20,7 @@ from orix import __author__, __version__, __file__
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 sys.path.insert(0, os.path.abspath("."))
-# sys.path.append("../")
+sys.path.append("../")
 
 
 # -- Release info ------------------------------------------------------------
