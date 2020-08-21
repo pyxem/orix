@@ -13,14 +13,13 @@ from os.path import relpath, dirname
 import re
 import sys
 
+from orix import __author__, __version__, __file__
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# sys.path.insert(0, os.path.abspath("."))
-sys.path.append("../")
+sys.path.insert(0, os.path.abspath("."))
 
-from orix import __author__, __version__, __file__
 
 # -- Release info ------------------------------------------------------------
 
