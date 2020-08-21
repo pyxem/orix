@@ -1,10 +1,13 @@
-|Travis|_ |Coveralls|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
+|Travis|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
 
 .. |Travis| image:: https://travis-ci.org/pyxem/orix.svg?branch=master
 .. _Travis: https://travis-ci.org/pyxem/orix
 
 .. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=master
 .. _Coveralls: https://coveralls.io/github/pyxem/orix?branch=master
+
+.. |docs| image:: https://readthedocs.org/projects/orix/badge/?version=latest
+.. _docs: https://orix.readthedocs.io/en/latest
 
 .. |pypi_version| image:: http://img.shields.io/pypi/v/orix.svg?style=flat
 .. _pypi_version: https://pypi.python.org/pypi/orix
