@@ -29,6 +29,15 @@ from orix.io.plugins import plugin_list
 extensions = [plugin.file_extensions for plugin in plugin_list if plugin.writes]
 
 
+# Lists what will be imported when calling "from orix.io import *"
+__all__ = [
+    "loadang",
+    "loadctf",
+    "load",
+    "save",
+]
+
+
 def loadang(file_string):
     """Load ``.ang`` files.
 

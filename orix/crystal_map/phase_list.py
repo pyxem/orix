@@ -532,30 +532,6 @@ class PhaseList:
         else:
             return PhaseList(d)
 
-    def __setitem__(self, key, value):
-        """Add a phase to the list with a name, point group and
-        structure.
-        """
-        if key not in self.names:
-            # Make sure the new phase gets a new color
-            color_new = None
-            for color_name in ALL_COLORS.keys():
-                if color_name not in self.colors:
-                    color_new = color_name
-                    break
-
-            # Create new ID
-            if self.ids:
-                new_phase_id = max(self.ids) + 1
-            else:  # `self.phase_ids` is an empty list
-                new_phase_id = 0
-
-            self._dict[new_phase_id] = Phase(
-                name=key, point_group=value, color=color_new
-            )
-        else:
-            raise ValueError(f"{key} is already in the phase list {self.names}.")
-
     def __delitem__(self, key):
         """Delete a phase from the phase list.
 
@@ -662,3 +638,56 @@ class PhaseList:
             if name == phase.name:
                 return phase_id
         raise KeyError(f"'{name}' is not among the phase names {self.names}.")
+
+    def add(self, value):
+        """Add phases to the end of a phase list, incrementing the phase
+        IDs.
+
+        Parameters
+        ----------
+        value : Phase, list of Phase or another PhaseList
+            Phase(s) to add. If a PhaseList is added, the phase IDs in the
+            old list are lost.
+
+        Examples
+        --------
+        >>> from orix.crystal_map import Phase, PhaseList
+        >>> pl = PhaseList(names=["a", "b"], space_groups=[10, 20])
+        >>> pl.add(Phase("c", space_group=30))
+        >>> pl.add([Phase("d", space_group=40), Phase("e")])
+        >>> pl.add(PhaseList(names=["f", "g"], space_groups=[60, 70]))
+        >>> pl
+        Id  Name  Space group  Point group  Proper point group       Color
+         0     a         P2/m          2/m                 112    tab:blue
+         1     b        C2221          222                 222  tab:orange
+         2     c         Pnc2          mm2                 211   tab:green
+         3     d         Ama2          mm2                 211     tab:red
+         4     e         None         None                None  tab:purple
+         5     f         Pbcn          mmm                 222   tab:brown
+         6     g         Fddd          mmm                 222    tab:pink
+        """
+        if isinstance(value, Phase):
+            value = [value]
+        if isinstance(value, PhaseList):
+            value = [i for _, i in value]
+        for phase in value:
+            if phase.name in self.names:
+                raise ValueError(
+                    f"'{phase.name}' is already in the phase list {self.names}"
+                )
+
+            # Ensure a new color
+            if phase.color in self.colors:
+                for color_name in ALL_COLORS.keys():
+                    if color_name not in self.colors:
+                        phase.color = color_name
+                        break
+
+            # Increment the highest phase ID
+            if self.ids:
+                new_phase_id = max(self.ids) + 1
+            else:  # `self.phase_ids` is an empty list
+                new_phase_id = 0
+
+            # Finally, add the phase to the list
+            self._dict[new_phase_id] = phase

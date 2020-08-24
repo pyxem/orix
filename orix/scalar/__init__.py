@@ -24,7 +24,11 @@ of a vector or the rotation angle of a quaternion.
 """
 
 import numpy as np
+
 from orix.base import Object3d
+
+
+__all__ = ["Scalar"]
 
 
 class Scalar(Object3d):

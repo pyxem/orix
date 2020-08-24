@@ -346,14 +346,14 @@ class TestCrystalMapSetAttributes:
             with pytest.raises(IndexError, match="list index out of range"):
                 # `set_phase_id` ID is not in `self.phases.phase_ids`
                 cm[condition].phase_id = set_phase_id
-                _ = cm.__repr__()
+                _ = repr(cm)
 
-            # Add unknown ID to phase list to fix `self.__repr__()`
-            cm.phases["a"] = 432  # Add phase with ID 1
+            # Add unknown ID to phase list to fix `repr(self)`
+            cm.phases.add(Phase("a", point_group=432))  # Add phase with ID 1
         else:
             cm[condition].phase_id = set_phase_id
 
-        _ = cm.__repr__()
+        _ = repr(cm)
 
         new_phase_ids = phase_ids + [set_phase_id]
         new_phase_ids.sort()

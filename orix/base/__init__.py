@@ -19,6 +19,14 @@
 import numpy as np
 
 
+# Lists what will be imported when calling "from orix.base import *"
+__all__ = [
+    "check",
+    "DimensionError",
+    "Object3d",
+]
+
+
 def check(obj, cls):
     if not isinstance(obj, cls):
         try:
