@@ -20,7 +20,7 @@ quaternion
 Quaternion
 ----------
 
-.. autoclass:: orix.quaternion.Quaternion
+.. autoclass:: orix.quaternion.quaternion.Quaternion
     :members:
     :show-inheritance:
 
@@ -79,7 +79,7 @@ vector
 Vector3d
 --------
 
-.. autoclass:: orix.vector.Vector3d
+.. autoclass:: orix.vector.vector3d.Vector3d
     :members:
     :undoc-members:
     :show-inheritance:
@@ -237,6 +237,8 @@ orix HDF5
 
 plot
 ====
+
+.. automodule:: orix.plot
 
 RotationPlot
 ------------
