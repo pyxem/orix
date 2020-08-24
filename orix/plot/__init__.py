@@ -16,5 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from orix.plot.rotation_plot import RodriguesPlot
-from orix.plot.crystal_map_plot import CrystalMapPlot
+from orix.plot.crystal_map_plot import convert_unit, CrystalMapPlot
+from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
+
+# Lists what will be imported when calling "from orix.plot import *"
+__all__ = [
+    "convert_unit",
+    "CrystalMapPlot",
+    "AxAnglePlot",
+    "RodriguesPlot",
+    "RotationPlot",
+]

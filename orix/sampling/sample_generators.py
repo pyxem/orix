@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Module for generating grids in orientation spaces."""
-
 import numpy as np
 
 from orix.sampling.sampling_utils import uniform_SO3_sample

@@ -34,5 +34,13 @@ Submodules
 """
 
 from orix.crystal_map.crystal_map import CrystalMap
-from orix.crystal_map.phase_list import Phase, PhaseList
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
+from orix.crystal_map.phase_list import Phase, PhaseList
+
+# Lists what will be imported when calling "from orix.crystal_map import *"
+__all__ = [
+    "CrystalMap",
+    "Phase",
+    "PhaseList",
+    "CrystalMapProperties",
+]

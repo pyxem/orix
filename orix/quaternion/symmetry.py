@@ -35,8 +35,8 @@ another member of the group.
 Symmetries can consist of rotations or inversions, expressed as
 improper rotations. A mirror symmetry is equivalent to a 2-fold rotation
 combined with inversion.
-
 """
+
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 
