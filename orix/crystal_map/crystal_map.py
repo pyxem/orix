@@ -32,55 +32,6 @@ class CrystalMap:
     space.
 
     All properties are stored as 1D arrays, and reshaped when necessary.
-
-    Attributes
-    ----------
-    all_indexed : bool
-        Whether all points in data are indexed.
-    dz, dy, dx : float
-        Step sizes in z, y and x directions.
-    id : numpy.ndarray
-        ID of points in the data.
-    is_indexed : numpy.ndarray
-        Whether points in data are indexed.
-    ndim : int
-        Number of data dimensions of points in data.
-    orientations : orix.quaternion.orientation.Orientation
-        Orientations in data.
-    phase_id : numpy.ndarray
-        Phase IDs of points in data.
-    phases : orix.crystal_map.PhaseList
-        List of phases with their IDs, names, space groups, point groups
-        and colors (possibly more than are in the data).
-    phases_in_data : orix.crystal_map.PhaseList
-        List of phases in data with their IDs, names, point groups and
-        colors.
-    prop : orix.crystal_map.CrystalMapProperties
-        Dictionary with properties, like quality metrics, in each data
-        point.
-    rotations : orix.quaternion.rotation.Rotation
-        Rotations in data.
-    rotations_per_point : int
-        Number of rotations per data point in data.
-    rotations_shape : tuple
-        Shape of rotation object.
-    scan_unit : str
-        Length unit of data, default is "px".
-    shape : tuple
-        Shape of points in data.
-    size : int
-        Total number of points in data.
-    z, y, x : float
-        Coordinates of points in data.
-
-    Methods
-    -------
-    deepcopy()
-        Return a deep copy using :func:`~copy.deepcopy` function.
-    get_map_data(item, decimals=3, fill_value=None)
-        Return an array of a class instance attribute, with values equal
-        to ``False`` in ``self.is_in_data`` set to`fill_value`, of map
-        data shape.
     """
 
     def __init__(

@@ -21,16 +21,6 @@ Crystallographic map of rotations, crystal phases and key properties associated 
 every spatial coordinate in a 1D, 2D or 3D space.
 
 All map properties with a value in each data point are stored as 1D arrays.
-
-Submodules
-==========
-
-.. autosummary::
-    :toctree: _autosummary
-
-    crystal_map
-    crystal_map_properties
-    phase_list
 """
 
 from orix.crystal_map.crystal_map import CrystalMap

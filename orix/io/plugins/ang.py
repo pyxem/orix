@@ -43,13 +43,13 @@ def file_reader(filename):
     to be 2D.
 
     Many vendors produce an .ang file. Supported vendors are:
-        * EDAX TSL
-        * NanoMegas ASTAR Index
-        * EMsoft (from program `EMdpmerge`)
+    * EDAX TSL
+    * NanoMegas ASTAR Index
+    * EMsoft (from program `EMdpmerge`)
 
     All points satisfying the following criteria are classified as not
     indexed:
-        * EDAX TSL: confidence index == -1
+    * EDAX TSL: confidence index == -1
 
     Parameters
     ----------
