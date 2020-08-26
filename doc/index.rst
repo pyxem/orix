@@ -29,7 +29,7 @@ Related, open-source projects that users of orix might find useful:
   diffraction.
 - `kikuchipy <https://kikuchipy.org>`_: Python library for processing and analysis of
   electron backscatter diffraction (EBSD) patterns.
-- `MTEX <https://mtex-toolbos.github.io>`_: Matlab toolbox for analyzing and
+- `MTEX <https://mtex-toolbox.github.io>`_: Matlab toolbox for analyzing and
   modelling crystallographic textures by means of EBSD or pole figure data.
 
 Work using orix
