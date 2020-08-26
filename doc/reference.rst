@@ -12,6 +12,14 @@ generated from their docstrings. Many of the docstrings contain examples.
 
 ....
 
+Object3d
+========
+
+.. automodule:: orix.base
+    :members:
+
+....
+
 quaternion
 ==========
 
@@ -20,7 +28,7 @@ quaternion
 Quaternion
 ----------
 
-.. autoclass:: orix.quaternion.quaternion.Quaternion
+.. automodule:: orix.quaternion.quaternion
     :members:
     :show-inheritance:
 
@@ -28,45 +36,28 @@ Rotation
 --------
 
 .. automodule:: orix.quaternion.rotation
-
-.. autoclass:: orix.quaternion.rotation.Rotation
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Misorientation and Orientation
 ------------------------------
 
 .. automodule:: orix.quaternion.orientation
-
-.. autoclass:: orix.quaternion.orientation.Misorientation
     :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: orix.quaternion.orientation.Orientation
-    :members:
-    :undoc-members:
     :show-inheritance:
 
 OrientationRegion
 -----------------
 
 .. automodule:: orix.quaternion.orientation_region
-
-.. autoclass:: orix.quaternion.orientation_region.OrientationRegion
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Symmetry
 --------
 
 .. automodule:: orix.quaternion.symmetry
-
-.. autoclass:: orix.quaternion.symmetry.Symmetry
     :members:
-    :undoc-members:
     :show-inheritance:
 
 ....
@@ -79,9 +70,8 @@ vector
 Vector3d
 --------
 
-.. autoclass:: orix.vector.vector3d.Vector3d
+.. automodule:: orix.vector.vector3d.Vector3d
     :members:
-    :undoc-members:
     :show-inheritance:
 
 NeoEuler
@@ -91,7 +81,6 @@ NeoEuler
 
 .. autoclass:: orix.vector.neo_euler.NeoEuler
     :members:
-    :undoc-members:
     :show-inheritance:
 
 AxAngle
@@ -99,7 +88,6 @@ AxAngle
 
 .. autoclass:: orix.vector.neo_euler.AxAngle
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Homochoric
@@ -107,7 +95,6 @@ Homochoric
 
 .. autoclass:: orix.vector.neo_euler.Homochoric
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Rodrigues
@@ -115,17 +102,13 @@ Rodrigues
 
 .. autoclass:: orix.vector.neo_euler.Rodrigues
     :members:
-    :undoc-members:
     :show-inheritance:
 
 SphericalRegion
 ---------------
 
 .. automodule:: orix.vector.spherical_region
-
-.. autoclass:: orix.vector.spherical_region.SphericalRegion
     :members:
-    :undoc-members:
     :show-inheritance:
 
 ....
@@ -134,10 +117,7 @@ scalar
 ======
 
 .. automodule:: orix.scalar
-
-.. autoclass:: orix.scalar.Scalar
     :members:
-    :undoc-members:
     :show-inheritance:
 
 ....
@@ -150,7 +130,6 @@ Generators
 
 .. automodule:: orix.sampling.sample_generators
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Utilities
@@ -158,7 +137,6 @@ Utilities
 
 .. automodule:: orix.sampling.sampling_utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 ....
@@ -173,31 +151,33 @@ Phase
 
 .. autoclass:: orix.crystal_map.phase_list.Phase
     :members:
-    :undoc-members:
     :show-inheritance:
+
+    .. automethod:: __init__
 
 PhaseList
 ---------
 
 .. autoclass:: orix.crystal_map.phase_list.PhaseList
     :members:
-    :undoc-members:
     :show-inheritance:
+
+    .. automethod:: __init__
 
 CrystalMap
 ----------
 
 .. autoclass:: orix.crystal_map.crystal_map.CrystalMap
     :members:
-    :undoc-members:
     :show-inheritance:
+
+    .. automethod:: __init__
 
 CrystalMapProperties
 --------------------
 
 .. autoclass:: orix.crystal_map.crystal_map.CrystalMapProperties
     :members:
-    :undoc-members:
     :show-inheritance:
 
 ....
@@ -207,14 +187,12 @@ io
 
 .. automodule:: orix.io
     :members:
-    :undoc-members:
 
 ANG
 ---
 
 .. automodule:: orix.io.plugins.ang
     :members:
-    :undoc-members:
     :show-inheritance:
 
 EMsoft h5ebsd
@@ -222,7 +200,6 @@ EMsoft h5ebsd
 
 .. automodule:: orix.io.plugins.emsoft_h5ebsd
     :members:
-    :undoc-members:
     :show-inheritance:
 
 orix HDF5
@@ -230,7 +207,6 @@ orix HDF5
 
 .. automodule:: orix.io.plugins.orix_hdf5
     :members:
-    :undoc-members:
     :show-inheritance:
 
 ....
@@ -245,7 +221,6 @@ RotationPlot
 
 .. autoclass:: orix.plot.rotation_plot.RotationPlot
     :members:
-    :undoc-members:
     :show-inheritance:
 
 RodriguesPlot
@@ -253,7 +228,6 @@ RodriguesPlot
 
 .. autoclass:: orix.plot.rotation_plot.RodriguesPlot
     :members:
-    :undoc-members:
     :show-inheritance:
 
 AxAnglePlot
@@ -261,7 +235,6 @@ AxAnglePlot
 
 .. autoclass:: orix.plot.rotation_plot.AxAnglePlot
     :members:
-    :undoc-members:
     :show-inheritance:
 
 CrystalMapPlot
@@ -271,5 +244,4 @@ CrystalMapPlot
 
 .. autoclass:: orix.plot.crystal_map_plot.CrystalMapPlot
     :members:
-    :undoc-members:
     :show-inheritance:
