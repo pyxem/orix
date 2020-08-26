@@ -280,3 +280,23 @@ class TestSpareNotImplemented:
 
     def test_rmul_notimplemented(self, vector):
         "cantmul" * vector
+
+
+class TestSphericalCoordinates:
+    @pytest.mark.parametrize(
+        "vector, theta_desired, phi_desired, r_desired",
+        [
+            (Vector3d((0.5, 0.5, 0.707107)), np.pi / 4, np.pi / 4, 1),
+            (Vector3d((-0.75, -0.433013, -0.5)), 2 * np.pi / 3, 7 * np.pi / 6, 1),
+        ],
+    )
+    def test_to_polar(self, vector, theta_desired, phi_desired, r_desired):
+        theta, phi, r = vector.to_polar()
+        assert np.allclose(theta, theta_desired)
+        assert np.allclose(phi, phi_desired)
+        assert np.allclose(r, r_desired)
+
+    def test_polar_loop(self, vector):
+        theta, phi, r = vector.to_polar()
+        vector2 = Vector3d.from_polar(theta=theta, phi=phi, r=r)
+        assert np.allclose(vector.data, vector2.data)

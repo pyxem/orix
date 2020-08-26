@@ -307,6 +307,20 @@ class Vector3d(Object3d):
         """tuple of ndarray : This vector's components, useful for plotting."""
         return self.x.data, self.y.data, self.z.data
 
+    @property
+    def r(self):
+        return np.sqrt(self.x.data ** 2 + self.y.data ** 2 + self.z.data ** 2)
+
+    @property
+    def theta(self):
+        return np.arccos(self.z.data / self.r)
+
+    @property
+    def phi(self):
+        phi = np.arctan2(self.y.data, self.x.data)
+        phi += (phi < 0) * 2 * np.pi
+        return phi
+
     def angle_with(self, other):
         """Calculate the angles between vectors in 'self' and 'other'
 
@@ -409,3 +423,7 @@ class Vector3d(Object3d):
     def mean(self):
         axis = tuple(range(self.data_dim))
         return self.__class__(self.data.mean(axis=axis))
+
+    def to_polar(self):
+        """Return spherical coordinates."""
+        return self.theta, self.phi, self.r
