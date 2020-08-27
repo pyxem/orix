@@ -33,28 +33,8 @@ from orix.vector import Vector3d
 
 
 class CrystalMapPlot(Axes):
-    """A base class for 2D plotting of CrystalMap objects.
-
-    Attributes
-    ----------
-    name : str
-        Matplotlib projection name.
-
-    Methods
-    -------
-    plot_map(
-        crystal_map, value=None, scalebar=True, scalebar_properties=None,
-        legend=True, legend_properties=None, **kwargs)
-        Plot a 2D map with any CrystalMap attribute as map values.
-    add_scalebar(crystal_map, **kwargs)
-        Add a scalebar to the axes object via `AnchoredSizeBar`.
-    add_overlay(crystal_map, item)
-        Use a crystal map property as gray scale values of a phase map.
-    add_colorbar(label=None, **kwargs)
-        Add an opinionated colorbar to the figure.
-    remove_padding()
-        Remove all white padding outside of the figure.
-
+    """2D plotting of :class:`~orix.crystal_map.crystal_map.CrystalMap`
+    objects.
     """
 
     name = "plot_map"
@@ -228,7 +208,7 @@ class CrystalMapPlot(Axes):
         """Add a scalebar to the axes object via `AnchoredSizeBar`.
 
         To find an appropriate scalebar width, this snippet from MTEX
-        [Bachmann2010]_ written by Eric Payton and Philippe Pinard is used:
+        written by Eric Payton and Philippe Pinard is used:
         https://github.com/mtex-toolbox/mtex/blob/b8fc167d06d453a2b3e212b1ac383acbf85a5a27/plotting/scaleBar.m,
 
         Parameters

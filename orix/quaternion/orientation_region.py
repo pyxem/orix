@@ -32,7 +32,6 @@ domain of an adjusted 432 symmetry.
    :align: center
 
 Rotations or orientations can be inside or outside of an orientation region.
-
 """
 
 import itertools
@@ -111,7 +110,8 @@ def get_proper_groups(Gl, Gr):
 
 
 class OrientationRegion(Rotation):
-    """A set of :obj:`Rotation`s which are the normals of an orientation region.
+    """A set of :class:`~orix.quaternion.rotation.Rotation` which are the
+    normals of an orientation region.
     """
 
     @classmethod
@@ -176,8 +176,7 @@ class OrientationRegion(Rotation):
         return faces
 
     def __gt__(self, other):
-        """
-        overidden greater than method. Applying this to an Orientation
+        """Overridden greater than method. Applying this to an Orientation
         will return only orientations those that lie within the OrientationRegion
         """
 

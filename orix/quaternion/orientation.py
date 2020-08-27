@@ -34,7 +34,6 @@ only by the inclusion of a notion of symmetry. Consider the following example:
 Both objects have undergone the same *rotations* with respect to the reference.
 However, because the square has fourfold symmetry, it is indistinguishable
 in both cases, and hence has the same orientation.
-
 """
 
 from itertools import product as iproduct

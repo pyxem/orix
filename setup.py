@@ -6,9 +6,10 @@ from orix import __name__, __version__, __author__, __author_email__, __descript
 # tests. From setuptools:
 # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
 extra_feature_requirements = {
-    "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"]
+    "doc": ["sphinx >= 3.0.2", "sphinx-rtd-theme >= 0.4.3"],
+    "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
 }
-extra_feature_requirements["dev"] = ["black >= 19.3b0", "pre-commit >= 1.16",] + list(
+extra_feature_requirements["dev"] = ["black >= 19.3b0", "pre-commit >= 1.16"] + list(
     chain(*list(extra_feature_requirements.values()))
 )
 
@@ -45,5 +46,5 @@ setup(
         "tqdm",
     ],
     # fmt: on
-    package_data={"": ["LICENSE", "readme.rst"], "orix": ["*.py"],},
+    package_data={"": ["LICENSE", "README.rst", "readthedocs.yml"], "orix": ["*.py"],},
 )

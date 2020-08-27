@@ -24,6 +24,7 @@ of a vector or the rotation angle of a quaternion.
 """
 
 import numpy as np
+
 from orix.base import Object3d
 
 
