@@ -70,7 +70,9 @@ vector
 Vector3d
 --------
 
-.. automodule:: orix.vector.vector3d.Vector3d
+.. automodule:: orix.vector.vector3d
+
+.. autoclass:: orix.vector.vector3d.Vector3d
     :members:
     :show-inheritance:
 

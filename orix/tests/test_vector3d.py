@@ -292,11 +292,11 @@ class TestSphericalCoordinates:
     )
     def test_to_polar(self, vector, theta_desired, phi_desired, r_desired):
         theta, phi, r = vector.to_polar()
-        assert np.allclose(theta, theta_desired)
-        assert np.allclose(phi, phi_desired)
-        assert np.allclose(r, r_desired)
+        assert np.allclose(theta.data, theta_desired)
+        assert np.allclose(phi.data, phi_desired)
+        assert np.allclose(r.data, r_desired)
 
     def test_polar_loop(self, vector):
         theta, phi, r = vector.to_polar()
-        vector2 = Vector3d.from_polar(theta=theta, phi=phi, r=r)
+        vector2 = Vector3d.from_polar(theta=theta.data, phi=phi.data, r=r.data)
         assert np.allclose(vector.data, vector2.data)
