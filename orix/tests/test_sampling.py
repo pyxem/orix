@@ -55,11 +55,36 @@ def test_uniform_SO3_sample_resolution(sample):
     assert np.isclose(x, y, rtol=0.025)
 
 
-def test_get_sample_local_width(fr):
-    """ Checks that doubling the width 8 folds the number of points """
-    x = get_sample_local(np.pi, fr, 15).size * 8
-    y = get_sample_local(np.pi, fr, 30).size
-    assert np.isclose(x, y, rtol=0.025)
+@pytest.mark.parametrize("big,small", [(77, 52), (48, 37)])
+def test_get_sample_local_width(big, small):
+    """ Checks that width follows the expected trend (X - Sin(X)) """
+    resolution = np.pi
+
+    z = get_sample_local(resolution=resolution, grid_width=small)
+
+    assert np.all(z.angle_with(Rotation([1,0,0,0])) < np.deg2rad(small))
+    assert np.any(z.angle_with(Rotation([1,0,0,0])) > np.deg2rad(small - 1.5*resolution))
+
+    x_size = z.size
+    assert x_size > 0
+    y_size = get_sample_local(resolution=np.pi, grid_width=big).size
+    x_v = np.deg2rad(small) - np.sin(np.deg2rad(small))
+    y_v = np.deg2rad(big) - np.sin(np.deg2rad(big))
+    exp = y_size / x_size
+    theory = y_v / x_v
+
+    # resolution/width is high, so we must be generous on tolerance
+    assert np.isclose(exp, theory, rtol=0.2)
+
+
+@pytest.mark.parametrize("width", [60, 33])
+def test_get_sample_local_center(fr, width):
+    """ Checks that the center argument works as expected """
+    resolution=8
+    x = get_sample_local(resolution=resolution, center=fr, grid_width=width)
+    assert np.all((x.angle_with(fr) < np.deg2rad(width)))
+    # makes sure some of our rotations are inner the outer region
+    assert np.any(x.angle_with(fr) > np.deg2rad(width - resolution*1.5))
 
 
 @pytest.fixture(scope="session")
