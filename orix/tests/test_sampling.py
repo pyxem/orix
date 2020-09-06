@@ -55,17 +55,24 @@ def test_uniform_SO3_sample_resolution(sample):
     assert np.isclose(x, y, rtol=0.025)
 
 
-def test_get_sample_local_width(fr):
+@pytest.mark.parametrize("big,small",[(77,52),(48,37)])
+def test_get_sample_local_width(big,small):
     """ Checks that width follows the expected trend (X - Sin(X)) """
-    x = get_sample_local(resolution=np.pi,grid_width=15).size
-    y = get_sample_local(resolution=np.pi,grid_width=30).size
-    x_v = np.deg2rad(15) - np.sin(np.deg2rad(15))
-    y_v = np.deg2rad(30) - np.sin(np.deg2rad(30))
+    x = get_sample_local(resolution=np.pi,grid_width=small).size
+    y = get_sample_local(resolution=np.pi,grid_width=big).size
+    x_v = np.deg2rad(small) - np.sin(np.deg2rad(small))
+    y_v = np.deg2rad(big) - np.sin(np.deg2rad(big))
     exp = y/x
     theory = y_v/x_v
     assert x > 0
-    assert np.isclose(exp,theory, rtol=0.025)
+    # resolution/width is high, so we must be generous on tolerance
+    assert np.isclose(exp,theory, rtol=0.2)
 
+@pytest.mark.parametrize("width",[60,33])
+def test_get_sample_local_center(fr,width):
+    """ Checks that the center argument works as expected """
+    x = get_sample_local(resolution=8,center=fr,grid_width=width)
+    assert np.all((x.angle_with(fr) < np.deg2rad(width))).data
 
 @pytest.fixture(scope="session")
 def C6_sample():
