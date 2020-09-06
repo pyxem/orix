@@ -84,8 +84,9 @@ def get_sample_local(resolution=2, center=None, grid_width=10):
     """
 
     q = uniform_SO3_sample(resolution)
-    grid_cosine = np.arccos(np.deg2rad(grid_width / 2))
-    q = q[q.a > grid_cosine]
+    half_angle = (np.deg2rad(grid_width / 2))
+    half_angles = np.arccos(q.a.data)
+    q = q[half_angles < half_angle]
     if center is not None:
         q = center * q
     return q

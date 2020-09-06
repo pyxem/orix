@@ -56,11 +56,15 @@ def test_uniform_SO3_sample_resolution(sample):
 
 
 def test_get_sample_local_width(fr):
-    """ Checks that doubling the width 8 folds the number of points """
-    x = get_sample_local(np.pi, fr, 15).size * 8
-    y = get_sample_local(np.pi, fr, 30).size
+    """ Checks that width follows the expected trend (X - Sin(X)) """
+    x = get_sample_local(resolution=np.pi,grid_width=15).size
+    y = get_sample_local(resolution=np.pi,grid_width=30).size
+    x_v = np.deg2rad(15) - np.sin(np.deg2rad(15))
+    y_v = np.deg2rad(30) - np.sin(np.deg2rad(30))
+    exp = y/x
+    theory = y_v/x_v
     assert x > 0
-    assert np.isclose(x, y, rtol=0.025)
+    assert np.isclose(exp,theory, rtol=0.025)
 
 
 @pytest.fixture(scope="session")
