@@ -59,6 +59,7 @@ def test_get_sample_local_width(fr):
     """ Checks that doubling the width 8 folds the number of points """
     x = get_sample_local(np.pi, fr, 15).size * 8
     y = get_sample_local(np.pi, fr, 30).size
+    assert x > 0
     assert np.isclose(x, y, rtol=0.025)
 
 
