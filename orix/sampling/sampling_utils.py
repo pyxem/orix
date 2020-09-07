@@ -20,7 +20,6 @@
 the grid generation within rotation space """
 
 import numpy as np
-from itertools import product
 
 from orix.quaternion.rotation import Rotation
 
@@ -48,7 +47,7 @@ def uniform_SO3_sample(resolution):
     alpha = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
     beta = np.arccos(np.linspace(1, -1, num=half_steps, endpoint=False))
     gamma = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
-    q = np.asarray(list(product(alpha, beta, gamma)))
+    q = np.array(np.meshgrid(alpha, beta, gamma)).T.reshape((-1, 3))
 
     # convert to quaternions
     q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")
