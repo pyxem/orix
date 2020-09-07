@@ -62,8 +62,10 @@ def test_get_sample_local_width(big, small):
 
     z = get_sample_local(resolution=resolution, grid_width=small)
 
-    assert np.all(z.angle_with(Rotation([1,0,0,0])) < np.deg2rad(small))
-    assert np.any(z.angle_with(Rotation([1,0,0,0])) > np.deg2rad(small - 1.5*resolution))
+    assert np.all(z.angle_with(Rotation([1, 0, 0, 0])) < np.deg2rad(small))
+    assert np.any(
+        z.angle_with(Rotation([1, 0, 0, 0])) > np.deg2rad(small - 1.5 * resolution)
+    )
 
     x_size = z.size
     assert x_size > 0
@@ -80,11 +82,11 @@ def test_get_sample_local_width(big, small):
 @pytest.mark.parametrize("width", [60, 33])
 def test_get_sample_local_center(fr, width):
     """ Checks that the center argument works as expected """
-    resolution=8
+    resolution = 8
     x = get_sample_local(resolution=resolution, center=fr, grid_width=width)
     assert np.all((x.angle_with(fr) < np.deg2rad(width)))
     # makes sure some of our rotations are inner the outer region
-    assert np.any(x.angle_with(fr) > np.deg2rad(width - resolution*1.5))
+    assert np.any(x.angle_with(fr) > np.deg2rad(width - resolution * 1.5))
 
 
 @pytest.fixture(scope="session")
