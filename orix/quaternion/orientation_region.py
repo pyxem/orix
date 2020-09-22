@@ -188,19 +188,28 @@ class OrientationRegion(Rotation):
         return inside
 
     def get_plot_data(self):
+        """
+        Produces suitable Rotations for the construction of a wireframe for self
+        """
         from orix.vector import Vector3d
 
+        # gets a grid of vector directions
         theta = np.linspace(0, 2 * np.pi - EPSILON, 361)
         rho = np.linspace(0, np.pi - EPSILON, 181)
         theta, rho = np.meshgrid(theta, rho)
         g = Vector3d.from_polar(rho, theta)
+
+        # get the cell vector normal norms
         n = Rodrigues.from_rotation(self).norm.data[:, np.newaxis, np.newaxis]
         if n.size == 0:
             return Rotation.from_neo_euler(AxAngle.from_axes_angles(g, np.pi))
+
         d = (-self.axis).dot_outer(g.unit).data
         x = n * d
-        x = 2 * np.arctan(x ** -1)
-        x[x < 0] = np.pi
-        x = np.min(x, axis=0)
-        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(g.unit, x))
+        omega = 2 * np.arctan(np.where(x != 0, x ** -1, np.pi))
+
+        # keeps the smallest allowed angle
+        omega[omega < 0] = np.pi
+        omega = np.min(omega, axis=0)
+        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(g.unit, omega))
         return r
