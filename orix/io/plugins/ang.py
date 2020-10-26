@@ -96,7 +96,6 @@ def file_reader(filename):
             data_dict["prop"][name] = file_data[:, column]
 
     # Add phase list to dictionary
-    # unique_phase_ids = np.unique(data_dict["phase_id"]).astype(int)
     data_dict["phase_list"] = PhaseList(
         names=phase_names,
         point_groups=symmetries,
