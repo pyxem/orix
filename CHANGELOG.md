@@ -7,3 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - This project now keeps a Changelog
+
+### Fixed
+- CrystalMap.prop (CrystalMapProperties) allows setting of ND arrays when
+  the first axis' length equals the number of map points.
