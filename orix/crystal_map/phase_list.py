@@ -39,6 +39,8 @@ ALL_COLORS.update(mcolors.XKCD_COLORS)
 # group 432 is entered as 43...
 POINT_GROUP_ALIASES = {
     "432": "43",
+    "121": "20",
+    "222": "22",
 }
 
 

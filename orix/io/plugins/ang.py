@@ -258,6 +258,8 @@ def _get_phases_from_header(header):
 
     Returns
     -------
+    ids : list of int
+        Phase IDs.
     phase_names : list of str
         List of names of detected phases.
     phase_point_groups : list of str
@@ -273,22 +275,29 @@ def _get_phases_from_header(header):
     Index, and EMsoft v4/v5.
     """
     regexps = {
+        "id": "# Phase([ \t]+)([0-9 ]+)",
         "name": "# MaterialName([ \t]+)([A-z0-9 ]+)",
         "formula": "# Formula([ \t]+)([A-z0-9 ]+)",
         "point_group": "# Symmetry([ \t]+)([A-z0-9 ]+)",
         "lattice_constants": r"# LatticeConstants([ \t+])(.*)",
     }
-    phases = {"name": [], "formula": [], "point_group": [], "lattice_constants": []}
+    phases = {
+        "name": [],
+        "formula": [],
+        "point_group": [],
+        "lattice_constants": [],
+        "id": [],
+    }
     for line in header:
         for key, exp in regexps.items():
             match = re.search(exp, line)
             if match:
-                group = re.split("[ \t]", match.group(2).lstrip(" ").rstrip(" "))
+                group = re.split("[ \t]", line.lstrip("# ").rstrip(" "))
                 group = list(filter(None, group))
                 if key == "lattice_constants":
-                    group = [float(i) for i in group]
+                    group = [float(i) for i in group[1:]]
                 else:
-                    group = group[0]
+                    group = group[-1]
                 phases[key].append(group)
 
     # Check if formula is empty (sometimes the case for ASTAR Index)
@@ -296,4 +305,13 @@ def _get_phases_from_header(header):
     if len(names) == 0 or any([i != "" for i in names]):
         names = phases["name"]
 
-    return names, phases["point_group"], phases["lattice_constants"]
+    phase_ids = phases["id"]
+    n_phases = len(phases["name"])
+    if len(phase_ids) == 0:
+        phase_ids.append([i for i in range(n_phases)])
+    elif n_phases - len(phase_ids) > 0 and len(phase_ids) != 0:
+        next_id = max(phase_ids) + 1
+        n_left = n_phases - len(phase_ids)
+        phase_ids.append([i for i in range(next_id, next_id + n_left)])
+
+    return phase_ids, names, phases["point_group"], phases["lattice_constants"]

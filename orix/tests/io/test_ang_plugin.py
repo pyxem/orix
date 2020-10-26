@@ -17,59 +17,23 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
-from collections import OrderedDict
-from io import StringIO
-from numbers import Number
-import os
 import sys
 
-from diffpy.structure import Lattice, Structure
-from diffpy.structure.spacegroups import GetSpaceGroup
-from h5py import File
 import pytest
 import numpy as np
 
-from orix import __version__ as orix_version
-from orix.crystal_map import CrystalMap, Phase, PhaseList
-from orix.io import (
-    load,
-    save,
-    loadang,
-    loadctf,
-    _plugin_from_footprints,
-    _overwrite_or_not,
-)
+from orix.io import load, loadang
 from orix.io.plugins.ang import (
     _get_header,
     _get_phases_from_header,
     _get_vendor_columns,
 )
-from orix.io.plugins.orix_hdf5 import (
-    hdf5group2dict,
-    dict2crystalmap,
-    dict2phaselist,
-    dict2phase,
-    dict2structure,
-    dict2lattice,
-    dict2atom,
-    dict2hdf5group,
-    crystalmap2dict,
-    phaselist2dict,
-    phase2dict,
-    structure2dict,
-    lattice2dict,
-    atom2dict,
-)
-from orix.io.plugins import ang, emsoft_h5ebsd, orix_hdf5
-from orix.quaternion.rotation import Rotation
 
 from orix.tests.conftest import (
     ANGFILE_TSL_HEADER,
     ANGFILE_ASTAR_HEADER,
     ANGFILE_EMSOFT_HEADER,
 )
-
-plugin_list = [ang, emsoft_h5ebsd, orix_hdf5]
 
 
 @contextmanager
@@ -78,104 +42,6 @@ def replace_stdin(target):
     sys.stdin = target
     yield
     sys.stdin = orig
-
-
-def assert_dictionaries_are_equal(input_dict, output_dict):
-    for key in output_dict.keys():
-        output_value = output_dict[key]
-        input_value = input_dict[key]
-        if isinstance(output_value, (dict, OrderedDict)):
-            assert_dictionaries_are_equal(input_value, output_value)
-        else:
-            if isinstance(output_value, (np.ndarray, Number)):
-                assert np.allclose(input_value, output_value)
-            elif isinstance(output_value, Rotation):
-                assert np.allclose(input_value.to_euler(), output_value.to_euler())
-            elif isinstance(output_value, Phase):
-                assert_dictionaries_are_equal(
-                    input_value.__dict__, output_value.__dict__
-                )
-            elif isinstance(output_value, PhaseList):
-                assert_dictionaries_are_equal(input_value._dict, output_value._dict)
-            elif isinstance(output_value, Structure):
-                assert np.allclose(output_value.xyz, input_value.xyz)
-                assert str(output_value.element) == str(input_value.element)
-                assert np.allclose(output_value.occupancy, input_value.occupancy)
-            else:
-                assert input_value == output_value
-
-
-class TestGeneralIO:
-    def test_load_no_filename_match(self):
-        fname = "what_is_hip.ang"
-        with pytest.raises(IOError, match=f"No filename matches '{fname}'."):
-            _ = load(fname)
-
-    @pytest.mark.parametrize("temp_file_path", ["ctf"], indirect=["temp_file_path"])
-    def test_load_unsupported_format(self, temp_file_path):
-        np.savetxt(temp_file_path, X=np.random.rand(100, 8))
-        with pytest.raises(IOError, match=f"Could not read "):
-            _ = load(temp_file_path)
-
-    @pytest.mark.parametrize(
-        "top_group, expected_plugin",
-        [("Scan 1", emsoft_h5ebsd), ("crystal_map", orix_hdf5), ("Scan 2", None)],
-    )
-    def test_plugin_from_footprints(self, temp_file_path, top_group, expected_plugin):
-        with File(temp_file_path, mode="w") as f:
-            f.create_group(top_group)
-            assert (
-                _plugin_from_footprints(
-                    temp_file_path, plugins=[emsoft_h5ebsd, orix_hdf5]
-                )
-                is expected_plugin
-            )
-
-    def test_overwrite_or_not(self, crystal_map, temp_file_path):
-        save(temp_file_path, crystal_map)
-        with pytest.warns(UserWarning, match="Not overwriting, since your terminal "):
-            _overwrite_or_not(temp_file_path)
-
-    @pytest.mark.parametrize(
-        "answer, expected", [("y", True), ("n", False), ("m", None)]
-    )
-    def test_overwrite_or_not_input(
-        self, crystal_map, temp_file_path, answer, expected
-    ):
-        save(temp_file_path, crystal_map)
-        if answer == "m":
-            with replace_stdin(StringIO(answer)):
-                with pytest.raises(EOFError):
-                    _overwrite_or_not(temp_file_path)
-        else:
-            with replace_stdin(StringIO(answer)):
-                assert _overwrite_or_not(temp_file_path) is expected
-
-    @pytest.mark.parametrize("temp_file_path", ["angs", "hdf4", "h6"])
-    def test_save_unsupported_raises(self, temp_file_path, crystal_map):
-        _, ext = os.path.splitext(temp_file_path)
-        with pytest.raises(IOError, match=f"'{ext}' does not correspond to any "):
-            save(temp_file_path, crystal_map)
-
-    def test_save_overwrite_raises(self, temp_file_path, crystal_map):
-        with pytest.raises(ValueError, match="`overwrite` parameter can only be "):
-            save(temp_file_path, crystal_map, overwrite=1)
-
-    @pytest.mark.parametrize(
-        "overwrite, expected_phase_name", [(True, "hepp"), (False, "")]
-    )
-    def test_save_overwrite(
-        self, temp_file_path, crystal_map, overwrite, expected_phase_name
-    ):
-        assert crystal_map.phases[0].name == ""
-        save(temp_file_path, crystal_map)
-        assert os.path.isfile(temp_file_path) is True
-
-        crystal_map.phases[0].name = "hepp"
-        save(temp_file_path, crystal_map, overwrite=overwrite)
-
-        crystal_map2 = load(temp_file_path)
-        assert crystal_map2.phases[0].name == expected_phase_name
 
 
 @pytest.mark.parametrize(
@@ -222,16 +88,6 @@ class TestGeneralIO:
 def test_loadang(angfile_astar, expected_data):
     loaded_data = loadang(angfile_astar)
     assert np.allclose(loaded_data.data, expected_data)
-
-
-def test_loadctf():
-    """ Crude test of the ctf loader """
-    z = np.random.rand(100, 8)
-    fname = "temp.ctf"
-    np.savetxt(fname, z)
-
-    _ = loadctf(fname)
-    os.remove(fname)
 
 
 class TestAngPlugin:
@@ -526,7 +382,7 @@ class TestAngPlugin:
         phases_in_data = cm["indexed"].phases_in_data
         assert phases_in_data.size == 2
         assert phases_in_data.ids == [1, 2]
-        assert phases_in_data.names == ["austenite", "ferrite"]
+        assert phases_in_data.names == ["austenite", "ferrite/ferrite"]
         assert [i.name for i in phases_in_data.point_groups] == ["432"] * 2
 
     def test_get_header(self, temp_ang_file):
@@ -665,298 +521,3 @@ class TestAngPlugin:
         assert names == expected_names
         assert point_groups == expected_point_groups
         assert np.allclose(lattice_constants, expected_lattice_constants)
-
-
-class TestEMsoftPlugin:
-    @pytest.mark.parametrize(
-        (
-            "temp_emsoft_h5ebsd_file, map_shape, step_sizes, example_rot, "
-            "n_top_matches, refined"
-        ),
-        [
-            (
-                (
-                    (7, 3),  # map_shape
-                    (1.5, 1.5),  # step_sizes
-                    np.array(
-                        [
-                            [6.148271, 0.792205, 1.324879],
-                            [6.155951, 0.793078, 1.325229],
-                        ]
-                    ),  # rotations as rows of Euler angle triplets
-                    50,  # n_top_matches
-                    True,  # refined
-                ),
-                (7, 3),
-                (1.5, 1.5),
-                np.array(
-                    [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
-                ),
-                50,
-                True,
-            ),
-            (
-                (
-                    (5, 17),
-                    (0.5, 0.5),
-                    np.array(
-                        [
-                            [6.148271, 0.792205, 1.324879],
-                            [6.155951, 0.793078, 1.325229],
-                        ]
-                    ),
-                    20,
-                    False,
-                ),
-                (5, 17),
-                (0.5, 0.5),
-                np.array(
-                    [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
-                ),
-                20,
-                False,
-            ),
-        ],
-        indirect=["temp_emsoft_h5ebsd_file"],
-    )
-    def test_load_emsoft(
-        self,
-        temp_emsoft_h5ebsd_file,
-        map_shape,
-        step_sizes,
-        example_rot,
-        n_top_matches,
-        refined,
-    ):
-        cm = load(temp_emsoft_h5ebsd_file.filename, refined=refined)
-
-        assert cm.shape == map_shape
-        assert (cm.dy, cm.dx) == step_sizes
-        if refined:
-            n_top_matches = 1
-        assert cm.rotations_per_point == n_top_matches
-
-        # Properties
-        expected_props = [
-            "AvDotProductMap",
-            "CI",
-            "CIMap",
-            "IQ",
-            "IQMap",
-            "ISM",
-            "ISMap",
-            "KAM",
-            "OSM",
-            "TopDotProductList",
-            "TopMatchIndices",
-        ]
-        if refined:
-            expected_props += ["RefinedDotProducts"]
-        actual_props = list(cm.prop.keys())
-        actual_props.sort()
-        expected_props.sort()
-        assert actual_props == expected_props
-
-        assert cm.phases["austenite"].structure == Structure(
-            title="austenite",
-            lattice=Lattice(a=3.595, b=3.595, c=3.595, alpha=90, beta=90, gamma=90),
-        )
-
-
-class TestOrixHDF5Plugin:
-    def test_file_writer(self, crystal_map, temp_file_path):
-        save(filename=temp_file_path, object2write=crystal_map)
-
-        with File(temp_file_path, mode="r") as f:
-            assert f["manufacturer"][()][0].decode() == "orix"
-            assert f["version"][()][0].decode() == orix_version
-
-    @pytest.mark.parametrize(
-        "crystal_map_input",
-        [
-            ((4, 4, 3), (1, 1.5, 1.5), 1, [0, 1]),
-            ((2, 4, 3), (1, 1.5, 1.5), 2, [0, 1, 2]),
-        ],
-        indirect=["crystal_map_input"],
-    )
-    def test_write_read_masked(self, crystal_map_input, temp_file_path):
-        cm = CrystalMap(**crystal_map_input)
-        save(filename=temp_file_path, object2write=cm[cm.x > 2])
-        cm2 = load(temp_file_path)
-
-        assert cm2.size != cm.size
-        with pytest.raises(ValueError, match="operands could not be broadcast"):
-            _ = np.allclose(cm2.x, cm.x)
-
-        cm2.is_in_data = cm.is_in_data
-        assert cm2.size == cm.size
-        assert np.allclose(cm2.x, cm.x)
-
-    def test_file_writer_raises(self, temp_file_path, crystal_map):
-        with pytest.raises(OSError, match="Cannot write to the already open file "):
-            with File(temp_file_path, mode="w") as _:
-                save(temp_file_path, crystal_map, overwrite=True)
-
-    def test_dict2hdf5group(self, temp_file_path):
-        with File(temp_file_path, mode="w") as f:
-            group = f.create_group(name="a_group")
-            with pytest.warns(UserWarning, match="The orix HDF5 writer could not"):
-                dict2hdf5group(
-                    dictionary={"a": [np.array(24.5)], "c": set()}, group=group
-                )
-
-    def test_crystalmap2dict(self, temp_file_path, crystal_map_input):
-        cm = CrystalMap(**crystal_map_input)
-        cm_dict = crystalmap2dict(cm)
-
-        this_dict = {"hello": "there"}
-        cm_dict2 = crystalmap2dict(cm, dictionary=this_dict)
-
-        cm_dict2.pop("hello")
-        assert_dictionaries_are_equal(cm_dict, cm_dict2)
-
-        assert np.allclose(cm_dict["data"]["x"], crystal_map_input["x"])
-        assert cm_dict["header"]["z_step"] == cm.dz
-
-    def test_phaselist2dict(self, phase_list):
-        pl_dict = phaselist2dict(phase_list)
-        this_dict = {"hello": "there"}
-        this_dict = phaselist2dict(phase_list, dictionary=this_dict)
-        this_dict.pop("hello")
-
-        assert_dictionaries_are_equal(pl_dict, this_dict)
-
-    def test_phase2dict(self, phase_list):
-        phase_dict = phase2dict(phase_list[0])
-        this_dict = {"hello": "there"}
-        this_dict = phase2dict(phase_list[0], dictionary=this_dict)
-        this_dict.pop("hello")
-
-        assert_dictionaries_are_equal(phase_dict, this_dict)
-
-    def test_phase2dict_spacegroup(self):
-        """Space group is written to dict as an int or "None"."""
-        sg100 = 100
-        phase = Phase(space_group=sg100)
-        phase_dict1 = phase2dict(phase)
-        assert phase_dict1["space_group"] == sg100
-
-        sg200 = GetSpaceGroup(200)
-        phase.space_group = sg200
-        phase_dict2 = phase2dict(phase)
-        assert phase_dict2["space_group"] == sg200.number
-
-        phase.space_group = None
-        phase_dict3 = phase2dict(phase)
-        assert phase_dict3["space_group"] == "None"
-
-    def test_structure2dict(self, phase_list):
-        structure = phase_list[0].structure
-        structure_dict = structure2dict(structure)
-        this_dict = {"hello": "there"}
-        this_dict = structure2dict(structure, this_dict)
-        this_dict.pop("hello")
-
-        lattice1 = structure_dict["lattice"]
-        lattice2 = this_dict["lattice"]
-        assert np.allclose(lattice1["abcABG"], lattice2["abcABG"])
-        assert np.allclose(lattice1["baserot"], lattice2["baserot"])
-        assert_dictionaries_are_equal(structure_dict["atoms"], this_dict["atoms"])
-
-    def test_hdf5group2dict_update_dict(self, temp_file_path, crystal_map):
-        save(temp_file_path, crystal_map)
-        with File(temp_file_path, mode="r") as f:
-            this_dict = {"hello": "there"}
-            this_dict = hdf5group2dict(f["crystal_map"], dictionary=this_dict)
-
-            assert this_dict["hello"] == "there"
-            assert this_dict["data"] == f["crystal_map/data"]
-            assert this_dict["header"] == f["crystal_map/header"]
-
-    def test_file_reader(self, crystal_map, temp_file_path):
-        save(filename=temp_file_path, object2write=crystal_map)
-        cm2 = load(filename=temp_file_path)
-        assert_dictionaries_are_equal(crystal_map.__dict__, cm2.__dict__)
-
-    def test_dict2crystalmap(self, crystal_map):
-        cm2 = dict2crystalmap(crystalmap2dict(crystal_map))
-        assert_dictionaries_are_equal(crystal_map.__dict__, cm2.__dict__)
-
-    def test_dict2phaselist(self, phase_list):
-        phase_list2 = dict2phaselist(phaselist2dict(phase_list))
-
-        assert phase_list.size == phase_list2.size
-        assert phase_list.ids == phase_list2.ids
-        assert phase_list.names == phase_list2.names
-        assert phase_list.colors == phase_list2.colors
-        assert [
-            s1.name == s2.name
-            for s1, s2 in zip(phase_list.point_groups, phase_list2.point_groups)
-        ]
-
-    def test_dict2phase(self, phase_list):
-        phase1 = phase_list[0]
-        phase2 = dict2phase(phase2dict(phase1))
-
-        assert phase1.name == phase2.name
-        assert phase1.color == phase2.color
-        assert phase1.space_group.number == phase2.space_group.number
-        assert phase1.point_group.name == phase2.point_group.name
-        assert phase1.structure.lattice.abcABG() == phase2.structure.lattice.abcABG()
-
-    def test_dict2phase_spacegroup(self):
-        """Space group number int or None is properly parsed from a dict.
-        """
-        phase1 = Phase(space_group=200)
-        phase_dict = phase2dict(phase1)
-        phase2 = dict2phase(phase_dict)
-        assert phase1.space_group.number == phase2.space_group.number
-
-        phase_dict.pop("space_group")
-        phase3 = dict2phase(phase_dict)
-        assert phase3.space_group is None
-
-    def test_dict2structure(self, phase_list):
-        structure1 = phase_list[0].structure
-        structure2 = dict2structure(structure2dict(structure1))
-
-        lattice1 = structure1.lattice
-        lattice2 = structure2.lattice
-        assert lattice1.abcABG() == lattice2.abcABG()
-        assert np.allclose(lattice1.baserot, lattice2.baserot)
-
-        assert str(structure1.element) == str(structure2.element)
-        assert np.allclose(structure1.xyz, structure2.xyz)
-
-    def test_dict2lattice(self, phase_list):
-        lattice = phase_list[0].structure.lattice
-        lattice2 = dict2lattice(lattice2dict(lattice))
-
-        assert lattice.abcABG() == lattice2.abcABG()
-        assert np.allclose(lattice.baserot, lattice2.baserot)
-
-    def test_dict2atom(self, phase_list):
-        atom = phase_list[0].structure[0]
-        atom2 = dict2atom(atom2dict(atom))
-
-        assert str(atom.element) == str(atom2.element)
-        assert np.allclose(atom.xyz, atom2.xyz)
-
-    def test_read_point_group_from_v0_3_x(self, temp_file_path, crystal_map):
-        crystal_map.phases[0].point_group = "1"
-        save(filename=temp_file_path, object2write=crystal_map)
-
-        # First, ensure point group data set name is named "symmetry", as in v0.3.0
-        with File(temp_file_path, mode="r+") as f:
-            for phase in f["crystal_map/header/phases"].values():
-                phase["symmetry"] = phase["point_group"]
-                del phase["point_group"]
-
-        # Then, make sure it can still be read
-        cm2 = load(filename=temp_file_path)
-        # And that the symmetry operations are the same, for good measure
-        print(crystal_map)
-        print(cm2)
-        assert np.allclose(
-            crystal_map.phases[0].point_group.data, cm2.phases[0].point_group.data
-        )
