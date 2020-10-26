@@ -16,9 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
-import sys
-
 import pytest
 import numpy as np
 
@@ -34,14 +31,6 @@ from orix.tests.conftest import (
     ANGFILE_ASTAR_HEADER,
     ANGFILE_EMSOFT_HEADER,
 )
-
-
-@contextmanager
-def replace_stdin(target):
-    orig = sys.stdin
-    sys.stdin = target
-    yield
-    sys.stdin = orig
 
 
 @pytest.mark.parametrize(
@@ -464,11 +453,12 @@ class TestAngPlugin:
 
     @pytest.mark.parametrize(
         "header_phase_part, expected_names, expected_point_groups, "
-        "expected_lattice_constants",
+        "expected_lattice_constants, expected_phase_id",
         [
             (
                 [
                     [
+                        "# Phase 42",
                         "# MaterialName      Nickel",
                         "# Formula",
                         "# Symmetry          43",
@@ -486,6 +476,7 @@ class TestAngPlugin:
                 ["Nickel", "Aluminium"],
                 ["43", "m3m"],
                 [[3.52, 3.52, 3.52, 90, 90, 90], [3.52, 3.52, 3.52, 90, 90, 90]],
+                [42, 43],
             ),
         ],
     )
@@ -495,6 +486,7 @@ class TestAngPlugin:
         expected_names,
         expected_point_groups,
         expected_lattice_constants,
+        expected_phase_id,
     ):
         # Create header from parts
         header = [
@@ -516,8 +508,9 @@ class TestAngPlugin:
             "#",
             "# GRID: SqrGrid#",
         ]
-        names, point_groups, lattice_constants = _get_phases_from_header(header)
+        ids, names, point_groups, lattice_constants = _get_phases_from_header(header)
 
         assert names == expected_names
         assert point_groups == expected_point_groups
         assert np.allclose(lattice_constants, expected_lattice_constants)
+        assert np.allclose(ids, expected_phase_id)

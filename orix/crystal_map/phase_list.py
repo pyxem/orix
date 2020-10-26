@@ -26,22 +26,18 @@ from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
 import matplotlib.colors as mcolors
 import numpy as np
 
-from orix.quaternion.symmetry import _groups, get_point_group, Symmetry
+from orix.quaternion.symmetry import (
+    _groups,
+    get_point_group,
+    Symmetry,
+    POINT_GROUP_ALIASES,
+)
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
 for k, v in {**mcolors.BASE_COLORS, **mcolors.CSS4_COLORS}.items():
     ALL_COLORS[k] = mcolors.to_hex(v)
 ALL_COLORS.update(mcolors.XKCD_COLORS)
-
-# Point group alias mapping
-# Why is this needed? Well, e.g. in EDAX TSL OIM Analysis 7.2, point
-# group 432 is entered as 43...
-POINT_GROUP_ALIASES = {
-    "432": "43",
-    "121": "20",
-    "222": "22",
-}
 
 
 class Phase:
@@ -180,8 +176,8 @@ class Phase:
         if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):
-            for correct, alias in POINT_GROUP_ALIASES.items():
-                if value == alias:
+            for correct, aliases in POINT_GROUP_ALIASES.items():
+                if value in aliases:
                     value = correct
                     break
             for point_group in _groups:

@@ -16,22 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
-import sys
-
 from diffpy.structure import Lattice, Structure
 import pytest
 import numpy as np
 
 from orix.io import load
-
-
-@contextmanager
-def replace_stdin(target):
-    orig = sys.stdin
-    sys.stdin = target
-    yield
-    sys.stdin = orig
 
 
 class TestEMsoftPlugin:

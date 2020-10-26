@@ -494,3 +494,11 @@ def get_point_group(space_group_number, proper=False):
         return spacegroup2pointgroup_dict[pgn]["proper"]
     else:
         return spacegroup2pointgroup_dict[pgn]["improper"]
+
+
+# Point group alias mapping
+POINT_GROUP_ALIASES = {
+    "432": ["43",],
+    "121": ["20",],
+    "222": ["22",],
+}
