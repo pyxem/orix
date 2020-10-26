@@ -33,7 +33,6 @@ class CrystalMapProperties(dict):
     is_in_data : numpy.ndarray
         1D boolean array with True for points in the data, of the same size
         as the data.
-
     """
 
     def __init__(self, dictionary, id, is_in_data=None):
@@ -51,7 +50,6 @@ class CrystalMapProperties(dict):
             1D boolean array with True for points in the data. If ``None``
             is passed (default), all points are considered to be in the
             data.
-
         """
         super().__init__(**dictionary)
         self.id = id
@@ -64,25 +62,28 @@ class CrystalMapProperties(dict):
         """Add a 1D array to or update an existing array in the
         dictionary. If `key` is the name of an existing array, only the
         points in the data (where `self.is_in_data` is True) are set.
-
         """
-        # Get array values if `key` already present, or zeros
-        array = self.setdefault(key, np.zeros(self.is_in_data.size))
-
-        # Determine array data type from input
-        if hasattr(value, "__iter__"):
-            value_type = type(value[0])
+        # Set array shape
+        value = np.asarray(value)
+        ndim = value.ndim
+        if ndim > 1:
+            # Assume length of first axis equals self.is_in_data.size
+            array_shape = value.shape
         else:
-            value_type = type(value)
-        array = array.astype(value_type)
+            array_shape = (self.is_in_data.size,)
 
-        array[self.is_in_data] = value
+        # Get array values if `key` already present, or zeros
+        array = self.setdefault(key, np.zeros(array_shape))
+
+        # Set correct data type
+        array = array.astype(value.dtype)
+
+        array[self.is_in_data, ...] = value
         super().__setitem__(key, array)
 
     def __getitem__(self, item):
         """Return a dictionary entry, ensuring that only points in the data
         are returned.
-
         """
         array = super().__getitem__(item)
         return array[self.is_in_data]
