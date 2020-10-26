@@ -59,9 +59,14 @@ class CrystalMapProperties(dict):
             self.is_in_data = is_in_data
 
     def __setitem__(self, key, value):
-        """Add a 1D array to or update an existing array in the
-        dictionary. If `key` is the name of an existing array, only the
-        points in the data (where `self.is_in_data` is True) are set.
+        """Add an array to or update an existing array in the
+        dictionary.
+
+        If `key` is the name of an existing array, only the points in the
+        data (where `self.is_in_data` is True) are set.
+
+        If a 2D array is added, its first axis must have the same length
+        as `self.id`.
         """
         # Set array shape
         value = np.asarray(value)
