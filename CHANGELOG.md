@@ -9,5 +9,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This project now keeps a Changelog
 
 ### Fixed
-- Phase IDs found in the ANG file header are used when returning av CrystalMap from this
-  file format.
+- ANG file reader now recognises phase IDs defined in the header
