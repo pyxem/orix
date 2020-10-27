@@ -7,3 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - This project now keeps a Changelog
+
+### Fixed
+- ANG file reader now recognises phase IDs defined in the header

@@ -494,3 +494,13 @@ def get_point_group(space_group_number, proper=False):
         return spacegroup2pointgroup_dict[pgn]["proper"]
     else:
         return spacegroup2pointgroup_dict[pgn]["improper"]
+
+
+# Point group alias mapping. This is needed because in EDAX TSL OIM
+# Analysis 7.2, e.g. point group 432 is entered as 43.
+# Used when reading a phase's point group from an EDAX ANG file header
+point_group_aliases = {
+    "432": ["43",],
+    "121": ["20",],
+    "222": ["22",],
+}
