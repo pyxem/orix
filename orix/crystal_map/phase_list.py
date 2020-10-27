@@ -30,7 +30,7 @@ from orix.quaternion.symmetry import (
     _groups,
     get_point_group,
     Symmetry,
-    POINT_GROUP_ALIASES,
+    point_group_aliases,
 )
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
@@ -176,7 +176,7 @@ class Phase:
         if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):
-            for correct, aliases in POINT_GROUP_ALIASES.items():
+            for correct, aliases in point_group_aliases.items():
                 if value in aliases:
                     value = correct
                     break
