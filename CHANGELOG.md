@@ -9,4 +9,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This project now keeps a Changelog
 
 ### Fixed
+- EMsoft file reader reads Euler angles correctly
 - ANG file reader now recognises phase IDs defined in the header

@@ -91,7 +91,7 @@ def file_reader(filename, refined=False, **kwargs):
         dictionary_size = data_group["FZcnt"][:][0]
         dictionary_euler = data_group["DictionaryEulerAngles"][:][:dictionary_size]
         euler = dictionary_euler[top_match_idx, :]
-    data_dict["rotations"] = Rotation.from_euler(euler)
+    data_dict["rotations"] = Rotation.from_euler(np.deg2rad(euler))
 
     # Get number of top matches kept per data point
     n_top_matches = f["NMLparameters/EBSDIndexingNameListType/nnk"][:][0]
