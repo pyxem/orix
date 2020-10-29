@@ -445,11 +445,10 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         data=np.vstack((np.random.random(size=n_top_matches),) * map_size),
         dtype=np.float32,
     )
+    # In degrees
     data_group.create_dataset(
         "DictionaryEulerAngles",
-        data=np.column_stack(
-            (np.random.uniform(low=0, high=2 * np.pi, size=n_sampled_oris),) * 3
-        ),
+        data=np.column_stack((np.linspace(150, 160, n_sampled_oris),) * 3),
         dtype=np.float32,
     )
 
