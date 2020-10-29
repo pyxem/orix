@@ -960,3 +960,29 @@ class TestOrixHDF5Plugin:
         assert np.allclose(
             crystal_map.phases[0].point_group.data, cm2.phases[0].point_group.data
         )
+
+    def test_write_read_nd_crystalmap_properties(self, temp_file_path, crystal_map):
+        """Crystal map properties with more than one value in each point (e.g. top
+        matching scores from dictionary indexing) can be written and read from file
+        correctly.
+        """
+        xmap = crystal_map
+        map_size = xmap.size
+
+        prop2d_name = "prop2d"
+        prop2d_shape = (map_size, 2)
+        prop2d = np.arange(map_size * 2).reshape(prop2d_shape)
+        xmap.prop[prop2d_name] = prop2d
+
+        prop3d_name = "prop3d"
+        prop3d_shape = (map_size, 2, 2)
+        prop3d = np.arange(map_size * 4).reshape(prop3d_shape)
+        xmap.prop[prop3d_name] = prop3d
+
+        save(filename=temp_file_path, object2write=xmap)
+        xmap2 = load(temp_file_path)
+
+        assert np.allclose(xmap2.prop[prop2d_name], xmap.prop[prop2d_name])
+        assert np.allclose(xmap2.prop[prop3d_name], xmap.prop[prop3d_name])
+        assert np.allclose(xmap2.prop[prop2d_name].reshape(prop2d_shape), prop2d)
+        assert np.allclose(xmap2.prop[prop3d_name].reshape(prop3d_shape), prop3d)
