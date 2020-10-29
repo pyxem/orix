@@ -109,3 +109,4 @@ ENV/
 
 # Visual Studio Code
 *.code-workspace
+.vscode

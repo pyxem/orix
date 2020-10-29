@@ -84,13 +84,13 @@ class TestEMsoftPlugin:
         n_top_matches,
         refined,
     ):
-        cm = load(temp_emsoft_h5ebsd_file.filename, refined=refined)
+        xmap = load(temp_emsoft_h5ebsd_file.filename, refined=refined)
 
-        assert cm.shape == map_shape
-        assert (cm.dy, cm.dx) == step_sizes
+        assert xmap.shape == map_shape
+        assert (xmap.dy, xmap.dx) == step_sizes
         if refined:
             n_top_matches = 1
-        assert cm.rotations_per_point == n_top_matches
+        assert xmap.rotations_per_point == n_top_matches
 
         # Properties
         expected_props = [
@@ -108,12 +108,17 @@ class TestEMsoftPlugin:
         ]
         if refined:
             expected_props += ["RefinedDotProducts"]
-        actual_props = list(cm.prop.keys())
+        actual_props = list(xmap.prop.keys())
         actual_props.sort()
         expected_props.sort()
         assert actual_props == expected_props
 
-        assert cm.phases["austenite"].structure == Structure(
+        assert xmap.phases["austenite"].structure == Structure(
             title="austenite",
             lattice=Lattice(a=3.595, b=3.595, c=3.595, alpha=90, beta=90, gamma=90),
         )
+
+        # Ensure Euler angles in degrees are read correctly from file
+        if not refined:
+            assert np.rad2deg(xmap.rotations.to_euler().min()) >= 150
+            assert np.rad2deg(xmap.rotations.to_euler().max()) <= 160
