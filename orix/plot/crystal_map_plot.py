@@ -54,7 +54,7 @@ class CrystalMapPlot(Axes):
         depth=None,
         **kwargs,
     ) -> AxesImage:
-        """Plot a 2D map with any CrystalMap attribute as map values.
+        r"""Plot a 2D map with any CrystalMap attribute as map values.
 
         Wraps :meth:`matplotlib.axes.Axes.imshow`, see that method for
         relevant keyword arguments.
@@ -128,7 +128,8 @@ class CrystalMapPlot(Axes):
 
         >>> ax = plt.subplot(projection="plot_map")
         >>> ax.plot_map(
-        ...     cm, cm.dp, cmap="cividis", scalebar_properties={"loc": 4})
+        ...     cm, cm.dp, cmap="cividis", scalebar_properties={"loc": 4}
+        ... )
 
         Add a colorbar
 
@@ -153,7 +154,7 @@ class CrystalMapPlot(Axes):
         ...     "/some/directory/image.png",
         ...     pad_inches=0,
         ...     bbox_inches="tight"
-        ...)
+        ... )
 
         Write un-annotated image to file
 

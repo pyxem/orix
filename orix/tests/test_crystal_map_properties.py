@@ -55,11 +55,37 @@ class TestCrystalMapProperties:
         expected_array = np.array([1, 2, 3, 4, 5, 5, 6, 7, 8, 9])
         assert np.allclose(props.get("iq"), expected_array)
 
-        # Set array with one value
+        # Set array with one value (broadcasting works)
         props["iq"] = 2
         expected_array2 = np.ones(map_size) * 2
         expected_array2[5] = expected_array[5]
         assert np.allclose(props.get("iq"), expected_array2)
+
+    def test_set_item_nd(self):
+        map_size = 10
+        d = {"iq": np.arange(map_size)}
+        props = CrystalMapProperties(d, id=np.arange(map_size))
+
+        # 2D
+        prop_2d = np.arange(map_size * 2).reshape((10, 2))
+        props["prop_2d"] = prop_2d
+        assert np.allclose(props["prop_2d"], prop_2d)
+
+        # 3D
+        prop_3d = np.arange(map_size * 4).reshape((10, 2, 2))
+        props["prop_3d"] = prop_3d
+        assert np.allclose(props["prop_3d"], prop_3d)
+
+        with pytest.raises(IndexError, match="boolean index did not match indexed"):
+            props["prop_3d_wrong"] = np.random.random(40).reshape((2, 10, 2))
+
+        # Update 2D array, accounting for in data values
+        is_in_data = np.ones(map_size, dtype=bool)
+        is_in_data[5] = False
+        props.is_in_data = is_in_data
+        new_prop_2d = np.arange(map_size * 2).reshape((map_size, 2))
+        props["prop_2d"] = new_prop_2d[is_in_data]
+        np.allclose(props["prop_2d"], new_prop_2d[is_in_data])
 
     def test_set_item_error(self):
         map_size = 10
@@ -71,11 +97,11 @@ class TestCrystalMapProperties:
         props = CrystalMapProperties(d, id=np.arange(map_size), is_in_data=is_in_data)
 
         # Set array with an array
-        with pytest.raises(ValueError, match="NumPy boolean array indexing assignment"):
+        with pytest.raises(ValueError, match="shape mismatch: value array of shape"):
             props["iq"] = np.arange(map_size) + 1
 
         # Set new 2D array
         props.is_in_data[id_to_change] = True
-        with pytest.raises(TypeError, match="NumPy boolean array indexing assignment"):
+        with pytest.raises(IndexError, match="boolean index did not match indexed"):
             new_shape = (10 // 2, 10 // 5)
             props["dp"] = np.arange(map_size).reshape(new_shape)
