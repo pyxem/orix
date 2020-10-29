@@ -85,11 +85,13 @@ def file_reader(filename, refined=False, **kwargs):
 
     # Get rotations
     if refined:
-        euler = data_group["RefinedEulerAngles"][:]
+        euler = data_group["RefinedEulerAngles"][:]  # Radians
     else:  # Get n top matches for each pixel
         top_match_idx = data_group["TopMatchIndices"][:][:map_size] - 1
         dictionary_size = data_group["FZcnt"][:][0]
+        # Degrees
         dictionary_euler = data_group["DictionaryEulerAngles"][:][:dictionary_size]
+        dictionary_euler = np.deg2rad(dictionary_euler)
         euler = dictionary_euler[top_match_idx, :]
     data_dict["rotations"] = Rotation.from_euler(euler)
 
