@@ -4,7 +4,7 @@ orix
 
 .. toctree::
     :hidden:
-
+    basic_usage.rst
     reference.rst
 
 .. include:: ../README.rst
