@@ -9,5 +9,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This project now keeps a Changelog
 
 ### Fixed
-- CrystalMap.prop (CrystalMapProperties) allows setting of ND arrays when
-  the first axis' length equals the number of map points.
+- CrystalMap properties allows > 2D arrays
+- ANG file reader now recognises phase IDs defined in the header

@@ -43,7 +43,7 @@ ANGFILE_TSL_HEADER = (
     "# z-star                0.514900\n"
     "# WorkingDistance       27.100000\n"
     "#\n"
-    "# Phase 1\n"
+    "# Phase 2\n"
     "# MaterialName      Aluminum\n"
     "# Formula       Al\n"
     "# Info      \n"
@@ -53,6 +53,16 @@ ANGFILE_TSL_HEADER = (
     "# hklFamilies        1 -1 -1 1 8.469246 1\n"
     "# ElasticConstants  -1.000000 -1.000000 -1.000000 -1.000000 -1.000000 -1.000000\n"
     "# Categories0 0 0 0 0 \n"
+    "# Phase 3\n"
+    "# MaterialName  	Iron Titanium Oxide\n"
+    "# Formula     	FeTiO3\n"
+    "# Info 		\n"
+    "# Symmetry              32\n"
+    "# LatticeConstants      5.123 5.123 13.760  90.000  90.000 120.000\n"
+    "# NumberFamilies        60\n"
+    "# hklFamilies   	 3  0  0 1 100.000000 1\n"
+    "# ElasticConstants  -1.000000 -1.000000 -1.000000 -1.000000 -1.000000 -1.000000\n"
+    "# Categories0 0 0 0 0\n"
     "#\n"
     "# GRID: SqrGrid\n"
     "# XSTEP: 0.100000\n"
@@ -151,7 +161,7 @@ def temp_file_path(request):
         (
             (7, 13),  # map_shape
             (0.1, 0.1),  # step_sizes
-            np.random.choice([0], 7 * 13),  # phase_id
+            np.random.choice([2, 3], 7 * 13),  # phase_id
             5,  # Number of unknown columns (one between ci and fit, the rest after fit)
             np.array(
                 [[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589],]

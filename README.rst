@@ -1,7 +1,7 @@
 |Travis|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
 
-.. |Travis| image:: https://travis-ci.org/pyxem/orix.svg?branch=master
-.. _Travis: https://travis-ci.org/pyxem/orix
+.. |Travis| image:: https://travis-ci.com/pyxem/orix.svg?branch=master
+.. _Travis: https://travis-ci.com/pyxem/orix
 
 .. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=master
 .. _Coveralls: https://coveralls.io/github/pyxem/orix?branch=master

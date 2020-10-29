@@ -65,7 +65,9 @@ def file_reader(filename):
         header = _get_header(f)
 
     # Get phase names and crystal symmetries from header (potentially empty)
-    phase_names, symmetries, lattice_constants = _get_phases_from_header(header)
+    phase_ids, phase_names, symmetries, lattice_constants = _get_phases_from_header(
+        header
+    )
     structures = []
     for name, abcABG in zip(phase_names, lattice_constants):
         structures.append(Structure(title=name, lattice=Lattice(*abcABG)))
@@ -94,12 +96,11 @@ def file_reader(filename):
             data_dict["prop"][name] = file_data[:, column]
 
     # Add phase list to dictionary
-    unique_phase_ids = np.unique(data_dict["phase_id"]).astype(int)
     data_dict["phase_list"] = PhaseList(
         names=phase_names,
         point_groups=symmetries,
         structures=structures,
-        ids=unique_phase_ids,
+        ids=phase_ids,
     )
 
     # Set which data points are not indexed
@@ -258,6 +259,8 @@ def _get_phases_from_header(header):
 
     Returns
     -------
+    ids : list of int
+        Phase IDs.
     phase_names : list of str
         List of names of detected phases.
     phase_point_groups : list of str
@@ -273,22 +276,31 @@ def _get_phases_from_header(header):
     Index, and EMsoft v4/v5.
     """
     regexps = {
+        "id": "# Phase([ \t]+)([0-9 ]+)",
         "name": "# MaterialName([ \t]+)([A-z0-9 ]+)",
         "formula": "# Formula([ \t]+)([A-z0-9 ]+)",
         "point_group": "# Symmetry([ \t]+)([A-z0-9 ]+)",
         "lattice_constants": r"# LatticeConstants([ \t+])(.*)",
     }
-    phases = {"name": [], "formula": [], "point_group": [], "lattice_constants": []}
+    phases = {
+        "name": [],
+        "formula": [],
+        "point_group": [],
+        "lattice_constants": [],
+        "id": [],
+    }
     for line in header:
         for key, exp in regexps.items():
             match = re.search(exp, line)
             if match:
-                group = re.split("[ \t]", match.group(2).lstrip(" ").rstrip(" "))
+                group = re.split("[ \t]", line.lstrip("# ").rstrip(" "))
                 group = list(filter(None, group))
-                if key == "lattice_constants":
-                    group = [float(i) for i in group]
+                if key == "name":
+                    group = " ".join(group[1:])  # Drop "MaterialName"
+                elif key == "lattice_constants":
+                    group = [float(i) for i in group[1:]]
                 else:
-                    group = group[0]
+                    group = group[-1]
                 phases[key].append(group)
 
     # Check if formula is empty (sometimes the case for ASTAR Index)
@@ -296,4 +308,14 @@ def _get_phases_from_header(header):
     if len(names) == 0 or any([i != "" for i in names]):
         names = phases["name"]
 
-    return names, phases["point_group"], phases["lattice_constants"]
+    # Ensure each phase has an ID (hopefully found in the header)
+    phase_ids = [int(i) for i in phases["id"]]
+    n_phases = len(phases["name"])
+    if len(phase_ids) == 0:
+        phase_ids += [i for i in range(n_phases)]
+    elif n_phases - len(phase_ids) > 0 and len(phase_ids) != 0:
+        next_id = max(phase_ids) + 1
+        n_left = n_phases - len(phase_ids)
+        phase_ids += [i for i in range(next_id, next_id + n_left)]
+
+    return phase_ids, names, phases["point_group"], phases["lattice_constants"]
