@@ -1,18 +1,15 @@
-Getting started
----------------
+Basic Usage
+-----------
 
 The use of orix should feel familiar to the use of numpy, but rather
 than cells of numbers, the cells contain single 3d objects, such as
-vectors or quaternions. They can all be created using tuples, lists,
-numpy arrays, or other numpy-compatible iterables, and will raise an
-error if constructed with the incorrect number of dimensions. Basic
-examples are given below.
+vectors or quaternions. Here we demonstrate a few simple functionalities.
 
 Vectors
 ~~~~~~~
 
 Vectors are 3d objects representing positions or directions with
-"magnitude". They can be added and subtracted with integers, floats, or
+magnitudes. They can be added and subtracted with integers, floats, or
 other vectors (provided the data are of compatible shapes) and have
 several further unique operations.
 
@@ -53,12 +50,11 @@ several further unique operations.
     #  [1 1 0]]
 
 
-Quaternions
-~~~~~~~~~~~
+Rotations
+~~~~~~~~~
 
-Quaternions are four-dimensional data structures. Unit quaternions are
-often used for representing rotations in 3d. Quaternion multiplication
-is defined and can be applied to either other quaternions or vectors.
+Within orix a Rotation is lorum ipsum
+They are represented with unit quaternions, as a four-dimensional data structures.
 
 .. code:: python
 
@@ -78,3 +74,9 @@ is defined and can be applied to either other quaternions or vectors.
     # [[1. 0. 0. 0.]]
     >>> p.to_euler() # (Euler angles in the Bunge convention)
     # array([[1.57079633, 1.57079633, 0.        ]])
+
+Orientations
+~~~~~~~~~~~~
+
+An Orientation is lorum ipsum. From a coding perspective this means they inherit
+from . Some examples of functionality unique to Orientations is presented below.
