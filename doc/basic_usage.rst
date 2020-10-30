@@ -3,13 +3,14 @@ Basic Usage
 
 The use of orix should feel familiar to the use of numpy, but rather
 than cells of numbers, the cells contain single 3d objects, such as
-vectors or quaternions. Here we demonstrate a few simple functionalities.
+vectors or quaternions. Here we demonstrate a few simple functionalities as well as
+providing some clarity on how a few technical terms are used within the package.
 
 Vectors
 ~~~~~~~
 
 Vectors are 3d objects representing positions or directions with
-magnitudes. They can be added and subtracted with integers, floats, or
+magnitudes. They can be added and subtracted with
 other vectors (provided the data are of compatible shapes) and have
 several further unique operations.
 
@@ -53,8 +54,9 @@ several further unique operations.
 Rotations
 ~~~~~~~~~
 
-Within orix a Rotation is lorum ipsum
-They are represented with unit quaternions, as a four-dimensional data structures.
+Within orix a Rotation is the transformation (this will make more sense upon reading the Orientation section)
+that rotates a vector. They are represented with unit quaternions, as four-dimensional data structures and support
+many standard operations, including finding the inverse, with the ~ method
 
 .. code:: python
 
@@ -72,11 +74,15 @@ They are represented with unit quaternions, as a four-dimensional data structure
     >>> p * ~p # (unit rotation)
     # Rotation (1,)
     # [[1. 0. 0. 0.]]
-    >>> p.to_euler() # (Euler angles in the Bunge convention)
-    # array([[1.57079633, 1.57079633, 0.        ]])
 
 Orientations
 ~~~~~~~~~~~~
 
-An Orientation is lorum ipsum. From a coding perspective this means they inherit
-from . Some examples of functionality unique to Orientations is presented below.
+An Orientation is a rotation with a direction specified. From a coding perspective this means they inherit
+from Rotation. The specification of a direction (physically one might think of a crystal normal) allows us to introduce
+the concept of symmetry equivalent rotations, which we illustrate with an example below. Furthermore, this structure provides extensibility,
+with pole figures being an obvious destination.
+
+.. code:: python
+
+    >>> from orix.quaternion.lorum.ipsum
