@@ -54,9 +54,9 @@ several further unique operations.
 Rotations
 ~~~~~~~~~
 
-Within orix a Rotation is the transformation (this will make more sense upon reading the Orientation section)
-that rotates a vector. They are represented with unit quaternions, as four-dimensional data structures and support
-many standard operations, including finding the inverse, with the ~ method
+Within orix a Rotation describes the transformation of a vector (this formality of language will make more sense upon reading the Orientation section).
+Rotations are represented with unit quaternions, as four-dimensional data structures and support
+many standard operations; examples below:
 
 .. code:: python
 
@@ -78,10 +78,11 @@ many standard operations, including finding the inverse, with the ~ method
 Orientations
 ~~~~~~~~~~~~
 
-An Orientation is a rotation with a direction specified. From a coding perspective this means they inherit
-from Rotation. The specification of a direction (physically one might think of a crystal normal) allows us to introduce
-the concept of symmetry equivalent rotations, which we illustrate with an example below. Furthermore, this structure provides extensibility,
-with pole figures being an obvious destination.
+An Orientation is a rotation with a direction specified, or in an equivalent phrasing "an orientation is a rotation with respect to some reference frame".
+Often this direction will be chosen so that to be a high symmettry element lies along one of the coordinate axes, and one should take extreme care that
+the conventions and settings of all components of software are in agreement.
+
+    The specification of a direction allows us to introduce the concept of symmetry equivalent rotations which we illustrate with an example below.
 
 .. code:: python
 
