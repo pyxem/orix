@@ -149,6 +149,32 @@ class Vector3d(Object3d):
             return self.__class__(other[..., np.newaxis] * self.data)
         return NotImplemented
 
+    def __truediv__(self, other):
+        if isinstance(other, Vector3d):
+            raise ValueError(
+                "Dividing vectors is undefined"
+            )
+        elif isinstance(other, Scalar):
+            return self.__class__(self.data / other.data[..., np.newaxis])
+        elif isinstance(other, (int, float)):
+            return self.__class__(self.data / other)
+        elif isinstance(other, (list, tuple)):
+            other = np.array(other)
+        if isinstance(other, np.ndarray):
+            return self.__class__(self.data / other[..., np.newaxis])
+        return NotImplemented
+
+    def __rtruediv__(self, other):
+        if isinstance(other, Scalar):
+            return self.__class__(other.data[..., np.newaxis] / self.data)
+        elif isinstance(other, (int, float)):
+            return self.__class__(other / self.data)
+        elif isinstance(other, (list, tuple)):
+            other = np.array(other)
+        if isinstance(other, np.ndarray):
+            return self.__class__(other[..., np.newaxis] / self.data)
+        return NotImplemented
+
     def dot(self, other):
         """The dot product of a vector with another vector.
 
@@ -459,6 +485,14 @@ class Vector3d(Object3d):
         s = self.flatten()
         tuples = set([tuple(d) for d in s.data])
         return tuples
+
+    def normalize(self):
+        """
+        Return normalized vectors
+        """
+        norm = self.norm
+        normed = (self.data.T / norm.data).T
+        return self.__class__(normed)
 
     def mean(self):
         axis = tuple(range(self.data_dim))

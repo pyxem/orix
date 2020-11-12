@@ -50,6 +50,24 @@ def test_neg(vector):
 
 
 @pytest.mark.parametrize(
+        "data, datanorm",
+        [
+            ([1, 1, 1],
+             [1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)]),
+            ([[1, 1, 1],
+              [2, 2, 2]],
+             [[1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)],
+              [1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)]]),
+            ]
+        )
+def test_normalize(data, datanorm):
+    vector3 = Vector3d(data)
+    vectornorm = vector3.normalize()
+    expected = Vector3d(datanorm)
+    assert np.allclose(vectornorm.data, expected.data)
+
+
+@pytest.mark.parametrize(
     "vector, other, expected",
     [
         ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[2, 4, 6], [-2, 0, 2]]),
@@ -109,6 +127,31 @@ def test_mul(vector, other, expected):
     s2 = other * vector
     assert np.allclose(s1.data, expected)
     assert np.allclose(s1.data, s2.data)
+
+
+@pytest.mark.parametrize(
+    "vector, other, expected, rexpected",
+    [
+        pytest.param(
+            [1, 2, 3],
+            Vector3d([[1, 2, 3], [-3, -2, -1]]),
+            [[0, 0, 0], [4, 4, 4]],
+            [[0, 0, 0], [4, 4, 4]],
+            marks=pytest.mark.xfail(raises=ValueError),
+        ),
+        ([4, 8, 12], Scalar([4]), [1, 2, 3], [1, 0.5, 1/3]),
+        ([0.5, 1.0, 1.5], 0.5, [1, 2, 3], [1, 0.5, 1/3]),
+        ([1, 2, 3], [-1, 2], [[-1, -2, -3], [1/2, 1, 3/2]], [[-1, -1/2, -1/3], [2, 1, 2/3]]),
+        ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]], [[-1, -1/2, -1/3], [1, 1/2, 1/3]]),
+        pytest.param([1, 2, 3], "dracula", None, None, marks=pytest.mark.xfail),
+    ],
+    indirect=["vector"],
+)
+def test_div(vector, other, expected, rexpected):
+    s1 = vector / other
+    s2 = other / vector
+    assert np.allclose(s1.data, expected)
+    assert np.allclose(s2.data, rexpected)
 
 
 def test_dot(vector, something):
