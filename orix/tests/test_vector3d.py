@@ -50,24 +50,6 @@ def test_neg(vector):
 
 
 @pytest.mark.parametrize(
-        "data, datanorm",
-        [
-            ([1, 1, 1],
-             [1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)]),
-            ([[1, 1, 1],
-              [2, 2, 2]],
-             [[1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)],
-              [1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)]]),
-            ]
-        )
-def test_normalize(data, datanorm):
-    vector3 = Vector3d(data)
-    vectornorm = vector3.normalize()
-    expected = Vector3d(datanorm)
-    assert np.allclose(vectornorm.data, expected.data)
-
-
-@pytest.mark.parametrize(
     "vector, other, expected",
     [
         ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[2, 4, 6], [-2, 0, 2]]),

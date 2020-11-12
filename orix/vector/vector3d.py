@@ -486,14 +486,6 @@ class Vector3d(Object3d):
         tuples = set([tuple(d) for d in s.data])
         return tuples
 
-    def normalize(self):
-        """
-        Return normalized vectors
-        """
-        norm = self.norm
-        normed = (self.data.T / norm.data).T
-        return self.__class__(normed)
-
     def mean(self):
         axis = tuple(range(self.data_dim))
         return self.__class__(self.data.mean(axis=axis))
