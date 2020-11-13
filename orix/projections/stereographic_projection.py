@@ -20,7 +20,6 @@
 Stereographic projection of 3D vectors
 """
 
-from typing import Union
 import numpy as np
 from orix.vector import Vector3d
 
@@ -28,8 +27,53 @@ from orix.vector import Vector3d
 class StereographicProjection:
     """Project 3D vectors on the x-y plane stereographically"""
     @classmethod
-    def project(cls, v: Union[Vector3d, np.ndarray]) -> (np.ndarray, np.ndarray):
+    def project(cls, v, pole=-1):
+        """Convert vector3d to [X,Y]"""
+        v = Vector3d(v)
+        return _get_stereographic_coordinates(v, pole)
+
+    @classmethod
+    def project_spherical(cls, theta, phi, pole=-1):
+        """Convert theta, phi to [X,Y]"""
+        return _get_stereographic_from_spherical(theta, phi, pole)
+
+    @classmethod
+    def project_split(cls, v):
+        """Convert vector3d to [X,Y] split by hemisphere"""
+        v = Vector3d(v)
         return _get_stereographic_hemisphere_coords(v)
+
+    @classmethod
+    def project_split_spherical(cls, theta, phi):
+        """Convert theta, phi to [X,Y] split by hemisphere"""
+        return _get_stereographic_hemisphere_coords_spherical(theta, phi)
+
+
+class InverseStereographicProjection:
+    """Convert stereographic coordinates to unit vectors"""
+    @classmethod
+    def project(cls, xy, pole=-1):
+        """Convert [X, Y] to Vector3d"""
+        return _get_unitvectors_from_stereographic(xy)
+
+    @classmethod
+    def project_spherical(cls, xy, pole=-1):
+        """Convert [X, Y] to theta, phi"""
+        return _get_spherical_from_stereographic(xy)
+
+
+def _get_stereographic_from_spherical(theta, phi):
+    """Convert spherical polar (theta) - azimuthal (phi) coordinates to
+    stereographic"""
+    v = Vector3d.from_polar(theta, phi)
+    return _get_stereographic_coordinates(v)
+
+
+def _get_stereographic_hemisphere_coords_spherical(theta, phi):
+    """Convert spherical polar (theta) - azimuthal (phi) coordinates to
+    stereographic split by hemispheres"""
+    v = Vector3d.from_polar(theta, phi)
+    return _get_stereographic_hemisphere_coords(v)
 
 
 def _get_stereographic_hemisphere_coords(vector3d):
@@ -89,6 +133,15 @@ def _get_stereographic_coordinates(vector3d, pole=-1):
     y = -pole*vector3d.y.data/(vector3d.z.data-pole)
     stereo_coords = np.vstack([x, y]).T
     return stereo_coords
+
+
+def _get_spherical_from_stereographic(xy, pole=-1):
+    """
+    Convert stereographic coordinates to theta, phi spherical coordinates
+    """
+    xyz = _get_unitvectors_from_stereographic(xy, pole=pole)
+    theta, phi, _ = xyz.to_polar()
+    return theta, phi
 
 
 def _get_unitvectors_from_stereographic(xy, pole=-1):
