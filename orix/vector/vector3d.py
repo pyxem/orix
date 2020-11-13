@@ -151,9 +151,7 @@ class Vector3d(Object3d):
 
     def __truediv__(self, other):
         if isinstance(other, Vector3d):
-            raise ValueError(
-                "Dividing vectors is undefined"
-            )
+            raise ValueError("Dividing vectors is undefined")
         elif isinstance(other, Scalar):
             return self.__class__(self.data / other.data[..., np.newaxis])
         elif isinstance(other, (int, float)):
