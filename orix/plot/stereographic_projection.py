@@ -26,6 +26,8 @@ from matplotlib.transforms import Affine2DBase, Affine2D, BboxTransformTo, \
 from matplotlib.spines import Spine
 
 from matplotlib.projections import register_projection
+from orix.projections.stereographic_projection import StereographicProjection,\
+        InverseStereographicProjection
 
 import numpy as np
 
@@ -45,15 +47,9 @@ class StereographicTransform(Transform):
         self._axis = axis
 
     def transform_non_affine(self, values):
-        xy = np.empty(values.shape, float)
-        x = xy[:, 0:1]
-        y = xy[:, 1:2]
-        phi = np.pi - values[:, 0:1]
-        theta = values[:, 1:2]
-        r = np.sin(phi) / (1 - np.cos(phi))
-        x[:] = r * np.cos(theta)
-        y[:] = r * np.sin(theta)
-        return xy
+        theta = values[:, 0:1]
+        phi = values[:, 1:2]
+        return StereographicProjection.project_spherical(theta, phi)
 
     transform_non_affine.__doc__ = Transform.transform_non_affine.__doc__
 
@@ -85,16 +81,8 @@ class InvertedStereographicTransform(Transform):
         self._axis = axis
 
     def transform_non_affine(self, values):
-        phitheta = np.empty(values.shape, float)
-        phi = phitheta[:, 0:1]
-        theta = phitheta[:, 1:2]
-        x = values[:, 0:1]
-        y = values[:, 1:2]
-        c = x + 1j * y
-        r = np.absolute(c)
-        theta[:] = np.angle(c)
-        phi[:] = np.pi - 2 * np.arctan(1 / r)
-        return phitheta
+        theta, phi = InverseStereographicProjection.project_spherical(values)
+        return np.vstack([theta, phi]).T
 
 
 class StereographicAffine(Affine2DBase):
@@ -189,8 +177,8 @@ class StereographicAxes(Axes):
         return False
 
     def transform(self, xs):
-        from texpy.quaternion.rotation import Rotation
-        from texpy.vector import Vector3d
+        from orix.quaternion.rotation import Rotation
+        from orix.vector import Vector3d
         if isinstance(xs, Rotation):
             x, y, z = (xs * Vector3d.zvector()).xyz
         else:

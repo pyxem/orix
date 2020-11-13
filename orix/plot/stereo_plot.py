@@ -29,7 +29,7 @@ class StereoPlot(Axes):
     name = "stereographic"
 
     def scatter(self, vectors3d, **kwargs):
-        xy, _ = StereographicProjection.project(vectors3d)
+        xy = StereographicProjection.project(vectors3d)
         self.add_patch(Circle((0, 0), 1, facecolor="none", edgecolor="black"))
         self.set_aspect("equal")
         self.set_xlim(-1.1, 1.1)
