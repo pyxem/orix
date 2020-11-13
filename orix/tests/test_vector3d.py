@@ -136,6 +136,13 @@ def test_div(vector, other, expected, rexpected):
     assert np.allclose(s2.data, rexpected)
 
 
+@pytest.mark.xfail
+def test_rdiv():
+    v = Vector3d([1, 2, 3])
+    other = "dracula"
+    _ = other / v
+
+
 def test_dot(vector, something):
     assert np.allclose(vector.dot(vector).data, (vector.data ** 2).sum(axis=-1))
     assert np.allclose(vector.dot(something).data, something.dot(vector).data)
