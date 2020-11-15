@@ -124,44 +124,39 @@ def test_mul(vector, other, expected):
 
 
 @pytest.mark.parametrize(
-    "vector, other, expected, rexpected",
+    "vector, other, expected",
     [
         pytest.param(
             [1, 2, 3],
             Vector3d([[1, 2, 3], [-3, -2, -1]]),
             [[0, 0, 0], [4, 4, 4]],
-            [[0, 0, 0], [4, 4, 4]],
             marks=pytest.mark.xfail(raises=ValueError),
         ),
-        ([4, 8, 12], Scalar([4]), [1, 2, 3], [1, 0.5, 1 / 3]),
-        ([0.5, 1.0, 1.5], 0.5, [1, 2, 3], [1, 0.5, 1 / 3]),
+        ([4, 8, 12], Scalar([4]), [1, 2, 3]),
+        ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
         (
             [1, 2, 3],
             [-1, 2],
             [[-1, -2, -3], [1 / 2, 1, 3 / 2]],
-            [[-1, -1 / 2, -1 / 3], [2, 1, 2 / 3]],
         ),
         (
             [1, 2, 3],
             np.array([-1, 1]),
             [[-1, -2, -3], [1, 2, 3]],
-            [[-1, -1 / 2, -1 / 3], [1, 1 / 2, 1 / 3]],
         ),
-        pytest.param([1, 2, 3], "dracula", None, None, marks=pytest.mark.xfail),
+        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
-def test_div(vector, other, expected, rexpected):
+def test_div(vector, other, expected):
     s1 = vector / other
-    s2 = other / vector
     assert np.allclose(s1.data, expected)
-    assert np.allclose(s2.data, rexpected)
 
 
 @pytest.mark.xfail
 def test_rdiv():
     v = Vector3d([1, 2, 3])
-    other = "dracula"
+    other = 1
     _ = other / v
 
 

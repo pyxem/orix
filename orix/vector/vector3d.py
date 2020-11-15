@@ -163,15 +163,7 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __rtruediv__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data[..., np.newaxis] / self.data)
-        elif isinstance(other, (int, float)):
-            return self.__class__(other / self.data)
-        elif isinstance(other, (list, tuple)):
-            other = np.array(other)
-        if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] / self.data)
-        return NotImplemented
+        raise ValueError("Division by a vector is undefined")
 
     def dot(self, other):
         """The dot product of a vector with another vector.
