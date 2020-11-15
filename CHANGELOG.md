@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - This project now keeps a Changelog
 - Testing for Py3.8 on OSX
+- Support division of Vectors by scalars, floats, ints, ...
 
 ### Fixed
 - CrystalMap properties allow arrays with number of dimensions greater than 2
