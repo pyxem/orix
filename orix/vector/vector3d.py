@@ -36,6 +36,8 @@ class Vector3d(Object3d):
       array-like objects.
     - Subtraction to and from the above.
     - Multiplication to scalars, numbers, and compatible array-like objects.
+    - Division by the same as multiplication. Division by a vector is not
+      defined in general.
 
     Examples
     --------
@@ -67,6 +69,15 @@ class Vector3d(Object3d):
     >>> 3 * v
     Vector3d (1,)
     [[3 6 9]]
+
+    >>> v / 2
+    Vector3d (1,)
+    [[0.5 1.0 1.5]]
+
+    >>> v / (2, -2)
+    Vector3d (1,)
+    [[0.5 1.0 1.5]
+     [-0.5 -1.0 -1.5]]
     """
 
     dim = 3
