@@ -9,4 +9,5 @@ __credits__ = [
     "Håkon Wiik Ånes",
     "Duncan Johnstone",
     "Simon Høgås",
+    "Niels Cautaerts",
 ]
