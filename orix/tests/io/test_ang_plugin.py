@@ -79,7 +79,7 @@ def test_loadang(angfile_astar, expected_data):
     assert np.allclose(loaded_data.data, expected_data)
 
 
-class TestAngPlugin:
+class TestAngReader:
     @pytest.mark.parametrize(
         "angfile_tsl, map_shape, step_sizes, phase_id, n_unknown_columns, example_rot",
         [
@@ -514,3 +514,7 @@ class TestAngPlugin:
         assert point_groups == expected_point_groups
         assert np.allclose(lattice_constants, expected_lattice_constants)
         assert np.allclose(ids, expected_phase_id)
+
+
+class TestAngWriter:
+    pass

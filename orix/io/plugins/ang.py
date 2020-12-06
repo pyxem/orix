@@ -328,9 +328,8 @@ def file_writer(filename, crystal_map, **kwargs):
     * NanoMegas ASTAR MapViewer
     * MTEX
 
-    All points satisfying the following criteria are classified as not
-    indexed:
-    * EDAX TSL: confidence index == -1
+    All points considered as not indexed are assigned a dummy
+    orientation.
 
     Parameters
     ----------
