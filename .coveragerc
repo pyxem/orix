@@ -1,5 +1,0 @@
-[run]
-source = orix
-include = /orix/*
-omit =
-     /orix/__init__.py
