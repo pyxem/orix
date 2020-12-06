@@ -1,7 +1,7 @@
-|Travis|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
+|build_status|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
 
-.. |Travis| image:: https://travis-ci.com/pyxem/orix.svg?branch=master
-.. _Travis: https://travis-ci.com/pyxem/orix
+.. |build_status| image:: https://github.com/pyxem/orix/workflows/build/badge.svg
+.. _build_status: https://github.com/pyxem/orix/actions
 
 .. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=master
 .. _Coveralls: https://coveralls.io/github/pyxem/orix?branch=master
@@ -23,10 +23,15 @@
 
 orix is an open-source python library for analysing orientations and crystal symmetry.
 
-The package defines objects and functions for the analysis of orientations represented as quaternions or 3D rotation vectors accounting for crystal symmetry. Functionality builds primarily on top of `numpy <http://www.numpy.org/>`__ and
-`matplotlib <https://matplotlib.org/>`__ and is heavily inspired by the `MATLAB <https://www.mathworks.com/products/matlab.html>`__ package `MTEX <http://mtex-toolbox.github.io/>`__.
+The package defines objects and functions for the analysis of orientations represented
+as quaternions or 3D rotation vectors accounting for crystal symmetry. Functionality
+builds primarily on top of `numpy <http://www.numpy.org/>`__ and
+`matplotlib <https://matplotlib.org/>`__ and is heavily inspired by the
+`MATLAB <https://www.mathworks.com/products/matlab.html>`__ package
+`MTEX <http://mtex-toolbox.github.io/>`__.
 
-If analysis using orix forms a part of published work please cite the manuscript at the following `link <https://onlinelibrary.wiley.com/iucr/doi/10.1107/S1600576720011103>`_. You can also find demos in the `orix-demos <https://github.com/pyxem/orix-demos>`_ repo.
+If analysis using orix forms a part of published work please cite the manuscript at the
+following `link <https://onlinelibrary.wiley.com/iucr/doi/10.1107/S1600576720011103>`_.
+You can also find demos in the `orix-demos <https://github.com/pyxem/orix-demos>`_ repo.
 
 orix is released under the GPL v3 license.
-
