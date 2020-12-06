@@ -33,7 +33,7 @@ from orix.quaternion.rotation import Rotation
 # Plugin description
 format_name = "ang"
 file_extensions = ["ang"]
-writes = False
+writes = True
 writes_this = CrystalMap
 
 
@@ -319,3 +319,24 @@ def _get_phases_from_header(header):
         phase_ids += [i for i in range(next_id, next_id + n_left)]
 
     return phase_ids, names, phases["point_group"], phases["lattice_constants"]
+
+
+def file_writer(filename, crystal_map, **kwargs):
+    """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
+    to an ANG file readable, which should be readable by:
+    * EDAX TSL OIM Analysis
+    * NanoMegas ASTAR MapViewer
+    * MTEX
+
+    All points satisfying the following criteria are classified as not
+    indexed:
+    * EDAX TSL: confidence index == -1
+
+    Parameters
+    ----------
+    filename : str
+        Name of file to write to.
+    crystal_map : CrystalMap
+        Object to write to file.
+    """
+    return
