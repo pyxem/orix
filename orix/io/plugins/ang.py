@@ -332,7 +332,7 @@ def file_writer(
     pattern_fit_prop=None,
 ):
     """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
-    to an ANG file readable, readable (at least) by MTEX.
+    to an ANG file, readable (at least) by MTEX.
 
     All non-indexed points are assigned a dummy orientation.
 
