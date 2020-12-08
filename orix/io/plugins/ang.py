@@ -24,6 +24,8 @@ import numpy as np
 
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.quaternion.rotation import Rotation
+from orix import __version__
+
 
 # MTEX has this format sorted out, check out their readers when fixing
 # issues and adapting to other versions of this file format in the future:
@@ -321,15 +323,11 @@ def _get_phases_from_header(header):
     return phase_ids, names, phases["point_group"], phases["lattice_constants"]
 
 
-def file_writer(filename, crystal_map, **kwargs):
+def file_writer(filename, crystal_map):
     """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
-    to an ANG file readable, which should be readable by:
-    * EDAX TSL OIM Analysis
-    * NanoMegas ASTAR MapViewer
-    * MTEX
+    to an ANG file readable, readable (at least) by MTEX.
 
-    All points considered as not indexed are assigned a dummy
-    orientation.
+    All non-indexed points are assigned a dummy orientation.
 
     Parameters
     ----------
@@ -338,4 +336,63 @@ def file_writer(filename, crystal_map, **kwargs):
     crystal_map : CrystalMap
         Object to write to file.
     """
-    return
+    if crystal_map.ndim > 2:
+        raise ValueError("Writing a 3D dataset to an ANG file is not supported")
+    header = _get_ang_header(crystal_map)
+    data = crystal_map.rotations.to_euler()
+    np.savetxt(
+        fname=filename, X=data, fmt="%8.5f", header=header,
+    )
+
+
+def _get_ang_header(crystal_map):
+    # Ensure correct scan dimensions, at the same time getting number of
+    # columns and rows
+    nrows, ncols = (1, 1)
+    if crystal_map.ndim == 1:
+        ncols = crystal_map.shape[0]
+    else:  # crystal_map.ndim == 2:
+        nrows, ncols = crystal_map.shape
+
+    # Initialize header with microscope info
+    header = (
+        "TEM_PIXperUM           1.000000\n"
+        "x-star                 0.000000\n"
+        "y-star                 0.000000\n"
+        "z-star                 0.000000\n"
+        "WorkingDistance        0.000000\n"
+        "\n"
+    )
+
+    # Extend header with phase info
+    for phase_id, phase in crystal_map.phases:
+        lattice_constants = phase.structure.lattice.abcABG()
+        lattice_constants = " ".join([f"{float(val):.3f}" for val in lattice_constants])
+        header += (
+            f"Phase {phase_id}\n"
+            f"MaterialName    {phase.name}\n"
+            f"Formula    {phase.name}\n"
+            f"Info\n"
+            f"Symmetry    {phase.point_group.name}\n"
+            f"LatticeConstants    {lattice_constants}\n"
+            "NumberFamilies    0\n"
+        )
+
+    # Extend header with map info
+    header += (
+        "GRID: SqrGrid\n"
+        f"XSTEP: {float(crystal_map.dx):.6f}\n"
+        f"YSTEP: {float(crystal_map.dy):.6f}\n"
+        f"NCOLS_ODD: {ncols}\n"
+        f"NCOLS_EVEN: {ncols}\n"
+        f"NROWS: {nrows}\n"
+        "\n"
+        f"OPERATOR: orix {__version__}\n"
+        "\n"
+        "SAMPLEID:\n"
+        "\n"
+        "SCANID:\n"
+        "\n"
+    )
+
+    return header
