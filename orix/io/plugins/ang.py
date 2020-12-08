@@ -323,11 +323,21 @@ def _get_phases_from_header(header):
     return phase_ids, names, phases["point_group"], phases["lattice_constants"]
 
 
-def file_writer(filename, crystal_map):
+def file_writer(
+    filename,
+    crystal_map,
+    image_quality_prop=None,
+    confidence_index_prop=None,
+    sem_signal_prop=None,
+    pattern_fit_prop=None,
+):
     """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
     to an ANG file readable, readable (at least) by MTEX.
 
     All non-indexed points are assigned a dummy orientation.
+
+    The columns are phi1, Phi, phi2, x, y, image quality,
+    confidence index, phase ID, sem signal, and pattern fit.
 
     Parameters
     ----------
@@ -335,25 +345,82 @@ def file_writer(filename, crystal_map):
         Name of file to write to.
     crystal_map : CrystalMap
         Object to write to file.
+    image_quality_prop : str, optional
+        Which map property to use as the image quality. If None
+        (default), "iq" or "imagequality", if present, is used, or just
+        zeros. If the property has more than one value per point, only
+        the first value is used.
+    confidence_index_prop : str, optional
+        Which map property to use as the confidence index. If None
+        (default), "ci" or "confidenceindex", if present, is used, or
+        just zeros. If the property has more than one value per point,
+        only the first value is used.
+    sem_signal_prop : str, optional
+        Which map property to use as the SEM signal. If None
+        (default), "ss", or "semsignal", if present, is used, or just
+        zeros. If the property has more than one value per point, only
+        the first value is used.
+    pattern_fit_prop : str, optional
+        Which map property to use as the pattern fit. If None
+        (default), "fit" or "patternfit", if present, is used, or just
+        zeros. If the property has more than one value per point, only
+        the first value is used.
     """
     if crystal_map.ndim > 2:
         raise ValueError("Writing a 3D dataset to an ANG file is not supported")
     header = _get_ang_header(crystal_map)
-    data = crystal_map.rotations.to_euler()
+
+    # Number of decimals to round to
+    decimals = 5
+
+    # Get map data, accounting for potentially masked out values
+    nrows, ncols, dy, dx = _get_nrows_ncols_step_sizes(crystal_map)
+    map_size = nrows * ncols
+    # Orientations
+    eulers = crystal_map.get_map_data(
+        "rotations", decimals=decimals, fill_value=0
+    ).reshape((map_size, 3))
+    # Spatial arrays
+    x = np.tile(np.arange(ncols) * dx, nrows)
+    y = np.sort(np.tile(np.arange(nrows) * dy, ncols))
+    x_width = _get_column_width(np.max(x))
+    y_width = _get_column_width(np.max(y))
+    # Properties
+    # TODO: Allow additional data columns
+    prop_arrays = _get_prop_arrays(
+        crystal_map=crystal_map,
+        prop_names=list(crystal_map.prop.keys()),
+        desired_prop_names=[
+            image_quality_prop,
+            confidence_index_prop,
+            sem_signal_prop,
+            pattern_fit_prop,
+        ],
+        map_size=map_size,
+        decimals=decimals,
+    )
+    iq_width = _get_column_width(np.max(prop_arrays[:, 0]))
+    ci_width = _get_column_width(np.max(prop_arrays[:, 1]))
+    sem_signal_width = _get_column_width(np.max(prop_arrays[:, 3]))
+    fit_width = _get_column_width(np.max(prop_arrays[:, 2]))
+    # Phase ID
+    phase_id = crystal_map.get_map_data("phase_id").reshape(map_size,)
+
     np.savetxt(
-        fname=filename, X=data, fmt="%8.5f", header=header,
+        fname=filename,
+        X=np.column_stack(
+            [eulers, x, y, prop_arrays[:, :2], phase_id, prop_arrays[:, 2:]]
+        ),
+        fmt=(
+            f"%8.5f  %8.5f  %8.5f  %{x_width}.5f  %{y_width}.5f  %{iq_width}.5f  "
+            f"%{ci_width}.5f  %i  %{fit_width}.5f  %{sem_signal_width}.5f"
+        ),
+        header=header,
     )
 
 
 def _get_ang_header(crystal_map):
-    # Ensure correct scan dimensions, at the same time getting number of
-    # columns and rows
-    nrows, ncols = (1, 1)
-    if crystal_map.ndim == 1:
-        ncols = crystal_map.shape[0]
-    else:  # crystal_map.ndim == 2:
-        nrows, ncols = crystal_map.shape
-
+    nrows, ncols, _, _ = _get_nrows_ncols_step_sizes(crystal_map)
     # Initialize header with microscope info
     header = (
         "TEM_PIXperUM           1.000000\n"
@@ -363,7 +430,6 @@ def _get_ang_header(crystal_map):
         "WorkingDistance        0.000000\n"
         "\n"
     )
-
     # Extend header with phase info
     for phase_id, phase in crystal_map.phases:
         lattice_constants = phase.structure.lattice.abcABG()
@@ -377,7 +443,6 @@ def _get_ang_header(crystal_map):
             f"LatticeConstants    {lattice_constants}\n"
             "NumberFamilies    0\n"
         )
-
     # Extend header with map info
     header += (
         "GRID: SqrGrid\n"
@@ -392,7 +457,76 @@ def _get_ang_header(crystal_map):
         "SAMPLEID:\n"
         "\n"
         "SCANID:\n"
-        "\n"
     )
-
     return header
+
+
+def _get_nrows_ncols_step_sizes(crystal_map):
+    nrows, ncols = (1, 1)
+    dy, dx = crystal_map.dy, crystal_map.dx
+    if crystal_map.ndim == 1:
+        ncols = crystal_map.shape[0]
+        dy = 1
+    else:  # crystal_map.ndim == 2:
+        nrows, ncols = crystal_map.shape
+    return nrows, ncols, dy, dx
+
+
+def _get_column_width(max_value, decimals=5):
+    return len(str(int(max_value // 1))) + decimals + 1
+
+
+def _get_prop_arrays(crystal_map, prop_names, desired_prop_names, map_size, decimals=5):
+    # "Image_quality" -> "imagequality"
+    prop_names_lower = [k.lower().replace("_", "") for k in prop_names]
+    prop_names_lower_arr = np.array(prop_names_lower)
+    all_expected_prop_names = [
+        ["iq", "image_quality", "imagequality"],
+        ["ci", "confidence_index", "confidenceindex"],
+        ["ss", "sem_signal", "semsignal"],
+        ["fit", "pattern_fit", "patternfit"],
+    ]
+    prop_arrays = np.zeros((map_size, 4), dtype=np.float32)
+    for i, (name, names) in enumerate(zip(desired_prop_names, all_expected_prop_names)):
+        prop = _get_prop_array(
+            crystal_map=crystal_map,
+            prop_name=name,
+            expected_prop_names=names,
+            prop_names=prop_names,
+            prop_names_lower_arr=prop_names_lower_arr,
+            map_size=map_size,
+            decimals=decimals,
+            fill_value=0,
+        )
+        if prop is not None:
+            prop_arrays[:, i] = prop.reshape(map_size,)
+    return prop_arrays
+
+
+def _get_prop_array(
+    crystal_map,
+    prop_name,
+    expected_prop_names,
+    prop_names,
+    prop_names_lower_arr,
+    map_size,
+    decimals=5,
+    fill_value=0,
+):
+    if prop_name is not None:
+        prop = crystal_map.get_map_data(
+            prop_name, decimals=decimals, fill_value=fill_value
+        )
+    else:
+        for k in expected_prop_names:
+            is_equal = k == prop_names_lower_arr
+            if is_equal.any():
+                prop_name = prop_names[np.argmax(is_equal)]
+                break
+        if prop_name is None:
+            return
+        else:
+            prop = crystal_map.get_map_data(
+                prop_name, decimals=decimals, fill_value=fill_value
+            )
+    return prop

@@ -636,7 +636,7 @@ class CrystalMap:
             How many decimals to round data point values to (default is
             3).
         fill_value : None, optional
-            Value to fill points not in the data with. If ``None``
+            Value to fill points not in the data with. If None
             (default), np.nan is used.
 
         Returns
@@ -666,6 +666,7 @@ class CrystalMap:
 
         # Enter non-masked values into array
         if isinstance(item, np.ndarray):
+            # TODO: Account for 2D map with more than one value per point
             array[self.is_in_data] = item
         elif item in ["orientations", "rotations"]:
             if item == "rotations":
@@ -688,6 +689,7 @@ class CrystalMap:
             if data is None:
                 raise ValueError(f"{item} is {data}.")
             else:
+                # TODO: Account for 2D map with more than one value per point
                 array[self.is_in_data] = data
 
         # Round values
