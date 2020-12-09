@@ -331,20 +331,27 @@ def file_writer(
     sem_signal_prop=None,
     pattern_fit_prop=None,
 ):
-    """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
-    to an ANG file, readable (at least) by MTEX.
-
-    All non-indexed points are assigned a dummy orientation.
+    """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` to an
+    ANG file, readable (at least) by MTEX.
 
     The columns are phi1, Phi, phi2, x, y, image quality,
     confidence index, phase ID, sem signal, and pattern fit.
 
+    Values in masked out points are set to 0. The following values are
+    used in non-indexed points:
+    * euler angles = 4 * pi
+    * image quality = 0
+    * confidence index = -1
+    * phase ID = 0
+    * pattern fit = 180
+    * SEM signal = 0
+
     Parameters
     ----------
     filename : str
-        Name of file to write to.
+        Name ANG of file with an ".ang" file extension to write to.
     crystal_map : CrystalMap
-        Object to write to file.
+        Crystal map to write to file.
     image_quality_prop : str, optional
         Which map property to use as the image quality. If None
         (default), "iq" or "imagequality", if present, is used, or just
@@ -380,11 +387,15 @@ def file_writer(
     eulers = crystal_map.get_map_data(
         "rotations", decimals=decimals, fill_value=0
     ).reshape((map_size, 3))
+    non_indexed_points = crystal_map._phase_id == -1
+    eulers[non_indexed_points] = 4 * np.pi
+
     # Spatial arrays
     x = np.tile(np.arange(ncols) * dx, nrows)
     y = np.sort(np.tile(np.arange(nrows) * dy, ncols))
     x_width = _get_column_width(np.max(x))
     y_width = _get_column_width(np.max(y))
+
     # Properties
     # TODO: Allow additional data columns
     prop_arrays = _get_prop_arrays(
@@ -399,21 +410,34 @@ def file_writer(
         map_size=map_size,
         decimals=decimals,
     )
+    prop_arrays[non_indexed_points, 0::2] = 0
+    prop_arrays[non_indexed_points, 1] = -1
+    prop_arrays[non_indexed_points, 3] = 180
     iq_width = _get_column_width(np.max(prop_arrays[:, 0]))
     ci_width = _get_column_width(np.max(prop_arrays[:, 1]))
     sem_signal_width = _get_column_width(np.max(prop_arrays[:, 3]))
     fit_width = _get_column_width(np.max(prop_arrays[:, 2]))
-    # Phase ID
-    phase_id = crystal_map.get_map_data("phase_id").reshape(map_size,)
 
+    # Phase ID
+    original_phase_ids = crystal_map._phase_id
+    new_phase_ids = np.zeros(map_size, dtype=int)
+    pl = crystal_map.phases_in_data.deepcopy()
+    if -1 in pl.ids:
+        del pl[-1]
+    for i, (phase_id, phase) in enumerate(pl):
+        if phase_id == -1:
+            continue
+        new_phase_ids[original_phase_ids == phase_id] = i + 1
+
+    # Finally, write everything to file
     np.savetxt(
         fname=filename,
         X=np.column_stack(
-            [eulers, x, y, prop_arrays[:, :2], phase_id, prop_arrays[:, 2:]]
+            [eulers, x, y, prop_arrays[:, :2], new_phase_ids, prop_arrays[:, 2:]]
         ),
         fmt=(
             f"%8.5f  %8.5f  %8.5f  %{x_width}.5f  %{y_width}.5f  %{iq_width}.5f  "
-            f"%{ci_width}.5f  %i  %{fit_width}.5f  %{sem_signal_width}.5f"
+            f"%{ci_width}.5f  %2i  %{fit_width}.5f  %{sem_signal_width}.5f"
         ),
         header=header,
     )
@@ -430,16 +454,29 @@ def _get_ang_header(crystal_map):
         "WorkingDistance        0.000000\n"
         "\n"
     )
+    # Get phase list, removing the non indexed phase if present
+    pl = crystal_map.phases_in_data.deepcopy()
+    if -1 in pl.ids:
+        del pl[-1]
+
     # Extend header with phase info
-    for phase_id, phase in crystal_map.phases:
+    for i, (_, phase) in enumerate(pl):
         lattice_constants = phase.structure.lattice.abcABG()
         lattice_constants = " ".join([f"{float(val):.3f}" for val in lattice_constants])
+        phase_id = i + 1
+        phase_name = phase.name
+        if phase_name == "":
+            phase_name = f"phase{phase_id}"
+        if phase.point_group is None:
+            point_group_name = "1"
+        else:
+            point_group_name = phase.point_group.name
         header += (
             f"Phase {phase_id}\n"
-            f"MaterialName    {phase.name}\n"
-            f"Formula    {phase.name}\n"
+            f"MaterialName    {phase_name}\n"
+            f"Formula    {phase_name}\n"
             f"Info\n"
-            f"Symmetry    {phase.point_group.name}\n"
+            f"Symmetry    {point_group_name}\n"
             f"LatticeConstants    {lattice_constants}\n"
             "NumberFamilies    0\n"
         )
@@ -473,7 +510,7 @@ def _get_nrows_ncols_step_sizes(crystal_map):
 
 
 def _get_column_width(max_value, decimals=5):
-    return len(str(int(max_value // 1))) + decimals + 1
+    return len(str(int(max_value // 1))) + decimals + 2
 
 
 def _get_prop_arrays(crystal_map, prop_names, desired_prop_names, map_size, decimals=5):
