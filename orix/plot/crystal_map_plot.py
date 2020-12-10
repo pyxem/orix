@@ -534,6 +534,8 @@ class CrystalMapPlot(Axes):
 
         # Get image data, overwriting potentially masked regions set to 0.0
         image_data = image.get_array()  # numpy.masked.MaskedArray
+        # Force float because np.nan is a float
+        image_data = image_data.astype("float")
         image_data[image_data.mask] = np.nan
 
         def status_bar_data(event):

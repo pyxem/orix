@@ -644,29 +644,55 @@ class TestCrystalMapGetMapData:
         indirect=["crystal_map_input"],
     )
     def test_get_unknown_string_raises(self, crystal_map_input, to_get):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
         with pytest.raises(ValueError, match=f"{to_get} is None."):
-            _ = cm.get_map_data(to_get)
+            _ = xmap.get_map_data(to_get)
+
+    def test_get_boolean_array(self, crystal_map):
+        xmap = crystal_map
+
+        assert np.issubdtype(xmap.get_map_data("is_indexed").dtype, np.bool_)
+        assert np.issubdtype(xmap.get_map_data(xmap.is_in_data).dtype, np.bool_)
+
+    @pytest.mark.parametrize(
+        "dtype_in", [np.uint8, np.int64, np.float32, np.float64, np.bool]
+    )
+    def test_preserve_dtype(self, crystal_map, dtype_in):
+        xmap = crystal_map
+        prop_name = "new_prop"
+        xmap.prop[prop_name] = np.ones(xmap.size, dtype=dtype_in)
+
+        assert xmap.get_map_data(prop_name).dtype == dtype_in
+
+    @pytest.mark.parametrize("dtype_in", [np.bool, np.int64])
+    def test_not_preserve_dtype(self, crystal_map, dtype_in):
+        xmap = crystal_map
+        prop_name = "new_prop"
+        xmap.prop[prop_name] = np.ones(xmap.size, dtype=dtype_in)
+        xmap.is_in_data[0] = False
+
+        assert not xmap.is_in_data.all()
+        assert xmap.get_map_data(prop_name, fill_value=None).dtype == np.float64
 
 
 class TestCrystalMapRepresentation:
     def test_representation(self, crystal_map, phase_list):
-        cm = crystal_map
-        cm.phases = phase_list
-        cm.scan_unit = "nm"
+        xmap = crystal_map
+        xmap.phases = phase_list
+        xmap.scan_unit = "nm"
 
         # Test code assumptions
         assert phase_list.ids == [0, 1, 2]
-        assert cm.shape == (4, 3)
+        assert xmap.shape == (4, 3)
 
-        cm[0, 1].phase_id = phase_list.ids[1]
-        cm[1, 1].phase_id = phase_list.ids[2]
+        xmap[0, 1].phase_id = phase_list.ids[1]
+        xmap[1, 1].phase_id = phase_list.ids[2]
 
-        cm.prop["iq"] = np.arange(cm.size)
+        xmap.prop["iq"] = np.arange(xmap.size)
 
-        assert repr(cm[cm.phase_id == -1]) == "No data."
+        assert repr(xmap[xmap.phase_id == -1]) == "No data."
 
-        assert repr(cm) == (
+        assert repr(xmap) == (
             "Phase  Orientations  Name  Space group  Point group  Proper point group  "
             "Color\n"
             "    0    10 (83.3%)     a        Im-3m         m-3m                 432  "
@@ -682,29 +708,29 @@ class TestCrystalMapRepresentation:
 
 class TestCrystalMapCopying:
     def test_shallowcopy_crystal_map(self, crystal_map):
-        cm2 = crystal_map[:]  # Everything except `is_in_data` is shallow copied
-        cm3 = crystal_map  # These are the same objects (of course)
+        xmap2 = crystal_map[:]  # Everything except `is_in_data` is shallow copied
+        xmap3 = crystal_map  # These are the same objects (of course)
 
-        assert np.may_share_memory(cm2._phase_id, crystal_map._phase_id)
-        assert np.may_share_memory(cm2._rotations.data, crystal_map._rotations.data)
+        assert np.may_share_memory(xmap2._phase_id, crystal_map._phase_id)
+        assert np.may_share_memory(xmap2._rotations.data, crystal_map._rotations.data)
 
         crystal_map[3, 0].phase_id = -2
-        assert np.allclose(cm2.phase_id, crystal_map.phase_id)
-        assert np.allclose(cm3.phase_id, crystal_map.phase_id)
+        assert np.allclose(xmap2.phase_id, crystal_map.phase_id)
+        assert np.allclose(xmap3.phase_id, crystal_map.phase_id)
 
         # The user is strictly speaking only supposed to change this via __getitem__()
         crystal_map.is_in_data[2] = False
-        assert cm2.size != crystal_map.size
-        assert cm3.size == crystal_map.size
-        assert np.allclose(cm2.is_in_data, crystal_map.is_in_data) is False
-        assert np.may_share_memory(cm3.is_in_data, crystal_map.is_in_data)
+        assert xmap2.size != crystal_map.size
+        assert xmap3.size == crystal_map.size
+        assert np.allclose(xmap2.is_in_data, crystal_map.is_in_data) is False
+        assert np.may_share_memory(xmap3.is_in_data, crystal_map.is_in_data)
 
     def test_deepcopy_crystal_map(self, crystal_map):
-        cm2 = crystal_map.deepcopy()
+        xmap2 = crystal_map.deepcopy()
 
         crystal_map[3, 0].phase_id = -2
-        assert np.allclose(cm2.phase_id, crystal_map.phase_id) is False
-        assert np.may_share_memory(cm2._phase_id, crystal_map._phase_id) is False
+        assert np.allclose(xmap2.phase_id, crystal_map.phase_id) is False
+        assert np.may_share_memory(xmap2._phase_id, crystal_map._phase_id) is False
 
 
 class TestCrystalMapShape:
@@ -732,8 +758,8 @@ class TestCrystalMapShape:
         indirect=["crystal_map_input"],
     )
     def test_data_slices_from_coordinates(self, crystal_map_input, expected_slices):
-        cm = CrystalMap(**crystal_map_input)
-        assert cm._data_slices_from_coordinates() == expected_slices
+        xmap = CrystalMap(**crystal_map_input)
+        assert xmap._data_slices_from_coordinates() == expected_slices
 
     @pytest.mark.parametrize(
         "crystal_map_input, slices, expected_size, expected_shape, expected_slices",
@@ -777,14 +803,14 @@ class TestCrystalMapShape:
     def test_data_slice_from_coordinates_masked(
         self, crystal_map_input, slices, expected_size, expected_shape, expected_slices
     ):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
         # Mask data
-        cm2 = cm[slices]
+        xmap2 = xmap[slices]
 
-        assert cm2.size == expected_size
-        assert cm2.shape == expected_shape
-        assert cm2._data_slices_from_coordinates() == expected_slices
+        assert xmap2.size == expected_size
+        assert xmap2.shape == expected_shape
+        assert xmap2._data_slices_from_coordinates() == expected_slices
 
     @pytest.mark.parametrize(
         "crystal_map_input, expected_shape",
@@ -797,8 +823,8 @@ class TestCrystalMapShape:
         indirect=["crystal_map_input"],
     )
     def test_shape_from_coordinates(self, crystal_map_input, expected_shape):
-        cm = CrystalMap(**crystal_map_input)
-        assert cm.shape == expected_shape
+        xmap = CrystalMap(**crystal_map_input)
+        assert xmap.shape == expected_shape
 
     @pytest.mark.parametrize(
         "crystal_map_input, expected_shape",
@@ -811,8 +837,8 @@ class TestCrystalMapShape:
         indirect=["crystal_map_input"],
     )
     def test_rotation_shape(self, crystal_map_input, expected_shape):
-        cm = CrystalMap(**crystal_map_input)
-        assert cm.rotations_shape == expected_shape
+        xmap = CrystalMap(**crystal_map_input)
+        assert xmap.rotations_shape == expected_shape
 
     @pytest.mark.parametrize(
         "crystal_map_input, expected_coordinate_axes",
@@ -826,5 +852,5 @@ class TestCrystalMapShape:
         indirect=["crystal_map_input"],
     )
     def test_coordinate_axes(self, crystal_map_input, expected_coordinate_axes):
-        cm = CrystalMap(**crystal_map_input)
-        assert cm._coordinate_axes == expected_coordinate_axes
+        xmap = CrystalMap(**crystal_map_input)
+        assert xmap._coordinate_axes == expected_coordinate_axes
