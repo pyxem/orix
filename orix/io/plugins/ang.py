@@ -331,6 +331,7 @@ def file_writer(
     confidence_index_prop=None,
     sem_signal_prop=None,
     pattern_fit_prop=None,
+    extra_prop=None,
 ):
     """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` to an
     ANG file, readable (at least) by MTEX.
@@ -378,6 +379,10 @@ def file_writer(
         (default), "fit" or "patternfit", if present, is used, or just
         zeros. If the property has more than one value per point, only
         the first value is used.
+    extra_prop : str or list of str, optional
+        One or multiple properties to add as extra columns in the ANG
+        file, as a string or a list of strings. If None (default), no
+        extra properties are added.
     """
     if xmap.ndim > 2:
         raise ValueError("Writing a 3D dataset to an ANG file is not supported")
@@ -410,27 +415,35 @@ def file_writer(
     y_width = _get_column_width(np.max(y))
 
     # Properties
-    # TODO: Allow additional data columns
+    desired_prop_names = [
+        image_quality_prop,
+        confidence_index_prop,
+        sem_signal_prop,
+        pattern_fit_prop,
+    ]
+    if extra_prop is not None:
+        if isinstance(extra_prop, str):
+            extra_prop = [
+                extra_prop,
+            ]
+        desired_prop_names += extra_prop
     prop_arrays = _get_prop_arrays(
         xmap=xmap,
         prop_names=list(xmap.prop.keys()),
-        desired_prop_names=[
-            image_quality_prop,
-            confidence_index_prop,
-            sem_signal_prop,
-            pattern_fit_prop,
-        ],
+        desired_prop_names=desired_prop_names,
         map_size=map_size,
         index=index,
         decimals=decimals,
     )
-    prop_arrays[non_indexed_points, 0::2] = 0
-    prop_arrays[non_indexed_points, 1] = -1
-    prop_arrays[non_indexed_points, 3] = 180
-    iq_width = _get_column_width(np.max(prop_arrays[:, 0]))
-    ci_width = _get_column_width(np.max(prop_arrays[:, 1]))
-    sem_signal_width = _get_column_width(np.max(prop_arrays[:, 3]))
-    fit_width = _get_column_width(np.max(prop_arrays[:, 2]))
+    # Set values for non-indexed points
+    prop_arrays[non_indexed_points, 0::2] = 0  # IQ, phase ID
+    prop_arrays[non_indexed_points, 1] = -1  # CI
+    prop_arrays[non_indexed_points, 3] = 180  # Pattern fit
+    # Get property column widths
+    prop_widths = [
+        _get_column_width(np.max(prop_arrays[:, i]))
+        for i in range(prop_arrays.shape[1])
+    ]
 
     # Phase ID
     original_phase_ids = xmap.get_map_data("phase_id").reshape(map_size)
@@ -447,8 +460,19 @@ def file_writer(
     header += (
         "\n"
         "Column names: phi1, Phi, phi2, x, y, confidence index, image quality, "
-        "phase ID, pattern fit, SEM signal\n"
+        "phase ID, pattern fit, SEM signal"
     )
+
+    # Get data formats
+    fmt = (
+        f"%8.5f  %8.5f  %8.5f  %{x_width}.5f  %{y_width}.5f  %{prop_widths[0]}.5f  "
+        f"%{prop_widths[1]}.5f  %2i  %{prop_widths[2]}.5f  %{prop_widths[3]}.5f"
+    )
+    if extra_prop is not None:  # Then it must be a list!
+        for extra_width, extra_prop_name in zip(prop_widths[4:], extra_prop):
+            fmt += f"  %{extra_width}.5f"
+            header += f", {extra_prop_name}"
+    header += "\n"
 
     # Finally, write everything to file
     np.savetxt(
@@ -456,15 +480,15 @@ def file_writer(
         X=np.column_stack(
             [eulers, x, y, prop_arrays[:, :2], new_phase_ids, prop_arrays[:, 2:]]
         ),
-        fmt=(
-            f"%8.5f  %8.5f  %8.5f  %{x_width}.5f  %{y_width}.5f  %{iq_width}.5f  "
-            f"%{ci_width}.5f  %2i  %{fit_width}.5f  %{sem_signal_width}.5f"
-        ),
+        fmt=fmt,
         header=header,
     )
 
 
 def _get_header_from_phases(xmap):
+    """Return a string with the ANG file header from the crystal map
+    metadata.
+    """
     nrows, ncols, _, _ = _get_nrows_ncols_step_sizes(xmap)
     # Initialize header with microscope info
     header = (
@@ -520,6 +544,7 @@ def _get_header_from_phases(xmap):
 
 
 def _get_nrows_ncols_step_sizes(xmap):
+    """Get crystal map shape and step sizes."""
     nrows, ncols = (1, 1)
     dy, dx = xmap.dy, xmap.dx
     if xmap.ndim == 1:
@@ -531,22 +556,45 @@ def _get_nrows_ncols_step_sizes(xmap):
 
 
 def _get_column_width(max_value, decimals=5):
+    """Get width of column to pass to :func:`numpy.savetxt`."""
     return len(str(int(max_value // 1))) + decimals + 2
 
 
 def _get_prop_arrays(
     xmap, prop_names, desired_prop_names, map_size, index, decimals=5,
 ):
+    """Return a 2D array (n_points, n_properties) with desired property
+    values in, or just zeros.
+    
+    This function tries to get as many properties as possible from the
+    crystal map properties.
+    
+    Parameters
+    ----------
+    xmap : CrystalMap
+    prop_names : list of str
+    desired_prop_names : list of str
+    map_size : int
+    index : int or None
+    decimals : int, optional
+    
+    Returns
+    -------
+    np.ndarray
+    """
     # "Image_quality" -> "imagequality"
     prop_names_lower = [k.lower().replace("_", "") for k in prop_names]
     prop_names_lower_arr = np.array(prop_names_lower)
+    # Potential extra names added so that lists are of the same length
+    # in the loop
     all_expected_prop_names = [
         ["iq", "image_quality", "imagequality"],
         ["ci", "confidence_index", "confidenceindex"],
         ["ss", "sem_signal", "semsignal"],
         ["fit", "pattern_fit", "patternfit"],
-    ]
-    prop_arrays = np.zeros((map_size, 4), dtype=np.float32)
+    ] + desired_prop_names[4:]
+    n_desired_props = len(desired_prop_names)
+    prop_arrays = np.zeros((map_size, n_desired_props), dtype=np.float32)
     for i, (name, names) in enumerate(zip(desired_prop_names, all_expected_prop_names)):
         prop = _get_prop_array(
             xmap=xmap,
@@ -575,6 +623,29 @@ def _get_prop_array(
     decimals=5,
     fill_value=0,
 ):
+    """Return a 1D array (n_points,) with the desired property values or
+    None if the property cannot be read.
+
+    Reasons for why the property cannot be read:
+    * Property name isn't among the crystal map properties
+    * Property has only one value per point, but `index` is not None
+
+    Parameters
+    ----------
+    xmap : CrystalMap
+    prop_name : str
+    expected_prop_names : list of str
+    prop_names : list of str
+    prop_names : list of str
+    map_size : int
+    index : int or None
+    decimals : int, optional
+    fill_value : int, float, or bool, optional
+    
+    Returns
+    -------
+    np.ndarray or None
+    """
     kwargs = dict(decimals=decimals, fill_value=fill_value)
     if prop_name is not None:
         if index is None:
