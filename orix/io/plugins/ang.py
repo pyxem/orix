@@ -443,6 +443,13 @@ def file_writer(
             continue
         new_phase_ids[original_phase_ids == phase_id] = i + 1
 
+    # Extend header with column names
+    header += (
+        "\n"
+        "Column names: phi1, Phi, phi2, x, y, confidence index, image quality, "
+        "phase ID, pattern fit, SEM signal\n"
+    )
+
     # Finally, write everything to file
     np.savetxt(
         fname=filename,
