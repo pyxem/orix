@@ -49,6 +49,7 @@ def file_reader(filename):
         * EDAX TSL
         * NanoMegas ASTAR Index
         * EMsoft (from program `EMdpmerge`)
+        * orix
 
     All points satisfying the following criteria are classified as not
     indexed:
@@ -176,10 +177,12 @@ def _get_vendor_columns(header, n_cols_file):
         "astar": "ACOM",
         "orix": "Column names: phi1, Phi, phi2",
     }
+    footprint_line = None
     for name, footprint in vendor_footprint.items():
         for line in header:
             if footprint in line:
                 vendor = name
+                footprint_line = line
                 break
 
     # Vendor column names
@@ -246,7 +249,13 @@ def _get_vendor_columns(header, n_cols_file):
     }
 
     n_cols_expected = len(column_names[vendor])
-    if n_cols_file != n_cols_expected:
+    if vendor == "orix" and "Column names" in footprint_line:
+        # Append names of extra properties found, if any, in the orix
+        # ANG file header
+        n_cols = len(column_names[vendor])
+        extra_props = footprint_line.split(":")[1].split(",")[n_cols:]
+        column_names[vendor] += [i.lstrip(" ").replace(" ", "_") for i in extra_props]
+    elif n_cols_file != n_cols_expected:
         warnings.warn(
             f"Number of columns, {n_cols_file}, in the file is not equal to "
             f"the expected number of columns, {n_cols_expected}, for the \n"
@@ -353,12 +362,11 @@ def file_writer(
     The columns are phi1, Phi, phi2, x, y, image quality,
     confidence index, phase ID, detector signal, and pattern fit.
 
-    Parameters in masked out points are set to 0. The following
-    parameter values are used in non-indexed points:
+    Parameters in masked out or non-indexed points are set to:
         * euler angles = 4 * pi
         * image quality = 0
         * confidence index = -1
-        * phase ID = 0
+        * phase ID = 0 if single phase or -1 if multi phase
         * pattern fit = 180
         * detector signal = 0
 
@@ -450,9 +458,10 @@ def file_writer(
         decimals=decimals,
     )
     # Set values for non-indexed points
-    prop_arrays[~indexed_points, 0::2] = 0  # IQ, phase ID
+    prop_arrays[~indexed_points, 0::2] = 0  # IQ, detector signal
     prop_arrays[~indexed_points, 1] = -1  # CI
     prop_arrays[~indexed_points, 3] = 180  # Pattern fit
+    prop_arrays[~indexed_points, 4:] = 0
     # Get property column widths
     prop_widths = [
         _get_column_width(np.max(prop_arrays[:, i]))
