@@ -24,6 +24,7 @@ import numpy as np
 
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.quaternion.rotation import Rotation
+from orix.quaternion.symmetry import point_group_aliases
 from orix import __version__
 
 
@@ -45,13 +46,13 @@ def file_reader(filename):
     to be 2D.
 
     Many vendors produce an .ang file. Supported vendors are:
-    * EDAX TSL
-    * NanoMegas ASTAR Index
-    * EMsoft (from program `EMdpmerge`)
+        * EDAX TSL
+        * NanoMegas ASTAR Index
+        * EMsoft (from program `EMdpmerge`)
 
     All points satisfying the following criteria are classified as not
     indexed:
-    * EDAX TSL: confidence index == -1
+        * EDAX TSL: confidence index == -1
 
     Parameters
     ----------
@@ -106,7 +107,7 @@ def file_reader(filename):
     )
 
     # Set which data points are not indexed
-    if vendor == "tsl":
+    if vendor in ["orix", "tsl"]:
         data_dict["phase_id"][np.where(data_dict["prop"]["ci"] == -1)] = -1
     # TODO: Add not-indexed convention for INDEX ASTAR
 
@@ -173,6 +174,7 @@ def _get_vendor_columns(header, n_cols_file):
     vendor_footprint = {
         "emsoft": "EMsoft",
         "astar": "ACOM",
+        "orix": "Column names: phi1, Phi, phi2",
     }
     for name, footprint in vendor_footprint.items():
         for line in header:
@@ -228,6 +230,18 @@ def _get_vendor_columns(header, n_cols_file):
             "rel",  # Reliability
             "phase_id",
             "relx100",  # Reliability x 100
+        ],
+        "orix": [
+            "euler1",
+            "euler2",
+            "euler3",
+            "x",
+            "y",
+            "iq",
+            "ci",
+            "phase_id",
+            "detector_signal",
+            "fit",
         ],
     }
 
@@ -329,24 +343,24 @@ def file_writer(
     index=None,
     image_quality_prop=None,
     confidence_index_prop=None,
-    sem_signal_prop=None,
+    detector_signal_prop=None,
     pattern_fit_prop=None,
     extra_prop=None,
 ):
     """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` to an
-    ANG file, readable (at least) by MTEX.
+    ANG file readable (at least) by MTEX and EDAX TSL OIM Analysis v7.
 
     The columns are phi1, Phi, phi2, x, y, image quality,
-    confidence index, phase ID, sem signal, and pattern fit.
+    confidence index, phase ID, detector signal, and pattern fit.
 
     Parameters in masked out points are set to 0. The following
     parameter values are used in non-indexed points:
-    * euler angles = 4 * pi
-    * image quality = 0
-    * confidence index = -1
-    * phase ID = 0
-    * pattern fit = 180
-    * SEM signal = 0
+        * euler angles = 4 * pi
+        * image quality = 0
+        * confidence index = -1
+        * phase ID = 0
+        * pattern fit = 180
+        * detector signal = 0
 
     Parameters
     ----------
@@ -369,11 +383,11 @@ def file_writer(
         (default), "ci" or "confidenceindex", if present, is used, or
         just zeros. If the property has more than one value per point,
         only the first value is used.
-    sem_signal_prop : str, optional
-        Which map property to use as the SEM signal. If None
-        (default), "ss", or "semsignal", if present, is used, or just
-        zeros. If the property has more than one value per point, only
-        the first value is used.
+    detector_signal_prop : str, optional
+        Which map property to use as the detector signal. If None
+        (default), "ds", or "detectorsignal", if present, is used, or
+        just zeros. If the property has more than one value per point,
+        only the first value is used.
     pattern_fit_prop : str, optional
         Which map property to use as the pattern fit. If None
         (default), "fit" or "patternfit", if present, is used, or just
@@ -403,10 +417,10 @@ def file_writer(
         eulers = xmap.get_map_data(
             "rotations", decimals=decimals, fill_value=0
         ).reshape((map_size, 3))
-    non_indexed_points = xmap.get_map_data(~xmap.is_indexed, fill_value=0).reshape(
+    indexed_points = xmap.get_map_data(xmap.is_indexed, fill_value=False).reshape(
         map_size,
     )
-    eulers[non_indexed_points] = 4 * np.pi
+    eulers[~indexed_points] = 4 * np.pi
 
     # Spatial arrays
     x = np.tile(np.arange(ncols) * dx, nrows)
@@ -418,7 +432,7 @@ def file_writer(
     desired_prop_names = [
         image_quality_prop,
         confidence_index_prop,
-        sem_signal_prop,
+        detector_signal_prop,
         pattern_fit_prop,
     ]
     if extra_prop is not None:
@@ -436,9 +450,9 @@ def file_writer(
         decimals=decimals,
     )
     # Set values for non-indexed points
-    prop_arrays[non_indexed_points, 0::2] = 0  # IQ, phase ID
-    prop_arrays[non_indexed_points, 1] = -1  # CI
-    prop_arrays[non_indexed_points, 3] = 180  # Pattern fit
+    prop_arrays[~indexed_points, 0::2] = 0  # IQ, phase ID
+    prop_arrays[~indexed_points, 1] = -1  # CI
+    prop_arrays[~indexed_points, 3] = 180  # Pattern fit
     # Get property column widths
     prop_widths = [
         _get_column_width(np.max(prop_arrays[:, i]))
@@ -451,6 +465,10 @@ def file_writer(
     pl = xmap.phases.deepcopy()
     if -1 in pl.ids:
         del pl[-1]
+    if pl.size > 1:
+        new_phase_ids = np.zeros(map_size, dtype=int)
+    else:
+        new_phase_ids = -np.ones(map_size, dtype=int)
     for i, (phase_id, phase) in enumerate(pl):
         if phase_id == -1:
             continue
@@ -460,7 +478,7 @@ def file_writer(
     header += (
         "\n"
         "Column names: phi1, Phi, phi2, x, y, confidence index, image quality, "
-        "phase ID, pattern fit, SEM signal"
+        "phase ID, pattern fit, detector signal"
     )
 
     # Get data formats
@@ -515,7 +533,12 @@ def _get_header_from_phases(xmap):
         if phase.point_group is None:
             point_group_name = "1"
         else:
-            point_group_name = phase.point_group.name
+            proper_point_group = phase.point_group.proper_subgroup
+            point_group_name = proper_point_group.name
+            for key, alias in point_group_aliases.items():
+                if point_group_name == key:
+                    point_group_name = alias[0]
+                    break
         header += (
             f"Phase {phase_id}\n"
             f"MaterialName    {phase_name}\n"
@@ -534,7 +557,7 @@ def _get_header_from_phases(xmap):
         f"NCOLS_EVEN: {ncols}\n"
         f"NROWS: {nrows}\n"
         "\n"
-        f"OPERATOR: orix {__version__}\n"
+        f"OPERATOR: orix_v{__version__}\n"
         "\n"
         "SAMPLEID:\n"
         "\n"
