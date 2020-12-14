@@ -45,15 +45,15 @@ def file_reader(filename):
     from a file in EDAX TLS's .ang format. The map in the input is assumed
     to be 2D.
 
-    Many vendors produce an .ang file. Supported vendors are:
-        * EDAX TSL
-        * NanoMegas ASTAR Index
-        * EMsoft (from program `EMdpmerge`)
-        * orix
+    Many vendors produce an .ang file. Supported vendors are
+        - EDAX TSL
+        - NanoMegas ASTAR Index
+        - EMsoft (from program `EMdpmerge`)
+        - orix
 
     All points satisfying the following criteria are classified as not
-    indexed:
-        * EDAX TSL: confidence index == -1
+    indexed
+        - EDAX TSL: confidence index == -1
 
     Parameters
     ----------
@@ -123,7 +123,7 @@ def file_reader(filename):
     data_dict["rotations"] = Rotation.from_euler(
         np.column_stack(
             (data_dict.pop("euler1"), data_dict.pop("euler2"), data_dict.pop("euler3"))
-        )
+        ),
     )
 
     return CrystalMap(**data_dict)
@@ -251,7 +251,7 @@ def _get_vendor_columns(header, n_cols_file):
     n_cols_expected = len(column_names[vendor])
     if vendor == "orix" and "Column names" in footprint_line:
         # Append names of extra properties found, if any, in the orix
-        # ANG file header
+        # .ang file header
         n_cols = len(column_names[vendor])
         extra_props = footprint_line.split(":")[1].split(",")[n_cols:]
         column_names[vendor] += [i.lstrip(" ").replace(" ", "_") for i in extra_props]
@@ -357,30 +357,31 @@ def file_writer(
     extra_prop=None,
 ):
     """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` to an
-    ANG file readable (at least) by MTEX and EDAX TSL OIM Analysis v7.
+    .ang file readable (at least) by MTEX and EDAX TSL OIM Analysis v7.
 
-    The columns are phi1, Phi, phi2, x, y, image quality,
-    confidence index, phase ID, detector signal, and pattern fit.
+    The columns are phi1, Phi, phi2, x, y, image_quality,
+    confidence_index, phase_id, detector_signal, and pattern_fit.
 
-    Parameters in masked out or non-indexed points are set to:
-        * euler angles = 4 * pi
-        * image quality = 0
-        * confidence index = -1
-        * phase ID = 0 if single phase or -1 if multi phase
-        * pattern fit = 180
-        * detector signal = 0
+    Parameters in masked out or non-indexed points are set to
+        - euler angles = 4 * pi
+        - image quality = 0
+        - confidence index = -1
+        - phase ID = 0 if single phase or -1 if multi phase
+        - pattern fit = 180
+        - detector signal = 0
+        - extra properties = 0
 
     Parameters
     ----------
     filename : str
-        Name ANG of file with an ".ang" file extension to write to.
+        File name with an ".ang" file extension to write to.
     xmap : CrystalMap
         Crystal map to write to file.
     index : int, optional
         If the crystal map has more than one rotation and phase ID per
-        point, this index can be set to write that "layer" of rotations
-        to the file. For properties to be written as well, these must
-        also have multiple values per point.
+        point, this index can be set to write that "layer" of data to
+        the file. For properties to be written as well, these must also
+        have multiple values per point.
     image_quality_prop : str, optional
         Which map property to use as the image quality. If None
         (default), "iq" or "imagequality", if present, is used, or just
@@ -402,12 +403,12 @@ def file_writer(
         zeros. If the property has more than one value per point, only
         the first value is used.
     extra_prop : str or list of str, optional
-        One or multiple properties to add as extra columns in the ANG
+        One or multiple properties to add as extra columns in the .ang
         file, as a string or a list of strings. If None (default), no
         extra properties are added.
     """
     if xmap.ndim > 2:
-        raise ValueError("Writing a 3D dataset to an ANG file is not supported")
+        raise ValueError("Writing a 3D dataset to an .ang file is not supported")
     header = _get_header_from_phases(xmap)
 
     # Number of decimals to round to
@@ -479,15 +480,13 @@ def file_writer(
     else:
         new_phase_ids = -np.ones(map_size, dtype=int)
     for i, (phase_id, phase) in enumerate(pl):
-        if phase_id == -1:
-            continue
-        new_phase_ids[original_phase_ids == phase_id] = i + 1
+        new_phase_ids[original_phase_ids == phase_id] = i
 
     # Extend header with column names
     header += (
         "\n"
-        "Column names: phi1, Phi, phi2, x, y, confidence index, image quality, "
-        "phase ID, pattern fit, detector signal"
+        "Column names: phi1, Phi, phi2, x, y, confidence_index, image_quality, "
+        "phase_id, pattern_fit, detector_signal"
     )
 
     # Get data formats
@@ -513,7 +512,7 @@ def file_writer(
 
 
 def _get_header_from_phases(xmap):
-    """Return a string with the ANG file header from the crystal map
+    """Return a string with the .ang file header from the crystal map
     metadata.
     """
     nrows, ncols, _, _ = _get_nrows_ncols_step_sizes(xmap)
@@ -535,7 +534,7 @@ def _get_header_from_phases(xmap):
     for i, (_, phase) in enumerate(pl):
         lattice_constants = phase.structure.lattice.abcABG()
         lattice_constants = " ".join([f"{float(val):.3f}" for val in lattice_constants])
-        phase_id = i + 1
+        phase_id = i
         phase_name = phase.name
         if phase_name == "":
             phase_name = f"phase{phase_id}"
@@ -588,7 +587,9 @@ def _get_nrows_ncols_step_sizes(xmap):
 
 
 def _get_column_width(max_value, decimals=5):
-    """Get width of column to pass to :func:`numpy.savetxt`."""
+    """Get width of column to pass to :func:`numpy.savetxt`, accounting
+    for the decimal point and a sign +/-.
+    """
     return len(str(int(max_value // 1))) + decimals + 2
 
 
@@ -687,6 +688,8 @@ def _get_prop_array(
                 prop = xmap.get_map_data(xmap.prop[prop_name][:, index], **kwargs)
             except IndexError:
                 return
+    elif len(prop_names_lower_arr) == 0:
+        return
     else:
         for k in expected_prop_names:
             is_equal = k == prop_names_lower_arr

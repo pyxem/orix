@@ -19,13 +19,18 @@
 import pytest
 import numpy as np
 
-from orix.io import load, loadang
+from orix.crystal_map import CrystalMap, Phase
+from orix.io import load, loadang, save
 from orix.io.plugins.ang import (
     _get_header,
     _get_phases_from_header,
     _get_vendor_columns,
+    _get_header_from_phases,
+    _get_nrows_ncols_step_sizes,
+    _get_column_width,
+    _get_prop_arrays,
+    _get_prop_array,
 )
-
 from orix.tests.conftest import (
     ANGFILE_TSL_HEADER,
     ANGFILE_ASTAR_HEADER,
@@ -517,4 +522,162 @@ class TestAngReader:
 
 
 class TestAngWriter:
-    pass
+    def test_write_read_loop(self, crystal_map, tmp_path):
+        fname = tmp_path / "test_write_read_loop.ang"
+        save(filename=fname, object2write=crystal_map)
+        xmap_reload = load(filename=fname)
+
+        assert np.allclose(
+            xmap_reload.rotations.to_euler(), crystal_map.rotations.to_euler(),
+        )
+        assert np.allclose(xmap_reload.phase_id, crystal_map.phase_id)
+
+    @pytest.mark.parametrize(
+        "crystal_map_input, desired_shape, desired_step_sizes",
+        [
+            (((1, 4, 3), (1, 2, 3), 1, [0]), (4, 3), (2, 3)),
+            (((1, 1, 3), (1, 1, 1), 1, [0]), (1, 3), (1, 1)),
+            (((1, 1, 6), (1, 1, 3.14), 1, [0]), (1, 6), (1, 3.14)),
+        ],
+        indirect=["crystal_map_input"],
+    )
+    def test_get_nrows_ncols_step_sizes(
+        self, crystal_map_input, desired_shape, desired_step_sizes
+    ):
+        xmap = CrystalMap(**crystal_map_input)
+        nrows, ncols, dy, dx = _get_nrows_ncols_step_sizes(xmap)
+
+        assert (nrows, ncols) == desired_shape
+        assert (dy, dx) == desired_step_sizes
+
+    @pytest.mark.parametrize(
+        "max_value, decimals, expected_width",
+        [(3.14, 2, 5), (3.1415, 2, 5), (3.141592, 6, 9)],
+    )
+    def test_get_column_width(self, max_value, decimals, expected_width):
+        assert _get_column_width(max_value, decimals) == expected_width
+
+    @pytest.mark.parametrize(
+        "extra_prop", ["a", ["abc", "iq"], ["scores", "simulation_indices"]]
+    )
+    def test_extra_prop(self, crystal_map, tmp_path, extra_prop):
+        fname = tmp_path / "test_extra_prop.ang"
+        desired_arrays = []
+        n_points = crystal_map.size
+        for i, name in enumerate(extra_prop):
+            new_array = np.arange(n_points) * i
+            crystal_map.prop[name] = new_array
+            desired_arrays.append(new_array)
+
+        save(fname, crystal_map, extra_prop=extra_prop)
+        xmap_reload = load(fname)
+
+        for name in extra_prop:
+            assert np.allclose(xmap_reload.prop[name], crystal_map.prop[name])
+
+    def test_non_indexed_points(self, crystal_map, tmp_path):
+        crystal_map[2].phase_id = -1
+        fname = tmp_path / "test_non_indexed_points.ang"
+        save(fname, crystal_map)
+
+        xmap_reload = load(fname)
+
+        crystal_map.phases[0].name = "phase0"
+
+        assert xmap_reload.phases.names == crystal_map.phases.names
+        assert np.allclose(xmap_reload.phase_id, crystal_map.phase_id)
+
+    def test_points_not_in_data(self, crystal_map, tmp_path):
+        crystal_map.prop["iq"] = np.ones(crystal_map.size)
+        crystal_map[2].iq = 0
+        xmap2 = crystal_map[crystal_map.iq == 1]
+        fname = tmp_path / "test_points_not_in_data.ang"
+        save(fname, xmap2)
+
+        xmap_reload = load(fname)
+        assert not xmap2.is_in_data.all()
+        assert np.allclose(xmap2.is_in_data, xmap_reload.is_indexed)
+
+    @pytest.mark.parametrize(
+        "extra_phase_names", ["ni", ["ferrite", "austenite"], ["si", "al", "cu"]],
+    )
+    def test_extra_phases(self, crystal_map, tmp_path, extra_phase_names):
+        crystal_map.phases.add_not_indexed()
+        for i, name in enumerate(extra_phase_names):
+            crystal_map.phases.add(Phase(name=name))
+            crystal_map[i].phase_id = crystal_map.phases.id_from_name(name)
+        fname = tmp_path / "test_extra_phases.ang"
+        save(fname, crystal_map)
+        xmap_reload = load(fname)
+
+        crystal_map.phases[0].name = "phase0"
+        assert np.allclose(xmap_reload.phase_id, crystal_map.phase_id)
+
+        pl = crystal_map.phases
+        del pl[-1]
+        assert xmap_reload.phases.names == pl.names
+
+    @pytest.mark.parametrize("point_group", ["432", "121", "222"])
+    def test_point_group_aliases(self, crystal_map, tmp_path, point_group):
+        crystal_map.phases[0].point_group = point_group
+        fname = tmp_path / "test_point_group_aliases.ang"
+        save(fname, crystal_map)
+        xmap_reload = load(fname)
+
+        assert xmap_reload.phases[0].point_group.name == point_group
+
+    @pytest.mark.parametrize(
+        "crystal_map_input",
+        [((1, 1, 5), (1, 1, 2), 1, [0])],
+        indirect=["crystal_map_input"],
+    )
+    def test_1d_map(self, crystal_map_input, tmp_path):
+        xmap = CrystalMap(**crystal_map_input)
+        assert xmap.ndim == 1
+        fname = tmp_path / "test_1d_map.ang"
+        save(fname, xmap)
+
+        xmap_reload = load(fname)
+
+        assert xmap_reload.ndim == 1
+        assert np.allclose(xmap.rotations.to_euler(), xmap_reload.rotations.to_euler())
+
+    @pytest.mark.parametrize(
+        "crystal_map_input",
+        [((3, 3, 3), (1, 2, 3), 1, [0])],
+        indirect=["crystal_map_input"],
+    )
+    def test_3d_map_raises(self, crystal_map_input, tmp_path):
+        xmap = CrystalMap(**crystal_map_input)
+        fname = tmp_path / "test_3d_raises.ang"
+        with pytest.raises(ValueError, match="Writing a 3D dataset to an .ang file"):
+            save(fname, xmap)
+
+    @pytest.mark.parametrize(
+        "crystal_map_input, index",
+        [
+            (((1, 4, 3), (1, 2, 3), 5, [0]), 0),
+            (((1, 4, 3), (1, 2, 3), 5, [0]), 1),
+            (((1, 4, 3), (1, 2, 3), 5, [0]), 4),
+        ],
+        indirect=["crystal_map_input"],
+    )
+    def test_write_data_layer_i(self, crystal_map_input, tmp_path, index):
+        xmap = CrystalMap(**crystal_map_input)
+        xmap.prop["ci"] = np.arange(xmap.size * xmap.rotations_per_point).reshape(
+            (xmap.size, xmap.rotations_per_point)
+        )
+        xmap.prop["iq"] = np.arange(xmap.size)
+        extra_prop = "iq_times_ci"
+        xmap.prop[extra_prop] = xmap.ci * xmap.iq[:, np.newaxis]
+        fname = tmp_path / "test_write_data_layer_i.ang"
+        save(fname, xmap, index=index, extra_prop=[extra_prop, "iq"])
+
+        xmap_reload = load(fname)
+
+        assert np.allclose(
+            xmap.rotations[:, index].to_euler(), xmap_reload.rotations.to_euler()
+        )
+        assert np.allclose(xmap_reload.iq, np.zeros(xmap.size))
+        assert np.allclose(xmap_reload.ci, xmap.ci[:, index])
+        assert np.allclose(xmap_reload.iq_times_ci, xmap.iq_times_ci[:, index])
