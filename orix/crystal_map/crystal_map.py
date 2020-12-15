@@ -160,9 +160,15 @@ class CrystalMap:
             phase_ids = phase_list.ids
             n_different = len(phase_ids) - len(unique_phase_ids)
             if n_different > 0:
-                # Remove superfluous phases
-                for i in phase_list.ids[::-1][:n_different]:
-                    del phase_list[i]
+                # Remove superfluous phases:
+                # First, try to remove the phases whose ID is not in the
+                # ID array, in descending list order
+                for i in phase_ids[::-1]:
+                    if n_different == 0:
+                        break
+                    if i not in unique_phase_ids:
+                        del phase_list[i]
+                        n_different -= 1
             elif n_different < 0:
                 # Create new phase list adding the missing phases with
                 # default initial values

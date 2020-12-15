@@ -25,8 +25,8 @@ from orix.quaternion.orientation import Orientation
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
 
-# Note that many parts of the CrystalMap() class are tested while testing IO and the
-# Phase() and PhaseList() classes
+# Note that many parts of the CrystalMap() class are tested while
+# testing IO and the Phase() and PhaseList() classes
 
 
 class TestCrystalMapInit:
@@ -173,6 +173,25 @@ class TestCrystalMapInit:
         phase_list = PhaseList(point_groups=point_group)
         cm = CrystalMap(phase_list=phase_list, **crystal_map_input)
         assert np.allclose(cm.phases.point_groups[0].data, point_group.data)
+
+    @pytest.mark.parametrize(
+        "crystal_map_input, phase_names, phase_ids, desired_phase_names",
+        [
+            (((1, 7, 4), (0, 1, 1), 1, [0]), ["a", "b", "c"], [0, 1, 2], ["a"]),
+            (((1, 7, 4), (0, 1, 1), 1, [0, 1]), ["a", "b", "c"], [0, 2, 1], ["a", "c"]),
+            (((1, 7, 4), (0, 1, 1), 1, [0, 2]), ["a", "b", "c"], [0, 2, 1], ["a", "b"]),
+            (((1, 7, 4), (0, 1, 1), 1, [3]), ["a", "b", "c"], [0, 2, 1], ["a"]),
+        ],
+        indirect=["crystal_map_input"],
+    )
+    def test_init_with_too_many_phases(
+        self, crystal_map_input, phase_names, phase_ids, desired_phase_names
+    ):
+        """More phases than phase IDs."""
+        phase_list = PhaseList(names=phase_names, ids=phase_ids)
+        xmap = CrystalMap(phase_list=phase_list, **crystal_map_input)
+
+        assert xmap.phases.names == desired_phase_names
 
 
 class TestCrystalMapGetItem:

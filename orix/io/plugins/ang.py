@@ -479,8 +479,10 @@ def file_writer(
         new_phase_ids = np.zeros(map_size, dtype=int)
     else:
         new_phase_ids = -np.ones(map_size, dtype=int)
-    for i, (phase_id, phase) in enumerate(pl):
-        new_phase_ids[original_phase_ids == phase_id] = i
+    # Phase IDs are reversed because EDAX TSL OIM Analysis v7.2.0
+    # assumes a reversed phase order in the header
+    for i, (phase_id, phase) in reversed(list(enumerate(pl))):
+        new_phase_ids[original_phase_ids == phase_id] = i + 1
 
     # Extend header with column names
     header += (
@@ -514,6 +516,11 @@ def file_writer(
 def _get_header_from_phases(xmap):
     """Return a string with the .ang file header from the crystal map
     metadata.
+
+    Notes
+    -----
+    Phase IDs are reversed because EDAX TSL OIM Analysis v7.2.0 assumes
+    a reversed phase order in the header
     """
     nrows, ncols, _, _ = _get_nrows_ncols_step_sizes(xmap)
     # Initialize header with microscope info
@@ -531,10 +538,12 @@ def _get_header_from_phases(xmap):
         del pl[-1]
 
     # Extend header with phase info
-    for i, (_, phase) in enumerate(pl):
+    # Phase IDs are reversed because EDAX TSL OIM Analysis v7.2.0
+    # assumes a reversed phase order in the header
+    for i, (_, phase) in reversed(list(enumerate(pl))):
         lattice_constants = phase.structure.lattice.abcABG()
         lattice_constants = " ".join([f"{float(val):.3f}" for val in lattice_constants])
-        phase_id = i
+        phase_id = i + 1
         phase_name = phase.name
         if phase_name == "":
             phase_name = f"phase{phase_id}"

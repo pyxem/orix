@@ -137,14 +137,14 @@ class TestAngReader:
         n_unknown_columns,
         example_rot,
     ):
-        cm = load(angfile_tsl)
+        xmap = load(angfile_tsl)
 
         # Fraction of non-indexed points
         non_indexed_fraction = int(np.prod(map_shape) * 0.1)
-        assert non_indexed_fraction == np.sum(~cm.is_indexed)
+        assert non_indexed_fraction == np.sum(~xmap.is_indexed)
 
         # Properties
-        assert list(cm.prop.keys()) == [
+        assert list(xmap.prop.keys()) == [
             "iq",
             "ci",
             "unknown1",
@@ -158,38 +158,38 @@ class TestAngReader:
         # Coordinates
         ny, nx = map_shape
         dy, dx = step_sizes
-        assert np.allclose(cm.x, np.tile(np.arange(nx) * dx, ny))
-        assert np.allclose(cm.y, np.sort(np.tile(np.arange(ny) * dy, nx)))
+        assert np.allclose(xmap.x, np.tile(np.arange(nx) * dx, ny))
+        assert np.allclose(xmap.y, np.sort(np.tile(np.arange(ny) * dy, nx)))
 
         # Map shape and size
-        assert cm.shape == map_shape
-        assert cm.size == np.prod(map_shape)
+        assert xmap.shape == map_shape
+        assert xmap.size == np.prod(map_shape)
 
         # Attributes are within expected ranges or have a certain value
-        assert cm.prop["ci"].max() <= 1
-        assert cm["indexed"].fit.max() <= 3
-        assert all(cm["not_indexed"].fit == 180)
-        assert all(cm["not_indexed"].ci == -1)
+        assert xmap.prop["ci"].max() <= 1
+        assert xmap["indexed"].fit.max() <= 3
+        assert all(xmap["not_indexed"].fit == 180)
+        assert all(xmap["not_indexed"].ci == -1)
 
         # Phase IDs (accounting for non-indexed points)
-        phase_id[cm["not_indexed"].id] = -1
-        assert np.allclose(cm.phase_id, phase_id)
+        phase_id[xmap["not_indexed"].id] = -1
+        assert np.allclose(xmap.phase_id, phase_id)
 
         # Rotations
-        rot_unique = np.unique(cm["indexed"].rotations.to_euler(), axis=0)
+        rot_unique = np.unique(xmap["indexed"].rotations.to_euler(), axis=0)
         assert np.allclose(
             np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5
         )
         assert np.allclose(
-            cm["not_indexed"].rotations.to_euler()[0],
+            xmap["not_indexed"].rotations.to_euler()[0],
             np.array([np.pi, 0, np.pi]),
             atol=1e-5,
         )
 
         # Phases
-        assert cm.phases.size == 2  # Including non-indexed
-        assert cm.phases.ids == [-1, 0]
-        phase = cm.phases[0]
+        assert xmap.phases.size == 2  # Including non-indexed
+        assert xmap.phases.ids == [-1, 0]
+        phase = xmap.phases[0]
         assert phase.name == "Aluminum"
         assert phase.point_group.name == "432"
 
@@ -530,7 +530,7 @@ class TestAngWriter:
         assert np.allclose(
             xmap_reload.rotations.to_euler(), crystal_map.rotations.to_euler(),
         )
-        assert np.allclose(xmap_reload.phase_id, crystal_map.phase_id)
+        assert np.allclose(xmap_reload.phase_id - 1, crystal_map.phase_id)
 
     @pytest.mark.parametrize(
         "crystal_map_input, desired_shape, desired_step_sizes",
@@ -582,10 +582,12 @@ class TestAngWriter:
 
         xmap_reload = load(fname)
 
-        crystal_map.phases[0].name = "phase0"
-
+        crystal_map.phases[0].name = "phase1"
         assert xmap_reload.phases.names == crystal_map.phases.names
-        assert np.allclose(xmap_reload.phase_id, crystal_map.phase_id)
+
+        new_phase_ids = xmap_reload.phase_id
+        new_phase_ids[xmap_reload.is_indexed] -= 1
+        assert np.allclose(new_phase_ids, crystal_map.phase_id)
 
     def test_points_not_in_data(self, crystal_map, tmp_path):
         crystal_map.prop["iq"] = np.ones(crystal_map.size)
@@ -610,8 +612,8 @@ class TestAngWriter:
         save(fname, crystal_map)
         xmap_reload = load(fname)
 
-        crystal_map.phases[0].name = "phase0"
-        assert np.allclose(xmap_reload.phase_id, crystal_map.phase_id)
+        crystal_map.phases[0].name = "phase1"
+        assert np.allclose(xmap_reload.phase_id - 1, crystal_map.phase_id)
 
         pl = crystal_map.phases
         del pl[-1]
@@ -624,7 +626,8 @@ class TestAngWriter:
         save(fname, crystal_map)
         xmap_reload = load(fname)
 
-        assert xmap_reload.phases[0].point_group.name == point_group
+        phase_ids = xmap_reload.phases.ids
+        assert xmap_reload.phases[phase_ids[0]].point_group.name == point_group
 
     @pytest.mark.parametrize(
         "crystal_map_input",
