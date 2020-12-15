@@ -378,10 +378,11 @@ def file_writer(
     xmap : CrystalMap
         Crystal map to write to file.
     index : int, optional
-        If the crystal map has more than one rotation and phase ID per
-        point, this index can be set to write that "layer" of data to
-        the file. For properties to be written as well, these must also
-        have multiple values per point.
+        If the crystal map has more than one rotation/match and phase
+        ID per point, this index can be set to write that "layer" of
+        data to the file. For properties to be written as well, these
+        must also have multiple values per point. To get the best match
+        at every point, use None (default).
     image_quality_prop : str, optional
         Which map property to use as the image quality. If None
         (default), "iq" or "imagequality", if present, is used, or just
