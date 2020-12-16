@@ -160,9 +160,14 @@ class CrystalMap:
             phase_ids = phase_list.ids
             n_different = len(phase_ids) - len(unique_phase_ids)
             if n_different > 0:
-                # Remove superfluous phases
-                for i in phase_list.ids[::-1][:n_different]:
-                    del phase_list[i]
+                # Remove superfluous phases by removing the phases whose
+                # ID is not in the ID array, in descending list order
+                for i in phase_ids[::-1]:
+                    if i not in unique_phase_ids:
+                        del phase_list[i]
+                        n_different -= 1
+                    if n_different == 0:
+                        break
             elif n_different < 0:
                 # Create new phase list adding the missing phases with
                 # default initial values
@@ -491,6 +496,9 @@ class CrystalMap:
         Properties: iq, dp
         Scan unit: um
         """
+        # TODO: Crop new map to the extremal spatial values (e.g. if all values in first
+        #  or last row/column are masked out by the key), i.e. not just mask the values
+
         # Initiate a mask to be added to the returned copy of the
         # CrystalMap object, to ensure that only the unmasked values are
         # in the data of the copy (True in `is_in_data`). First, no points
@@ -636,7 +644,7 @@ class CrystalMap:
             How many decimals to round data point values to (default is
             3).
         fill_value : None, optional
-            Value to fill points not in the data with. If ``None``
+            Value to fill points not in the data with. If None
             (default), np.nan is used.
 
         Returns
@@ -655,17 +663,22 @@ class CrystalMap:
         # TODO: Better account for `item.shape`, e.g. quaternions
         #  (item.shape[-1] == 4) in a more general way than here (not more
         #  if/else)!
-        array = np.zeros(np.prod(map_shape))
+        map_size = np.prod(map_shape)
         if isinstance(item, np.ndarray):
+            array = np.empty(map_size, dtype=item.dtype)
             if item.shape[-1] == 3:  # Assume RGB
                 map_shape += (3,)
                 array = np.column_stack((array,) * 3)
         elif item in ["orientations", "rotations"]:  # Definitely RGB
+            array = np.empty(map_size, dtype=np.float64)
             map_shape += (3,)
             array = np.column_stack((array,) * 3)
+        else:
+            array = np.empty(map_size, dtype=np.float64)
 
         # Enter non-masked values into array
         if isinstance(item, np.ndarray):
+            # TODO: Account for 2D map with more than one value per point
             array[self.is_in_data] = item
         elif item in ["orientations", "rotations"]:
             if item == "rotations":
@@ -688,24 +701,33 @@ class CrystalMap:
             if data is None:
                 raise ValueError(f"{item} is {data}.")
             else:
+                # TODO: Account for 2D map with more than one value per point
                 array[self.is_in_data] = data
-
-        # Round values
-        rounded_array = np.round(array, decimals=decimals)
+                array = array.astype(data.dtype)
 
         # Slice and reshape array
         slices = self._data_slices_from_coordinates()
-        reshaped_array = rounded_array.reshape(map_shape)
-        output_array = reshaped_array[slices]
+        reshaped_array = array.reshape(map_shape)
+        sliced_array = reshaped_array[slices]
 
-        # Reshape and slice mask with points *not* in data
+        # Reshape and slice mask with points not in data
         if array.shape[-1] == 3:  # RGB
             not_in_data = np.dstack((~self.is_in_data,) * 3)
         else:  # Scalar
             not_in_data = ~self.is_in_data
         not_in_data = not_in_data.reshape(map_shape)[slices]
 
-        output_array[not_in_data] = fill_value
+        # Fill points not in data with the fill value
+        if not_in_data.any():
+            if fill_value is None or fill_value is np.nan:
+                sliced_array = sliced_array.astype(np.float64)
+            sliced_array[not_in_data] = fill_value
+
+        # Round values
+        if np.issubdtype(array.dtype, np.bool_):
+            output_array = sliced_array
+        else:
+            output_array = np.round(sliced_array, decimals=decimals)
 
         return output_array
 

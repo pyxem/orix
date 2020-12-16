@@ -6,10 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added 
-- Overloaded division for Vector3d (left hand side) by numbers and suitably shaped array-like objects.
+- .ang file writer for CrystalMap objects (via orix.io.save())
+- Overloaded division for Vector3d (left hand side) by numbers and suitably shaped array-like objects
 
 ### Changed
-- Continuous integration migrated from Travis CI to GitHub Actions.
+- CrystalMap.get_map_data() tries to respect input data type, other minor improvements
+- Continuous integration migrated from Travis CI to GitHub Actions
 
 ## 2020-11-03 - version 0.5.1
 ### Added
@@ -18,5 +20,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - CrystalMap properties allow arrays with number of dimensions greater than 2
-- ANG file reader now recognises phase IDs defined in the header
+- .ang file reader now recognises phase IDs defined in the header
 - EMsoft file reader reads unrefined Euler angles correctly
