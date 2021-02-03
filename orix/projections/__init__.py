@@ -16,18 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Plotting of various objects."""
+"""Projections, from e.g. cartesian to spherical."""
 
-from orix.plot.crystal_map_plot import convert_unit, CrystalMapPlot
-from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
-from orix.plot.stereographic import StereographicAxes
+from orix.projections.spherical import InverseSphericalProjection
+from orix.projections.stereographic import (
+    InverseStereographicProjection,
+    StereographicProjection,
+)
 
-# Lists what will be imported when calling "from orix.plot import *"
+
+# Lists what will be imported when calling "from orix.vector import *"
 __all__ = [
-    "convert_unit",
-    "CrystalMapPlot",
-    "AxAnglePlot",
-    "RodriguesPlot",
-    "RotationPlot",
-    "StereographicAxes",
+    "InverseSphericalProjection",
+    "InverseStereographicProjection",
+    "StereographicProjection",
 ]
