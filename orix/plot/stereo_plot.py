@@ -40,4 +40,4 @@ class StereographicPlot(Axes):
         return self.scatter(vectors3d, **kwargs)
 
 
-register_projection(StereoPlot)
+register_projection(StereographicPlot)
