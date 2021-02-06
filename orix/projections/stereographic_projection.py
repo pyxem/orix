@@ -48,25 +48,22 @@ class StereographicProjection:
         """Convert theta, phi to [X,Y] split by hemisphere"""
         return _get_stereographic_hemisphere_coords_spherical(theta, phi)
 
-
-class InverseStereographicProjection:
-    """Convert stereographic coordinates to unit vectors"""
     @classmethod
-    def project(cls, xy, pole=-1):
+    def iproject(cls, xy, pole=-1):
         """Convert [X, Y] to Vector3d"""
-        return _get_unitvectors_from_stereographic(xy)
+        return _get_unitvectors_from_stereographic(xy, pole=pole)
 
     @classmethod
-    def project_spherical(cls, xy, pole=-1):
+    def iproject_spherical(cls, xy, pole=-1):
         """Convert [X, Y] to theta, phi"""
-        return _get_spherical_from_stereographic(xy)
+        return _get_spherical_from_stereographic(xy, pole=pole)
 
 
-def _get_stereographic_from_spherical(theta, phi):
+def _get_stereographic_from_spherical(theta, phi, pole):
     """Convert spherical polar (theta) - azimuthal (phi) coordinates to
     stereographic"""
     v = Vector3d.from_polar(theta, phi)
-    return _get_stereographic_coordinates(v)
+    return _get_stereographic_coordinates(v, pole)
 
 
 def _get_stereographic_hemisphere_coords_spherical(theta, phi):
@@ -169,10 +166,10 @@ def _get_unitvectors_from_stereographic(xy, pole=-1):
     """
     if xy.ndim == 1:
         xy = xy.reshape((1, xy.shape[0]))
-    if xy.shape[1] != 2:
-        raise ValueError("An (N, 2) shaped array must be provided")
-    z = -pole*(1 - (xy[:, 0]**2 - xy[:, 1]**2))/(1 + xy[:, 0]**2 + xy[:, 1]**2)
-    x = 2*xy[:, 0]/(1 + xy[:, 0]**2 + xy[:, 1]**2)
-    y = 2*xy[:, 1]/(1 + xy[:, 0]**2 + xy[:, 1]**2)
-    xyz = np.vstack([x, y, z]).T
+    x = xy[:, 0]
+    y = xy[:, 1]
+    zz = -pole*(1 - x**2 - y**2)/(1 + x**2 + y**2)
+    xx = 2*x/(1 + x**2 + y**2)
+    yy = 2*y/(1 + x**2 + y**2)
+    xyz = np.vstack([xx, yy, zz]).T
     return Vector3d(xyz)

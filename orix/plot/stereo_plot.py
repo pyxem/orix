@@ -23,7 +23,7 @@ from orix.projections.stereographic_projection import StereographicProjection
 from matplotlib.projections import register_projection
 
 
-class StereoPlot(Axes):
+class StereographicPlot(Axes):
     """Plot Vector3D in a stereographic plot"""
 
     name = "stereographic"
