@@ -83,12 +83,18 @@ def test_project_split(vector3d):
 
 def test_project_split_spherical(spherical_coordinates):
     theta, phi = spherical_coordinates
-    StereographicProjection.project_spherical(theta, phi)
+    StereographicProjection.project_split_spherical(theta, phi)
 
 
 @pytest.mark.parametrize("pole", [-1, 1])
 def test_iproject(pole, xy):
     StereographicProjection.iproject(xy, pole)
+
+
+@pytest.mark.parametrize("pole", [-1, 1])
+def test_iproject_onearray(pole):
+    data = np.array([0.5, -0.5])
+    StereographicProjection.iproject(data, pole)
 
 
 @pytest.mark.parametrize("pole", [-1, 1])

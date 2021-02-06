@@ -43,6 +43,7 @@ def test_plot_stereo():
     data = Vector3d(np.random.rand(6, 3))
     fig, ax = plt.subplots(subplot_kw = dict(projection="stereographic"))
     ax.scatter(data)
+    ax.plot(data)
 
 
 class TestCrystalMapPlot:
