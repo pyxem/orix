@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+# Copyright 2018-2021 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
 from orix.projections.stereographic_projection import StereographicProjection
 import pytest
 from orix.vector.vector3d import Vector3d
@@ -111,8 +129,6 @@ def test_verify(vector3d):
     inv_u = StereographicProjection.iproject(stereocoords_u, -1)
     inv_d = StereographicProjection.iproject(stereocoords_d, 1)
     np.testing.assert_allclose(inv_u.data, vector3d_up.data, rtol=1e-5, atol=1e-5)
-    print(vector3d_down)
-    print(inv_d)
     np.testing.assert_allclose(inv_d.data, vector3d_down.data, rtol=1e-5, atol=1e-5)
 
 

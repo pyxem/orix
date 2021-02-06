@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2020 the orix developers
+# Copyright 2018-2021 the orix developers
 #
 # This file is part of orix.
 #
@@ -28,8 +28,8 @@ class StereographicPlot(Axes):
 
     name = "stereographic"
 
-    def scatter(self, vectors3d, **kwargs):
-        xy = StereographicProjection.project(vectors3d)
+    def scatter(self, vectors3d, pole=-1, **kwargs):
+        xy = StereographicProjection.project(vectors3d, pole=pole)
         self.add_patch(Circle((0, 0), 1, facecolor="none", edgecolor="black"))
         self.set_aspect("equal")
         self.set_xlim(-1.1, 1.1)
