@@ -1,5 +1,5 @@
 __name__ = "orix"
-__version__ = "0.5.1"
+__version__ = "0.6.dev0"
 __author__ = "Ben Martineau, Phillip Crout, Håkon Wiik Ånes, Duncan Johnstone"
 __author_email__ = "pyxem.team@gmail.com"
 __description__ = "orix is an open-source python library for handling crystal orientation mapping data."

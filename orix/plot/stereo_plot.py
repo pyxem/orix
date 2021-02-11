@@ -18,9 +18,9 @@
 
 from matplotlib.axes import Axes
 from matplotlib.patches import Circle
-from orix.vector.vector3d import Vector3d
-from orix.projections.stereographic_projection import StereographicProjection
 from matplotlib.projections import register_projection
+
+from orix.projections import StereographicProjection
 
 
 class StereographicPlot(Axes):
