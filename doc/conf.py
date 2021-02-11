@@ -11,7 +11,7 @@ from os.path import relpath, dirname
 import re
 import sys
 
-from orix import __author__, __version__, __file__
+from orix import __author__, __version__
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
