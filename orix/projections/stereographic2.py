@@ -21,38 +21,43 @@ import numpy as np
 from orix.vector import Vector3d
 
 
-class StereographicProjection:
+class StereographicProjection2:
     """Get stereographic coordinates from other representations."""
 
-    @staticmethod
-    def vector2xy(v):
+    def vector2xy(self, v):
         """(x, y, z) to (X, Y)."""
-        polar = v.theta.data
-        azimuthal = v.phi.data
-        r = np.tan(polar / 2)
-        x = r * np.cos(azimuthal)
-        y = r * np.sin(azimuthal)
+        zenith, azimuth, radial = self.vector2spherical(v)
+
+        # Map zenith to upper hemishphere
+        zenith = np.where(zenith < np.pi / 2, zenith, np.pi - zenith)
+
+        # Stereographic projection
+        rho = radial * np.tan(zenith / 2)
+
+        x = rho * np.cos(azimuth)
+        y = rho * np.sin(azimuth)
+
         return x, y
 
-    def spherical2xy(self, azimuthal, polar):
-        """(azimuthal, polar) to (X, Y)."""
-        v = Vector3d.from_polar(theta=polar, phi=azimuthal).unit
+    def spherical2xy(self, azimuth, polar):
+        """(azimuth, polar) via unit vector to (X, Y)."""
+        v = Vector3d.from_polar(theta=polar, phi=azimuth, r=1)
         return self.vector2xy(v)
 
 
-class InverseStereographicProjection:
+class InverseStereographicProjection2:
     """Get other representations from stereographic coordinates."""
 
     @staticmethod
     def xy2vector(x, y):
-        """(X, Y) to (x, y, z)."""
+        """(X, Y) to (x, y, z) unit vector."""
         polar = 2 * np.arctan(np.sqrt(x ** 2 + y ** 2))
-        azimuthal = np.arctan2(y, x)
-        return Vector3d.from_polar(theta=polar, phi=azimuthal)
+        azimuth = np.arctan2(y, x)
+        return Vector3d.from_polar(theta=polar, phi=azimuth, r=1)
 
     def xy2spherical(self, x, y):
         """(X, Y) to (azimuthal, polar)."""
         v = self.xy2vector(x=x, y=y)
-        azimuthal = v.phi.data
-        polar = v.theta.data
-        return azimuthal, polar
+        azimuth = v.phi
+        polar = v.theta
+        return azimuth, polar

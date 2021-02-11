@@ -18,16 +18,20 @@
 
 """Projections, from e.g. cartesian to spherical."""
 
-from orix.projections.spherical import InverseSphericalProjection
 from orix.projections.stereographic import (
     InverseStereographicProjection,
     StereographicProjection,
+)
+from orix.projections.stereographic2 import (
+    InverseStereographicProjection2,
+    StereographicProjection2,
 )
 
 
 # Lists what will be imported when calling "from orix.vector import *"
 __all__ = [
-    "InverseSphericalProjection",
     "InverseStereographicProjection",
     "StereographicProjection",
+    "InverseStereographicProjection2",
+    "StereographicProjection2",
 ]

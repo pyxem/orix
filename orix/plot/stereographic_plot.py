@@ -23,7 +23,6 @@ from matplotlib.patches import Circle
 from matplotlib.path import Path
 from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
-from matplotlib.ticker import NullLocator, FixedLocator
 from matplotlib.transforms import Affine2D, Affine2DBase, BboxTransformTo, Transform
 import numpy as np
 
@@ -35,10 +34,16 @@ from orix.vector import Vector3d
 class StereographicTransform(Transform):
     input_dims = output_dims = 2
 
+    def __init__(self, pole=-1):
+        super().__init__()
+        self.pole = pole
+
     def transform_non_affine(self, values):
-        """(azimuthal, polar) to (X, Y)."""
-        azimuthal, polar = values.T
-        x, y = StereographicProjection().spherical2xy(polar=polar, azimuthal=azimuthal)
+        """(Azimuth, polar) to (X, Y)."""
+        azimuth, polar = values.T
+        x, y = StereographicProjection(pole=self.pole).spherical2xy(
+            azimuth=azimuth, polar=polar
+        )
         return np.column_stack([x, y])
 
     def transform_path_non_affine(self, path):
@@ -46,44 +51,63 @@ class StereographicTransform(Transform):
         return Path(self.transform(ipath.vertices), ipath.codes)
 
     def inverted(self):
-        return InverseStereographicTransform()
+        return InverseStereographicTransform(pole=self.pole)
 
 
 class InverseStereographicTransform(Transform):
     input_dims = output_dims = 2
 
-    def transform_non_affine(self, values):
-        """(X, Y) to (azimuthal, polar)."""
-        x, y = values.T
-        azimuthal, polar = InverseStereographicProjection().xy2spherical(x=x, y=y)
-        return np.column_stack([azimuthal, polar])
+    def __init__(self, pole=-1):
+        super().__init__()
+        self.pole = pole
 
-    def inverted(self):
+    def transform_non_affine(self, values):
+        """(X, Y) to (azimuth, polar)."""
+        x, y = values.T
+        azimuth, polar = InverseStereographicProjection(pole=self.pole).xy2spherical(
+            x=x, y=y
+        )
+        return np.column_stack([azimuth, polar])
+
+    @staticmethod
+    def inverted():
         return StereographicTransform()
 
 
 class StereographicAffine(Affine2DBase):
+    def __init__(self, pole=-1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pole = pole
+
     def get_matrix(self):
-        st = StereographicTransform()
+        st = StereographicTransform(pole=self.pole)
         xscale, _ = st.transform((0, np.pi / 2))
         _, yscale = st.transform((np.pi / 2, np.pi / 2))
         scales = (0.5 / xscale, 0.5 / yscale)
         return Affine2D().scale(*scales).translate(0.5, 0.5)
 
 
-class StereographicAxes(Axes):
+class StereographicPlot(Axes):
     """Stereographic projection."""
 
     name = "stereographic"
+    pole = -1
 
     def __init__(self, *args, **kwargs):
         self._polar_cap = np.pi / 2
-        self._azimuthal_cap = 2 * np.pi
+        self._azimuth_cap = 2 * np.pi
         super().__init__(*args, **kwargs)
         # Set ratio of y-unit to x-unit by adjusting the physical
         # dimension of the Axes (box), and centering the anchor (C)
         self.set_aspect("equal", adjustable="box", anchor="C")
         self.cla()
+
+    def set_pole(self, value):
+        self.pole = value
+        self._set_lim_and_transforms()
+
+    def get_hemisphere(self):
+        return {"1": "lower", "-1": "upper"}[str(self.pole)]
 
     def _init_axis(self):
         # Need to override these to get rid of spines
@@ -101,14 +125,17 @@ class StereographicAxes(Axes):
         self.xaxis.set_tick_params(label1On=False)
         self.yaxis.set_tick_params(label1On=False)
 
-        resolution = 15
+        resolution = 30
         self.set_polar_grid(resolution)
-        self.set_azimuthal_grid(resolution)
-        self.grid(rcParams["axes.grid"])  # Boolean
+        self.set_azimuth_grid(resolution)
+        self.grid(rcParams["axes.grid"])
+
+        self.set_xlim(0, self._azimuth_cap)
+        self.set_ylim(0, self._polar_cap)
 
     def _set_lim_and_transforms(self):
-        self.transProjection = StereographicTransform()
-        self.transAffine = StereographicAffine()
+        self.transProjection = StereographicTransform(pole=self.pole)
+        self.transAffine = StereographicAffine(pole=self.pole)
         self.transAxes = BboxTransformTo(self.bbox)
 
         self.transData = self.transProjection + self.transAffine + self.transAxes
@@ -116,29 +143,19 @@ class StereographicAxes(Axes):
         self._xaxis_pretransform = Affine2D().scale(1, self._polar_cap)
         self._xaxis_transform = self._xaxis_pretransform + self.transData
 
-        self._yaxis_pretransform = Affine2D().scale(self._azimuthal_cap, 1)
+        self._yaxis_pretransform = Affine2D().scale(self._azimuth_cap, 1)
         self._yaxis_transform = self._yaxis_pretransform + self.transData
 
-    def set_polar_grid(self, resolution):
-        resolution = np.deg2rad(resolution)
-        grid = np.arange(0, self._polar_cap, resolution)
-        self.set_yticks(grid)
-
-    def set_azimuthal_grid(self, resolution):
-        resolution = np.deg2rad(resolution)
-        grid = np.arange(0, self._azimuthal_cap, resolution)
-        self.set_xticks(grid)
-
     @staticmethod
-    def format_coord(azimuthal, polar):
-        azimuthal_deg = np.rad2deg(azimuthal)
+    def format_coord(azimuth, polar):
+        azimuth_deg = np.rad2deg(azimuth)
         polar_deg = np.rad2deg(polar)
         return (
-            "\N{GREEK SMALL LETTER THETA}={:.2f}\N{GREEK SMALL LETTER PI} "
-            "({:.2f}\N{DEGREE SIGN}), "
             "\N{GREEK SMALL LETTER PHI}={:.2f}\N{GREEK SMALL LETTER PI} "
+            "({:.2f}\N{DEGREE SIGN}), "
+            "\N{GREEK SMALL LETTER RHO}={:.2f}\N{GREEK SMALL LETTER PI} "
             "({:.2f}\N{DEGREE SIGN})"
-        ).format(azimuthal, azimuthal_deg, polar, polar_deg)
+        ).format(azimuth, azimuth_deg, polar, polar_deg)
 
     def get_xaxis_transform(self, which="grid"):
         # Need to override this to get rid of spines.
@@ -151,41 +168,82 @@ class StereographicAxes(Axes):
     def _gen_axes_spines(self):
         return {"stereographic": Spine.circular_spine(self, (0.5, 0.5), 0.5)}
 
-    def _gen_axes_patch(self):
+    @staticmethod
+    def _gen_axes_patch():
         return Circle((0.5, 0.5), 0.5)
 
-    def get_data_ratio(self):
+    @staticmethod
+    def get_data_ratio():
         return 1
 
-    def can_pan(self):
-        return False
-
-    def can_zoom(self):
+    @staticmethod
+    def can_pan():
         return False
 
     @staticmethod
+    def can_zoom():
+        return False
+
+    def set_polar_grid(self, resolution):
+        resolution = np.deg2rad(resolution)
+        grid = np.arange(0, self._polar_cap, resolution)
+        self.set_yticks(grid)
+
+    def set_azimuth_grid(self, resolution):
+        resolution = np.deg2rad(resolution)
+        grid = np.arange(0, self._azimuth_cap, resolution)
+        self.set_xticks(grid)
+
+    def _set_label(self, x, y, label, **kwargs):
+        bbox_dict = dict(boxstyle="round", fc="w", ec="w")
+        new_kwargs = dict(ha="center", va="center", bbox=bbox_dict)
+        for k, v in new_kwargs.items():
+            kwargs.setdefault(k, v)
+        super().text(x=x, y=y, s=label, **kwargs)
+
+    def set_xlabel(self, label="X", **kwargs):
+        self._set_label(0, self._polar_cap, label, **kwargs)
+
+    def set_ylabel(self, label="Y", **kwargs):
+        self._set_label(self._polar_cap, self._polar_cap, label, **kwargs)
+
+    def set_zlabel(self, label="Z", **kwargs):
+        self._set_label(0, 0, label, **kwargs)
+
+    @staticmethod
     def _pretransform_input(values):
+        """Return azimuth and polar angles from input data."""
         if len(values) == 2:
-            azimuthal, polar = values
+            azimuth, polar = values
         else:
             value = values[0]
             if isinstance(value, Rotation):
                 v = value * Vector3d.zvector()
-                azimuthal = v.phi.data
-                polar = v.theta.data
+                azimuth = v.phi
+                polar = v.theta
             elif isinstance(value, Vector3d):
-                azimuthal = value.phi.data
-                polar = value.theta.data
+                azimuth = value.phi
+                polar = value.theta
             else:
                 raise ValueError(
-                    "Accepts only one, Vector3d or Rotation, or two, (azimuthal, "
-                    "polar), input arguments"
+                    "Accepts only one (Vector3d or Rotation) or two (azimuth, "
+                    "polar) input arguments"
                 )
-        return azimuthal, polar
+        return azimuth, polar
 
     def scatter(self, *args, **kwargs):
-        azimuthal, polar = self._pretransform_input(args)
-        super().scatter(azimuthal, polar, **kwargs)
+        new_kwargs = dict(zorder=3, clip_on=False)
+        for k, v in new_kwargs.items():
+            kwargs.setdefault(k, v)
+        azimuth, polar = self._pretransform_input(args)
+        super().scatter(azimuth, polar, **kwargs)
+
+    def text(self, *args, **kwargs):
+        new_kwargs = dict(va="bottom", ha="center")
+        for k, v in new_kwargs.items():
+            kwargs.setdefault(k, v)
+        azimuth, polar = self._pretransform_input(args)
+        super().text(azimuth, polar, **kwargs)
 
 
-register_projection(StereographicAxes)
+register_projection(StereographicPlot)
