@@ -29,6 +29,6 @@ Work using orix
     :caption: Help & reference
 
     reference.rst
-    CHANGELOG.rst
+    changelog.rst
     contributing.rst
     related_projects.rst
