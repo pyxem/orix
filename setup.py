@@ -6,7 +6,14 @@ from orix import __name__, __version__, __author__, __author_email__, __descript
 # tests. From setuptools:
 # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
 extra_feature_requirements = {
-    "doc": ["sphinx >= 3.0.2", "sphinx-rtd-theme >= 0.4.3"],
+    "doc": [
+        "ipykernel",  # https://github.com/spatialaudio/nbsphinx/issues/121
+        "nbsphinx >= 0.7",
+        "sphinx >= 3.0.2",
+        "sphinx-rtd-theme >= 0.4.3",
+        "sphinx-gallery >= 0.6",
+        "sphinxcontrib-bibtex >= 1.0",
+    ],
     "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
 }
 extra_feature_requirements["dev"] = ["black >= 19.3b0", "pre-commit >= 1.16"] + list(
