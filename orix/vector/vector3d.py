@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 import numpy as np
 
 from orix.base import check, Object3d
@@ -500,3 +502,9 @@ class Vector3d(Object3d):
         theta, phi, r : Scalar
         """
         return self.theta, self.phi, self.r
+
+    def _nice_string_repr(self):
+        str_list = [re.sub("[\[\], ]", "", str(v)) for v in self.data]
+        if len(str_list) == 1:
+            str_list = str_list[0]
+        return str_list

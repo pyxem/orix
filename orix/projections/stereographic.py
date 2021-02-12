@@ -20,7 +20,7 @@
 
 import numpy as np
 
-from orix.vector import Vector3d
+from orix.vector import SphericalRegion, Vector3d
 
 
 class StereographicProjection:
@@ -28,9 +28,11 @@ class StereographicProjection:
 
     def __init__(self, pole=-1):
         self.pole = pole
+        self.region = SphericalRegion([0, 0, pole * -1])
 
     def vector2xy(self, v):
         """(x, y, z) to (X, Y)."""
+        v = v[v <= self.region]
         vx, vy, vz = v.xyz
         pole = self.pole
         x = -pole * vx / (vz - pole)

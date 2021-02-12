@@ -91,23 +91,20 @@ class StereographicPlot(Axes):
     """Stereographic projection."""
 
     name = "stereographic"
-    pole = -1
+    _pole = -1
 
     def __init__(self, *args, **kwargs):
         self._polar_cap = np.pi / 2
+        self._polar_resolution = 30
+
         self._azimuth_cap = 2 * np.pi
+        self._azimuth_resolution = 30
+
         super().__init__(*args, **kwargs)
         # Set ratio of y-unit to x-unit by adjusting the physical
         # dimension of the Axes (box), and centering the anchor (C)
         self.set_aspect("equal", adjustable="box", anchor="C")
-        self.cla()
-
-    def set_pole(self, value):
-        self.pole = value
-        self._set_lim_and_transforms()
-
-    def get_hemisphere(self):
-        return {"1": "lower", "-1": "upper"}[str(self.pole)]
+        self.clear()
 
     def _init_axis(self):
         # Need to override these to get rid of spines
@@ -116,29 +113,31 @@ class StereographicPlot(Axes):
         self.spines["stereographic"].register_axis(self.yaxis)
         self._update_transScale()
 
-    def cla(self):
+    def clear(self):
         """Resetting of the axes."""
-        super().cla()
+        super().clear()
 
         self.xaxis.set_ticks_position("none")
         self.yaxis.set_ticks_position("none")
         self.xaxis.set_tick_params(label1On=False)
         self.yaxis.set_tick_params(label1On=False)
 
-        resolution = 30
-        self.set_polar_grid(resolution)
-        self.set_azimuth_grid(resolution)
+        self.set_polar_grid()
+        self.set_azimuth_grid()
         self.grid(rcParams["axes.grid"])
 
         self.set_xlim(0, self._azimuth_cap)
         self.set_ylim(0, self._polar_cap)
 
     def _set_lim_and_transforms(self):
+        self.transShift = Affine2D().scale(-self._pole, 1)
         self.transProjection = StereographicTransform(pole=self.pole)
         self.transAffine = StereographicAffine(pole=self.pole)
         self.transAxes = BboxTransformTo(self.bbox)
 
-        self.transData = self.transProjection + self.transAffine + self.transAxes
+        self.transData = (
+            self.transShift + self.transProjection + self.transAffine + self.transAxes
+        )
 
         self._xaxis_pretransform = Affine2D().scale(1, self._polar_cap)
         self._xaxis_transform = self._xaxis_pretransform + self.transData
@@ -155,7 +154,7 @@ class StereographicPlot(Axes):
             "({:.2f}\N{DEGREE SIGN}), "
             "\N{GREEK SMALL LETTER RHO}={:.2f}\N{GREEK SMALL LETTER PI} "
             "({:.2f}\N{DEGREE SIGN})"
-        ).format(azimuth, azimuth_deg, polar, polar_deg)
+        ).format(azimuth / np.pi, azimuth_deg, polar / np.pi, polar_deg)
 
     def get_xaxis_transform(self, which="grid"):
         # Need to override this to get rid of spines.
@@ -184,22 +183,60 @@ class StereographicPlot(Axes):
     def can_zoom():
         return False
 
-    def set_polar_grid(self, resolution):
-        resolution = np.deg2rad(resolution)
-        grid = np.arange(0, self._polar_cap, resolution)
+    def scatter(self, *args, **kwargs):
+        new_kwargs = dict(zorder=3, clip_on=False)
+        for k, v in new_kwargs.items():
+            kwargs.setdefault(k, v)
+        azimuth, polar = self._pretransform_input(args)
+        super().scatter(azimuth, polar, **kwargs)
+
+    def text(self, *args, **kwargs):
+        new_kwargs = dict(va="bottom", ha="center", usetex=True)
+        for k, v in new_kwargs.items():
+            kwargs.setdefault(k, v)
+        azimuth, polar = self._pretransform_input(args)
+        super().text(azimuth, polar, **kwargs)
+
+    # ----------- Custom attributes and methods below here ----------- #
+
+    @property
+    def pole(self):
+        return self._pole
+
+    @pole.setter
+    def pole(self, value):
+        if value not in [1, -1]:
+            raise ValueError(f"Pole must be -1 (upper) or 1 (lower), not {value}")
+        self._pole = value
+        self._set_lim_and_transforms()
+        self.clear()
+
+    @property
+    def hemisphere(self):
+        return {"-1": "upper", "1": "lower"}[str(self.pole)]
+
+    def show_hemisphere(self, **kwargs):
+        new_kwargs = dict(ha="right", va="bottom")
+        new_kwargs.update(kwargs)
+        Axes.text(self, (3 / 4) * np.pi, np.pi / 2, s=self.hemisphere, **new_kwargs)
+
+    def set_polar_grid(self, resolution=None):
+        if resolution is not None:
+            self._polar_resolution = resolution
+        grid = np.arange(0, self._polar_cap, np.deg2rad(self._polar_resolution))
         self.set_yticks(grid)
 
-    def set_azimuth_grid(self, resolution):
-        resolution = np.deg2rad(resolution)
-        grid = np.arange(0, self._azimuth_cap, resolution)
+    def set_azimuth_grid(self, resolution=None):
+        if resolution is not None:
+            self._azimuth_resolution = resolution
+        grid = np.arange(0, self._azimuth_cap, np.deg2rad(self._azimuth_resolution))
         self.set_xticks(grid)
 
     def _set_label(self, x, y, label, **kwargs):
         bbox_dict = dict(boxstyle="round", fc="w", ec="w")
         new_kwargs = dict(ha="center", va="center", bbox=bbox_dict)
-        for k, v in new_kwargs.items():
-            kwargs.setdefault(k, v)
-        super().text(x=x, y=y, s=label, **kwargs)
+        new_kwargs.update(kwargs)
+        super().text(x=x, y=y, s=label, **new_kwargs)
 
     def set_xlabel(self, label="X", **kwargs):
         self._set_label(0, self._polar_cap, label, **kwargs)
@@ -230,20 +267,6 @@ class StereographicPlot(Axes):
                     "polar) input arguments"
                 )
         return azimuth, polar
-
-    def scatter(self, *args, **kwargs):
-        new_kwargs = dict(zorder=3, clip_on=False)
-        for k, v in new_kwargs.items():
-            kwargs.setdefault(k, v)
-        azimuth, polar = self._pretransform_input(args)
-        super().scatter(azimuth, polar, **kwargs)
-
-    def text(self, *args, **kwargs):
-        new_kwargs = dict(va="bottom", ha="center")
-        for k, v in new_kwargs.items():
-            kwargs.setdefault(k, v)
-        azimuth, polar = self._pretransform_input(args)
-        super().text(azimuth, polar, **kwargs)
 
 
 register_projection(StereographicPlot)
