@@ -7,6 +7,7 @@ from orix import __name__, __version__, __author__, __author_email__, __descript
 # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
 extra_feature_requirements = {
     "doc": [
+        "ipykernel",  # https://github.com/spatialaudio/nbsphinx/issues/121
         "nbsphinx >= 0.7",
         "sphinx >= 3.0.2",
         "sphinx-rtd-theme >= 0.4.3",
