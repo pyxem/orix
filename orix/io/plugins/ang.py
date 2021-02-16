@@ -42,18 +42,22 @@ writes_this = CrystalMap
 
 def file_reader(filename):
     """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
-    from a file in EDAX TLS's .ang format. The map in the input is assumed
-    to be 2D.
+    from a file in EDAX TLS's .ang format. The map in the input is
+    assumed to be 2D.
 
     Many vendors produce an .ang file. Supported vendors are
-        - EDAX TSL
-        - NanoMegas ASTAR Index
-        - EMsoft (from program `EMdpmerge`)
-        - orix
+    * EDAX TSL
+
+    * NanoMegas ASTAR Index
+
+    * EMsoft (from program `EMdpmerge`)
+
+    * orix
 
     All points satisfying the following criteria are classified as not
-    indexed
-        - EDAX TSL: confidence index == -1
+    indexed:
+
+    * EDAX TSL: confidence index == -1
 
     Parameters
     ----------
@@ -363,13 +367,20 @@ def file_writer(
     confidence_index, phase_id, detector_signal, and pattern_fit.
 
     Parameters in masked out or non-indexed points are set to
-        - euler angles = 4 * pi
-        - image quality = 0
-        - confidence index = -1
-        - phase ID = 0 if single phase or -1 if multi phase
-        - pattern fit = 180
-        - detector signal = 0
-        - extra properties = 0
+
+    * euler angles = 4 * pi
+
+    * image quality = 0
+
+    * confidence index = -1
+
+    * phase ID = 0 if single phase or -1 if multi phase
+
+    * pattern fit = 180
+
+    * detector signal = 0
+
+    * extra properties = 0
 
     Parameters
     ----------
@@ -608,10 +619,10 @@ def _get_prop_arrays(
 ):
     """Return a 2D array (n_points, n_properties) with desired property
     values in, or just zeros.
-    
+
     This function tries to get as many properties as possible from the
     crystal map properties.
-    
+
     Parameters
     ----------
     xmap : CrystalMap
@@ -620,7 +631,7 @@ def _get_prop_arrays(
     map_size : int
     index : int or None
     decimals : int, optional
-    
+
     Returns
     -------
     np.ndarray
@@ -684,7 +695,7 @@ def _get_prop_array(
     index : int or None
     decimals : int, optional
     fill_value : int, float, or bool, optional
-    
+
     Returns
     -------
     np.ndarray or None

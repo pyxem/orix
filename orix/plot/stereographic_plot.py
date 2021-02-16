@@ -38,18 +38,28 @@ from orix.plot._symmetry_marker import (
 
 
 class StereographicTransform(Transform):
+    """The stereographic transform."""
+
     input_dims = output_dims = 2
 
     def __init__(self, pole=-1):
+        """Create a new stereographic transform.
+
+        Parameters
+        ----------
+        pole : int, optional
+            -1 or 1, where -1 (1) means the projection point of the
+            stereographic transform is the south (north) pole [00-1]
+            ([001]), i.e. only vectors with z > 0 (z < 0) are returned.
+        """
         super().__init__()
         self.pole = pole
 
     def transform_non_affine(self, values):
-        """(Azimuth, polar) to (X, Y)."""
+        # (azimuth, polar) to (X, Y)
         azimuth, polar = values.T
-        x, y = StereographicProjection(pole=self.pole).spherical2xy(
-            azimuth=azimuth, polar=polar
-        )
+        sp = StereographicProjection(pole=self.pole)
+        x, y = sp.spherical2xy(azimuth=azimuth, polar=polar)
         return np.column_stack([x, y])
 
     def transform_path_non_affine(self, path):
@@ -68,11 +78,10 @@ class InvertedStereographicTransform(Transform):
         self.pole = pole
 
     def transform_non_affine(self, values):
-        """(X, Y) to (azimuth, polar)."""
+        # (X, Y) to (azimuth, polar)
         x, y = values.T
-        azimuth, polar = InverseStereographicProjection(pole=self.pole).xy2spherical(
-            x=x, y=y
-        )
+        isp = InverseStereographicProjection(pole=self.pole)
+        azimuth, polar = isp.xy2spherical(x=x, y=y)
         return np.column_stack([azimuth, polar])
 
     def inverted(self):
@@ -85,19 +94,37 @@ class StereographicAffine(Affine2DBase):
         self.pole = pole
 
     def get_matrix(self):
-        if self._invalid:  # Only recompute if children has changed
-            st = StereographicTransform(pole=self.pole)
-            xscale, _ = st.transform((0, np.pi / 2))
-            _, yscale = st.transform((np.pi / 2, np.pi / 2))
-            scales = (0.5 / xscale, 0.5 / yscale)
-            self._mtx = Affine2D().scale(*scales).translate(0.5, 0.5)
-            self._inverted = None
-            self._invalid = 0
+        # Only recompute if self._invalid is True?
+        st = StereographicTransform(pole=self.pole)
+        xscale, _ = st.transform((0, np.pi / 2))
+        _, yscale = st.transform((np.pi / 2, np.pi / 2))
+        scales = (0.5 / xscale, 0.5 / yscale)
+        self._mtx = Affine2D().scale(*scales).translate(0.5, 0.5)
+        self._inverted = None
+        self._invalid = 0
         return self._mtx
 
 
 class StereographicPlot(Axes):
-    """Stereographic projection."""
+    """Stereographic projection plot. The projection is an equal angle
+    projection and is typically used for visualizing 3D vectors in a 2D
+    plane.
+
+    https://en.wikipedia.org/wiki/Stereographic_projection
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from orix import plot, vector
+    >>> fig, ax = plt.subplots(subplot_kw=dict(projections="stereographic"))
+    >>> ax.scatter(vector.Vector3d([[0, 0, 1], [1, 0, 1]]))
+    """
+
+    # TODO: Extend by taking inspiration from matplotlib.projections.polar:
+    #  https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py
+
+    # See this Matplotlib tutorial for explanations of methods:
+    # https://matplotlib.org/stable/gallery/misc/custom_projection.html
 
     name = "stereographic"
     _hemisphere = "upper"
@@ -123,7 +150,6 @@ class StereographicPlot(Axes):
         self._update_transScale()
 
     def clear(self):
-        """Resetting of the axes."""
         super().clear()
 
         self.xaxis.set_ticks_position("none")
@@ -187,7 +213,8 @@ class StereographicPlot(Axes):
 
     @staticmethod
     def can_zoom():
-        return True
+        # TODO: Implement zoom (https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py#L1437)
+        return False
 
     def scatter(self, *args, **kwargs):
         new_kwargs = dict(zorder=3, clip_on=False)
@@ -207,10 +234,20 @@ class StereographicPlot(Axes):
 
     @property
     def hemisphere(self):
+        """Hemisphere to plot.
+
+        Returns
+        -------
+        str
+            "upper" ("north") or "lower" ("south") plots the upper or
+            lower hemisphere vectors. The :attr:`pole` attribute is
+            derived from this attribute.
+        """
         return self._hemisphere
 
     @hemisphere.setter
     def hemisphere(self, value):
+        """Set hemisphere to plot."""
         value = value.lower()
         if value in ["upper", "north"]:
             self._hemisphere = "upper"
@@ -224,20 +261,68 @@ class StereographicPlot(Axes):
 
     @property
     def pole(self):
+        """Projection pole, either -1 or 1, where -1 (1) means the
+        projection point of the stereographic transform is the south
+        (north) pole [00-1] ([001]), i.e. only vectors with z > 0 (z <
+        0) are plotted.
+
+        Derived from the :attr:`hemisphere` attribute.
+        """
         return {"upper": -1, "lower": 1}[self.hemisphere]
 
     def show_hemisphere_label(self, **kwargs):
+        """Add a hemisphere label ("upper"/"lower") to the upper left of
+        the plane.
+
+        Parameters
+        ----------
+        kwargs
+            Keyword arguments passed to
+            :func:`matplotlib.axes.Axes.text`.
+
+        See Also
+        --------
+        hemisphere
+        """
         new_kwargs = dict(ha="right", va="bottom")
         new_kwargs.update(kwargs)
         Axes.text(self, (3 / 4) * np.pi, np.pi / 2, s=self.hemisphere, **new_kwargs)
 
     def polar_grid(self, resolution=None):
+        """Set the polar grid resolution in degrees.
+
+        Parameters
+        ----------
+        resolution : float, optional
+            Polar grid resolution in degrees. Default is 30 degrees.
+            This can also be set upon initialization of the axes by
+            passing `polar_resolution` to the `subplot_kw` dictionary.
+
+        See Also
+        --------
+        azimuth_grid
+        matplotlib.axes.Axes.grid
+        """
         if resolution is not None:
             self._polar_resolution = resolution
         grid = np.arange(0, self._polar_cap, np.deg2rad(self._polar_resolution))
         self.set_yticks(grid)
 
     def azimuth_grid(self, resolution=None):
+        """Set the azimuth grid resolution in degrees.
+
+        Parameters
+        ----------
+        resolution : float, optional
+            Aziumuth grid resolution in degrees. Default is 30 degrees.
+            This can also be set upon initialization of the axes by
+            passing `azimuth_resolution` to `subplot_kw`.
+
+        See Also
+        --------
+        polar_grid
+        matplotlib.axes.Axes.grid
+        """
         if resolution is not None:
             self._azimuth_resolution = resolution
         grid = np.arange(0, self._azimuth_cap, np.deg2rad(self._azimuth_resolution))
@@ -249,16 +334,62 @@ class StereographicPlot(Axes):
         new_kwargs.update(kwargs)
         super().text(x=x, y=y, s=label, **new_kwargs)
 
-    def set_xlabel(self, label="X", **kwargs):
-        # Overwrite to place at proper location
-        self._set_label(0, self._polar_cap, label, **kwargs)
+    def set_labels(self, xlabel="X", ylabel="Y", zlabel="Z", **kwargs):
+        """Set the reference frame's axes labels.
 
-    def set_ylabel(self, label="Y", **kwargs):
-        # Overwrite to place at proper location
-        self._set_label(self._polar_cap, self._polar_cap, label, **kwargs)
+        Parameters
+        ----------
+        xlabel : str, False or None, optional
+            X axis label, default is "X". If False or None, this label
+            is not shown.
+        ylabel : str, False or None, optional
+            Y axis label, default is "Y". If False or None, this label
+            is not shown.
+        zlabel : str, False or None, optional
+            Z axis label, default is "Z". If False or None, this label
+            is not shown.
+        """
+        # x, y label positions
+        pos = [(0, self._polar_cap), (self._polar_cap,) * 2]
+        # z label position
+        if self.hemisphere == "upper":
+            pos += [(0, 0)]
+        else:  # lower
+            pos += [(0, np.pi)]
 
-    def set_zlabel(self, label="Z", **kwargs):
-        self._set_label(0, 0, label, **kwargs)
+        for (x, y), label in zip(pos, [xlabel, ylabel, zlabel]):
+            if label not in [None, False]:
+                self._set_label(x=x, y=y, label=label, **kwargs)
+
+    def symmetry_marker(self, v, fold, **kwargs):
+        """Plot 2-, 3- 4- or 6-fold symmetry marker(s).
+
+        Parameters
+        ----------
+        v : Vector3d
+            Position of the marker(s) to plot.
+        fold : int
+            Which symmetry element to plot, can be either 2, 3, 4 or 6.
+        kwargs
+            Keyword arguments passed to :meth:`scatter`.
+        """
+        size = kwargs.pop("s", 1)
+        if fold == 2:
+            marker = TwoFoldMarker(v, size=size)
+        elif fold == 3:
+            marker = ThreeFoldMarker(v, size=size)
+        elif fold == 4:
+            marker = FourFoldMarker(v, size=size)
+        elif fold == 6:
+            marker = SixFoldMarker(v, size=size)
+        else:
+            raise ValueError("Can only plot 2-, 3-, 4- or 6-fold elements.")
+
+        for vec, marker, marker_size in marker:
+            self.scatter(vec, marker=marker, s=marker_size, **kwargs)
+
+        # TODO: Find a way to control padding, so that markers aren't
+        #  clipped
 
     @staticmethod
     def _pretransform_input(values):
@@ -280,22 +411,6 @@ class StereographicPlot(Axes):
                     "polar) input arguments"
                 )
         return azimuth, polar
-
-    def symmetry_marker(self, v, fold, **kwargs):
-        size = kwargs.pop("s", 1)
-        if fold == 2:
-            marker = TwoFoldMarker(v, size=size)
-        elif fold == 3:
-            marker = ThreeFoldMarker(v, size=size)
-        elif fold == 4:
-            marker = FourFoldMarker(v, size=size)
-        elif fold == 6:
-            marker = SixFoldMarker(v, size=size)
-        else:
-            raise ValueError("Can only plot 2-, 3-, 4- or 6-fold elements.")
-
-        for vec, marker, marker_size in marker:
-            self.scatter(vec, marker=marker, s=marker_size, **kwargs)
 
 
 register_projection(StereographicPlot)

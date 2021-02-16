@@ -60,8 +60,9 @@ class TwoFoldMarker(SymmetryMarker):
 
     @property
     def size(self):
-        radial = np.tan(self._vector.theta / 2)
         # Assuming maximum polar angle is 90 degrees
+        radial = np.tan(self._vector.theta / 2)
+        radial = np.where(radial == 0, 1, radial)
         return self._size / np.sqrt(radial)
 
     @property

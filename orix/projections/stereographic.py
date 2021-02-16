@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Stereographic projection of vectors."""
+"""Stereographic projection of 3D vectors."""
 
 import numpy as np
 
@@ -24,85 +24,220 @@ from orix.vector import SphericalRegion, Vector3d
 
 
 class StereographicProjection:
-    """Get stereographic coordinates from other representations."""
+    """Get stereographic coordinates (X, Y) from representations of
+    vectors.
+    """
 
     def __init__(self, pole=-1):
+        """Initialize projection by setting whether the south pole (-1)
+        or north pole (1) is the projection point.
+
+        Parameters
+        ----------
+        pole : int, optional
+            -1 or 1, where -1 (1) means the projection point is the
+            south (north) pole [00-1] ([001]), i.e. only vectors with
+            z > 0 (z < 0) are returned.
+        """
         self.pole = pole
         self.region = SphericalRegion([0, 0, pole * -1])
 
     def vector2xy(self, v):
-        """(x, y, z) to (X, Y)."""
-        v = v[v <= self.region].unit
-        vx, vy, vz = v.xyz
-        pole = self.pole
-        x = -pole * vx / (vz - pole)
-        y = -pole * vy / (vz - pole)
-        return x, y
-
-    def vector2xy2(self, v):
-        """(x, y, z) to (X, Y)."""
-        v = v[v <= self.region].unit
-
-        zenith = v.theta
-        azimuth = v.phi
-
-        # Map to upper hemisphere
-        zenith = np.where(zenith > np.pi / 2, np.pi - zenith, zenith)
-
-        # Stereographic projection
-        polar = np.tan(zenith / 2)
-
-        x = polar * np.cos(azimuth)
-        y = polar * np.sin(azimuth)
-
-        return x, y
-
-    def spherical2xy(self, azimuth, polar):
-        """(azimuth, polar) to (X, Y)."""
-        v = Vector3d.from_polar(theta=polar, phi=azimuth, r=1)
-        return self.vector2xy(v)
-
-    @staticmethod
-    def project_split(v):
-        """Convert vector3d to [X,Y] split by hemisphere"""
-        v = Vector3d(v)
-        return _get_stereographic_hemisphere_coords(v)
-
-    @staticmethod
-    def project_split_spherical(theta, phi):
-        """Convert theta, phi to [X,Y] split by hemisphere"""
-        return _get_stereographic_hemisphere_coords_spherical(theta, phi)
-
-
-class InverseStereographicProjection:
-    """Get other representations from stereographic coordinates."""
-
-    def __init__(self, pole=-1):
-        self.pole = pole
-
-    def xy2vector(self, x, y):
-        """Convert stereographic coordinates (X, Y) to unit vectors
-        (x, y, z).
+        r"""Return stereographic coordinates (X, Y) of 3D unit vectors.
 
         Parameters
         ----------
-        coordinates : (N, 2) np.ndarray
-           (x, y) coordinates of the stereo plot
-        pole : int
-            1 or -1 to indicate the projection point being [0, 0, 1] or
-            [0, 0, -1] respectively.
+        v : Vector3d
+            If it's not a unit vector, it will be made into one.
 
         Returns
         -------
-        orix.vector.Vector3d
-            Unit vectors corresponding to stereographic coordinates.
+        x : numpy.ndarray
+            Stereographic coordinate X of shape same shape as the input
+            vector shape. Only the vectors with :math:`z` coordinate
+            positive (`pole` = -1) or negative (`pole` = 1) are
+            returned.
+        y : numpy.ndarray
+            Stereographic coordinate Y of shape same shape as the input
+            vector shape. Only the vectors with :math:`z` coordinate
+            positive (`pole` = -1) or negative (`pole` = 1) are
+            returned.
 
         Notes
         -----
-        The 1 pole is usually used to project vectors with z < 0, and
-        the -1 pole is usually used to project vectors with z > 0. This
-        way, the coordinates end up in the unit circle, otherwise they
-        end up outside.
+        The stereographic coordinates :math:`(X, Y)` are calculated from
+        the unit vectors' cartesian coordiantes :math:`(x, y, z)` as
+
+        .. math::
+            (X, Y) = \left(\frac{-px}{z - p}, \frac{-py}{z - p}\right),
+
+        where :math:`p` is either 1 (north pole as projection point) or
+        -1 (south pole as projection point).
+        """
+        v = v[v <= self.region].unit
+        return _vector2xy(v, pole=self.pole)
+
+    def spherical2xy(self, azimuth, polar):
+        r"""Return stereographic coordinates (X, Y) from 3D unit vectors
+        created from spherical coordinates, azimuth :math:`\phi` and
+        polar :math:`\theta`, defined as in the ISO 31-11 standard
+        [SphericalWolfram]_.
+
+        Parameters
+        ----------
+        azimuth : float or numpy.ndarray
+            Spherical azimuth coordinate.
+        polar : float or numpy.ndarray
+            Spherical polar coordinate.
+
+        Returns
+        -------
+        x : numpy.ndarray
+            Stereographic coordinate X of shape same shape as the input
+            vector shape. Only the vectors with :math:`z` coordinate
+            positive (`pole` = -1) or negative (`pole` = 1) are
+            returned.
+        y : numpy.ndarray
+            Stereographic coordinate Y of shape same shape as the input
+            vector shape. Only the vectors with :math:`z` coordinate
+            positive (`pole` = -1) or negative (`pole` = 1) are
+            returned.
+
+        See Also
+        --------
+        vector2xy
+        """
+        v = Vector3d.from_polar(theta=polar, phi=azimuth)
+        return self.vector2xy(v)
+
+    @staticmethod
+    def vector2xy_split(v):
+        """Return two sets of stereographic coordinates (X, Y) from 3D
+        unit vectors: one set for vectors in the upper hemisphere, and
+        one for the lower.
+
+        Parameters
+        ----------
+        v : Vector3d
+            If it's not a unit vector, it will be made into one.
+
+        Returns
+        -------
+        x_upper : numpy.ndarray
+            Stereographic coordinate X of upper hemisphere vectors, of
+            shape same shape as the input vector shape.
+        y_upper : numpy.ndarray
+            Stereographic coordinate Y of upper hemisphere vectors, of
+            shape same shape as the input vector shape.
+        x_lower : numpy.ndarray
+            Stereographic coordinate X of lower hemisphere vectors, of
+            shape same shape as the input vector shape.
+        y_lower : numpy.ndarray
+            Stereographic coordinate Y of lower hemisphere vectors, of
+            shape same shape as the input vector shape.
+
+        See Also
+        --------
+        vector2xy
+        """
+        v = v.unit
+        is_upper = v.z >= 0
+        x_upper, y_upper = _vector2xy(v[is_upper], pole=-1)
+        x_lower, y_lower = _vector2xy(v[~is_upper], pole=1)
+        return x_upper, y_upper, x_lower, y_lower
+
+    def spherical2xy_split(self, azimuth, polar):
+        r"""Return two sets of stereographic coordinates (X, Y) from 3D
+        unit vectors created from spherical coordinates, azimuth
+        :math:`\phi` and polar :math:`\theta`, defined as in the
+        ISO 31-11 standard [SphericalWolfram]_: one set for vectors in
+        the upper hemisphere, and one for the lower.
+
+        Parameters
+        ----------
+        azimuth : float or numpy.ndarray
+            Spherical azimuth coordinate.
+        polar : float or numpy.ndarray
+            Spherical polar coordinate.
+
+        Returns
+        -------
+        x_upper : numpy.ndarray
+            Stereographic coordinate X of upper hemisphere vectors, of
+            shape same shape as the input vector shape.
+        y_upper : numpy.ndarray
+            Stereographic coordinate Y of upper hemisphere vectors, of
+            shape same shape as the input vector shape.
+        x_lower : numpy.ndarray
+            Stereographic coordinate X of lower hemisphere vectors, of
+            shape same shape as the input vector shape.
+        y_lower : numpy.ndarray
+            Stereographic coordinate Y of lower hemisphere vectors, of
+            shape same shape as the input vector shape.
+
+        See Also
+        --------
+        vector2xy
+        """
+        v = Vector3d.from_polar(theta=polar, phi=azimuth)
+        return self.vector2xy_split(v)
+
+
+def _vector2xy(v, pole):
+    vx, vy, vz = v.unit.xyz
+    x = -pole * vx / (vz - pole)
+    y = -pole * vy / (vz - pole)
+    return x, y
+
+
+class InverseStereographicProjection:
+    """Get 3D unit vectors or spherical coordinates from stereographic
+    coordinates (X, Y).
+    """
+
+    def __init__(self, pole=-1):
+        """Initialize inverse projection by setting whether the south
+        pole (-1) or north pole (1) is the projection point.
+
+        Parameters
+        ----------
+        pole : int, optional
+            -1 or 1, where -1 (1) means the projection point is the
+            south (north) pole [00-1] ([001]), i.e. only vectors with
+            z > 0 (z < 0) are returned.
+        """
+        self.pole = pole
+
+    def xy2vector(self, x, y):
+        r"""Return 3D unit vectors from stereographic coordinates
+        (X, Y).
+
+        Parameters
+        ----------
+        x : float or numpy.ndarray
+        y : float or numpy.ndarray
+
+        Returns
+        -------
+        Vector3d
+            Unit vectors corresponding to the stereographic coordinates.
+            Whether the upper or lower hemisphere points are returned is
+            controlled by `pole` (-1 = upper, 1 = lower).
+
+        Notes
+        -----
+        The 3D unit vectors :math:`(x, y, z)` are calculated from the
+        stereographic coordinates :math:`(X, Y)` as
+
+        .. math::
+            (x, y, z) = \left(
+                \frac{2x}{1 + x^2 + y^2},
+                \frac{2y}{1 + x^2 + y^2},
+                \frac{-p(1 - x^2 - y^2)}{1 + x^2 + y^2}
+            \right),
+
+        where :math:`p` is either 1 (north pole as projection point) or
+        -1 (south pole as projection point).
         """
         denom = 1 + x ** 2 + y ** 2
         vx = 2 * x / denom
@@ -111,72 +246,30 @@ class InverseStereographicProjection:
         return Vector3d(np.column_stack([vx, vy, vz]))
 
     def xy2spherical(self, x, y):
-        """(X, Y) to (azimuth, polar)."""
+        """Return spherical coordinates, azimuth :math:`phi` and
+        polar :math:`theta`, defined as in the ISO 31-11 standard
+        [SphericalWolfram]_, from stereographic coordinates (X, Y).
+
+        Parameters
+        ----------
+        x : float or numpy.ndarray
+        y : float or numpy.ndarray
+
+        Returns
+        -------
+        phi : numpy.ndarray
+            Whether the coordinates for the upper or lower hemisphere
+            points are returned is controlled by `pole` (-1 = upper,
+            1 = lower).
+        theta : numpy.ndarray
+            Whether the coordinates for the upper or lower hemisphere
+            points are returned is controlled by `pole` (-1 = upper,
+            1 = lower).
+
+        See Also
+        --------
+        xy2vector
+        StereographicProjection.spherical2xy
+        """
         v = self.xy2vector(x=x, y=y)
         return v.phi, v.theta
-
-
-def _get_stereographic_hemisphere_coords_spherical(theta, phi):
-    """Convert spherical polar (theta) - azimuthal (phi) coordinates to
-    stereographic split by hemispheres"""
-    v = Vector3d.from_polar(theta, phi)
-    return _get_stereographic_hemisphere_coords(v)
-
-
-def _get_stereographic_hemisphere_coords(vector3d):
-    """
-    Converts Vector3d objects into stereographic coordinates
-
-    The upper and lower hemisphere (z>=0 and z<0) are split so that all
-    coordinates can be plot within a unit circle.
-
-    Parameters
-    ----------
-    vector3d : orix.vector.vector3d.Vector3d
-        The list of vectors to convert to stereographic coordinates
-
-    Returns
-    -------
-    upper_coordinates : (N, 2) np.ndarray
-       (x, y) stereo coordinates of the vectors in the upper hemisphere
-    lower_coordinates : (N, 2) np.ndarray
-        (x, y) stereo coordinates of the vectors in the lower hemisphere
-    """
-    vector3d = vector3d.unit
-    vector3d_up = vector3d[vector3d.z >= 0]
-    vector3d_down = vector3d[vector3d.z < 0]
-    upper_coordinates = _get_stereographic_coordinates(vector3d_up, pole=-1)
-    lower_coordinates = _get_stereographic_coordinates(vector3d_down, pole=1)
-    return upper_coordinates, lower_coordinates
-
-
-def _get_stereographic_coordinates(vector3d, pole=-1):
-    """
-    Converts Vector3d objects into stereographic coordinates
-
-    Parameters
-    ----------
-    vector3d : orix.vector.vector3d.Vector3d
-        The list of vectors to convert to stereographic coordinates
-    pole : int
-        1 or -1 to indicate the projection point being [0,0,1] or [0,0,-1]
-        respectively.
-
-    Returns
-    -------
-    coordinates : (N, 2) np.ndarray
-       (x, y) coordinates of the stereo plot
-
-    Notes
-    -----
-    The 1 pole is usually used to project vectors with z<0, and the -1 pole
-    is usually used to project vectors with z>0. This way the coordinates
-    end up in the unit circle, otherwise they end up outside.
-    """
-    if pole not in [1, -1]:
-        raise ValueError("Pole must be 1 or -1")
-    vector3d = vector3d.unit
-    x = -pole * vector3d.x.data / (vector3d.z.data - pole)
-    y = -pole * vector3d.y.data / (vector3d.z.data - pole)
-    stereo_coords = np.vstack([x, y]).T
-    return stereo_coords
