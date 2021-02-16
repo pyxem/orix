@@ -217,6 +217,24 @@ class StereographicPlot(Axes):
         return False
 
     def scatter(self, *args, **kwargs):
+        """A scatter plot of vectors.
+
+        This method overwrites :meth:`matplotlib.axes.Axes.scatter`, see
+        that method's docstring for parameters.
+
+        Parameters
+        ----------
+        args : orix.vector.Vector3d or tuple of float or numpy.ndarray
+            Vector(s), or azimuth and polar angles, the latter two
+            passed as separate arguments (not keyword arguments).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.scatter`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.scatter
+        """
         new_kwargs = dict(zorder=3, clip_on=False)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
@@ -224,6 +242,24 @@ class StereographicPlot(Axes):
         super().scatter(azimuth, polar, **kwargs)
 
     def text(self, *args, **kwargs):
+        """Add text to the axes.
+
+        This method overwrites :meth:`matplotlib.axes.Axes.text`, see
+        that method's docstring for parameters.
+
+        Parameters
+        ----------
+        args : orix.vector.Vector3d or tuple of float or numpy.ndarray
+            Vector(s), or azimuth and polar angles, the latter two
+            passed as separate arguments (not keyword arguments).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.text`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.text
+        """
         new_kwargs = dict(va="bottom", ha="center")
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)

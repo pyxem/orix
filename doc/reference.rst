@@ -190,12 +190,14 @@ StereographicPlot
 .. autosummary::
     azimuth_grid
     polar_grid
+    scatter
     show_hemisphere_label
     set_labels
     symmetry_marker
+    text
 .. autoclass:: orix.plot.StereographicPlot
     :show-inheritance:
-    :members: azimuth_grid, hemisphere, name, polar_grid, pole, set_labels, show_hemisphere_label, symmetry_marker
+    :members: azimuth_grid, hemisphere, name, polar_grid, pole, scatter, set_labels, show_hemisphere_label, symmetry_marker, text
 
 ....
 
