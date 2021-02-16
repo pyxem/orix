@@ -4,7 +4,8 @@ API reference
 
 This reference manual details the public modules, classes, and functions in orix, as
 generated from their docstrings. Many of the docstrings contain examples, however, see
-the user guide for how to use orix.
+the :ref:`user guide <user-guide>` and the
+`demos <https://github.com/pyxem/orix-demos>`_ for how to use orix.
 
 .. caution::
 
@@ -155,8 +156,6 @@ AxAnglePlot
 -----------
 .. currentmodule:: orix.plot.AxAnglePlot
 .. autoclass:: orix.plot.AxAnglePlot
-    :members:
-    :undoc-members:
     :show-inheritance:
 
 CrystalMapPlot
@@ -177,16 +176,12 @@ RodriguesPlot
 -------------
 .. currentmodule:: orix.plot.RodriguesPlot
 .. autoclass:: orix.plot.RodriguesPlot
-    :members:
-    :undoc-members:
     :show-inheritance:
 
 RotationPlot
 ------------
 .. currentmodule:: orix.plot.RotationPlot
 .. autoclass:: orix.plot.RotationPlot
-    :members:
-    :undoc-members:
     :show-inheritance:
 
 StereographicPlot
@@ -254,11 +249,26 @@ quaternion
 
 Orientation and Misorientation
 ------------------------------
+.. currentmodule:: orix.quaternion.orientation
 .. automodule:: orix.quaternion.orientation
+
+Orientation
+~~~~~~~~~~~
+.. currentmodule:: orix.quaternion.Orientation
+.. autosummary::
+    set_symmetry
 .. autoclass:: orix.quaternion.Orientation
     :show-inheritance:
     :members:
     :undoc-members:
+
+Misorientation
+~~~~~~~~~~~~~~
+.. currentmodule:: orix.quaternion.Misorientation
+.. autosummary::
+    distance
+    equivalent
+    set_symmetry
 .. autoclass:: orix.quaternion.Misorientation
     :show-inheritance:
     :members:
@@ -266,6 +276,13 @@ Orientation and Misorientation
 
 OrientationRegion
 -----------------
+.. automodule:: orix.quaternion.OrientationRegion
+    :noindex:
+.. currentmodule:: orix.quaternion.OrientationRegion
+.. autosummary::
+    from_symmetry
+    get_plot_data
+    vertices
 .. autoclass:: orix.quaternion.OrientationRegion
     :show-inheritance:
     :members:
@@ -276,10 +293,25 @@ Quaternion
 .. autoclass:: orix.quaternion.Quaternion
     :show-inheritance:
     :members:
-    :undoc-members:
 
 Rotation
 --------
+.. automodule:: orix.quaternion.rotation
+.. currentmodule:: orix.quaternion.Rotation
+.. autosummary::
+    angle_with
+    dot_outer
+    flatten
+    from_euler
+    from_matrix
+    from_neo_euler
+    identity
+    outer
+    random
+    random_vonmises
+    to_euler
+    to_matrix
+    unique
 .. autoclass:: orix.quaternion.Rotation
     :show-inheritance:
     :members:
@@ -287,16 +319,30 @@ Rotation
 
 Symmetry
 --------
+.. automodule:: orix.quaternion.symmetry
+.. currentmodule:: orix.quaternion.Symmetry
+.. autosummary::
+    from_generators
 .. autoclass:: orix.quaternion.Symmetry
     :show-inheritance:
     :members:
     :undoc-members:
 
+Other functions
+
+.. currentmodule:: orix.quaternion.symmetry
+.. autofunction:: get_distinguished_points
+.. autofunction:: get_point_group
+
 ....
 
 sampling
 ========
-
+.. currentmodule:: orix.sampling
+.. autosummary::
+    get_sample_fundamental
+    get_sample_local
+    uniform_SO3_sample
 .. automodule:: orix.sampling
     :members:
     :show-inheritance:
@@ -305,7 +351,6 @@ sampling
 
 scalar
 ======
-
 .. automodule:: orix.scalar
     :members:
     :show-inheritance:
@@ -314,244 +359,76 @@ scalar
 
 vector
 ======
-
 .. automodule:: orix.vector
+.. currentmodule:: orix.vector
+.. autosummary::
+    AxAngle
+    Homochoric
+    NeoEuler
+    Rodrigues
+    SphericalRegion
+    Vector3d
+
+AxAngle
+-------
+.. currentmodule:: orix.vector.AxAngle
+.. autosummary::
+    from_axes_angles
+.. autoclass:: orix.vector.AxAngle
     :members:
+    :undoc-members:
     :show-inheritance:
 
-.. Object3d
-.. ========
-..
-.. .. automodule:: orix.base
-..     :members:
-..
-.. ....
-..
-.. quaternion
-.. ==========
-..
-.. .. automodule:: orix.quaternion
-..
-.. Quaternion
-.. ----------
-..
-.. .. automodule:: orix.quaternion.quaternion
-..     :members:
-..     :show-inheritance:
-..
-.. Rotation
-.. --------
-..
-.. .. automodule:: orix.quaternion.rotation
-..     :members:
-..     :show-inheritance:
-..
-.. Misorientation and Orientation
-.. ------------------------------
-..
-.. .. automodule:: orix.quaternion.orientation
-..     :members:
-..     :show-inheritance:
-..
-.. OrientationRegion
-.. -----------------
-..
-.. .. automodule:: orix.quaternion.orientation_region
-..     :members:
-..     :show-inheritance:
-..
-.. Symmetry
-.. --------
-..
-.. .. automodule:: orix.quaternion.symmetry
-..     :members:
-..     :show-inheritance:
-..
-.. ....
-..
-.. vector
-.. ======
-..
-.. .. automodule:: orix.vector
-..
-.. Vector3d
-.. --------
-..
-.. .. automodule:: orix.vector.vector3d
-..
-.. .. autoclass:: orix.vector.vector3d.Vector3d
-..     :members:
-..     :show-inheritance:
-..
-.. NeoEuler
-.. --------
-..
-.. .. automodule:: orix.vector.neo_euler
-..
-.. .. autoclass:: orix.vector.neo_euler.NeoEuler
-..     :members:
-..     :show-inheritance:
-..
-.. AxAngle
-.. ~~~~~~~
-..
-.. .. autoclass:: orix.vector.neo_euler.AxAngle
-..     :members:
-..     :show-inheritance:
-..
-.. Homochoric
-.. ~~~~~~~~~~
-..
-.. .. autoclass:: orix.vector.neo_euler.Homochoric
-..     :members:
-..     :show-inheritance:
-..
-.. Rodrigues
-.. ~~~~~~~~~
-..
-.. .. autoclass:: orix.vector.neo_euler.Rodrigues
-..     :members:
-..     :show-inheritance:
-..
-.. SphericalRegion
-.. ---------------
-..
-.. .. automodule:: orix.vector.spherical_region
-..     :members:
-..     :show-inheritance:
-..
-.. ....
-..
-.. scalar
-.. ======
-..
-.. .. automodule:: orix.scalar
-..     :members:
-..     :show-inheritance:
-..
-.. ....
-..
-.. sampling
-.. ========
-..
-.. Generators
-.. ----------
-..
-.. .. automodule:: orix.sampling.sample_generators
-..     :members:
-..     :show-inheritance:
-..
-.. Utilities
-.. ---------
-..
-.. .. automodule:: orix.sampling.sampling_utils
-..     :members:
-..     :show-inheritance:
-..
-.. ....
-..
-.. crystal_map
-.. ===========
-..
-.. .. automodule:: orix.crystal_map
-..
-.. Phase
-.. -----
-..
-.. .. autoclass:: orix.crystal_map.phase_list.Phase
-..     :members:
-..     :show-inheritance:
-..
-..     .. automethod:: __init__
-..
-.. PhaseList
-.. ---------
-..
-.. .. autoclass:: orix.crystal_map.phase_list.PhaseList
-..     :members:
-..     :show-inheritance:
-..
-..     .. automethod:: __init__
-..
-.. CrystalMap
-.. ----------
-..
-.. .. autoclass:: orix.crystal_map.crystal_map.CrystalMap
-..     :members:
-..     :show-inheritance:
-..
-..     .. automethod:: __init__
-..
-.. CrystalMapProperties
-.. --------------------
-..
-.. .. autoclass:: orix.crystal_map.crystal_map.CrystalMapProperties
-..     :members:
-..     :show-inheritance:
-..
-.. ....
-..
-.. io
-.. ==
-..
-.. .. automodule:: orix.io
-..     :members:
-..
-.. ANG
-.. ---
-..
-.. .. automodule:: orix.io.plugins.ang
-..     :members:
-..     :show-inheritance:
-..
-.. EMsoft h5ebsd
-.. -------------
-..
-.. .. automodule:: orix.io.plugins.emsoft_h5ebsd
-..     :members:
-..     :show-inheritance:
-..
-.. orix HDF5
-.. ---------
-..
-.. .. automodule:: orix.io.plugins.orix_hdf5
-..     :members:
-..     :show-inheritance:
-..
-.. ....
-..
-.. plot
-.. ====
-..
-.. .. automodule:: orix.plot
-..
-.. RotationPlot
-.. ------------
-..
-.. .. autoclass:: orix.plot.rotation_plot.RotationPlot
-..     :members:
-..     :show-inheritance:
-..
-.. RodriguesPlot
-.. -------------
-..
-.. .. autoclass:: orix.plot.rotation_plot.RodriguesPlot
-..     :members:
-..     :show-inheritance:
-..
-.. AxAnglePlot
-.. -----------
-..
-.. .. autoclass:: orix.plot.rotation_plot.AxAnglePlot
-..     :members:
-..     :show-inheritance:
-..
-.. CrystalMapPlot
-.. --------------
-..
-.. .. automodule:: orix.plot.crystal_map_plot
-..
-.. .. autoclass:: orix.plot.crystal_map_plot.CrystalMapPlot
-..     :members:
-..     :show-inheritance:
-..
+Homochoric
+----------
+.. autoclass:: orix.vector.Homochoric
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+NeoEuler
+--------
+.. currentmodule:: orix.vector.NeoEuler
+.. autosummary::
+    from_rotation
+.. autoclass:: orix.vector.NeoEuler
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Rodrigues
+---------
+.. autoclass:: orix.vector.Rodrigues
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+SphericalRegion
+---------------
+.. automodule:: orix.vector.spherical_region
+.. autoclass:: orix.vector.SphericalRegion
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Vector3d
+--------
+.. currentmodule:: orix.vector.Vector3d
+.. autosummary::
+    angle_with
+    cross
+    dot
+    dot_outer
+    from_polar
+    get_nearest
+    mean
+    rotate
+    to_polar
+    xvector
+    yvector
+    zvector
+    zero
+.. autoclass:: orix.vector.Vector3d
+    :members:
+    :undoc-members:
+    :show-inheritance:

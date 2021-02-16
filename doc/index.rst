@@ -7,11 +7,10 @@ orix
 Work using orix
 ---------------
 
-.. [Johnstone2020]
-    D. N. Johnstone, B. H. Martineau, P. Crout, P. A. Midgley, A. S.
-    Eggeman, "Density-based clustering of crystal orientations and
-    misorientations and the orix python library," *arXiv
-    preprint:2001.02716* (2020), url: https://arxiv.org/abs/2001.02716.
+* D. N. Johnstone, B. H. Martineau, P. Crout, P. A. Midgley, A. S.
+  Eggeman, "Density-based clustering of crystal orientations and
+  misorientations and the orix python library," *arXiv
+  preprint:2001.02716* (2020), url: https://arxiv.org/abs/2001.02716.
 
 .. toctree::
     :hidden:
@@ -19,6 +18,7 @@ Work using orix
 
     installation.rst
 
+.. _user-guide:
 .. nbgallery::
     :caption: User guide
 
