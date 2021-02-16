@@ -74,8 +74,11 @@ class StereographicProjection:
         where :math:`p` is either 1 (north pole as projection point) or
         -1 (south pole as projection point).
         """
-        v = v[v <= self.region].unit
-        return _vector2xy(v, pole=self.pole)
+        if self.pole == -1:
+            v = v[v <= self.region]
+        else:
+            v = v[v < self.region]
+        return _vector2xy(v.unit, pole=self.pole)
 
     def spherical2xy(self, azimuth, polar):
         r"""Return stereographic coordinates (X, Y) from 3D unit vectors
@@ -182,11 +185,20 @@ class StereographicProjection:
         v = Vector3d.from_polar(theta=polar, phi=azimuth)
         return self.vector2xy_split(v)
 
+    @property
+    def inverse(self):
+        """Return the corresponding inverse projection,
+        :class:`InverseStereographicProjection`, with the same
+        projection pole.
+        """
+        return InverseStereographicProjection(pole=self.pole)
+
 
 def _vector2xy(v, pole):
     vx, vy, vz = v.unit.xyz
-    x = -pole * vx / (vz - pole)
-    y = -pole * vy / (vz - pole)
+    with np.errstate(invalid="ignore"):
+        x = -pole * vx / (vz - pole)
+        y = -pole * vy / (vz - pole)
     return x, y
 
 
@@ -272,4 +284,4 @@ class InverseStereographicProjection:
         StereographicProjection.spherical2xy
         """
         v = self.xy2vector(x=x, y=y)
-        return v.phi, v.theta
+        return v.phi.data, v.theta.data

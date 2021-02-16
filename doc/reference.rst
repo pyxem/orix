@@ -213,6 +213,7 @@ StereographicProjection
 -----------------------
 .. currentmodule:: orix.projections.StereographicProjection
 .. autosummary::
+    inverse
     spherical2xy
     spherical2xy_split
     vector2xy

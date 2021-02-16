@@ -23,11 +23,9 @@ import matplotlib.pyplot as plt
 import pytest
 
 from orix.plot import CrystalMapPlot
-from orix.plot import StereographicPlot
 from orix.plot.crystal_map_plot import convert_unit
 from orix.crystal_map import CrystalMap
 from orix.crystal_map.phase_list import PhaseList
-from orix.vector.vector3d import Vector3d
 
 plt.rcParams["backend"] = "TkAgg"
 
@@ -36,14 +34,6 @@ SCALEBAR_WARNING = "Scalebar width .* is not an integer."
 
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"
-
-
-def test_plot_stereo():
-    np.random.seed(1001)
-    data = Vector3d(np.random.rand(6, 3))
-    fig, ax = plt.subplots(subplot_kw = dict(projection="stereographic"))
-    ax.scatter(data)
-    ax.plot(data)
 
 
 class TestCrystalMapPlot:

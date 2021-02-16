@@ -436,11 +436,11 @@ class StereographicPlot(Axes):
             value = values[0]
             if isinstance(value, Rotation):
                 v = value * Vector3d.zvector()
-                azimuth = v.phi
-                polar = v.theta
+                azimuth = v.phi.data
+                polar = v.theta.data
             elif isinstance(value, Vector3d):
-                azimuth = value.phi
-                polar = value.theta
+                azimuth = value.phi.data
+                polar = value.theta.data
             else:
                 raise ValueError(
                     "Accepts only one (Vector3d or Rotation) or two (azimuth, "

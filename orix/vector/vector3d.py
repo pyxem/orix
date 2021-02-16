@@ -356,8 +356,10 @@ class Vector3d(Object3d):
         -------
         Scalar
         """
-        return np.sqrt(
-            self.data[..., 0] ** 2 + self.data[..., 1] ** 2 + self.data[..., 2] ** 2
+        return Scalar(
+            np.sqrt(
+                self.data[..., 0] ** 2 + self.data[..., 1] ** 2 + self.data[..., 2] ** 2
+            )
         )
 
     @property
@@ -373,7 +375,7 @@ class Vector3d(Object3d):
         """
         phi = np.arctan2(self.data[..., 1], self.data[..., 0])
         phi += (phi < 0) * 2 * np.pi
-        return phi
+        return Scalar(phi)
 
     @property
     def theta(self):
@@ -386,7 +388,7 @@ class Vector3d(Object3d):
         -------
         Scalar
         """
-        return np.arccos(self.data[..., 2] / self.r.data)
+        return Scalar(np.arccos(self.data[..., 2] / self.r.data))
 
     def angle_with(self, other):
         """Calculate the angles between vectors in 'self' and 'other'
