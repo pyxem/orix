@@ -32,11 +32,29 @@ class StereographicProjection:
 
     def vector2xy(self, v):
         """(x, y, z) to (X, Y)."""
-        v = v[v <= self.region]
+        v = v[v <= self.region].unit
         vx, vy, vz = v.xyz
         pole = self.pole
         x = -pole * vx / (vz - pole)
         y = -pole * vy / (vz - pole)
+        return x, y
+
+    def vector2xy2(self, v):
+        """(x, y, z) to (X, Y)."""
+        v = v[v <= self.region].unit
+
+        zenith = v.theta
+        azimuth = v.phi
+
+        # Map to upper hemisphere
+        zenith = np.where(zenith > np.pi / 2, np.pi - zenith, zenith)
+
+        # Stereographic projection
+        polar = np.tan(zenith / 2)
+
+        x = polar * np.cos(azimuth)
+        y = polar * np.sin(azimuth)
+
         return x, y
 
     def spherical2xy(self, azimuth, polar):
@@ -44,14 +62,14 @@ class StereographicProjection:
         v = Vector3d.from_polar(theta=polar, phi=azimuth, r=1)
         return self.vector2xy(v)
 
-    @classmethod
-    def project_split(cls, v):
+    @staticmethod
+    def project_split(v):
         """Convert vector3d to [X,Y] split by hemisphere"""
         v = Vector3d(v)
         return _get_stereographic_hemisphere_coords(v)
 
-    @classmethod
-    def project_split_spherical(cls, theta, phi):
+    @staticmethod
+    def project_split_spherical(theta, phi):
         """Convert theta, phi to [X,Y] split by hemisphere"""
         return _get_stereographic_hemisphere_coords_spherical(theta, phi)
 

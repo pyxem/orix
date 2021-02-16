@@ -503,8 +503,13 @@ class Vector3d(Object3d):
         """
         return self.theta, self.phi, self.r
 
-    def _nice_string_repr(self):
-        str_list = [re.sub("[\[\], ]", "", str(v)) for v in self.data]
+    def _nice_string_repr(self, parantheses="[]"):
+        left = parantheses[0]
+        right = parantheses[1]
+        str_list = []
+        for v in self.data:
+            str_v = left + re.sub("[\[\], ]", "", str(v)) + right
+            str_list.append(str_v)
         if len(str_list) == 1:
             str_list = str_list[0]
         return str_list

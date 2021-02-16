@@ -21,7 +21,6 @@
 from orix.plot.crystal_map_plot import convert_unit, CrystalMapPlot
 from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
 from orix.plot.stereographic_plot import StereographicPlot
-from orix.plot.stereo_plot import StereographicPlot2
 
 # Lists what will be imported when calling "from orix.plot import *"
 __all__ = [
@@ -31,5 +30,4 @@ __all__ = [
     "RodriguesPlot",
     "RotationPlot",
     "StereographicPlot",
-    "StereographicPlot2",
 ]

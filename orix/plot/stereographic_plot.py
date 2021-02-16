@@ -29,6 +29,12 @@ import numpy as np
 from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.quaternion import Rotation
 from orix.vector import Vector3d
+from orix.plot._symmetry_marker import (
+    TwoFoldMarker,
+    ThreeFoldMarker,
+    FourFoldMarker,
+    SixFoldMarker,
+)
 
 
 class StereographicTransform(Transform):
@@ -51,10 +57,10 @@ class StereographicTransform(Transform):
         return Path(self.transform(ipath.vertices), ipath.codes)
 
     def inverted(self):
-        return InverseStereographicTransform(pole=self.pole)
+        return InvertedStereographicTransform(pole=self.pole)
 
 
-class InverseStereographicTransform(Transform):
+class InvertedStereographicTransform(Transform):
     input_dims = output_dims = 2
 
     def __init__(self, pole=-1):
@@ -69,9 +75,8 @@ class InverseStereographicTransform(Transform):
         )
         return np.column_stack([azimuth, polar])
 
-    @staticmethod
-    def inverted():
-        return StereographicTransform()
+    def inverted(self):
+        return StereographicTransform(pole=self.pole)
 
 
 class StereographicAffine(Affine2DBase):
@@ -80,25 +85,29 @@ class StereographicAffine(Affine2DBase):
         self.pole = pole
 
     def get_matrix(self):
-        st = StereographicTransform(pole=self.pole)
-        xscale, _ = st.transform((0, np.pi / 2))
-        _, yscale = st.transform((np.pi / 2, np.pi / 2))
-        scales = (0.5 / xscale, 0.5 / yscale)
-        return Affine2D().scale(*scales).translate(0.5, 0.5)
+        if self._invalid:  # Only recompute if children has changed
+            st = StereographicTransform(pole=self.pole)
+            xscale, _ = st.transform((0, np.pi / 2))
+            _, yscale = st.transform((np.pi / 2, np.pi / 2))
+            scales = (0.5 / xscale, 0.5 / yscale)
+            self._mtx = Affine2D().scale(*scales).translate(0.5, 0.5)
+            self._inverted = None
+            self._invalid = 0
+        return self._mtx
 
 
 class StereographicPlot(Axes):
     """Stereographic projection."""
 
     name = "stereographic"
-    _pole = -1
+    _hemisphere = "upper"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, polar_resolution=30, azimuth_resolution=30, **kwargs):
         self._polar_cap = np.pi / 2
-        self._polar_resolution = 30
+        self._polar_resolution = polar_resolution
 
         self._azimuth_cap = 2 * np.pi
-        self._azimuth_resolution = 30
+        self._azimuth_resolution = azimuth_resolution
 
         super().__init__(*args, **kwargs)
         # Set ratio of y-unit to x-unit by adjusting the physical
@@ -122,22 +131,19 @@ class StereographicPlot(Axes):
         self.xaxis.set_tick_params(label1On=False)
         self.yaxis.set_tick_params(label1On=False)
 
-        self.set_polar_grid()
-        self.set_azimuth_grid()
+        self.polar_grid()
+        self.azimuth_grid()
         self.grid(rcParams["axes.grid"])
 
         self.set_xlim(0, self._azimuth_cap)
         self.set_ylim(0, self._polar_cap)
 
     def _set_lim_and_transforms(self):
-        self.transShift = Affine2D().scale(-self._pole, 1)
         self.transProjection = StereographicTransform(pole=self.pole)
         self.transAffine = StereographicAffine(pole=self.pole)
         self.transAxes = BboxTransformTo(self.bbox)
 
-        self.transData = (
-            self.transShift + self.transProjection + self.transAffine + self.transAxes
-        )
+        self.transData = self.transProjection + self.transAffine + self.transAxes
 
         self._xaxis_pretransform = Affine2D().scale(1, self._polar_cap)
         self._xaxis_transform = self._xaxis_pretransform + self.transData
@@ -152,7 +158,7 @@ class StereographicPlot(Axes):
         return (
             "\N{GREEK SMALL LETTER PHI}={:.2f}\N{GREEK SMALL LETTER PI} "
             "({:.2f}\N{DEGREE SIGN}), "
-            "\N{GREEK SMALL LETTER RHO}={:.2f}\N{GREEK SMALL LETTER PI} "
+            "\N{GREEK SMALL LETTER theta}={:.2f}\N{GREEK SMALL LETTER PI} "
             "({:.2f}\N{DEGREE SIGN})"
         ).format(azimuth / np.pi, azimuth_deg, polar / np.pi, polar_deg)
 
@@ -181,7 +187,7 @@ class StereographicPlot(Axes):
 
     @staticmethod
     def can_zoom():
-        return False
+        return True
 
     def scatter(self, *args, **kwargs):
         new_kwargs = dict(zorder=3, clip_on=False)
@@ -191,7 +197,7 @@ class StereographicPlot(Axes):
         super().scatter(azimuth, polar, **kwargs)
 
     def text(self, *args, **kwargs):
-        new_kwargs = dict(va="bottom", ha="center", usetex=True)
+        new_kwargs = dict(va="bottom", ha="center")
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
         azimuth, polar = self._pretransform_input(args)
@@ -200,33 +206,38 @@ class StereographicPlot(Axes):
     # ----------- Custom attributes and methods below here ----------- #
 
     @property
-    def pole(self):
-        return self._pole
+    def hemisphere(self):
+        return self._hemisphere
 
-    @pole.setter
-    def pole(self, value):
-        if value not in [1, -1]:
-            raise ValueError(f"Pole must be -1 (upper) or 1 (lower), not {value}")
-        self._pole = value
+    @hemisphere.setter
+    def hemisphere(self, value):
+        value = value.lower()
+        if value in ["upper", "north"]:
+            self._hemisphere = "upper"
+        elif value in ["lower", "south"]:
+            self._hemisphere = "lower"
+        else:
+            raise ValueError(
+                f"Hemisphere must be upper/north or lower/south, not {value}"
+            )
         self._set_lim_and_transforms()
-        self.clear()
 
     @property
-    def hemisphere(self):
-        return {"-1": "upper", "1": "lower"}[str(self.pole)]
+    def pole(self):
+        return {"upper": -1, "lower": 1}[self.hemisphere]
 
-    def show_hemisphere(self, **kwargs):
+    def show_hemisphere_label(self, **kwargs):
         new_kwargs = dict(ha="right", va="bottom")
         new_kwargs.update(kwargs)
         Axes.text(self, (3 / 4) * np.pi, np.pi / 2, s=self.hemisphere, **new_kwargs)
 
-    def set_polar_grid(self, resolution=None):
+    def polar_grid(self, resolution=None):
         if resolution is not None:
             self._polar_resolution = resolution
         grid = np.arange(0, self._polar_cap, np.deg2rad(self._polar_resolution))
         self.set_yticks(grid)
 
-    def set_azimuth_grid(self, resolution=None):
+    def azimuth_grid(self, resolution=None):
         if resolution is not None:
             self._azimuth_resolution = resolution
         grid = np.arange(0, self._azimuth_cap, np.deg2rad(self._azimuth_resolution))
@@ -239,9 +250,11 @@ class StereographicPlot(Axes):
         super().text(x=x, y=y, s=label, **new_kwargs)
 
     def set_xlabel(self, label="X", **kwargs):
+        # Overwrite to place at proper location
         self._set_label(0, self._polar_cap, label, **kwargs)
 
     def set_ylabel(self, label="Y", **kwargs):
+        # Overwrite to place at proper location
         self._set_label(self._polar_cap, self._polar_cap, label, **kwargs)
 
     def set_zlabel(self, label="Z", **kwargs):
@@ -267,6 +280,22 @@ class StereographicPlot(Axes):
                     "polar) input arguments"
                 )
         return azimuth, polar
+
+    def symmetry_marker(self, v, fold, **kwargs):
+        size = kwargs.pop("s", 1)
+        if fold == 2:
+            marker = TwoFoldMarker(v, size=size)
+        elif fold == 3:
+            marker = ThreeFoldMarker(v, size=size)
+        elif fold == 4:
+            marker = FourFoldMarker(v, size=size)
+        elif fold == 6:
+            marker = SixFoldMarker(v, size=size)
+        else:
+            raise ValueError("Can only plot 2-, 3-, 4- or 6-fold elements.")
+
+        for vec, marker, marker_size in marker:
+            self.scatter(vec, marker=marker, s=marker_size, **kwargs)
 
 
 register_projection(StereographicPlot)
