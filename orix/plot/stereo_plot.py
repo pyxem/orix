@@ -20,7 +20,7 @@ from matplotlib.axes import Axes
 from matplotlib.patches import Circle
 from matplotlib.projections import register_projection
 
-from orix.projections.stereographic2 import StereographicProjection2
+from orix.projections import StereographicProjection
 
 
 class StereographicPlot2(Axes):
@@ -29,7 +29,7 @@ class StereographicPlot2(Axes):
     name = "stereographic2"
 
     def scatter(self, vectors3d, pole=-1, **kwargs):
-        xy = StereographicProjection2.project(vectors3d, pole=pole)
+        xy = StereographicProjection.project(vectors3d, pole=pole)
         self.add_patch(Circle((0, 0), 1, facecolor="none", edgecolor="black"))
         self.set_aspect("equal")
         self.set_xlim(-1.1, 1.1)
