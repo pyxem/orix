@@ -67,17 +67,17 @@ class TwoFoldMarker(SymmetryMarker):
 
     @property
     def _marker(self):
-        # Make an ellipse (https://matplotlib.org/stable/api/path_api.html)
+        # Make an ellipse path (https://matplotlib.org/stable/api/path_api.html)
         circle = mpath.Path.circle()
-        verts = np.copy(circle.vertices)  # Considered immutable
+        verts = np.copy(circle.vertices)  # Paths considered immutable
         verts[:, 0] *= 2
-        path = mpath.Path(verts, circle.codes)
+        ellipse = mpath.Path(verts, circle.codes)
 
         # Set up rotations of ellipse
         azimuth = self._vector.phi.data
         trans = [mtransforms.Affine2D().rotate(a + (np.pi / 2)) for a in azimuth]
 
-        return [path.deepcopy().transformed(i) for i in trans]
+        return [ellipse.deepcopy().transformed(i) for i in trans]
 
 
 class ThreeFoldMarker(SymmetryMarker):

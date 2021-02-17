@@ -12,6 +12,10 @@ Unreleased
 
 Added
 -----
+- User guide with Jupyter notebooks as part of the Read the Docs documentation
+- Stereographic projection using Matplotlib's projections framework
+- orix.projections module for projecting vectors to various coordinates, including
+  stereographic coordinates
 - .ang file writer for CrystalMap objects (via orix.io.save())
 - Overloaded division for Vector3d (left hand side) by numbers and suitably shaped
   array-like objects

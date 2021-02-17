@@ -16,11 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import matplotlib.colors as mcolors
+import matplotlib.path as mpath
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.plot.stereographic_plot import StereographicTransform
+from orix.plot.stereographic_plot import (
+    StereographicTransform,
+    TwoFoldMarker,
+    ThreeFoldMarker,
+    FourFoldMarker,
+    SixFoldMarker,
+)
 from orix import plot, vector
 
 
@@ -195,13 +203,87 @@ class TestStereographicPlot:
 
 
 class TestSymmetryMarker:
-    def test_point_group_432(self):
+    def test_properties(self):
+        v2fold = vector.Vector3d([[1, 0, 1], [0, 1, 1]])
+        marker2fold = TwoFoldMarker(v2fold)
+        assert np.allclose(v2fold.data, marker2fold._vector.data)
+        assert marker2fold.fold == 2
+        assert marker2fold.n == 2
+        assert np.allclose(marker2fold.size, [1.55, 1.55], atol=1e-2)
+        assert isinstance(marker2fold._marker[0], mpath.Path)
+
+        v3fold = vector.Vector3d([1, 1, 1])
+        marker3fold = ThreeFoldMarker(v3fold, size=5)
+        assert np.allclose(v3fold.data, marker3fold._vector.data)
+        assert marker3fold.fold == 3
+        assert marker3fold.n == 1
+        assert np.allclose(marker3fold.size, 5)
+
+        # Iterating over markers
+        for i, (vec, mark, size) in enumerate(marker3fold):
+            assert np.allclose(vec.data, v3fold[i].data)
+            assert np.allclose(mark, (3, 0, 45 + 90))
+            assert size == 5
+
+        v4fold = vector.Vector3d([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+        marker4fold = FourFoldMarker(v4fold, size=11)
+        assert np.allclose(v4fold.data, marker4fold._vector.data)
+        assert marker4fold.fold == 4
+        assert marker4fold.n == 3
+        assert np.allclose(marker4fold.size, [11, 11, 11])
+        assert marker4fold._marker == ["D"] * 3
+
+        marker6fold = SixFoldMarker([0, 0, 1], size=15)
+        assert isinstance(marker6fold._vector, vector.Vector3d)
+        assert np.allclose(marker6fold._vector.data, [0, 0, 1])
+        assert marker6fold.fold == 6
+        assert marker6fold.n == 1
+        assert marker6fold.size == 15
+        assert marker6fold._marker == ["h"]
+
+        plt.close("all")
+
+    def test_plot_symmetry_marker(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         marker_size = 500
+
         v4fold = vector.Vector3d(
             [[0, 0, 1], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]]
         )
         ax.symmetry_marker(v4fold, fold=4, c="C4", s=marker_size)
+
+        v3fold = vector.Vector3d([[1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1]])
+        ax.symmetry_marker(v3fold, fold=3, c="C3", s=marker_size)
+
+        v2fold = vector.Vector3d(
+            [
+                [1, 0, 1],
+                [0, 1, 1],
+                [-1, 0, 1],
+                [0, -1, 1],
+                [1, 1, 0],
+                [-1, -1, 0],
+                [-1, 1, 0],
+                [1, -1, 0],
+            ]
+        )
+        ax.symmetry_marker(v2fold, fold=2, c="C2", s=marker_size)
+
+        ax.symmetry_marker([0, 0, 1], fold=6, s=marker_size)
+
+        markers = ax.collections
+        assert len(markers) == 18
+        assert np.allclose(markers[0]._sizes, marker_size)
+        assert np.allclose(markers[-1]._sizes, marker_size)
+        assert np.allclose(markers[0]._facecolors, mcolors.to_rgba("C4"))
+        assert np.allclose(markers[5]._facecolors, mcolors.to_rgba("C3"))
+        assert np.allclose(markers[-2]._facecolors, mcolors.to_rgba("C2"))
+        assert np.allclose(markers[-1]._facecolors, mcolors.to_rgba("C0"))
+
+        with pytest.raises(ValueError, match="Can only plot 2"):
+            ax.symmetry_marker([0, 0, 1], fold=5)
+
+        plt.close("all")
 
 
 class TestStereographicTransform:
