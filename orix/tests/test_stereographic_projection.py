@@ -19,7 +19,7 @@
 import numpy as np
 import pytest
 
-from orix.projections import StereographicProjection, InverseStereographicProjection
+from orix.projections import StereographicProjection
 from orix.vector.vector3d import Vector3d
 
 
@@ -58,7 +58,22 @@ def vectors():
 
 
 class TestStereographicProjection:
-    def test_vector2xy_upper(self, vectors):
+    def test_simple_vector2xy(self):
+        v = Vector3d([[1, 0, 0], [0, 1, 0], [-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+        x_desired = [1, 0, -1, 0, 0]
+        y_desired = [0, 1, 0, -1, 0]
+
+        sp_up = StereographicProjection(pole=-1)
+        x_up, y_up = sp_up.vector2xy(v)
+        assert np.allclose(x_up, x_desired)
+        assert np.allclose(y_up, y_desired)
+
+        sp_down = StereographicProjection(pole=1)
+        x_down, y_down = sp_down.vector2xy(v)
+        assert np.allclose(x_down, x_desired[:-1])
+        assert np.allclose(y_down, y_desired[:-1])
+
+    def test_vector2xy(self, vectors):
         sp_up = StereographicProjection(pole=-1)
         x_up, y_up, x_down, y_down = sp_up.vector2xy_split(v=vectors)
         x1, y1 = sp_up.vector2xy(v=vectors)

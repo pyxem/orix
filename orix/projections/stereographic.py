@@ -23,6 +23,10 @@ import numpy as np
 from orix.vector import SphericalRegion, Vector3d
 
 
+_UPPER_HEMISPHERE = SphericalRegion([0, 0, 1])
+_LOWER_HEMISPHERE = SphericalRegion([0, 0, -1])
+
+
 class StereographicProjection:
     """Get stereographic coordinates (X, Y) from representations of
     vectors.
@@ -74,11 +78,8 @@ class StereographicProjection:
         where :math:`p` is either 1 (north pole as projection point) or
         -1 (south pole as projection point).
         """
-        if self.pole == -1:
-            v = v[v <= self.region]
-        else:
-            v = v[v < self.region]
-        return _vector2xy(v.unit, pole=self.pole)
+        v = v[v <= self.region]
+        return _vector2xy(v, pole=self.pole)
 
     def spherical2xy(self, azimuth, polar):
         r"""Return stereographic coordinates (X, Y) from 3D unit vectors
@@ -143,10 +144,8 @@ class StereographicProjection:
         --------
         vector2xy
         """
-        v = v.unit
-        is_upper = v.z >= 0
-        x_upper, y_upper = _vector2xy(v[is_upper], pole=-1)
-        x_lower, y_lower = _vector2xy(v[~is_upper], pole=1)
+        x_upper, y_upper = _vector2xy(v[v <= _UPPER_HEMISPHERE], pole=-1)
+        x_lower, y_lower = _vector2xy(v[v <= _LOWER_HEMISPHERE], pole=1)
         return x_upper, y_upper, x_lower, y_lower
 
     def spherical2xy_split(self, azimuth, polar):

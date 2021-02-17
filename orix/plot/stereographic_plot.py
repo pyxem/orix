@@ -27,7 +27,6 @@ from matplotlib.transforms import Affine2D, Affine2DBase, BboxTransformTo, Trans
 import numpy as np
 
 from orix.projections import InverseStereographicProjection, StereographicProjection
-from orix.quaternion import Rotation
 from orix.vector import Vector3d
 from orix.plot._symmetry_marker import (
     TwoFoldMarker,
@@ -95,13 +94,15 @@ class StereographicAffine(Affine2DBase):
 
     def get_matrix(self):
         # Only recompute if self._invalid is True?
-        st = StereographicTransform(pole=self.pole)
-        xscale, _ = st.transform((0, np.pi / 2))
-        _, yscale = st.transform((np.pi / 2, np.pi / 2))
-        scales = (0.5 / xscale, 0.5 / yscale)
-        self._mtx = Affine2D().scale(*scales).translate(0.5, 0.5)
-        self._inverted = None
-        self._invalid = 0
+        if self._invalid:
+            pole = self.pole
+            st = StereographicTransform(pole=pole)
+            xscale, _ = st.transform((0, 0.5 * np.pi))
+            _, yscale = st.transform((0.5 * np.pi, 0.5 * np.pi))
+            scales = (0.5 / xscale, 0.5 / yscale)
+            self._mtx = Affine2D().scale(*scales).translate(0.5, 0.5)
+            self._inverted = None
+            self._invalid = 0
         return self._mtx
 
 
@@ -130,7 +131,7 @@ class StereographicPlot(Axes):
     _hemisphere = "upper"
 
     def __init__(self, *args, polar_resolution=30, azimuth_resolution=30, **kwargs):
-        self._polar_cap = np.pi / 2
+        self._polar_cap = 0.5 * np.pi
         self._polar_resolution = polar_resolution
 
         self._azimuth_cap = 2 * np.pi
@@ -322,27 +323,7 @@ class StereographicPlot(Axes):
         """
         new_kwargs = dict(ha="right", va="bottom")
         new_kwargs.update(kwargs)
-        Axes.text(self, (3 / 4) * np.pi, np.pi / 2, s=self.hemisphere, **new_kwargs)
-
-    def polar_grid(self, resolution=None):
-        """Set the polar grid resolution in degrees.
-
-        Parameters
-        ----------
-        resolution : float, optional
-            Polar grid resolution in degrees. Default is 30 degrees.
-            This can also be set upon initialization of the axes by
-            passing `polar_resolution` to the `subplot_kw` dictionary.
-
-        See Also
-        --------
-        azimuth_grid
-        matplotlib.axes.Axes.grid
-        """
-        if resolution is not None:
-            self._polar_resolution = resolution
-        grid = np.arange(0, self._polar_cap, np.deg2rad(self._polar_resolution))
-        self.set_yticks(grid)
+        Axes.text(self, 0.75 * np.pi, 0.5 * np.pi, s=self.hemisphere, **new_kwargs)
 
     def azimuth_grid(self, resolution=None):
         """Set the azimuth grid resolution in degrees.
@@ -363,6 +344,26 @@ class StereographicPlot(Axes):
             self._azimuth_resolution = resolution
         grid = np.arange(0, self._azimuth_cap, np.deg2rad(self._azimuth_resolution))
         self.set_xticks(grid)
+
+    def polar_grid(self, resolution=None):
+        """Set the polar grid resolution in degrees.
+
+        Parameters
+        ----------
+        resolution : float, optional
+            Polar grid resolution in degrees. Default is 30 degrees.
+            This can also be set upon initialization of the axes by
+            passing `polar_resolution` to the `subplot_kw` dictionary.
+
+        See Also
+        --------
+        azimuth_grid
+        matplotlib.axes.Axes.grid
+        """
+        if resolution is not None:
+            self._polar_resolution = resolution
+        grid = np.arange(0, self._polar_cap, np.deg2rad(self._polar_resolution))
+        self.set_yticks(grid)
 
     def _set_label(self, x, y, label, **kwargs):
         bbox_dict = dict(boxstyle="round", fc="w", ec="w")
@@ -385,14 +386,12 @@ class StereographicPlot(Axes):
             Z axis label, default is "Z". If False or None, this label
             is not shown.
         """
-        # x, y label positions
-        pos = [(0, self._polar_cap), (self._polar_cap,) * 2]
         # z label position
-        if self.hemisphere == "upper":
-            pos += [(0, 0)]
-        else:  # lower
-            pos += [(0, np.pi)]
-
+        if self.pole == -1:
+            z_pos = (0, 0)
+        else:  # == 1
+            z_pos = (0, np.pi)
+        pos = [(0, self._polar_cap), (self._polar_cap,) * 2, z_pos]
         for (x, y), label in zip(pos, [xlabel, ylabel, zlabel]):
             if label not in [None, False]:
                 self._set_label(x=x, y=y, label=label, **kwargs)
@@ -434,17 +433,14 @@ class StereographicPlot(Axes):
             azimuth, polar = values
         else:
             value = values[0]
-            if isinstance(value, Rotation):
-                v = value * Vector3d.zvector()
-                azimuth = v.phi.data
-                polar = v.theta.data
-            elif isinstance(value, Vector3d):
+            if isinstance(value, Vector3d):
+                value = value.unit
                 azimuth = value.phi.data
                 polar = value.theta.data
             else:
                 raise ValueError(
-                    "Accepts only one (Vector3d or Rotation) or two (azimuth, "
-                    "polar) input arguments"
+                    "Accepts only one (Vector3d) or two (azimuth, polar) input "
+                    "arguments"
                 )
         return azimuth, polar
 
