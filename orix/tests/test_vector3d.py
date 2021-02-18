@@ -8,29 +8,17 @@ from orix.scalar import Scalar
 vectors = [
     (1, 0, 0),
     (0, 0, 1),
-    (
-        (0.5, 0.5, 0.5),
-        (-1, 0, 0),
-    ),
-    [
-        [[-0.707, 0.707, 1], [2, 2, 2]],
-        [[0.1, -0.3, 0.2], [-5, -6, -7]],
-    ],
+    ((0.5, 0.5, 0.5), (-1, 0, 0),),
+    [[[-0.707, 0.707, 1], [2, 2, 2]], [[0.1, -0.3, 0.2], [-5, -6, -7]],],
     np.random.rand(3),
 ]
 
 singles = [
     (1, -1, 1),
     (-5, -5, -6),
-    [
-        [9, 9, 9],
-        [0.001, 0.0001, 0.00001],
-    ],
+    [[9, 9, 9], [0.001, 0.0001, 0.00001],],
     np.array(
-        [
-            [[0.5, 0.25, 0.125], [-0.125, 0.25, 0.5]],
-            [[1, 2, 4], [1, -0.3333, 0.1667]],
-        ]
+        [[[0.5, 0.25, 0.125], [-0.125, 0.25, 0.5]], [[1, 2, 4], [1, -0.3333, 0.1667]],]
     ),
 ]
 
@@ -134,16 +122,8 @@ def test_mul(vector, other, expected):
         ),
         ([4, 8, 12], Scalar([4]), [1, 2, 3]),
         ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
-        (
-            [1, 2, 3],
-            [-1, 2],
-            [[-1, -2, -3], [1 / 2, 1, 3 / 2]],
-        ),
-        (
-            [1, 2, 3],
-            np.array([-1, 1]),
-            [[-1, -2, -3], [1, 2, 3]],
-        ),
+        ([1, 2, 3], [-1, 2], [[-1, -2, -3], [1 / 2, 1, 3 / 2]],),
+        ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]],),
         pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
@@ -201,12 +181,7 @@ def test_polar(theta, phi, r, expected):
 
 
 @pytest.mark.parametrize(
-    "shape",
-    [
-        (1,),
-        (2, 2),
-        (5, 4, 3),
-    ],
+    "shape", [(1,), (2, 2), (5, 4, 3),],
 )
 def test_zero(shape):
     v = Vector3d.zero(shape)
@@ -233,10 +208,7 @@ def test_mul_array(vector):
 
 @pytest.mark.parametrize(
     "vector, x, y, z",
-    [
-        ([1, 2, 3], 1, 2, 3),
-        ([[0, 2, 3], [2, 2, 3]], [0, 2], [2, 2], [3, 3]),
-    ],
+    [([1, 2, 3], 1, 2, 3), ([[0, 2, 3], [2, 2, 3]], [0, 2], [2, 2], [3, 3]),],
     indirect=["vector"],
 )
 def test_xyz(vector, x, y, z):
@@ -309,12 +281,7 @@ def test_assign_z(vector, data, expected):
 
 
 @pytest.mark.parametrize(
-    "vector",
-    [
-        [(1, 0, 0)],
-        [(0.5, 0.5, 1.25), (-1, -1, -1)],
-    ],
-    indirect=["vector"],
+    "vector", [[(1, 0, 0)], [(0.5, 0.5, 1.25), (-1, -1, -1)],], indirect=["vector"],
 )
 def test_perpendicular(vector: Vector3d):
     assert np.allclose(vector.dot(vector.perpendicular).data, 0)

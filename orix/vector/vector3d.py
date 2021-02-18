@@ -371,9 +371,9 @@ class Vector3d(Object3d):
         -------
         Scalar
         """
-        phi = Scalar(np.arctan2(self.data[..., 1], self.data[..., 0]))
+        phi = np.arctan2(self.data[..., 1], self.data[..., 0])
         phi += (phi < 0) * 2 * np.pi
-        return phi
+        return Scalar(phi)
 
     @property
     def theta(self):

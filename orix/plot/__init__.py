@@ -16,11 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Plotting of various objects."""
+"""Extensions of Matplotlib's projections framework for plotting
+:class:`~orix.vector.Vector3d`, :class:`~orix.quaternion.Rotation`,
+and :class:`~orix.crystal_map.CrystalMap` objects.
+
+Example of usage::
+
+    >>> import matplotlib.pyplot as plt
+    >>> from orix import plot, vector
+    >>> fig, ax = plt.subplots(subplot_kw=dict(projections="stereographic"))
+    >>> ax.scatter(vector.Vector3d([[0, 0, 1], [1, 0, 1]]))
+"""
 
 from orix.plot.crystal_map_plot import convert_unit, CrystalMapPlot
 from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
-from orix.plot.stereo_plot import StereographicPlot
+from orix.plot.stereographic_plot import StereographicPlot
+
 
 # Lists what will be imported when calling "from orix.plot import *"
 __all__ = [

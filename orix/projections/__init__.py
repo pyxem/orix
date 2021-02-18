@@ -16,11 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Spherical projections."""
+"""Projections of :class:`orix.vector.Vector3d` to various other
+representations.
+"""
 
-from orix.projections.stereographic_projection import StereographicProjection
+from orix.projections.stereographic import (
+    InverseStereographicProjection,
+    StereographicProjection,
+)
 
-# Lists what will be imported when calling "from orix.plot import *"
+# Lists what will be imported when calling "from orix.vector import *"
 __all__ = [
+    "InverseStereographicProjection",
     "StereographicProjection",
 ]
