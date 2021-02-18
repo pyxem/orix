@@ -62,15 +62,14 @@ class TestStereographicPlot:
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         v = vector.Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
         ax.scatter(v)
-        v_str = v[:2]._nice_string_repr()
-        for vi, vi_str in zip(v[:2], v_str):
-            ax.text(vi, s=vi_str)
-        ax.text(v[2], s=v[2]._nice_string_repr("()"))
+        format_vector = lambda v: str(v.data[0]).replace(" ", "")
+        for vi in v:
+            ax.text(vi, s=format_vector(vi))
 
         assert len(ax.texts) == 3
         assert ax.texts[0]._text == "[001]"
         assert ax.texts[1]._text == "[-101]"
-        assert ax.texts[2]._text == "(111)"
+        assert ax.texts[2]._text == "[111]"
 
         plt.close("all")
 

@@ -194,10 +194,38 @@ class StereographicProjection:
 
 
 def _vector2xy(v, pole):
+    """Return stereographic coordinates (X, Y) of 3D unit vectors.
+
+    (X, Y) is both zero for vectors with z equal to the projection pole.
+
+    Parameters
+    ----------
+    v : Vector3d
+        If it's not a unit vector, it will be made into one.
+    pole : int
+        -1 or 1, where -1 (1) means the projection point of the
+        stereographic transform is the south (north) pole [00-1]
+        ([001]), i.e. only vectors with z > 0 (z < 0) are returned.
+
+    Returns
+    -------
+    x : numpy.ndarray
+        Stereographic coordinate X of shape same shape as the input
+        vector shape.
+    y : numpy.ndarray
+        Stereographic coordinate Y of shape same shape as the input
+        vector shape.
+
+    See Also
+    --------
+    StereographicProjection.vector2xy
+    """
     vx, vy, vz = v.unit.xyz
-    with np.errstate(invalid="ignore"):
-        x = -pole * vx / (vz - pole)
-        y = -pole * vy / (vz - pole)
+    # We explicitly say (X, Y) is zero when the denominator is zero
+    denom = vz - pole
+    not_zero = denom != 0
+    x = np.divide(-pole * vx, denom, where=not_zero, out=np.zeros_like(vx))
+    y = np.divide(-pole * vy, denom, where=not_zero, out=np.zeros_like(vy))
     return x, y
 
 

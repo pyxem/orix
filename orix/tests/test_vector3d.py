@@ -331,11 +331,3 @@ class TestSphericalCoordinates:
         theta, phi, r = vector.to_polar()
         vector2 = Vector3d.from_polar(theta=theta.data, phi=phi.data, r=r.data)
         assert np.allclose(vector.data, vector2.data)
-
-
-class TestStringRepresentation:
-    def test_nice_string_representation(self):
-        v = Vector3d([[1, 2, 3], [-1, -2, -3]])
-        assert v[0]._nice_string_repr() == "[123]"
-        assert v._nice_string_repr("()") == ["(123)", "(-1-2-3)"]
-        assert v._nice_string_repr("  ") == [" 123 ", " -1-2-3 "]
