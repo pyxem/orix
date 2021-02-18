@@ -326,7 +326,7 @@ class StereographicPlot(Axes):
         Parameters
         ----------
         resolution : float, optional
-            Aziumuth grid resolution in degrees. Default is 30 degrees.
+            Aziumuth grid resolution in degrees. Default is 15 degrees.
             This can also be set upon initialization of the axes by
             passing `azimuth_resolution` to `subplot_kw`.
 
@@ -346,7 +346,7 @@ class StereographicPlot(Axes):
         Parameters
         ----------
         resolution : float, optional
-            Polar grid resolution in degrees. Default is 30 degrees.
+            Polar grid resolution in degrees. Default is 15 degrees.
             This can also be set upon initialization of the axes by
             passing `polar_resolution` to the `subplot_kw` dictionary.
 
@@ -430,8 +430,8 @@ class StereographicPlot(Axes):
             value = values[0]
             if isinstance(value, Vector3d):
                 value = value.unit
-                azimuth = value.phi.data
-                polar = value.theta.data
+                azimuth = value.azimuth.data
+                polar = value.polar.data
             else:
                 raise ValueError(
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
