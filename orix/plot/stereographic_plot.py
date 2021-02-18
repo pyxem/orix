@@ -27,13 +27,14 @@ from matplotlib.transforms import Affine2D, Affine2DBase, BboxTransformTo, Trans
 import numpy as np
 
 from orix.projections import InverseStereographicProjection, StereographicProjection
-from orix.vector import Vector3d
 from orix.plot._symmetry_marker import (
     TwoFoldMarker,
     ThreeFoldMarker,
     FourFoldMarker,
     SixFoldMarker,
 )
+from orix.quaternion import Rotation
+from orix.vector import AxAngle, Vector3d, SphericalRegion
 
 
 class StereographicTransform(Transform):
@@ -225,7 +226,7 @@ class StereographicPlot(Axes):
 
         Parameters
         ----------
-        args : orix.vector.Vector3d or tuple of float or numpy.ndarray
+        args : Vector3d or tuple of float or numpy.ndarray
             Vector(s), or azimuth and polar angles, the latter two
             passed as separate arguments (not keyword arguments).
         kwargs
@@ -250,7 +251,7 @@ class StereographicPlot(Axes):
 
         Parameters
         ----------
-        args : orix.vector.Vector3d or tuple of float or numpy.ndarray
+        args : Vector3d or tuple of float or numpy.ndarray
             Vector(s), or azimuth and polar angles, the latter two
             passed as separate arguments (not keyword arguments).
         kwargs
@@ -420,6 +421,38 @@ class StereographicPlot(Axes):
 
         # TODO: Find a way to control padding, so that markers aren't
         #  clipped
+
+    def circle(self, *args, opening_angle=0.5 * np.pi, **kwargs):
+        r"""Draw great or small circles with a given `opening_angle` to
+        one or multiple vectors.
+
+        Parameters
+        ----------
+        args : Vector3d or tuple of float or numpy.ndarray
+            Vector(s), or azimuth and polar angles defining vectors, the
+            latter two passed as separate arguments (not keyword
+            arguments). Circles are drawn perpendicular to these with a
+            given `opening_angle`.
+        opening_angle : float or numpy.ndarray, optional
+            Opening angle(s) around the vector(s). Default is
+            :math:`\pi/2`, giving a great circle. If an array is passed,
+            its size must be equal to the number of circles to draw.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot` to alter the circles'
+            appearance.
+        """
+        # Get unit vectors
+        if len(args) == 2:
+            azimuth, polar = args
+            v = Vector3d.from_polar(phi=azimuth, theta=polar)
+        else:
+            v = Vector3d(args[0])
+        v = v.unit
+
+        circles = v.get_circle(opening_angle=opening_angle, steps=100)
+        for c in circles:
+            super().plot(c.phi.data, c.theta.data, **kwargs)
 
     @staticmethod
     def _pretransform_input(values):

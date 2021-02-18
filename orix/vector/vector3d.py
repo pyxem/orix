@@ -223,7 +223,6 @@ class Vector3d(Object3d):
         [[ 0.5  0. ]
          [ 0.   0.4]
          [ 0.5  0.5]]
-
         """
         dots = np.tensordot(self.data, other.data, axes=(-1, -1))
         return Scalar(dots)
@@ -246,7 +245,6 @@ class Vector3d(Object3d):
         Vector3d (2,)
         [[ 0  0  1]
          [ 0  0 -1]]
-
         """
         return other.__class__(np.cross(self.data, other.data))
 
@@ -293,7 +291,6 @@ class Vector3d(Object3d):
         Returns
         -------
         Vector3d
-
         """
         return cls(np.zeros(shape + (cls.dim,)))
 
@@ -427,10 +424,9 @@ class Vector3d(Object3d):
         >>> axis = Vector3d((0, 0, 1))
         >>> angles = [0, pi/4, pi/2, 3*pi/4, pi]
         >>> v.rotate(axis=axis, angle=angles)
-
-
         """
-        from orix.quaternion.rotation import Rotation
+        # Import here to avoid circular import
+        from orix.quaternion import Rotation
         from orix.vector.neo_euler import AxAngle
 
         axis = Vector3d.zvector() if axis is None else axis
@@ -442,7 +438,7 @@ class Vector3d(Object3d):
     def perpendicular(self):
         if np.any(self.x.data == 0) and np.any(self.y.data == 0):
             if np.any(self.z.data == 0):
-                raise ValueError("Contains zero vectors!")
+                raise ValueError("No vectors are perpendicular")
             return Vector3d.xvector()
         x = -self.y.data
         y = self.x.data
@@ -456,16 +452,16 @@ class Vector3d(Object3d):
         ----------
         x : Vector3d
         inclusive : bool
-            if False (default) vectors exactly parallel to this will not be
-            considered.
+            if False (default) vectors exactly parallel to this will not
+            be considered.
         tiebreak : Vector3d
-            If multiple vectors are equally close to this one, `tiebreak` will
-            be used as a secondary comparison. By default equal to (0, 0, 1).
+            If multiple vectors are equally close to this one,
+            `tiebreak` will be used as a secondary comparison. By
+            default equal to (0, 0, 1).
 
         Returns
         -------
         Vector3d
-
         """
         assert self.size == 1, "`get_nearest` only works for single vectors."
         tiebreak = Vector3d.zvector() if tiebreak is None else tiebreak
@@ -502,3 +498,38 @@ class Vector3d(Object3d):
         theta, phi, r : Scalar
         """
         return self.theta, self.phi, self.r
+
+    def get_circle(self, opening_angle=0.5 * np.pi, steps=100):
+        r"""Get great or small circle(s) with a given `opening_angle`
+        about the vectors in this instance.
+
+        Used for plotting plane traces in stereographic projections.
+
+        Parameters
+        ----------
+        opening_angle : float or numpy.ndarray, optional
+            Opening angle(s) around the vector(s). Default is
+            :math:`\pi/2`, giving a great circle. If an array is passed,
+            its size must be equal to the number of vectors in this
+            instance.
+
+        Returns
+        -------
+        circles : Vector3d
+            Circles with the `opening_angle` about the vectors in this
+            instance.
+
+        Notes
+        -----
+        A set of `steps` number of vectors equal to each vector in this
+        instance is rotated twice to obtain a circle:
+        1. About a perpendicular vector to the current vector at
+          `opening_angle`.
+        2. About the current vector in a full circle.
+        """
+        circles = self.zero((self.size, steps))
+        full_circle = np.linspace(0, 2 * np.pi, num=steps)
+        opening_angles = np.ones(self.size) * opening_angle
+        for i, (v, oa) in enumerate(zip(self.flatten(), opening_angles)):
+            circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)
+        return circles
