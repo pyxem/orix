@@ -43,8 +43,8 @@ class TestStereographicPlot:
         assert ax.name == PROJ_NAME
         assert ax._polar_cap == 0.5 * np.pi
         assert ax._azimuth_cap == 2 * np.pi
-        assert ax._polar_resolution == 30
-        assert ax._azimuth_resolution == 30
+        assert ax._polar_resolution == 15
+        assert ax._azimuth_resolution == 15
         assert ax.get_data_ratio() == 1
         assert ax.can_pan() is False
         assert ax.can_zoom() is False
@@ -152,7 +152,7 @@ class TestStereographicPlot:
         assert label_up._color == "black"
         assert np.allclose([label_up._x, label_up._y], [2.356, 1.571], atol=1e-3)
 
-        ax[1].hemisphere = "south"
+        ax[1].hemisphere = "lower"
         ax[1].scatter(vector.Vector3d([0, 0, -1]))
         ax[1].show_hemisphere_label(color="r")
         label_low = ax[1].texts[0]
@@ -163,13 +163,7 @@ class TestStereographicPlot:
         plt.close("all")
 
     @pytest.mark.parametrize(
-        "hemisphere, pole, hemi_str",
-        [
-            ("upper", -1, "upper"),
-            ("north", -1, "upper"),
-            ("lower", 1, "lower"),
-            ("south", 1, "lower"),
-        ],
+        "hemisphere, pole, hemi_str", [("uPPer", -1, "upper"), ("loweR", 1, "lower")],
     )
     def test_hemisphere_pole(self, hemisphere, pole, hemi_str):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
@@ -184,7 +178,7 @@ class TestStereographicPlot:
 
     def test_hemisphere_raises(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        with pytest.raises(ValueError, match="Hemisphere must be upper/north or"):
+        with pytest.raises(ValueError, match="Hemisphere must be 'upper' or"):
             ax.hemisphere = "west"
 
         plt.close("all")

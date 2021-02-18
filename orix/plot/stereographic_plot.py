@@ -130,7 +130,7 @@ class StereographicPlot(Axes):
     name = "stereographic"
     _hemisphere = "upper"
 
-    def __init__(self, *args, polar_resolution=30, azimuth_resolution=30, **kwargs):
+    def __init__(self, *args, polar_resolution=15, azimuth_resolution=15, **kwargs):
         self._polar_cap = 0.5 * np.pi
         self._polar_resolution = polar_resolution
 
@@ -276,9 +276,8 @@ class StereographicPlot(Axes):
         Returns
         -------
         str
-            "upper" ("north") or "lower" ("south") plots the upper or
-            lower hemisphere vectors. The :attr:`pole` attribute is
-            derived from this attribute.
+            "upper" or "lower" plots the upper or lower hemisphere
+            vectors. :attr:`pole` is derived from this attribute.
         """
         return self._hemisphere
 
@@ -286,14 +285,10 @@ class StereographicPlot(Axes):
     def hemisphere(self, value):
         """Set hemisphere to plot."""
         value = value.lower()
-        if value in ["upper", "north"]:
-            self._hemisphere = "upper"
-        elif value in ["lower", "south"]:
-            self._hemisphere = "lower"
+        if value in ["upper", "lower"]:
+            self._hemisphere = value
         else:
-            raise ValueError(
-                f"Hemisphere must be upper/north or lower/south, not {value}"
-            )
+            raise ValueError(f"Hemisphere must be 'upper' or 'lower', not {value}")
         self._set_lim_and_transforms()
 
     @property
@@ -303,7 +298,7 @@ class StereographicPlot(Axes):
         (north) pole [00-1] ([001]), i.e. only vectors with z > 0 (z <
         0) are plotted.
 
-        Derived from the :attr:`hemisphere` attribute.
+        Derived from :attr:`hemisphere`.
         """
         return {"upper": -1, "lower": 1}[self.hemisphere]
 
@@ -366,7 +361,7 @@ class StereographicPlot(Axes):
         self.set_yticks(grid)
 
     def _set_label(self, x, y, label, **kwargs):
-        bbox_dict = dict(boxstyle="round", fc="w", ec="w")
+        bbox_dict = dict(boxstyle="round, pad=0.1", fc="w", ec="w")
         new_kwargs = dict(ha="center", va="center", bbox=bbox_dict)
         new_kwargs.update(kwargs)
         super().text(x=x, y=y, s=label, **new_kwargs)
