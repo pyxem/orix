@@ -19,7 +19,7 @@
 """Symmetry element markers to plot in stereographic representations of
 crystallographic point groups.
 
-Ment to be used indirectly in
+Meant to be used indirectly in
 :func:`orix.plot.StereographicPlot.symmetry_marker`.
 """
 
