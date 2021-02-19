@@ -512,6 +512,8 @@ class Vector3d(Object3d):
             :math:`\pi/2`, giving a great circle. If an array is passed,
             its size must be equal to the number of vectors in this
             instance.
+        steps : int, optional
+            Number of vectors to describe each circle, default is 100.
 
         Returns
         -------

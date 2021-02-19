@@ -43,8 +43,8 @@ class TestStereographicPlot:
         assert ax.name == PROJ_NAME
         assert ax._polar_cap == 0.5 * np.pi
         assert ax._azimuth_cap == 2 * np.pi
-        assert ax._polar_resolution == 15
-        assert ax._azimuth_resolution == 15
+        assert ax._polar_resolution == 10
+        assert ax._azimuth_resolution == 10
         assert ax.get_data_ratio() == 1
         assert ax.can_pan() is False
         assert ax.can_zoom() is False

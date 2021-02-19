@@ -131,7 +131,7 @@ class StereographicPlot(Axes):
     name = "stereographic"
     _hemisphere = "upper"
 
-    def __init__(self, *args, polar_resolution=15, azimuth_resolution=15, **kwargs):
+    def __init__(self, *args, polar_resolution=10, azimuth_resolution=10, **kwargs):
         self._polar_cap = 0.5 * np.pi
         self._polar_resolution = polar_resolution
 
@@ -442,14 +442,12 @@ class StereographicPlot(Axes):
             :meth:`matplotlib.axes.Axes.plot` to alter the circles'
             appearance.
         """
-        # Get unit vectors
         if len(args) == 2:
             azimuth, polar = args
             v = Vector3d.from_polar(phi=azimuth, theta=polar)
         else:
             v = Vector3d(args[0])
         v = v.unit
-
         circles = v.get_circle(opening_angle=opening_angle, steps=100)
         for c in circles:
             super().plot(c.phi.data, c.theta.data, **kwargs)
