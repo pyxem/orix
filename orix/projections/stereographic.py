@@ -111,7 +111,7 @@ class StereographicProjection:
         --------
         vector2xy
         """
-        v = Vector3d.from_polar(theta=polar, phi=azimuth)
+        v = Vector3d.from_polar(azimuth=azimuth, polar=polar)
         return self.vector2xy(v)
 
     @staticmethod
@@ -181,7 +181,7 @@ class StereographicProjection:
         --------
         vector2xy
         """
-        v = Vector3d.from_polar(theta=polar, phi=azimuth)
+        v = Vector3d.from_polar(azimuth=azimuth, polar=polar)
         return self.vector2xy_split(v)
 
     @property
@@ -296,14 +296,15 @@ class InverseStereographicProjection:
 
         Returns
         -------
-        phi : numpy.ndarray
+        azimuth : numpy.ndarray
+            Azimuth spherical coordinate corresponding to (X, Y).
             Whether the coordinates for the upper or lower hemisphere
             points are returned is controlled by `pole` (-1 = upper,
             1 = lower).
         theta : numpy.ndarray
-            Whether the coordinates for the upper or lower hemisphere
-            points are returned is controlled by `pole` (-1 = upper,
-            1 = lower).
+            Polar spherical coordinate corresponding to (X, Y). Whether
+            the coordinates for the upper or lower hemisphere points are
+            returned is controlled by `pole` (-1 = upper, 1 = lower).
 
         See Also
         --------
@@ -311,4 +312,4 @@ class InverseStereographicProjection:
         StereographicProjection.spherical2xy
         """
         v = self.xy2vector(x=x, y=y)
-        return v.phi.data, v.theta.data
+        return v.azimuth.data, v.polar.data

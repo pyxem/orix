@@ -22,6 +22,8 @@ Added
 
 Changed
 -------
+- Names of spherical coordinates for the Vector3d class, "phi" to "azimuth", "theta" to
+  "polar", and "r" to "radial". Similar changes to to/from_polar parameter names.
 - CrystalMap.get_map_data() tries to respect input data type, other minor improvements
 - Continuous integration migrated from Travis CI to GitHub Actions
 

@@ -251,18 +251,18 @@ class Vector3d(Object3d):
         return other.__class__(np.cross(self.data, other.data))
 
     @classmethod
-    def from_polar(cls, theta, phi, r=1):
-        """Create a :class:`~orix.vector.vector3d.Vector3d` from spherical
+    def from_polar(cls, azimuth, polar, radial=1):
+        """Create a :class:`~orix.vector.Vector3d` from spherical
         coordinates according to the ISO 31-11 standard
         [SphericalWolfram]_.
 
         Parameters
         ----------
-        theta : array_like
+        azimuth : array_like
+            The azimuth angle, in radians.
+        polar : array_like
             The polar angle, in radians.
-        phi : array_like
-            The azimuthal angle, in radians.
-        r : array_like
+        radial : array_like
             The radial distance. Defaults to 1 to produce unit vectors.
 
         Returns
@@ -275,12 +275,13 @@ class Vector3d(Object3d):
             *From MathWorld--A Wolfram Web Resource*,
             url: https://mathworld.wolfram.com/SphericalCoordinates.html
         """
-        theta = np.atleast_1d(theta)
-        phi = np.atleast_1d(phi)
-        x = np.cos(phi) * np.sin(theta)
-        y = np.sin(phi) * np.sin(theta)
-        z = np.cos(theta)
-        return r * cls(np.stack((x, y, z), axis=-1))
+        azimuth = np.atleast_1d(azimuth)
+        polar = np.atleast_1d(polar)
+        sin_polar = np.sin(polar)
+        x = np.cos(azimuth) * sin_polar
+        y = np.sin(azimuth) * sin_polar
+        z = np.cos(polar)
+        return radial * cls(np.stack((x, y, z), axis=-1))
 
     @classmethod
     def zero(cls, shape=(1,)):
@@ -345,9 +346,9 @@ class Vector3d(Object3d):
         return self.x.data, self.y.data, self.z.data
 
     @property
-    def r(self):
-        """Radial spherical coordinate, i.e. the distance from a point on
-        the sphere to the origin, according to the ISO 31-11 standard
+    def radial(self):
+        """Radial spherical coordinate, i.e. the distance from a point
+        on the sphere to the origin, according to the ISO 31-11 standard
         [SphericalWolfram]_.
 
         Returns
@@ -361,32 +362,32 @@ class Vector3d(Object3d):
         )
 
     @property
-    def phi(self):
-        r"""Azimuthal spherical coordinate, i.e. the angle
-        :math:`\phi \in [0, 2\pi]` from the positive z-axis to a point on
-        the sphere, according to the ISO 31-11 standard
+    def azimuth(self):
+        r"""Azimuth spherical coordinate, i.e. the angle
+        :math:`\phi \in [0, 2\pi]` from the positive z-axis to a point
+        on the sphere, according to the ISO 31-11 standard
         [SphericalWolfram]_.
 
         Returns
         -------
         Scalar
         """
-        phi = np.arctan2(self.data[..., 1], self.data[..., 0])
-        phi += (phi < 0) * 2 * np.pi
-        return Scalar(phi)
+        azimuth = np.arctan2(self.data[..., 1], self.data[..., 0])
+        azimuth += (azimuth < 0) * 2 * np.pi
+        return Scalar(azimuth)
 
     @property
-    def theta(self):
+    def polar(self):
         r"""Polar spherical coordinate, i.e. the angle
-        :math:`\theta \in [0, \pi]` from the positive z-axis to a point on
-        the sphere, according to the ISO 31-11 standard
+        :math:`\theta \in [0, \pi]` from the positive z-axis to a point
+        on the sphere, according to the ISO 31-11 standard
         [SphericalWolfram]_.
 
         Returns
         -------
         Scalar
         """
-        return Scalar(np.arccos(self.data[..., 2] / self.r.data))
+        return Scalar(np.arccos(self.data[..., 2] / self.radial.data))
 
     def angle_with(self, other):
         """Calculate the angles between vectors in 'self' and 'other'
@@ -492,13 +493,13 @@ class Vector3d(Object3d):
         return self.__class__(self.data.mean(axis=axis))
 
     def to_polar(self):
-        r"""Return the polar :math:`\theta`, azimuthal :math:`\phi` and
-        radial :math:`r` spherical coordinates, the angles in radians. The
-        coordinates are defined as in the ISO 31-11 standard
+        r"""Return the azimuth :math:`\phi`, polar :math:`\theta`, and
+        radial :math:`r` spherical coordinates, the angles in radians.
+        The coordinates are defined as in the ISO 31-11 standard
         [SphericalWolfram]_.
 
         Returns
         -------
-        theta, phi, r : Scalar
+        azimuth, polar, r : Scalar
         """
-        return self.theta, self.phi, self.r
+        return self.azimuth, self.polar, self.radial

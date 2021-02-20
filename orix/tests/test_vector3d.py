@@ -168,15 +168,17 @@ def test_cross_error(vector, number):
 
 
 @pytest.mark.parametrize(
-    "theta, phi, r, expected",
+    "azimuth, polar, radial, expected",
     [
         (np.pi / 4, np.pi / 4, 1, Vector3d((0.5, 0.5, 0.707107))),
-        (2 * np.pi / 3, 7 * np.pi / 6, 1, Vector3d((-0.75, -0.433013, -0.5))),
+        (7 * np.pi / 6, 2 * np.pi / 3, 1, Vector3d((-0.75, -0.433013, -0.5))),
     ],
 )
-def test_polar(theta, phi, r, expected):
+def test_polar(azimuth, polar, radial, expected):
     assert np.allclose(
-        Vector3d.from_polar(theta, phi, r).data, expected.data, atol=1e-5
+        Vector3d.from_polar(azimuth=azimuth, polar=polar, radial=radial).data,
+        expected.data,
+        atol=1e-5,
     )
 
 
@@ -298,7 +300,7 @@ def test_mean_xyz():
 @pytest.mark.xfail(strict=True, reason=ValueError)
 def test_zero_perpendicular():
     t = Vector3d(np.asarray([0, 0, 0]))
-    tperp = t.perpendicular()
+    _ = t.perpendicular()
 
 
 @pytest.mark.xfail(strict=True, reason=TypeError)
@@ -315,19 +317,21 @@ class TestSpareNotImplemented:
 
 class TestSphericalCoordinates:
     @pytest.mark.parametrize(
-        "vector, theta_desired, phi_desired, r_desired",
+        "v, polar_desired, azimuth_desired, radial_desired",
         [
             (Vector3d((0.5, 0.5, 0.707107)), np.pi / 4, np.pi / 4, 1),
             (Vector3d((-0.75, -0.433013, -0.5)), 2 * np.pi / 3, 7 * np.pi / 6, 1),
         ],
     )
-    def test_to_polar(self, vector, theta_desired, phi_desired, r_desired):
-        theta, phi, r = vector.to_polar()
-        assert np.allclose(theta.data, theta_desired)
-        assert np.allclose(phi.data, phi_desired)
-        assert np.allclose(r.data, r_desired)
+    def test_to_polar(self, v, polar_desired, azimuth_desired, radial_desired):
+        azimuth, polar, radial = v.to_polar()
+        assert np.allclose(polar.data, polar_desired)
+        assert np.allclose(azimuth.data, azimuth_desired)
+        assert np.allclose(radial.data, radial_desired)
 
     def test_polar_loop(self, vector):
-        theta, phi, r = vector.to_polar()
-        vector2 = Vector3d.from_polar(theta=theta.data, phi=phi.data, r=r.data)
+        azimuth, polar, radial = vector.to_polar()
+        vector2 = Vector3d.from_polar(
+            azimuth=azimuth.data, polar=polar.data, radial=radial.data
+        )
         assert np.allclose(vector.data, vector2.data)
