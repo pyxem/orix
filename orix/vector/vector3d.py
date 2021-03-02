@@ -546,7 +546,8 @@ class Vector3d(Object3d):
         hemisphere=None,
         grid=None,
         grid_resolution=None,
-        **kwargs
+        scatter_kwargs=None,
+        text_kwargs=None,
     ):
         # Add "stereographic" to list of registered Matplotlib projections
         import orix.plot.stereographic_plot
@@ -575,6 +576,12 @@ class Vector3d(Object3d):
         if grid_resolution is None:
             grid_resolution = (None,) * 2
 
+        # Set default keyword arguments
+        if scatter_kwargs is None:
+            scatter_kwargs = {}
+        if text_kwargs is None:
+            text_kwargs = {}
+
         fig, axes = plt.subplots(
             ncols=ncols, subplot_kw=dict(projection="stereographic")
         )
@@ -584,15 +591,15 @@ class Vector3d(Object3d):
             ]
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
-            ax.scatter(self, **kwargs)
+            ax.scatter(self, **scatter_kwargs)
             ax.grid(grid)
-            ax.polar_grid(grid_resolution[0])
-            ax.azimuth_grid(grid_resolution[1])
+            ax.azimuth_grid(grid_resolution[0])
+            ax.polar_grid(grid_resolution[1])
             ax.set_labels(*axes_labels)
             if show_hemisphere_label:
                 ax.show_hemisphere_label()
             if labels is not None:
                 for vi, labeli in zip(self, labels):
-                    ax.text(vi, s=labeli)
+                    ax.text(vi, s=labeli, **text_kwargs)
 
         self.figure = fig

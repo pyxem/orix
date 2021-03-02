@@ -131,12 +131,12 @@ class StereographicPlot(Axes):
     name = "stereographic"
     _hemisphere = "upper"
 
-    def __init__(self, *args, polar_resolution=10, azimuth_resolution=10, **kwargs):
-        self._polar_cap = 0.5 * np.pi
-        self._polar_resolution = polar_resolution
-
+    def __init__(self, *args, azimuth_resolution=10, polar_resolution=10, **kwargs):
         self._azimuth_cap = 2 * np.pi
         self._azimuth_resolution = azimuth_resolution
+
+        self._polar_cap = 0.5 * np.pi
+        self._polar_resolution = polar_resolution
 
         super().__init__(*args, **kwargs)
         # Set ratio of y-unit to x-unit by adjusting the physical
@@ -266,7 +266,10 @@ class StereographicPlot(Axes):
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
         azimuth, polar = self._pretransform_input(args)
-        super().text(azimuth, polar, **kwargs)
+        if (self.hemisphere == "upper" and polar <= np.pi / 2) or (
+            self.hemisphere == "lower" and polar > np.pi / 2
+        ):
+            super().text(azimuth, polar, **kwargs)
 
     # ----------- Custom attributes and methods below here ----------- #
 
@@ -444,13 +447,13 @@ class StereographicPlot(Axes):
         """
         if len(args) == 2:
             azimuth, polar = args
-            v = Vector3d.from_polar(phi=azimuth, theta=polar)
+            v = Vector3d.from_polar(azimuth=azimuth, polar=polar)
         else:
             v = Vector3d(args[0])
         v = v.unit
         circles = v.get_circle(opening_angle=opening_angle, steps=100)
         for c in circles:
-            super().plot(c.phi.data, c.theta.data, **kwargs)
+            super().plot(c.azimuth.data, c.polar.data, **kwargs)
 
     @staticmethod
     def _pretransform_input(values):
