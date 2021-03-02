@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.base import check, Object3d
@@ -81,6 +82,7 @@ class Vector3d(Object3d):
     """
 
     dim = 3
+    figure = None
 
     def __neg__(self):
         return self.__class__(-self.data)
@@ -536,3 +538,61 @@ class Vector3d(Object3d):
         for i, (v, oa) in enumerate(zip(self.flatten(), opening_angles)):
             circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)
         return circles
+
+    def scatter(
+        self,
+        axes_labels=None,
+        labels=None,
+        hemisphere=None,
+        grid=None,
+        grid_resolution=None,
+        **kwargs
+    ):
+        # Add "stereographic" to list of registered Matplotlib projections
+        import orix.plot.stereographic_plot
+
+        # Set axes labels
+        if axes_labels is None:
+            axes_labels = ["x", "y", None]
+
+        # Which hemisphere(s) to plot
+        ncols = 1
+        show_hemisphere_label = False
+        if hemisphere is None:
+            hemisphere = "upper"
+        if hemisphere.lower() in ["upper", "lower"]:
+            hemisphere = [
+                hemisphere,
+            ]
+        if hemisphere == "both":
+            ncols = 2
+            show_hemisphere_label = True
+            hemisphere = ["upper", "lower"]
+
+        # Whether to plot a grid, and with which resolution
+        if grid is None:
+            grid = plt.rcParams["axes.grid"]
+        if grid_resolution is None:
+            grid_resolution = (None,) * 2
+
+        fig, axes = plt.subplots(
+            ncols=ncols, subplot_kw=dict(projection="stereographic")
+        )
+        if not hasattr(axes, "__iter__"):  # Make iterable
+            axes = [
+                axes,
+            ]
+        for i, ax in enumerate(axes):  # Assumes a maximum of two axes
+            ax.hemisphere = hemisphere[i]
+            ax.scatter(self, **kwargs)
+            ax.grid(grid)
+            ax.polar_grid(grid_resolution[0])
+            ax.azimuth_grid(grid_resolution[1])
+            ax.set_labels(*axes_labels)
+            if show_hemisphere_label:
+                ax.show_hemisphere_label()
+            if labels is not None:
+                for vi, labeli in zip(self, labels):
+                    ax.text(vi, s=labeli)
+
+        self.figure = fig
