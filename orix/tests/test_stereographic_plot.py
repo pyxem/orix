@@ -51,10 +51,10 @@ class TestStereographicPlot:
 
         v = vector.Vector3d([[0, 0, 1], [2, 0, 2]])
         ax.scatter(v[0])
-        ax.scatter(v[1].phi.data, v[1].theta.data)
+        ax.scatter(v[1].azimuth.data, v[1].polar.data)
 
         with pytest.raises(ValueError, match="Accepts only one "):
-            ax.scatter(v[1].phi)
+            ax.scatter(v[1].azimuth)
 
         plt.close("all")
 
