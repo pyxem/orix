@@ -426,6 +426,7 @@ Vector3d
     get_nearest
     mean
     rotate
+    scatter
     to_polar
     xvector
     yvector

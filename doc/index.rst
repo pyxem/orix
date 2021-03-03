@@ -23,6 +23,7 @@ Work using orix
     :caption: User guide
 
     stereographic_projection.ipynb
+    stereographic_projection2.ipynb
 
 .. toctree::
     :hidden:

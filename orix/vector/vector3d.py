@@ -498,9 +498,9 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        azimuth, polar, r : Scalar
+        azimuth, polar, radial : Scalar
         """
-        return self.theta, self.phi, self.r
+        return self.azimuth, self.polar, self.radial
 
     def get_circle(self, opening_angle=0.5 * np.pi, steps=100):
         r"""Get great or small circle(s) with a given `opening_angle`
@@ -542,33 +542,35 @@ class Vector3d(Object3d):
     def scatter(
         self,
         axes_labels=None,
-        labels=None,
+        vector_labels=None,
         hemisphere=None,
+        show_hemisphere_label=None,
         grid=None,
         grid_resolution=None,
+        figure_kwargs=None,
         scatter_kwargs=None,
         text_kwargs=None,
     ):
-        # Add "stereographic" to list of registered Matplotlib projections
+        # Add "stereographic" to registered Matplotlib projections
         import orix.plot.stereographic_plot
 
         # Set axes labels
         if axes_labels is None:
             axes_labels = ["x", "y", None]
 
-        # Which hemisphere(s) to plot
+        # Which hemisphere(s) to plot, and whether to show hemisphere
+        # label(s)
         ncols = 1
-        show_hemisphere_label = False
         if hemisphere is None:
             hemisphere = "upper"
         if hemisphere.lower() in ["upper", "lower"]:
-            hemisphere = [
-                hemisphere,
-            ]
+            hemisphere = (hemisphere,)
         if hemisphere == "both":
             ncols = 2
             show_hemisphere_label = True
-            hemisphere = ["upper", "lower"]
+            hemisphere = ("upper", "lower")
+        if show_hemisphere_label is None:
+            show_hemisphere_label = False
 
         # Whether to plot a grid, and with which resolution
         if grid is None:
@@ -577,18 +579,18 @@ class Vector3d(Object3d):
             grid_resolution = (None,) * 2
 
         # Set default keyword arguments
+        if figure_kwargs is None:
+            figure_kwargs = {}
         if scatter_kwargs is None:
             scatter_kwargs = {}
         if text_kwargs is None:
             text_kwargs = {}
 
         fig, axes = plt.subplots(
-            ncols=ncols, subplot_kw=dict(projection="stereographic")
+            ncols=ncols, subplot_kw=dict(projection="stereographic"), **figure_kwargs,
         )
         if not hasattr(axes, "__iter__"):  # Make iterable
-            axes = [
-                axes,
-            ]
+            axes = [axes]
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.scatter(self, **scatter_kwargs)
@@ -598,8 +600,8 @@ class Vector3d(Object3d):
             ax.set_labels(*axes_labels)
             if show_hemisphere_label:
                 ax.show_hemisphere_label()
-            if labels is not None:
-                for vi, labeli in zip(self, labels):
+            if vector_labels is not None:
+                for vi, labeli in zip(self, vector_labels):
                     ax.text(vi, s=labeli, **text_kwargs)
 
         self.figure = fig

@@ -12,6 +12,8 @@ Unreleased
 
 Added
 -----
+- Vector3d.scatter() plot method plotting the vectors as unit vectors in the
+  stereographic projection
 - User guide with Jupyter notebooks as part of the Read the Docs documentation
 - Stereographic projection using Matplotlib's projections framework
 - orix.projections module for projecting vectors to various coordinates, including
