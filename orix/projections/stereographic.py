@@ -130,7 +130,7 @@ class StereographicProjection:
         x_upper : numpy.ndarray
             Stereographic coordinate X of upper hemisphere vectors, of
             shape same shape as the input vector shape.
-        y_upper : numpy.ndarray
+]        y_upper : numpy.ndarray
             Stereographic coordinate Y of upper hemisphere vectors, of
             shape same shape as the input vector shape.
         x_lower : numpy.ndarray

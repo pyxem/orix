@@ -370,19 +370,19 @@ class StereographicPlot(Axes):
         new_kwargs.update(kwargs)
         super().text(x=x, y=y, s=label, **new_kwargs)
 
-    def set_labels(self, xlabel="X", ylabel="Y", zlabel="Z", **kwargs):
+    def set_labels(self, xlabel="x", ylabel="y", zlabel="z", **kwargs):
         """Set the reference frame's axes labels.
 
         Parameters
         ----------
         xlabel : str, False or None, optional
-            X axis label, default is "X". If False or None, this label
+            X axis label, default is "x". If False or None, this label
             is not shown.
         ylabel : str, False or None, optional
-            Y axis label, default is "Y". If False or None, this label
+            Y axis label, default is "y". If False or None, this label
             is not shown.
         zlabel : str, False or None, optional
-            Z axis label, default is "Z". If False or None, this label
+            Z axis label, default is "z". If False or None, this label
             is not shown.
         """
         # z label position

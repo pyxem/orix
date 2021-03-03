@@ -67,9 +67,9 @@ class TestStereographicPlot:
             ax.text(vi, s=format_vector(vi))
 
         assert len(ax.texts) == 3
-        assert ax.texts[0]._text == "[001]"
-        assert ax.texts[1]._text == "[-101]"
-        assert ax.texts[2]._text == "[111]"
+        assert ax.texts[0].get_text() == "[001]"
+        assert ax.texts[1].get_text() == "[-101]"
+        assert ax.texts[2].get_text() == "[111]"
 
         plt.close("all")
 
@@ -124,19 +124,19 @@ class TestStereographicPlot:
 
         ax.set_labels("X", None, None)
         assert len(ax.texts) == 1
-        assert ax.texts[0]._text == "X"
+        assert ax.texts[0].get_text() == "X"
         assert np.allclose([ax.texts[0]._x, ax.texts[0]._y], [0, 0.5 * np.pi])
 
         ax.set_labels(None, "TD", None)
         assert len(ax.texts) == 2
-        assert ax.texts[1]._text == "TD"
+        assert ax.texts[1].get_text() == "TD"
         assert np.allclose([ax.texts[1]._x, ax.texts[1]._y], [0.5 * np.pi, 0.5 * np.pi])
 
         ax.hemisphere = "lower"
         ax.set_labels(False, False, color="xkcd:salmon")
         assert len(ax.texts) == 3
-        assert ax.texts[2]._text == "Z"
-        assert ax.texts[2]._color == "xkcd:salmon"
+        assert ax.texts[2].get_text() == "z"
+        assert ax.texts[2].get_color() == "xkcd:salmon"
         assert np.allclose([ax.texts[2]._x, ax.texts[2]._y], [0, np.pi])
 
         plt.close("all")
@@ -147,16 +147,16 @@ class TestStereographicPlot:
         ax[0].scatter(vector.Vector3d([0, 0, 1]))
         ax[0].show_hemisphere_label()
         label_up = ax[0].texts[0]
-        assert label_up._text == "upper"
-        assert label_up._color == "black"
+        assert label_up.get_text() == "upper"
+        assert label_up.get_color() == "black"
         assert np.allclose([label_up._x, label_up._y], [2.356, 1.571], atol=1e-3)
 
         ax[1].hemisphere = "lower"
         ax[1].scatter(vector.Vector3d([0, 0, -1]))
         ax[1].show_hemisphere_label(color="r")
         label_low = ax[1].texts[0]
-        assert label_low._text == "lower"
-        assert label_low._color == "r"
+        assert label_low.get_text() == "lower"
+        assert label_low.get_color() == "r"
         assert np.allclose([label_low._x, label_low._y], [2.356, 1.571], atol=1e-3)
 
         plt.close("all")
