@@ -197,8 +197,9 @@ StereographicPlot
     symmetry_marker
     text
 .. autoclass:: orix.plot.StereographicPlot
-    :show-inheritance:
     :members: azimuth_grid, draw_circle, hemisphere, name, polar_grid, pole, scatter, set_labels, show_hemisphere_label, symmetry_marker, text
+    :undoc-members:
+    :show-inheritance:
 
 ....
 
@@ -423,6 +424,7 @@ Vector3d
     cross
     dot
     dot_outer
+    draw_circle
     from_polar
     get_nearest
     mean

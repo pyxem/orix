@@ -378,8 +378,7 @@ class TestPlotting:
         plt.rcParams["axes.grid"] = False
         v = self.v
 
-        v.scatter()
-        fig1 = v.figure
+        fig1 = v.scatter(return_figure=True)
         assert isinstance(fig1, plt.Figure)
 
         azimuth_res = 15
@@ -388,7 +387,7 @@ class TestPlotting:
         text_size = 20
         scatter_colors = ["C0", "C1", "C2"] * 2
         vector_labels = [str(vi).replace(" ", "") for vi in v.data]
-        v.scatter(
+        fig2 = v.scatter(
             hemisphere="both",
             grid=True,
             grid_resolution=(azimuth_res, polar_res),
@@ -396,9 +395,9 @@ class TestPlotting:
             figure_kwargs=dict(figsize=fig_size),
             text_kwargs=dict(size=text_size),
             c=scatter_colors,
+            return_figure=True,
         )
-        fig2 = v.figure
-        assert fig2 != fig1  # Figure is overwritten
+        assert fig2 != fig1  # New figure
         assert fig2.get_figwidth() == fig_size[0]
         assert fig2.get_figheight() == fig_size[1]
         assert len(fig2.axes) == 2
@@ -409,8 +408,30 @@ class TestPlotting:
         assert fig2.axes[0].texts[1].get_text() == vector_labels[0]
         assert fig2.axes[1].texts[1].get_size() == text_size
 
+        fig3 = v.scatter(figure=fig1, return_figure=True)
+        assert fig3 == fig1
+
         plt.close("all")
 
     def test_scatter_projection(self):
-        with pytest.raises(ValueError, match="'stereographic' is the only supported"):
+        with pytest.raises(
+            NotImplementedError, match="Stereographic is the only supported"
+        ):
             self.v.scatter(projection="equal_angle")
+
+    def test_draw_circle(self):
+        v = self.v
+        colors = [f"C{i}" for i in range(v.size)]
+        steps = 200
+        fig1 = v.draw_circle(
+            steps=steps,
+            hemisphere="both",
+            return_figure=True,
+            color=colors,
+            linestyle="--",
+        )
+
+        assert isinstance(fig1, plt.Figure)
+        assert len(fig1.axes) == 2
+        assert all(a.hemisphere == h for a, h in zip(fig1.axes, ["upper", "lower"]))
+        assert fig1.axes[0].lines[0]._path._vertices.shape == (steps, 2)

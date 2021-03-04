@@ -78,7 +78,6 @@ class Vector3d(Object3d):
     """
 
     dim = 3
-    _figure = None
 
     @property
     def x(self):
@@ -173,17 +172,6 @@ class Vector3d(Object3d):
         Scalar
         """
         return Scalar(np.arccos(self.data[..., 2] / self.radial.data))
-
-    @property
-    def figure(self):
-        """Current :class:`matplotlib.figure.Figure` showing the
-        vectors.
-        """
-        return self._figure
-
-    @figure.setter
-    def figure(self, value):
-        self._figure = value
 
     def __neg__(self):
         return self.__class__(-self.data)
@@ -534,7 +522,7 @@ class Vector3d(Object3d):
         A set of `steps` number of vectors equal to each vector is
         rotated twice to obtain a circle:
         1. About a perpendicular vector to the current vector at
-          `opening_angle`.
+        `opening_angle`.
         2. About the current vector in a full circle.
         """
         circles = self.zero((self.size, steps))
@@ -556,6 +544,7 @@ class Vector3d(Object3d):
         grid_resolution=None,
         figure_kwargs=dict(),
         text_kwargs=dict(),
+        return_figure=False,
         **kwargs,
     ):
         """Plot vectors in the stereographic projection.
@@ -580,6 +569,11 @@ class Vector3d(Object3d):
             Keyword arguments passed to
             :func:`~orix.plot.StereographicPlot.scatter`, which passes
             these on to :meth:`matplotlib.axes.Axes.scatter`.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The created figure.
 
         Notes
         -----
@@ -620,8 +614,8 @@ class Vector3d(Object3d):
                 for vi, labeli in zip(self, vector_labels):
                     ax.text(vi, s=labeli, **text_kwargs)
 
-        # Add figure for further customization, saving etc.
-        self.figure = fig
+        if return_figure:
+            return fig
 
     def draw_circle(
         self,
@@ -635,6 +629,7 @@ class Vector3d(Object3d):
         grid=None,
         grid_resolution=None,
         figure_kwargs=dict(),
+        return_figure=False,
         **kwargs,
     ):
         r"""Draw great or small circles with a given `opening_angle` to
@@ -657,6 +652,11 @@ class Vector3d(Object3d):
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the circles'
             appearance.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The created figure.
 
         Notes
         -----
@@ -695,13 +695,13 @@ class Vector3d(Object3d):
             if show_hemisphere_label:
                 ax.show_hemisphere_label()
 
-        # Add figure for further customization, saving etc.
-        self.figure = fig
+        if return_figure:
+            return fig
 
+    @staticmethod
     def _setup_plot(
-        self,
         projection="stereographic",
-        figure=figure,
+        figure=None,
         hemisphere=None,
         show_hemisphere_label=None,
         grid=None,
@@ -734,9 +734,6 @@ class Vector3d(Object3d):
 
         import orix.plot.stereographic_plot
 
-        if figure is None:
-            if self.figure is not None:
-                figure = self.figure
         if figure is not None:
             axes = figure.axes
             hemisphere = "both" if len(axes) == 2 else axes[0].hemisphere
@@ -782,12 +779,8 @@ PLOT_PROJECTION_DOCSTRING = """
 """
 PLOT_FIGURE_DOCSTRING = """
         figure : matplotlib.figure.Figure, optional
-            Which figure to plot onto. Default is None, which either
-            creates a new figure if :attr:`self.figure` is None, or
-            plots onto the existing figure if the argument passed to
-            `hemisphere` corresponds to the existing figure's
-            hemisphere(s). If the latter is not the case, a new figure
-            is created.
+            Which figure to plot onto. Default is None, which creates a
+            new figure.
 """
 PLOT_AXES_LABELS_DOCSTRING = """
         axes_labels : list of str, optional
@@ -796,10 +789,10 @@ PLOT_AXES_LABELS_DOCSTRING = """
 PLOT_HEMISPHERE_DOCTRING = """
         hemisphere : str, optional
             Which hemisphere(s) to plot the vectors in, defaults to
-            None, which means "upper" if a new figure is created,
-            otherwise adds to the current figure. Options are "upper",
-            "lower", and "both", which plots two projections side by
-            side.
+            "None", which means "upper" if a new figure is created,
+            otherwise adds to the current figure's hemispheres. Options
+            are "upper", "lower", and "both", which plots two
+            projections side by side.
 """
 PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING = """
         show_hemisphere_label : bool, optional
@@ -831,7 +824,6 @@ PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING = """
         figure and the axes can also be created using Matplotlib
         directly, which is more customizable.
 """
-
 Vector3d.scatter.__doc__ %= (
     PLOT_PROJECTION_DOCSTRING,
     PLOT_FIGURE_DOCSTRING,
