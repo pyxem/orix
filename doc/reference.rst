@@ -189,6 +189,7 @@ StereographicPlot
 .. currentmodule:: orix.plot.StereographicPlot
 .. autosummary::
     azimuth_grid
+    draw_circle
     polar_grid
     scatter
     show_hemisphere_label

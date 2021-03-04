@@ -508,8 +508,8 @@ class Vector3d(Object3d):
         return self.azimuth, self.polar, self.radial
 
     def get_circle(self, opening_angle=0.5 * np.pi, steps=100):
-        r"""Get great or small circle(s) with a given `opening_angle`
-        about the vectors in this instance.
+        r"""Get vectors delineating great or small circle(s) with a
+        given `opening_angle` about each vector.
 
         Used for plotting plane traces in stereographic projections.
 
@@ -518,27 +518,26 @@ class Vector3d(Object3d):
         opening_angle : float or numpy.ndarray, optional
             Opening angle(s) around the vector(s). Default is
             :math:`\pi/2`, giving a great circle. If an array is passed,
-            its size must be equal to the number of vectors in this
-            instance.
+            its size must be equal to the number of vectors.
         steps : int, optional
             Number of vectors to describe each circle, default is 100.
 
         Returns
         -------
         circles : Vector3d
-            Circles with the `opening_angle` about the vectors in this
-            instance.
+            Vectors delinating circles with the `opening_angle` about
+            the vectors.
 
         Notes
         -----
-        A set of `steps` number of vectors equal to each vector in this
-        instance is rotated twice to obtain a circle:
+        A set of `steps` number of vectors equal to each vector is
+        rotated twice to obtain a circle:
         1. About a perpendicular vector to the current vector at
           `opening_angle`.
         2. About the current vector in a full circle.
         """
         circles = self.zero((self.size, steps))
-        full_circle = np.linspace(0, 2 * np.pi, num=steps)
+        full_circle = np.linspace(0, 2 * np.pi, num=steps, endpoint=True)
         opening_angles = np.ones(self.size) * opening_angle
         for i, (v, oa) in enumerate(zip(self.flatten(), opening_angles)):
             circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)

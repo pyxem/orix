@@ -33,8 +33,7 @@ from orix.plot._symmetry_marker import (
     FourFoldMarker,
     SixFoldMarker,
 )
-from orix.quaternion import Rotation
-from orix.vector import AxAngle, Vector3d, SphericalRegion
+from orix.vector import Vector3d
 
 
 class StereographicTransform(Transform):
@@ -127,6 +126,12 @@ class StereographicPlot(Axes):
 
     # See this Matplotlib tutorial for explanations of methods:
     # https://matplotlib.org/stable/gallery/misc/custom_projection.html
+
+    # Elements' zorder (let's try to keep this updated!):
+    #   text                6
+    #   scatter             5
+    #   symmetry_element    4
+    #   draw_circle         3
 
     name = "stereographic"
     _hemisphere = "upper"
@@ -237,11 +242,26 @@ class StereographicPlot(Axes):
         --------
         matplotlib.axes.Axes.scatter
         """
-        new_kwargs = dict(zorder=3, clip_on=False)
+        new_kwargs = dict(zorder=5, clip_on=False)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
+
         azimuth, polar = self._pretransform_input(args)
-        super().scatter(azimuth, polar, **kwargs)
+        visible = self._visible_in_hemisphere(polar)
+        if np.count_nonzero(visible) == 0:
+            return
+        else:
+            azimuth = azimuth[visible]
+            polar = polar[visible]
+
+        # Color(s) and size(s)
+        c = kwargs.pop("c", "C0")
+        c = _get_array_of_values(value=c, visible=visible)
+        s = kwargs.pop("s", None)
+        if s is not None:
+            s = _get_array_of_values(value=s, visible=visible)
+
+        super().scatter(azimuth, polar, c=c, s=s, **kwargs)
 
     def text(self, *args, **kwargs):
         """Add text to the axes.
@@ -262,14 +282,19 @@ class StereographicPlot(Axes):
         --------
         matplotlib.axes.Axes.text
         """
-        new_kwargs = dict(va="bottom", ha="center")
+        new_kwargs = dict(va="bottom", ha="center", zorder=6)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
+
         azimuth, polar = self._pretransform_input(args)
-        if (self.hemisphere == "upper" and polar <= np.pi / 2) or (
-            self.hemisphere == "lower" and polar > np.pi / 2
-        ):
-            super().text(azimuth, polar, **kwargs)
+        visible = self._visible_in_hemisphere(polar)
+        if np.count_nonzero(visible) == 0:
+            return
+        else:
+            azimuth = azimuth[visible]
+            polar = polar[visible]
+
+        super().text(azimuth, polar, **kwargs)
 
     # ----------- Custom attributes and methods below here ----------- #
 
@@ -407,17 +432,20 @@ class StereographicPlot(Axes):
         kwargs
             Keyword arguments passed to :meth:`scatter`.
         """
-        size = kwargs.pop("s", 1)
-        if fold == 2:
-            marker = TwoFoldMarker(v, size=size)
-        elif fold == 3:
-            marker = ThreeFoldMarker(v, size=size)
-        elif fold == 4:
-            marker = FourFoldMarker(v, size=size)
-        elif fold == 6:
-            marker = SixFoldMarker(v, size=size)
-        else:
+        if fold not in [2, 3, 4, 6]:
             raise ValueError("Can only plot 2-, 3-, 4- or 6-fold elements.")
+
+        marker_classes = {
+            "2": TwoFoldMarker,
+            "3": ThreeFoldMarker,
+            "4": FourFoldMarker,
+            "6": SixFoldMarker,
+        }
+        marker = marker_classes[str(fold)](v, size=kwargs.pop("s", 1))
+
+        new_kwargs = dict(zorder=4, clip_on=False)
+        for k, v in new_kwargs.items():
+            kwargs.setdefault(k, v)
 
         for vec, marker, marker_size in marker:
             self.scatter(vec, marker=marker, s=marker_size, **kwargs)
@@ -425,7 +453,7 @@ class StereographicPlot(Axes):
         # TODO: Find a way to control padding, so that markers aren't
         #  clipped
 
-    def circle(self, *args, opening_angle=0.5 * np.pi, **kwargs):
+    def draw_circle(self, *args, opening_angle=0.5 * np.pi, steps=100, **kwargs):
         r"""Draw great or small circles with a given `opening_angle` to
         one or multiple vectors.
 
@@ -440,38 +468,176 @@ class StereographicPlot(Axes):
             Opening angle(s) around the vector(s). Default is
             :math:`\pi/2`, giving a great circle. If an array is passed,
             its size must be equal to the number of circles to draw.
+        steps : int, optional
+            Number of vectors to describe each circle, default is 100.
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the circles'
             appearance.
+
+        See Also
+        --------
+        orix.vector.Vector3d.get_circle
         """
-        if len(args) == 2:
-            azimuth, polar = args
-            v = Vector3d.from_polar(azimuth=azimuth, polar=polar)
+        azimuth, polar = self._pretransform_input(args)
+
+        # Exclude vectors not visible in this hemisphere before creating
+        # circles
+        visible = self._visible_in_hemisphere(polar)
+        if np.count_nonzero(visible) == 0:  # No circles to draw
+            return
         else:
-            v = Vector3d(args[0])
-        v = v.unit
-        circles = v.get_circle(opening_angle=opening_angle, steps=100)
-        for c in circles:
-            super().plot(c.azimuth.data, c.polar.data, **kwargs)
+            azimuth = azimuth[visible]
+            polar = polar[visible]
+
+        # Get set of `steps` vectors delineating a circle per vector
+        v = Vector3d.from_polar(azimuth=azimuth, polar=polar)
+        circles = v.get_circle(opening_angle=opening_angle, steps=steps).unit
+
+        # Enable using one color per circle
+        color = kwargs.pop("color", "C0")
+        color2 = _get_array_of_values(value=color, visible=visible)
+
+        # Set above which elements circles will appear (zorder)
+        new_kwargs = dict(zorder=3, clip_on=False)
+        for k, v in new_kwargs.items():
+            kwargs.setdefault(k, v)
+
+        hemisphere = self.hemisphere
+        polar_cap = self._polar_cap
+        for i, c in enumerate(circles):
+            a, p = _sort_coords_by_shifted_bools(
+                hemisphere=hemisphere,
+                polar_cap=polar_cap,
+                azimuth=c.azimuth.data,
+                polar=c.polar.data,
+            )
+            super().plot(a, p, color=color2[i], **kwargs)
 
     @staticmethod
     def _pretransform_input(values):
-        """Return azimuth and polar angles from input data."""
+        """Return arrays of azimuth and polar angles from input data.
+
+        Parameters
+        ----------
+        values : tuple of numpy.ndarray or Vector3d
+            Spherical coordinates (azimuth, polar) or vectors. If
+            spherical coordinates are given, they are assumed to
+            describe unit vectors.
+
+        Returns
+        -------
+        azimuth : numpy.ndarray
+            Azimuth coordiantes of unit vectors.
+        polar : numpy.ndarray
+            Polar coordinates of unit vectors.
+        """
         if len(values) == 2:
             azimuth, polar = values
         else:
             value = values[0]
-            if isinstance(value, Vector3d):
+            try:
                 value = value.unit
                 azimuth = value.azimuth.data
                 polar = value.polar.data
-            else:
+            except (ValueError, AttributeError):
                 raise ValueError(
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
                     "arguments"
                 )
         return azimuth, polar
 
+    def _visible_in_hemisphere(self, polar):
+        """Return a boolean array describing whether the vector which
+        the polar angles belong to are visible in the current
+        hemisphere.
+
+        Parameters
+        ----------
+        polar : numpy.ndarray
+
+        Returns
+        -------
+        numpy.ndarray
+            Boolean array with True for the polar angles corresponding
+            to vectors visible in this hemisphere.
+        """
+        return _visible_in_hemisphere(self.hemisphere, self._polar_cap, polar)
+
 
 register_projection(StereographicPlot)
+
+
+def _get_array_of_values(value, visible):
+    """Ensure we get a usable array of `value` with the correct size
+    even though `value` doesn't have as many elements as `visible.size`.
+
+    Parameters
+    ----------
+    value : str, float, or a list of str, float
+        Typically a keyword argument value to be passed to some
+        Matplotlib routine.
+    visible : numpy.ndarray
+        Boolean array with as many elements as input vectors.
+
+    Returns
+    -------
+    numpy.ndarray
+        An array populated with `value` of a size equal to the number of
+        True elements in `visible`.
+    """
+    n = visible.size
+    if not isinstance(value, str) and hasattr(value, "__iter__") and len(value) != n:
+        value = value[0]
+    if isinstance(value, str) or not hasattr(value, "__iter__") or len(value) != n:
+        value = [value,] * n
+    return np.asarray(value)[visible]
+
+
+def _visible_in_hemisphere(hemisphere, polar_cap, polar):
+    """Return a boolean array describing whether the vector which the
+    polar angles belong to are visible in the current hemisphere.
+
+    Parameters
+    ----------
+    hemisphere : str
+    polar_cap : float
+    polar : numpy.ndarray
+
+    Returns
+    -------
+    numpy.ndarray
+        Boolean array with True for polar angles corresponding to
+        vectors visible in this hemisphere.
+    """
+    return polar <= polar_cap if hemisphere == "upper" else polar > polar_cap
+
+
+def _sort_coords_by_shifted_bools(hemisphere, polar_cap, azimuth, polar):
+    """Shift azimuth and polar coordinate arrays so that the ones
+    corresponding to vectors visible in this hemisphere are shifted to
+    the start of the arrays.
+
+    Used in :meth:`StereographicPlot.draw_circle`.
+
+    Parameters
+    ----------
+    hemisphere : str
+    polar_cap : float
+    azimuth : numpy.ndarray
+    polar : numpy.ndarray
+
+    Returns
+    -------
+    azimuth : numpy.ndarray
+    polar : numpy.ndarray
+    """
+    visible = _visible_in_hemisphere(
+        hemisphere=hemisphere, polar_cap=polar_cap, polar=polar
+    )
+    indices = np.where(visible != visible[0])[0]
+    if indices.size != 0:
+        to_shift = indices[-1] + 1
+        azimuth = np.roll(azimuth, shift=-to_shift)
+        polar = np.roll(polar, shift=-to_shift)
+    return azimuth, polar
