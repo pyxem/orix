@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -420,7 +422,6 @@ class Vector3d(Object3d):
         -------
         Scalar
             The angle between the vectors, in radians.
-
         """
         cosines = np.round(self.dot(other).data / self.norm.data / other.norm.data, 9)
         return Scalar(np.arccos(cosines))
@@ -546,9 +547,10 @@ class Vector3d(Object3d):
     def scatter(
         self,
         projection="stereographic",
+        figure=None,
         axes_labels=[None, None, None],
         vector_labels=None,
-        hemisphere="upper",
+        hemisphere=None,
         show_hemisphere_label=None,
         grid=None,
         grid_resolution=None,
@@ -558,38 +560,18 @@ class Vector3d(Object3d):
     ):
         """Plot vectors in the stereographic projection.
 
-        The created figure is added to :attr:`figure`, overwriting the
-        figure in :attr:`figure` if one is already there.
-
         Parameters
         ----------
-        projection : str, optional
-            Which projection to use. The default is "stereographic",
-            the only current option.
-        axes_labels : list of str, optional
-            Reference frame axes labels, defaults to
-            `[None, None, None]`.
+        %s
+        %s
+        %s
         vector_labels : list of str, optional
             Vector text labels, which by default aren't added.
-        hemisphere : str, optional
-            Which hemisphere(s) to plot the vectors in, defaults to
-            "upper". Options are "upper", "lower", and "both", which
-            plots two projections side by side.
-        show_hemisphere_label : bool, optional
-            Whether to show hemisphere labels "upper" or "lower".
-            Default is True if `hemisphere` is "both", otherwise False.
-        grid : bool, optional
-            Whether to show the azimuth and polar grid. Default is
-            whatever `axes.grid` is set to in
-            :obj:`matplotlib.rcParams`.
-        grid_resolution : tuple, optional
-            Azimuth and polar grid resolution in degrees, as a tuple.
-            Default is whatever is default in
-            :class:`~orix.plot.StereographicPlot.azimuth_grid` and
-            :class:`~orix.plot.StereographicPlot.polar_grid`.
-        figure_kwargs : dict, optional
-            Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.subplots`.
+        %s
+        %s
+        %s
+        %s
+        %s
         text_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :func:`~orix.plot.StereographicPlot.text`, which passes
@@ -601,48 +583,28 @@ class Vector3d(Object3d):
 
         Notes
         -----
-        This is a somewhat customizable convenience method which creates
-        a figure with axes using :class:`~orix.plot.StereographicPlot`.
-        This figure and the axes can also be created using Matplotlib
-        directly, which is more customizable.
+        %s
 
         See Also
         --------
         orix.plot.StereographicPlot
         """
-        if projection.lower() != "stereographic":
-            raise ValueError("'stereographic' is the only supported projection")
-
-        # Add "stereographic" to registered Matplotlib projections
-        import orix.plot.stereographic_plot
-
-        # Which hemisphere(s) to plot, and whether to show hemisphere
-        # label(s)
-        ncols = 1
-        if hemisphere.lower() in ["upper", "lower"]:
-            hemisphere = (hemisphere,)
-        if hemisphere == "both":
-            ncols = 2
-            hemisphere = ("upper", "lower")
-            if show_hemisphere_label != False:
-                show_hemisphere_label = True
-        if show_hemisphere_label is None:
-            show_hemisphere_label = False
-
-        # Whether to plot a grid, and with which resolution
-        if grid is None:
-            grid = plt.rcParams["axes.grid"]
-        if grid_resolution is None:
-            grid_resolution = (None,) * 2
-
-        # Create figure and axis/axes
-        fig, axes = plt.subplots(
-            ncols=ncols, subplot_kw=dict(projection="stereographic"), **figure_kwargs,
+        (
+            fig,
+            axes,
+            hemisphere,
+            show_hemisphere_label,
+            grid,
+            grid_resolution,
+        ) = self._setup_plot(
+            projection=projection,
+            figure=figure,
+            hemisphere=hemisphere,
+            show_hemisphere_label=show_hemisphere_label,
+            grid=grid,
+            grid_resolution=grid_resolution,
+            figure_kwargs=figure_kwargs,
         )
-
-        # Make axes iterable to enable looping
-        if not hasattr(axes, "__iter__"):
-            axes = [axes]
 
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
@@ -660,3 +622,244 @@ class Vector3d(Object3d):
 
         # Add figure for further customization, saving etc.
         self.figure = fig
+
+    def draw_circle(
+        self,
+        projection="stereographic",
+        figure=None,
+        opening_angle=0.5 * np.pi,
+        steps=100,
+        axes_labels=[None, None, None],
+        hemisphere=None,
+        show_hemisphere_label=None,
+        grid=None,
+        grid_resolution=None,
+        figure_kwargs=dict(),
+        **kwargs,
+    ):
+        r"""Draw great or small circles with a given `opening_angle` to
+        to the vectors in the stereographic projection.
+
+        A vector must be present in the current hemisphere for its
+        circle to be drawn.
+
+        Parameters
+        ----------
+        %s
+        %s
+        %s
+        %s
+        %s
+        %s
+        %s
+        %s
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot` to alter the circles'
+            appearance.
+
+        Notes
+        -----
+        %s
+
+        See Also
+        --------
+        orix.plot.StereographicPlot
+        orix.vector.Vector3d.get_circle
+        """
+        (
+            fig,
+            axes,
+            hemisphere,
+            show_hemisphere_label,
+            grid,
+            grid_resolution,
+        ) = self._setup_plot(
+            projection=projection,
+            figure=figure,
+            hemisphere=hemisphere,
+            show_hemisphere_label=show_hemisphere_label,
+            grid=grid,
+            grid_resolution=grid_resolution,
+            figure_kwargs=figure_kwargs,
+        )
+
+        # Use methods of the StereographicPlot class
+        for i, ax in enumerate(axes):  # Assumes a maximum of two axes
+            ax.hemisphere = hemisphere[i]
+            ax.draw_circle(self, opening_angle=opening_angle, steps=steps, **kwargs)
+            ax.grid(grid)
+            ax.azimuth_grid(grid_resolution[0])
+            ax.polar_grid(grid_resolution[1])
+            ax.set_labels(*axes_labels)
+            if show_hemisphere_label:
+                ax.show_hemisphere_label()
+
+        # Add figure for further customization, saving etc.
+        self.figure = fig
+
+    def _setup_plot(
+        self,
+        projection="stereographic",
+        figure=figure,
+        hemisphere=None,
+        show_hemisphere_label=None,
+        grid=None,
+        grid_resolution=None,
+        figure_kwargs=dict(),
+    ):
+        """Set up a stereographic projection plot.
+
+        Parameters
+        ----------
+        %s
+        %s
+        %s
+        %s
+        %s
+        %s
+        %s
+
+        Returns
+        -------
+        figure : matplotlib.figure.Figure
+        axes : matplotlib.axes.Axes
+        hemisphere : tuple of str
+        show_hemisphere_label : bool
+        grid : bool
+        grid_resolution : tuple
+        """
+        if projection.lower() != "stereographic":
+            raise NotImplementedError("Stereographic is the only supported projection")
+
+        import orix.plot.stereographic_plot
+
+        if figure is None:
+            if self.figure is not None:
+                figure = self.figure
+        if figure is not None:
+            axes = figure.axes
+            hemisphere = "both" if len(axes) == 2 else axes[0].hemisphere
+
+        # Which hemisphere(s) to plot
+        ncols = 1
+        hemispheres = ("upper", "lower")
+        if hemisphere is None:
+            hemisphere = "upper"
+        if hemisphere.lower() in hemispheres:
+            hemisphere = (hemisphere,)
+        elif hemisphere == "both":
+            ncols = 2
+            hemisphere = hemispheres
+            if show_hemisphere_label != False:  # True or None
+                show_hemisphere_label = True
+
+        # Create new figure and axis/axes
+        if figure is None:
+            figure, axes = plt.subplots(
+                ncols=ncols, subplot_kw=dict(projection=projection), **figure_kwargs,
+            )
+
+        # Make axes iterable
+        axes = [axes] if not hasattr(axes, "__iter__") else axes
+
+        if show_hemisphere_label is None:
+            show_hemisphere_label = False
+
+        # Whether to plot a grid, and with which resolution
+        if grid is None:
+            grid = plt.rcParams["axes.grid"]
+        if grid_resolution is None:
+            grid_resolution = (None,) * 2
+
+        return figure, axes, hemisphere, show_hemisphere_label, grid, grid_resolution
+
+
+PLOT_PROJECTION_DOCSTRING = """
+        projection : str, optional
+            Which projection to use. The default is "stereographic", the
+            only current option.
+"""
+PLOT_FIGURE_DOCSTRING = """
+        figure : matplotlib.figure.Figure, optional
+            Which figure to plot onto. Default is None, which either
+            creates a new figure if :attr:`self.figure` is None, or
+            plots onto the existing figure if the argument passed to
+            `hemisphere` corresponds to the existing figure's
+            hemisphere(s). If the latter is not the case, a new figure
+            is created.
+"""
+PLOT_AXES_LABELS_DOCSTRING = """
+        axes_labels : list of str, optional
+            Reference frame axes labels, defaults to [None, None, None].
+"""
+PLOT_HEMISPHERE_DOCTRING = """
+        hemisphere : str, optional
+            Which hemisphere(s) to plot the vectors in, defaults to
+            None, which means "upper" if a new figure is created,
+            otherwise adds to the current figure. Options are "upper",
+            "lower", and "both", which plots two projections side by
+            side.
+"""
+PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING = """
+        show_hemisphere_label : bool, optional
+            Whether to show hemisphere labels "upper" or "lower".
+            Default is True if `hemisphere` is "both", otherwise False.
+"""
+PLOT_GRID_DOCSTRING = """
+        grid : bool, optional
+            Whether to show the azimuth and polar grid. Default is
+            whatever `axes.grid` is set to in
+            :obj:`matplotlib.rcParams`.
+"""
+PLOT_GRID_RESOLUTION_DOCSTRING = """
+        grid_resolution : tuple, optional
+            Azimuth and polar grid resolution in degrees, as a tuple.
+            Default is whatever is default in
+            :class:`~orix.plot.StereographicPlot.azimuth_grid` and
+            :class:`~orix.plot.StereographicPlot.polar_grid`.
+"""
+PLOT_FIGURE_KWARGS_DOCSTRING = """
+        figure_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
+"""
+PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING = """
+        This is a somewhat customizable convenience method which creates
+        a figure with axes using :class:`~orix.plot.StereographicPlot`,
+        however, it is meant for quick plotting and prototyping. This
+        figure and the axes can also be created using Matplotlib
+        directly, which is more customizable.
+"""
+
+Vector3d.scatter.__doc__ %= (
+    PLOT_PROJECTION_DOCSTRING,
+    PLOT_FIGURE_DOCSTRING,
+    PLOT_AXES_LABELS_DOCSTRING,
+    PLOT_HEMISPHERE_DOCTRING,
+    PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING,
+    PLOT_GRID_DOCSTRING,
+    PLOT_GRID_RESOLUTION_DOCSTRING,
+    PLOT_FIGURE_KWARGS_DOCSTRING,
+    PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING,
+)
+Vector3d.draw_circle.__doc__ %= (
+    PLOT_PROJECTION_DOCSTRING,
+    PLOT_FIGURE_DOCSTRING,
+    PLOT_AXES_LABELS_DOCSTRING,
+    PLOT_HEMISPHERE_DOCTRING,
+    PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING,
+    PLOT_GRID_DOCSTRING,
+    PLOT_GRID_RESOLUTION_DOCSTRING,
+    PLOT_FIGURE_KWARGS_DOCSTRING,
+    PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING,
+)
+Vector3d._setup_plot.__doc__ %= (
+    PLOT_PROJECTION_DOCSTRING,
+    PLOT_FIGURE_DOCSTRING,
+    PLOT_HEMISPHERE_DOCTRING,
+    PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING,
+    PLOT_GRID_DOCSTRING,
+    PLOT_GRID_RESOLUTION_DOCSTRING,
+    PLOT_FIGURE_KWARGS_DOCSTRING,
+)

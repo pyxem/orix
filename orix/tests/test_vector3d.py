@@ -356,6 +356,19 @@ class TestSphericalCoordinates:
         assert np.allclose(vector.data, vector2.data)
 
 
+class TestGetCircle:
+    def test_get_circle(self):
+        v = Vector3d([0, 0, 1])
+        oa = 0.5 * np.pi
+        c = v.get_circle(opening_angle=oa, steps=101)
+
+        assert c.size == 101
+        assert np.allclose(c.z.data, 0)
+        assert np.allclose(v.angle_with(c).data, oa)
+        assert np.allclose(c.mean().data, [0, 0, 0], atol=1e-2)
+        assert np.allclose(v.cross(c[0, 0]).data, [1, 0, 0])
+
+
 class TestPlotting:
     v = Vector3d(
         [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 0, -1], [-1, 0, -1], [-1, -1, -1]]

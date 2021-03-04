@@ -457,6 +457,9 @@ class StereographicPlot(Axes):
         r"""Draw great or small circles with a given `opening_angle` to
         one or multiple vectors.
 
+        A vector must be present in the current hemisphere for its
+        circle to be drawn.
+
         Parameters
         ----------
         args : Vector3d or tuple of float or numpy.ndarray
