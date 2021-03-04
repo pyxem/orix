@@ -198,7 +198,7 @@ StereographicPlot
     text
 .. autoclass:: orix.plot.StereographicPlot
     :show-inheritance:
-    :members: azimuth_grid, hemisphere, name, polar_grid, pole, scatter, set_labels, show_hemisphere_label, symmetry_marker, text
+    :members: azimuth_grid, draw_circle, hemisphere, name, polar_grid, pole, scatter, set_labels, show_hemisphere_label, symmetry_marker, text
 
 ....
 
