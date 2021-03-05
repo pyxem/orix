@@ -25,17 +25,21 @@ axis of a quaternion or the normal to the bounding planes of a spherical
 region.
 """
 
+# Must be imported first
 from orix.vector.vector3d import check_vector, Vector3d
+
+from orix.vector.miller import Miller
 from orix.vector.neo_euler import AxAngle, Homochoric, NeoEuler, Rodrigues
 from orix.vector.spherical_region import SphericalRegion
 
 # Lists what will be imported when calling "from orix.vector import *"
 __all__ = [
     "check_vector",
-    "Vector3d",
     "AxAngle",
     "Homochoric",
+    "Miller",
     "NeoEuler",
     "Rodrigues",
     "SphericalRegion",
+    "Vector3d",
 ]
