@@ -520,10 +520,9 @@ class Vector3d(Object3d):
         Notes
         -----
         A set of `steps` number of vectors equal to each vector is
-        rotated twice to obtain a circle:
-        1. About a perpendicular vector to the current vector at
-        `opening_angle`.
-        2. About the current vector in a full circle.
+        rotated twice to obtain a circle: (1) About a perpendicular
+        vector to the current vector at `opening_angle` and (2) about
+        the current vector in a full circle.
         """
         circles = self.zero((self.size, steps))
         full_circle = np.linspace(0, 2 * np.pi, num=steps, endpoint=True)

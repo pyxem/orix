@@ -426,6 +426,7 @@ Vector3d
     dot_outer
     draw_circle
     from_polar
+    get_circle
     get_nearest
     mean
     rotate
