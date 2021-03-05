@@ -569,16 +569,18 @@ register_projection(StereographicPlot)
 
 
 def _get_array_of_values(value, visible):
-    """Ensure we get a usable array of `value` with the correct size
-    even though `value` doesn't have as many elements as `visible.size`.
+    """Return a usable array of `value` with the correct size
+    even though `value` doesn't have as many elements as `visible.size`,
+    to be iterated over along with `True` elements in `visible`.
 
     Parameters
     ----------
-    value : str, float, or a list of str, float
+    value : str, float, or a list of str or float
         Typically a keyword argument value to be passed to some
         Matplotlib routine.
     visible : numpy.ndarray
-        Boolean array with as many elements as input vectors.
+        Boolean array with as many elements as input vectors, only some
+        of which are visible in the hemisphere (`True`).
 
     Returns
     -------
@@ -589,7 +591,7 @@ def _get_array_of_values(value, visible):
     n = visible.size
     if not isinstance(value, str) and hasattr(value, "__iter__") and len(value) != n:
         value = value[0]
-    if isinstance(value, str) or not hasattr(value, "__iter__") or len(value) != n:
+    if isinstance(value, str) or not hasattr(value, "__iter__"):
         value = [value,] * n
     return np.asarray(value)[visible]
 
