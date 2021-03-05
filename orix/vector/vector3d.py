@@ -642,6 +642,12 @@ class Vector3d(Object3d):
         ----------
         %s
         %s
+        opening_angle : float or numpy.ndarray, optional
+            Opening angle(s) around the vector(s). Default is
+            :math:`\pi/2`, giving a great circle. If an array is passed,
+            its size must be equal to the number of vectors.
+        steps : int, optional
+            Number of vectors to describe each circle, default is 100.
         %s
         %s
         %s
@@ -772,58 +778,49 @@ class Vector3d(Object3d):
         return figure, axes, hemisphere, show_hemisphere_label, grid, grid_resolution
 
 
-PLOT_PROJECTION_DOCSTRING = """
-        projection : str, optional
+PLOT_PROJECTION_DOCSTRING = """projection : str, optional
             Which projection to use. The default is "stereographic", the
             only current option.
-"""
-PLOT_FIGURE_DOCSTRING = """
-        figure : matplotlib.figure.Figure, optional
+    """
+PLOT_FIGURE_DOCSTRING = """figure : matplotlib.figure.Figure, optional
             Which figure to plot onto. Default is None, which creates a
             new figure.
-"""
-PLOT_AXES_LABELS_DOCSTRING = """
-        axes_labels : list of str, optional
+    """
+PLOT_AXES_LABELS_DOCSTRING = """axes_labels : list of str, optional
             Reference frame axes labels, defaults to [None, None, None].
-"""
-PLOT_HEMISPHERE_DOCTRING = """
-        hemisphere : str, optional
+    """
+PLOT_HEMISPHERE_DOCTRING = """hemisphere : str, optional
             Which hemisphere(s) to plot the vectors in, defaults to
             "None", which means "upper" if a new figure is created,
             otherwise adds to the current figure's hemispheres. Options
             are "upper", "lower", and "both", which plots two
             projections side by side.
-"""
-PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING = """
-        show_hemisphere_label : bool, optional
+    """
+PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING = """show_hemisphere_label : bool, optional
             Whether to show hemisphere labels "upper" or "lower".
             Default is True if `hemisphere` is "both", otherwise False.
-"""
-PLOT_GRID_DOCSTRING = """
-        grid : bool, optional
+    """
+PLOT_GRID_DOCSTRING = """grid : bool, optional
             Whether to show the azimuth and polar grid. Default is
             whatever `axes.grid` is set to in
             :obj:`matplotlib.rcParams`.
-"""
-PLOT_GRID_RESOLUTION_DOCSTRING = """
-        grid_resolution : tuple, optional
+    """
+PLOT_GRID_RESOLUTION_DOCSTRING = """grid_resolution : tuple, optional
             Azimuth and polar grid resolution in degrees, as a tuple.
             Default is whatever is default in
             :class:`~orix.plot.StereographicPlot.azimuth_grid` and
             :class:`~orix.plot.StereographicPlot.polar_grid`.
-"""
-PLOT_FIGURE_KWARGS_DOCSTRING = """
-        figure_kwargs : dict, optional
+    """
+PLOT_FIGURE_KWARGS_DOCSTRING = """figure_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
-"""
-PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING = """
-        This is a somewhat customizable convenience method which creates
+    """
+PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING = """This is a somewhat customizable convenience method which creates
         a figure with axes using :class:`~orix.plot.StereographicPlot`,
         however, it is meant for quick plotting and prototyping. This
         figure and the axes can also be created using Matplotlib
         directly, which is more customizable.
-"""
+    """
 Vector3d.scatter.__doc__ %= (
     PLOT_PROJECTION_DOCSTRING,
     PLOT_FIGURE_DOCSTRING,

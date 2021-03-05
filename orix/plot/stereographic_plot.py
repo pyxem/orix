@@ -548,7 +548,7 @@ class StereographicPlot(Axes):
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
                     "arguments"
                 )
-        return azimuth, polar
+        return np.asarray(azimuth), np.asarray(polar)
 
     def _visible_in_hemisphere(self, polar):
         """Return a boolean array describing whether the vector which
