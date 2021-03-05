@@ -496,7 +496,7 @@ class Vector3d(Object3d):
         """
         return self.azimuth, self.polar, self.radial
 
-    def get_circle(self, opening_angle=0.5 * np.pi, steps=100):
+    def get_circle(self, opening_angle=np.pi / 2, steps=100):
         r"""Get vectors delineating great or small circle(s) with a
         given `opening_angle` about each vector.
 
@@ -620,7 +620,7 @@ class Vector3d(Object3d):
         self,
         projection="stereographic",
         figure=None,
-        opening_angle=0.5 * np.pi,
+        opening_angle=np.pi / 2,
         steps=100,
         axes_labels=[None, None, None],
         hemisphere=None,

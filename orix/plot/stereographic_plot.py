@@ -97,13 +97,16 @@ class StereographicAffine(Affine2DBase):
         if self._invalid:
             pole = self.pole
             st = StereographicTransform(pole=pole)
-            xscale, _ = st.transform((0, 0.5 * np.pi))
-            _, yscale = st.transform((0.5 * np.pi, 0.5 * np.pi))
+            xscale, _ = st.transform((0, np.pi / 2))
+            _, yscale = st.transform((np.pi / 2, np.pi / 2))
             scales = (0.5 / xscale, 0.5 / yscale)
             self._mtx = Affine2D().scale(*scales).translate(0.5, 0.5)
             self._inverted = None
             self._invalid = 0
         return self._mtx
+
+
+ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
 
 
 class StereographicPlot(Axes):
@@ -127,12 +130,6 @@ class StereographicPlot(Axes):
     # See this Matplotlib tutorial for explanations of methods:
     # https://matplotlib.org/stable/gallery/misc/custom_projection.html
 
-    # Elements' zorder (let's try to keep this updated!):
-    #   text                6
-    #   scatter             5
-    #   symmetry_element    4
-    #   draw_circle         3
-
     name = "stereographic"
     _hemisphere = "upper"
 
@@ -140,7 +137,7 @@ class StereographicPlot(Axes):
         self._azimuth_cap = 2 * np.pi
         self._azimuth_resolution = azimuth_resolution
 
-        self._polar_cap = 0.5 * np.pi
+        self._polar_cap = np.pi / 2
         self._polar_resolution = polar_resolution
 
         super().__init__(*args, **kwargs)
@@ -242,7 +239,7 @@ class StereographicPlot(Axes):
         --------
         matplotlib.axes.Axes.scatter
         """
-        new_kwargs = dict(zorder=5, clip_on=False)
+        new_kwargs = dict(zorder=ZORDER["scatter"], clip_on=False)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
 
@@ -282,7 +279,7 @@ class StereographicPlot(Axes):
         --------
         matplotlib.axes.Axes.text
         """
-        new_kwargs = dict(va="bottom", ha="center", zorder=6)
+        new_kwargs = dict(va="bottom", ha="center", zorder=ZORDER["text"])
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
 
@@ -347,7 +344,7 @@ class StereographicPlot(Axes):
         """
         new_kwargs = dict(ha="right", va="bottom")
         new_kwargs.update(kwargs)
-        Axes.text(self, 0.75 * np.pi, 0.5 * np.pi, s=self.hemisphere, **new_kwargs)
+        Axes.text(self, 0.75 * np.pi, np.pi / 2, s=self.hemisphere, **new_kwargs)
 
     def azimuth_grid(self, resolution=None):
         """Set the azimuth grid resolution in degrees.
@@ -443,7 +440,7 @@ class StereographicPlot(Axes):
         }
         marker = marker_classes[str(fold)](v, size=kwargs.pop("s", 1))
 
-        new_kwargs = dict(zorder=4, clip_on=False)
+        new_kwargs = dict(zorder=ZORDER["symmetry_marker"], clip_on=False)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
 
@@ -453,7 +450,7 @@ class StereographicPlot(Axes):
         # TODO: Find a way to control padding, so that markers aren't
         #  clipped
 
-    def draw_circle(self, *args, opening_angle=0.5 * np.pi, steps=100, **kwargs):
+    def draw_circle(self, *args, opening_angle=np.pi / 2, steps=100, **kwargs):
         r"""Draw great or small circles with a given `opening_angle` to
         one or multiple vectors.
 
@@ -502,7 +499,7 @@ class StereographicPlot(Axes):
         color2 = _get_array_of_values(value=color, visible=visible)
 
         # Set above which elements circles will appear (zorder)
-        new_kwargs = dict(zorder=3, clip_on=False)
+        new_kwargs = dict(zorder=ZORDER["draw_circle"], clip_on=False)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
 
@@ -536,11 +533,11 @@ class StereographicPlot(Axes):
             Polar coordinates of unit vectors.
         """
         if len(values) == 2:
-            azimuth, polar = values
+            azimuth = np.asarray(values[0])
+            polar = np.asarray(values[1])
         else:
-            value = values[0]
             try:
-                value = value.unit
+                value = values[0].unit
                 azimuth = value.azimuth.data
                 polar = value.polar.data
             except (ValueError, AttributeError):
@@ -548,7 +545,7 @@ class StereographicPlot(Axes):
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
                     "arguments"
                 )
-        return np.asarray(azimuth), np.asarray(polar)
+        return azimuth, polar
 
     def _visible_in_hemisphere(self, polar):
         """Return a boolean array describing whether the vector which
@@ -638,7 +635,7 @@ def _sort_coords_by_shifted_bools(hemisphere, polar_cap, azimuth, polar):
     visible = _visible_in_hemisphere(
         hemisphere=hemisphere, polar_cap=polar_cap, polar=polar
     )
-    indices = np.where(visible != visible[0])[0]
+    indices = np.asarray(visible != visible[0]).nonzero()[0]
     if indices.size != 0:
         to_shift = indices[-1] + 1
         azimuth = np.roll(azimuth, shift=-to_shift)
