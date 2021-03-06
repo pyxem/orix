@@ -12,8 +12,11 @@ Unreleased
 
 Added
 -----
+- Vector3d.scatter() and Vector3d.draw_circle() methods to show unit vectors and
+  great/small circles in stereographic projection
 - User guide with Jupyter notebooks as part of the Read the Docs documentation
-- Stereographic projection using Matplotlib's projections framework
+- Stereographic projection using Matplotlib's projections framework for plotting
+  vectors, great/small circles, and symmetry elements
 - orix.projections module for projecting vectors to various coordinates, including
   stereographic coordinates
 - .ang file writer for CrystalMap objects (via orix.io.save())

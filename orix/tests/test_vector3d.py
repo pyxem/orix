@@ -1,9 +1,28 @@
-from math import pi
+# -*- coding: utf-8 -*-
+# Copyright 2018-2021 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.vector import Vector3d, check_vector
 from orix.scalar import Scalar
+from orix.vector import Vector3d, check_vector
+
 
 vectors = [
     (1, 0, 0),
@@ -223,14 +242,14 @@ def test_xyz(vector, x, y, z):
 @pytest.mark.parametrize(
     "vector, rotation, expected",
     [
-        ((1, 0, 0), pi / 2, (0, 1, 0)),
-        ((1, 1, 0), pi / 2, (-1, 1, 0)),
+        ((1, 0, 0), np.pi / 2, (0, 1, 0)),
+        ((1, 1, 0), np.pi / 2, (-1, 1, 0)),
         (
             (1, 1, 0),
-            [pi / 2, pi, 3 * pi / 2, 2 * pi],
+            [np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi],
             [(-1, 1, 0), (-1, -1, 0), (1, -1, 0), (1, 1, 0)],
         ),
-        ((1, 1, 1), -pi / 2, (1, -1, 1)),
+        ((1, 1, 1), -np.pi / 2, (1, -1, 1)),
     ],
     indirect=["vector"],
 )
@@ -335,3 +354,84 @@ class TestSphericalCoordinates:
             azimuth=azimuth.data, polar=polar.data, radial=radial.data
         )
         assert np.allclose(vector.data, vector2.data)
+
+
+class TestGetCircle:
+    def test_get_circle(self):
+        v = Vector3d([0, 0, 1])
+        oa = 0.5 * np.pi
+        c = v.get_circle(opening_angle=oa, steps=101)
+
+        assert c.size == 101
+        assert np.allclose(c.z.data, 0)
+        assert np.allclose(v.angle_with(c).data, oa)
+        assert np.allclose(c.mean().data, [0, 0, 0], atol=1e-2)
+        assert np.allclose(v.cross(c[0, 0]).data, [1, 0, 0])
+
+
+class TestPlotting:
+    v = Vector3d(
+        [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 0, -1], [-1, 0, -1], [-1, -1, -1]]
+    )
+
+    def test_scatter(self):
+        plt.rcParams["axes.grid"] = False
+        v = self.v
+
+        fig1 = v.scatter(return_figure=True)
+        assert isinstance(fig1, plt.Figure)
+
+        azimuth_res = 15
+        polar_res = 20
+        fig_size = (5, 10)
+        text_size = 20
+        scatter_colors = ["C0", "C1", "C2"] * 2
+        vector_labels = [str(vi).replace(" ", "") for vi in v.data]
+        fig2 = v.scatter(
+            hemisphere="both",
+            grid=True,
+            grid_resolution=(azimuth_res, polar_res),
+            vector_labels=vector_labels,
+            figure_kwargs=dict(figsize=fig_size),
+            text_kwargs=dict(size=text_size),
+            c=scatter_colors,
+            return_figure=True,
+        )
+        assert fig2 != fig1  # New figure
+        assert fig2.get_figwidth() == fig_size[0]
+        assert fig2.get_figheight() == fig_size[1]
+        assert len(fig2.axes) == 2
+        assert fig2.axes[0]._azimuth_resolution == azimuth_res
+        assert fig2.axes[1]._polar_resolution == polar_res
+        assert fig2.axes[0].texts[0].get_text() == "upper"
+        assert fig2.axes[1].texts[0].get_text() == "lower"
+        assert fig2.axes[0].texts[1].get_text() == vector_labels[0]
+        assert fig2.axes[1].texts[1].get_size() == text_size
+
+        fig3 = v.scatter(figure=fig1, return_figure=True)
+        assert fig3 == fig1
+
+        plt.close("all")
+
+    def test_scatter_projection(self):
+        with pytest.raises(
+            NotImplementedError, match="Stereographic is the only supported"
+        ):
+            self.v.scatter(projection="equal_angle")
+
+    def test_draw_circle(self):
+        v = self.v
+        colors = [f"C{i}" for i in range(v.size)]
+        steps = 200
+        fig1 = v.draw_circle(
+            steps=steps,
+            hemisphere="both",
+            return_figure=True,
+            color=colors,
+            linestyle="--",
+        )
+
+        assert isinstance(fig1, plt.Figure)
+        assert len(fig1.axes) == 2
+        assert all(a.hemisphere == h for a, h in zip(fig1.axes, ["upper", "lower"]))
+        assert fig1.axes[0].lines[0]._path._vertices.shape == (steps, 2)
