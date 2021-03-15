@@ -20,7 +20,6 @@ import warnings
 
 import matplotlib.font_manager as fm
 import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from matplotlib.projections import register_projection

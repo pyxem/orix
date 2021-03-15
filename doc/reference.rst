@@ -189,6 +189,7 @@ StereographicPlot
 .. currentmodule:: orix.plot.StereographicPlot
 .. autosummary::
     azimuth_grid
+    draw_circle
     polar_grid
     scatter
     show_hemisphere_label
@@ -196,8 +197,9 @@ StereographicPlot
     symmetry_marker
     text
 .. autoclass:: orix.plot.StereographicPlot
+    :members: azimuth_grid, draw_circle, hemisphere, name, polar_grid, pole, scatter, set_labels, show_hemisphere_label, symmetry_marker, text
+    :undoc-members:
     :show-inheritance:
-    :members: azimuth_grid, hemisphere, name, polar_grid, pole, scatter, set_labels, show_hemisphere_label, symmetry_marker, text
 
 ....
 
@@ -422,10 +424,13 @@ Vector3d
     cross
     dot
     dot_outer
+    draw_circle
     from_polar
+    get_circle
     get_nearest
     mean
     rotate
+    scatter
     to_polar
     xvector
     yvector

@@ -43,8 +43,8 @@ class TestStereographicPlot:
         assert ax.name == PROJ_NAME
         assert ax._polar_cap == 0.5 * np.pi
         assert ax._azimuth_cap == 2 * np.pi
-        assert ax._polar_resolution == 15
-        assert ax._azimuth_resolution == 15
+        assert ax._polar_resolution == 10
+        assert ax._azimuth_resolution == 10
         assert ax.get_data_ratio() == 1
         assert ax.can_pan() is False
         assert ax.can_zoom() is False
@@ -54,7 +54,7 @@ class TestStereographicPlot:
         ax.scatter(v[1].azimuth.data, v[1].polar.data)
 
         with pytest.raises(ValueError, match="Accepts only one "):
-            ax.scatter(v[1].azimuth)
+            ax.scatter(v[0].azimuth.data)
 
         plt.close("all")
 
@@ -67,9 +67,9 @@ class TestStereographicPlot:
             ax.text(vi, s=format_vector(vi))
 
         assert len(ax.texts) == 3
-        assert ax.texts[0]._text == "[001]"
-        assert ax.texts[1]._text == "[-101]"
-        assert ax.texts[2]._text == "[111]"
+        assert ax.texts[0].get_text() == "[001]"
+        assert ax.texts[1].get_text() == "[-101]"
+        assert ax.texts[2].get_text() == "[111]"
 
         plt.close("all")
 
@@ -124,19 +124,19 @@ class TestStereographicPlot:
 
         ax.set_labels("X", None, None)
         assert len(ax.texts) == 1
-        assert ax.texts[0]._text == "X"
+        assert ax.texts[0].get_text() == "X"
         assert np.allclose([ax.texts[0]._x, ax.texts[0]._y], [0, 0.5 * np.pi])
 
         ax.set_labels(None, "TD", None)
         assert len(ax.texts) == 2
-        assert ax.texts[1]._text == "TD"
+        assert ax.texts[1].get_text() == "TD"
         assert np.allclose([ax.texts[1]._x, ax.texts[1]._y], [0.5 * np.pi, 0.5 * np.pi])
 
         ax.hemisphere = "lower"
         ax.set_labels(False, False, color="xkcd:salmon")
         assert len(ax.texts) == 3
-        assert ax.texts[2]._text == "Z"
-        assert ax.texts[2]._color == "xkcd:salmon"
+        assert ax.texts[2].get_text() == "z"
+        assert ax.texts[2].get_color() == "xkcd:salmon"
         assert np.allclose([ax.texts[2]._x, ax.texts[2]._y], [0, np.pi])
 
         plt.close("all")
@@ -147,16 +147,16 @@ class TestStereographicPlot:
         ax[0].scatter(vector.Vector3d([0, 0, 1]))
         ax[0].show_hemisphere_label()
         label_up = ax[0].texts[0]
-        assert label_up._text == "upper"
-        assert label_up._color == "black"
+        assert label_up.get_text() == "upper"
+        assert label_up.get_color() == "black"
         assert np.allclose([label_up._x, label_up._y], [2.356, 1.571], atol=1e-3)
 
         ax[1].hemisphere = "lower"
         ax[1].scatter(vector.Vector3d([0, 0, -1]))
         ax[1].show_hemisphere_label(color="r")
         label_low = ax[1].texts[0]
-        assert label_low._text == "lower"
-        assert label_low._color == "r"
+        assert label_low.get_text() == "lower"
+        assert label_low.get_color() == "r"
         assert np.allclose([label_low._x, label_low._y], [2.356, 1.571], atol=1e-3)
 
         plt.close("all")
@@ -193,6 +193,17 @@ class TestStereographicPlot:
             ).format(a / np.pi, np.rad2deg(a), p / np.pi, np.rad2deg(p))
 
         plt.close("all")
+
+    def test_empty_scatter(self):
+        v = vector.Vector3d([0, 0, 1])
+
+        _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        ax.hemisphere = "lower"
+
+        # Not plotted since the vector isn't visible in this hemisphere
+        ax.scatter(v)
+        ax.text(v, s="1")
+        assert ax.texts == []
 
 
 class TestSymmetryMarker:
@@ -309,3 +320,97 @@ class TestStereographicTransform:
             st.inverted().inverted().transform((0.25 * np.pi, 0.5 * np.pi)),
             (0.5 * np.sqrt(2), 0.5 * np.sqrt(2)),
         )
+
+
+class TestDrawCircle:
+    @pytest.mark.parametrize(
+        "value, visible, desired_array",
+        [
+            ("C0", np.array([1, 1, 1, 0, 1], dtype=bool), ["C0"] * 4),
+            (["C0", "C1"], np.array([1, 1, 1, 0, 1], dtype=bool), ["C0"] * 4),
+        ],
+    )
+    def test_get_array_of_values(self, value, visible, desired_array):
+        assert all(
+            plot.stereographic_plot._get_array_of_values(value=value, visible=visible)
+            == desired_array
+        )
+
+    @pytest.mark.parametrize(
+        "hemisphere, polar_cap, polar, desired_array",
+        [
+            (
+                "upper",
+                0.5 * np.pi,
+                np.deg2rad([60, 90, 120, 150, 180, 30]),
+                np.array([1, 1, 0, 0, 0, 1], dtype=bool),
+            ),
+            (
+                "lower",
+                0.5 * np.pi,
+                np.deg2rad([60, 90, 120, 150, 180, 30]),
+                np.array([0, 0, 1, 1, 1, 0], dtype=bool),
+            ),
+        ],
+    )
+    def test_visible_in_hemisphere(self, hemisphere, polar_cap, polar, desired_array):
+        assert np.allclose(
+            plot.stereographic_plot._visible_in_hemisphere(
+                hemisphere=hemisphere, polar_cap=polar_cap, polar=polar
+            ),
+            desired_array,
+        )
+
+    @pytest.mark.parametrize(
+        "hemisphere, polar_cap, azimuth, polar, desired_azimuth, desired_polar",
+        [
+            (
+                "upper",
+                0.5 * np.pi,
+                np.arange(5),
+                np.deg2rad([60, 90, 120, 150, 180, 30]),
+                np.roll(np.arange(5), shift=-5),
+                np.roll(np.deg2rad([60, 90, 120, 150, 180, 30]), shift=-5),
+            ),
+            (
+                "lower",
+                0.5 * np.pi,
+                np.arange(5),
+                np.deg2rad([60, 90, 120, 150, 180, 30]),
+                np.roll(np.arange(5), shift=-5),
+                np.roll(np.deg2rad([60, 90, 120, 150, 180, 30]), shift=-5),
+            ),
+        ],
+    )
+    def test_sort_coords_by_shifted_bools(
+        self, hemisphere, polar_cap, azimuth, polar, desired_azimuth, desired_polar
+    ):
+        azimuth_out, polar_out = plot.stereographic_plot._sort_coords_by_shifted_bools(
+            hemisphere=hemisphere, polar_cap=polar_cap, azimuth=azimuth, polar=polar,
+        )
+        assert np.allclose(azimuth_out, desired_azimuth)
+        assert np.allclose(polar_out, desired_polar)
+
+    def test_draw_circle(self):
+        v1 = vector.Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
+        v2 = vector.Vector3d(np.append(v1.data, -v1.data, axis=0))
+
+        _, ax = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
+        c = [f"C{i}" for i in range(6)]
+        ax[0].scatter(v2, c=c)
+        ax[0].draw_circle(v2, color=c, steps=100)
+        ax[1].hemisphere = "lower"
+        ax[1].scatter(v2, c=c)
+        ax[1].draw_circle(v2, color=c, steps=150, linewidth=3)
+
+        # Circles
+        assert len(ax[0].lines) == len(ax[1].lines) == 3
+        assert ax[0].lines[0]._path._vertices.shape == (100, 2)
+        assert ax[1].lines[0]._path._vertices.shape == (150, 2)
+
+    def test_draw_circle_empty(self):
+        v1 = vector.Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
+        _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        ax.hemisphere = "lower"
+        ax.draw_circle(v1)
+        assert len(ax.lines) == 0
