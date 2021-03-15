@@ -38,9 +38,8 @@ a mirroring through the x-y plane can be considered an improper rotation of
    :width: 200px
    :alt: 180° rotation followed by inversion, leading to a mirror operation.
    :align: center
-
-
 """
+
 import numpy as np
 from scipy.special import hyp0f1
 
@@ -48,7 +47,7 @@ from orix.quaternion import Quaternion
 from orix.vector import Vector3d
 from orix.scalar import Scalar
 
-_FLOAT_EPS = np.finfo(np.float).eps  # Used to round values below 1e-16 to zero
+_FLOAT_EPS = np.finfo("float").eps  # Used to round values below 1e-16 to zero
 
 
 class Rotation(Quaternion):
@@ -65,7 +64,6 @@ class Rotation(Quaternion):
 
     Rotations can be converted to other parametrizations, notably the neo-Euler
     representations. See :class:`NeoEuler`.
-
     """
 
     def __init__(self, data):
@@ -250,7 +248,6 @@ class Rotation(Quaternion):
         ----------
         neo_euler : NeoEuler
             Vector parametrization of a rotation.
-
         """
         s = np.sin(neo_euler.angle.data / 2)
         a = np.cos(neo_euler.angle.data / 2)
@@ -273,7 +270,6 @@ class Rotation(Quaternion):
         -------
         ndarray
             Array of Euler angles in radians.
-
         """
         if convention != "bunge":
             raise ValueError("The convention you have specified is not supported")
@@ -497,7 +493,6 @@ class Rotation(Quaternion):
         ----------
         shape : tuple
             The shape out of which to construct identity quaternions
-
         """
         data = np.zeros(shape + (4,))
         data[..., 0] = 1
@@ -527,7 +522,6 @@ class Rotation(Quaternion):
         ----------
         shape : int or tuple of int, optional
             The shape of the required object.
-
         """
         shape = (shape,) if isinstance(shape, int) else shape
         n = int(np.prod(shape))
@@ -554,7 +548,6 @@ class Rotation(Quaternion):
             The center of the distribution.
         eps : float
             A small fixed variable.
-
         """
         shape = (shape,) if isinstance(shape, int) else shape
         reference = Rotation(reference)
@@ -600,7 +593,6 @@ def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
     Returns
     -------
     ndarray
-
     """
     angle = x.angle_with(reference)
     return np.exp(2 * alpha * np.cos(angle.data)) / hyp0f1(1.5, alpha ** 2)

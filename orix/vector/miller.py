@@ -24,6 +24,10 @@ from orix.vector import Vector3d
 
 
 class Miller(Vector3d):
+    """Miller indices, describing directions with respect to the crystal
+    reference frame.
+    """
+
     def __init__(self, coordinates, phase=None):
         self.phase = phase
         super().__init__(coordinates)
@@ -74,58 +78,56 @@ class Miller(Vector3d):
 
     @property
     def multiplicity(self) -> Union[int, np.ndarray]:
-        return self.symmetrise(antipodal=True, return_multiplicity=True)[1]
+        return self.symmetrise(antipodal=False, return_multiplicity=True)[1]
 
     def symmetrise(
-        self,
-        antipodal: bool = True,
-        unique: bool = True,
-        return_multiplicity: bool = False,
+        self, antipodal: bool = True, return_multiplicity: bool = False,
     ):
-        """Return planes with symmetrically equivalent Miller indices.
-
-        Parameters
-        ----------
-        antipodal : bool, optional
-            Whether to include antipodal symmetry operations. Default
-            is True.
-        unique : bool, optional
-            Whether to return only distinct indices. Default is True.
-            If True, zero-entries, which are assumed to be degenerate,
-            are removed.
-        return_multiplicity : bool, optional
-            Whether to return the multiplicity of indices. This option
-            is only available if `unique` is True. Default is False.
-
-        Returns
-        -------
-        ReciprocalLatticePoint
-            Planes with Miller indices symmetrically equivalent to the
-            original planes.
-        multiplicity : numpy.ndarray
-            Multiplicity of the original Miller indices. Only returned
-            if `return_multiplicity` is True.
-        """
         # Get symmetry operations
         pg = self.phase.point_group
         operations = pg if antipodal else pg[~pg.improper]
 
-        out = get_equivalent_hkl(
-            hkl=self.hkl,
-            operations=operations,
-            unique=unique,
-            return_multiplicity=return_multiplicity,
-        )
+        new = operations.outer(self)
 
-        # TODO: Enable inheriting classes pass on their properties in this new object
-        # Format output and return
-        if unique and return_multiplicity:
-            multiplicity = out[1]
-            if multiplicity.size == 1:
-                multiplicity = multiplicity[0]
-            return self.__class__(coordinates=out[0], phase=self.phase), multiplicity
-        else:
-            return self.__class__(coordinates=out, phase=self.phase)
+        # Transpose and remove 1-dimensions
+        new = new.flatten().reshape(*new.shape[::-1])
+        new = new.squeeze()
+
+        # Add phase
+        new.phase = self.phase
+
+        return new
+
+    #        multiplicity = None
+    #        if unique:
+    #            n_families = new_hkl.shape[0]
+    #            multiplicity = np.zeros(n_families, dtype=int)
+    #            temp_hkl = new_hkl[0].unique().data
+    #            multiplicity[0] = temp_hkl.shape[0]
+    #            if n_families > 1:
+    #                for i, hkl in enumerate(new_hkl[1:]):
+    #                    temp_hkl2 = hkl.unique()
+    #                    multiplicity[i + 1] = temp_hkl2.size
+    #                    temp_hkl = np.append(temp_hkl, temp_hkl2.data, axis=0)
+    #            new_hkl = Vector3d(temp_hkl[: multiplicity.sum()])
+    #
+    #        # Remove 1-dimensions
+    #        new_hkl = new_hkl.squeeze()
+    #
+    #        if unique and return_multiplicity:
+    #            return new_hkl, multiplicity
+    #        else:
+    #            return new_hkl
+
+    #        # TODO: Enable inheriting classes pass on their properties in this new object
+    #        # Format output and return
+    #        if unique and return_multiplicity:
+    #            multiplicity = out[1]
+    #            if multiplicity.size == 1:
+    #                multiplicity = multiplicity[0]
+    #            return self.__class__(coordinates=out[0], phase=self.phase), multiplicity
+    #        else:
+    #            return self.__class__(coordinates=out, phase=self.phase)
 
     @property
     def allowed(self):

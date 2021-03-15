@@ -674,7 +674,7 @@ class TestCrystalMapGetMapData:
         assert np.issubdtype(xmap.get_map_data(xmap.is_in_data).dtype, np.bool_)
 
     @pytest.mark.parametrize(
-        "dtype_in", [np.uint8, np.int64, np.float32, np.float64, np.bool]
+        "dtype_in", [np.uint8, np.int64, np.float32, np.float64, np.bool_]
     )
     def test_preserve_dtype(self, crystal_map, dtype_in):
         xmap = crystal_map
@@ -683,7 +683,7 @@ class TestCrystalMapGetMapData:
 
         assert xmap.get_map_data(prop_name).dtype == dtype_in
 
-    @pytest.mark.parametrize("dtype_in", [np.bool, np.int64])
+    @pytest.mark.parametrize("dtype_in", [np.bool_, np.int64])
     def test_not_preserve_dtype(self, crystal_map, dtype_in):
         xmap = crystal_map
         prop_name = "new_prop"
