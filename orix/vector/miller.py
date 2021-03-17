@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 
@@ -28,27 +28,79 @@ class Miller(Vector3d):
     reference frame.
     """
 
-    def __init__(self, coordinates, phase=None):
+    def __init__(
+        self,
+        xyz: Optional[Union[np.ndarray, list, tuple]] = None,
+        uvw: Optional[Union[np.ndarray, list, tuple]] = None,
+        hkl: Optional[Union[np.ndarray, list, tuple]] = None,
+        hkil: Optional[Union[np.ndarray, list, tuple]] = None,
+        phase: Optional = None,
+    ):
         self.phase = phase
-        super().__init__(coordinates)
+        self._print_format = "hkl"
+        if xyz is not None:
+            xyz = np.asarray(xyz)
+            self._print_format = "xyz"
+        elif uvw is not None:
+            xyz = _uvw2xyz(uvw=uvw, lattice=phase.structure.lattice)
+            self.print_format = "uvw"
+        elif hkl is not None:
+            xyz = _hkl2xyz(hkl=hkl, lattice=phase.structure.lattice)
+        elif hkil is not None:
+            hkil = np.asarray(hkil)
+            _check_hkil(hkil)
+            hkl = _hkil2hkl(hkil)
+            xyz = _hkl2xyz(hkl=hkl, lattice=phase.structure.lattice)
+            self.print_format = "hkil"
+        else:
+            raise ValueError(
+                "Either `uvw` (direct), `hkl` (reciprocal), `hkil` (reciprocal), or "
+                "`xyz` (assumes direct) coordinates must be passed"
+            )
+        super().__init__(xyz)
 
     def __repr__(self) -> str:
+        name = self.__class__.__name__
+        shape = self.shape
         symmetry = None if self.phase is None else self.phase.point_group.name
-        return (
-            f"{self.__class__.__name__} {self.shape} {symmetry}\n"
-            f"{np.array_str(self.data, precision=4, suppress_small=True)}"
-        )
+        print_format = self.print_format
+        if print_format == "xyz":
+            data = self.data
+        else:
+            data = self.__getattribute__(print_format)
+        data = np.array_str(data, precision=4, suppress_small=True)
+        return f"{name} {shape}, point group {symmetry}, {print_format}\n" f"{data}"
 
     def __getitem__(self, key):
-        return self.__class__(coordinates=self.data[key], phase=self.phase)
+        return self.__class__(xyz=self.data[key], phase=self.phase)
+
+    @property
+    def print_format(self) -> str:
+        return self._print_format
+
+    @print_format.setter
+    def print_format(self, value: str):
+        value = value.lower()
+        formats = ["xyz", "uvw", "hkl", "hkil"]
+        if value not in formats:
+            raise ValueError(f"Available print formats are {formats}")
+        self._print_format = value
 
     @property
     def hkl(self) -> np.ndarray:
-        return self.data
+        return _xyz2hkl(xyz=self.data, lattice=self.phase.structure.lattice)
 
     @hkl.setter
     def hkl(self, value: np.ndarray):
-        self.data = value
+        self.data = _hkl2xyz(hkl=value, lattice=self.phase.struture.lattice)
+
+    @property
+    def hkil(self) -> np.ndarray:
+        return _hkl2hkil(self.hkl)
+
+    @hkil.setter
+    def hkil(self, value: np.ndarray):
+        self.hkl = _hkil2hkl(value)
 
     @property
     def h(self) -> np.ndarray:
@@ -59,14 +111,32 @@ class Miller(Vector3d):
         return self.hkl[..., 1]
 
     @property
+    def i(self) -> np.ndarray:
+        return self.hkil[..., 2]
+
+    @property
     def l(self) -> np.ndarray:
         return self.hkl[..., 2]
 
     @property
-    def hkil(self) -> np.ndarray:
-        hkl = self.hkl
-        # h k -(h+k) l
-        return hkl
+    def uvw(self) -> np.ndarray:
+        return _xyz2uvw(xyz=self.data, lattice=self.phase.structure.lattice)
+
+    @uvw.setter
+    def uvw(self, value: np.ndarray):
+        self.data = _uvw2xyz(uvw=value, lattice=self.phase.structure.lattice)
+
+    @property
+    def u(self) -> np.ndarray:
+        return self.uvw[..., 0]
+
+    @property
+    def v(self) -> np.ndarray:
+        return self.uvw[..., 1]
+
+    @property
+    def w(self) -> np.ndarray:
+        return self.uvw[..., 2]
 
     @property
     def gspacing(self) -> np.ndarray:
@@ -77,60 +147,46 @@ class Miller(Vector3d):
         return 1 / self.gspacing
 
     @property
-    def multiplicity(self) -> Union[int, np.ndarray]:
-        return self.symmetrise(antipodal=False, return_multiplicity=True)[1]
+    def multiplicity(self) -> np.ndarray:
+        return super().symmetrise(
+            symmetry=self.phase.point_group, unique=True, return_multiplicity=True,
+        )[1]
 
-    def symmetrise(
-        self, antipodal: bool = True, return_multiplicity: bool = False,
-    ):
-        # Get symmetry operations
-        pg = self.phase.point_group
-        operations = pg if antipodal else pg[~pg.improper]
+    def symmetrise(self, unique: bool = False, return_index: bool = False):
+        out = super().symmetrise(
+            symmetry=self.phase.point_group,
+            unique=unique,
+            return_multiplicity=False,
+            return_index=return_index,
+        )
+        if return_index:
+            m, idx = out
+            m.phase = self.phase
+            return m, idx
+        else:
+            out.phase = self.phase
+            return out
 
-        new = operations.outer(self)
-
-        # Transpose and remove 1-dimensions
-        new = new.flatten().reshape(*new.shape[::-1])
-        new = new.squeeze()
-
-        # Add phase
-        new.phase = self.phase
-
-        return new
-
-    #        multiplicity = None
-    #        if unique:
-    #            n_families = new_hkl.shape[0]
-    #            multiplicity = np.zeros(n_families, dtype=int)
-    #            temp_hkl = new_hkl[0].unique().data
-    #            multiplicity[0] = temp_hkl.shape[0]
-    #            if n_families > 1:
-    #                for i, hkl in enumerate(new_hkl[1:]):
-    #                    temp_hkl2 = hkl.unique()
-    #                    multiplicity[i + 1] = temp_hkl2.size
-    #                    temp_hkl = np.append(temp_hkl, temp_hkl2.data, axis=0)
-    #            new_hkl = Vector3d(temp_hkl[: multiplicity.sum()])
-    #
-    #        # Remove 1-dimensions
-    #        new_hkl = new_hkl.squeeze()
-    #
-    #        if unique and return_multiplicity:
-    #            return new_hkl, multiplicity
-    #        else:
-    #            return new_hkl
-
-    #        # TODO: Enable inheriting classes pass on their properties in this new object
-    #        # Format output and return
-    #        if unique and return_multiplicity:
-    #            multiplicity = out[1]
-    #            if multiplicity.size == 1:
-    #                multiplicity = multiplicity[0]
-    #            return self.__class__(coordinates=out[0], phase=self.phase), multiplicity
-    #        else:
-    #            return self.__class__(coordinates=out, phase=self.phase)
+    def unique(self, return_index: bool = False, return_inverse: bool = False):
+        out = super().unique(return_index=return_index, return_inverse=return_inverse)
+        if return_index and return_inverse:
+            m, idx, inv = out
+            m.phase = self.phase
+            return m, idx, inv
+        elif return_index and not return_inverse:
+            m, idx = out
+            m.phase = self.phase
+            return m, idx
+        elif not return_index and return_inverse:
+            m, inv = out
+            m.phase = self.phase
+            return m, inv
+        else:
+            out.phase = self.phase
+            return out
 
     @property
-    def allowed(self):
+    def allowed(self) -> np.ndarray:
         """Return whether planes diffract according to structure factor
         selection rules, assuming kinematical scattering theory.
         """
@@ -169,52 +225,46 @@ class Miller(Vector3d):
             raise ValueError(f"The phase {self.phase} must have a space group set")
 
 
-def get_equivalent_hkl(
-    hkl, operations, unique: bool = False, return_multiplicity: bool = False
-):
-    """Return symmetrically equivalent Miller indices.
+def _uvw2xyz(uvw: Union[np.ndarray, list, tuple], lattice) -> np.ndarray:
+    return np.asarray(uvw).dot(lattice.base)
 
-    Parameters
-    ----------
-    hkl : orix.vector.vector3d.Vector3d, numpy.ndarray, list or tuple\
-            of int
-        Miller indices.
-    operations : orix.quaternion.symmetry.Symmetry
-        Point group describing allowed symmetry operations.
-    unique : bool, optional
-        Whether to return only unique Miller indices. Default is False.
-    return_multiplicity : bool, optional
-        Whether to return the multiplicity of the input indices. Default
-        is False.
 
-    Returns
-    -------
-    new_hkl : orix.vector.Vector3d
-        The symmetrically equivalent Miller indices.
-    multiplicity : numpy.ndarray
-        Number of symmetrically equivalent indices. Only returned if
-        `return_multiplicity` is True.
-    """
-    new_hkl = operations.outer(Vector3d(hkl))
-    new_hkl = new_hkl.flatten().reshape(*new_hkl.shape[::-1])
+def _xyz2uvw(xyz: Union[np.ndarray, list, tuple], lattice) -> np.ndarray:
+    return np.linalg.inv(lattice.base.T).dot(xyz.T).T
 
-    multiplicity = None
-    if unique:
-        n_families = new_hkl.shape[0]
-        multiplicity = np.zeros(n_families, dtype=int)
-        temp_hkl = new_hkl[0].unique().data
-        multiplicity[0] = temp_hkl.shape[0]
-        if n_families > 1:
-            for i, hkl in enumerate(new_hkl[1:]):
-                temp_hkl2 = hkl.unique()
-                multiplicity[i + 1] = temp_hkl2.size
-                temp_hkl = np.append(temp_hkl, temp_hkl2.data, axis=0)
-        new_hkl = Vector3d(temp_hkl[: multiplicity.sum()])
 
-    # Remove 1-dimensions
-    new_hkl = new_hkl.squeeze()
+def _hkl2xyz(hkl: Union[np.ndarray, list, tuple], lattice) -> np.ndarray:
+    return np.asarray(hkl).dot(lattice.recbase.T)
 
-    if unique and return_multiplicity:
-        return new_hkl, multiplicity
-    else:
-        return new_hkl
+
+def _xyz2hkl(xyz: np.ndarray, lattice) -> np.ndarray:
+    xyz = np.asarray(xyz)
+    return np.linalg.inv(lattice.recbase).dot(xyz.T).T
+
+
+def _hkl2hkil(hkl: Union[np.ndarray, list, tuple]) -> np.ndarray:
+    hkl = np.asarray(hkl)
+    hkil = np.zeros(hkl.shape[:-1] + (4,))
+    h = hkl[..., 0]
+    k = hkl[..., 1]
+    hkil[..., 0] = h
+    hkil[..., 1] = k
+    hkil[..., 2] = -(h + k)
+    hkil[..., 3] = hkl[..., 2]
+    return hkil
+
+
+def _hkil2hkl(hkil: Union[np.ndarray, list, tuple]) -> np.ndarray:
+    hkil = np.asarray(hkil)
+    hkl = np.zeros(hkil.shape[:-1] + (3,))
+    hkl[..., :2] = hkil[..., :2]
+    hkl[..., 2] = hkil[..., 3]
+    return hkl
+
+
+def _check_hkil(hkil: Union[np.ndarray, list, tuple]):
+    hkil = np.asarray(hkil)
+    if not np.allclose(hkil[..., 0] + hkil[..., 1] + hkil[..., 2], 0, atol=1e-4):
+        raise ValueError(
+            "The Miller-Bravais indices convention h + k + i = 0 is not satisfied"
+        )

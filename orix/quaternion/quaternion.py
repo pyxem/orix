@@ -44,8 +44,6 @@ class Quaternion(Object3d):
         The individual elements of each vector.
     conj : Quaternion
         The conjugate of this quaternion: :math:`q^* = a - bi - cj - dk`
-
-
     """
 
     dim = 4
@@ -153,8 +151,10 @@ class Quaternion(Object3d):
             )
             v = np.stack((x_new, y_new, z_new), axis=-1)
             return other.__class__(v)
+
         raise NotImplementedError(
-            "This operation is currently not avaliable in orix, please use outer with other of type: Quaternion or Vector3d"
+            "This operation is currently not avaliable in orix, please use outer with "
+            "other of type: Quaternion or Vector3d"
         )
 
     def dot(self, other):

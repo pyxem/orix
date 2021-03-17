@@ -19,10 +19,10 @@
 """Three-dimensional quantities.
 
 Vectors can represent positions in three-dimensional space and are also
-commonly associated with motion, possessing both a magnitude and a direction.
-In orix they are often encountered as derived objects such as the rotation
-axis of a quaternion or the normal to the bounding planes of a spherical
-region.
+commonly associated with motion, possessing both a magnitude and a
+direction. In orix they are often encountered as derived objects such as
+the rotation axis of a quaternion or the normal to the bounding planes
+of a spherical region.
 """
 
 # Must be imported first

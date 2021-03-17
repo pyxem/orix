@@ -94,13 +94,13 @@ class Symmetry(Rotation):
 
     @property
     def laue(self):
-        """Symmetry : this group plus inversion"""
-        laue_group = Symmetry.from_generators(self, Ci)
-        return laue_group
+        """Symmetry : this group plus inversion."""
+        return Symmetry.from_generators(self, Ci)
 
     @property
     def laue_proper_subgroup(self):
-        """Symmetry : the proper subgroup of this group plus inversion."""
+        """Symmetry : the proper subgroup of this group plus
+        inversion."""
         return self.laue.proper_subgroup
 
     @property
@@ -117,7 +117,8 @@ class Symmetry(Rotation):
 
     @classmethod
     def from_generators(cls, *generators):
-        """Create a Symmetry from a minimum list of generating transformations.
+        """Create a Symmetry from a minimum list of generating
+        transformations.
 
         Parameters
         ----------
@@ -130,8 +131,8 @@ class Symmetry(Rotation):
 
         Examples
         --------
-        Combining a 180° rotation about [1, -1, 0] with a 4-fold rotoinversion
-        axis along [0, 0, 1]
+        Combining a 180° rotation about [1, -1, 0] with a 4-fold
+        rotoinversion axis along [0, 0, 1]
 
         >>> myC2 = Symmetry([(1, 0, 0, 0), (0, 0.75**0.5, -0.75**0.5, 0)])
         >>> myS4 = Symmetry([(1, 0, 0, 0), (0.5**0.5, 0, 0, 0.5**0.5)])
@@ -404,7 +405,8 @@ _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T
 
 
 def get_distinguished_points(s1, s2=C1):
-    """Points symmetrically equivalent to identity with respect to `s1` and `s2`
+    """Points symmetrically equivalent to identity with respect to `s1`
+    and `s2`.
 
     Parameters
     ----------
@@ -413,7 +415,6 @@ def get_distinguished_points(s1, s2=C1):
     Returns
     -------
     Rotation
-
     """
     distinguished_points = s1.outer(s2).antipodal.unique(antipodal=False)
     return distinguished_points[distinguished_points.angle > 0]
@@ -500,7 +501,10 @@ def get_point_group(space_group_number, proper=False):
 # Analysis 7.2, e.g. point group 432 is entered as 43.
 # Used when reading a phase's point group from an EDAX ANG file header
 point_group_aliases = {
-    "432": ["43",],
     "121": ["20",],
+    "2/m": ["2"],
     "222": ["22",],
+    "422": ["42"],
+    "432": ["43",],
+    "m-3m": ["m3m"],
 }

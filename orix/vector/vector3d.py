@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import warnings
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -530,6 +528,52 @@ class Vector3d(Object3d):
         for i, (v, oa) in enumerate(zip(self.flatten(), opening_angles)):
             circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)
         return circles
+
+    def symmetrise(
+        self,
+        symmetry,
+        unique: bool = False,
+        return_multiplicity: bool = False,
+        return_index: bool = False,
+    ):
+        if return_multiplicity and not unique:
+            raise ValueError("`unique` must be True when `return_multiplicity` is True")
+        elif return_index and not unique:
+            raise ValueError("`unique` must be True when `return_index` is True")
+
+        # Symmetrise with respect to crystal symmetry
+        v = symmetry.outer(self)
+
+        if unique:
+            n_v = v.shape[-1]
+            v2 = self.zero((n_v, symmetry.size))
+            multiplicity = np.zeros(n_v, dtype=int)
+            idx = np.ones(v2.size, dtype=int) * -1
+            l_accum = 0
+            for i in range(n_v):
+                vi = v[:, i].unique(return_index=False)
+                l = vi.size
+                v2[i, :l] = vi
+                multiplicity[i] = l
+                idx[l_accum : l_accum + l] = i
+                l_accum += l
+            non_zero = np.sum(np.abs(v2.data), axis=-1) != 0
+            v3 = self.__class__(v2.data[non_zero])
+            idx = idx[: np.sum(non_zero)]
+        else:
+            v3 = v
+
+        # Flatten and remove 1-dimensions
+        v3 = v3.flatten()
+
+        if return_multiplicity and return_index:
+            return v3, multiplicity, idx
+        elif return_multiplicity and not return_index:
+            return v3, multiplicity
+        elif not return_multiplicity and return_index:
+            return v3, idx
+        else:
+            return v3
 
     def scatter(
         self,

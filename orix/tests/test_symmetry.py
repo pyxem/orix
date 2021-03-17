@@ -237,12 +237,15 @@ def test_laue(symmetry, expected):
     assert symmetry.laue._tuples == expected._tuples
 
 
+def test_is_laue():
+    laue_groups = [Ci, C2h, D2h, C4h, D4h, S6, D3d, C6h, D6h, Th, Oh]
+    assert all(i.contains_inversion for i in laue_groups)
+
+
 @pytest.mark.parametrize(
     "symmetry, expected", [(Cs, C2), (C4v, D4), (Th, T), (Td, O), (O, O), (Oh, O),]
 )
 def test_proper_inversion_subgroup(symmetry, expected):
-    print("Expected\n", expected)
-    print("Calculated\n", symmetry.laue_proper_subgroup)
     assert symmetry.laue_proper_subgroup._tuples == expected._tuples
 
 
