@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from itertools import product
 from typing import Optional, Union
 
 import numpy as np
@@ -32,59 +33,97 @@ class Miller(Vector3d):
         self,
         xyz: Optional[Union[np.ndarray, list, tuple]] = None,
         uvw: Optional[Union[np.ndarray, list, tuple]] = None,
+        uvtw: Optional[Union[np.ndarray, list, tuple]] = None,
         hkl: Optional[Union[np.ndarray, list, tuple]] = None,
         hkil: Optional[Union[np.ndarray, list, tuple]] = None,
-        phase: Optional = None,
+        phase=None,
+        coordinate_format: str = None,
     ):
         self.phase = phase
-        self._print_format = "hkl"
+
         if xyz is not None:
             xyz = np.asarray(xyz)
-            self._print_format = "xyz"
+            in_coords = "xyz"
         elif uvw is not None:
             xyz = _uvw2xyz(uvw=uvw, lattice=phase.structure.lattice)
-            self.print_format = "uvw"
+            in_coords = "uvw"
+        elif uvtw is not None:
+            _check_uvtw(uvtw)
+            uvw = _uvtw2uvw(uvtw=uvtw)
+            xyz = _uvw2xyz(uvw=uvw, lattice=phase.structure.lattice)
+            in_coords = "uvtw"
         elif hkl is not None:
             xyz = _hkl2xyz(hkl=hkl, lattice=phase.structure.lattice)
+            in_coords = "hkl"
         elif hkil is not None:
             hkil = np.asarray(hkil)
             _check_hkil(hkil)
             hkl = _hkil2hkl(hkil)
             xyz = _hkl2xyz(hkl=hkl, lattice=phase.structure.lattice)
-            self.print_format = "hkil"
+            in_coords = "hkil"
         else:
             raise ValueError(
-                "Either `uvw` (direct), `hkl` (reciprocal), `hkil` (reciprocal), or "
-                "`xyz` (assumes direct) coordinates must be passed"
+                "Either `uvw` (direct), `uvtw` (direct), `hkl` (reciprocal), `hkil`"
+                " (reciprocal), or `xyz` (assumes direct) coordinates must be passed"
             )
         super().__init__(xyz)
+
+        if coordinate_format is None:
+            coordinate_format = in_coords
+        self.coordinate_format = coordinate_format
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
         shape = self.shape
         symmetry = None if self.phase is None else self.phase.point_group.name
-        print_format = self.print_format
-        if print_format == "xyz":
-            data = self.data
-        else:
-            data = self.__getattribute__(print_format)
-        data = np.array_str(data, precision=4, suppress_small=True)
-        return f"{name} {shape}, point group {symmetry}, {print_format}\n" f"{data}"
+        coordinate_format = self.coordinate_format
+        data = np.array_str(self._coordinates, precision=4, suppress_small=True)
+        return (
+            f"{name} {shape}, point group {symmetry}, {coordinate_format}\n" f"{data}"
+        )
 
     def __getitem__(self, key):
-        return self.__class__(xyz=self.data[key], phase=self.phase)
+        return self.__class__(
+            xyz=self.data[key],
+            phase=self.phase,
+            coordinate_format=self.coordinate_format,
+        )
 
     @property
-    def print_format(self) -> str:
-        return self._print_format
+    def coordinate_format(self) -> str:
+        return self._coordinate_format
 
-    @print_format.setter
-    def print_format(self, value: str):
+    @coordinate_format.setter
+    def coordinate_format(self, value: str):
         value = value.lower()
-        formats = ["xyz", "uvw", "hkl", "hkil"]
+        formats = ["xyz", "uvw", "uvtw", "hkl", "hkil"]
         if value not in formats:
             raise ValueError(f"Available print formats are {formats}")
-        self._print_format = value
+        self._coordinate_format = value
+
+    @property
+    def _vector_format(self) -> str:
+        coordinate_format = self.coordinate_format
+        if coordinate_format == "xyz":
+            return coordinate_format
+        elif coordinate_format in ["hkl", "hkil"]:
+            return "hkl"
+        else:  # in ["uvw", "uvtw"]
+            return "uvw"
+
+    @property
+    def _coordinates(self):
+        coordinate_format = self.coordinate_format
+        if coordinate_format == "xyz":
+            coordinate_format = "data"
+        return self.__getattribute__(coordinate_format)
+
+    @property
+    def _vector_coordinates(self):
+        vector_format = self._vector_format
+        if vector_format == "xyz":
+            vector_format = "data"
+        return self.__getattribute__(vector_format)
 
     @property
     def hkl(self) -> np.ndarray:
@@ -127,6 +166,15 @@ class Miller(Vector3d):
         self.data = _uvw2xyz(uvw=value, lattice=self.phase.structure.lattice)
 
     @property
+    def uvtw(self) -> np.ndarray:
+        # U = 2u - v, V = 2v - u, T = -(u + v), W = 3w
+        return _uvw2uvtw(self.uvw)
+
+    @uvtw.setter
+    def uvtw(self, value: np.ndarray):
+        self.uvw = _uvtw2uvw(value)
+
+    @property
     def u(self) -> np.ndarray:
         return self.uvw[..., 0]
 
@@ -139,6 +187,22 @@ class Miller(Vector3d):
         return self.uvw[..., 2]
 
     @property
+    def U(self) -> np.ndarray:
+        return self.uvtw[..., 0]
+
+    @property
+    def V(self) -> np.ndarray:
+        return self.uvtw[..., 1]
+
+    @property
+    def T(self) -> np.ndarray:
+        return self.uvtw[..., 2]
+
+    @property
+    def W(self) -> np.ndarray:
+        return self.uvtw[..., 3]
+
+    @property
     def gspacing(self) -> np.ndarray:
         return self.phase.structure.lattice.rnorm(self.hkl)
 
@@ -148,98 +212,146 @@ class Miller(Vector3d):
 
     @property
     def multiplicity(self) -> np.ndarray:
-        return super().symmetrise(
-            symmetry=self.phase.point_group, unique=True, return_multiplicity=True,
-        )[1]
-
-    def symmetrise(self, unique: bool = False, return_index: bool = False):
-        out = super().symmetrise(
-            symmetry=self.phase.point_group,
-            unique=unique,
-            return_multiplicity=False,
-            return_index=return_index,
-        )
-        if return_index:
-            m, idx = out
-            m.phase = self.phase
-            return m, idx
-        else:
-            out.phase = self.phase
-            return out
-
-    def unique(self, return_index: bool = False, return_inverse: bool = False):
-        out = super().unique(return_index=return_index, return_inverse=return_inverse)
-        if return_index and return_inverse:
-            m, idx, inv = out
-            m.phase = self.phase
-            return m, idx, inv
-        elif return_index and not return_inverse:
-            m, idx = out
-            m.phase = self.phase
-            return m, idx
-        elif not return_index and return_inverse:
-            m, inv = out
-            m.phase = self.phase
-            return m, inv
-        else:
-            out.phase = self.phase
-            return out
+        return self.symmetrise(unique=True, return_multiplicity=True)[1]
 
     @property
-    def allowed(self) -> np.ndarray:
-        """Return whether planes diffract according to structure factor
-        selection rules, assuming kinematical scattering theory.
-        """
-        self._raise_if_no_space_group()
+    def _is_hexagonal(self) -> bool:
+        return _is_hexagonal(self.phase.structure.lattice.abcABG()[3:])
 
-        # Translational symmetry
-        centering = self.phase.space_group.short_name[0]
+    @classmethod
+    def from_highest_indices(
+        cls,
+        phase,
+        hkl: Optional[Union[np.ndarray, list, tuple]] = None,
+        uvw: Optional[Union[np.ndarray, list, tuple]] = None,
+    ):
+        if hkl is not None:
+            coordinate_format = "hkl"
+            highest_idx = hkl
+        elif uvw is not None:
+            coordinate_format = "uvw"
+            highest_idx = uvw
+        else:
+            raise ValueError("Either highest `hkl` or `uvw` indices must be passed")
+        idx = _get_indices_from_highest(highest_indices=highest_idx)
+        init_kw = {
+            coordinate_format: idx,
+            "phase": phase,
+            "coordinate_format": coordinate_format,
+        }
+        return cls(**init_kw)
 
-        if centering == "P":  # Primitive
-            if self.phase.space_group.crystal_system == "HEXAGONAL":
-                # TODO: See rules in e.g.
-                #  https://mcl1.ncifcrf.gov/dauter_pubs/284.pdf, Table 4
-                #  http://xrayweb.chem.ou.edu/notes/symmetry.html, Systematic Absences
-                raise NotImplementedError
-            else:  # Any hkl
-                return np.ones(self.size, dtype=bool)
-        elif centering == "F":  # Face-centred, hkl all odd/even
-            selection = np.sum(np.mod(self.hkl, 2), axis=1)
-            return np.array([i not in [1, 2] for i in selection], dtype=bool)
-        elif centering == "I":  # Body-centred, h + k + l = 2n (even)
-            return np.mod(np.sum(self.hkl, axis=1), 2) == 0
-        elif centering == "A":  # Centred on A faces only
-            return np.mod(self.k + self.l, 2) == 0
-        elif centering == "B":  # Centred on B faces only
-            return np.mod(self.h + self.l, 2) == 0
-        elif centering == "C":  # Centred on C faces only
-            return np.mod(self.h + self.k, 2) == 0
-        elif centering in ["R", "H"]:  # Rhombohedral
-            return np.mod(-self.h + self.k + self.l, 3) == 0
+    @classmethod
+    def from_min_dspacing(cls, phase, min_dspacing: float = 0.5):
+        highest_hkl = _get_highest_hkl(
+            lattice=phase.structure.lattice, min_dspacing=min_dspacing
+        )
+        hkl = _get_indices_from_highest(highest_indices=highest_hkl)
+        return cls(hkl=hkl, phase=phase).unique()
 
-    def _raise_if_no_space_group(self):
-        """Raise ValueError if the phase attribute has no space group
-        set.
-        """
-        if self.phase.space_group is None:
-            raise ValueError(f"The phase {self.phase} must have a space group set")
+    def cross(self, other):
+        # TODO: Consider whether to use "zone axis" format instead
+        return self.__class__(
+            xyz=super().cross(other).data,
+            phase=self.phase,
+            coordinate_format=self.coordinate_format,
+        )
+
+    def symmetrise(
+        self,
+        unique: bool = False,
+        return_multiplicity: bool = False,
+        return_index: bool = False,
+    ):
+        if return_multiplicity and not unique:
+            raise ValueError("`unique` must be True when `return_multiplicity` is True")
+        elif return_index and not unique:
+            raise ValueError("`unique` must be True when `return_index` is True")
+
+        # Symmetrise directions with respect to crystal symmetry
+        operations = self.phase.point_group
+        v2 = operations.outer(self)
+
+        if unique:
+            n_v = self.size
+            v3 = self.zero((n_v, operations.size))
+            multiplicity = np.zeros(n_v, dtype=int)
+            idx = np.ones(v3.size, dtype=int) * -1
+            l_accum = 0
+            for i in range(n_v):
+                vi = v2[:, i].unique()
+                l = vi.size
+                v3[i, :l] = vi
+                multiplicity[i] = l
+                idx[l_accum : l_accum + l] = i
+                l_accum += l
+            non_zero = np.sum(np.abs(v3.data), axis=-1) != 0
+            v2 = v3[non_zero]
+            idx = idx[: np.sum(non_zero)]
+
+        v2 = v2.flatten()
+
+        # Carry over crystal structure and coordinate format
+        m = self.__class__(
+            xyz=v2.data, phase=self.phase, coordinate_format=self.coordinate_format
+        )
+
+        if return_multiplicity and return_index:
+            return m, multiplicity, idx
+        elif return_multiplicity and not return_index:
+            return m, multiplicity
+        elif not return_multiplicity and return_index:
+            return m, idx
+        else:
+            return m
+
+    def unique(self, use_symmetry: bool = False, return_index: bool = False):
+        out = super().unique(return_index=return_index)
+        if return_index:
+            v, idx = out
+        else:
+            v = out
+
+        if use_symmetry:
+            operations = self.phase.point_group
+            n_v = v.size
+            v2 = operations.outer(v).flatten().reshape(*(n_v, operations.size))
+            data = v2.data
+            data_sorted = np.zeros_like(data)
+            for i in range(n_v):
+                a = data[i]
+                order = np.lexsort(a.T)  # Sort by column 1, 2, then 3
+                data_sorted[i] = a[order]
+            _, idx = np.unique(data_sorted, return_index=True, axis=0)
+            v = v[idx[::-1]]
+
+        m = self.__class__(
+            xyz=v.data, phase=self.phase, coordinate_format=self.coordinate_format,
+        )
+        if return_index:
+            return m, idx
+        else:
+            return m
 
 
-def _uvw2xyz(uvw: Union[np.ndarray, list, tuple], lattice) -> np.ndarray:
-    return np.asarray(uvw).dot(lattice.base)
+def _uvw2xyz(uvw, lattice):
+    dsm = _direct_structure_matrix(lattice)
+    return dsm.dot(np.asarray(uvw).T).T
 
 
-def _xyz2uvw(xyz: Union[np.ndarray, list, tuple], lattice) -> np.ndarray:
-    return np.linalg.inv(lattice.base.T).dot(xyz.T).T
+def _xyz2uvw(xyz, lattice):
+    rsm = _reciprocal_structure_matrix(lattice)
+    return np.asarray(xyz).dot(rsm)
 
 
-def _hkl2xyz(hkl: Union[np.ndarray, list, tuple], lattice) -> np.ndarray:
-    return np.asarray(hkl).dot(lattice.recbase.T)
+def _hkl2xyz(hkl, lattice):
+    rsm = _reciprocal_structure_matrix(lattice)
+    return rsm.dot(np.asarray(hkl).T).T
 
 
-def _xyz2hkl(xyz: np.ndarray, lattice) -> np.ndarray:
-    xyz = np.asarray(xyz)
-    return np.linalg.inv(lattice.recbase).dot(xyz.T).T
+def _xyz2hkl(xyz, lattice):
+    dsm = _direct_structure_matrix(lattice)
+    return np.asarray(xyz).dot(dsm)
 
 
 def _hkl2hkil(hkl: Union[np.ndarray, list, tuple]) -> np.ndarray:
@@ -264,7 +376,141 @@ def _hkil2hkl(hkil: Union[np.ndarray, list, tuple]) -> np.ndarray:
 
 def _check_hkil(hkil: Union[np.ndarray, list, tuple]):
     hkil = np.asarray(hkil)
-    if not np.allclose(hkil[..., 0] + hkil[..., 1] + hkil[..., 2], 0, atol=1e-4):
+    if not np.allclose(np.sum(hkil[..., :3], axis=-1), 0, atol=1e-4):
         raise ValueError(
             "The Miller-Bravais indices convention h + k + i = 0 is not satisfied"
         )
+
+
+def _uvw2uvtw(uvw: Union[np.ndarray, list, tuple]) -> np.ndarray:
+    uvw = np.asarray(uvw)
+    uvtw = np.zeros(uvw.shape[:-1] + (4,))
+    u = uvw[..., 0]
+    v = uvw[..., 1]
+
+    # DeGraef: U = (2u - v) / 3, V = (2v - u) / 3, T = -(U + V), W = w
+    #    big_u = ((2 * u) - v) / 3
+    #    big_v = ((2 * v) - u) / 3
+    #    uvtw[..., 0] = big_u
+    #    uvtw[..., 1] = big_v
+    #    uvtw[..., 2] = - (big_u + big_v)
+    #    uvtw[..., 3] = uvw[..., 2]
+
+    # MTEX: U = 2u - v, V = 2v - u, T = -(u + v), W = 3w
+    uvtw[..., 0] = 2 * u - v
+    uvtw[..., 1] = 2 * v - u
+    uvtw[..., 2] = -(u + v)
+    uvtw[..., 3] = 3 * uvw[..., 2]
+
+    return uvtw
+
+
+def _uvtw2uvw(uvtw: Union[np.ndarray, list, tuple]) -> np.ndarray:
+    uvtw = np.asarray(uvtw)
+    uvw = np.zeros(uvtw.shape[:-1] + (3,))
+
+    # DeGraef: u = 2U + V, v = 2V + U, w = W
+    #    big_u = uvtw[..., 0]
+    #    big_v = uvtw[..., 1]
+    #    uvw[..., 0] = 2 * big_u + big_v
+    #    uvw[..., 1] = 2 * big_v + big_u
+    #    uvw[..., 2] = uvtw[..., 3]
+
+    # MTEX: u = 2U + V, v = 2V + U, w = W / 3
+    big_u = uvtw[..., 0]
+    big_v = uvtw[..., 1]
+    big_t = uvtw[..., 2]
+    uvw[..., 0] = big_u - big_t
+    uvw[..., 1] = big_v - big_t
+    uvw[..., 2] = uvtw[..., 3]
+    uvw = uvw / 3
+
+    return uvw
+
+
+def _check_uvtw(uvtw: Union[np.ndarray, list, tuple]):
+    uvtw = np.asarray(uvtw)
+    if not np.allclose(np.sum(uvtw[..., :3], axis=-1), 0, atol=1e-4):
+        raise ValueError(
+            "The Miller-Bravais indices convention U + V + T = 0 is not satisfied"
+        )
+
+
+def _is_hexagonal(angles) -> bool:
+    """Determine whether a lattice belongs to the hexagonal lattice
+    family.
+    """
+    return np.allclose(angles, [90, 90, 120])
+
+
+def _get_indices_from_highest(
+    highest_indices: Union[np.ndarray, list, tuple]
+) -> np.ndarray:
+    """Return a list of coordinates from a set of highest indices.
+
+    Parameters
+    ----------
+    highest_indices
+        Highest indices to consider.
+
+    Returns
+    -------
+    indices
+        An array of indices sorted from positive to negative in the
+        first column.
+    """
+    highest_indices = np.asarray(highest_indices)
+    if not np.all(highest_indices >= 0) or np.all(highest_indices == 0):
+        raise ValueError(
+            f"All indices {highest_indices} must be positive with at least one non-zero"
+        )
+    index_ranges = [np.arange(-i, i + 1) for i in highest_indices]
+    indices = np.asarray(list(product(*index_ranges)), dtype=int)
+    indices = indices[~np.all(indices == 0, axis=1)]  # Remove (000)
+    indices = indices[::-1]  # Make e.g. (111) first instead of (-1-1-1)
+    return indices
+
+
+def _get_highest_hkl(lattice, min_dspacing: Optional[float] = 0.5) -> np.ndarray:
+    """Return the highest Miller indices hkl of the plane with a direct
+    space interplanar spacing greater than but closest to a lower
+    threshold.
+
+    Parameters
+    ----------
+    lattice : diffpy.structure.Lattice
+        Crystal lattice.
+    min_dspacing
+        Smallest interplanar spacing to consider. Default is 0.5 Å.
+
+    Returns
+    -------
+    highest_hkl
+        Highest Miller indices.
+    """
+    highest_hkl = np.ones(3, dtype=int)
+    for i in range(3):
+        hkl = np.zeros(3)
+        d = min_dspacing + 1
+        while d > min_dspacing:
+            hkl[i] += 1
+            d = 1 / lattice.rnorm(hkl)
+        highest_hkl[i] = hkl[i]
+    return highest_hkl
+
+
+def _direct_structure_matrix(lattice):
+    a, b, c = lattice.abcABG()[:3]
+    ca, cb, cg = lattice.ca, lattice.cb, lattice.cg
+    sg = lattice.sg
+    return np.array(
+        [
+            [a, b * cg, c * cb],
+            [0, b * sg, -c * (cb * cg - ca) / sg],
+            [0, 0, lattice.volume / (a * b * sg)],
+        ]
+    )
+
+
+def _reciprocal_structure_matrix(lattice):
+    return np.linalg.inv(_direct_structure_matrix(lattice)).T

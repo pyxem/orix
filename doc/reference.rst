@@ -369,6 +369,7 @@ vector
 .. autosummary::
     AxAngle
     Homochoric
+    Miller
     NeoEuler
     Rodrigues
     SphericalRegion
@@ -387,6 +388,13 @@ AxAngle
 Homochoric
 ----------
 .. autoclass:: orix.vector.Homochoric
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Miller
+------
+.. autoclass:: orix.vector.Miller
     :members:
     :undoc-members:
     :show-inheritance:

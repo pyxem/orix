@@ -107,6 +107,7 @@ class StereographicAffine(Affine2DBase):
 
 
 ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
+# ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3, imshow=-1)
 
 
 class StereographicPlot(Axes):
@@ -292,6 +293,12 @@ class StereographicPlot(Axes):
             polar = polar[visible]
 
         super().text(azimuth, polar, **kwargs)
+
+    #    def imshow(self, X, **kwargs):
+    #        ax = self.figure.add_subplot(zorder=ZORDER["imshow"])
+    #        ax.set_aspect(self.get_aspect())
+    #        ax.imshow(X, **kwargs)
+    #        ax.axis("off")
 
     # ----------- Custom attributes and methods below here ----------- #
 
