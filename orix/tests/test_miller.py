@@ -21,10 +21,52 @@ import numpy as np
 
 from orix.crystal_map import Phase
 from orix.vector import Miller
+from orix.vector.miller import _uvw2UVTW, _UVTW2uvw, _round_indices
 
 
 class TestMiller:
     pass
+
+
+class TestMillerBravais:
+    def test_uvw2UVTW(self):
+        """Indices taken from Table 1.1 in 'Introduction to Conventional
+        Transmission Electron Microscopy (DeGraef, 2003)'.
+        """
+        # fmt: off
+        uvw = [
+            [ 1, 0, 0],
+            [ 1, 1, 0],
+            [ 0, 0, 1],
+            [ 0, 1, 1],
+            [ 2, 1, 0],
+            [ 2, 1, 1],
+            [ 0, 1, 0],
+            [-1, 1, 0],
+            [ 1, 0, 1],
+            [ 1, 1, 1],
+            [ 1, 2, 0],
+            [ 1, 1, 2],
+        ]
+        UVTW = [
+            [ 2, -1, -1, 0],
+            [ 1,  1, -2, 0],
+            [ 0,  0,  0, 1],
+            [-1,  2, -1, 3],
+            [ 1,  0, -1, 0],
+            [ 1,  0, -1, 1],
+            [-1,  2, -1, 0],
+            [-1,  1,  0, 0],
+            [ 2, -1, -1, 3],
+            [ 1,  1, -2, 3],
+            [ 0,  1, -1, 0],
+            [ 1,  1, -2, 6],
+        ]
+        # fmt: on
+        assert np.allclose(_round_indices(_uvw2UVTW(uvw)), UVTW)
+        assert np.allclose(_round_indices(_UVTW2uvw(UVTW)), uvw)
+        assert np.allclose(_round_indices(_uvw2UVTW(_UVTW2uvw(UVTW))), UVTW)
+        assert np.allclose(_round_indices(_UVTW2uvw(_uvw2UVTW(uvw))), uvw)
 
 
 # Run tests for all systems: $ pytest -k TestMillerPointGroups
