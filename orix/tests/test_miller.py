@@ -18,14 +18,81 @@
 
 from diffpy.structure import Lattice, Structure
 import numpy as np
+import pytest
 
 from orix.crystal_map import Phase
 from orix.vector import Miller
-from orix.vector.miller import _uvw2UVTW, _UVTW2uvw, _round_indices
+from orix.vector.miller import _round_indices, _uvw2UVTW, _UVTW2uvw
+
+
+TETRAGONAL_LATTICE = Lattice(0.5, 0.5, 1, 90, 90, 90)
+TETRAGONAL_PHASE = Phase(
+    point_group="321", structure=Structure(lattice=TETRAGONAL_LATTICE)
+)
+TRIGONAL_PHASE = Phase(
+    point_group="321", structure=Structure(lattice=Lattice(4.9, 4.9, 5.4, 90, 90, 120))
+)
 
 
 class TestMiller:
-    pass
+    def test_init_raises(self):
+        with pytest.raises(ValueError, match="Either *"):
+            _ = Miller(phase=Phase(point_group="m-3m"))
+
+    def test_repr(self):
+        m = Miller(hkil=[1, 1, -2, 0], phase=TETRAGONAL_PHASE)
+        assert repr(m) == ("Miller (1,), point group 321, hkil\n" "[[ 1.  1. -2.  0.]]")
+
+    def test_coordinate_format(self):
+        pass
+
+    def test_set_coordinates(self):
+        pass
+
+    def test_length(self):
+        # Direct lattice vectors
+        m1 = Miller(uvw=[0, -0.5, 0.5], phase=TETRAGONAL_PHASE)
+        assert np.allclose(m1.length, 0.559, atol=1e-3)
+
+        # Reciprocal lattice vectors
+        m2 = Miller(hkl=[[1, 2, 0], [3, 1, 1]], phase=TETRAGONAL_PHASE)
+        assert np.allclose(m2.length, [4.472, 6.403], atol=1e-3)
+        assert np.allclose(1 / m2.length, [0.224, 0.156], atol=1e-3)
+
+        # Vectors
+        m3 = Miller(xyz=[[1, 0, 0], [0, 1, 0], [0, 0, 1]], phase=TETRAGONAL_PHASE)
+        assert np.allclose(m3.length, [1, 1, 1])
+
+    def test_init_from_highest_indices(self):
+        pass
+
+    def test_init_from_min_dspacing(self):
+        pass
+
+    def test_deepcopy(self):
+        pass
+
+    def test_get_nearest(self):
+        Miller(uvw=[1, 0, 0], phase=TETRAGONAL_PHASE).get_nearest() == NotImplemented
+
+    def test_mean(self):
+        pass
+
+    def test_round(self):
+        pass
+
+    def test_symmetrise_raises(self):
+        m = Miller(uvw=[1, 0, 0], phase=TETRAGONAL_PHASE)
+        with pytest.raises(ValueError, match="`unique` must be True when"):
+            _ = m.symmetrise(return_multiplicity=True)
+        with pytest.raises(ValueError, match="`unique` must be True when"):
+            _ = m.symmetrise(return_index=True)
+
+    def test_symmetrise(self):
+        pass
+
+    def test_unique(self):
+        pass
 
 
 class TestMillerBravais:
@@ -63,10 +130,137 @@ class TestMillerBravais:
             [ 1,  1, -2, 6],
         ]
         # fmt: on
+
         assert np.allclose(_round_indices(_uvw2UVTW(uvw)), UVTW)
         assert np.allclose(_round_indices(_UVTW2uvw(UVTW)), uvw)
         assert np.allclose(_round_indices(_uvw2UVTW(_UVTW2uvw(UVTW))), UVTW)
         assert np.allclose(_round_indices(_UVTW2uvw(_uvw2UVTW(uvw))), uvw)
+
+        m1 = Miller(uvw=uvw, phase=TETRAGONAL_PHASE)
+        m2 = Miller(UVTW=UVTW, phase=TETRAGONAL_PHASE)
+        assert np.allclose(m1.unit.data, m2.unit.data)
+
+    def test_trigonal_crystal(self):
+        # Examples from MTEX' documentation:
+        # https://mtex-toolbox.github.io/CrystalDirections.html
+        m = Miller(UVTW=[2, 1, -3, 1], phase=TRIGONAL_PHASE)
+        assert np.allclose(m.U + m.V + m.T, 0)
+        n = Miller(hkil=[1, 1, -2, 3], phase=TRIGONAL_PHASE)
+        assert np.allclose(n.h + n.k + n.i, 0)
+
+        m.coordinate_format = "uvw"
+        mround = m.round()
+        assert np.allclose(mround.uvw, [5, 4, 1])
+        assert np.allclose([mround.u[0], mround.v[0], mround.w[0]], [5, 4, 1])
+
+        n.coordinate_format = "UVTW"
+        nround = n.round()
+        assert np.allclose(nround.UVTW, [3, 3, -6, 11])
+        assert np.allclose(
+            [nround.U[0], nround.V[0], nround.T[0], nround.W[0]], [3, 3, -6, 11]
+        )
+
+        # Examples from MTEX' documentation:
+        # https://mtex-toolbox.github.io/CrystalOperations.html
+        m1 = Miller(hkil=[1, -1, 0, 0], phase=TRIGONAL_PHASE)
+        m2 = Miller(hkil=[1, 0, -1, 0], phase=TRIGONAL_PHASE)
+        assert np.allclose(m1.cross(m2).round().UVTW, [0, 0, 0, 1])
+
+        m3 = Miller(UVTW=[0, 0, 0, 1], phase=TRIGONAL_PHASE)
+        m4 = Miller(UVTW=[1, -2, 1, 3], phase=TRIGONAL_PHASE)
+        assert np.allclose(m3.cross(m4).round().hkil, [1, 0, -1, 0])
+
+        m5 = m4.symmetrise(unique=True)
+        assert m5.size == 6
+        # fmt: off
+        assert np.allclose(
+            m5.coordinates,
+            [
+                [ 1, -2,  1,  3],
+                [ 1,  1, -2,  3],
+                [-2,  1,  1,  3],
+                [ 1,  1, -2, -3],
+                [-2,  1,  1, -3],
+                [ 1, -2,  1, -3],
+            ]
+        )
+        # fmt: on
+
+        m6 = Miller(hkil=[1, 1, -2, 0], phase=TRIGONAL_PHASE)
+        m7 = Miller(hkil=[-1, -1, 2, 0], phase=TRIGONAL_PHASE)
+
+        assert np.allclose(np.rad2deg(m6.angle_with(m7).data[0]), 180)
+        assert np.allclose(np.rad2deg(m6.angle_with(m7, use_symmetry=True).data[0]), 60)
+
+    def test_convention_not_met(self):
+        with pytest.raises(ValueError, match="The Miller-Bravais indices convention"):
+            _ = Miller(hkil=[1, 1, -1, 0], phase=TETRAGONAL_PHASE)
+        with pytest.raises(ValueError, match="The Miller-Bravais indices convention"):
+            _ = Miller(UVTW=[1, 1, -1, 0], phase=TETRAGONAL_PHASE)
+
+    def test_mtex_convention(self):
+        pass
+
+
+class TestDeGraefExamples:
+    # Tests from examples in chapter 1 in Introduction to Conventional
+    # Transmission Electron Microscopy (DeGraef, 2003)
+    def test_tetragonal_crystal(self):
+        # a = b = 0.5 nm, c = 1 nm
+        lattice = TETRAGONAL_LATTICE
+
+        # Example 1.1: Direct metric tensor
+        assert np.allclose(lattice.metrics, [[0.25, 0, 0], [0, 0.25, 0], [0, 0, 1]])
+
+        # Example 1.2: Distance between two points (length of a vector)
+        answer = np.sqrt(5) / 4  # nm
+        p1 = np.array([0.5, 0, 0.5])
+        p2 = np.array([0.5, 0.5, 0])
+        assert np.allclose(lattice.dist(p1, p2), answer)
+        m1 = Miller(uvw=p1 - p2, phase=TETRAGONAL_PHASE)
+        assert np.allclose(m1.length, answer)
+
+        # Example 1.3, 1.4: Dot product and angle between two directions
+        m2 = Miller(uvw=[1, 2, 0], phase=TETRAGONAL_PHASE)
+        m3 = Miller(uvw=[3, 1, 1], phase=TETRAGONAL_PHASE)
+        assert np.allclose(m2.dot(m3).data, 5 / 4)  # nm^2
+        assert np.allclose(np.rad2deg(m2.angle_with(m3).data[0]), 53.30, atol=0.01)
+
+        # Example 1.5: Reciprocal metric tensor
+        lattice_recip = lattice.reciprocal()
+        assert np.allclose(lattice_recip.metrics, [[4, 0, 0], [0, 4, 0], [0, 0, 1]])
+
+        # Example 1.6, 1.7: Angle between two plane normals
+        m4 = Miller(hkl=[1, 2, 0], phase=TETRAGONAL_PHASE)
+        m5 = Miller(hkl=[3, 1, 1], phase=TETRAGONAL_PHASE)
+        assert np.allclose(np.rad2deg(m4.angle_with(m5).data[0]), 45.7, atol=0.1)
+
+        # Example 1.8: Reciprocal components of a lattice vector
+        m6 = Miller(uvw=[1, 1, 4], phase=TETRAGONAL_PHASE)
+        assert np.allclose(m6.hkl, [0.25, 0.25, 4])
+        m7 = Miller(hkl=m6.hkl, phase=TETRAGONAL_PHASE)
+        assert np.allclose(m7.round().hkl, [1, 1, 16])
+
+        # Example 1.9: Reciprocal lattice parameters
+        assert np.allclose(lattice_recip.abcABG(), [2, 2, 1, 90, 90, 90])
+
+        # Example 1.10, 1.11: Cross product of two directions
+        m8 = Miller(uvw=[1, 1, 0], phase=TETRAGONAL_PHASE)
+        m9 = Miller(uvw=[1, 1, 1], phase=TETRAGONAL_PHASE)
+        m10 = m8.cross(m9)
+        assert m10.coordinate_format == "hkl"
+        assert np.allclose(m10.coordinates, [0.25, -0.25, 0])
+        assert np.allclose(m10.uvw, [1, -1, 0])
+        assert np.allclose(m10.round().coordinates, [1, -1, 0])
+
+        # Example 1.12: Cross product of two reciprocal lattice vectors
+        m11 = Miller(hkl=[1, 1, 0], phase=TETRAGONAL_PHASE)
+        m12 = Miller(hkl=[1, 1, 1], phase=TETRAGONAL_PHASE)
+        m13 = m11.cross(m12)
+        assert m13.coordinate_format == "uvw"
+        assert np.allclose(m13.coordinates, [4, -4, 0])
+        assert np.allclose(m13.hkl, [1, -1, 0])
+        assert np.allclose(m13.round().coordinates, [1, -1, 0])
 
 
 # Run tests for all systems: $ pytest -k TestMillerPointGroups

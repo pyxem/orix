@@ -260,6 +260,9 @@ class Miller(Vector3d):
     def deepcopy(self):
         return deepcopy(self)
 
+    def get_nearest(self):
+        return NotImplemented
+
     def mean(self, use_symmetry: bool = False):
         if use_symmetry:
             return NotImplemented
