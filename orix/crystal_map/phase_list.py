@@ -181,7 +181,6 @@ class Phase:
                     value = correct
                     break
             for point_group in _groups:
-                #                if value.replace("-", "") == point_group.name.replace("-", ""):
                 if value == point_group.name:
                     value = point_group
                     break

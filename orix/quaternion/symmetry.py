@@ -222,34 +222,11 @@ class Symmetry(Rotation):
         sr = SphericalRegion(n.unique())
         return sr
 
-    def fundamental_sector2(self):
-        from orix.vector.spherical_region import SphericalRegion
-
-        name = self.name
-        vx = Vector3d.xvector().data.squeeze()
-        vy = Vector3d.yvector().data.squeeze()
-        vz = Vector3d.zvector().data.squeeze()
-        if name in ["1", "-1"]:
-            n = vz
-        elif name in ["211", "121", "112", "2"]:
-            n = vz
-        elif name in ["m11", "1m1", "11m", "m"]:
-            pass
-        elif name in ["m-3", "432"]:
-            n = [[0, -1, 1], [-1, 0, 1], vx, vy, vz]
-        elif name in "-43m":
-            n = [[1, -1, 0], [1, 1, 0], [-1, 0, 1]]
-        elif name == "m-3m":
-            n = [[1, -1, 0], [-1, 0, 1], vy]
-        n = Vector3d(n)
-        return SphericalRegion(n.unique())
-
 
 # Triclinic
 C1 = Symmetry((1, 0, 0, 0))
 C1.name = "1"
 Ci = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)])
-# Ci = Symmetry([(-1, 0, 0, 0), (1, 0, 0, 0)])
 Ci.improper = [0, 1]
 Ci.name = "-1"
 

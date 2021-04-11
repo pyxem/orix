@@ -210,10 +210,6 @@ class Miller(Vector3d):
             coordinate_format=self.coordinate_format,
         )
 
-    @property
-    def _is_hexagonal(self) -> bool:
-        return _is_hexagonal(self.phase.structure.lattice.abcABG()[3:])
-
     @classmethod
     def from_highest_indices(
         cls,
@@ -468,11 +464,6 @@ def _check_UVTW(UVTW: Union[np.ndarray, list, tuple]):
         )
 
 
-def _is_hexagonal(angles) -> bool:
-    """Whether a lattice belongs to the hexagonal lattice family."""
-    return np.allclose(angles, [90, 90, 120])
-
-
 def _get_indices_from_highest(
     highest_indices: Union[np.ndarray, list, tuple]
 ) -> np.ndarray:
@@ -529,6 +520,7 @@ def _get_highest_hkl(lattice, min_dspacing: Optional[float] = 0.5) -> np.ndarray
     return highest_hkl
 
 
+# TODO: Implement in diffpy.structure.Lattice
 def _direct_structure_matrix(lattice):
     a, b, c = lattice.abcABG()[:3]
     ca, cb, cg = lattice.ca, lattice.cb, lattice.cg
@@ -542,42 +534,9 @@ def _direct_structure_matrix(lattice):
     )
 
 
+# TODO: Implement in diffpy.structure.Lattice
 def _reciprocal_structure_matrix(lattice):
     return np.linalg.inv(_direct_structure_matrix(lattice)).T
-
-
-def _round_indices_emsoft(indices: Union[np.ndarray, list, tuple]) -> np.ndarray:
-    """Round a set of index triplet (Miller) or quartet (Miller-Bravais)
-    to the smallest integers.
-
-    Adopted from EMsoft's IndexReduce subroutine.
-
-    Parameters
-    ----------
-    indices
-        Set of index triplet(s) or quartet(s) to round.
-
-    Return
-    ------
-    new_indices
-        Rounded set of index triplet(s) or quartet(s).
-    """
-    indices = np.asarray(indices).round(decimals=_PRECISION)
-    n_idx = indices.shape[-1]
-    size = indices.size // n_idx
-    m = np.ones(size) * 1e6  # A large number
-    for i in range(n_idx):
-        ii = indices[..., i]
-        m = np.where((abs(ii) < m) * (ii != 0), abs(ii), m)
-    new_indices = np.zeros_like(indices)
-    n = np.zeros(size)
-    for i in range(n_idx):
-        new_idx = indices[..., i] / m
-        new_indices[..., i] = new_idx
-        new_idx2 = np.sign(new_idx) * np.ceil(abs(new_idx))
-        n = np.where(abs(new_idx - new_idx2) == 0, n + 1, n)
-    m = np.where(n == n_idx, 1, m)
-    return (new_indices * m[:, np.newaxis]).astype(int)
 
 
 def _round_indices(

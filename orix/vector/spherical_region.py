@@ -36,8 +36,6 @@ array([ True, False, False], dtype=bool)
 array([ True, False,  True], dtype=bool)
 """
 
-from itertools import combinations
-
 import numpy as np
 
 from orix.vector import Vector3d
@@ -56,7 +54,6 @@ class SphericalRegion(Vector3d):
         Returns
         -------
         ndarray
-
         """
         return np.all(self.dot_outer(x) > 1e-9, axis=0)
 
@@ -70,38 +67,5 @@ class SphericalRegion(Vector3d):
         Returns
         -------
         ndarray
-
         """
         return np.all(self.dot_outer(x) > -1e-9, axis=0)
-
-    @property
-    def vertices(self):
-        n = self.size
-        vertices = self.zero((n,))
-        i_next = np.arange(1, n + 1)
-        i_next[-1] = 0
-        for i in range(n):
-            i_n = i_next[i]
-            vertices[i_n] = self[i_n].cross(self[i]).squeeze()
-        return Vector3d(vertices).unit
-
-    @property
-    def center(self):
-        return self.vertices.mean()
-
-    @property
-    def edges(self):
-        steps = 100
-        c = self.get_circle(steps=steps)
-        edges = np.zeros((self.size * steps + 3, 3))
-        vertices = self.vertices
-        j = 0
-        for i, ci in enumerate(c):
-            edges[j] = vertices[i].data
-            j += 1
-            ci_inside = ci[ci <= self]
-            ci_n = ci_inside.size
-            edges[j : j + ci_n] = ci_inside.data
-            j += ci_n
-        edges = edges[:j]
-        return Vector3d(edges)
