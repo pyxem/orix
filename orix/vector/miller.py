@@ -102,7 +102,7 @@ class Miller(Vector3d):
     def coordinate_format(self, value: str):
         formats = ["xyz", "uvw", "UVTW", "hkl", "hkil"]
         if value not in formats:
-            raise ValueError(f"Available print formats are {formats}")
+            raise ValueError(f"Available coordinate formats are {formats}")
         self._coordinate_format = value
 
     @property

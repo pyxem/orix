@@ -43,8 +43,10 @@ class TestMiller:
         m = Miller(hkil=[1, 1, -2, 0], phase=TETRAGONAL_PHASE)
         assert repr(m) == ("Miller (1,), point group 321, hkil\n" "[[ 1.  1. -2.  0.]]")
 
-    def test_coordinate_format(self):
-        pass
+    def test_coordinate_format_raises(self):
+        m = Miller(hkl=[1, 1, 1], phase=TETRAGONAL_PHASE)
+        with pytest.raises(ValueError, match="Available coordinate formats are "):
+            m.coordinate_format = "abc"
 
     def test_set_coordinates(self):
         pass
@@ -70,7 +72,11 @@ class TestMiller:
         pass
 
     def test_deepcopy(self):
-        pass
+        m = Miller(hkl=[1, 1, 0], phase=TETRAGONAL_PHASE)
+        m2 = m.deepcopy()
+        m2.coordinate_format = "uvw"
+        assert m2.coordinate_format == "uvw"
+        assert m.coordinate_format == "hkl"
 
     def test_get_nearest(self):
         Miller(uvw=[1, 0, 0], phase=TETRAGONAL_PHASE).get_nearest() == NotImplemented
@@ -137,8 +143,14 @@ class TestMillerBravais:
         assert np.allclose(_round_indices(_UVTW2uvw(_uvw2UVTW(uvw))), uvw)
 
         m1 = Miller(uvw=uvw, phase=TETRAGONAL_PHASE)
+        assert np.allclose(m1.uvw, uvw)
         m2 = Miller(UVTW=UVTW, phase=TETRAGONAL_PHASE)
+        assert np.allclose(m2.UVTW, UVTW)
         assert np.allclose(m1.unit.data, m2.unit.data)
+
+        # MTEX convention
+        assert np.allclose(_uvw2UVTW(uvw, convention="mtex") / 3, _uvw2UVTW(uvw))
+        assert np.allclose(_UVTW2uvw(UVTW, convention="mtex") * 3, _UVTW2uvw(UVTW))
 
     def test_trigonal_crystal(self):
         # Examples from MTEX' documentation:
