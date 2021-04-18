@@ -55,7 +55,7 @@ class Miller(Vector3d):
         passed.
 
         The vectors are stored internally as cartesian coordinates in
-        the :attr:`data` attribute.
+        the `data` attribute.
 
         Parameters
         ----------
