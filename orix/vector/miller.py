@@ -119,7 +119,7 @@ class Miller(Vector3d):
 
     @hkl.setter
     def hkl(self, value: np.ndarray):
-        self.data = _hkl2xyz(hkl=value, lattice=self.phase.struture.lattice)
+        self.data = _hkl2xyz(hkl=value, lattice=self.phase.structure.lattice)
 
     @property
     def hkil(self) -> np.ndarray:
@@ -266,11 +266,10 @@ class Miller(Vector3d):
     def mean(self, use_symmetry: bool = False):
         if use_symmetry:
             return NotImplemented
-        new_fmt = dict(hkl="uvw", uvw="hkl", hkil="UVTW", UVTW="hkil")
         return self.__class__(
             xyz=super().mean().data,
             phase=self.phase,
-            coordinate_format=new_fmt[self.coordinate_format],
+            coordinate_format=self.coordinate_format,
         )
 
     def round(self, max_index: int = 20):
@@ -495,17 +494,16 @@ def _get_indices_from_highest(
     return indices
 
 
-def _get_highest_hkl(lattice, min_dspacing: Optional[float] = 0.5) -> np.ndarray:
+def _get_highest_hkl(lattice, min_dspacing: Optional[float] = 0.05) -> np.ndarray:
     """Return the highest Miller indices hkl of the plane with a direct
-    space interplanar spacing greater than but closest to a lower
-    threshold.
+    space interplanar spacing closest to a threshold.
 
     Parameters
     ----------
     lattice : diffpy.structure.Lattice
         Crystal lattice.
     min_dspacing
-        Smallest interplanar spacing to consider. Default is 0.5 Å.
+        Smallest interplanar spacing to consider. Default is 0.05 nm.
 
     Returns
     -------
@@ -515,11 +513,12 @@ def _get_highest_hkl(lattice, min_dspacing: Optional[float] = 0.5) -> np.ndarray
     highest_hkl = np.ones(3, dtype=int)
     for i in range(3):
         hkl = np.zeros(3)
-        d = min_dspacing + 1
+        hkl[i] = 1
+        d = 1 / lattice.rnorm(hkl)
         while d > min_dspacing:
             hkl[i] += 1
             d = 1 / lattice.rnorm(hkl)
-        highest_hkl[i] = hkl[i]
+        highest_hkl[i] = hkl[i] - 1
     return highest_hkl
 
 

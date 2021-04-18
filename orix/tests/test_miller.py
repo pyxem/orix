@@ -21,17 +21,19 @@ import numpy as np
 import pytest
 
 from orix.crystal_map import Phase
+from orix.quaternion import Orientation
 from orix.vector import Miller
 from orix.vector.miller import _round_indices, _uvw2UVTW, _UVTW2uvw
 
 
 TETRAGONAL_LATTICE = Lattice(0.5, 0.5, 1, 90, 90, 90)
 TETRAGONAL_PHASE = Phase(
-    point_group="321", structure=Structure(lattice=TETRAGONAL_LATTICE)
+    point_group="4", structure=Structure(lattice=TETRAGONAL_LATTICE)
 )
 TRIGONAL_PHASE = Phase(
     point_group="321", structure=Structure(lattice=Lattice(4.9, 4.9, 5.4, 90, 90, 120))
 )
+CUBIC_PHASE = Phase(point_group="m-3m")
 
 
 class TestMiller:
@@ -40,7 +42,7 @@ class TestMiller:
             _ = Miller(phase=Phase(point_group="m-3m"))
 
     def test_repr(self):
-        m = Miller(hkil=[1, 1, -2, 0], phase=TETRAGONAL_PHASE)
+        m = Miller(hkil=[1, 1, -2, 0], phase=TRIGONAL_PHASE)
         assert repr(m) == ("Miller (1,), point group 321, hkil\n" "[[ 1.  1. -2.  0.]]")
 
     def test_coordinate_format_raises(self):
@@ -49,7 +51,38 @@ class TestMiller:
             m.coordinate_format = "abc"
 
     def test_set_coordinates(self):
-        pass
+        m = Miller(xyz=[1, 2, 0], phase=TETRAGONAL_PHASE)
+        assert np.allclose(m.data, m.coordinates)
+
+    def test_set_hkl_hkil(self):
+        m1 = Miller(hkl=[[1, 1, 1], [2, 0, 0]], phase=TETRAGONAL_PHASE)
+        assert np.allclose(m1.data, [[2, 2, 1], [4, 0, 0]])
+        assert np.allclose([m1.h, m1.k, m1.l], [[1, 2], [1, 0], [1, 0]])
+        m1.hkl = [[1, 2, 0], [1, 1, 0]]
+        assert np.allclose(m1.data, [[2, 4, 0], [2, 2, 0]])
+        assert np.allclose([m1.h, m1.k, m1.l], [[1, 1], [2, 1], [0, 0]])
+
+        m2 = Miller(hkil=[[1, 1, -2, 1], [2, 0, -2, 0]], phase=TRIGONAL_PHASE)
+        assert np.allclose(m2.data, [[0.20, 0.35, 0.19], [0.41, 0.24, 0]], atol=0.01)
+        assert np.allclose([m2.h, m2.k, m2.i, m2.l], [[1, 2], [1, 0], [-2, -2], [1, 0]])
+        m2.hkil = [[1, 2, -3, 1], [2, 1, -3, 1]]
+        assert np.allclose(m2.data, [[0.20, 0.59, 0.19], [0.41, 0.47, 0.19]], atol=0.01)
+        assert np.allclose([m2.h, m2.k, m2.i, m2.l], [[1, 2], [2, 1], [-3, -3], [1, 1]])
+
+    def test_set_uvw_UVTW(self):
+        m1 = Miller(uvw=[[1, 1, 1], [2, 0, 0]], phase=TETRAGONAL_PHASE)
+        assert np.allclose(m1.data, [[0.5, 0.5, 1], [1, 0, 0]])
+        assert np.allclose([m1.u, m1.v, m1.w], [[1, 2], [1, 0], [1, 0]])
+        m1.uvw = [[1, 2, 0], [1, 1, 0]]
+        assert np.allclose(m1.data, [[0.5, 1, 0], [0.5, 0.5, 0]])
+        assert np.allclose([m1.u, m1.v, m1.w], [[1, 1], [2, 1], [0, 0]])
+
+        m2 = Miller(UVTW=[[1, 1, -2, 1], [2, 0, -2, 0]], phase=TRIGONAL_PHASE)
+        assert np.allclose(m2.data, [[7.35, 12.73, 5.4], [14.7, 8.49, 0]], atol=0.01)
+        assert np.allclose([m2.U, m2.V, m2.T, m2.W], [[1, 2], [1, 0], [-2, -2], [1, 0]])
+        m2.UVTW = [[1, 2, -3, 1], [2, 1, -3, 1]]
+        assert np.allclose(m2.data, [[7.35, 21.22, 5.4], [14.7, 16.97, 5.4]], atol=0.01)
+        assert np.allclose([m2.U, m2.V, m2.T, m2.W], [[1, 2], [2, 1], [-3, -3], [1, 1]])
 
     def test_length(self):
         # Direct lattice vectors
@@ -66,10 +99,28 @@ class TestMiller:
         assert np.allclose(m3.length, [1, 1, 1])
 
     def test_init_from_highest_indices(self):
-        pass
+        m1 = Miller.from_highest_indices(phase=TETRAGONAL_PHASE, hkl=[3, 2, 1])
+        assert np.allclose(np.max(m1.hkl, axis=0), [3, 2, 1])
+        m2 = Miller.from_highest_indices(phase=TETRAGONAL_PHASE, uvw=[1, 2, 3])
+        assert np.allclose(np.max(m2.uvw, axis=0), [1, 2, 3])
+
+        with pytest.raises(ValueError, match="Either highest `hkl` or `uvw` indices "):
+            _ = Miller.from_highest_indices(phase=TETRAGONAL_PHASE)
+
+        with pytest.raises(ValueError, match="All indices*"):
+            _ = Miller.from_highest_indices(phase=TETRAGONAL_PHASE, hkl=[3, 2, -1])
 
     def test_init_from_min_dspacing(self):
-        pass
+        # Tested against EMsoft v5.0
+        m1 = Miller.from_min_dspacing(phase=TETRAGONAL_PHASE, min_dspacing=0.05)
+        assert m1.coordinate_format == "hkl"
+        assert m1.size == 14078
+        assert np.allclose(np.max(m1.hkl, axis=0), [9, 9, 19])
+        assert np.allclose(np.min(1 / m1.length), 0.0315, atol=1e-4)
+        m2 = Miller.from_min_dspacing(phase=TRIGONAL_PHASE, min_dspacing=0.5)
+        assert m2.size == 6068
+        assert np.allclose(np.max(m2.hkl, axis=0), [8, 8, 10])
+        assert np.allclose(np.min(1 / m2.length), 0.2664, atol=1e-4)
 
     def test_deepcopy(self):
         m = Miller(hkl=[1, 1, 0], phase=TETRAGONAL_PHASE)
@@ -79,13 +130,45 @@ class TestMiller:
         assert m.coordinate_format == "hkl"
 
     def test_get_nearest(self):
-        Miller(uvw=[1, 0, 0], phase=TETRAGONAL_PHASE).get_nearest() == NotImplemented
+        assert (
+            Miller(uvw=[1, 0, 0], phase=TETRAGONAL_PHASE).get_nearest()
+            == NotImplemented
+        )
 
     def test_mean(self):
-        pass
+        # Tested against MTEX v5.6.0
+        m1 = Miller(hkl=[[1, 2, 0], [3, 1, 1]], phase=TETRAGONAL_PHASE)
+        m1_mean = m1.mean()
+        assert isinstance(m1_mean, Miller)
+        assert m1_mean.coordinate_format == "hkl"
+        assert np.allclose(m1_mean.hkl, [2, 1.5, 0.5])
+
+        m2 = Miller(UVTW=[[1, 2, -3, 0], [3, 1, -4, 1]], phase=TRIGONAL_PHASE)
+        m2_mean = m2.mean()
+        assert m2_mean.coordinate_format == "UVTW"
+        assert np.allclose(m2_mean.UVTW, [2, 1.5, -3.5, 0.5])
+
+        assert m2.mean(use_symmetry=True) == NotImplemented
 
     def test_round(self):
-        pass
+        # Tested against MTEX v5.6.0
+        m1 = Miller(uvw=[[1, 1, 0], [1, 1, 1]], phase=TETRAGONAL_PHASE)
+        m1perp = m1[0].cross(m1[1])
+        m1round = m1perp.round()
+        assert isinstance(m1round, Miller)
+        assert m1round.coordinate_format == "hkl"
+        assert np.allclose(m1round.hkl, [1, -1, 0])
+
+        m2 = Miller(hkil=[1, 1, -2, 3], phase=TRIGONAL_PHASE)
+        m2.coordinate_format = "UVTW"
+        m2round = m2.round()
+        assert np.allclose(m2round.UVTW, [3, 3, -6, 11])
+
+        m3 = Miller(xyz=[[0.1, 0.2, 0.3], [1, 0.5, 1]], phase=TRIGONAL_PHASE)
+        assert m3.coordinate_format == "xyz"
+        m3round = m3.round()
+        assert np.allclose(m3.data, m3round.data)
+        assert not np.may_share_memory(m3.data, m3round.data)
 
     def test_symmetrise_raises(self):
         m = Miller(uvw=[1, 0, 0], phase=TETRAGONAL_PHASE)
@@ -95,10 +178,42 @@ class TestMiller:
             _ = m.symmetrise(return_index=True)
 
     def test_symmetrise(self):
-        pass
+        # Also thoroughly tested in the TestMillerPointGroup* classes
+
+        # Test from MTEX' v5.6.0 documentation
+        m = Miller(UVTW=[1, -2, 1, 3], phase=TRIGONAL_PHASE)
+        _, l = m.symmetrise(return_multiplicity=True, unique=True)
+        assert l == 6
+
+        m2 = Miller(uvw=[[1, 0, 0], [1, 1, 0], [1, 1, 1]], phase=CUBIC_PHASE)
+        _, idx = m2.symmetrise(unique=True, return_index=True)
+        assert np.allclose(idx, np.array([0] * 6 + [1] * 12 + [2] * 8))
+
+        _, l3, _ = m2.symmetrise(
+            unique=True, return_multiplicity=True, return_index=True
+        )
+        assert np.allclose(l3, [6, 12, 8])
 
     def test_unique(self):
-        pass
+        # From the "Crystal geometry" notebook
+        diamond = Phase(space_group=227)
+        m = Miller.from_highest_indices(phase=diamond, uvw=[10, 10, 10])
+        assert m.size == 9260
+        m2 = m.unique(use_symmetry=True)
+        assert m2.size == 450
+        m3, idx = m2.unit.unique(return_index=True)
+        assert m3.size == 345
+        assert isinstance(m3, Miller)
+        assert np.allclose(idx[:10], [74, 448, 434, 409, 374, 330, 278, 447, 412, 432])
+
+    def test_multiply_orientation(self):
+        o = Orientation.from_euler(np.deg2rad([45, 0, 0]))
+        o = o.set_symmetry(CUBIC_PHASE.point_group)
+        m = Miller(hkl=[[1, 1, 1], [2, 0, 0]], phase=CUBIC_PHASE)
+        m2 = o * m
+        assert isinstance(m2, Miller)
+        assert m2.coordinate_format == "hkl"
+        assert np.allclose(m2.data, [[np.sqrt(2), 0, 1], [np.sqrt(2), -np.sqrt(2), 0]])
 
 
 class TestMillerBravais:
@@ -151,6 +266,12 @@ class TestMillerBravais:
         # MTEX convention
         assert np.allclose(_uvw2UVTW(uvw, convention="mtex") / 3, _uvw2UVTW(uvw))
         assert np.allclose(_UVTW2uvw(UVTW, convention="mtex") * 3, _UVTW2uvw(UVTW))
+
+    def test_mtex_convention(self):
+        # Same result without convention="mtex" because of rounding...
+        UVTW = [2, 1, -3, 1]
+        uvw = _UVTW2uvw(UVTW, convention="mtex")
+        assert np.allclose(_round_indices(uvw), [5, 4, 1])
 
     def test_trigonal_crystal(self):
         # Examples from MTEX' documentation:
@@ -209,9 +330,6 @@ class TestMillerBravais:
             _ = Miller(hkil=[1, 1, -1, 0], phase=TETRAGONAL_PHASE)
         with pytest.raises(ValueError, match="The Miller-Bravais indices convention"):
             _ = Miller(UVTW=[1, 1, -1, 0], phase=TETRAGONAL_PHASE)
-
-    def test_mtex_convention(self):
-        pass
 
 
 class TestDeGraefExamples:
