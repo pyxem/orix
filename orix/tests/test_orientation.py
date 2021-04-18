@@ -21,7 +21,7 @@ import pytest
 
 from orix.quaternion.orientation import Orientation, Misorientation
 from orix.quaternion.symmetry import C1, C2, C3, C4, D2, D3, D6, T, O, Oh
-from orix.vector import Vector3d
+from orix.vector import AxAngle, Vector3d
 
 
 @pytest.fixture
@@ -139,13 +139,42 @@ def test_sub_orientation_and_other():
         _ = m - 3
 
 
-def test_from_euler_symmetry():
-    euler = np.deg2rad([90, 45, 90])
-    o1 = Orientation.from_euler(euler)
-    assert np.allclose(o1.data, [0, -0.3827, 0, -0.9239], atol=1e-4)
-    assert o1.symmetry.name == "1"
-    o2 = Orientation.from_euler(euler, symmetry=Oh)
-    assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
-    assert o2.symmetry.name == "m-3m"
-    o3 = o1.set_symmetry(Oh)
-    assert np.allclose(o3.data, o2.data)
+class TestOrientationInitialization:
+    def test_from_euler_symmetry(self):
+        euler = np.deg2rad([90, 45, 90])
+        o1 = Orientation.from_euler(euler)
+        assert np.allclose(o1.data, [0, -0.3827, 0, -0.9239], atol=1e-4)
+        assert o1.symmetry.name == "1"
+        o2 = Orientation.from_euler(euler, symmetry=Oh)
+        assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
+        assert o2.symmetry.name == "m-3m"
+        o3 = o1.set_symmetry(Oh)
+        assert np.allclose(o3.data, o2.data)
+
+    def test_from_matrix_symmetry(self):
+        om = np.array(
+            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
+        )
+        o1 = Orientation.from_matrix(om)
+        assert np.allclose(
+            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape((4, 4))
+        )
+        assert o1.symmetry.name == "1"
+        o2 = Orientation.from_matrix(om, symmetry=Oh)
+        assert np.allclose(
+            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape((4, 4))
+        )
+        assert o2.symmetry.name == "m-3m"
+        o3 = o1.set_symmetry(Oh)
+        assert np.allclose(o3.data, o2.data)
+
+    def test_from_neo_euler_symmetry(self):
+        v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
+        o1 = Orientation.from_neo_euler(v)
+        assert np.allclose(o1.data, [0.7071, 0, 0, 0.7071])
+        assert o1.symmetry.name == "1"
+        o2 = Orientation.from_neo_euler(v, symmetry=Oh)
+        assert np.allclose(o2.data, [-1, 0, 0, 0])
+        assert o2.symmetry.name == "m-3m"
+        o3 = o1.set_symmetry(Oh)
+        assert np.allclose(o3.data, o2.data)

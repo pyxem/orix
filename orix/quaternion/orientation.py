@@ -247,7 +247,57 @@ class Orientation(Misorientation):
     def from_euler(
         cls, euler, symmetry=None, convention="bunge", direction="crystal2lab"
     ):
+        """Creates orientation(s) from an array of Euler angles.
+
+        Parameters
+        ----------
+        euler : array-like
+            Euler angles in the Bunge convention.
+        symmetry : Symmetry, optional
+            Symmetry of orientation(s). If None (default), no symmetry
+            is set.
+        convention : str
+            Only 'bunge' is currently supported for new data
+        direction : str
+            'lab2crystal' or 'crystal2lab'
+        """
         o = super().from_euler(euler=euler, convention=convention, direction=direction)
+        if symmetry:
+            o = o.set_symmetry(symmetry)
+        return o
+
+    @classmethod
+    def from_matrix(cls, matrix, symmetry=None):
+        """Creates orientation(s) from orientation matrices
+        [Rowenhorst2015]_.
+
+        Parameters
+        ----------
+        matrix : array_like
+            Array of orientation matrices.
+        symmetry : Symmetry, optional
+            Symmetry of orientation(s). If None (default), no symmetry
+            is set.
+        """
+        o = super().from_matrix(matrix)
+        if symmetry:
+            o = o.set_symmetry(symmetry)
+        return o
+
+    @classmethod
+    def from_neo_euler(cls, neo_euler, symmetry=None):
+        """Creates orientation(s) from a neo-euler (vector)
+        representation.
+
+        Parameters
+        ----------
+        neo_euler : NeoEuler
+            Vector parametrization of orientation(s).
+        symmetry : Symmetry, optional
+            Symmetry of orientation(s). If None (default), no symmetry
+            is set.
+        """
+        o = super().from_neo_euler(neo_euler)
         if symmetry:
             o = o.set_symmetry(symmetry)
         return o
