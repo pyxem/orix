@@ -12,6 +12,8 @@ Unreleased
 
 Added
 -----
+- Miller class, inherinting functionality from the Vector3d class, to handle operations
+  with direct lattice vectors (uvw/UVTW) and reciprocal lattice vectors (hkl/hkil).
 - Vector3d.scatter() and Vector3d.draw_circle() methods to show unit vectors and
   great/small circles in stereographic projection
 - User guide with Jupyter notebooks as part of the Read the Docs documentation
