@@ -12,7 +12,7 @@ Unreleased
 
 Added
 -----
-- Initialization of Orientation from Euler angles and a point group symmetry.
+- Passing symmetry when initializing an Orientation.
 - Vector3d.scatter() and Vector3d.draw_circle() methods to show unit vectors and
   great/small circles in stereographic projection
 - User guide with Jupyter notebooks as part of the Read the Docs documentation
