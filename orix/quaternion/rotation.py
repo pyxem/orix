@@ -352,8 +352,8 @@ class Rotation(Quaternion):
         euler = np.array(euler)
         if np.any(euler > 9):
             warnings.warn(
-                "Angles are assumed to be in radians, it appears you might instead be "
-                " using degrees"
+                "Angles are assumed to be in radians, but degrees might have been "
+                "passed"
             )
         n = euler.shape[:-1]
         alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
@@ -587,7 +587,7 @@ class Rotation(Quaternion):
 
 
 def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
-    """A vastly simplified Von Mises-Fisher distribution calculation.
+    r"""A vastly simplified Von Mises-Fisher distribution calculation.
 
     Parameters
     ----------
@@ -601,7 +601,7 @@ def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
     This simplified version of the distribution is calculated using
 
     .. math::
-        \frac{\\exp\\left(2\alpha\\cos\\left(\omega\right)\right)}{\_0F\_1\left(\frac{N}{2}, \alpha^2\right)}
+        \frac{\exp\left(2\alpha\cos\left(\omega\right)\right)}{\_0F\_1\left(\frac{N}{2}, \alpha^2\right)}
 
     where :math:`\omega` is the angle between orientations and :math:`N`
     is the number of relevant dimensions, in this case 3.
