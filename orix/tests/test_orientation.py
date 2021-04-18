@@ -1,8 +1,26 @@
+# -*- coding: utf-8 -*-
+# Copyright 2018-2021 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
 import numpy as np
 import pytest
 
 from orix.quaternion.orientation import Orientation, Misorientation
-from orix.quaternion.symmetry import C1, C2, C3, C4, D2, D3, D6, T, O
+from orix.quaternion.symmetry import C1, C2, C3, C4, D2, D3, D6, T, O, Oh
 from orix.vector import Vector3d
 
 
@@ -106,18 +124,28 @@ def test_equivalent(Gl):
 
 def test_repr():
     m = Misorientation([1, 1, 1, 1])  # any will do
-    print(m)  # hits __repr__
-    return None
+    _ = repr(m)
 
 
 def test_sub():
     m = Orientation([1, 1, 1, 1])  # any will do
     m.set_symmetry(C4)  # only one as it a O
-    _ = m - m  # this should give a set of zeroes
-    return None
+    assert np.allclose((m - m).data, [1, 0, 0, 0])
 
 
-@pytest.mark.xfail(strict=True, reason=TypeError)
 def test_sub_orientation_and_other():
     m = Orientation([1, 1, 1, 1])  # any will do
-    _ = m - 3
+    with pytest.raises(TypeError):
+        _ = m - 3
+
+
+def test_from_euler_symmetry():
+    euler = np.deg2rad([90, 45, 90])
+    o1 = Orientation.from_euler(euler)
+    assert np.allclose(o1.data, [0, -0.3827, 0, -0.9239], atol=1e-4)
+    assert o1.symmetry.name == "1"
+    o2 = Orientation.from_euler(euler, symmetry=Oh)
+    assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
+    assert o2.symmetry.name == "m-3m"
+    o3 = o1.set_symmetry(Oh)
+    assert np.allclose(o3.data, o2.data)
