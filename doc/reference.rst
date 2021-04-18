@@ -394,6 +394,23 @@ Homochoric
 
 Miller
 ------
+.. currentmodule:: orix.vector.Miller
+.. autosummary::
+    angle_with
+    cross
+    dot
+    dot_outer
+    deepcopy
+    draw_circle
+    from_highest_indices
+    from_min_dspacing
+    get_circle
+    mean
+    round
+    rotate
+    scatter
+    symmetrise
+    unique
 .. autoclass:: orix.vector.Miller
     :members:
     :undoc-members:

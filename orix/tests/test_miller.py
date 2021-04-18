@@ -40,6 +40,8 @@ class TestMiller:
     def test_init_raises(self):
         with pytest.raises(ValueError, match="Either *"):
             _ = Miller(phase=Phase(point_group="m-3m"))
+        with pytest.raises(ValueError, match="A phase with a crystal lattice and "):
+            _ = Miller(hkl=[1, 1, 1])
 
     def test_repr(self):
         m = Miller(hkil=[1, 1, -2, 0], phase=TRIGONAL_PHASE)
