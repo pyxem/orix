@@ -12,6 +12,7 @@ Unreleased
 
 Added
 -----
+- Warning when trying to create rotations with large angles (degrees, not radians).
 - Vector3d.scatter() and Vector3d.draw_circle() methods to show unit vectors and
   great/small circles in stereographic projection
 - User guide with Jupyter notebooks as part of the Read the Docs documentation
