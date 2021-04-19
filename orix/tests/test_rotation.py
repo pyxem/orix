@@ -232,7 +232,7 @@ class TestToFromEuler:
 
     def test_passing_degrees_warns(self):
         with pytest.warns(UserWarning, match="Angles are assumed to be in radians, "):
-            r = Rotation.from_euler([90, 0, 0])
+            r = Rotation.from_euler([90, 0, 0], convention="bunge")
             assert np.allclose(r.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
 
 
