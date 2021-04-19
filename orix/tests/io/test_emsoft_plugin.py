@@ -25,10 +25,7 @@ from orix.io import load
 
 class TestEMsoftPlugin:
     @pytest.mark.parametrize(
-        (
-            "temp_emsoft_h5ebsd_file, map_shape, step_sizes, example_rot, "
-            "n_top_matches, refined"
-        ),
+        "temp_emsoft_h5ebsd_file, map_shape, step_sizes, n_top_matches, refined",
         [
             (
                 (
@@ -45,9 +42,6 @@ class TestEMsoftPlugin:
                 ),
                 (7, 3),
                 (1.5, 1.5),
-                np.array(
-                    [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
-                ),
                 50,
                 True,
             ),
@@ -66,9 +60,6 @@ class TestEMsoftPlugin:
                 ),
                 (5, 17),
                 (0.5, 0.5),
-                np.array(
-                    [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
-                ),
                 20,
                 False,
             ),
@@ -76,13 +67,7 @@ class TestEMsoftPlugin:
         indirect=["temp_emsoft_h5ebsd_file"],
     )
     def test_load_emsoft(
-        self,
-        temp_emsoft_h5ebsd_file,
-        map_shape,
-        step_sizes,
-        example_rot,
-        n_top_matches,
-        refined,
+        self, temp_emsoft_h5ebsd_file, map_shape, step_sizes, n_top_matches, refined,
     ):
         xmap = load(temp_emsoft_h5ebsd_file.filename, refined=refined)
 

@@ -108,8 +108,8 @@ def file_reader(filename, refined=False, **kwargs):
 
 
 def _get_properties(data_group, n_top_matches, map_size):
-    """Return a dictionary of properties within an EMsoft h5ebsd file, with
-    property names as the dictionary key and arrays as the values.
+    """Return a dictionary of properties within an EMsoft h5ebsd file,
+    with property names as the dictionary key and arrays as the values.
 
     Parameters
     ----------
@@ -139,8 +139,6 @@ def _get_properties(data_group, n_top_matches, map_size):
         "TopDotProductList",
         "TopMatchIndices",
     ]
-
-    # Get properties
     properties = {}
     for property_name in expected_properties:
         if property_name in data_group.keys():
@@ -150,7 +148,6 @@ def _get_properties(data_group, n_top_matches, map_size):
             else:
                 prop = prop.reshape(map_size)
             properties[property_name] = prop
-
     return properties
 
 
@@ -174,7 +171,7 @@ def _get_phase(data_group):
     """
     name = re.search(r"([A-z0-9]+)", data_group["MaterialName"][:][0].decode()).group(1)
     point_group = re.search(
-        r"\[([A-z0-9]+)\]", data_group["Point Group"][:][0].decode()
+        r"\[([A-z0-9/]+)\]", data_group["Point Group"][:][0].decode()
     ).group(1)
     lattice = Lattice(
         *tuple(
