@@ -18,12 +18,14 @@
 
 """Rotations respecting symmetry.
 
-An orientation is simply a rotation with respect to some reference frame. In
-this respect, an orientation is in fact a *misorientation* - a change of
-orientation - with respect to a reference of the identity rotation.
+An orientation is simply a rotation with respect to some reference
+frame. In this respect, an orientation is in fact a *misorientation* -
+a change of orientation - with respect to a reference of the identity
+rotation.
 
-In orix, orientations and misorientations are distinguished from rotations
-only by the inclusion of a notion of symmetry. Consider the following example:
+In orix, orientations and misorientations are distinguished from
+rotations only by the inclusion of a notion of symmetry. Consider the
+following example:
 
 .. image:: /_static/img/orientation.png
    :width: 200px
@@ -31,30 +33,29 @@ only by the inclusion of a notion of symmetry. Consider the following example:
          fourfold symmetry, has the same orientation in both cases.
    :align: center
 
-Both objects have undergone the same *rotations* with respect to the reference.
-However, because the square has fourfold symmetry, it is indistinguishable
-in both cases, and hence has the same orientation.
+Both objects have undergone the same *rotations* with respect to the
+reference. However, because the square has fourfold symmetry, it is
+indistinguishable in both cases, and hence has the same orientation.
 """
 
 from itertools import product as iproduct
 from itertools import combinations_with_replacement as icombinations
+
 import numpy as np
-import warnings
 from tqdm import tqdm
 
-
+from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1
-from orix.quaternion.orientation_region import OrientationRegion
 
 
 def _distance(misorientation, verbose, split_size=100):
-    """ private function to find the symmetry reduced distance between all
-    pairs of (mis)orientations
+    """Private function to find the symmetry reduced distance between
+    all pairs of (mis)orientations
 
     Parameters
     ----------
-    misorientation : orix.Misorientation object
+    misorientation : orix.quaternion.Misorientation
         The misorientation to be considered.
     verbose : bool
         Output progress bar while computing.
@@ -63,7 +64,7 @@ def _distance(misorientation, verbose, split_size=100):
 
     Returns
     -------
-    distance : np.array
+    distance : numpy.ndarray
         2D matrix containing the angular distance between every
         orientation, considering symmetries.
     """
@@ -105,37 +106,37 @@ def _distance(misorientation, verbose, split_size=100):
 
 
 class Misorientation(Rotation):
-    """Misorientation object.
+    r"""Misorientation object.
 
     Misorientations represent transformations from one orientation,
     :math:`o_1` to another, :math:`o_2`: :math:`o_2 \\cdot o_1^{-1}`.
 
-    They have symmetries associated with each of the starting orientations.
-
+    They have symmetries associated with each of the starting
+    orientations.
     """
 
     _symmetry = (C1, C1)
 
     def __getitem__(self, key):
-        m = super(Misorientation, self).__getitem__(key)
+        m = super().__getitem__(key)
         m._symmetry = self._symmetry
         return m
 
     @property
     def symmetry(self):
-        """tuple of Symmetry"""
+        """Tuple of Symmetry"""
         return self._symmetry
 
     def equivalent(self, grain_exchange=False):
         """Equivalent misorientations
 
         grain_exchange : bool
-            If true the rotation g and g^{-1} are considered to be identical
+            If True the rotation g and g^{-1} are considered to be
+            identical. Default is False.
 
         Returns
         -------
         Misorientation
-
         """
         Gl, Gr = self._symmetry
 
@@ -150,8 +151,8 @@ class Misorientation(Rotation):
     def set_symmetry(self, Gl, Gr, verbose=False):
         """Assign symmetries to this misorientation.
 
-        Computes equivalent transformations which have the smallest angle of
-        rotation and assigns these in-place.
+        Computes equivalent transformations which have the smallest
+        angle of rotation and assigns these in-place.
 
         Parameters
         ----------
@@ -171,7 +172,6 @@ class Misorientation(Rotation):
         Misorientation (2,) 4, 2
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
-
         """
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
@@ -192,19 +192,19 @@ class Misorientation(Rotation):
     def distance(self, verbose=False, split_size=100):
         """Symmetry reduced distance
 
-        Compute the shortest distance between all orientations considering
-        symmetries.
+        Compute the shortest distance between all orientations
+        considering symmetries.
 
         Parameters
         ---------
         verbose : bool
-            Output progress bar while computing.
+            Output progress bar while computing. Default is False.
         split_size : int
-            Size of block to compute at a time.
+            Size of block to compute at a time. Default is 100.
 
         Returns
         -------
-        distance : np.array
+        distance : numpy.ndarray
             2D matrix containing the angular distance between every
             orientation, considering symmetries.
 
@@ -223,6 +223,7 @@ class Misorientation(Rotation):
         return distance.reshape(self.shape + self.shape)
 
     def __repr__(self):
+        """String representation."""
         cls = self.__class__.__name__
         shape = str(self.shape)
         s1, s2 = self._symmetry[0].name, self._symmetry[1].name
@@ -234,27 +235,83 @@ class Misorientation(Rotation):
 
 
 class Orientation(Misorientation):
-    """Orientation object.
+    """Orientations represent misorientations away from a reference of
+    identity and have only one associated symmetry.
 
-    Orientations represent misorientations away from a reference of identity
-    and have only one associated symmetry.
-
-    Orientations support binary subtraction, producing a misorientation. That
-    is, to compute the misorientation from :math:`o_1` to :math:`o_2`,
-    call :code:`o_2 - o_1`.
-
+    Orientations support binary subtraction, producing a misorientation.
+    That is, to compute the misorientation from :math:`o_1` to
+    :math:`o_2`, call :code:`o_2 - o_1`.
     """
+
+    @classmethod
+    def from_euler(
+        cls, euler, symmetry=None, convention="bunge", direction="crystal2lab"
+    ):
+        """Creates orientation(s) from an array of Euler angles.
+
+        Parameters
+        ----------
+        euler : array-like
+            Euler angles in the Bunge convention.
+        symmetry : Symmetry, optional
+            Symmetry of orientation(s). If None (default), no symmetry
+            is set.
+        convention : str
+            Only 'bunge' is currently supported for new data
+        direction : str
+            'lab2crystal' or 'crystal2lab'
+        """
+        o = super().from_euler(euler=euler, convention=convention, direction=direction)
+        if symmetry:
+            o = o.set_symmetry(symmetry)
+        return o
+
+    @classmethod
+    def from_matrix(cls, matrix, symmetry=None):
+        """Creates orientation(s) from orientation matrices
+        [Rowenhorst2015]_.
+
+        Parameters
+        ----------
+        matrix : array_like
+            Array of orientation matrices.
+        symmetry : Symmetry, optional
+            Symmetry of orientation(s). If None (default), no symmetry
+            is set.
+        """
+        o = super().from_matrix(matrix)
+        if symmetry:
+            o = o.set_symmetry(symmetry)
+        return o
+
+    @classmethod
+    def from_neo_euler(cls, neo_euler, symmetry=None):
+        """Creates orientation(s) from a neo-euler (vector)
+        representation.
+
+        Parameters
+        ----------
+        neo_euler : NeoEuler
+            Vector parametrization of orientation(s).
+        symmetry : Symmetry, optional
+            Symmetry of orientation(s). If None (default), no symmetry
+            is set.
+        """
+        o = super().from_neo_euler(neo_euler)
+        if symmetry:
+            o = o.set_symmetry(symmetry)
+        return o
 
     @property
     def symmetry(self):
-        """Symmetry"""
+        """Symmetry."""
         return self._symmetry[1]
 
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
 
-        Computes equivalent transformations which have the smallest angle of
-        rotation and assigns these in-place.
+        Computes equivalent transformations which have the smallest
+        angle of rotation and assigns these in-place.
 
         Parameters
         ----------
@@ -274,9 +331,8 @@ class Orientation(Misorientation):
         Orientation (2,) 4
         [[-0.7071  0.     -0.7071  0.    ]
         [ 0.      1.      0.      0.    ]]
-
         """
-        return super(Orientation, self).set_symmetry(C1, symmetry)
+        return super().set_symmetry(C1, symmetry)
 
     def __sub__(self, other):
         if isinstance(other, Orientation):

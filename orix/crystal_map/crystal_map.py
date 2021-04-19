@@ -578,7 +578,7 @@ class CrystalMap:
         unique_phases = np.unique(phase_ids)
         p_sizes = [np.where(phase_ids == i)[0].size for i in unique_phases]
         id_len = 5
-        ori_len = max(max([len(str(p_size)) for p_size in p_sizes]) + 8, 12)
+        ori_len = max(max([len(str(p_size)) for p_size in p_sizes]) + 9, 12)
         name_len = max(max([len(n) for n in names]), 4)
         sg_len = max(max([len(i) for i in sg_names]), 11)
         pg_len = max(max([len(i) for i in pg_names]), 11)
