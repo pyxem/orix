@@ -279,7 +279,7 @@ class Rotation(Quaternion):
             Array of Euler angles in radians.
         """
         # TODO: other conventions
-        if convention.lower() != "bunge":
+        if convention != "bunge":
             raise ValueError(
                 "The chosen convention is not supported, 'bunge' is the only option"
             )
