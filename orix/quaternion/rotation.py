@@ -338,13 +338,13 @@ class Rotation(Quaternion):
         direction : str
             "lab2crystal" or "crystal2lab".
         """
-        conventions = ["bunge", "krakow_hielscher"]
-        if convention.lower() not in conventions:
+        conventions = ["bunge", "Krakow_Hielscher"]
+        if convention not in conventions:
             raise ValueError(
                 f"The chosen convention is not one of the allowed options {conventions}"
             )
         directions = ["lab2crystal", "crystal2lab"]
-        if direction.lower() not in directions:
+        if direction not in directions:
             raise ValueError(
                 f"The chosen direction is not one of the allowed options {directions}"
             )
@@ -358,7 +358,7 @@ class Rotation(Quaternion):
         n = euler.shape[:-1]
         alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
 
-        if convention.lower() == "krakow_hielscher":
+        if convention == "Krakow_Hielscher":
             # To be applied to the data found at:
             # https://www.repository.cam.ac.uk/handle/1810/263510
             alpha -= np.pi / 2
@@ -378,7 +378,7 @@ class Rotation(Quaternion):
             rot = cls(data.data)
             rot.improper = zero
             return rot
-        elif convention.lower() == "bunge":
+        elif convention == "bunge":
             # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
             # (2015) 083501
             sigma = 0.5 * np.add(alpha, gamma)
