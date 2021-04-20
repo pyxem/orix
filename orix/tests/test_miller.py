@@ -38,8 +38,10 @@ CUBIC_PHASE = Phase(point_group="m-3m")
 
 class TestMiller:
     def test_init_raises(self):
-        with pytest.raises(ValueError, match="Either *"):
+        with pytest.raises(ValueError, match="Exactly *"):
             _ = Miller(phase=Phase(point_group="m-3m"))
+        with pytest.raises(ValueError, match="Exactly *"):
+            _ = Miller(xyz=[0, 1, 2], hkl=[3, 4, 5], phase=Phase(point_group="m-3m"))
         with pytest.raises(ValueError, match="A phase with a crystal lattice and "):
             _ = Miller(hkl=[1, 1, 1])
 

@@ -119,9 +119,9 @@ class Quaternion(Object3d):
             )
             v = np.stack((x_new, y_new, z_new), axis=-1)
             if isinstance(other, Miller):
-                return other.__class__(
-                    xyz=v, phase=other.phase, coordinate_format=other.coordinate_format
-                )
+                m = other.__class__(xyz=v, phase=other.phase)
+                m.coordinate_format = other.coordinate_format
+                return m
             else:
                 return other.__class__(v)
         return NotImplemented
@@ -157,9 +157,9 @@ class Quaternion(Object3d):
             )
             v = np.stack((x_new, y_new, z_new), axis=-1)
             if isinstance(other, Miller):
-                return other.__class__(
-                    xyz=v, phase=other.phase, coordinate_format=other.coordinate_format
-                )
+                m = other.__class__(xyz=v, phase=other.phase)
+                m.coordinate_format = other.coordinate_format
+                return m
             else:
                 return other.__class__(v)
 
