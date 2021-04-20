@@ -37,7 +37,7 @@ class Miller(Vector3d):
 
     def __init__(self, xyz=None, uvw=None, UVTW=None, hkl=None, hkil=None, phase=None):
         r"""Create a set of direct lattice vectors (uvw or UVTW)
-        or reicprocal lattice vectors (hkl or hkil) describing
+        or reciprocal lattice vectors (hkl or hkil) describing
         directions with respect to a crystal reference frame defined by
         a phase's crystal lattice and symmetry.
 
@@ -125,7 +125,7 @@ class Miller(Vector3d):
 
     def __getitem__(self, key):
         """NumPy fancy indexing of vectors."""
-        m = self.__class__(xyz=self.data[key], phase=self.phase)
+        m = self.__class__(xyz=self.data[key], phase=self.phase).deepcopy()
         m.coordinate_format = self.coordinate_format
         return m
 
@@ -299,6 +299,24 @@ class Miller(Vector3d):
         return self.symmetrise(unique=True, return_multiplicity=True)[1]
 
     @property
+    def space(self):
+        """Whether the vector is in "direct" or "reciprocal" space."""
+        return dict(
+            xyz="direct",
+            uvw="direct",
+            UVTW="direct",
+            hkl="reciprocal",
+            hkil="reciprocal",
+        )[self.coordinate_format]
+
+    @property
+    def is_hexagonal(self):
+        """Whether the crystal reference frame is hexagonal/trigonal or
+        not.
+        """
+        return self.phase.is_hexagonal
+
+    @property
     def unit(self):
         """Unit vectors."""
         m = self.__class__(xyz=super().unit.data, phase=self.phase)
@@ -358,7 +376,8 @@ class Miller(Vector3d):
         possibly using symmetrically equivalent vectors to find the
         smallest angle under symmetry.
 
-        Vectors must have compatible shapes for broadcasting to work.
+        Vectors must have compatible shapes, and be in the same space
+        (direct or recprocal) and crystal reference frames.
 
         Parameters
         ----------
@@ -372,6 +391,7 @@ class Miller(Vector3d):
         Scalar
             The angle between the vectors, in radians.
         """
+        self._compatible_with(other, raise_error=True)
         if use_symmetry:
             other2 = other.symmetrise(unique=True)
             cosines = self.dot_outer(other2).data / (
@@ -388,7 +408,8 @@ class Miller(Vector3d):
         another vector, which is considered the zone axis between the
         vectors.
 
-        Vectors must have compatible shape for broadcasting to work.
+        Vectors must have compatible shapes, and be in the same space
+        (direct or recprocal) and crystal reference frames.
 
         Returns
         -------
@@ -396,6 +417,7 @@ class Miller(Vector3d):
             Vectors in reciprocal (direct) space if direct (reciprocal)
             vectors are crossed.
         """
+        self._compatible_with(other, raise_error=True)
         new_fmt = dict(hkl="uvw", uvw="hkl", hkil="UVTW", UVTW="hkil")
         m = self.__class__(xyz=super().cross(other).data, phase=self.phase)
         m.coordinate_format = new_fmt[self.coordinate_format]
@@ -404,6 +426,35 @@ class Miller(Vector3d):
     def deepcopy(self):
         """Return a deepcopy of the instance."""
         return deepcopy(self)
+
+    def dot(self, other):
+        """Dot product of a vector with another vector.
+
+        Vectors must have compatible shapes, and be in the same space
+        (direct or recprocal) and crystal reference frames.
+
+        Returns
+        -------
+        Scalar
+        """
+        self._compatible_with(other, raise_error=True)
+        return super().dot(other)
+
+    def dot_outer(self, other):
+        """Outer dot product of a vector with another vector.
+
+        Vectors must be in the same space (direct or recprocal) and
+        crystal reference frames.
+
+        The dot product for every combination of vectors in `self` and
+        `other` is computed.
+
+        Returns
+        -------
+        Scalar
+        """
+        self._compatible_with(other, raise_error=True)
+        return super().dot_outer(other)
 
     def get_nearest(self):
         """NotImplemented."""
@@ -567,6 +618,36 @@ class Miller(Vector3d):
             return m, idx
         else:
             return m
+
+    def _compatible_with(self, other, raise_error=False):
+        """Whether `self` and `other` have both the same crystal lattice
+        and symmetry and that the vectors are in the same space.
+
+        Parameters
+        ----------
+        other : Miller
+        raise_error : bool, optional
+            Whether to raise a ValueError if the instances are not
+            compatible. Default is False.
+
+        Returns
+        -------
+        bool
+        """
+        same_symmetry = self.phase.point_group.name == other.phase.point_group.name
+        same_lattice = np.allclose(
+            self.phase.structure.lattice.abcABG(),
+            other.phase.structure.lattice.abcABG(),
+        )
+        same_space = self.space == other.space
+        compatible = same_symmetry * same_lattice * same_space
+        if not compatible and raise_error:
+            raise ValueError(
+                "The crystal lattices and symmetries must be the same, and the vectors "
+                "must be in the same space"
+            )
+        else:
+            return compatible
 
 
 def _uvw2xyz(uvw, lattice):

@@ -231,6 +231,18 @@ class TestPhase:
             p = Phase()
             p.space_group = space_group
 
+    def test_is_hexagonal(self):
+        p1 = Phase(
+            point_group="321",
+            structure=Structure(lattice=Lattice(1, 1, 2, 90, 90, 120)),
+        )
+        p2 = Phase(
+            point_group="m-3m",
+            structure=Structure(lattice=Lattice(1, 1, 1, 90, 90, 90)),
+        )
+        assert p1.is_hexagonal
+        assert not p2.is_hexagonal
+
 
 class TestPhaseList:
     @pytest.mark.parametrize("empty_input", [(), [], {}])

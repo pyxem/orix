@@ -58,6 +58,15 @@ class TestMiller:
         m = Miller(xyz=[1, 2, 0], phase=TETRAGONAL_PHASE)
         assert np.allclose(m.data, m.coordinates)
 
+    def test_get_item(self):
+        v = [[1, 1, 1], [2, 0, 0]]
+        m = Miller(hkl=v, phase=TETRAGONAL_PHASE)
+        assert not np.may_share_memory(m.data, m[0].data)
+        assert not np.may_share_memory(m.data, m[:].data)
+        m2 = m[0]
+        m2.hkl = [1, 1, 2]
+        assert np.allclose(m.hkl, v)
+
     def test_set_hkl_hkil(self):
         m1 = Miller(hkl=[[1, 1, 1], [2, 0, 0]], phase=TETRAGONAL_PHASE)
         assert np.allclose(m1.data, [[2, 2, 1], [4, 0, 0]])
@@ -218,6 +227,33 @@ class TestMiller:
         assert isinstance(m2, Miller)
         assert m2.coordinate_format == "hkl"
         assert np.allclose(m2.data, [[np.sqrt(2), 0, 1], [np.sqrt(2), -np.sqrt(2), 0]])
+
+    def test_overwritten_vector3d_methods(self):
+        lattice = Lattice(1, 1, 1, 90, 90, 90)
+        phase1 = Phase(point_group="m-3m", structure=Structure(lattice=lattice))
+        phase2 = Phase(point_group="432", structure=Structure(lattice=lattice))
+        m1 = Miller(hkl=[[1, 1, 1], [2, 0, 0]], phase=phase1)
+        m2 = Miller(hkil=[[1, 1, -2, 0], [2, 1, -3, 1]], phase=phase2)
+        assert not m1._compatible_with(m2)
+
+        with pytest.raises(ValueError, match="The crystal lattices and symmetries"):
+            _ = m1.angle_with(m2)
+
+        with pytest.raises(ValueError, match="The crystal lattices and symmetries"):
+            _ = m1.cross(m2)
+
+        with pytest.raises(ValueError, match="The crystal lattices and symmetries"):
+            _ = m1.dot(m2)
+
+        with pytest.raises(ValueError, match="The crystal lattices and symmetries"):
+            _ = m1.dot_outer(m2)
+
+        m3 = Miller(hkl=[[2, 0, 0], [1, 1, 1]], phase=phase1)
+        assert m1._compatible_with(m3)
+
+    def test_is_hexagonal(self):
+        assert Miller(hkil=[1, 1, -2, 1], phase=TRIGONAL_PHASE).is_hexagonal
+        assert not Miller(hkil=[1, 1, -2, 1], phase=TETRAGONAL_PHASE).is_hexagonal
 
 
 class TestMillerBravais:

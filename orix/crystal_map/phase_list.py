@@ -201,6 +201,12 @@ class Phase:
                     self.space_group = None
             self._point_group = value
 
+    @property
+    def is_hexagonal(self):
+        """Whether the crystal structure is hexagonal/trigonal or not.
+        """
+        return np.allclose(self.structure.lattice.abcABG()[3:], [90, 90, 120])
+
     def __repr__(self):
         if self.point_group is not None:
             pg_name = self.point_group.name
