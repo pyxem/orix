@@ -190,52 +190,50 @@ def test_neg(rotation, i, expected_i):
     assert np.allclose(r.improper, expected_i)
 
 
-""" these tests address .to_euler() and .from_euler()"""
-
-
 @pytest.fixture()
 def e():
-    e = np.random.rand(10, 3)
-    return e
+    return np.random.rand(10, 3)
 
 
-def test_to_from_euler(e):
-    """ Checks that going euler2quat2euler gives no change """
-    r = Rotation.from_euler(e)
-    e2 = r.to_euler()
-    assert np.allclose(e.data, e2.data)
+class TestToFromEuler:
+    """These tests address .to_euler() and .from_euler()."""
 
+    def test_to_from_euler(self, e):
+        """Checks that going euler2quat2euler gives no change."""
+        r = Rotation.from_euler(e)
+        e2 = r.to_euler()
+        assert np.allclose(e, e2.data)
 
-def test_direction_kwarg(e):
-    r = Rotation.from_euler(e, direction="lab2crystal")
+    def test_direction_kwarg(self, e):
+        _ = Rotation.from_euler(e, direction="lab2crystal")
 
+    def test_Krakow_Hielscher(self, e):
+        _ = Rotation.from_euler(e, convention="Krakow_Hielscher")
 
-def test_Krakow_Hielscher(e):
-    r = Rotation.from_euler(e, convention="Krakow_Hielscher")
+    def test_direction_kwarg_dumb(self, e):
+        with pytest.raises(ValueError, match="The chosen direction is not one of "):
+            _ = Rotation.from_euler(e, direction="dumb_direction")
 
+    def test_unsupported_conv_to(self, e):
+        r = Rotation.from_euler(e)
+        with pytest.raises(ValueError, match="The chosen convention is not supported,"):
+            _ = r.to_euler(convention="unsupported")
 
-@pytest.mark.xfail()
-def test_direction_kwarg_dumb(e):
-    r = Rotation.from_euler(e, direction="dumb_direction")
+    def test_unsupported_conv_from(self, e):
+        with pytest.raises(ValueError, match="The chosen convention is not one of "):
+            _ = Rotation.from_euler(e, convention="unsupported")
 
+    def test_edge_cases_to_euler(self):
+        x = np.sqrt(1 / 2)
+        q = Rotation(np.asarray([x, 0, 0, x]))
+        _ = q.to_euler()
+        q = Rotation(np.asarray([0, x, 0, 0]))
+        _ = q.to_euler()
 
-@pytest.mark.xfail()
-def test_unsupported_conv_to(e):
-    r = Rotation.from_euler(e)
-    r.to_euler(convention="unsupported")
-
-
-@pytest.mark.xfail()
-def test_unsupported_conv_from(e):
-    r = Rotation.from_euler(e, convention="unsupported")
-
-
-def test_edge_cases_to_euler():
-    x = np.sqrt(1 / 2)
-    q = Rotation(np.asarray([x, 0, 0, x]))
-    e = q.to_euler()
-    q = Rotation(np.asarray([0, x, 0, 0]))
-    e = q.to_euler()
+    def test_passing_degrees_warns(self):
+        with pytest.warns(UserWarning, match="Angles are assumed to be in radians, "):
+            r = Rotation.from_euler([90, 0, 0], convention="bunge")
+            assert np.allclose(r.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
 
 
 @pytest.mark.parametrize(

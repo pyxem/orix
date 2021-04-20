@@ -19,26 +19,28 @@
 """Point transformations of objects.
 
 Rotations are transformations of three-dimensional space leaving the
-origin in place. Rotations can be parametrized numerous ways, but in orix are
-handled as unit quaternions. Rotations can act on vectors, or other rotations,
-but not scalars. They are often most easily visualised as being a turn of a
-certain angle about a certain axis.
+origin in place. Rotations can be parametrized numerous ways, but in
+orix are handled as unit quaternions. Rotations can act on vectors, or
+other rotations, but not scalars. They are often most easily visualised
+as being a turn of a certain angle about a certain axis.
 
 .. image:: /_static/img/rotation.png
    :width: 200px
    :alt: Rotation of an object illustrated with an axis and rotation angle.
    :align: center
 
-Rotations can also be *improper*. An improper rotation in orix operates on
-vectors as a rotation by the unit quaternion, followed by inversion. Hence,
-a mirroring through the x-y plane can be considered an improper rotation of
-180° about the z-axis, illustrated in the figure below.
+Rotations can also be *improper*. An improper rotation in orix operates
+on vectors as a rotation by the unit quaternion, followed by inversion.
+Hence, a mirroring through the x-y plane can be considered an improper
+rotation of 180° about the z-axis, illustrated in the figure below.
 
 .. image:: /_static/img/inversion.png
    :width: 200px
    :alt: 180° rotation followed by inversion, leading to a mirror operation.
    :align: center
 """
+
+import warnings
 
 import numpy as np
 from scipy.special import hyp0f1
@@ -47,7 +49,8 @@ from orix.quaternion import Quaternion
 from orix.vector import Vector3d
 from orix.scalar import Scalar
 
-_FLOAT_EPS = np.finfo("float").eps  # Used to round values below 1e-16 to zero
+# Used to round values below 1e-16 to zero
+_FLOAT_EPS = np.finfo(float).eps
 
 
 class Rotation(Quaternion):
@@ -116,27 +119,28 @@ class Rotation(Quaternion):
         return r
 
     def unique(self, return_index=False, return_inverse=False, antipodal=True):
-        """Returns a new object containing only this object's unique entries.
+        """Returns a new object containing only this object's unique
+        entries.
 
         Two rotations are not unique if:
 
             - they have the same propriety AND
                 - they have the same numerical value OR
-                - the numerical value of one is the negative of the other
+                - the numerical value of one is the negative of the
+                  other
 
         Parameters
         ----------
         return_index : bool, optional
-            If True, will also return the indices of the (flattened) data where
-            the unique entries were found.
+            If True, will also return the indices of the (flattened)
+            data where the unique entries were found.
         return_inverse : bool, optional
-            If True, will also return the indices to reconstruct the (flattened)
-            data from the unique data.
+            If True, will also return the indices to reconstruct the
+            (flattened) data from the unique data.
         antipodal : bool, optional
             If False, rotations representing the same transformation
-            whose values are numerically different (negative) will *not* be
-            considered unique.
-
+            whose values are numerically different (negative) will *not*
+            be considered unique.
         """
         if len(self.data) == 0:
             return self.__class__(self.data)
@@ -192,12 +196,12 @@ class Rotation(Quaternion):
         return abcd
 
     def angle_with(self, other):
-        """The angle of rotation transforming this rotation to the other.
+        """The angle of rotation transforming this rotation to the
+        other.
 
         Returns
         -------
         Scalar
-
         """
         other = Rotation(other)
         angles = Scalar(
@@ -257,22 +261,24 @@ class Rotation(Quaternion):
         r = cls(np.stack([a, b, c, d], axis=-1))
         return r
 
-    def to_euler(self, convention="bunge"):  # TODO: other conventions
+    def to_euler(self, convention="bunge"):
         """Rotations as Euler angles.
 
         Parameters
         ----------
-        convention : 'bunge'
-            The Euler angle convention used. Only 'bunge'
-            is supported as present
+        convention : str, optional
+            The Euler angle convention used. Only "bunge" is supported.
 
         Returns
         -------
         ndarray
             Array of Euler angles in radians.
         """
+        # TODO: other conventions
         if convention != "bunge":
-            raise ValueError("The convention you have specified is not supported")
+            raise ValueError(
+                "The chosen convention is not supported, 'bunge' is the only option"
+            )
         # A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
         n = self.data.shape[:-1]
         e = np.zeros(n + (3,))
@@ -317,28 +323,40 @@ class Rotation(Quaternion):
 
     @classmethod
     def from_euler(cls, euler, convention="bunge", direction="crystal2lab"):
-        """Creates a rotation from an array of Euler angles.
+        """Creates a rotation from an array of Euler angles in radians.
 
         Parameters
         ----------
         euler : array-like
-            Euler angles in the Bunge convention.
+            Euler angles in radians in the Bunge convention.
         convention : str
-            Only 'bunge' is currently supported for new data
+            Only "bunge" is supported for new data.
         direction : str
-            'lab2crystal' or 'crystal2lab'
+            "lab2crystal" or "crystal2lab".
         """
-        if convention not in ["bunge", "Krakow_Hielscher"]:
-            raise ValueError("The chosen convention is not one of the allowed options")
-        if direction not in ["lab2crystal", "crystal2lab"]:
-            raise ValueError("The chosen direction is not one of the allowed options")
+        conventions = ["bunge", "Krakow_Hielscher"]
+        if convention not in conventions:
+            raise ValueError(
+                f"The chosen convention is not one of the allowed options {conventions}"
+            )
+        directions = ["lab2crystal", "crystal2lab"]
+        if direction not in directions:
+            raise ValueError(
+                f"The chosen direction is not one of the allowed options {directions}"
+            )
+
+        euler = np.array(euler)
+        if np.any(np.abs(euler) > 9):
+            warnings.warn(
+                "Angles are assumed to be in radians, but degrees might have been "
+                "passed"
+            )
+        n = euler.shape[:-1]
+        alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
 
         if convention == "Krakow_Hielscher":
             # To be applied to the data found at:
             # https://www.repository.cam.ac.uk/handle/1810/263510
-            euler = np.array(euler)
-            n = euler.shape[:-1]
-            alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
             alpha -= np.pi / 2
             gamma -= 3 * np.pi / 2
             zero = np.zeros(n)
@@ -356,17 +374,9 @@ class Rotation(Quaternion):
             rot = cls(data.data)
             rot.improper = zero
             return rot
-
         elif convention == "bunge":
-            euler = np.array(euler)
-            n = euler.shape[:-1]
-
-            # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
-
-            alpha = euler[..., 0]  # psi1
-            beta = euler[..., 1]  # Psi
-            gamma = euler[..., 2]  # psi3
-
+            # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
+            # (2015) 083501
             sigma = 0.5 * np.add(alpha, gamma)
             delta = 0.5 * np.subtract(alpha, gamma)
             c = np.cos(beta / 2)
@@ -401,11 +411,11 @@ class Rotation(Quaternion):
 
         References
         ----------
-        .. [Rowenhorst2015] D. Rowenhorst, A. D. Rollett, G. S. Rohrer, M.
-            Groeber, M. Jackson, P. J. Konijnenberg, M. De Graef,
+        .. [Rowenhorst2015] D. Rowenhorst, A. D. Rollett, G. S. Rohrer,
+            M. Groeber, M. Jackson, P. J. Konijnenberg, M. De Graef,
             "Consistent representations of and conversions between 3D
-            rotations," *Modelling and Simulation in Materials Science and
-            Engineering* **23** (2015), doi:
+            rotations," *Modelling and Simulation in Materials Science
+            and Engineering* **23** (2015), doi:
             https://doi.org/10.1088/0965-0393/23/8/083501
 
         Examples
@@ -446,7 +456,8 @@ class Rotation(Quaternion):
 
     @classmethod
     def from_matrix(cls, matrix):
-        """Creates rotations from orientation matrices [Rowenhorst2015]_.
+        """Creates rotations from orientation matrices
+        [Rowenhorst2015]_.
 
         Parameters
         ----------
@@ -465,7 +476,8 @@ class Rotation(Quaternion):
         True
         """
         om = np.asarray(matrix)
-        n = (1,) if om.ndim == 2 else om.shape[:-2]  # Assuming (3, 3) as last two dims
+        # Assuming (3, 3) as last two dims
+        n = (1,) if om.ndim == 2 else om.shape[:-2]
         q = np.zeros(n + (4,))
 
         # Compute quaternion components
@@ -492,7 +504,7 @@ class Rotation(Quaternion):
         Parameters
         ----------
         shape : tuple
-            The shape out of which to construct identity quaternions
+            The shape out of which to construct identity quaternions.
         """
         data = np.zeros(shape + (4,))
         data[..., 0] = 1
@@ -534,20 +546,19 @@ class Rotation(Quaternion):
         return cls(np.array(rotations[:n])).reshape(*shape)
 
     @classmethod
-    def random_vonmises(cls, shape=(1,), alpha=1.0, reference=(1, 0, 0, 0), eps=1e-6):
-        """Random rotations with a simplified Von Mises-Fisher distribution.
+    def random_vonmises(cls, shape=(1,), alpha=1.0, reference=(1, 0, 0, 0)):
+        """Random rotations with a simplified Von Mises-Fisher
+        distribution.
 
         Parameters
         ----------
         shape : int or tuple of int, optional
             The shape of the required object.
         alpha : float
-            Parameter for the VM-F distribution. Lower values lead to "looser"
-            distributions.
+            Parameter for the VM-F distribution. Lower values lead to
+            "looser" distributions.
         reference : Rotation
             The center of the distribution.
-        eps : float
-            A small fixed variable.
         """
         shape = (shape,) if isinstance(shape, int) else shape
         reference = Rotation(reference)
@@ -572,27 +583,28 @@ class Rotation(Quaternion):
 
 
 def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
-    """A vastly simplified Von Mises-Fisher distribution calculation.
+    r"""A vastly simplified Von Mises-Fisher distribution calculation.
 
     Parameters
     ----------
     x : Rotation
     alpha : float
         Lower values of alpha lead to "looser" distributions.
-    reference : Rotation
+    reference : Rotation, optional
 
     Notes
     -----
     This simplified version of the distribution is calculated using
 
-    .. math:: \\frac{\\exp\\left(2\\alpha\\cos\\left(\\omega\\right)\\right)}{_0F_1\\left(\\frac{N}{2}, \\alpha^2\\right)}
+    .. math::
+        \frac{\exp\left(2\alpha\cos\left(\omega\right)\right)}{\_0F\_1\left(\frac{N}{2}, \alpha^2\right)}
 
-    where :math:`\omega` is the angle between orientations and :math:`N` is the
-    number of relevant dimensions, in this case 3.
+    where :math:`\omega` is the angle between orientations and :math:`N`
+    is the number of relevant dimensions, in this case 3.
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
     """
     angle = x.angle_with(reference)
     return np.exp(2 * alpha * np.cos(angle.data)) / hyp0f1(1.5, alpha ** 2)
