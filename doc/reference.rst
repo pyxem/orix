@@ -402,10 +402,12 @@ Miller
     dot_outer
     deepcopy
     draw_circle
+    flatten
     from_highest_indices
     from_min_dspacing
     get_circle
     mean
+    reshape
     round
     rotate
     scatter

@@ -25,9 +25,6 @@ from orix.scalar import Scalar
 from orix.vector import Vector3d
 
 
-_PRECISION = np.finfo(np.float32).precision
-
-
 class Miller(Vector3d):
     """Direct crystal lattice vectors (uvw or UVTW) and reciprocal
     crystal lattice vectors (hkl or hkil), the latter known as Miller
@@ -129,6 +126,8 @@ class Miller(Vector3d):
         m.coordinate_format = self.coordinate_format
         return m
 
+    # ---------------------- Unique properties ---------------------- #
+
     @property
     def coordinate_format(self):
         """Vector coordinate format, either "xyz", "uvw", "UVTW", "hkl",
@@ -153,7 +152,7 @@ class Miller(Vector3d):
         if coordinate_format == "xyz":
             coordinate_format = "data"
         coordinates = self.__getattribute__(coordinate_format)
-        return coordinates.round(decimals=_PRECISION)
+        return coordinates
 
     @property
     def hkl(self):
@@ -296,7 +295,8 @@ class Miller(Vector3d):
     @property
     def multiplicity(self):
         """Number of symmetrically equivalent directions per vector."""
-        return self.symmetrise(unique=True, return_multiplicity=True)[1]
+        l = self.symmetrise(unique=True, return_multiplicity=True)[1]
+        return l.reshape(self.shape)
 
     @property
     def space(self):
@@ -316,12 +316,16 @@ class Miller(Vector3d):
         """
         return self.phase.is_hexagonal
 
+    # ----------- Overwritten Vector3d/Object3d properties ----------- #
+
     @property
     def unit(self):
         """Unit vectors."""
         m = self.__class__(xyz=super().unit.data, phase=self.phase)
         m.coordinate_format = self.coordinate_format
         return m
+
+    # ------------------------ Unique methods ------------------------ #
 
     @classmethod
     def from_highest_indices(cls, phase, uvw=None, hkl=None):
@@ -370,6 +374,149 @@ class Miller(Vector3d):
         )
         hkl = _get_indices_from_highest(highest_indices=highest_hkl)
         return cls(hkl=hkl, phase=phase).unique()
+
+    def deepcopy(self):
+        """Return a deepcopy of the instance."""
+        return deepcopy(self)
+
+    def round(self, max_index=20):
+        """Round a set of index triplet (Miller) or quartet
+        (Miller-Bravais/Weber) to the *closest* smallest integers.
+
+        Adopted from MTEX's Miller.round function.
+
+        Parameters
+        ----------
+        max_index : int
+            Maximum integer index to round to, by default 20.
+
+        Return
+        ------
+        Miller
+            Rounded set of index triplet(s) or quartet(s).
+        """
+        if self.coordinate_format == "xyz":
+            return self.deepcopy()
+        else:
+            new_coords = _round_indices(indices=self.coordinates, max_index=max_index)
+            init_kw = {self.coordinate_format: new_coords, "phase": self.phase}
+            return self.__class__(**init_kw)
+
+    def symmetrise(self, unique=False, return_multiplicity=False, return_index=False):
+        """Vectors symmetrically equivalent to the ones in `self`.
+
+        Parameters
+        ----------
+        unique : bool, optional
+            Whether to return only unique vectors. Default is False.
+        return_multiplicity : bool, optional
+            Whether to return the multiplicity of each vector. Default
+            is False.
+        return_index : bool, optional
+            Whether to return the index into `self` for the returned
+            symmetrically equivalent vectors. Default is False.
+
+        Returns
+        -------
+        Miller
+            Flattened symmetrically equivalent vectors.
+        multiplicity : numpy.ndarray
+            Multiplicity of each vector. Returned if
+            `return_multiplicity` is True.
+        idx : numpy.ndarray
+            Index into `self` for the symmetrically equivalent vectors.
+            Returned if `return_index` is True.
+        """
+        if return_multiplicity and not unique:
+            raise ValueError("`unique` must be True when `return_multiplicity` is True")
+        elif return_index and not unique:
+            raise ValueError("`unique` must be True when `return_index` is True")
+
+        # Symmetrise directions with respect to crystal symmetry on the
+        # flattened set of vectors
+        operations = self.phase.point_group
+        v2 = operations.outer(self.flatten())
+
+        if unique:
+            n_v = self.size  # Number of initial vectors in `self`
+
+            # Array for symmetrically equivalent vectors
+            v3 = self.zero((n_v, operations.size))
+
+            # Array for multiplicity of initial vectors
+            multiplicity = np.zeros(n_v, dtype=int)
+
+            # Array for index into `self` for the returned symmetrically
+            # equivalent vectors
+            idx = np.ones(v3.size, dtype=int) * -1
+
+            # Loop over initial vectors
+            l_accum = 0
+            for i in range(n_v):
+                # Unique vectors among those symmetrically equivalent
+                vi = v2[:, i].unique()
+                l = vi.size  # Multiplicity
+                v3[i, :l] = vi  # Insert only the unique ones
+
+                # Multiplicity of this initial vector
+                multiplicity[i] = l
+
+                # Index into `self` for the unique, symmetrically
+                # equivalent vectors
+                idx[l_accum : l_accum + l] = i
+                l_accum += l
+
+            # Remove entries into `v3` and `idx` not used
+            non_zero = np.sum(np.abs(v3.data), axis=-1) != 0
+            v2 = v3[non_zero]
+            idx = idx[: np.sum(non_zero)]
+
+        v2 = v2.flatten()
+
+        # Carry over crystal structure and coordinate format
+        m = self.__class__(xyz=v2.data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
+
+        if return_multiplicity and return_index:
+            return m, multiplicity, idx
+        elif return_multiplicity and not return_index:
+            return m, multiplicity
+        elif not return_multiplicity and return_index:
+            return m, idx
+        else:
+            return m
+
+    def _compatible_with(self, other, raise_error=False):
+        """Whether `self` and `other` have both the same crystal lattice
+        and symmetry and that the vectors are in the same space.
+
+        Parameters
+        ----------
+        other : Miller
+        raise_error : bool, optional
+            Whether to raise a ValueError if the instances are not
+            compatible. Default is False.
+
+        Returns
+        -------
+        bool
+        """
+        same_symmetry = self.phase.point_group.name == other.phase.point_group.name
+        same_lattice = np.allclose(
+            self.phase.structure.lattice.abcABG(),
+            other.phase.structure.lattice.abcABG(),
+        )
+        same_space = self.space == other.space
+        compatible = same_symmetry * same_lattice * same_space
+        if not compatible and raise_error:
+            raise ValueError(
+                "The crystal lattices and symmetries must be the same, and the vectors "
+                "must be in the same space"
+            )
+        else:
+            return compatible
+
+    # ------------- Overwritten Vector3d/Object3d methods- ----------- #
 
     def angle_with(self, other, use_symmetry=False):
         """Calculate angles between vectors in `self` and `other`,
@@ -423,10 +570,6 @@ class Miller(Vector3d):
         m.coordinate_format = new_fmt[self.coordinate_format]
         return m
 
-    def deepcopy(self):
-        """Return a deepcopy of the instance."""
-        return deepcopy(self)
-
     def dot(self, other):
         """Dot product of a vector with another vector.
 
@@ -456,123 +599,28 @@ class Miller(Vector3d):
         self._compatible_with(other, raise_error=True)
         return super().dot_outer(other)
 
+    def flatten(self):
+        m = self.__class__(xyz=super().flatten().data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
+        return m
+
     def get_nearest(self):
         """NotImplemented."""
         return NotImplemented
 
     def mean(self, use_symmetry=False):
         """Mean vector of the set of vectors."""
+        # TODO: Allow using symmetry by projecting to fundamental sector
         if use_symmetry:
             return NotImplemented
         m = self.__class__(xyz=super().mean().data, phase=self.phase)
         m.coordinate_format = self.coordinate_format
         return m
 
-    def round(self, max_index=20):
-        """Round a set of index triplet (Miller) or quartet
-        (Miller-Bravais/Weber) to the *closest* smallest integers.
-
-        Adopted from MTEX's Miller.round function.
-
-        Parameters
-        ----------
-        max_index : int
-            Maximum integer index to round to, by default 20.
-
-        Return
-        ------
-        Miller
-            Rounded set of index triplet(s) or quartet(s).
-        """
-        if self.coordinate_format == "xyz":
-            return self.deepcopy()
-        else:
-            new_coords = _round_indices(indices=self.coordinates, max_index=max_index)
-            init_kw = {self.coordinate_format: new_coords, "phase": self.phase}
-            return self.__class__(**init_kw)
-
-    def symmetrise(self, unique=False, return_multiplicity=False, return_index=False):
-        """Vectors symmetrically equivalent to the ones in `self`.
-
-        Parameters
-        ----------
-        unique : bool, optional
-            Whether to return only unique vectors. Default is False.
-        return_multiplicity : bool, optional
-            Whether to return the multiplicity of each vector. Default
-            is False.
-        return_index : bool, optional
-            Whether to return the index into `self` for the returned
-            symmetrically equivalent vectors. Default is False.
-
-        Returns
-        -------
-        Miller
-            Symmetrically equivalent vectors.
-        multiplicity : numpy.ndarray
-            Multiplicity of each vector. Returned if
-            `return_multiplicity` is True.
-        idx : numpy.ndarray
-            Index into `self` for the symmetrically equivalent vectors.
-            Returned if `return_index` is True.
-        """
-        if return_multiplicity and not unique:
-            raise ValueError("`unique` must be True when `return_multiplicity` is True")
-        elif return_index and not unique:
-            raise ValueError("`unique` must be True when `return_index` is True")
-
-        # Symmetrise directions with respect to crystal symmetry
-        operations = self.phase.point_group
-        v2 = operations.outer(self)
-
-        if unique:
-            n_v = self.size  # Number of initial vectors in `self`
-
-            # Array for symmetrically equivalent vectors
-            v3 = self.zero((n_v, operations.size))
-
-            # Array for multiplicity of initial vectors
-            multiplicity = np.zeros(n_v, dtype=int)
-
-            # Array for index into `self` for the returned symmetrically
-            # equivalent vectors
-            idx = np.ones(v3.size, dtype=int) * -1
-
-            # Loop over initial vectors
-            l_accum = 0
-            for i in range(n_v):
-                # Unique vectors among those symmetrically equivalent
-                vi = v2[:, i].unique()
-                l = vi.size  # Multiplicity
-                v3[i, :l] = vi  # Insert only the unique ones
-
-                # Multiplicity of this initial vector
-                multiplicity[i] = l
-
-                # Index into `self` for the unique, symmetrically
-                # equivalent vectors
-                idx[l_accum : l_accum + l] = i
-                l_accum += l
-
-            # Remove entries into `v3` and `idx` not used
-            non_zero = np.sum(np.abs(v3.data), axis=-1) != 0
-            v2 = v3[non_zero]
-            idx = idx[: np.sum(non_zero)]
-
-        v2 = v2.flatten()
-
-        # Carry over crystal structure and coordinate format
-        m = self.__class__(xyz=v2.data, phase=self.phase)
+    def reshape(self, *shape):
+        m = self.__class__(xyz=super().reshape(*shape).data, phase=self.phase)
         m.coordinate_format = self.coordinate_format
-
-        if return_multiplicity and return_index:
-            return m, multiplicity, idx
-        elif return_multiplicity and not return_index:
-            return m, multiplicity
-        elif not return_multiplicity and return_index:
-            return m, idx
-        else:
-            return m
+        return m
 
     def unique(self, use_symmetry=False, return_index=False):
         """Unique vectors in `self`.
@@ -589,7 +637,7 @@ class Miller(Vector3d):
         Returns
         -------
         Miller
-            Unique vectors.
+            Flattened unique vectors.
         idx : numpy.ndarray
             Indices of the unique data in the (flattened) array.
         """
@@ -602,6 +650,7 @@ class Miller(Vector3d):
         if use_symmetry:
             operations = self.phase.point_group
             n_v = v.size
+            v2 = operations.outer(v).flatten()
             v2 = operations.outer(v).flatten().reshape(*(n_v, operations.size))
             data = v2.data
             data_sorted = np.zeros_like(data)
@@ -619,55 +668,37 @@ class Miller(Vector3d):
         else:
             return m
 
-    def _compatible_with(self, other, raise_error=False):
-        """Whether `self` and `other` have both the same crystal lattice
-        and symmetry and that the vectors are in the same space.
-
-        Parameters
-        ----------
-        other : Miller
-        raise_error : bool, optional
-            Whether to raise a ValueError if the instances are not
-            compatible. Default is False.
-
-        Returns
-        -------
-        bool
-        """
-        same_symmetry = self.phase.point_group.name == other.phase.point_group.name
-        same_lattice = np.allclose(
-            self.phase.structure.lattice.abcABG(),
-            other.phase.structure.lattice.abcABG(),
-        )
-        same_space = self.space == other.space
-        compatible = same_symmetry * same_lattice * same_space
-        if not compatible and raise_error:
-            raise ValueError(
-                "The crystal lattices and symmetries must be the same, and the vectors "
-                "must be in the same space"
-            )
-        else:
-            return compatible
-
 
 def _uvw2xyz(uvw, lattice):
-    dsm = _direct_structure_matrix(lattice)
-    return dsm.dot(np.asarray(uvw).T).T
+    uvw = np.asarray(uvw)
+    shape = uvw.shape
+    uvw = uvw.reshape((uvw.size // 3, 3))
+    xyz = _direct_structure_matrix(lattice).dot(uvw.T).T
+    return xyz.reshape(shape)
 
 
 def _xyz2uvw(xyz, lattice):
-    rsm = _reciprocal_structure_matrix(lattice)
-    return np.asarray(xyz).dot(rsm)
+    xyz = np.asarray(xyz)
+    shape = xyz.shape
+    xyz = xyz.reshape((xyz.size // 3, 3))
+    uvw = xyz.dot(_reciprocal_structure_matrix(lattice))
+    return uvw.reshape(shape)
 
 
 def _hkl2xyz(hkl, lattice):
-    rsm = _reciprocal_structure_matrix(lattice)
-    return rsm.dot(np.asarray(hkl).T).T
+    hkl = np.asarray(hkl)
+    shape = hkl.shape
+    hkl = hkl.reshape((hkl.size // 3, 3))
+    xyz = _reciprocal_structure_matrix(lattice).dot(hkl.T).T
+    return xyz.reshape(shape)
 
 
 def _xyz2hkl(xyz, lattice):
-    dsm = _direct_structure_matrix(lattice)
-    return np.asarray(xyz).dot(dsm)
+    xyz = np.asarray(xyz)
+    shape = xyz.shape
+    xyz = xyz.reshape((xyz.size // 3, 3))
+    hkl = xyz.dot(_direct_structure_matrix(lattice))
+    return hkl.reshape(shape)
 
 
 def _hkl2hkil(hkl):
@@ -835,7 +866,7 @@ def _round_indices(indices, max_index=12):
     n_idx = idx.shape[-1]  # 3 or 4
     idx_flat = np.reshape(idx, (-1, n_idx))
     if n_idx == 4:
-        idx_flat = idx_flat[:, [0, 1, 3]]
+        idx_flat = idx_flat[..., [0, 1, 3]]
 
     # Get number of sets, max. index per set, and all possible integer
     # multipliers between 1 and `max_index`
@@ -846,8 +877,8 @@ def _round_indices(indices, max_index=12):
     # Divide by highest index, repeat array `max_index` number of times,
     # and multiply with all multipliers
     idx_scaled = (
-        np.broadcast_to(idx_flat / max_per_set[:, np.newaxis], (max_index, n_sets, 3))
-        * multipliers[:, np.newaxis, np.newaxis]
+        np.broadcast_to(idx_flat / max_per_set[..., np.newaxis], (max_index, n_sets, 3))
+        * multipliers[..., np.newaxis, np.newaxis]
     )
 
     # Find the most suitable multiplier per set, which gives the
@@ -861,8 +892,11 @@ def _round_indices(indices, max_index=12):
     idx_min_error = np.argmin(error, axis=0)
     multiplier = (idx_min_error + 1) / max_per_set
 
+    # Reshape `multiplier` to match indices shape
+    multiplier = multiplier.reshape(idx.shape[:-1])[..., np.newaxis]
+
     # Finally, multiply each set with their most suitable multiplier,
     # and round
-    new_indices = np.round(multiplier[:, np.newaxis] * idx).astype(int)
+    new_indices = np.round(multiplier * idx).astype(int)
 
     return new_indices

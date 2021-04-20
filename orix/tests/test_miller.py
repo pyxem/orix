@@ -255,6 +255,57 @@ class TestMiller:
         assert Miller(hkil=[1, 1, -2, 1], phase=TRIGONAL_PHASE).is_hexagonal
         assert not Miller(hkil=[1, 1, -2, 1], phase=TETRAGONAL_PHASE).is_hexagonal
 
+    def test_various_shapes(self):
+        v = np.array([[1, 2, 0], [3, 1, 1], [1, 1, 1], [2, 0, 0], [1, 2, 3], [2, 2, 2]])
+
+        # Initialization of vectors work as expected
+        shape1 = (2, 3)
+        m1 = Miller(hkl=v.reshape(shape1 + (3,)), phase=TETRAGONAL_PHASE)
+        assert m1.shape == shape1
+        assert np.allclose(m1.hkl, v.reshape(shape1 + (3,)))
+        shape2 = (2, 3)[::-1]
+        m2 = Miller(uvw=v.reshape(shape2 + (3,)), phase=TETRAGONAL_PHASE)
+        assert m2.shape == shape2
+        assert np.allclose(m2.uvw, v.reshape(shape2 + (3,)))
+
+        # Vector length and multiplicity
+        assert m1.length.shape == m1.shape
+        assert m1.multiplicity.shape == m1.shape
+
+        # Symmetrically equivalent vectors
+        m3, mult, idx = m1.symmetrise(
+            unique=True, return_multiplicity=True, return_index=True
+        )
+        assert m3.shape == (24,)
+        assert np.allclose(mult, [4] * m1.size)
+        assert np.allclose(
+            idx, [0] * 4 + [1] * 4 + [2] * 4 + [3] * 4 + [4] * 4 + [5] * 4
+        )
+
+        # Unit vectors
+        m4 = m1.unit
+        assert m4.shape == shape1
+
+        # Overwritten Vector3d methods
+        assert m1.angle_with(m1).shape == shape1
+        assert m1.cross(m1).shape == shape1
+        assert m1.dot(m1).shape == shape1
+        assert m1.dot_outer(m1).shape == shape1 + shape1
+        assert m1.mean().shape == (1,)
+
+        # Round
+        m5 = m1.round()
+        assert m5.shape == shape1
+
+        # Unique vectors
+        assert m5.unique(use_symmetry=True).shape == (5,)
+        assert m5.unique().shape == (5,)
+
+        # Reshape
+        m6 = m1.reshape(*shape2)
+        assert np.allclose(m6.hkl, v.reshape(shape2 + (3,)))
+        assert m1._compatible_with(m6)  # Phase carries over
+
 
 class TestMillerBravais:
     def test_uvw2UVTW(self):
