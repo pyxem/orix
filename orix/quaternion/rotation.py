@@ -70,7 +70,7 @@ class Rotation(Quaternion):
     """
 
     def __init__(self, data):
-        super(Rotation, self).__init__(data)
+        super().__init__(data)
         self._data = np.concatenate((self.data, np.zeros(self.shape + (1,))), axis=-1)
         if isinstance(data, Rotation):
             self.improper = data.improper
@@ -109,12 +109,12 @@ class Rotation(Quaternion):
         return r
 
     def __getitem__(self, key):
-        r = super(Rotation, self).__getitem__(key)
+        r = super().__getitem__(key)
         r.improper = self.improper[key]
         return r
 
     def __invert__(self):
-        r = super(Rotation, self).__invert__()
+        r = super().__invert__()
         r.improper = self.improper
         return r
 
@@ -210,10 +210,8 @@ class Rotation(Quaternion):
         return angles
 
     def outer(self, other):
-        """Compute the outer product of this rotation and the other
-        object.
-        """
-        r = super(Rotation, self).outer(other)
+        """Compute the outer product of this rotation and the other object."""
+        r = super().outer(other)
         if isinstance(r, Rotation):
             r.improper = np.logical_xor.outer(self.improper, other.improper)
         if isinstance(r, Vector3d):
@@ -222,7 +220,7 @@ class Rotation(Quaternion):
 
     def flatten(self):
         """A new object with the same data in a single column."""
-        r = super(Rotation, self).flatten()
+        r = super().flatten()
         r.improper = self.improper.T.flatten().T
         return r
 
@@ -236,10 +234,8 @@ class Rotation(Quaternion):
         self._data[..., -1] = value
 
     def dot_outer(self, other):
-        """Scalar : the outer dot product of this rotation and the
-        other.
-        """
-        cosines = np.abs(super(Rotation, self).dot_outer(other).data)
+        """Scalar : the outer dot product of this rotation and the other."""
+        cosines = np.abs(super().dot_outer(other).data)
         if isinstance(other, Rotation):
             improper = self.improper.reshape(self.shape + (1,) * len(other.shape))
             i = np.logical_xor(improper, other.improper)

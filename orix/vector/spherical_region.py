@@ -28,24 +28,21 @@ the spherical region.
 
 Examples
 --------
-
 >>> sr = SphericalRegion([0, 0, 1])  # Region above the x-y plane
 >>> v = Vector3d([(0, 0, 1), (0, 0, -1), (1, 0, 0)])
 >>> v < sr
 array([ True, False, False], dtype=bool)
 >>> v <= sr
 array([ True, False,  True], dtype=bool)
-
 """
+
 import numpy as np
 
 from orix.vector import Vector3d
 
 
 class SphericalRegion(Vector3d):
-    """A set of vectors representing normals segmenting a sphere.
-
-    """
+    """A set of vectors representing normals segmenting a sphere."""
 
     def __gt__(self, x):
         """Returns True where x is strictly inside the region.
@@ -57,7 +54,6 @@ class SphericalRegion(Vector3d):
         Returns
         -------
         ndarray
-
         """
         return np.all(self.dot_outer(x) > 1e-9, axis=0)
 
@@ -71,6 +67,5 @@ class SphericalRegion(Vector3d):
         Returns
         -------
         ndarray
-
         """
         return np.all(self.dot_outer(x) > -1e-9, axis=0)

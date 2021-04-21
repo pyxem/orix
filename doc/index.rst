@@ -22,6 +22,7 @@ Work using orix
 .. nbgallery::
     :caption: User guide
 
+    crystal_geometry.ipynb
     stereographic_projection.ipynb
 
 .. toctree::

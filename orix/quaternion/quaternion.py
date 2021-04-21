@@ -20,7 +20,7 @@ import numpy as np
 
 from orix.base import check, Object3d
 from orix.scalar import Scalar
-from orix.vector import Vector3d
+from orix.vector import Miller, Vector3d
 
 
 def check_quaternion(obj):
@@ -44,8 +44,6 @@ class Quaternion(Object3d):
         The individual elements of each vector.
     conj : Quaternion
         The conjugate of this quaternion: :math:`q^* = a - bi - cj - dk`
-
-
     """
 
     dim = 4
@@ -119,7 +117,13 @@ class Quaternion(Object3d):
             z_new = (a ** 2 - b ** 2 - c ** 2 + d ** 2) * z + 2 * (
                 (a * b + c * d) * y + (b * d - a * c) * x
             )
-            return other.__class__(np.stack((x_new, y_new, z_new), axis=-1))
+            v = np.stack((x_new, y_new, z_new), axis=-1)
+            if isinstance(other, Miller):
+                m = other.__class__(xyz=v, phase=other.phase)
+                m.coordinate_format = other.coordinate_format
+                return m
+            else:
+                return other.__class__(v)
         return NotImplemented
 
     def outer(self, other):
@@ -152,9 +156,16 @@ class Quaternion(Object3d):
                 e(a * b + c * d, y) + e(b * d - a * c, x)
             )
             v = np.stack((x_new, y_new, z_new), axis=-1)
-            return other.__class__(v)
+            if isinstance(other, Miller):
+                m = other.__class__(xyz=v, phase=other.phase)
+                m.coordinate_format = other.coordinate_format
+                return m
+            else:
+                return other.__class__(v)
+
         raise NotImplementedError(
-            "This operation is currently not avaliable in orix, please use outer with other of type: Quaternion or Vector3d"
+            "This operation is currently not avaliable in orix, please use outer with "
+            "other of type: Quaternion or Vector3d"
         )
 
     def dot(self, other):

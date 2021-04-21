@@ -456,13 +456,29 @@ def test_random_vonmises(shape, reference):
 
 class TestFromToMatrix:
     def test_to_matrix(self):
-        r = Rotation([[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]]).reshape(
-            2, 2
-        )
+        r = Rotation([[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]])
         om = np.array(
             [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
         )
-        assert np.allclose(r.to_matrix(), om.reshape((2, 2, 3, 3)))
+        # Shapes are handled correctly
+        assert np.allclose(r.reshape(2, 2).to_matrix(), om.reshape(2, 2, 3, 3))
+
+        r2 = Rotation(
+            [
+                [0.1, 0.2, 0.3, 0.4],
+                [0.5, 0.6, 0.7, 0.8],
+                [0.9, 0.91, 0.92, 0.93],
+                [1, 2, 3, 4],
+            ]
+        )
+        om_from_r2 = r2.to_matrix()
+        # Inverse equal to transpose
+        assert all(np.allclose(np.linalg.inv(i), i.T) for i in om_from_r2)
+        # Cross product of any two rows gives the third
+        assert all(np.allclose(np.cross(i[:, 0], i[:, 1]), i[:, 2]) for i in om_from_r2)
+        # Sum of squares of any column or row equals unity
+        assert np.allclose(np.sum(np.square(om_from_r2), axis=1), 1)  # Rows
+        assert np.allclose(np.sum(np.square(om_from_r2), axis=2), 1)  # Columns
 
     def test_from_matrix(self):
         r = Rotation([[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]])
