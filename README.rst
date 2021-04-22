@@ -38,7 +38,7 @@ at the following
 `link <https://onlinelibrary.wiley.com/iucr/doi/10.1107/S1600576720011103>`_.
 You can also find demos in the
 `orix-demos <https://github.com/pyxem/orix-demos>`_ repo, visit the `user guide
-<https://orix.readthedocs.io>`, or try out the user guide notebooks
+<https://orix.readthedocs.io>`_, or try out the user guide notebooks
 interactively in the browser by clicking the Binder link above and navigating
 to the ``doc/`` directory.
 
