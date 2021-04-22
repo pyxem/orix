@@ -1,4 +1,7 @@
-|build_status|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
+|binder|_ |build_status|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
+
+.. |binder| image:: https://mybinder.org/badge_logo.svg
+.. _binder: https://mybinder.org/v2/gh/pyxem/orix/HEAD
 
 .. |build_status| image:: https://github.com/pyxem/orix/workflows/build/badge.svg
 .. _build_status: https://github.com/pyxem/orix/actions
@@ -30,8 +33,13 @@ builds primarily on top of `numpy <http://www.numpy.org/>`__ and
 `MATLAB <https://www.mathworks.com/products/matlab.html>`__ package
 `MTEX <http://mtex-toolbox.github.io/>`__.
 
-If analysis using orix forms a part of published work please cite the manuscript at the
-following `link <https://onlinelibrary.wiley.com/iucr/doi/10.1107/S1600576720011103>`_.
-You can also find demos in the `orix-demos <https://github.com/pyxem/orix-demos>`_ repo.
+If analysis using orix forms a part of published work please cite the manuscript
+at the following
+`link <https://onlinelibrary.wiley.com/iucr/doi/10.1107/S1600576720011103>`_.
+You can also find demos in the
+`orix-demos <https://github.com/pyxem/orix-demos>`_ repo, visit the `user guide
+<https://orix.readthedocs.io>`, or try out the user guide notebooks
+interactivelly in the browser by clicking the Binder link above and navigating
+to the ``doc/`` directory.
 
 orix is released under the GPL v3 license.
