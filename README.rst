@@ -39,7 +39,7 @@ at the following
 You can also find demos in the
 `orix-demos <https://github.com/pyxem/orix-demos>`_ repo, visit the `user guide
 <https://orix.readthedocs.io>`, or try out the user guide notebooks
-interactivelly in the browser by clicking the Binder link above and navigating
+interactively in the browser by clicking the Binder link above and navigating
 to the ``doc/`` directory.
 
 orix is released under the GPL v3 license.
