@@ -13,7 +13,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.7, 3.8]
+        python-version: [3.8, 3.9]
+        include:
+          # Oldest supported version of main dependencies on Python 3.6
+          - os: ubuntu-latest
+            python-version: 3.6
+            OLDEST_SUPPORTED_VERSION: true
+            DEPENDENCIES: diffpy.structure==3  matplotlib==3.3
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -25,6 +31,9 @@ jobs:
       - name: Install depedencies and package
         shell: bash
         run: pip install -U -e .'[doc, tests]'
+      - name: Install oldest supported version
+        if: ${{ matrix.OLDEST_SUPPORTED_VERSION }}
+        run: pip install ${{ matrix.DEPENDENCIES }}
       - name: Run tests
         run: pytest --cov=orix --pyargs orix
       - name: Generate line coverage
