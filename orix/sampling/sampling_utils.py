@@ -51,9 +51,7 @@ def uniform_SO3_sample(resolution,max_angle=None,old_method=False):
     #TODO: think more carefully about what resolution should mean
 
     num_steps = int(np.ceil(360 / resolution))
-    if num_steps % 2 == 1:
-        num_steps = int(num_steps + 1)
-    half_steps = int(num_steps / 2)
+
 
     if not old_method:
         # sources can be found in the discussion of issue #175
@@ -64,27 +62,34 @@ def uniform_SO3_sample(resolution,max_angle=None,old_method=False):
             u_2 = np.linspace(0,1,num=num_steps,endpoint=True)
         else:
             # e_1 = cos(omega/2) = np.sqrt(1-u_1) * np.sin(2*np.pi*u2)
-            e_1_max = np.cos(np.deg2rad(max_angle/2))
-            u_1_max = 1 - np.square(e_1_max)
-            u_2_max = np.arcsin(e_1_max) / 2 / np.pi
-            u_1 = np.linspace(0,u_1_max,num=int(num_steps*u_1_max),endpoint=True)
-            u_2 = np.linspace(0,u_2_max,num=int(num_steps*u_2_max),endpoint=True)
+            e_1_min = np.cos(np.deg2rad(max_angle/2))
+            u_1_max = 1 - np.square(e_1_min)
+            u_2_min = np.arcsin(e_1_min) / 2 / np.pi
+            u_1 = np.linspace(0,u_1_max,num=int(num_steps*(u_1_max)),endpoint=True)
+            u_2 = np.linspace(u_2_min,1,num=int(num_steps*(1-u_2_min)),endpoint=True)
 
-        # eyeballed this, will need checking
         inputs = np.meshgrid(u_1,u_2,u_3)
+        mesh1 = inputs[0].flatten()
+        mesh2 = inputs[1].flatten()
+        mesh3 = inputs[2].flatten()
 
         # Convert u_1 etc. into the final form used
-        a = np.sqrt(1-inputs[:,0])
-        b = np.sqrt(inputs[:,0])
-        s_2,c_2 = np.sin(2*np.pi*inputs[:,1]),np.cos(2*np.pi*inputs[:,1])
-        s_3,c_3 = np.sin(2*np.pi*inputs[:,2]),np.cos(2*np.pi*inputs[:,2])
+        a = np.sqrt(1-mesh1)
+        b = np.sqrt(mesh1)
+        s_2,c_2 = np.sin(2*np.pi*mesh2),np.cos(2*np.pi*mesh2)
+        s_3,c_3 = np.sin(2*np.pi*mesh3),np.cos(2*np.pi*mesh3)
 
         q = np.asarray([a*s_2,a*c_2,b*s_3,b*c_3])
 
-        # convert to quaternion object
+        #convert to quaternion object
         # remove duplicates
-
+        
     if old_method:
+        if num_steps % 2 == 1:
+            num_steps = int(num_steps + 1)
+
+        half_steps = int(num_steps / 2)
+
         alpha = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
         beta = np.arccos(np.linspace(1, -1, num=half_steps, endpoint=False))
         gamma = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
