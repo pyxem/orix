@@ -537,7 +537,7 @@ class StereographicPlot(Axes):
             polar = np.asarray(values[1])
         else:
             try:
-                value = values[0].unit
+                value = values[0].flatten().unit
                 azimuth = value.azimuth.data
                 polar = value.polar.data
             except (ValueError, AttributeError):
