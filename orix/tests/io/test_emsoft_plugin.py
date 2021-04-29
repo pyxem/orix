@@ -109,3 +109,23 @@ class TestEMsoftPlugin:
         if not refined:
             assert np.rad2deg(xmap.rotations.to_euler().min()) >= 150
             assert np.rad2deg(xmap.rotations.to_euler().max()) <= 160
+
+    @pytest.mark.parametrize(
+        "temp_emsoft_h5ebsd_file",
+        [
+            (
+                (7, 3),  # map_shape
+                (1.5, 1.5),  # step_sizes
+                np.array(
+                    [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229]]
+                ),  # rotations as rows of Euler angle triplets
+                21,  # n_top_matches
+                False,  # refined
+            ),
+        ],
+        indirect=["temp_emsoft_h5ebsd_file"],
+    )
+    def test_load_emsoft_best_matches_shape(self, temp_emsoft_h5ebsd_file):
+        xmap = load(temp_emsoft_h5ebsd_file.filename, refined=False)
+        assert xmap.rotations_per_point == 21
+        assert xmap.TopDotProductList.shape == (21, 21)

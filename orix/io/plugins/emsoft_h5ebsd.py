@@ -143,9 +143,11 @@ def _get_properties(data_group, n_top_matches, map_size):
     for property_name in expected_properties:
         if property_name in data_group.keys():
             prop = data_group[property_name][:]
-            if prop.shape[-1] == n_top_matches:
-                prop = prop[:map_size].reshape((map_size,) + (n_top_matches,))
+            if prop.shape[-1] == n_top_matches and np.prod(prop.shape) > map_size:
+                # Not a refined dot product file
+                prop = prop[:map_size].reshape((map_size, n_top_matches))
             else:
+                # Refined dot product file
                 prop = prop.reshape(map_size)
             properties[property_name] = prop
     return properties
