@@ -771,7 +771,8 @@ class Vector3d(Object3d):
         # Whether to plot a grid, and with which resolution
         if grid is None:
             grid = [a._stereographic_grid for a in axes]
-        #            grid = plt.rcParams["axes.grid"]
+            if all(g is None for g in grid):
+                grid = [plt.rcParams["axes.grid"],] * ncols
         else:
             grid = [grid,] * ncols
         if grid_resolution is None:

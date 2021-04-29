@@ -140,7 +140,7 @@ class StereographicPlot(Axes):
         self._polar_resolution = polar_resolution
 
         # Custom attribute to keep track of whether grid is on or off
-        self._stereographic_grid = False
+        self._stereographic_grid = None
 
         super().__init__(*args, **kwargs)
         # Set ratio of y-unit to x-unit by adjusting the physical

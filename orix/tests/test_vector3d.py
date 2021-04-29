@@ -439,7 +439,7 @@ class TestPlotting:
         v.scatter(figure=fig)
         assert fig.axes[0]._stereographic_grid is True
 
-        # New figure, so _stereographic_grid should be as initialized
+        # New figure, so _stereographic_grid should be as `axes.grid`
         fig2 = v.scatter(return_figure=True)
         assert fig2.axes[0]._stereographic_grid is False
 
