@@ -601,7 +601,8 @@ class Vector3d(Object3d):
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.scatter(self, **kwargs)
-            ax.grid(grid)
+            ax.grid(grid[i])
+            ax._stereographic_grid = grid[i]
             ax.azimuth_grid(grid_resolution[0])
             ax.polar_grid(grid_resolution[1])
             ax.set_labels(*axes_labels)
@@ -691,7 +692,8 @@ class Vector3d(Object3d):
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.draw_circle(self, opening_angle=opening_angle, steps=steps, **kwargs)
-            ax.grid(grid)
+            ax.grid(grid[i])
+            ax._stereographic_grid = grid[i]
             ax.azimuth_grid(grid_resolution[0])
             ax.polar_grid(grid_resolution[1])
             ax.set_labels(*axes_labels)
@@ -729,7 +731,7 @@ class Vector3d(Object3d):
         axes : matplotlib.axes.Axes
         hemisphere : tuple of str
         show_hemisphere_label : bool
-        grid : bool
+        grid : list of bool
         grid_resolution : tuple
         """
         if projection.lower() != "stereographic":
@@ -768,7 +770,10 @@ class Vector3d(Object3d):
 
         # Whether to plot a grid, and with which resolution
         if grid is None:
-            grid = plt.rcParams["axes.grid"]
+            grid = [a._stereographic_grid for a in axes]
+        #            grid = plt.rcParams["axes.grid"]
+        else:
+            grid = [grid,] * ncols
         if grid_resolution is None:
             grid_resolution = (None,) * 2
 

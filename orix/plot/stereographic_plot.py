@@ -136,9 +136,11 @@ class StereographicPlot(Axes):
     def __init__(self, *args, azimuth_resolution=10, polar_resolution=10, **kwargs):
         self._azimuth_cap = 2 * np.pi
         self._azimuth_resolution = azimuth_resolution
-
         self._polar_cap = np.pi / 2
         self._polar_resolution = polar_resolution
+
+        # Custom attribute to keep track of whether grid is on or off
+        self._stereographic_grid = False
 
         super().__init__(*args, **kwargs)
         # Set ratio of y-unit to x-unit by adjusting the physical

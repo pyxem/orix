@@ -37,7 +37,6 @@ Changed
 
 Fixed
 -----
-- Plotting of multidimensional Vector3d instances
 - Reading of crystal symmetry from EMsoft h5ebsd dot product files in CrystalMap plugin
 
 2020-11-03 - version 0.5.1
