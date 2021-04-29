@@ -98,9 +98,11 @@ class TestEMsoftPlugin:
         expected_props.sort()
         assert actual_props == expected_props
 
-        assert xmap.phases["austenite"].structure == Structure(
-            title="austenite",
-            lattice=Lattice(a=3.595, b=3.595, c=3.595, alpha=90, beta=90, gamma=90),
+        assert xmap.phases["fe4al13"].structure == Structure(
+            title="fe4al13",
+            lattice=Lattice(
+                a=15.009001, b=8.066, c=12.469, alpha=90, beta=107.72, gamma=90
+            ),
         )
 
         # Ensure Euler angles in degrees are read correctly from file

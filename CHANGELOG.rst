@@ -30,6 +30,10 @@ Changed
 - CrystalMap.get_map_data() tries to respect input data type, other minor improvements
 - Continuous integration migrated from Travis CI to GitHub Actions
 
+Fixed
+-----
+- Reading of crystal symmetry from EMsoft h5ebsd dot product files in CrystalMap plugin
+
 2020-11-03 - version 0.5.1
 ==========================
 
