@@ -79,7 +79,7 @@ def _three_uniform_samples_method(resolution,max_angle):
 
     [1] - http://planning.cs.uiuc.edu/node198.html
     [2] - http://inis.jinr.ru/sl/vol1/CMC/Graphics_Gems_3,ed_D.Kirk.pdf
-    [3] - K. Shoemake. Uniform random rotations. Graphics Gems III, pages 124-132. Academic, New York, 1992. 
+    [3] - K. Shoemake. Uniform random rotations. Graphics Gems III, pages 124-132. Academic, New York, 1992.
     """
     num_steps = int(np.ceil(360 / resolution))
     # sources can be found in the discussion of issue #175
@@ -111,7 +111,11 @@ def _three_uniform_samples_method(resolution,max_angle):
     q = np.asarray([a*s_2,a*c_2,b*s_3,b*c_3])
 
     #convert to quaternion object
+    q = Quaternion(q)
+
     # remove duplicates
+    q = q.unique()
+    
     return q
 
 def _euler_angles_harr_measure(resolution):
