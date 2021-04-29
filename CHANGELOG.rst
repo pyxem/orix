@@ -37,6 +37,7 @@ Changed
 
 Fixed
 -----
+- Reading of properties (scores etc.) from EMsoft h5ebsd files with certain map shapes
 - Reading of crystal symmetry from EMsoft h5ebsd dot product files in CrystalMap plugin
 
 2020-11-03 - version 0.5.1
