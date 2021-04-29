@@ -48,55 +48,105 @@ def uniform_SO3_sample(resolution,max_angle=None,old_method=False):
     """
     if max_angle is not None and old_method:
         raise ValueError("old_method=True does not support using the max_angle keyword")
-    #TODO: think more carefully about what resolution should mean
+
+    if old_method:
+        return _euler_angles_harr_measure(resolution)
+    else:
+        return _three_uniform_samples_method(resolution,max_angle)
+
+def _three_uniform_samples_method(resolution,max_angle):
+    """
+    Returns rotations that are evenly spaced according to the Haar measure on
+    SO3, the advantage of this method is that it select values from uniform distributions
+    so we can more easily restrict to a subregion of SO3
+
+    Parameters
+    ----------
+    resolution : float
+        The characteristic distance between a rotation and its neighbour (degrees)
+    max_angle : float
+        The max angle (ie. distance from the origin) required from the gridding, (degrees)
+    Returns
+    -------
+    q : orix.quaternion.rotation.Rotation
+        grid containing appropriate rotations
+
+    Notes
+    -----
+    This algorithm has a fairly light-footprint on the internet, it's implemented as
+    described in [1], the 'gem' on which it is based can be found at [2] and
+    has a reference [3]:
+
+    [1] - http://planning.cs.uiuc.edu/node198.html
+    [2] - http://inis.jinr.ru/sl/vol1/CMC/Graphics_Gems_3,ed_D.Kirk.pdf
+    [3] - K. Shoemake. Uniform random rotations. Graphics Gems III, pages 124-132. Academic, New York, 1992. 
+    """
+    num_steps = int(np.ceil(360 / resolution))
+    # sources can be found in the discussion of issue #175
+
+    if max_angle is None:
+        u_1 = np.linspace(0,1,num=num_steps,endpoint=True)
+        u_2 = np.linspace(0,1,num=num_steps,endpoint=True)
+    else:
+        # e_1 = cos(omega/2) = np.sqrt(1-u_1) * np.sin(2*np.pi*u2)
+        e_1_min = np.cos(np.deg2rad(max_angle/2))
+        u_1_max = 1 - np.square(e_1_min)
+        u_2_min = np.arcsin(e_1_min) / 2 / np.pi
+        u_1 = np.linspace(0,u_1_max,num=int(num_steps*(u_1_max)),endpoint=True)
+        u_2 = np.linspace(u_2_min,1,num=int(num_steps*(1-u_2_min)),endpoint=True)
+
+    u_3 = np.linspace(0,1,num=num_steps,endpoint=True)
+
+    inputs = np.meshgrid(u_1,u_2,u_3)
+    mesh1 = inputs[0].flatten()
+    mesh2 = inputs[1].flatten()
+    mesh3 = inputs[2].flatten()
+
+    # Convert u_1 etc. into the final form used
+    a = np.sqrt(1-mesh1)
+    b = np.sqrt(mesh1)
+    s_2,c_2 = np.sin(2*np.pi*mesh2),np.cos(2*np.pi*mesh2)
+    s_3,c_3 = np.sin(2*np.pi*mesh3),np.cos(2*np.pi*mesh3)
+
+    q = np.asarray([a*s_2,a*c_2,b*s_3,b*c_3])
+
+    #convert to quaternion object
+    # remove duplicates
+    return q
+
+def _euler_angles_harr_measure(resolution):
+    """
+    Returns rotations that are evenly spaced according to the Haar measure on
+    SO3 using the euler angle parameterization
+
+    Parameters
+    ----------
+    resolution : float
+        The characteristic distance between a rotation and its neighbour (degrees)
+    Returns
+    -------
+    q : orix.quaternion.rotation.Rotation
+        grid containing appropriate rotations
+
+    Notes
+    -----
+    The measures is proportional to cos(beta) dalpha dbeta dgamma ~
+    see for example: https://math.stackexchange.com/questions/3316481/
+    """
 
     num_steps = int(np.ceil(360 / resolution))
+    if num_steps % 2 == 1:
+        num_steps = int(num_steps + 1)
 
+    half_steps = int(num_steps / 2)
 
-    if not old_method:
-        # sources can be found in the discussion of issue #175
-        u_3 = np.linspace(0,1,num=num_steps,endpoint=True)
+    alpha = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
+    beta = np.arccos(np.linspace(1, -1, num=half_steps, endpoint=False))
+    gamma = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
+    q = np.array(np.meshgrid(alpha, beta, gamma)).T.reshape((-1, 3))
 
-        if max_angle is None:
-            u_1 = np.linspace(0,1,num=num_steps,endpoint=True)
-            u_2 = np.linspace(0,1,num=num_steps,endpoint=True)
-        else:
-            # e_1 = cos(omega/2) = np.sqrt(1-u_1) * np.sin(2*np.pi*u2)
-            e_1_min = np.cos(np.deg2rad(max_angle/2))
-            u_1_max = 1 - np.square(e_1_min)
-            u_2_min = np.arcsin(e_1_min) / 2 / np.pi
-            u_1 = np.linspace(0,u_1_max,num=int(num_steps*(u_1_max)),endpoint=True)
-            u_2 = np.linspace(u_2_min,1,num=int(num_steps*(1-u_2_min)),endpoint=True)
-
-        inputs = np.meshgrid(u_1,u_2,u_3)
-        mesh1 = inputs[0].flatten()
-        mesh2 = inputs[1].flatten()
-        mesh3 = inputs[2].flatten()
-
-        # Convert u_1 etc. into the final form used
-        a = np.sqrt(1-mesh1)
-        b = np.sqrt(mesh1)
-        s_2,c_2 = np.sin(2*np.pi*mesh2),np.cos(2*np.pi*mesh2)
-        s_3,c_3 = np.sin(2*np.pi*mesh3),np.cos(2*np.pi*mesh3)
-
-        q = np.asarray([a*s_2,a*c_2,b*s_3,b*c_3])
-
-        #convert to quaternion object
-        # remove duplicates
-        
-    if old_method:
-        if num_steps % 2 == 1:
-            num_steps = int(num_steps + 1)
-
-        half_steps = int(num_steps / 2)
-
-        alpha = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
-        beta = np.arccos(np.linspace(1, -1, num=half_steps, endpoint=False))
-        gamma = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
-        q = np.array(np.meshgrid(alpha, beta, gamma)).T.reshape((-1, 3))
-
-        # convert to quaternions
-        q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")
+    # convert to quaternions
+    q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")
 
     # remove duplicates
     q = q.unique()
