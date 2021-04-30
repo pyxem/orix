@@ -413,6 +413,42 @@ class TestPlotting:
 
         plt.close("all")
 
+    def test_scatter_grid(self):
+        plt.rcParams["axes.grid"] = True
+        v = self.v
+        fig = v.scatter(grid=False, return_figure=True)
+
+        # Would think this attribute controlled whether a grid was
+        # visible or not, but it doesn't seem like it. This should be
+        # looked into again if this ever is untrue!
+        assert fig.axes[0]._gridOn is True
+
+        # Custom attribute
+        assert fig.axes[0]._stereographic_grid is False
+
+        # Grid remains off, respecting _stereographic_grid
+        v.scatter(figure=fig)
+        assert fig.axes[0]._stereographic_grid is False
+
+        # Grid is turned on, respecting `grid`
+        v.scatter(figure=fig, grid=True)
+        assert fig.axes[0]._stereographic_grid is True
+
+        # Grid remains on, respecting _stereographic_grid
+        plt.rcParams["axes.grid"] = False
+        v.scatter(figure=fig)
+        assert fig.axes[0]._stereographic_grid is True
+
+        # New figure, so _stereographic_grid should be as `axes.grid`
+        fig2 = v.scatter(return_figure=True)
+        assert fig2.axes[0]._stereographic_grid is False
+
+        # Grid is turned on, respecting `grid`
+        v.scatter(figure=fig2, grid=True)
+        assert fig2.axes[0]._stereographic_grid is True
+
+        plt.close("all")
+
     def test_scatter_projection(self):
         with pytest.raises(
             NotImplementedError, match="Stereographic is the only supported"
@@ -435,3 +471,24 @@ class TestPlotting:
         assert len(fig1.axes) == 2
         assert all(a.hemisphere == h for a, h in zip(fig1.axes, ["upper", "lower"]))
         assert fig1.axes[0].lines[0]._path._vertices.shape == (steps, 2)
+
+    def test_draw_circle_grid(self):
+        plt.rcParams["axes.grid"] = True
+        v = self.v
+        fig = v.draw_circle(grid=False, return_figure=True)
+
+        # Would think this attribute controlled whether a grid was
+        # visible or not, but it doesn't seem like it. This should be
+        # looked into again if this ever is untrue!
+        assert fig.axes[0]._gridOn is True
+
+        # Custom attribute
+        assert fig.axes[0]._stereographic_grid is False
+
+        v.draw_circle(figure=fig)
+        assert fig.axes[0]._stereographic_grid is False
+
+        v.draw_circle(figure=fig, grid=True)
+        assert fig.axes[0]._stereographic_grid is True
+
+        plt.close("all")

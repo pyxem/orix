@@ -205,6 +205,17 @@ class TestStereographicPlot:
         ax.text(v, s="1")
         assert ax.texts == []
 
+        plt.close("all")
+
+    @pytest.mark.parametrize("shape", [(5, 10), (2, 3)])
+    def test_multidimensional_vector(self, shape):
+        n = np.prod(shape)
+        v = vector.Vector3d(np.random.normal(size=3 * n).reshape(shape + (3,)))
+        v.scatter()
+        v.draw_circle()
+
+        plt.close("all")
+
 
 class TestSymmetryMarker:
     def test_properties(self):
