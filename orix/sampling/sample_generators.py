@@ -18,7 +18,7 @@
 
 import numpy as np
 
-from orix.sampling.sampling_utils import uniform_SO3_sample
+from orix.sampling.SO3_sampling import uniform_SO3_sample
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.symmetry import get_point_group
 

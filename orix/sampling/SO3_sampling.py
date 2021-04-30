@@ -115,7 +115,7 @@ def _three_uniform_samples_method(resolution,max_angle):
 
     # remove duplicates
     q = q.unique()
-    
+
     return q
 
 def _euler_angles_harr_measure(resolution):
