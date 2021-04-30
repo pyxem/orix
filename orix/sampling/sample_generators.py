@@ -83,6 +83,8 @@ def get_sample_local(resolution=2, center=None, grid_width=10):
     """
 
     q = uniform_SO3_sample(resolution,max_angle=grid_width)
+
+    # this block may now be redundant
     half_angle = np.deg2rad(grid_width / 2)
     half_angles = np.arccos(q.a.data)
     mask = np.logical_or(
