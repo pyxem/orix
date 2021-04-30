@@ -41,7 +41,7 @@ def test_old_method():
     _ = uniform_SO3_sample(5,old_method=True)
 
 def test_old_method_max_angle():
-    with pytest.raise ValueError:
+    with pytest.raises(ValueError):
         _ = uniform_SO3_sample(5,old_method=True,max_angle=12)
 
 def test_uniform_SO3_sample_regions(sample, fr):
