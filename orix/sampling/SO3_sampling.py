@@ -110,8 +110,8 @@ def _three_uniform_samples_method(resolution,max_angle):
 
     q = np.asarray([a*s_2,a*c_2,b*s_3,b*c_3])
 
-    #convert to quaternion object
-    q = Quaternion(q)
+    #convert to Rotation object
+    q = Rotation(q.T)
 
     # remove duplicates
     q = q.unique()
