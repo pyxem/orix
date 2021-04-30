@@ -38,7 +38,7 @@ def fr():
     return r
 
 def test_old_method():
-    _ = uniform_SO3_sample(5,old_method=True)
+    _ = uniform_SO3_sample(5.1,old_method=True)
 
 def test_old_method_max_angle():
     with pytest.raises(ValueError):
