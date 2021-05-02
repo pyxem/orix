@@ -144,6 +144,12 @@ plaintext markup language. They should be accessible in the browser by typing
 Tips for writing Jupyter Notebooks that are meant to be converted to reST text
 files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
 
+- Notebooks (with the `.ipynb` file extension) are ignored by git (listed in the
+  `.gitignore` file). The ``-f``
+  `git flag <https://git-scm.com/docs/git-add#Documentation/git-add.txt--f>`_ must be
+  added to ``git add -f notebook.ipynb`` in order to update an existing notebook or add
+  a new one. Notebooks are ignored by git in general to avoid non-documentation changes
+  to notebooks, like cell IDs, being pushed unnecessarily.
 - All notebooks should have a Markdown (MD) cell with this message at the top,
   "This notebook is part of the `orix` documentation https://orix.rtfd.io. Links to the
   documentation won't work from the notebook.", and have ``"nbsphinx": "hidden"`` in the
