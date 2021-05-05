@@ -16,15 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import warnings
-
 import matplotlib.font_manager as fm
 import matplotlib.patches as mpatches
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from matplotlib.projections import register_projection
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 
 from orix.scalar import Scalar
@@ -205,29 +203,24 @@ class CrystalMapPlot(Axes):
         return im
 
     def add_scalebar(self, crystal_map, **kwargs):
-        """Add a scalebar to the axes object via `AnchoredSizeBar`.
-
-        To find an appropriate scalebar width, this snippet from MTEX
-        written by Eric Payton and Philippe Pinard is used:
-        https://github.com/mtex-toolbox/mtex/blob/b8fc167d06d453a2b3e212b1ac383acbf85a5a27/plotting/scaleBar.m,
+        """Add a scalebar to the axes instance.
 
         Parameters
         ----------
         crystal_map : orix.crystal_map.CrystalMap
-            Crystal map object to obtain necessary data from.
+            Crystal map instance to obtain necessary data from.
         kwargs
             Keyword arguments passed to
-            :func:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
-            `alpha` can also be passed, to set the scalebar transparency.
+            :class:`matplotlib_scalebar.scalebar.ScaleBar`.
 
         Returns
         -------
-        bar : mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar
+        bar : matplotlib_scalebar.scalebar.ScaleBar
             Scalebar.
 
         Examples
         --------
-        >>> cm
+        >>> xmap
         Phase  Orientations   Name       Symmetry  Color
         1      5657 (48.4%)   austenite  432       tab:blue
         2      6043 (51.6%)   ferrite    432       tab:orange
@@ -238,77 +231,37 @@ class CrystalMapPlot(Axes):
 
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
-        >>> im = ax.plot_map(cm, scalebar=False)
-        >>> sbar = ax.add_scalebar(cm, loc=4, frameon=False)
+        >>> im = ax.plot_map(xmap, scalebar=False)
+        >>> sbar = ax.add_scalebar(xmap, location=4, frameon=False)
         """
+        # Get whether z, y or x
         last_axis = crystal_map.ndim - 1
-        horizontal = crystal_map._coordinate_axes[last_axis]  # Get whether z, y or x
-
-        map_width = crystal_map.shape[last_axis]
-        step_size = crystal_map._step_sizes[horizontal]
-        scan_unit = crystal_map.scan_unit
-
-        # Initial scalebar width should be approximately 1/10 of map width
-        scalebar_width = 0.1 * map_width * step_size
-
-        # Ensure a suitable number is used, e.g. going from 1000 nm to 1 um
-        scalebar_width, scan_unit, factor = convert_unit(scalebar_width, scan_unit)
-
-        # This snippet for finding a suitable scalebar width is taken from MTEX:
-        # https://github.com/mtex-toolbox/mtex/blob/b8fc167d06d453a2b3e212b1ac383acbf85a5a27/plotting/scaleBar.m,
-        # written by Eric Payton and Philippe Pinard. We want a round, not too high
-        # number without decimals
-        good_values = np.array(
-            [1, 2, 5, 10, 15, 20, 25, 50, 75, 100, 125, 150, 200, 500, 750], dtype=int,
-        )
-        # Find good data closest to initial scalebar width
-        difference = abs(scalebar_width - good_values)
-        good_value_idx = np.where(difference == difference.min())[0][0]
-        scalebar_width = good_values[good_value_idx]
-
-        # Scale width by factor from above conversion (usually factor = 1.0)
-        scalebar_width = scalebar_width * factor
-        scalebar_width_px = scalebar_width / step_size
-
-        # Allow for a potential decimal in scalebar number if something didn't go as
-        # planned
-        if scalebar_width.is_integer():
-            scalebar_width = int(scalebar_width)
-        else:
-            warnings.warn(f"Scalebar width {scalebar_width} is not an integer.")
-
-        if scan_unit == "um":
-            scan_unit = "\u03BC" + "m"
+        horizontal = crystal_map._coordinate_axes[last_axis]
 
         # Set up arguments to AnchoredSizeBar() if not already present in kwargs
-        d = {
-            "loc": 3,
-            "pad": 0.2,
-            "sep": 3,
-            "frameon": True,
-            "borderpad": 0.5,
-            "size_vertical": scalebar_width_px / 12,
-            "fontproperties": fm.FontProperties(size=11),
-        }
+        d = dict(
+            pad=0.2,
+            sep=3,
+            border_pad=0.5,
+            location="lower left",
+            box_alpha=0.6,
+            font_properties=dict(size=11),
+        )
         [kwargs.setdefault(k, v) for k, v in d.items()]
 
-        alpha = kwargs.pop("alpha", 0.6)
-
         # Create scalebar
-        bar = AnchoredSizeBar(
-            transform=self.axes.transData,
-            size=scalebar_width_px,
-            label=str(scalebar_width) + " " + scan_unit,
+        bar = ScaleBar(
+            dx=crystal_map._step_sizes[horizontal],
+            units=crystal_map.scan_unit,
             **kwargs,
         )
-        bar.patch.set_alpha(alpha)
-
         self.axes.add_artist(bar)
 
         return bar
 
     def add_overlay(self, crystal_map, item):
-        """Use a crystal map property as gray scale values of a phase map.
+        """Use a crystal map property as gray scale values of a phase
+        map.
 
         The property's range is adjusted to [0, 1] for maximum contrast.
 
@@ -576,64 +529,3 @@ class CrystalMapPlot(Axes):
 
 
 register_projection(CrystalMapPlot)
-
-
-def convert_unit(value, unit):
-    """Return the data with a suitable, not too large, unit.
-
-    This algorithm is taken directly from MTEX [Bachmann2010]_
-    https://github.com/mtex-toolbox/mtex/blob/a74545383160610796b9525eedf50a241800ffae/plotting/plotting_tools/switchUnit.m.
-
-    Parameters
-    ----------
-    value : float
-        The data to convert.
-    unit : str
-        The data unit, e.g. um. If `px` is passed, `um` is assumed.
-
-    Returns
-    -------
-    new_value : float
-        The input data converted to the suitable unit.
-    new_unit : str
-        A (possibly) more suitable unit than the input.
-    factor : float
-        Factor to multiple `new_value` with to get the input data.
-
-    Examples
-    --------
-    >>> convert_unit(17.55 * 1e3, 'nm')
-    17.55 um 999.9999999999999
-    >>> convert_unit(17.55 * 1e-3, 'mm')
-    17.55 um 0.001
-    """
-    unit_is_px = False
-    if unit == "px":
-        unit = "um"
-        unit_is_px = True
-
-    # Create lookup-table with units and power
-    lookup_table = []
-    letters = "yzafpnum kMGTPEZY"
-    new_unit_idx = None
-    for i, letter in enumerate(letters):
-        # Ensure 'm' is entered correctly
-        current_unit = (letter + "m").strip(" ")
-        lookup_table.append((current_unit, 10 ** (3 * i - 24)))
-        if unit == current_unit:
-            new_unit_idx = i
-
-    # Find the lookup-table index of the most suitable unit
-    value_in_metres = value * lookup_table[new_unit_idx][1]
-    power_of_value = np.floor(np.log10(value_in_metres))
-    suitable_unit_idx = int(np.floor(power_of_value / 3) + 8)
-
-    # Calculate new data, unit and the conversion factor
-    new_value = value_in_metres / lookup_table[suitable_unit_idx][1]
-    new_unit = lookup_table[suitable_unit_idx][0]
-    factor = lookup_table[suitable_unit_idx][1] / lookup_table[new_unit_idx][1]
-
-    if unit_is_px:
-        new_unit = "px"
-
-    return new_value, new_unit, factor
