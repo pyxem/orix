@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import matplotlib.font_manager as fm
 import matplotlib.patches as mpatches
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
@@ -38,6 +37,8 @@ class CrystalMapPlot(Axes):
     _data_axes = None
     _data_slices = None
     _data_shape = None
+    colorbar = None
+    scalebar = None
 
     def plot_map(
         self,
@@ -203,7 +204,9 @@ class CrystalMapPlot(Axes):
         return im
 
     def add_scalebar(self, crystal_map, **kwargs):
-        """Add a scalebar to the axes instance.
+        """Add a scalebar to the axes instance and return it.
+
+        The scalebar is also available as an attribute :attr:`scalebar`.
 
         Parameters
         ----------
@@ -254,7 +257,6 @@ class CrystalMapPlot(Axes):
             border_pad=0.5,
             location="lower left",
             box_alpha=0.6,
-            font_properties=dict(size=11),
             dimension=dim,
         )
         [kwargs.setdefault(k, v) for k, v in d.items()]
@@ -266,6 +268,7 @@ class CrystalMapPlot(Axes):
             **kwargs,
         )
         self.axes.add_artist(bar)
+        self.scalebar = bar
 
         return bar
 
@@ -319,7 +322,9 @@ class CrystalMapPlot(Axes):
         image.set_data(image_data)
 
     def add_colorbar(self, label=None, **kwargs):
-        """Add an opinionated colorbar to the figure.
+        """Add an opinionated colorbar to the figure and return it.
+
+        The colorbar is also available as an attribute :attr:`colorbar`.
 
         Parameters
         ----------
@@ -367,6 +372,8 @@ class CrystalMapPlot(Axes):
         # Set label with padding
         cbar.ax.get_yaxis().labelpad = 15
         cbar.ax.set_ylabel(label, rotation=270)
+
+        self.colorbar = cbar
 
         return cbar
 
@@ -458,7 +465,6 @@ class CrystalMapPlot(Axes):
             "handlelength": 0.75,
             "handletextpad": 0.3,
             "framealpha": 0.6,
-            "prop": fm.FontProperties(size=11),
         }
         [kwargs.setdefault(k, v) for k, v in d.items()]
         self.legend(handles=patches, **kwargs)

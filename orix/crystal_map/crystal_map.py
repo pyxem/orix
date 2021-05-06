@@ -744,6 +744,9 @@ class CrystalMap:
         scalebar_properties=None,
         legend=True,
         legend_properties=None,
+        colorbar=False,
+        colorbar_label=None,
+        colorbar_properties=dict(),
         remove_padding=False,
         return_figure=False,
         figure_kwargs=dict(),
@@ -767,15 +770,22 @@ class CrystalMap:
         scalebar : bool, optional
             Whether to add a scalebar (default is True) along the
             horizontal map dimension.
-        scalebar_properties : dict
+        scalebar_properties : dict, optional
             Keyword arguments passed to
             :class:`matplotlib_scalebar.scalebar.ScaleBar`.
         legend : bool, optional
             Whether to add a legend to the plot. This is only
             implemented for a phase plot (in which case default is
             True).
-        legend_properties : dict
+        legend_properties : dict, optional
             Keyword arguments passed to :meth:`matplotlib.axes.legend`.
+        colorbar : bool, optional
+            Whether to add an opinionated colorbar (default is False).
+        colorbar_label : str, optional
+            Label/title of colorbar.
+        colorbar_properties : dict, optional
+            Keyword arguments passed to
+            :meth:`orix.plot.CrystalMapPlot.add_colorbar`.
         axes : tuple of ints, optional
             Which data axes to plot if data has more than two
             dimensions. The index of data to plot in the final dimension
@@ -824,6 +834,8 @@ class CrystalMap:
             ax.add_overlay(self, overlay)
         if remove_padding:
             ax.remove_padding()
+        if colorbar:
+            ax.add_colorbar(label=colorbar_label, **colorbar_properties)
         if return_figure:
             return fig
 

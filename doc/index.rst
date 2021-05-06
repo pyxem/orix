@@ -24,7 +24,7 @@ Work using orix
 
     crystal_geometry.ipynb
     stereographic_projection.ipynb
-    crystal_maps.ipynb
+    crystal_map.ipynb
 
 .. toctree::
     :hidden:

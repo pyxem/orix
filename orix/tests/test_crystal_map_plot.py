@@ -20,6 +20,8 @@ import copy
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colorbar as mbar
+from matplotlib_scalebar import scalebar
 import pytest
 
 from orix.plot import CrystalMapPlot
@@ -160,6 +162,17 @@ class TestCrystalMapPlot:
 
         plt.close("all")
 
+    def test_properties(self, crystal_map):
+        xmap = crystal_map
+        fig = xmap.plot(return_figure=True, colorbar=True, colorbar_label="score")
+        ax = fig.axes[0]
+
+        assert isinstance(ax.colorbar, mbar.Colorbar)
+        assert ax.colorbar.ax.get_ylabel() == "score"
+        assert isinstance(ax.scalebar, scalebar.ScaleBar)
+
+        plt.close("all")
+
 
 class TestCrystalMapPlotUtilities:
     def test_init_projection(self):
@@ -259,13 +272,16 @@ class TestCrystalMapPlotUtilities:
             names=phase_names, point_groups=[3, 3], colors=phase_colors
         )
 
+        fontsize = 11
+        plt.rcParams["font.size"] = fontsize
+
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
         _ = ax.plot_map(cm, legend_properties=legend_properties)
 
         legend = ax.legend_
 
-        assert legend._fontsize == 11.0
+        assert legend._fontsize == fontsize
         assert [i._text for i in legend.texts] == phase_names
 
         frame_alpha = legend_properties.pop("framealpha", 0.6)

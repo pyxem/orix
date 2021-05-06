@@ -79,6 +79,7 @@ CrystalMap
 .. autosummary::
     deepcopy
     get_map_data
+    plot
 .. autoclass:: orix.crystal_map.CrystalMap
     :members:
     :undoc-members:
