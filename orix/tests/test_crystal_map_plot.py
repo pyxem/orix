@@ -26,7 +26,7 @@ from orix.plot import CrystalMapPlot
 from orix.crystal_map import CrystalMap
 from orix.crystal_map.phase_list import PhaseList
 
-plt.rcParams["backend"] = "TkAgg"
+plt.rcParams["backend"] = "Agg"
 
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"
@@ -449,4 +449,10 @@ class TestScalebar:
         assert sbar.dx == xmap.dx
         for k, v in scalebar_properties.items():
             assert sbar.__getattribute__(k) == v
+
+        # Custom scan unit
+        xmap.scan_unit = "parsec"
+        fig2 = xmap.plot(return_figure=True)
+        assert fig2.axes[0].artists[0].units == xmap.scan_unit
+
         plt.close("all")

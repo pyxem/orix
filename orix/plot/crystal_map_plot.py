@@ -22,7 +22,7 @@ from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from matplotlib.projections import register_projection
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib_scalebar.scalebar import ScaleBar
+from matplotlib_scalebar import dimension, scalebar
 import numpy as np
 
 from orix.scalar import Scalar
@@ -238,6 +238,15 @@ class CrystalMapPlot(Axes):
         last_axis = crystal_map.ndim - 1
         horizontal = crystal_map._coordinate_axes[last_axis]
 
+        # Set a reasonable unit dimension
+        scan_unit = crystal_map.scan_unit
+        if scan_unit == "px":
+            dim = "pixel-length"
+        elif scan_unit[-1] == "m":
+            dim = "si-length"  # Default
+        else:
+            dim = dimension._Dimension(scan_unit)
+
         # Set up arguments to AnchoredSizeBar() if not already present in kwargs
         d = dict(
             pad=0.2,
@@ -246,11 +255,12 @@ class CrystalMapPlot(Axes):
             location="lower left",
             box_alpha=0.6,
             font_properties=dict(size=11),
+            dimension=dim,
         )
         [kwargs.setdefault(k, v) for k, v in d.items()]
 
         # Create scalebar
-        bar = ScaleBar(
+        bar = scalebar.ScaleBar(
             dx=crystal_map._step_sizes[horizontal],
             units=crystal_map.scan_unit,
             **kwargs,

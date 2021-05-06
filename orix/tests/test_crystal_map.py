@@ -16,14 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
+from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 import pytest
 
 from orix.crystal_map import CrystalMap
 from orix.crystal_map.phase_list import Phase, PhaseList
+from orix.plot import CrystalMapPlot
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
+
+
+plt.rcParams["backend"] = "Agg"
 
 # Note that many parts of the CrystalMap() class are tested while
 # testing IO and the Phase() and PhaseList() classes
@@ -873,7 +879,32 @@ class TestCrystalMapShape:
         assert xmap._coordinate_axes == expected_coordinate_axes
 
 
-class TestCrystalMapPlot:
+class TestCrystalMapPlotMethod:
     def test_plot(self, crystal_map):
         xmap = crystal_map
-        xmap.plot()
+        fig1 = xmap.plot(return_figure=True)
+        assert isinstance(fig1.axes[0], CrystalMapPlot)
+
+        sbar1 = fig1.axes[0].artists[0]
+        assert isinstance(sbar1, ScaleBar)
+        assert sbar1.dimension.base_units == xmap.scan_unit
+        assert sbar1.location == 3  # "lower left"
+
+        prop = np.arange(xmap.size)
+        location = "upper right"
+        fig2 = xmap.plot(
+            return_figure=True,
+            remove_padding=True,
+            overlay=prop,
+            scalebar_properties=dict(location=location),
+        )
+        ax2 = fig2.axes[0]
+
+        # One effect of "removing padding"
+        assert ax2._xmargin == 0
+        assert ax2._ymargin == 0
+
+        sbar2 = fig2.axes[0].artists[0]
+        assert sbar2.location == 1  # "upper right"
+
+        plt.close("all")

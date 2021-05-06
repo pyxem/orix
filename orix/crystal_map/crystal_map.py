@@ -768,15 +768,14 @@ class CrystalMap:
             Whether to add a scalebar (default is True) along the
             horizontal map dimension.
         scalebar_properties : dict
-            Dictionary of keyword arguments passed to
-            :func:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
+            Keyword arguments passed to
+            :class:`matplotlib_scalebar.scalebar.ScaleBar`.
         legend : bool, optional
             Whether to add a legend to the plot. This is only
             implemented for a phase plot (in which case default is
             True).
         legend_properties : dict
-            Dictionary of keyword arguments passed to
-            :meth:`matplotlib.axes.legend`.
+            Keyword arguments passed to :meth:`matplotlib.axes.legend`.
         axes : tuple of ints, optional
             Which data axes to plot if data has more than two
             dimensions. The index of data to plot in the final dimension
@@ -789,7 +788,7 @@ class CrystalMap:
         return_figure: bool, optional
             Whether to return the figure (default is False).
         figure_kwargs : dict, optional
-            Dictionary of keyword arguments passed to
+            Keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
         kwargs
             Keyword arguments passed to
@@ -808,6 +807,7 @@ class CrystalMap:
         orix.plot.CrystalMapPlot.add_overlay
         orix.plot.CrystalMapPlot.add_colorbar
         """
+        # Register "plot_map" projection with Matplotlib
         import orix.plot.crystal_map_plot
 
         fig, ax = plt.subplots(subplot_kw=dict(projection="plot_map"), **figure_kwargs)
