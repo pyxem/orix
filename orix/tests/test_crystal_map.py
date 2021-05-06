@@ -193,6 +193,10 @@ class TestCrystalMapInit:
 
         assert xmap.phases.names == desired_phase_names
 
+    @pytest.mark.parametrize("shape")
+    def test_classmethod_empty(self, shape):
+        pass
+
 
 class TestCrystalMapGetItem:
     @pytest.mark.parametrize(

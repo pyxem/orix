@@ -627,6 +627,24 @@ class CrystalMap:
 
         return representation
 
+    @classmethod
+    def empty(cls, shape=(1, 1)):
+        """Create a 2D crystal map with identity rotations of the given
+        shape.
+
+        Parameters
+        ----------
+        shape : tuple
+            2D map shape. Default is (1, 1).
+
+        Returns
+        -------
+        CrystalMap
+        """
+        d, n = _get_spatial_array_dicts(shape)
+        d["rotations"] = Rotation.identity((n,))
+        return cls(**d)
+
     def get_map_data(self, item, decimals=3, fill_value=None):
         """Return an array of a class instance attribute, with values
         equal to ``False`` in ``self.is_in_data`` set to `fill_value`, of
@@ -790,3 +808,23 @@ class CrystalMap:
         for dim_slice in self._data_slices_from_coordinates():
             data_shape.append(dim_slice.stop - dim_slice.start)
         return tuple(data_shape)
+
+
+def _get_spatial_array_dicts(shape, step_sizes=(1, 1)):
+    ny, nx = shape
+    dy, dx = step_sizes
+    d = {"x": None, "y": None, "z": None}
+    map_size = 1
+    if nx > 1:
+        if ny > 1:
+            d["x"] = np.tile(np.arange(nx) * dx, ny)
+        else:
+            d["x"] = np.arange(nx) * dx
+        map_size *= nx
+    if ny > 1:
+        if nx > 1:
+            d["y"] = np.sort(np.tile(np.arange(ny) * dy, nx))
+        else:
+            d["y"] = np.arange(ny) * dy
+        map_size *= ny
+    return d, map_size
