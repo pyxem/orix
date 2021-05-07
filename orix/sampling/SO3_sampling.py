@@ -59,7 +59,7 @@ def uniform_SO3_sample(resolution, max_angle=None, old_method=False):
 def _three_uniform_samples_method(resolution, max_angle):
     """
     Returns rotations that are evenly spaced according to the Haar measure on
-    SO3, the advantage of this method is that it select values from uniform distributions
+    SO3, the advantage of this method is that it selects values from uniform distributions
     so we can more easily restrict to a subregion of SO3
 
     Parameters
@@ -131,7 +131,7 @@ def _euler_angles_harr_measure(resolution):
     ----------
     resolution : float
         The characteristic distance between a rotation and its neighbour (degrees)
-        
+
     Returns
     -------
     q : orix.quaternion.rotation.Rotation
