@@ -19,7 +19,7 @@
 """Module for generating grids in orientation spaces."""
 
 from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
-from orix.sampling.sampling_utils import uniform_SO3_sample
+from orix.sampling.SO3_sampling import uniform_SO3_sample
 
 # Lists what will be imported when calling "from orix.sampling import *"
 __all__ = [

@@ -18,6 +18,7 @@
 
 import copy
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
@@ -627,6 +628,10 @@ class CrystalMap:
 
         return representation
 
+    def deepcopy(self):
+        """Return a deep copy using :func:`copy.deepcopy` function."""
+        return copy.deepcopy(self)
+
     @classmethod
     def empty(cls, shape=(5, 5), step_sizes=None):
         """Create a crystal map of a given shape and step sizes with
@@ -752,9 +757,108 @@ class CrystalMap:
 
         return output_array
 
-    def deepcopy(self):
-        """Return a deep copy using :func:`copy.deepcopy` function."""
-        return copy.deepcopy(self)
+    def plot(
+        self,
+        value=None,
+        overlay=None,
+        scalebar=True,
+        scalebar_properties=None,
+        legend=True,
+        legend_properties=None,
+        colorbar=False,
+        colorbar_label=None,
+        colorbar_properties=dict(),
+        remove_padding=False,
+        return_figure=False,
+        figure_kwargs=dict(),
+        **kwargs,
+    ):
+        r"""Plot a 2D map with any crystallographic map property as map
+        values.
+
+        Wraps :meth:`matplotlib.axes.Axes.imshow`, see that method for
+        relevant keyword arguments.
+
+        Parameters
+        ----------
+        value : numpy.ndarray, optional
+            Attribute array to plot. If None (default), a phase map is
+            plotted.
+        overlay : str or numpy.ndarray, optional
+            Name of map property or a property array to use in the
+            alpha (RGBA) channel. The property range is adjusted for
+            maximum contrast. Default is None.
+        scalebar : bool, optional
+            Whether to add a scalebar (default is True) along the
+            horizontal map dimension.
+        scalebar_properties : dict, optional
+            Keyword arguments passed to
+            :class:`matplotlib_scalebar.scalebar.ScaleBar`.
+        legend : bool, optional
+            Whether to add a legend to the plot. This is only
+            implemented for a phase plot (in which case default is
+            True).
+        legend_properties : dict, optional
+            Keyword arguments passed to :meth:`matplotlib.axes.legend`.
+        colorbar : bool, optional
+            Whether to add an opinionated colorbar (default is False).
+        colorbar_label : str, optional
+            Label/title of colorbar.
+        colorbar_properties : dict, optional
+            Keyword arguments passed to
+            :meth:`orix.plot.CrystalMapPlot.add_colorbar`.
+        axes : tuple of ints, optional
+            Which data axes to plot if data has more than two
+            dimensions. The index of data to plot in the final dimension
+            is determined by `depth`. If None (default), data along the
+            two last axes is plotted.
+        depth : int, optional
+            Which layer along the third axis to plot if data has more
+            than two dimensions. If None (default), data in the first
+            index (layer) is plotted.
+        return_figure: bool, optional
+            Whether to return the figure (default is False).
+        figure_kwargs : dict, optional
+            Keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.imshow`.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The created figure, returned if `return_figure` is True.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.imshow
+        orix.plot.CrystalMapPlot.plot_map
+        orix.plot.CrystalMapPlot.add_scalebar
+        orix.plot.CrystalMapPlot.add_overlay
+        orix.plot.CrystalMapPlot.add_colorbar
+        """
+        # Register "plot_map" projection with Matplotlib
+        import orix.plot.crystal_map_plot
+
+        fig, ax = plt.subplots(subplot_kw=dict(projection="plot_map"), **figure_kwargs)
+        ax.plot_map(
+            self,
+            value=value,
+            scalebar=scalebar,
+            scalebar_properties=scalebar_properties,
+            legend=legend,
+            legend_properties=legend_properties,
+            **kwargs,
+        )
+        if overlay is not None:
+            ax.add_overlay(self, overlay)
+        if remove_padding:
+            ax.remove_padding()
+        if colorbar:
+            ax.add_colorbar(label=colorbar_label, **colorbar_properties)
+        if return_figure:
+            return fig
 
     @staticmethod
     def _step_size_from_coordinates(coordinates):

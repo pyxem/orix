@@ -22,7 +22,7 @@ import numpy as np
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C6, D6, get_point_group
-from orix.sampling.sampling_utils import uniform_SO3_sample
+from orix.sampling.SO3_sampling import uniform_SO3_sample
 from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
 
 
@@ -37,6 +37,12 @@ def fr():
     r = Rotation([0.5, 0.5, 0, 0])
     return r
 
+def test_old_method():
+    _ = uniform_SO3_sample(5.1,old_method=True)
+
+def test_old_method_max_angle():
+    with pytest.raises(ValueError):
+        _ = uniform_SO3_sample(5,old_method=True,max_angle=12)
 
 def test_uniform_SO3_sample_regions(sample, fr):
     """ Checks that different regions have the same density"""

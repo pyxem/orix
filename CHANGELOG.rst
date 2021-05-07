@@ -12,6 +12,7 @@ Unreleased
 
 Added
 -----
+- CrystalMap.plot() method for easy plotting of phases, properties etc.
 - Python 3.9 support.
 - Miller class, inherinting functionality from the Vector3d class, to handle operations
   with direct lattice vectors (uvw/UVTW) and reciprocal lattice vectors (hkl/hkil).

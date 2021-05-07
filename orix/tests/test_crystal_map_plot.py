@@ -20,17 +20,15 @@ import copy
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colorbar as mbar
+from matplotlib_scalebar import scalebar
 import pytest
 
 from orix.plot import CrystalMapPlot
-from orix.plot.crystal_map_plot import convert_unit
 from orix.crystal_map import CrystalMap
 from orix.crystal_map.phase_list import PhaseList
 
-plt.rcParams["backend"] = "TkAgg"
-
-# Warning raised when plot width is too small (this too is tested)
-SCALEBAR_WARNING = "Scalebar width .* is not an integer."
+plt.rcParams["backend"] = "Agg"
 
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"
@@ -45,7 +43,6 @@ class TestCrystalMapPlot:
         ],
         indirect=["crystal_map_input"],
     )
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_plot_phase(self, crystal_map_input, phase_list, expected_data_shape):
         cm = CrystalMap(**crystal_map_input)
 
@@ -73,7 +70,6 @@ class TestCrystalMapPlot:
 
         plt.close("all")
 
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_plot_property(self, crystal_map):
         cm = crystal_map
 
@@ -89,7 +85,6 @@ class TestCrystalMapPlot:
 
         plt.close("all")
 
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_plot_scalar(self, crystal_map):
         cm = crystal_map
 
@@ -115,7 +110,6 @@ class TestCrystalMapPlot:
         [((2, 9, 3), (1, 1.5, 1.5), 1, [0]), ((2, 10, 5), (1, 0.1, 0.1), 1, [0])],
         indirect=["crystal_map_input"],
     )
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_plot_masked_phase(self, crystal_map_input, phase_list):
         cm = CrystalMap(**crystal_map_input)
 
@@ -143,7 +137,6 @@ class TestCrystalMapPlot:
         [((2, 9, 6), (1, 1.5, 1.5), 2, [0]), ((2, 10, 5), (1, 0.1, 0.1), 1, [0])],
         indirect=["crystal_map_input"],
     )
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_plot_masked_scalar(self, crystal_map_input):
         cm = CrystalMap(**crystal_map_input)
 
@@ -166,6 +159,17 @@ class TestCrystalMapPlot:
         im2_data = im2.get_array()
         assert np.allclose(im1_data, expected_data_im1)
         assert np.allclose(im2_data, expected_data_im2)
+
+        plt.close("all")
+
+    def test_properties(self, crystal_map):
+        xmap = crystal_map
+        fig = xmap.plot(return_figure=True, colorbar=True, colorbar_label="score")
+        ax = fig.axes[0]
+
+        assert isinstance(ax.colorbar, mbar.Colorbar)
+        assert ax.colorbar.ax.get_ylabel() == "score"
+        assert isinstance(ax.scalebar, scalebar.ScaleBar)
 
         plt.close("all")
 
@@ -192,7 +196,6 @@ class TestCrystalMapPlotUtilities:
         ],
         indirect=["crystal_map_input"],
     )
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_get_plot_shape(
         self, crystal_map_input, idx_to_change, axes, depth, expected_plot_shape
     ):
@@ -211,7 +214,6 @@ class TestCrystalMapPlotUtilities:
         plt.close("all")
 
     @pytest.mark.parametrize("to_plot", ["scalar", "rgb"])
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_add_overlay(self, crystal_map, to_plot):
         cm = crystal_map
 
@@ -261,7 +263,6 @@ class TestCrystalMapPlotUtilities:
             ),
         ],
     )
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_phase_legend(
         self, crystal_map, phase_names, phase_colors, legend_properties
     ):
@@ -271,13 +272,16 @@ class TestCrystalMapPlotUtilities:
             names=phase_names, point_groups=[3, 3], colors=phase_colors
         )
 
+        fontsize = 11
+        plt.rcParams["font.size"] = fontsize
+
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
         _ = ax.plot_map(cm, legend_properties=legend_properties)
 
         legend = ax.legend_
 
-        assert legend._fontsize == 11.0
+        assert legend._fontsize == fontsize
         assert [i._text for i in legend.texts] == phase_names
 
         frame_alpha = legend_properties.pop("framealpha", 0.6)
@@ -289,7 +293,6 @@ class TestCrystalMapPlotUtilities:
         plt.close("all")
 
     @pytest.mark.parametrize("with_colorbar", [True, False])
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_remove_padding(self, crystal_map, with_colorbar):
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
@@ -333,7 +336,6 @@ class TestCrystalMapPlotUtilities:
         plt.close("all")
 
     @pytest.mark.parametrize("cmap", ["viridis", "cividis", "inferno"])
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_set_colormap(self, crystal_map, cmap):
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
@@ -347,7 +349,6 @@ class TestCrystalMapPlotUtilities:
         "cmap, label, position",
         [("viridis", "a", "right"), ("cividis", "b", "left"), ("inferno", "c", "top"),],
     )
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_add_colorbar(self, crystal_map, cmap, label, position):
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
@@ -368,25 +369,8 @@ class TestCrystalMapPlotUtilities:
 
         plt.close("all")
 
-    @pytest.mark.parametrize(
-        "value, unit, expected_value, expected_unit, expected_factor",
-        [
-            (3.141592 * 1e3, "nm", 3.141592, "um", 1e3),
-            (10.55 * 1e-3, "mm", 10.55, "um", 1e-3),
-            (23.7 * 1e3, "px", 23.7, "px", 1e3),
-        ],
-    )
-    def test_convert_unit(
-        self, value, unit, expected_value, expected_unit, expected_factor
-    ):
-        new_value, new_unit, factor = convert_unit(value, unit)
-        assert np.allclose(new_value, expected_value, atol=1e-6)
-        assert new_unit == expected_unit
-        assert np.allclose(factor, expected_factor)
-
 
 class TestStatusBar:
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_status_bar_call_directly(self, crystal_map):
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
@@ -396,7 +380,6 @@ class TestStatusBar:
 
         plt.close("all")
 
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_status_bar_silence_default_format_coord(self, crystal_map):
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
@@ -407,7 +390,6 @@ class TestStatusBar:
         plt.close("all")
 
     @pytest.mark.parametrize("to_plot", ["rgb", "scalar"])
-    @pytest.mark.filterwarnings(f"ignore: {SCALEBAR_WARNING}")
     def test_status_bar(self, crystal_map, to_plot):
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
@@ -463,125 +445,30 @@ class TestStatusBar:
 
 class TestScalebar:
     @pytest.mark.parametrize(
-        "crystal_map_input, scalebar_properties, artist_attribute",
+        "crystal_map_input, scalebar_properties",
         [
-            (((1, 10, 30), (0, 1, 1), 1, [0]), {}, {}),  # Default
+            (((1, 10, 30), (0, 1, 1), 1, [0]), {}),  # Default
             (
                 ((1, 10, 30), (0, 1, 1), 1, [0]),
-                {"loc": 4, "sep": 6, "size_vertical": 0.2, "alpha": 0.8,},
-                {
-                    "loc": "loc",
-                    "sep": ["_box", "sep"],
-                    "size_vertical": ["size_bar", "_children", 0, "_height"],
-                    "alpha": ["patch", "_alpha"],
-                },
+                {"location": 4, "sep": 6, "box_alpha": 0.8},
             ),
         ],
         indirect=["crystal_map_input"],
     )
-    def test_scalebar_properties(
-        self, crystal_map_input, scalebar_properties, artist_attribute
-    ):
-        cm = CrystalMap(**crystal_map_input)
-        cm.scan_unit = "um"
+    def test_scalebar_properties(self, crystal_map_input, scalebar_properties):
+        xmap = CrystalMap(**crystal_map_input)
+        units = "um"
+        xmap.scan_unit = units
+        fig = xmap.plot(return_figure=True, scalebar=False)
+        sbar = fig.axes[0].add_scalebar(xmap, **scalebar_properties)
+        assert sbar.units == units
+        assert sbar.dx == xmap.dx
+        for k, v in scalebar_properties.items():
+            assert sbar.__getattribute__(k) == v
 
-        fig = plt.figure()
-        ax = fig.add_subplot(projection=PLOT_MAP)
-        _ = ax.plot_map(cm, scalebar=False)
-        sbar = ax.add_scalebar(cm, **scalebar_properties)
-
-        if "alpha" not in scalebar_properties.keys():  # Check default
-            assert sbar.patch._alpha == 0.6
-
-        for (k, v), attr_loc in zip(
-            scalebar_properties.items(), artist_attribute.values()
-        ):
-            if isinstance(attr_loc, list):
-                sbar_attr = sbar.__getattribute__(attr_loc[0])
-                for i in attr_loc[1:]:
-                    if isinstance(i, int):
-                        sbar_attr = sbar_attr[i]
-                    else:
-                        sbar_attr = sbar_attr.__getattribute__(i)
-            else:
-                sbar_attr = sbar.__getattribute__(attr_loc)
-            assert sbar_attr == v
-
-        plt.close("all")
-
-    @pytest.mark.parametrize(
-        (
-            "crystal_map_input, unit, expected_coordinate_axes, expected_width_px, "
-            "expected_width_unit, expected_unit"
-        ),
-        [
-            (((10, 20, 1), (1, 1, 0), 1, [0]), "px", {0: "z", 1: "y"}, 2, 2, "px"),
-            (((1, 10, 30), (0, 1, 1), 1, [0]), "px", {0: "y", 1: "x"}, 2, 2, "px"),
-            (((1, 10, 40), (0, 1, 1), 1, [0]), "px", {0: "y", 1: "x"}, 5, 5, "px"),
-            (((20, 1, 10), (1, 1, 1), 1, [0]), "um", {0: "z", 1: "x"}, 1, 1, "um"),
-            (
-                ((1, 100, 117), (0, 1.5, 1.5), 1, [0]),
-                "nm",
-                {0: "y", 1: "x"},
-                13.33,
-                20,
-                "nm",
-            ),
-        ],
-        indirect=["crystal_map_input"],
-    )
-    def test_scalebar_axis(
-        self,
-        crystal_map_input,
-        unit,
-        expected_coordinate_axes,
-        expected_width_px,
-        expected_width_unit,
-        expected_unit,
-    ):
-        cm = CrystalMap(**crystal_map_input)
-        cm.scan_unit = unit
-
-        assert cm._coordinate_axes == expected_coordinate_axes
-
-        fig = plt.figure()
-        ax = fig.add_subplot(projection=PLOT_MAP)
-        _ = ax.plot_map(cm, scalebar=False)
-        sbar = ax.add_scalebar(cm)
-
-        # Scalebar width (_width attribute of Rectangle artist)
-        assert np.allclose(
-            sbar.size_bar._children[0]._width, expected_width_px, atol=1e-2
-        )
-
-        # Scalebar text
-        if expected_unit == "um":
-            expected_unit = "\u03BC" + "m"
-        assert (
-            sbar.txt_label._children[0]._text
-            == f"{expected_width_unit} {expected_unit}"
-        )
-
-        plt.close("all")
-
-    @pytest.mark.parametrize(
-        "crystal_map_input, warns",
-        [
-            (((1, 10, 20), (0, 1.5, 1.5), 1, [0]), False),
-            (((1, 4, 3), (0, 0.1, 0.1), 1, [0]), True),
-        ],
-        indirect=["crystal_map_input"],
-    )
-    def test_scalebar_warns(self, crystal_map_input, warns):
-        cm = CrystalMap(**crystal_map_input)
-
-        fig = plt.figure()
-        ax = fig.add_subplot(projection=PLOT_MAP)
-
-        if warns:
-            with pytest.warns(UserWarning, match=SCALEBAR_WARNING):
-                _ = ax.plot_map(cm)
-        else:
-            _ = ax.plot_map(cm)
+        # Custom scan unit
+        xmap.scan_unit = "parsec"
+        fig2 = xmap.plot(return_figure=True)
+        assert fig2.axes[0].artists[0].units == xmap.scan_unit
 
         plt.close("all")
