@@ -24,7 +24,7 @@ import numpy as np
 from orix.quaternion.rotation import Rotation
 
 
-def uniform_SO3_sample(resolution,max_angle=None,old_method=False):
+def uniform_SO3_sample(resolution, max_angle=None, old_method=False):
     """
     Returns rotations that are evenly spaced according to the Haar measure on
     SO3
@@ -37,6 +37,7 @@ def uniform_SO3_sample(resolution,max_angle=None,old_method=False):
         The max angle (ie. distance from the origin) required from the gridding, (degrees)
     old_method : False
         Use the implementation adopted prior to version 0.6, offered for compatibility
+
     Returns
     -------
     q : orix.quaternion.rotation.Rotation
@@ -52,9 +53,10 @@ def uniform_SO3_sample(resolution,max_angle=None,old_method=False):
     if old_method:
         return _euler_angles_harr_measure(resolution)
     else:
-        return _three_uniform_samples_method(resolution,max_angle)
+        return _three_uniform_samples_method(resolution, max_angle)
 
-def _three_uniform_samples_method(resolution,max_angle):
+
+def _three_uniform_samples_method(resolution, max_angle):
     """
     Returns rotations that are evenly spaced according to the Haar measure on
     SO3, the advantage of this method is that it select values from uniform distributions
@@ -66,6 +68,7 @@ def _three_uniform_samples_method(resolution,max_angle):
         The characteristic distance between a rotation and its neighbour (degrees)
     max_angle : float
         The max angle (ie. distance from the origin) required from the gridding, (degrees)
+
     Returns
     -------
     q : orix.quaternion.rotation.Rotation
@@ -85,38 +88,39 @@ def _three_uniform_samples_method(resolution,max_angle):
     # sources can be found in the discussion of issue #175
 
     if max_angle is None:
-        u_1 = np.linspace(0,1,num=num_steps,endpoint=True)
-        u_2 = np.linspace(0,1,num=num_steps,endpoint=True)
+        u_1 = np.linspace(0, 1, num=num_steps, endpoint=True)
+        u_2 = np.linspace(0, 1, num=num_steps, endpoint=True)
     else:
         # e_1 = cos(omega/2) = np.sqrt(1-u_1) * np.sin(2*np.pi*u2)
-        e_1_min = np.cos(np.deg2rad(max_angle/2))
+        e_1_min = np.cos(np.deg2rad(max_angle / 2))
         u_1_max = 1 - np.square(e_1_min)
         u_2_min = np.arcsin(e_1_min) / 2 / np.pi
-        u_1 = np.linspace(0,u_1_max,num=int(num_steps*(u_1_max)),endpoint=True)
-        u_2 = np.linspace(u_2_min,1,num=int(num_steps*(1-u_2_min)),endpoint=True)
+        u_1 = np.linspace(0, u_1_max, num=int(num_steps * (u_1_max)), endpoint=True)
+        u_2 = np.linspace(u_2_min, 1, num=int(num_steps * (1 - u_2_min)), endpoint=True)
 
-    u_3 = np.linspace(0,1,num=num_steps,endpoint=True)
+    u_3 = np.linspace(0, 1, num=num_steps, endpoint=True)
 
-    inputs = np.meshgrid(u_1,u_2,u_3)
+    inputs = np.meshgrid(u_1, u_2, u_3)
     mesh1 = inputs[0].flatten()
     mesh2 = inputs[1].flatten()
     mesh3 = inputs[2].flatten()
 
     # Convert u_1 etc. into the final form used
-    a = np.sqrt(1-mesh1)
+    a = np.sqrt(1 - mesh1)
     b = np.sqrt(mesh1)
-    s_2,c_2 = np.sin(2*np.pi*mesh2),np.cos(2*np.pi*mesh2)
-    s_3,c_3 = np.sin(2*np.pi*mesh3),np.cos(2*np.pi*mesh3)
+    s_2, c_2 = np.sin(2 * np.pi * mesh2), np.cos(2 * np.pi * mesh2)
+    s_3, c_3 = np.sin(2 * np.pi * mesh3), np.cos(2 * np.pi * mesh3)
 
-    q = np.asarray([a*s_2,a*c_2,b*s_3,b*c_3])
+    q = np.asarray([a * s_2, a * c_2, b * s_3, b * c_3])
 
-    #convert to Rotation object
+    # convert to Rotation object
     q = Rotation(q.T)
 
     # remove duplicates
     q = q.unique()
 
     return q
+
 
 def _euler_angles_harr_measure(resolution):
     """
@@ -127,6 +131,7 @@ def _euler_angles_harr_measure(resolution):
     ----------
     resolution : float
         The characteristic distance between a rotation and its neighbour (degrees)
+        
     Returns
     -------
     q : orix.quaternion.rotation.Rotation

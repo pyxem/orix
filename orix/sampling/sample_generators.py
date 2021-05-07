@@ -53,7 +53,7 @@ def get_sample_fundamental(resolution=2, point_group=None, space_group=None):
     if point_group is None:
         point_group = get_point_group(space_group, proper=True)
 
-    #TODO: provide some subspace selection options
+    # TODO: provide some subspace selection options
     q = uniform_SO3_sample(resolution)
     fundamental_region = OrientationRegion.from_symmetry(point_group)
     return q[q < fundamental_region]
@@ -82,7 +82,7 @@ def get_sample_local(resolution=2, center=None, grid_width=10):
     orix.sampling_utils.uniform_SO3_sample
     """
 
-    q = uniform_SO3_sample(resolution,max_angle=grid_width)
+    q = uniform_SO3_sample(resolution, max_angle=grid_width)
 
     # this block may now be redundant
     half_angle = np.deg2rad(grid_width / 2)
