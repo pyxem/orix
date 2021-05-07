@@ -95,8 +95,14 @@ def _three_uniform_samples_method(resolution, max_angle):
         e_1_min = np.cos(np.deg2rad(max_angle / 2))
         u_1_max = 1 - np.square(e_1_min)
         u_2_min = np.arcsin(e_1_min) / 2 / np.pi
-        u_1 = np.linspace(0, u_1_max, num=int(num_steps * (u_1_max)), endpoint=True)
-        u_2 = np.linspace(u_2_min, 1, num=int(num_steps * (1 - u_2_min)), endpoint=True)
+
+        # avoids the zero selection
+        num_1 = int(num_steps * (u_1_max)) if int(num_steps * (u_1_max)) > 1 else 2
+        num_2 = int(num_steps * (1 - u_2_min)) if int(num_steps * (1 - u_2_min)) > 1 else 2
+
+
+        u_1 = np.linspace(0, u_1_max, num=num_1, endpoint=True)
+        u_2 = np.linspace(u_2_min, 1, num=num_2, endpoint=True)
 
     u_3 = np.linspace(0, 1, num=num_steps, endpoint=True)
 
