@@ -562,6 +562,7 @@ class Vector3d(Object3d):
             Dictionary of keyword arguments passed to
             :func:`~orix.plot.StereographicPlot.text`, which passes
             these on to :meth:`matplotlib.axes.Axes.text`.
+        %s
         kwargs : dict, optional
             Keyword arguments passed to
             :func:`~orix.plot.StereographicPlot.scatter`, which passes
@@ -570,7 +571,7 @@ class Vector3d(Object3d):
         Returns
         -------
         fig : matplotlib.figure.Figure
-            The created figure.
+            The created figure, returned if `return_figure` is True.
 
         Notes
         -----
@@ -652,6 +653,7 @@ class Vector3d(Object3d):
         %s
         %s
         %s
+        %s
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the circles'
@@ -660,7 +662,7 @@ class Vector3d(Object3d):
         Returns
         -------
         fig : matplotlib.figure.Figure
-            The created figure.
+            The created figure, returned if `return_figure` is True.
 
         Notes
         -----
@@ -814,6 +816,9 @@ PLOT_GRID_RESOLUTION_DOCSTRING = """grid_resolution : tuple, optional
             :class:`~orix.plot.StereographicPlot.azimuth_grid` and
             :class:`~orix.plot.StereographicPlot.polar_grid`.
     """
+PLOT_RETURN_FIGURE_DOCSTRING = """return_figure : bool, optional
+            Whether to return the figure (default is False).
+    """
 PLOT_FIGURE_KWARGS_DOCSTRING = """figure_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
@@ -833,6 +838,7 @@ Vector3d.scatter.__doc__ %= (
     PLOT_GRID_DOCSTRING,
     PLOT_GRID_RESOLUTION_DOCSTRING,
     PLOT_FIGURE_KWARGS_DOCSTRING,
+    PLOT_RETURN_FIGURE_DOCSTRING,
     PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING,
 )
 Vector3d.draw_circle.__doc__ %= (
@@ -844,6 +850,7 @@ Vector3d.draw_circle.__doc__ %= (
     PLOT_GRID_DOCSTRING,
     PLOT_GRID_RESOLUTION_DOCSTRING,
     PLOT_FIGURE_KWARGS_DOCSTRING,
+    PLOT_RETURN_FIGURE_DOCSTRING,
     PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING,
 )
 Vector3d._setup_plot.__doc__ %= (

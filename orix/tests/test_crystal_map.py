@@ -16,14 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
+from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 import pytest
 
 from orix.crystal_map import CrystalMap
 from orix.crystal_map.phase_list import Phase, PhaseList
+from orix.plot import CrystalMapPlot
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
+
+
+plt.rcParams["backend"] = "Agg"
 
 # Note that many parts of the CrystalMap() class are tested while
 # testing IO and the Phase() and PhaseList() classes
@@ -35,15 +41,15 @@ class TestCrystalMapInit:
 
         assert isinstance(rotations, Rotation)
 
-        cm = CrystalMap(rotations=rotations)
+        xmap = CrystalMap(rotations=rotations)
 
-        assert np.allclose(cm.x, np.arange(map_size))
-        assert cm.size == map_size
-        assert cm.shape == (map_size,)
-        assert cm.ndim
-        assert np.allclose(cm.id, np.arange(map_size))
-        assert isinstance(cm.rotations, Rotation)
-        assert np.allclose(cm.rotations.data, rotations.data)
+        assert np.allclose(xmap.x, np.arange(map_size))
+        assert xmap.size == map_size
+        assert xmap.shape == (map_size,)
+        assert xmap.ndim
+        assert np.allclose(xmap.id, np.arange(map_size))
+        assert isinstance(xmap.rotations, Rotation)
+        assert np.allclose(xmap.rotations.data, rotations.data)
 
     @pytest.mark.parametrize("rotation_format", ["array", "list"])
     def test_init_with_invalid_rotations(self, rotations, rotation_format):
@@ -91,20 +97,20 @@ class TestCrystalMapInit:
         expected_step_sizes,
         expected_rotations_per_point,
     ):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
         coordinate_arrays = [
             crystal_map_input["z"],
             crystal_map_input["y"],
             crystal_map_input["x"],
         ]
 
-        assert cm.shape == expected_shape
-        assert cm.size == expected_size
-        assert cm._step_sizes == expected_step_sizes
-        assert cm.rotations_per_point == expected_rotations_per_point
+        assert xmap.shape == expected_shape
+        assert xmap.size == expected_size
+        assert xmap._step_sizes == expected_step_sizes
+        assert xmap.rotations_per_point == expected_rotations_per_point
 
         for actual_coords, expected_coords, expected_step_size in zip(
-            cm._coordinates.values(), coordinate_arrays, expected_step_sizes.values()
+            xmap._coordinates.values(), coordinate_arrays, expected_step_sizes.values()
         ):
             print(actual_coords, expected_coords)
             if expected_coords is None:
@@ -115,11 +121,11 @@ class TestCrystalMapInit:
     def test_init_map_with_props(self, crystal_map_input):
         x = crystal_map_input["x"]
         props = {"iq": np.arange(x.size)}
-        cm = CrystalMap(prop=props, **crystal_map_input)
+        xmap = CrystalMap(prop=props, **crystal_map_input)
 
-        assert cm.prop == props
-        assert np.allclose(cm.prop.id, cm.id)
-        assert np.allclose(cm.prop.is_in_data, cm.is_in_data)
+        assert xmap.prop == props
+        assert np.allclose(xmap.prop.id, xmap.id)
+        assert np.allclose(xmap.prop.is_in_data, xmap.is_in_data)
 
     @pytest.mark.parametrize(
         "crystal_map_input",
@@ -131,16 +137,16 @@ class TestCrystalMapInit:
     )
     def test_init_with_phase_id(self, crystal_map_input):
         phase_id = crystal_map_input["phase_id"]
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        assert np.allclose(cm.phase_id, phase_id)
+        assert np.allclose(xmap.phase_id, phase_id)
         # Test all_indexed
         if -1 in np.unique(phase_id):
-            assert not cm.all_indexed
-            assert -1 in cm.phases.ids
+            assert not xmap.all_indexed
+            assert -1 in xmap.phases.ids
         else:
-            assert cm.all_indexed
-            assert -1 not in cm.phases.ids
+            assert xmap.all_indexed
+            assert -1 not in xmap.phases.ids
 
     @pytest.mark.parametrize(
         "crystal_map_input",
@@ -154,25 +160,25 @@ class TestCrystalMapInit:
     def test_init_with_phase_list(self, crystal_map_input):
         point_groups = [C2, C3, C4]
         phase_list = PhaseList(point_groups=point_groups)
-        cm = CrystalMap(phase_list=phase_list, **crystal_map_input)
+        xmap = CrystalMap(phase_list=phase_list, **crystal_map_input)
 
         n_point_groups = len(point_groups)
-        n_phase_ids = len(cm.phases.ids)
+        n_phase_ids = len(xmap.phases.ids)
         n_different = n_point_groups - n_phase_ids
         if n_different < 0:
             point_groups += [None] * abs(n_different)
         assert [
-            cm.phases.point_groups[i] == point_groups[i] for i in range(n_phase_ids)
+            xmap.phases.point_groups[i] == point_groups[i] for i in range(n_phase_ids)
         ]
 
         unique_phase_ids = list(np.unique(crystal_map_input["phase_id"]).astype(int))
-        assert cm.phases.ids == unique_phase_ids
+        assert xmap.phases.ids == unique_phase_ids
 
     def test_init_with_single_point_group(self, crystal_map_input):
         point_group = O
         phase_list = PhaseList(point_groups=point_group)
-        cm = CrystalMap(phase_list=phase_list, **crystal_map_input)
-        assert np.allclose(cm.phases.point_groups[0].data, point_group.data)
+        xmap = CrystalMap(phase_list=phase_list, **crystal_map_input)
+        assert np.allclose(xmap.phases.point_groups[0].data, point_group.data)
 
     @pytest.mark.parametrize(
         "crystal_map_input, phase_names, phase_ids, desired_phase_names",
@@ -223,10 +229,10 @@ class TestCrystalMapGetItem:
         indirect=["crystal_map_input"],
     )
     def test_get_by_slice(self, crystal_map_input, slice_tuple, expected_shape):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        cm2 = cm[slice_tuple]
-        assert cm2.shape == expected_shape
+        xmap2 = xmap[slice_tuple]
+        assert xmap2.shape == expected_shape
 
     def test_get_by_phase_name(self, crystal_map_input, phase_list):
         x = crystal_map_input["x"]
@@ -242,27 +248,27 @@ class TestCrystalMapGetItem:
             n_points_per_phase[phase.name] = len(np.where(phase_ids == phase_i)[0])
 
         crystal_map_input.pop("phase_id")
-        cm = CrystalMap(phase_id=phase_ids, **crystal_map_input)
-        cm.phases = phase_list
+        xmap = CrystalMap(phase_id=phase_ids, **crystal_map_input)
+        xmap.phases = phase_list
 
         for (_, phase), (expected_phase_name, n_points) in zip(
             phase_list, n_points_per_phase.items()
         ):
-            cm2 = cm[phase.name]
+            xmap2 = xmap[phase.name]
 
-            assert cm2.size == n_points
-            assert cm2.phases_in_data.names == [expected_phase_name]
+            assert xmap2.size == n_points
+            assert xmap2.phases_in_data.names == [expected_phase_name]
 
     def test_get_by_indexed_not_indexed(self, crystal_map):
-        cm = crystal_map
+        xmap = crystal_map
 
         # Set some points to not_indexed
-        cm[2:4].phase_id = -1
+        xmap[2:4].phase_id = -1
 
-        indexed = cm["indexed"]
-        not_indexed = cm["not_indexed"]
+        indexed = xmap["indexed"]
+        not_indexed = xmap["not_indexed"]
 
-        assert indexed.size + not_indexed.size == cm.size
+        assert indexed.size + not_indexed.size == xmap.size
         assert np.allclose(np.unique(not_indexed.phase_id), np.array([-1]))
         assert np.allclose(np.unique(indexed.phase_id), np.array([0]))
 
@@ -272,33 +278,33 @@ class TestCrystalMapGetItem:
         indirect=["crystal_map_input"],
     )
     def test_get_by_condition(self, crystal_map_input):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        cm.prop["dp"] = np.arange(cm.size)
+        xmap.prop["dp"] = np.arange(xmap.size)
 
         n_points = 2
-        assert cm.shape == (4, 3)  # Test code assumption
-        cm[0, :n_points].dp = -1
-        cm2 = cm[cm.dp < 0]
+        assert xmap.shape == (4, 3)  # Test code assumption
+        xmap[0, :n_points].dp = -1
+        xmap2 = xmap[xmap.dp < 0]
 
-        assert cm2.size == n_points
-        assert np.sum(cm2.dp) == -n_points
+        assert xmap2.size == n_points
+        assert np.sum(xmap2.dp) == -n_points
 
     def test_get_by_multiple_conditions(self, crystal_map, phase_list):
-        cm = crystal_map
+        xmap = crystal_map
 
         assert phase_list.ids == [0, 1, 2]  # Test code assumption
 
-        cm.phases = phase_list
-        cm.prop["dp"] = np.arange(cm.size)
+        xmap.phases = phase_list
+        xmap.prop["dp"] = np.arange(xmap.size)
         a_phase_id = phase_list.ids[0]
-        cm[cm.dp > 3].phase_id = a_phase_id
+        xmap[xmap.dp > 3].phase_id = a_phase_id
 
-        condition1 = cm.dp > 3
-        condition2 = cm.phase_id == a_phase_id
-        cm2 = cm[condition1 & condition2]
-        assert cm2.size == np.sum(condition1 * condition2)
-        assert np.allclose(cm2.is_in_data, condition1 * condition2)
+        condition1 = xmap.dp > 3
+        condition2 = xmap.phase_id == a_phase_id
+        xmap2 = xmap[condition1 & condition2]
+        assert xmap2.size == np.sum(condition1 * condition2)
+        assert np.allclose(xmap2.is_in_data, condition1 * condition2)
 
     @pytest.mark.parametrize(
         "crystal_map_input, integer_slices, expected_id, raises",
@@ -315,13 +321,13 @@ class TestCrystalMapGetItem:
         self, crystal_map_input, integer_slices, expected_id, raises
     ):
         # This also tests `phase_id`
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
         if raises:
             with pytest.raises(IndexError, match=f".* is out of bounds for"):
-                _ = cm[integer_slices]
+                _ = xmap[integer_slices]
         else:
-            point = cm[integer_slices]
-            expected_point = cm[cm.id == expected_id]
+            point = xmap[integer_slices]
+            expected_point = xmap[xmap.id == expected_id]
 
             assert np.allclose(point.rotations.data, expected_point.rotations.data)
             assert point._coordinates == expected_point._coordinates
@@ -329,26 +335,26 @@ class TestCrystalMapGetItem:
 
 class TestCrystalMapSetAttributes:
     def test_set_scan_unit(self, crystal_map):
-        cm = crystal_map
-        assert cm.scan_unit == "px"
+        xmap = crystal_map
+        assert xmap.scan_unit == "px"
 
         micron = "um"
-        cm.scan_unit = micron
-        assert cm.scan_unit == micron
+        xmap.scan_unit = micron
+        assert xmap.scan_unit == micron
 
     @pytest.mark.parametrize("set_phase_id", [1, -1])
     def test_set_phase_ids(self, crystal_map, set_phase_id):
-        cm = crystal_map
+        xmap = crystal_map
 
-        phase_ids = cm.phase_id
-        condition = cm.x > 1.5
-        cm[condition].phase_id = set_phase_id
+        phase_ids = xmap.phase_id
+        condition = xmap.x > 1.5
+        xmap[condition].phase_id = set_phase_id
         phase_ids[condition] = set_phase_id
 
-        assert np.allclose(cm.phase_id, phase_ids)
+        assert np.allclose(xmap.phase_id, phase_ids)
 
         if set_phase_id == -1:
-            assert "not_indexed" in cm.phases.names
+            assert "not_indexed" in xmap.phases.names
 
     def test_set_phase_ids_raises(self, crystal_map):
         with pytest.raises(ValueError, match="NumPy boolean array indexing assignment"):
@@ -356,43 +362,43 @@ class TestCrystalMapSetAttributes:
 
     @pytest.mark.parametrize("set_phase_id, index_error", [(-1, False), (1, True)])
     def test_set_phase_id_with_unknown_id(self, crystal_map, set_phase_id, index_error):
-        cm = crystal_map
+        xmap = crystal_map
 
-        condition = cm.x > 1.5
-        phase_ids = cm.phases.ids  # Get before adding a new phase
+        condition = xmap.x > 1.5
+        phase_ids = xmap.phases.ids  # Get before adding a new phase
 
         if index_error:
             with pytest.raises(IndexError, match="list index out of range"):
                 # `set_phase_id` ID is not in `self.phases.phase_ids`
-                cm[condition].phase_id = set_phase_id
-                _ = repr(cm)
+                xmap[condition].phase_id = set_phase_id
+                _ = repr(xmap)
 
             # Add unknown ID to phase list to fix `repr(self)`
-            cm.phases.add(Phase("a", point_group=432))  # Add phase with ID 1
+            xmap.phases.add(Phase("a", point_group=432))  # Add phase with ID 1
         else:
-            cm[condition].phase_id = set_phase_id
+            xmap[condition].phase_id = set_phase_id
 
-        _ = repr(cm)
+        _ = repr(xmap)
 
         new_phase_ids = phase_ids + [set_phase_id]
         new_phase_ids.sort()
-        assert cm.phases.ids == new_phase_ids
+        assert xmap.phases.ids == new_phase_ids
 
     def test_phases_in_data(self, crystal_map, phase_list):
-        cm = crystal_map
-        cm.phases = phase_list
+        xmap = crystal_map
+        xmap.phases = phase_list
 
-        assert cm.phases_in_data.names != cm.phases.names
+        assert xmap.phases_in_data.names != xmap.phases.names
 
         ids_not_in_data = np.setdiff1d(
-            np.array(cm.phases.ids), np.array(cm.phases_in_data.ids)
+            np.array(xmap.phases.ids), np.array(xmap.phases_in_data.ids)
         )
-        condition1 = cm.x > 1.5
-        condition2 = cm.y > 1.5
+        condition1 = xmap.x > 1.5
+        condition2 = xmap.y > 1.5
         for new_id, condition in zip(ids_not_in_data, [condition1, condition2]):
-            cm[condition].phase_id = new_id
+            xmap[condition].phase_id = new_id
 
-        assert cm.phases_in_data.names == cm.phases.names
+        assert xmap.phases_in_data.names == xmap.phases.names
 
 
 class TestCrystalMapOrientations:
@@ -405,20 +411,20 @@ class TestCrystalMapOrientations:
             phase_ids[i] = unique_id
 
         crystal_map_input.pop("phase_id")
-        cm = CrystalMap(phase_id=phase_ids, **crystal_map_input)
+        xmap = CrystalMap(phase_id=phase_ids, **crystal_map_input)
 
         # Set phases and make sure all are in data
-        cm.phases = phase_list
-        assert cm.phases_in_data.names == cm.phases.names
+        xmap.phases = phase_list
+        assert xmap.phases_in_data.names == xmap.phases.names
 
         # Ensure all points have a valid orientation
         orientations_size = 0
         for phase_id in phase_list.ids:
-            o = cm[cm.phase_id == phase_id].orientations
+            o = xmap[xmap.phase_id == phase_id].orientations
             assert isinstance(o, Orientation)
             orientations_size += o.size
 
-        assert orientations_size == cm.size
+        assert orientations_size == xmap.size
 
     @pytest.mark.parametrize(
         "point_group, rotation, expected_orientation",
@@ -431,10 +437,10 @@ class TestCrystalMapOrientations:
     )
     def test_orientations_symmetry(self, point_group, rotation, expected_orientation):
         r = Rotation(rotation)
-        cm = CrystalMap(rotations=r, phase_id=np.array([0]))
-        cm.phases = PhaseList(Phase("a", point_group=point_group))
+        xmap = CrystalMap(rotations=r, phase_id=np.array([0]))
+        xmap.phases = PhaseList(Phase("a", point_group=point_group))
 
-        o = cm.orientations
+        o = xmap.orientations
 
         assert np.allclose(
             o.data, Orientation(r).set_symmetry(point_group).data, atol=1e-3
@@ -442,21 +448,21 @@ class TestCrystalMapOrientations:
         assert np.allclose(o.data, expected_orientation, atol=1e-3)
 
     def test_orientations_none_symmetry_raises(self, crystal_map_input):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        assert cm.phases.point_groups == [None]
+        assert xmap.phases.point_groups == [None]
 
         with pytest.raises(TypeError, match="'NoneType' object is not iterable"):
-            _ = cm.orientations
+            _ = xmap.orientations
 
     def test_orientations_multiple_phases_raises(self, crystal_map, phase_list):
-        cm = crystal_map
+        xmap = crystal_map
 
-        cm.phases = phase_list
-        cm[cm.x > 1.5].phase_id = 2
+        xmap.phases = phase_list
+        xmap[xmap.x > 1.5].phase_id = 2
 
         with pytest.raises(ValueError, match="Data has the phases "):
-            _ = cm.orientations
+            _ = xmap.orientations
 
     @pytest.mark.parametrize(
         "crystal_map_input, rotations_per_point",
@@ -466,51 +472,51 @@ class TestCrystalMapOrientations:
     def test_multiple_orientations_per_point(
         self, crystal_map_input, rotations_per_point
     ):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        assert cm.phases.ids == [0]  # Test code assumption
-        cm.phases[0].point_group = "m-3m"
+        assert xmap.phases.ids == [0]  # Test code assumption
+        xmap.phases[0].point_group = "m-3m"
 
-        assert cm.rotations_per_point == rotations_per_point
-        assert cm.orientations.size == cm.size
+        assert xmap.rotations_per_point == rotations_per_point
+        assert xmap.orientations.size == xmap.size
 
 
 class TestCrystalMapProp:
     def test_add_new_crystal_map_property(self, crystal_map):
-        cm = crystal_map
+        xmap = crystal_map
 
         prop_name = "iq"
-        prop_values = np.arange(cm.size)
-        cm.prop[prop_name] = prop_values
+        prop_values = np.arange(xmap.size)
+        xmap.prop[prop_name] = prop_values
 
-        assert np.allclose(cm.prop.get(prop_name), prop_values)
-        assert np.allclose(cm.prop[prop_name], prop_values)
+        assert np.allclose(xmap.prop.get(prop_name), prop_values)
+        assert np.allclose(xmap.prop[prop_name], prop_values)
 
     def test_overwrite_crystal_map_property_values(self, crystal_map):
-        cm = crystal_map
+        xmap = crystal_map
 
         prop_name = "iq"
-        prop_values = np.arange(cm.size)
-        cm.prop[prop_name] = prop_values
+        prop_values = np.arange(xmap.size)
+        xmap.prop[prop_name] = prop_values
 
-        assert np.allclose(cm.prop[prop_name], prop_values)
+        assert np.allclose(xmap.prop[prop_name], prop_values)
 
         new_prop_value = -1
-        cm.__setattr__(prop_name, new_prop_value)
+        xmap.__setattr__(prop_name, new_prop_value)
 
-        assert np.allclose(cm.prop[prop_name], np.ones(cm.size) * new_prop_value)
+        assert np.allclose(xmap.prop[prop_name], np.ones(xmap.size) * new_prop_value)
 
 
 class TestCrystalMapMasking:
     def test_getitem_with_masking(self, crystal_map_input):
         x = crystal_map_input["x"]
         props = {"iq": np.arange(x.size)}
-        cm = CrystalMap(prop=props, **crystal_map_input)
+        xmap = CrystalMap(prop=props, **crystal_map_input)
 
-        cm2 = cm[cm.iq > 1]
+        xmap2 = xmap[xmap.iq > 1]
 
-        assert np.allclose(cm2.prop.id, cm2.id)
-        assert np.allclose(cm2.prop.is_in_data, cm2.is_in_data)
+        assert np.allclose(xmap2.prop.id, xmap2.id)
+        assert np.allclose(xmap2.prop.is_in_data, xmap2.is_in_data)
 
 
 class TestCrystalMapGetMapData:
@@ -536,34 +542,34 @@ class TestCrystalMapGetMapData:
         indirect=["crystal_map_input"],
     )
     def test_get_coordinate_array(self, crystal_map_input, to_get, expected_array):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
         # Get via string
-        data_via_string = cm.get_map_data(to_get)
+        data_via_string = xmap.get_map_data(to_get)
         assert np.allclose(data_via_string, expected_array)
 
         # Get via numpy array
         if to_get == "x":
-            data_via_array = cm.get_map_data(cm.x)
+            data_via_array = xmap.get_map_data(xmap.x)
         elif to_get == "y":
-            data_via_array = cm.get_map_data(cm.y)
+            data_via_array = xmap.get_map_data(xmap.y)
         else:  # to_get == "z"
-            data_via_array = cm.get_map_data(cm.z)
+            data_via_array = xmap.get_map_data(xmap.z)
         assert np.allclose(data_via_array, expected_array)
 
         # Make sure they are the same
         assert np.allclose(data_via_array, data_via_string)
 
     def test_get_property_array(self, crystal_map):
-        cm = crystal_map
+        xmap = crystal_map
 
-        expected_array = np.arange(cm.size)
+        expected_array = np.arange(xmap.size)
         prop_name = "iq"
-        cm.prop[prop_name] = expected_array
+        xmap.prop[prop_name] = expected_array
 
-        iq = cm.get_map_data(prop_name)
+        iq = xmap.get_map_data(prop_name)
 
-        assert np.allclose(iq, expected_array.reshape(cm.shape))
+        assert np.allclose(iq, expected_array.reshape(xmap.shape))
 
     @pytest.mark.parametrize(
         "crystal_map_input",
@@ -571,48 +577,48 @@ class TestCrystalMapGetMapData:
         indirect=["crystal_map_input"],
     )
     def test_get_orientations_array(self, crystal_map_input, phase_list):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        cm[:2, 0].phase_id = 1
+        xmap[:2, 0].phase_id = 1
         # Test code assumption
         id1 = 0
         id2 = 1
-        assert np.allclose(np.unique(cm.phase_id), np.array([id1, id2]))
-        cm.phases = phase_list
+        assert np.allclose(np.unique(xmap.phase_id), np.array([id1, id2]))
+        xmap.phases = phase_list
 
         # Get all with string
-        o = cm.get_map_data("orientations")
+        o = xmap.get_map_data("orientations")
 
         # Get per phase with string
-        cm1 = cm[cm.phase_id == id1]
-        cm2 = cm[cm.phase_id == id2]
-        o1 = cm1.get_map_data("orientations")
-        o2 = cm2.get_map_data("orientations")
+        xmap1 = xmap[xmap.phase_id == id1]
+        xmap2 = xmap[xmap.phase_id == id2]
+        o1 = xmap1.get_map_data("orientations")
+        o2 = xmap2.get_map_data("orientations")
 
-        expected_o1 = cm1.orientations.to_euler()
+        expected_o1 = xmap1.orientations.to_euler()
         expected_shape = expected_o1.shape
         assert np.allclose(
             o1[~np.isnan(o1)].reshape(expected_shape), expected_o1, atol=1e-3
         )
 
-        expected_o2 = cm2.orientations.to_euler()
+        expected_o2 = xmap2.orientations.to_euler()
         expected_shape = expected_o2.shape
         assert np.allclose(
             o2[~np.isnan(o2)].reshape(expected_shape), expected_o2, atol=1e-3
         )
 
         # Do calculations "manually"
-        data_shape = (cm.size, 3)
+        data_shape = (xmap.size, 3)
         array = np.zeros(data_shape)
 
-        if cm.rotations_per_point > 1:
-            rotations = cm.rotations[:, 0]
+        if xmap.rotations_per_point > 1:
+            rotations = xmap.rotations[:, 0]
         else:
-            rotations = cm.rotations
+            rotations = xmap.rotations
 
-        for i, phase in cm.phases_in_data:
-            phase_mask = cm._phase_id == i
-            phase_mask_in_data = cm.phase_id == i
+        for i, phase in xmap.phases_in_data:
+            phase_mask = xmap._phase_id == i
+            phase_mask_in_data = xmap.phase_id == i
             array[phase_mask] = (
                 Orientation(rotations[phase_mask_in_data])
                 .set_symmetry(phase.point_group)
@@ -627,21 +633,21 @@ class TestCrystalMapGetMapData:
         indirect=["crystal_map_input"],
     )
     def test_get_rotations_array(self, crystal_map_input):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
         # Get with string
-        r = cm.get_map_data("rotations")
+        r = xmap.get_map_data("rotations")
 
-        new_shape = cm.shape + (3,)
-        if cm.rotations_per_point > 1:
-            expected_array = cm.rotations[:, 0].to_euler().reshape(*new_shape)
+        new_shape = xmap.shape + (3,)
+        if xmap.rotations_per_point > 1:
+            expected_array = xmap.rotations[:, 0].to_euler().reshape(*new_shape)
         else:
-            expected_array = cm.rotations.to_euler().reshape(*new_shape)
+            expected_array = xmap.rotations.to_euler().reshape(*new_shape)
         assert np.allclose(r, expected_array, atol=1e-3)
 
         # Get with array (RGB)
-        new_shape2 = (cm.size, 3)
-        r2 = cm.get_map_data(r.reshape(*new_shape2))
+        new_shape2 = (xmap.size, 3)
+        r2 = xmap.get_map_data(r.reshape(*new_shape2))
         assert np.allclose(r2, expected_array, atol=1e-3)
 
     @pytest.mark.parametrize(
@@ -650,8 +656,8 @@ class TestCrystalMapGetMapData:
         indirect=["crystal_map_input"],
     )
     def test_get_phase_id_array_from_3d_data(self, crystal_map_input):
-        cm = CrystalMap(**crystal_map_input)
-        _ = cm.get_map_data(cm.phase_id)
+        xmap = CrystalMap(**crystal_map_input)
+        _ = xmap.get_map_data(xmap.phase_id)
 
     @pytest.mark.parametrize(
         "crystal_map_input, to_get",
@@ -871,3 +877,34 @@ class TestCrystalMapShape:
     def test_coordinate_axes(self, crystal_map_input, expected_coordinate_axes):
         xmap = CrystalMap(**crystal_map_input)
         assert xmap._coordinate_axes == expected_coordinate_axes
+
+
+class TestCrystalMapPlotMethod:
+    def test_plot(self, crystal_map):
+        xmap = crystal_map
+        fig1 = xmap.plot(return_figure=True)
+        assert isinstance(fig1.axes[0], CrystalMapPlot)
+
+        sbar1 = fig1.axes[0].artists[0]
+        assert isinstance(sbar1, ScaleBar)
+        assert sbar1.dimension.base_units == xmap.scan_unit
+        assert sbar1.location == 3  # "lower left"
+
+        prop = np.arange(xmap.size)
+        location = "upper right"
+        fig2 = xmap.plot(
+            return_figure=True,
+            remove_padding=True,
+            overlay=prop,
+            scalebar_properties=dict(location=location),
+        )
+        ax2 = fig2.axes[0]
+
+        # One effect of "removing padding"
+        assert ax2._xmargin == 0
+        assert ax2._ymargin == 0
+
+        sbar2 = fig2.axes[0].artists[0]
+        assert sbar2.location == 1  # "upper right"
+
+        plt.close("all")
