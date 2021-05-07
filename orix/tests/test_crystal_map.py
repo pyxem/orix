@@ -193,9 +193,54 @@ class TestCrystalMapInit:
 
         assert xmap.phases.names == desired_phase_names
 
-    @pytest.mark.parametrize("shape")
-    def test_classmethod_empty(self, shape):
-        pass
+    # d["z"] = np.array([np.ones(ny * nx) * i * dz for i in range(nz)]).flatten()
+    # d["y"] = np.tile(np.sort(np.tile(np.arange(ny) * dy, nx)), nz).flatten()
+    # d["x"] = np.tile(np.arange(nx) * dx, ny * nz).flatten()
+
+    @pytest.mark.parametrize(
+        "shape, step_sizes, desired_coordinates, desired_step_sizes",
+        [
+            (
+                (5, 5),
+                None,
+                dict(
+                    z=None,
+                    y=np.tile(np.sort(np.tile(np.arange(5) * 1, 5)), 1).flatten(),
+                    x=np.tile(np.arange(5) * 1, 5 * 1).flatten(),
+                ),
+                dict(z=0, y=1, x=1),
+            ),
+            (
+                (2, 2, 3),
+                (2, 3, 4),
+                dict(
+                    z=np.array([np.ones(2 * 3) * i * 2 for i in range(2)]).flatten(),
+                    y=np.tile(np.sort(np.tile(np.arange(2) * 3, 3)), 2).flatten(),
+                    x=np.tile(np.arange(3) * 4, 2 * 2).flatten(),
+                ),
+                dict(z=2, y=3, x=4),
+            ),
+        ],
+    )
+    def test_classmethod_empty(
+        self, shape, step_sizes, desired_coordinates, desired_step_sizes
+    ):
+        xmap = CrystalMap.empty(shape=shape, step_sizes=step_sizes)
+        assert xmap.scan_unit == "px"
+        desired_size = np.prod(shape)
+        assert np.allclose(
+            xmap.rotations.data,
+            np.array([1, 0, 0, 0] * desired_size).reshape((desired_size, 4)),
+        )
+        assert xmap.shape == shape
+        for i in ["z", "y", "x"]:
+            assert xmap._step_sizes[i] == desired_step_sizes[i]
+            coords = xmap._coordinates[i]
+            desired_coords = desired_coordinates[i]
+            if coords is None:
+                assert coords == desired_coords
+            else:
+                assert np.allclose(coords, desired_coords)
 
 
 class TestCrystalMapGetItem:

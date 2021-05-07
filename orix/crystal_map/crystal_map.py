@@ -628,20 +628,23 @@ class CrystalMap:
         return representation
 
     @classmethod
-    def empty(cls, shape=(1, 1)):
-        """Create a 2D crystal map with identity rotations of the given
-        shape.
+    def empty(cls, shape=(5, 5), step_sizes=None):
+        """Create a crystal map of a given shape and step sizes with
+        identity rotations.
 
         Parameters
         ----------
         shape : tuple
-            2D map shape. Default is (1, 1).
+            Map shape. Default is a 2D map of (5, 5).
+        step_sizes : tuple
+            Map step sizes. If None (default), it is set to 1 px in each
+            map direction given by `shape`.
 
         Returns
         -------
         CrystalMap
         """
-        d, n = _get_spatial_array_dicts(shape)
+        d, n = _get_spatial_array_dicts(shape, step_sizes)
         d["rotations"] = Rotation.identity((n,))
         return cls(**d)
 
@@ -810,21 +813,19 @@ class CrystalMap:
         return tuple(data_shape)
 
 
-def _get_spatial_array_dicts(shape, step_sizes=(1, 1)):
-    ny, nx = shape
-    dy, dx = step_sizes
-    d = {"x": None, "y": None, "z": None}
-    map_size = 1
-    if nx > 1:
-        if ny > 1:
-            d["x"] = np.tile(np.arange(nx) * dx, ny)
-        else:
-            d["x"] = np.arange(nx) * dx
-        map_size *= nx
-    if ny > 1:
-        if nx > 1:
-            d["y"] = np.sort(np.tile(np.arange(ny) * dy, nx))
-        else:
-            d["y"] = np.arange(ny) * dy
+def _get_spatial_array_dicts(shape, step_sizes=None):
+    ndim = len(shape)
+    if step_sizes is None:
+        step_sizes = (1,) * ndim
+    dz, dy, dx = (1,) * (3 - ndim) + step_sizes
+    nz, ny, nx = (1,) * (3 - ndim) + shape
+    d = dict()
+    d["x"] = np.tile(np.arange(nx) * dx, ny * nz).flatten()
+    map_size = nx
+    if ndim > 1:
+        d["y"] = np.tile(np.sort(np.tile(np.arange(ny) * dy, nx)), nz).flatten()
         map_size *= ny
+    if ndim > 2:
+        d["z"] = np.array([np.ones(ny * nx) * i * dz for i in range(nz)]).flatten()
+        map_size *= nz
     return d, map_size
