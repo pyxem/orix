@@ -148,11 +148,15 @@ def _three_uniform_samples_method(resolution, max_angle):
 
     q = np.asarray([a * s_2, a * c_2, b * s_3, b * c_3])
 
+    # remove duplicates manually as this is memory efficient compared to Rotation.unique()
+
+    # removes the double covering of quaternions
+    q = np.where(q[0] > 0,+q,-q)
+    # now rotation the same iff all elements are the same
+    q = np.unique(q,axis=0)
+
     # convert to Rotation object
     q = Rotation(q.T)
-
-    # remove duplicates
-    q = q.unique()
 
     return q
 
