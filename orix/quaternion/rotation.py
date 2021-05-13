@@ -581,6 +581,9 @@ class Rotation(Quaternion):
         r.improper = self.improper
         return r
 
+    def project2euler_fundamental_region(self, fold):
+        pass
+
 
 def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
     r"""A vastly simplified Von Mises-Fisher distribution calculation.

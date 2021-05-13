@@ -342,3 +342,29 @@ class Orientation(Misorientation):
             ).squeeze()
             return m_inside
         return NotImplemented
+
+    def to_euler_in_fundamental_region(self):
+        symmetry = self.symmetry.proper_subgroup
+
+        r_special = symmetry.rotations_not_about_primary_axis
+        o2 = self.outer(r_special)
+        alpha, beta, gamma = o2.to_euler().T
+
+        alpha2 = np.mod(alpha, 2 * np.pi)
+        gamma2 = np.mod(gamma, 2 * np.pi / symmetry.primary_axis_order)
+
+        max_alpha, max_beta, max_gamma = symmetry.max_euler_angles
+        is_inside = (alpha2 <= max_alpha) * (beta <= max_beta) * (gamma2 <= max_gamma)
+
+        i = np.argmax(is_inside, axis=0)
+        # TODO: Find appropriate NumPy indexing function to get these
+        # arrays from the indices directly without the loop
+        alpha3 = np.zeros(self.size)
+        beta3 = np.zeros_like(alpha3)
+        gamma3 = np.zeros_like(alpha3)
+        for j, ii in enumerate(i):
+            alpha3[j] = alpha2[ii, j]
+            beta3[j] = beta[ii, j]
+            gamma3[j] = gamma2[ii, j]
+
+        return np.column_stack([alpha3, beta3, gamma3])
