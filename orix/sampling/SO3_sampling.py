@@ -73,7 +73,7 @@ def _resolution_to_num_steps(resolution,even_only=False,odd_only=False):
         The number of steps to use sampling a 'full' linear axes
     """
     num_steps = int(np.ceil(360 / resolution))
-    
+
     if even_only:
         if num_steps % 2 == 1:
             num_steps = int(num_steps + 1)
@@ -112,8 +112,8 @@ def _three_uniform_samples_method(resolution, max_angle):
     [2] - http://inis.jinr.ru/sl/vol1/CMC/Graphics_Gems_3,ed_D.Kirk.pdf
     [3] - K. Shoemake. Uniform random rotations. Graphics Gems III, pages 124-132. Academic, New York, 1992.
     """
-    num_steps = int(np.ceil(360 / resolution))
-    # sources can be found in the discussion of issue #175
+    # odd numbers of steps will not return 0.5 in the u_2 position
+    num_steps = _resolution_to_num_steps(resolution,odd_only=True)
 
     if max_angle is None:
         u_1 = np.linspace(0, 1, num=num_steps, endpoint=True)
@@ -178,10 +178,7 @@ def _euler_angles_harr_measure(resolution):
     see for example: https://math.stackexchange.com/questions/3316481/
     """
 
-    num_steps = int(np.ceil(360 / resolution))
-    if num_steps % 2 == 1:
-        num_steps = int(num_steps + 1)
-
+    num_steps = _resolution_to_num_steps(resolution,even_only=True)
     half_steps = int(num_steps / 2)
 
     alpha = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
