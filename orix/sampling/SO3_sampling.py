@@ -89,7 +89,7 @@ def _three_uniform_samples_method(resolution, max_angle):
 
     if max_angle is None:
         u_1 = np.linspace(0, 1, num=num_steps, endpoint=True)
-        u_2 = np.linspace(0, 1, num=num_steps, endpoint=True)
+        u_2 = np.linspace(0, 1, num=num_steps, endpoint=False)
     else:
         # e_1 = cos(omega/2) = np.sqrt(1-u_1) * np.sin(2*np.pi*u2)
         e_1_min = np.cos(np.deg2rad(max_angle / 2))
@@ -105,7 +105,7 @@ def _three_uniform_samples_method(resolution, max_angle):
         u_1 = np.linspace(0, u_1_max, num=num_1, endpoint=True)
         u_2 = np.linspace(u_2_min, 1, num=num_2, endpoint=True)
 
-    u_3 = np.linspace(0, 1, num=num_steps, endpoint=True)
+    u_3 = np.linspace(0, 1, num=num_steps, endpoint=False)
 
     inputs = np.meshgrid(u_1, u_2, u_3)
     mesh1 = inputs[0].flatten()
