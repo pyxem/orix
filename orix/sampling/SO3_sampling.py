@@ -55,6 +55,34 @@ def uniform_SO3_sample(resolution, max_angle=None, old_method=False):
     else:
         return _three_uniform_samples_method(resolution, max_angle)
 
+def _resolution_to_num_steps(resolution,even_only=False,odd_only=False):
+    """ Converts a user input resolution to a number off steps (ie. on a linear axis)
+
+    Parameters
+    ----------
+    resolution : float
+        The characteristic distance between a rotation and its neighbour (degrees)
+    even_only : bool, optional
+        Force the returned num_steps to be even, defaults False
+    odd_only : bool, optional
+        Force the returned num_steps to be odd, defaults False
+
+    Returns
+    -------
+    num_steps : int
+        The number of steps to use sampling a 'full' linear axes
+    """
+    num_steps = int(np.ceil(360 / resolution))
+    
+    if even_only:
+        if num_steps % 2 == 1:
+            num_steps = int(num_steps + 1)
+
+    elif odd_only:
+            if num_steps % 2 == 0:
+                num_steps = int(num_steps + 1)
+
+    return num_steps
 
 def _three_uniform_samples_method(resolution, max_angle):
     """
