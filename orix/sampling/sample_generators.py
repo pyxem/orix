@@ -59,7 +59,7 @@ def get_sample_fundamental(resolution=2, point_group=None, space_group=None):
     return q[q < fundamental_region]
 
 
-def get_sample_local(resolution=2, center=None, grid_width=10):
+def get_sample_local(resolution=2, center=None, grid_width=10,old_method=False):
     """
     Generates a grid of rotations about a given rotation
 
@@ -71,7 +71,8 @@ def get_sample_local(resolution=2, center=None, grid_width=10):
         The rotation at which the grid is centered. If None (default) uses the identity
     grid_width : float, optional
         The largest angle of rotation away from center that is acceptable (degrees)
-
+    old_method : bool, optional
+        #TODO
     Returns
     -------
     q : orix.quaternion.rotation.Rotation
@@ -81,16 +82,19 @@ def get_sample_local(resolution=2, center=None, grid_width=10):
     --------
     orix.sampling_utils.uniform_SO3_sample
     """
+    if not old_method:
+        q = uniform_SO3_sample(resolution, max_angle=None,old_method=False)
+    else:
+        q = uniform_SO3_sample(resolution,old_method=True)
 
-    q = uniform_SO3_sample(resolution, max_angle=grid_width)
-
-    # this block may now be redundant
     half_angle = np.deg2rad(grid_width / 2)
     half_angles = np.arccos(q.a.data)
     mask = np.logical_or(
         half_angles < half_angle, half_angles > (2 * np.pi - half_angle)
-    )
+        )
     q = q[mask]
+
     if center is not None:
         q = center * q
+
     return q
