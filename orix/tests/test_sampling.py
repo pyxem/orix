@@ -66,29 +66,23 @@ class TestUniformSO3():
         assert np.isclose(x, y, rtol=0.025)
 
 class TestGetSampleLocal():
-    @pytest.mark.parametrize("big,small", [(77, 52), (48, 37)])
-    def test_get_sample_local_width(self, big, small):
-        """ Checks that size follows the expected trend (X - Sin(X)) """
+    @pytest.mark.parametrize("big,small,old_method", [(180, 90, False), (180, 90, True)])
+    def test_get_sample_local_width(self, big, small,old_method):
+        """ Checks that size follows the expected trend (X - Sin(X))
+        With 180 and 90 we expect: pi and pi/2 - 1
 
-        resolution = 5
-        x_size = get_sample_local(resolution=resolution, grid_width=small).size
-        y_size = get_sample_local(resolution=resolution, grid_width=big).size
+        """
+
+        resolution = 4
+        x_size = get_sample_local(resolution=resolution, grid_width=small,old_method=old_method).size
+        y_size = get_sample_local(resolution=resolution, grid_width=big,old_method=old_method).size
         x_v = np.deg2rad(small) - np.sin(np.deg2rad(small))
         y_v = np.deg2rad(big) - np.sin(np.deg2rad(big))
         exp = y_size / x_size
         theory = y_v / x_v
 
-        # resolution/width is high, so we must be generous on tolerance
         assert x_size > 0 # if this fails exp will be nan
         assert np.isclose(exp, theory, atol=0.2)
-
-
-    @pytest.mark.parametrize("width", [60, 33])
-    def test_get_sample_local_center(self, fr, width):
-        """ Checks that the center argument works as expected """
-        resolution = 8
-        x = get_sample_local(resolution=resolution, center=fr, grid_width=width)
-        assert np.all((x.angle_with(fr) < np.deg2rad(width)))
 
 class TestSamplingFundamentalSector():
     @pytest.fixture(scope="session")
