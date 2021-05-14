@@ -83,16 +83,15 @@ def get_sample_local(resolution=2, center=None, grid_width=10,old_method=False):
     orix.sampling_utils.uniform_SO3_sample
     """
     if not old_method:
-        q = uniform_SO3_sample(resolution, max_angle=None,old_method=False)
+        q = uniform_SO3_sample(resolution, max_angle=grid_width,old_method=False)
     else:
         q = uniform_SO3_sample(resolution,old_method=True)
-
-    half_angle = np.deg2rad(grid_width / 2)
-    half_angles = np.arccos(q.a.data)
-    mask = np.logical_or(
+        half_angle = np.deg2rad(grid_width / 2)
+        half_angles = np.arccos(q.a.data)
+        mask = np.logical_or(
         half_angles < half_angle, half_angles > (2 * np.pi - half_angle)
         )
-    q = q[mask]
+        q = q[mask]
 
     if center is not None:
         q = center * q

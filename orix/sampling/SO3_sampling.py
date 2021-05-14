@@ -115,12 +115,8 @@ def _three_uniform_samples_method(resolution, max_angle):
     # odd numbers of steps will not return 0.5 in the u_2 position
     num_steps = _resolution_to_num_steps(resolution,odd_only=True)
 
-    if max_angle is None:
-        u_1 = np.linspace(0, 1, num=num_steps, endpoint=True)
-        u_2 = np.linspace(0, 1, num=num_steps, endpoint=False)
-    else:
-        raise ValueError("This method will not work")
-
+    u_1 = np.linspace(0, 1, num=num_steps, endpoint=True)
+    u_2 = np.linspace(0, 1, num=num_steps, endpoint=False)
     u_3 = np.linspace(0, 1, num=num_steps, endpoint=False)
 
     inputs = np.meshgrid(u_1, u_2, u_3)
@@ -140,6 +136,15 @@ def _three_uniform_samples_method(resolution, max_angle):
 
     # removes the double covering of quaternions
     q = np.where(q[0] > 0,+q,-q)
+
+    if max_angle is not None:
+        half_angle = np.deg2rad(max_angle / 2)
+        half_angles = np.arccos(q[0])
+        mask = np.logical_or(
+            half_angles < half_angle, half_angles > (2 * np.pi - half_angle)
+            )
+        q = q.T[mask]
+        q = q.T
     # now rotation the same iff all elements are the same
     q = np.unique(q,axis=0)
 
