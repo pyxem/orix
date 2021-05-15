@@ -23,7 +23,7 @@ from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.symmetry import get_point_group
 
 
-def get_sample_fundamental(resolution=2, point_group=None, space_group=None):
+def get_sample_fundamental(resolution=2, point_group=None, space_group=None,method='harr_euler'):
     """
     Generates an equispaced grid of rotations within a fundamental zone.
 
@@ -54,12 +54,12 @@ def get_sample_fundamental(resolution=2, point_group=None, space_group=None):
         point_group = get_point_group(space_group, proper=True)
 
     # TODO: provide some subspace selection options
-    q = uniform_SO3_sample(resolution)
+    q = uniform_SO3_sample(resolution,method=method)
     fundamental_region = OrientationRegion.from_symmetry(point_group)
     return q[q < fundamental_region]
 
 
-def get_sample_local(resolution=2, center=None, grid_width=10,old_method=False):
+def get_sample_local(resolution=2, center=None, grid_width=10,method='harr_euler'):
     """
     Generates a grid of rotations about a given rotation
 
@@ -82,16 +82,7 @@ def get_sample_local(resolution=2, center=None, grid_width=10,old_method=False):
     --------
     orix.sampling_utils.uniform_SO3_sample
     """
-    if not old_method:
-        q = uniform_SO3_sample(resolution, max_angle=grid_width,old_method=False)
-    else:
-        q = uniform_SO3_sample(resolution,old_method=True)
-        half_angle = np.deg2rad(grid_width / 2)
-        half_angles = np.arccos(q.a.data)
-        mask = np.logical_or(
-        half_angles < half_angle, half_angles > (2 * np.pi - half_angle)
-        )
-        q = q[mask]
+    q = uniform_SO3_sample(resolution, max_angle=grid_width, method=method)
 
     if center is not None:
         q = center * q

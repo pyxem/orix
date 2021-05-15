@@ -39,16 +39,12 @@ def fr():
 
 class TestUniformSO3():
     def test_old_method(self):
-        _ = uniform_SO3_sample(5,old_method=True)
+        _ = uniform_SO3_sample(10,method='quaternion')
         assert _.size > 0
 
     def test_default_method(self):
-        _ = uniform_SO3_sample(5,old_method=False)
+        _ = uniform_SO3_sample(10)
         assert _.size > 0
-
-    def test_old_method_max_angle(self):
-        with pytest.raises(ValueError):
-            _ = uniform_SO3_sample(5,old_method=True,max_angle=12)
 
     def test_uniform_SO3_sample_regions(self,sample, fr):
         """ Checks that different regions have the same density"""
@@ -66,16 +62,15 @@ class TestUniformSO3():
         assert np.isclose(x, y, rtol=0.025)
 
 class TestGetSampleLocal():
-    @pytest.mark.parametrize("big,small,old_method", [(180, 90, False), (180, 90, True)])
-    def test_get_sample_local_width(self, big, small,old_method):
+    @pytest.mark.parametrize("big,small,method", [(180, 90, 'quaternion'), (180, 90, 'harr_euler')])
+    def test_get_sample_local_width(self, big, small,method):
         """ Checks that size follows the expected trend (X - Sin(X))
         With 180 and 90 we expect: pi and pi/2 - 1
-
         """
 
         resolution = 4
-        x_size = get_sample_local(resolution=resolution, grid_width=small,old_method=old_method).size
-        y_size = get_sample_local(resolution=resolution, grid_width=big,old_method=old_method).size
+        x_size = get_sample_local(resolution=resolution, grid_width=small,method=method).size
+        y_size = get_sample_local(resolution=resolution, grid_width=big,method=method).size
         x_v = np.deg2rad(small) - np.sin(np.deg2rad(small))
         y_v = np.deg2rad(big) - np.sin(np.deg2rad(big))
         exp = y_size / x_size

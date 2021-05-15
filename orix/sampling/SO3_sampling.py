@@ -24,7 +24,7 @@ import numpy as np
 from orix.quaternion.rotation import Rotation
 
 
-def uniform_SO3_sample(resolution, max_angle=None, old_method=False):
+def uniform_SO3_sample(resolution, max_angle=None, method='harr_euler'):
     """
     Returns rotations that are evenly spaced according to the Haar measure on
     SO3
@@ -47,42 +47,11 @@ def uniform_SO3_sample(resolution, max_angle=None, old_method=False):
     --------
     orix.sample_generators.get_local_grid
     """
-    if max_angle is not None and old_method:
-        raise ValueError("old_method=True does not support using the max_angle keyword")
 
-    if old_method:
-        return _euler_angles_harr_measure(resolution)
-    else:
+    if method == 'harr_euler':
+        return _euler_angles_harr_measure(resolution,max_angle)
+    elif method == 'quaternion':
         return _three_uniform_samples_method(resolution, max_angle)
-
-def _resolution_to_num_steps(resolution,even_only=False,odd_only=False):
-    """ Converts a user input resolution to a number off steps (ie. on a linear axis)
-
-    Parameters
-    ----------
-    resolution : float
-        The characteristic distance between a rotation and its neighbour (degrees)
-    even_only : bool, optional
-        Force the returned num_steps to be even, defaults False
-    odd_only : bool, optional
-        Force the returned num_steps to be odd, defaults False
-
-    Returns
-    -------
-    num_steps : int
-        The number of steps to use sampling a 'full' linear axes
-    """
-    num_steps = int(np.ceil(360 / resolution))
-
-    if even_only:
-        if num_steps % 2 == 1:
-            num_steps = int(num_steps + 1)
-
-    elif odd_only:
-            if num_steps % 2 == 0:
-                num_steps = int(num_steps + 1)
-
-    return num_steps
 
 def _three_uniform_samples_method(resolution, max_angle):
     """
@@ -112,8 +81,7 @@ def _three_uniform_samples_method(resolution, max_angle):
     [2] - http://inis.jinr.ru/sl/vol1/CMC/Graphics_Gems_3,ed_D.Kirk.pdf
     [3] - K. Shoemake. Uniform random rotations. Graphics Gems III, pages 124-132. Academic, New York, 1992.
     """
-    # odd numbers of steps will not return 0.5 in the u_2 position
-    num_steps = _resolution_to_num_steps(resolution,odd_only=True)
+    num_steps = _resolution_to_num_steps(resolution)
 
     u_1 = np.linspace(0, 1, num=num_steps, endpoint=True)
     u_2 = np.linspace(0, 1, num=num_steps, endpoint=False)
@@ -131,30 +99,17 @@ def _three_uniform_samples_method(resolution, max_angle):
     s_3, c_3 = np.sin(2 * np.pi * mesh3), np.cos(2 * np.pi * mesh3)
 
     q = np.asarray([a * s_2, a * c_2, b * s_3, b * c_3])
-
-    # remove duplicates manually as this is memory efficient compared to Rotation.unique()
-
-    # removes the double covering of quaternions
-    q = np.where(q[0] > 0,+q,-q)
+    q = Rotation(q.T)
 
     if max_angle is not None:
-        half_angle = np.deg2rad(max_angle / 2)
-        half_angles = np.arccos(q[0])
-        mask = np.logical_or(
-            half_angles < half_angle, half_angles > (2 * np.pi - half_angle)
-            )
-        q = q.T[mask]
-        q = q.T
-    # now rotation the same iff all elements are the same
-    q = np.unique(q,axis=0)
+        q = _remove_larger_than_angle(q,max_angle)
 
-    # convert to Rotation object
-    q = Rotation(q.T)
+    q = q.unique()
 
     return q
 
 
-def _euler_angles_harr_measure(resolution):
+def _euler_angles_harr_measure(resolution,max_angle=None):
     """
     Returns rotations that are evenly spaced according to the Haar measure on
     SO3 using the euler angle parameterization
@@ -186,7 +141,46 @@ def _euler_angles_harr_measure(resolution):
     # convert to quaternions
     q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")
 
-    # remove duplicates
+    if max_angle is not None:
+        q = _remove_larger_than_angle(q,max_angle)
+
     q = q.unique()
 
     return q
+
+def _remove_larger_than_angle(q,max_angle):
+    """ """
+    half_angle = np.deg2rad(max_angle / 2)
+    half_angles = np.arccos(q.a.data) #returns between 0 and pi
+    mask = half_angles < half_angle
+    q = q[mask]
+    return q
+
+def _resolution_to_num_steps(resolution,even_only=False,odd_only=False):
+    """ Converts a user input resolution to a number off steps (ie. on a linear axis)
+
+    Parameters
+    ----------
+    resolution : float
+        The characteristic distance between a rotation and its neighbour (degrees)
+    even_only : bool, optional
+        Force the returned num_steps to be even, defaults False
+    odd_only : bool, optional
+        Force the returned num_steps to be odd, defaults False
+
+    Returns
+    -------
+    num_steps : int
+        The number of steps to use sampling a 'full' linear axes
+    """
+    num_steps = int(np.ceil(360 / resolution))
+
+    if even_only:
+        if num_steps % 2 == 1:
+            num_steps = int(num_steps + 1)
+
+    elif odd_only:
+            if num_steps % 2 == 0:
+                num_steps = int(num_steps + 1)
+
+    return num_steps
