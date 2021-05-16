@@ -24,6 +24,7 @@ from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C6, D6, get_point_group
 from orix.sampling.SO3_sampling import uniform_SO3_sample
 from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
+from orix.sampling.sampling_utils import _resolution_to_num_steps
 
 
 @pytest.fixture(scope="session")
@@ -36,6 +37,15 @@ def fr():
     """ fixed rotation """
     r = Rotation([0.5, 0.5, 0, 0])
     return r
+
+class TestSamplingUtils():
+    def test_odd(self):
+        num_steps = _resolution_to_num_steps(1,odd_only=True)
+        assert num_steps == 361
+
+    def test_even(self):
+        num_steps = _resolution_to_num_steps(1,even_only=True)
+        assert num_steps == 360
 
 class TestUniformSO3():
     def test_old_method(self):
