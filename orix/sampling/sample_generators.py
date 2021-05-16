@@ -22,6 +22,27 @@ from orix.sampling.SO3_sampling import uniform_SO3_sample
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.symmetry import get_point_group
 
+def _remove_larger_than_angle(q,max_angle):
+    """
+    Removes large angle rotations
+
+    Parameters
+    ----------
+    q : orix.quaternion.rotation.Rotation
+        Object containing rotations
+    max_angle : float
+        Maximum allowable angle (in degrees) from which a rotation can differ from the origin
+
+    Returns
+    -------
+    q : orix.quaternion.rotation.Rotation
+        Object containing rotations lying within the desired region
+    """
+    half_angle = np.deg2rad(max_angle / 2)
+    half_angles = np.arccos(q.a.data) #returns between 0 and pi
+    mask = half_angles < half_angle
+    q = q[mask]
+    return q
 
 def get_sample_fundamental(resolution=2, point_group=None, space_group=None,method='harr_euler'):
     """
@@ -54,9 +75,14 @@ def get_sample_fundamental(resolution=2, point_group=None, space_group=None,meth
         point_group = get_point_group(space_group, proper=True)
 
     # TODO: provide some subspace selection options
-    q = uniform_SO3_sample(resolution,method=method)
+    q = uniform_SO3_sample(resolution,method=method,unique_only=False)
+
     fundamental_region = OrientationRegion.from_symmetry(point_group)
-    return q[q < fundamental_region]
+    q =  q[q < fundamental_region]
+
+    q = q.unique()
+
+    return q
 
 
 def get_sample_local(resolution=2, center=None, grid_width=10,method='harr_euler'):
@@ -82,7 +108,9 @@ def get_sample_local(resolution=2, center=None, grid_width=10,method='harr_euler
     --------
     orix.sampling_utils.uniform_SO3_sample
     """
-    q = uniform_SO3_sample(resolution, max_angle=grid_width, method=method)
+    q = uniform_SO3_sample(resolution, method=method, unique_only=False)
+    q = _remove_larger_than_angle(q,grid_width)
+    q = q.unique()
 
     if center is not None:
         q = center * q

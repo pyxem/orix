@@ -22,9 +22,10 @@ the grid generation within rotation space """
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
+from orix.sampling.sampling_utils import _resolution_to_num_steps
 
 
-def uniform_SO3_sample(resolution, max_angle=None, method='harr_euler'):
+def uniform_SO3_sample(resolution, method='harr_euler', unique_only=True):
     """
     Returns rotations that are evenly spaced according to the Haar measure on
     SO3
@@ -49,11 +50,11 @@ def uniform_SO3_sample(resolution, max_angle=None, method='harr_euler'):
     """
 
     if method == 'harr_euler':
-        return _euler_angles_harr_measure(resolution,max_angle)
+        return _euler_angles_harr_measure(resolution,unique_only)
     elif method == 'quaternion':
-        return _three_uniform_samples_method(resolution, max_angle)
+        return _three_uniform_samples_method(resolution, unique_only)
 
-def _three_uniform_samples_method(resolution, max_angle):
+def _three_uniform_samples_method(resolution,unique_only):
     """
     Returns rotations that are evenly spaced according to the Haar measure on
     SO3, the advantage of this method is that it selects values from uniform distributions
@@ -63,8 +64,6 @@ def _three_uniform_samples_method(resolution, max_angle):
     ----------
     resolution : float
         The characteristic distance between a rotation and its neighbour (degrees)
-    max_angle : float
-        The max angle (ie. distance from the origin) required from the gridding, (degrees)
 
     Returns
     -------
@@ -101,15 +100,13 @@ def _three_uniform_samples_method(resolution, max_angle):
     q = np.asarray([a * s_2, a * c_2, b * s_3, b * c_3])
     q = Rotation(q.T)
 
-    if max_angle is not None:
-        q = _remove_larger_than_angle(q,max_angle)
-
-    q = q.unique()
+    if unique_only:
+        q = q.unique()
 
     return q
 
 
-def _euler_angles_harr_measure(resolution,max_angle=None):
+def _euler_angles_harr_measure(resolution,unique_only):
     """
     Returns rotations that are evenly spaced according to the Haar measure on
     SO3 using the euler angle parameterization
@@ -141,46 +138,7 @@ def _euler_angles_harr_measure(resolution,max_angle=None):
     # convert to quaternions
     q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")
 
-    if max_angle is not None:
-        q = _remove_larger_than_angle(q,max_angle)
-
-    q = q.unique()
+    if unique_only:
+        q = q.unique()
 
     return q
-
-def _remove_larger_than_angle(q,max_angle):
-    """ """
-    half_angle = np.deg2rad(max_angle / 2)
-    half_angles = np.arccos(q.a.data) #returns between 0 and pi
-    mask = half_angles < half_angle
-    q = q[mask]
-    return q
-
-def _resolution_to_num_steps(resolution,even_only=False,odd_only=False):
-    """ Converts a user input resolution to a number off steps (ie. on a linear axis)
-
-    Parameters
-    ----------
-    resolution : float
-        The characteristic distance between a rotation and its neighbour (degrees)
-    even_only : bool, optional
-        Force the returned num_steps to be even, defaults False
-    odd_only : bool, optional
-        Force the returned num_steps to be odd, defaults False
-
-    Returns
-    -------
-    num_steps : int
-        The number of steps to use sampling a 'full' linear axes
-    """
-    num_steps = int(np.ceil(360 / resolution))
-
-    if even_only:
-        if num_steps % 2 == 1:
-            num_steps = int(num_steps + 1)
-
-    elif odd_only:
-            if num_steps % 2 == 0:
-                num_steps = int(num_steps + 1)
-
-    return num_steps
