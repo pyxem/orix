@@ -44,7 +44,8 @@ class TestSamplingUtils():
         assert num_steps == 361
 
     def test_even(self):
-        num_steps = _resolution_to_num_steps(1,even_only=True)
+        # Note that 360/1.002 = 359.28 rounds to 359
+        num_steps = _resolution_to_num_steps(1.002,even_only=True)
         assert num_steps == 360
 
 class TestUniformSO3():
