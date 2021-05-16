@@ -34,10 +34,10 @@ def uniform_SO3_sample(resolution, method='harr_euler', unique_only=True):
     ----------
     resolution : float
         The characteristic distance between a rotation and its neighbour (degrees)
-    max_angle : float
-        The max angle (ie. distance from the origin) required from the gridding, (degrees)
-    old_method : False
-        Use the implementation adopted prior to version 0.6, offered for compatibility
+    method : str
+        The sampling method adopted, either 'harr_euler' or 'quaternion'
+    unique_only : bool
+        whether only uniques rotation should be returned, default True
 
     Returns
     -------
@@ -64,6 +64,8 @@ def _three_uniform_samples_method(resolution,unique_only):
     ----------
     resolution : float
         The characteristic distance between a rotation and its neighbour (degrees)
+    unique_only : bool
+        whether only uniques rotation should be returned
 
     Returns
     -------
@@ -115,6 +117,8 @@ def _euler_angles_harr_measure(resolution,unique_only):
     ----------
     resolution : float
         The characteristic distance between a rotation and its neighbour (degrees)
+    unique_only : bool
+        whether only unique rotations should be returned
 
     Returns
     -------
