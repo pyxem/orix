@@ -87,7 +87,7 @@ class TestGetSampleLocal:
         exp = y_size / x_size
         theory = y_v / x_v
 
-        assert x_size > 0  # Ff this fails exp will be NaN
+        assert x_size > 0  # If this fails exp will be NaN
         assert np.isclose(exp, theory, atol=0.2)
 
     @pytest.mark.parametrize("width", [60, 33])
