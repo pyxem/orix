@@ -90,6 +90,13 @@ class TestGetSampleLocal():
         assert x_size > 0 # if this fails exp will be nan
         assert np.isclose(exp, theory, atol=0.2)
 
+    def test_get_sample_local_center(self,fr):
+        # fixed rotation takes us 30 degrees from origin
+        x = get_sample_local(resolution=3, grid_width = 20, center=fr)
+        # a == cos(omega/2)
+        assert np.all(x.a<np.cos(np.deg2rad(5)))
+
+
 class TestSamplingFundamentalSector():
     @pytest.fixture(scope="session")
     def C6_sample(self):
