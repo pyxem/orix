@@ -90,7 +90,7 @@ class TestGetSampleLocal:
         assert x_size > 0  # If this fails exp will be NaN
         assert np.isclose(exp, theory, atol=0.2)
 
-    def test_get_sample_local_center(self,fr):
+    def test_get_sample_local_center(self,fixed_rotation):
         # fixed rotation takes us 30 degrees from origin
         x = get_sample_local(resolution=3, grid_width = 20, center=fixed_rotation)
         # a == cos(omega/2)
