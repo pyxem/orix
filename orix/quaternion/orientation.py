@@ -243,6 +243,30 @@ class Orientation(Misorientation):
     :math:`o_2`, call :code:`o_2 - o_1`.
     """
 
+    def __sub__(self, other):
+        if isinstance(other, Orientation):
+            # Call to Object3d.squeeze() doesn't carry over symmetry
+            misorientation = Misorientation(self * ~other).squeeze()
+            return misorientation.set_symmetry(self.symmetry, other.symmetry)
+        return NotImplemented
+
+    def __repr__(self):
+        """String representation."""
+        cls = self.__class__.__name__
+        shape = str(self.shape)
+        symmetry = self.symmetry.name
+        data = np.array_str(self.data, precision=4, suppress_small=True)
+        rep = f"{cls} {shape} {symmetry}\n{data}"
+        return rep
+
+    def __invert__(self):
+        return super().__invert__().set_symmetry(self.symmetry)
+
+    @property
+    def symmetry(self):
+        """Symmetry."""
+        return self._symmetry[1]
+
     @classmethod
     def from_euler(
         cls, euler, symmetry=None, convention="bunge", direction="crystal2lab"
@@ -302,11 +326,6 @@ class Orientation(Misorientation):
             o = o.set_symmetry(symmetry)
         return o
 
-    @property
-    def symmetry(self):
-        """Symmetry."""
-        return self._symmetry[1]
-
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
 
@@ -333,12 +352,3 @@ class Orientation(Misorientation):
         [ 0.      1.      0.      0.    ]]
         """
         return super().set_symmetry(C1, symmetry)
-
-    def __sub__(self, other):
-        if isinstance(other, Orientation):
-            misorientation = Misorientation(self * ~other)
-            m_inside = misorientation.set_symmetry(
-                self.symmetry, other.symmetry
-            ).squeeze()
-            return m_inside
-        return NotImplemented

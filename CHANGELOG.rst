@@ -40,6 +40,8 @@ Changed
 
 Fixed
 -----
+- Symmetry is preserved when creating a misorientation from orientations or when
+  inverting orientations
 - Reading of properties (scores etc.) from EMsoft h5ebsd files with certain map shapes
 - Reading of crystal symmetry from EMsoft h5ebsd dot product files in CrystalMap plugin
 
