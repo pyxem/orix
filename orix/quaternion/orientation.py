@@ -338,9 +338,28 @@ class Orientation(Misorientation):
             o = o.set_symmetry(symmetry)
         return o
 
-    def angle_with(self, other, lazy=False, chunk_size=20, progressbar=True):
-        """The angle of rotation transforming this orientation to the
-        other.
+    def angle_with(self, other):
+        """The smallest angle of rotation transforming this orientation
+        to the other considering symmetry.
+
+        Parameters
+        ----------
+        other : orix.quaternion.Orientation
+
+        Returns
+        -------
+        Scalar
+        """
+        dp = self.unit.dot(other.unit).data
+        angle = np.nan_to_num(2 * np.arccos(dp))
+        return Scalar(angle)
+
+    def angle_with_outer(self, other, lazy=False, chunk_size=20, progressbar=True):
+        """The smallest angle of rotation transforming this orientation
+        to the other considering symmetry.
+
+        This is an alternative implementation of
+        :meth:`~orix.quaternion.Misorientation.distance`.
 
         Parameters
         ----------
@@ -361,11 +380,10 @@ class Orientation(Misorientation):
         Scalar
         """
         if lazy:
-            dp = self.unit._dot_dask(other.unit, chunk_size=chunk_size)
-            # Some dot products which are slightly above 1,
-            # like 1.0000000000000004
+            dp = self.unit._dot_outer_dask(other.unit, chunk_size=chunk_size)
+            # Round because some dot products are slightly above 1
             dp = da.round(dp, np.finfo(dp.dtype).precision)
-            angle_da = da.nan_to_num(2 * da.arccos(abs(dp)))
+            angle_da = da.nan_to_num(2 * da.arccos(dp))
             angle = np.zeros(angle_da.shape)
             if progressbar:
                 with ProgressBar():
@@ -373,8 +391,8 @@ class Orientation(Misorientation):
             else:
                 da.store(sources=angle_da, targets=angle)
         else:
-            dp = self.unit.dot(other.unit).data
-            angle = np.nan_to_num(2 * np.arccos(np.abs(dp)))
+            dp = self.unit.dot_outer(other.unit).data
+            angle = np.nan_to_num(2 * np.arccos(dp))
         return Scalar(angle)
 
     def dot(self, other):
@@ -382,8 +400,18 @@ class Orientation(Misorientation):
         :class:`~orix.scalar.Scalar`.
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
+        misorientation = (~self) * other
+        dp_all = Rotation(misorientation).dot_outer(symmetry).data
+        dp = np.max(dp_all, axis=-1)
+        return Scalar(dp)
+
+    def dot_outer(self, other):
+        """Outer dot product of this orientation and the other as a
+        :class:`~orix.scalar.Scalar`.
+        """
+        symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = (~self).outer(other)
-        dp_all = misorientation.dot_outer(symmetry).data
+        dp_all = Rotation(misorientation).dot_outer(symmetry).data
         dp = np.max(dp_all, axis=-1)
         return Scalar(dp)
 
@@ -414,16 +442,17 @@ class Orientation(Misorientation):
         """
         return super().set_symmetry(C1, symmetry)
 
-    def _dot_dask(self, other, chunk_size=20):
-        """Compute the dot product of two quaternions returned as a
-        Dask array.
+    def _dot_outer_dask(self, other, chunk_size=20):
+        """Symmetry reduced outer dot products of two orientations
+        instances returned as a Dask array.
 
         Parameters
         ----------
-        other : orix.quaternion.Quaternion
+        other : orix.quaternion.Orientation
         chunk_size : int, optional
-            Number of quaternions per axis in each quaternion to include
-            in each iteration of the computation. Default is 20.
+            Number of orientations per axis in each orientation instance
+            to include in each iteration of the computation. Default is
+            20.
 
         Returns
         -------
