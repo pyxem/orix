@@ -22,97 +22,110 @@ from orix.sampling.SO3_sampling import uniform_SO3_sample
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.symmetry import get_point_group
 
-def _remove_larger_than_angle(q,max_angle):
-    """
-    Removes large angle rotations
 
-    Parameters
-    ----------
-    q : orix.quaternion.rotation.Rotation
-        Object containing rotations
-    max_angle : float
-        Maximum allowable angle (in degrees) from which a rotation can differ from the origin
-
-    Returns
-    -------
-    q : orix.quaternion.rotation.Rotation
-        Object containing rotations lying within the desired region
-    """
-    half_angle = np.deg2rad(max_angle / 2)
-    half_angles = np.arccos(q.a.data) #returns between 0 and pi
-    mask = half_angles < half_angle
-    q = q[mask]
-    return q
-
-def get_sample_fundamental(resolution=2, point_group=None, space_group=None,method='harr_euler'):
-    """
-    Generates an equispaced grid of rotations within a fundamental zone.
+def get_sample_fundamental(
+    resolution=2, point_group=None, space_group=None, method="harr_euler"
+):
+    """Generates an equispaced grid of rotations within a fundamental
+    zone.
 
     Parameters
     ----------
     resolution : float, optional
-        The characteristic distance between a rotation and its neighbour (degrees)
-    point_group : orix.quaternion.symmetry.Symmetry, optional
-        One of the 11 proper point groups, defaults to None
+        The characteristic distance between a rotation and its neighbour
+        in degrees.
+    point_group : orix.quaternion.Symmetry, optional
+        One of the 11 proper point groups, defaults to None.
     space_group: int, optional
-        Between 1 and 231, defaults to None
+        Between 1 and 231, defaults to None.
+    method : str, optional
+        Either "harr_euler" (default) or "quaternion". See
+        :func:`~orix.sampling.uniform_SO3_sample` for details.
 
     Returns
     -------
-    q : orix.quaternion.rotation.Rotation
-        Grid of rotations lying within the specified fundamental zone
+    r : orix.quaternion.Rotation
+        Grid of rotations lying within the specified fundamental zone.
 
     See Also
     --------
-    orix.sampling.utils.uniform_SO3_sample
+    :func:`orix.sampling.uniform_SO3_sample`
 
     Examples
     --------
-    >>> from orix.quaternion.symmetry import C2,C4
+    >>> from orix.quaternion.symmetry import C2
+    >>> from orix.sampling import get_sample_fundamental
     >>> grid = get_sample_fundamental(1, point_group=C2)
     """
     if point_group is None:
         point_group = get_point_group(space_group, proper=True)
 
     # TODO: provide some subspace selection options
-    q = uniform_SO3_sample(resolution,method=method,unique_only=False)
+    r = uniform_SO3_sample(resolution, method=method, unique=False)
 
     fundamental_region = OrientationRegion.from_symmetry(point_group)
-    q =  q[q < fundamental_region]
+    r = r[r < fundamental_region]
 
-    q = q.unique()
+    r = r.unique()
 
-    return q
+    return r
 
 
-def get_sample_local(resolution=2, center=None, grid_width=10,method='harr_euler'):
-    """
-    Generates a grid of rotations about a given rotation
+def get_sample_local(resolution=2, center=None, grid_width=10, method="harr_euler"):
+    """Generates a grid of rotations about a given rotation.
 
     Parameters
     ----------
     resolution : float, optional
-        The characteristic distance between a rotation and its neighbour (degrees)
-    center : orix.quaternion.rotation.Rotation, optional
-        The rotation at which the grid is centered. If None (default) uses the identity
+        The characteristic distance between a rotation and its neighbour
+        in degrees.
+    center : orix.quaternion.Rotation, optional
+        The rotation at which the grid is centered. If None (default)
+        uses the identity.
     grid_width : float, optional
-        The largest angle of rotation away from center that is acceptable (degrees)
-    old_method : bool, optional
-        #TODO
+        The largest angle of rotation in degrees away from center that
+        is acceptable.
+    method : str, optional
+        Either "harr_euler" (default) or "quaternion". See
+        :func:`~orix.sampling.uniform_SO3_sample` for details.
+
     Returns
     -------
-    q : orix.quaternion.rotation.Rotation
-        Grid of rotations lying within grid_width of center
+    r : orix.quaternion.Rotation
+        Grid of rotations lying within `grid_width` of center.
 
     See Also
     --------
-    orix.sampling_utils.uniform_SO3_sample
+    :func:`orix.sampling.uniform_SO3_sample`
     """
-    q = uniform_SO3_sample(resolution, method=method, unique_only=False)
-    q = _remove_larger_than_angle(q,grid_width)
-    q = q.unique()
+    r = uniform_SO3_sample(resolution, method=method, unique=False)
+    r = _remove_larger_than_angle(r, grid_width)
+    r = r.unique()
 
     if center is not None:
-        q = center * q
+        r = center * r
 
-    return q
+    return r
+
+
+def _remove_larger_than_angle(r, max_angle):
+    """Removes large angle rotations from a sample of rotations.
+
+    Parameters
+    ----------
+    r : orix.quaternion.Rotation
+        Sample of rotations.
+    max_angle : float
+        Maximum allowable angle (in degrees) from which a rotation can
+        differ from the origin.
+
+    Returns
+    -------
+    r : orix.quaternion.Rotation
+        Rotations lying within the desired region.
+    """
+    half_angle = np.deg2rad(max_angle / 2)
+    half_angles = np.arccos(r.a.data)  # Returns between 0 and pi
+    mask = half_angles < half_angle
+    r = r[mask]
+    return r

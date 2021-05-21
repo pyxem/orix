@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Module for generating grids in orientation spaces."""
+"""Generation of grids in orientation space."""
 
 from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
 from orix.sampling.SO3_sampling import uniform_SO3_sample
