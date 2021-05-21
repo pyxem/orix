@@ -209,9 +209,9 @@ class Rotation(Quaternion):
         )
         return angles
 
-    def outer(self, other):
+    def outer(self, other, **kwargs):
         """Compute the outer product of this rotation and the other object."""
-        r = super().outer(other)
+        r = super().outer(other, **kwargs)
         if isinstance(r, Rotation):
             r.improper = np.logical_xor.outer(self.improper, other.improper)
         if isinstance(r, Vector3d):
@@ -512,18 +512,18 @@ class Rotation(Quaternion):
 
     @property
     def axis(self):
-        """Vector3d : the axis of rotation."""
+        """The axis of rotation as a :class:`~orix.vector.Vector3d`."""
         axis = Vector3d(np.stack((self.b.data, self.c.data, self.d.data), axis=-1))
-        axis[self.a.data < -1e-6] = -axis[self.a.data < -1e-6]
-        axis[axis.norm.data == 0] = Vector3d.zvector() * np.sign(
-            self.a[axis.norm.data == 0].data
-        )
+        a_is_zero = self.a.data < 1e-6
+        axis[a_is_zero] = -axis[a_is_zero]
+        norm_is_zero = axis.norm.data == 0
+        axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero].data)
         axis.data = axis.data / axis.norm.data[..., np.newaxis]
         return axis
 
     @property
     def angle(self):
-        """Scalar : the angle of rotation."""
+        """The angle of rotation as a :class:`~orix.scalar.Scalar."""
         return Scalar(2 * np.nan_to_num(np.arccos(np.abs(self.a.data))))
 
     @classmethod
@@ -579,6 +579,30 @@ class Rotation(Quaternion):
         """Rotation : this and antipodally equivalent rotations."""
         r = self.__class__(np.stack([self.data, -self.data], axis=0))
         r.improper = self.improper
+        return r
+
+    def _outer_dask(self, other, chunk_size=20):
+        """Compute the outer product of two rotations returned as a
+        Dask array.
+
+        Parameters
+        ----------
+        other : orix.quaternion.Rotation
+        chunk_size : int, optional
+            Number of rotations per axis in each rotation instance to
+            include in each iteration of the computation. Default is 20.
+
+        Returns
+        -------
+        dask.array.Array
+
+        Notes
+        -----
+        To get a new rotation from the returned array `rarr`, do
+        `r = Rotation(rarr.compute())`.
+        """
+        r = super()._outer_dask(other, chunk_size=chunk_size)
+        #        r[..., -1] = np.logical_xor.outer(self.improper, other.improper)
         return r
 
 

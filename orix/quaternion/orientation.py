@@ -40,13 +40,17 @@ indistinguishable in both cases, and hence has the same orientation.
 
 from itertools import product as iproduct
 from itertools import combinations_with_replacement as icombinations
+import warnings
 
+import dask.array as da
+from dask.diagnostics import ProgressBar
 import numpy as np
 from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1
+from orix.scalar import Scalar
 
 
 def _distance(misorientation, verbose, split_size=100):
@@ -117,15 +121,15 @@ class Misorientation(Rotation):
 
     _symmetry = (C1, C1)
 
+    @property
+    def symmetry(self):
+        """Tuple of :class:`~orix.quaternion.Symmetry`."""
+        return self._symmetry
+
     def __getitem__(self, key):
         m = super().__getitem__(key)
         m._symmetry = self._symmetry
         return m
-
-    @property
-    def symmetry(self):
-        """Tuple of Symmetry"""
-        return self._symmetry
 
     def equivalent(self, grain_exchange=False):
         """Equivalent misorientations
@@ -243,12 +247,21 @@ class Orientation(Misorientation):
     :math:`o_2`, call :code:`o_2 - o_1`.
     """
 
-    def __sub__(self, other):
-        if isinstance(other, Orientation):
-            # Call to Object3d.squeeze() doesn't carry over symmetry
-            misorientation = Misorientation(self * ~other).squeeze()
-            return misorientation.set_symmetry(self.symmetry, other.symmetry)
-        return NotImplemented
+    @property
+    def symmetry(self):
+        """Symmetry."""
+        return self._symmetry[1]
+
+    @property
+    def unit(self):
+        """Unit orientations."""
+        return super().unit.set_symmetry(self.symmetry)
+
+    def __invert__(self):
+        return super().__invert__().set_symmetry(self.symmetry)
+
+    def __neg__(self):
+        return super().__neg__().set_symmetry(self.symmetry)
 
     def __repr__(self):
         """String representation."""
@@ -259,13 +272,12 @@ class Orientation(Misorientation):
         rep = f"{cls} {shape} {symmetry}\n{data}"
         return rep
 
-    def __invert__(self):
-        return super().__invert__().set_symmetry(self.symmetry)
-
-    @property
-    def symmetry(self):
-        """Symmetry."""
-        return self._symmetry[1]
+    def __sub__(self, other):
+        if isinstance(other, Orientation):
+            # Call to Object3d.squeeze() doesn't carry over symmetry
+            misorientation = Misorientation(self * ~other).squeeze()
+            return misorientation.set_symmetry(self.symmetry, other.symmetry)
+        return NotImplemented
 
     @classmethod
     def from_euler(
@@ -326,6 +338,55 @@ class Orientation(Misorientation):
             o = o.set_symmetry(symmetry)
         return o
 
+    def angle_with(self, other, lazy=False, chunk_size=20, progressbar=True):
+        """The angle of rotation transforming this orientation to the
+        other.
+
+        Parameters
+        ----------
+        other : orix.quaternion.Quaternion
+        lazy : bool, optional
+            Whether to perform the computation lazily with Dask. Default
+            is False.
+        chunk_size : int, optional
+            Number of quaternions per axis in each quaternion to include
+            in each iteration of the computation. Default is 20. Only
+            applies when `lazy` is True.
+        progressbar : bool, optional
+            Whether to show a progressbar during computation if `lazy`
+            is True. Default is True.
+
+        Returns
+        -------
+        Scalar
+        """
+        if lazy:
+            dp = self.unit._dot_dask(other.unit, chunk_size=chunk_size)
+            # Some dot products which are slightly above 1,
+            # like 1.0000000000000004
+            dp = da.round(dp, np.finfo(dp.dtype).precision)
+            angle_da = da.nan_to_num(2 * da.arccos(abs(dp)))
+            angle = np.zeros(angle_da.shape)
+            if progressbar:
+                with ProgressBar():
+                    da.store(sources=angle_da, targets=angle)
+            else:
+                da.store(sources=angle_da, targets=angle)
+        else:
+            dp = self.unit.dot(other.unit).data
+            angle = np.nan_to_num(2 * np.arccos(np.abs(dp)))
+        return Scalar(angle)
+
+    def dot(self, other):
+        """Dot product of this orientation and the other as a
+        :class:`~orix.scalar.Scalar`.
+        """
+        symmetry = self.symmetry.outer(other.symmetry).unique()
+        misorientation = (~self).outer(other)
+        dp_all = misorientation.dot_outer(symmetry).data
+        dp = np.max(dp_all, axis=-1)
+        return Scalar(dp)
+
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
 
@@ -352,3 +413,38 @@ class Orientation(Misorientation):
         [ 0.      1.      0.      0.    ]]
         """
         return super().set_symmetry(C1, symmetry)
+
+    def _dot_dask(self, other, chunk_size=20):
+        """Compute the dot product of two quaternions returned as a
+        Dask array.
+
+        Parameters
+        ----------
+        other : orix.quaternion.Quaternion
+        chunk_size : int, optional
+            Number of quaternions per axis in each quaternion to include
+            in each iteration of the computation. Default is 20.
+
+        Returns
+        -------
+        dask.array.Array
+
+        Notes
+        -----
+        To read the dot products array `dparr` into memory, do
+        `dp = dparr.compute()`.
+        """
+        symmetry = self.symmetry.outer(other.symmetry).unique()
+        misorientation = (~self)._outer_dask(other, chunk_size=chunk_size)
+
+        # Summation subscripts
+        str1 = "abcdefghijklmnopqrstuvwxy"[: misorientation.ndim]
+        str2 = "z" + str1[-1]  # Last elements have shape (4,)
+        sum_over = f"{str1},{str2}->{str1[:-1] + str2[0]}"
+
+        warnings.filterwarnings("ignore", category=da.PerformanceWarning)
+
+        dp_all = da.einsum(sum_over, misorientation, symmetry.data)
+        dp = da.max(abs(dp_all), axis=-1)
+
+        return dp
