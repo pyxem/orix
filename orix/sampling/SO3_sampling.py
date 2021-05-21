@@ -78,7 +78,7 @@ def uniform_SO3_sample(resolution, method="harr_euler", unique=True):
         return _three_uniform_samples_method(resolution, unique)
 
 
-def _three_uniform_samples_method(resolution, unique):
+def _three_uniform_samples_method(resolution, unique, max_angle=None):
     """Returns rotations that are evenly spaced according to the Haar
     measure on *SO(3)*. The advantage of this method compared to
     :func:`_euler_angles_harr_measure` is that it selects values from
@@ -92,6 +92,8 @@ def _three_uniform_samples_method(resolution, unique):
         in degrees.
     unique : bool
         Whether only unique rotations should be returned.
+    max_angle : float
+        Only rotations with angles smaller than max_angle are returned
 
     Returns
     -------
@@ -104,8 +106,22 @@ def _three_uniform_samples_method(resolution, unique):
     """
     num_steps = _resolution_to_num_steps(resolution)
 
-    u_1 = np.linspace(0, 1, num=num_steps, endpoint=True)
-    u_2 = np.linspace(0, 1, num=num_steps, endpoint=False)
+    if max_angle is not None:
+        # e_1 = cos(omega/2) = np.sqrt(1-u_1) * np.sin(2*np.pi*u2)
+        e_1_min = np.cos(np.deg2rad(max_angle / 2))
+        u_1_max = 1 - np.square(e_1_min)
+        u_2_min = np.arcsin(e_1_min) / 2 / np.pi
+
+        # round these up to avoid zero selection
+        num_1 = int(num_steps * (u_1_max)+0.5)
+        num_2 = int(num_steps * (1 - u_2_min)+0.5)
+        u_1 = np.linspace(0, u_1_max, num=num_1, endpoint=True)
+        u_2 = np.linspace(u_2_min, 1, num=num_2, endpoint=True)
+
+    else:
+        u_1 = np.linspace(0, 1, num=num_steps, endpoint=True)
+        u_2 = np.linspace(0, 1, num=num_steps, endpoint=False)
+
     u_3 = np.linspace(0, 1, num=num_steps, endpoint=False)
 
     inputs = np.meshgrid(u_1, u_2, u_3)

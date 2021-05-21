@@ -18,7 +18,7 @@
 
 import numpy as np
 
-from orix.sampling.SO3_sampling import uniform_SO3_sample
+from orix.sampling.SO3_sampling import uniform_SO3_sample, _three_uniform_samples_method
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.symmetry import get_point_group
 
@@ -98,7 +98,11 @@ def get_sample_local(resolution=2, center=None, grid_width=10, method="harr_eule
     --------
     :func:`orix.sampling.uniform_SO3_sample`
     """
-    r = uniform_SO3_sample(resolution, method=method, unique=False)
+    if method is not "quaternion":
+        r = uniform_SO3_sample(resolution, method=method, unique=False)
+    else:
+        r = _three_uniform_samples_method(resolution, unique=False, max_angle=grid_width)
+
     r = _remove_larger_than_angle(r, grid_width)
     r = r.unique()
 
