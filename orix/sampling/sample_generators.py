@@ -101,7 +101,9 @@ def get_sample_local(resolution=2, center=None, grid_width=10, method="harr_eule
     if method is not "quaternion":
         r = uniform_SO3_sample(resolution, method=method, unique=False)
     else:
-        r = _three_uniform_samples_method(resolution, unique=False, max_angle=grid_width)
+        r = _three_uniform_samples_method(
+            resolution, unique=False, max_angle=grid_width
+        )
 
     r = _remove_larger_than_angle(r, grid_width)
     r = r.unique()
