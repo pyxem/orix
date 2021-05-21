@@ -204,9 +204,10 @@ class Rotation(Quaternion):
         Scalar
         """
         other = Rotation(other)
-        angles = Scalar(
-            np.nan_to_num(np.arccos(2 * self.unit.dot(other.unit).data ** 2 - 1))
-        )
+        dp = self.unit.dot(other.unit).data
+        # Round because some dot products are slightly above 1
+        dp = np.round(dp, np.finfo(dp.dtype).precision)
+        angles = Scalar(np.nan_to_num(2 * np.arccos(dp)))
         return angles
 
     def outer(self, other, **kwargs):
@@ -514,7 +515,7 @@ class Rotation(Quaternion):
     def axis(self):
         """The axis of rotation as a :class:`~orix.vector.Vector3d`."""
         axis = Vector3d(np.stack((self.b.data, self.c.data, self.d.data), axis=-1))
-        a_is_zero = self.a.data < 1e-6
+        a_is_zero = self.a.data < -1e-6
         axis[a_is_zero] = -axis[a_is_zero]
         norm_is_zero = axis.norm.data == 0
         axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero].data)
@@ -630,5 +631,5 @@ def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
     -------
     numpy.ndarray
     """
-    angle = x.angle_with(reference)
+    angle = Rotation(x).angle_with(reference)
     return np.exp(2 * alpha * np.cos(angle.data)) / hyp0f1(1.5, alpha ** 2)

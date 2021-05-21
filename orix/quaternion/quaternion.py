@@ -287,22 +287,27 @@ class Quaternion(Object3d):
         ndim1 = len(self.shape)
         ndim2 = len(other.shape)
 
-        # Summation subscripts
-        str1 = "abcdefghijklm"[:ndim1]  # Max. object dimension of 13
-        str2 = "nopqrstuvwxyz"[:ndim2]
-        sum_over = f"...{str1},{str2}...->{str1 + str2}"
-
         # Set chunk sizes
         chunks1 = (chunk_size,) * ndim1 + (-1,)
         chunks2 = (chunk_size,) * ndim2 + (-1,)
 
-        # Get quaternion parameters
+        # Get quaternion parameters as dask arrays to be computed later
         q1 = da.from_array(self.data, chunks=chunks1)
         a1, b1, c1, d1 = q1[..., 0], q1[..., 1], q1[..., 2], q1[..., 3]
         q2 = da.from_array(other.data, chunks=chunks2)
         a2, b2, c2, d2 = q2[..., 0], q2[..., 1], q2[..., 2], q2[..., 3]
 
+        # Dask has no dask.multiply.outer(), use dask.array.einsum
+        # Summation subscripts
+        str1 = "abcdefghijklm"[:ndim1]  # Max. object dimension of 13
+        str2 = "nopqrstuvwxyz"[:ndim2]
+        sum_over = f"...{str1},{str2}...->{str1 + str2}"
+
+        # We silence dask's einsum performance warnings for "small"
+        # chunk sizes, since using the chunk sizes suggested floods
+        # memory
         warnings.filterwarnings("ignore", category=da.PerformanceWarning)
+
         a = (
             +da.einsum(sum_over, a1, a2)
             - da.einsum(sum_over, b1, b2)
