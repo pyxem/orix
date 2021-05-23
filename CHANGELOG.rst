@@ -16,8 +16,7 @@ Added
 - User guide with Jupyter notebooks as part of the Read the Docs documentation
 - CrystalMap.plot() method for easy plotting of phases, properties etc.
 - .ang file writer for CrystalMap objects (via orix.io.save())
-- Miller class, inheriting functionality from the Vector3d class, to handle operations
-with direct lattice vectors (uvw/UVTW) and reciprocal lattice vectors (hkl/hkil).
+- Miller class, inheriting functionality from the Vector3d class, to handle operations with direct lattice vectors (uvw/UVTW) and reciprocal lattice vectors (hkl/hkil).
 - Vector3d.scatter() and Vector3d.draw_circle() methods to show unit vectors and
   great/small circles in stereographic projection
 - Stereographic projection using Matplotlib's projections framework for plotting
@@ -26,6 +25,7 @@ with direct lattice vectors (uvw/UVTW) and reciprocal lattice vectors (hkl/hkil)
   stereographic coordinates
 - CrystalMap.empty() class method to create empty map of a given shape with identity
   rotations.
+- sampling of SO3 now provided via two methods (up from the one in previous versions)
 - Warning when trying to create rotations from large Euler angles
 - Passing symmetry when initializing an Orientation.
 - Overloaded division for Vector3d (left hand side) by numbers and suitably shaped
