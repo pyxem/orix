@@ -354,9 +354,10 @@ class Orientation(Misorientation):
         angle = np.nan_to_num(2 * np.arccos(dp))
         return Scalar(angle)
 
-    def angle_with_outer(self, other, lazy=False, chunk_size=20, progressbar=True):
-        """The smallest angle of rotation transforming this orientation
-        to the other considering symmetry.
+    def distance_to(self, other, lazy=False, chunk_size=20, progressbar=True):
+        """The smallest angle of rotation transforming every orientation
+        in this instance to every orientation in the `other` instance,
+        considering symmetry.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance`.
