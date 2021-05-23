@@ -524,7 +524,7 @@ class Rotation(Quaternion):
 
     @property
     def angle(self):
-        """The angle of rotation as a :class:`~orix.scalar.Scalar."""
+        """The angle of rotation as a :class:`~orix.scalar.Scalar`."""
         return Scalar(2 * np.nan_to_num(np.arccos(np.abs(self.a.data))))
 
     @classmethod

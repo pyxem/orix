@@ -193,28 +193,28 @@ class TestOrientationInitialization:
 
 
 @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
-def test_angle_with_outer(symmetry):
+def test_distance_to(symmetry):
     q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
     o = Orientation(q).set_symmetry(symmetry)
-    angles_numpy = o.angle_with_outer(o)
+    angles_numpy = o.distance_to(o)
     assert isinstance(angles_numpy, Scalar)
     assert angles_numpy.shape == (2, 2)
 
-    angles_dask = o.angle_with_outer(o, lazy=True)
+    angles_dask = o.distance_to(o, lazy=True)
     assert isinstance(angles_dask, Scalar)
     assert angles_dask.shape == (2, 2)
 
     assert np.allclose(angles_numpy.data, angles_dask.data)
 
 
-def test_angle_with_outer_lazy_parameters():
+def test_distance_to_lazy_parameters():
     shape = (5, 15, 4)
     rng = np.random.default_rng()
     abcd = rng.normal(size=np.prod(shape)).reshape(shape)
     o = Orientation(abcd)
 
-    angle1 = o.angle_with_outer(o, lazy=True, chunk_size=5, progressbar=True)
-    angle2 = o.angle_with_outer(o, lazy=True, chunk_size=10, progressbar=False)
+    angle1 = o.distance_to(o, lazy=True, chunk_size=5, progressbar=True)
+    angle2 = o.distance_to(o, lazy=True, chunk_size=10, progressbar=False)
 
     assert np.allclose(angle1.data, angle2.data)
 
