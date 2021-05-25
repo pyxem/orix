@@ -225,7 +225,11 @@ def test_angle_with(symmetry):
     r = Rotation(q)
     o = Orientation(q).set_symmetry(symmetry)
 
-    assert not np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
+    is_equal = np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
+    if symmetry.name in ["1", "m3m"]:
+        assert is_equal
+    else:
+        assert not is_equal
 
 
 def test_negate_orientation():

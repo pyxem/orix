@@ -264,8 +264,10 @@ class Quaternion(Object3d):
             )
 
     def _outer_dask(self, other, chunk_size=20):
-        """Compute the outer product of two quaternions returned as a
-        Dask array.
+        """Compute the product of every quaternion in this instance to
+        every quaternion in another instance, returned as a Dask array.
+
+        This is also known as the Hamilton product.
 
         Parameters
         ----------
@@ -308,30 +310,32 @@ class Quaternion(Object3d):
         # memory
         warnings.filterwarnings("ignore", category=da.PerformanceWarning)
 
+        # fmt: off
         a = (
-            +da.einsum(sum_over, a1, a2)
+            + da.einsum(sum_over, a1, a2)
             - da.einsum(sum_over, b1, b2)
             - da.einsum(sum_over, c1, c2)
             - da.einsum(sum_over, d1, d2)
         )
         b = (
-            +da.einsum(sum_over, b1, a2)
+            + da.einsum(sum_over, b1, a2)
             + da.einsum(sum_over, a1, b2)
             - da.einsum(sum_over, d1, c2)
             + da.einsum(sum_over, c1, d2)
         )
         c = (
-            +da.einsum(sum_over, c1, a2)
+            + da.einsum(sum_over, c1, a2)
             + da.einsum(sum_over, d1, b2)
             + da.einsum(sum_over, a1, c2)
             - da.einsum(sum_over, b1, d2)
         )
         d = (
-            +da.einsum(sum_over, d1, a2)
+            + da.einsum(sum_over, d1, a2)
             - da.einsum(sum_over, c1, b2)
             + da.einsum(sum_over, b1, c2)
             + da.einsum(sum_over, a1, d2)
         )
+        # fmt: on
 
         new_chunks = tuple(chunks1[:-1]) + tuple(chunks2[:-1]) + (-1,)
         return da.stack((a, b, c, d), axis=-1).rechunk(new_chunks)

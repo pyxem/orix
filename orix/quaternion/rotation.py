@@ -207,7 +207,7 @@ class Rotation(Quaternion):
         dp = self.unit.dot(other.unit).data
         # Round because some dot products are slightly above 1
         dp = np.round(dp, np.finfo(dp.dtype).precision)
-        angles = Scalar(np.nan_to_num(2 * np.arccos(dp)))
+        angles = Scalar(np.nan_to_num(np.arccos(2 * dp ** 2 - 1)))
         return angles
 
     def outer(self, other, **kwargs):
@@ -583,8 +583,8 @@ class Rotation(Quaternion):
         return r
 
     def _outer_dask(self, other, chunk_size=20):
-        """Compute the outer product of two rotations returned as a
-        Dask array.
+        """Compute the product of every rotation in this instance to
+        every rotation in another instance, returned as a Dask array.
 
         Parameters
         ----------

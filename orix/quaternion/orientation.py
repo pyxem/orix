@@ -355,12 +355,13 @@ class Orientation(Misorientation):
         return Scalar(angle)
 
     def distance_to(self, other, lazy=False, chunk_size=20, progressbar=True):
-        """The smallest angle of rotation transforming every orientation
+        r"""The smallest angle of rotation transforming every orientation
         in this instance to every orientation in the `other` instance,
         considering symmetry.
 
         This is an alternative implementation of
-        :meth:`~orix.quaternion.Misorientation.distance`.
+        :meth:`~orix.quaternion.Misorientation.distance` for
+        orientations.
 
         Parameters
         ----------
@@ -379,12 +380,24 @@ class Orientation(Misorientation):
         Returns
         -------
         Scalar
+
+        Notes
+        -----
+        Given two orientations :math:`g_i` and :math:`g_j`, the smallest
+        angle is considered as the geodesic distance
+
+        .. math::
+
+            d(g_i, g_j) = \arccos(2(g_i \cdot g_j)^2 - 1),
+
+        where :math:`(g_i \cdot g_j)` is the highest dot product between
+        symmetrically equivalent orientations to :math:`g_{i,j}`.
         """
         if lazy:
             dp = self.unit._dot_outer_dask(other.unit, chunk_size=chunk_size)
             # Round because some dot products are slightly above 1
             dp = da.round(dp, np.finfo(dp.dtype).precision)
-            angle_da = da.nan_to_num(2 * da.arccos(dp))
+            angle_da = da.nan_to_num(da.arccos(2 * dp ** 2 - 1))
             angle = np.zeros(angle_da.shape)
             if progressbar:
                 with ProgressBar():
@@ -397,8 +410,12 @@ class Orientation(Misorientation):
         return Scalar(angle)
 
     def dot(self, other):
-        """Dot product of this orientation and the other as a
-        :class:`~orix.scalar.Scalar`.
+        """Dot product of orientations in this instance to orientations
+        in another instance, returned as :class:`~orix.scalar.Scalar`.
+
+        See Also
+        --------
+        dot_outer
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = (~self) * other
@@ -407,8 +424,13 @@ class Orientation(Misorientation):
         return Scalar(dp)
 
     def dot_outer(self, other):
-        """Outer dot product of this orientation and the other as a
+        """Symmetry reduced dot product of every orientation in this
+        instance to every orientation in another instance, returned as
         :class:`~orix.scalar.Scalar`.
+
+        See Also
+        --------
+        dot
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = (~self).outer(other)
@@ -444,8 +466,9 @@ class Orientation(Misorientation):
         return super().set_symmetry(C1, symmetry)
 
     def _dot_outer_dask(self, other, chunk_size=20):
-        """Symmetry reduced outer dot products of two orientations
-        instances returned as a Dask array.
+        """Symmetry reduced dot product of every orientation in this
+        instance to every orientation in another instance, returned as a
+        Dask array.
 
         Parameters
         ----------
