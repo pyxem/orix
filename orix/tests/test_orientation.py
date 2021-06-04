@@ -188,51 +188,45 @@ class TestOrientationInitialization:
         assert np.allclose(o3.data, o2.data)
 
 
-# TODO: Move into TestOrientation once PR
-# https://github.com/pyxem/orix/pull/194 is merged
+class TestOrientation:
+    @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
+    def test_get_distance_matrix(self, symmetry):
+        q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
+        o = Orientation(q).set_symmetry(symmetry)
+        angles_numpy = o.get_distance_matrix()
+        assert isinstance(angles_numpy, Scalar)
+        assert angles_numpy.shape == (2, 2)
 
+        angles_dask = o.get_distance_matrix(lazy=True)
+        assert isinstance(angles_dask, Scalar)
+        assert angles_dask.shape == (2, 2)
 
-@pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
-def test_get_distance_matrix(symmetry):
-    q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
-    o = Orientation(q).set_symmetry(symmetry)
-    angles_numpy = o.get_distance_matrix()
-    assert isinstance(angles_numpy, Scalar)
-    assert angles_numpy.shape == (2, 2)
+        assert np.allclose(angles_numpy.data, angles_dask.data)
 
-    angles_dask = o.get_distance_matrix(lazy=True)
-    assert isinstance(angles_dask, Scalar)
-    assert angles_dask.shape == (2, 2)
+    def test_get_distance_matrix_lazy_parameters(self):
+        shape = (5, 15, 4)
+        rng = np.random.default_rng()
+        abcd = rng.normal(size=np.prod(shape)).reshape(shape)
+        o = Orientation(abcd)
 
-    assert np.allclose(angles_numpy.data, angles_dask.data)
+        angle1 = o.get_distance_matrix(lazy=True, chunk_size=5, progressbar=True)
+        angle2 = o.get_distance_matrix(lazy=True, chunk_size=10, progressbar=False)
 
+        assert np.allclose(angle1.data, angle2.data)
 
-def test_get_distance_matrix_lazy_parameters():
-    shape = (5, 15, 4)
-    rng = np.random.default_rng()
-    abcd = rng.normal(size=np.prod(shape)).reshape(shape)
-    o = Orientation(abcd)
+    @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
+    def test_angle_with(self, symmetry):
+        q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
+        r = Rotation(q)
+        o = Orientation(q).set_symmetry(symmetry)
 
-    angle1 = o.get_distance_matrix(lazy=True, chunk_size=5, progressbar=True)
-    angle2 = o.get_distance_matrix(lazy=True, chunk_size=10, progressbar=False)
+        is_equal = np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
+        if symmetry.name in ["1", "m3m"]:
+            assert is_equal
+        else:
+            assert not is_equal
 
-    assert np.allclose(angle1.data, angle2.data)
-
-
-@pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
-def test_angle_with(symmetry):
-    q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
-    r = Rotation(q)
-    o = Orientation(q).set_symmetry(symmetry)
-
-    is_equal = np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
-    if symmetry.name in ["1", "m3m"]:
-        assert is_equal
-    else:
-        assert not is_equal
-
-
-def test_negate_orientation():
-    o = Orientation.identity().set_symmetry(Oh)
-    on = -o
-    assert on.symmetry.name == o.symmetry.name
+    def test_negate_orientation(self):
+        o = Orientation.identity().set_symmetry(Oh)
+        on = -o
+        assert on.symmetry.name == o.symmetry.name

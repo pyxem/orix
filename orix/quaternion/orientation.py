@@ -421,9 +421,9 @@ class Orientation(Misorientation):
         where :math:`(g_i \cdot g_j)` is the highest dot product between
         symmetrically equivalent orientations to :math:`g_{i,j}`.
         """
-        oris = self.unit
+        ori = self.unit
         if lazy:
-            dot_products = oris._dot_outer_dask(oris, chunk_size=chunk_size)
+            dot_products = ori._dot_outer_dask(ori, chunk_size=chunk_size)
 
             # Round because some dot products are slightly above 1
             n_decimals = np.finfo(dot_products.dtype).precision
@@ -440,7 +440,7 @@ class Orientation(Misorientation):
             else:
                 da.store(sources=angles_dask, targets=angles)
         else:
-            dot_products = oris.dot_outer(oris).data
+            dot_products = ori.dot_outer(ori).data
             angles = np.arccos(2 * dot_products ** 2 - 1)
             angles = np.nan_to_num(angles)
 
