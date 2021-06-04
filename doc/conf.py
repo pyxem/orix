@@ -42,6 +42,7 @@ extensions = [
 
 # Create links to references within orix's documentation to these packages
 intersphinx_mapping = {
+    "dask": ("https://docs.dask.org/en/latest", None),
     "diffpy.structure": ("https://www.diffpy.org/diffpy.structure", None),
     "h5py": ("http://docs.h5py.org/en/stable/", None),
     "matplotlib": ("https://matplotlib.org", None),

@@ -339,8 +339,8 @@ class Orientation(Misorientation):
         return o
 
     def angle_with(self, other):
-        """The smallest angle of rotation transforming this orientation
-        to the other considering symmetry.
+        """The symmetry reduced smallest angle of rotation transforming
+        this orientation to the other.
 
         Parameters
         ----------
@@ -350,29 +350,57 @@ class Orientation(Misorientation):
         -------
         Scalar
         """
-        dp = self.unit.dot(other.unit).data
-        angle = np.nan_to_num(2 * np.arccos(dp))
-        return Scalar(angle)
+        dot_products = self.unit.dot(other.unit).data
+        angles = np.nan_to_num(np.arccos(2 * dot_products ** 2 - 1))
+        return Scalar(angles)
 
-    def distance_to(self, other, lazy=False, chunk_size=20, progressbar=True):
-        r"""The smallest angle of rotation transforming every orientation
-        in this instance to every orientation in the `other` instance,
-        considering symmetry.
+    def dot(self, other):
+        """Symmetry reduced dot product of orientations in this instance
+        to orientations in another instance, returned as
+        :class:`~orix.scalar.Scalar`.
+
+        See Also
+        --------
+        dot_outer
+        """
+        symmetry = self.symmetry.outer(other.symmetry).unique()
+        misorientation = (~self) * other
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
+        highest_dot_product = np.max(all_dot_products, axis=-1)
+        return Scalar(highest_dot_product)
+
+    def dot_outer(self, other):
+        """Symmetry reduced dot product of every orientation in this
+        instance to every orientation in another instance, returned as
+        :class:`~orix.scalar.Scalar`.
+
+        See Also
+        --------
+        dot
+        """
+        symmetry = self.symmetry.outer(other.symmetry).unique()
+        misorientation = (~self).outer(other)
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
+        highest_dot_product = np.max(all_dot_products, axis=-1)
+        return Scalar(highest_dot_product)
+
+    def get_distance_matrix(self, lazy=False, chunk_size=20, progressbar=True):
+        r"""The symmetry reduced smallest angle of rotation transforming
+        each orientation in this instance to every other orientation.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance` for
-        orientations.
+        a single :class:`Orientation` instance, using :mod:`dask`.
 
         Parameters
         ----------
-        other : orix.quaternion.Quaternion
         lazy : bool, optional
             Whether to perform the computation lazily with Dask. Default
             is False.
         chunk_size : int, optional
-            Number of quaternions per axis in each quaternion to include
-            in each iteration of the computation. Default is 20. Only
-            applies when `lazy` is True.
+            Number of orientations per axis to include in each iteration
+            of the computation. Default is 20. Only applies when `lazy`
+            is True.
         progressbar : bool, optional
             Whether to show a progressbar during computation if `lazy`
             is True. Default is True.
@@ -393,50 +421,30 @@ class Orientation(Misorientation):
         where :math:`(g_i \cdot g_j)` is the highest dot product between
         symmetrically equivalent orientations to :math:`g_{i,j}`.
         """
+        oris = self.unit
         if lazy:
-            dp = self.unit._dot_outer_dask(other.unit, chunk_size=chunk_size)
+            dot_products = oris._dot_outer_dask(oris, chunk_size=chunk_size)
+
             # Round because some dot products are slightly above 1
-            dp = da.round(dp, np.finfo(dp.dtype).precision)
-            angle_da = da.nan_to_num(da.arccos(2 * dp ** 2 - 1))
-            angle = np.zeros(angle_da.shape)
+            n_decimals = np.finfo(dot_products.dtype).precision
+            dot_products = da.round(dot_products, n_decimals)
+
+            angles_dask = da.arccos(2 * dot_products ** 2 - 1)
+            angles_dask = da.nan_to_num(angles_dask)
+
+            # Create array in memory and overwrite, chunk by chunk
+            angles = np.zeros(angles_dask.shape)
             if progressbar:
                 with ProgressBar():
-                    da.store(sources=angle_da, targets=angle)
+                    da.store(sources=angles_dask, targets=angles)
             else:
-                da.store(sources=angle_da, targets=angle)
+                da.store(sources=angles_dask, targets=angles)
         else:
-            dp = self.unit.dot_outer(other.unit).data
-            angle = np.nan_to_num(2 * np.arccos(dp))
-        return Scalar(angle)
+            dot_products = oris.dot_outer(oris).data
+            angles = np.arccos(2 * dot_products ** 2 - 1)
+            angles = np.nan_to_num(angles)
 
-    def dot(self, other):
-        """Dot product of orientations in this instance to orientations
-        in another instance, returned as :class:`~orix.scalar.Scalar`.
-
-        See Also
-        --------
-        dot_outer
-        """
-        symmetry = self.symmetry.outer(other.symmetry).unique()
-        misorientation = (~self) * other
-        dp_all = Rotation(misorientation).dot_outer(symmetry).data
-        dp = np.max(dp_all, axis=-1)
-        return Scalar(dp)
-
-    def dot_outer(self, other):
-        """Symmetry reduced dot product of every orientation in this
-        instance to every orientation in another instance, returned as
-        :class:`~orix.scalar.Scalar`.
-
-        See Also
-        --------
-        dot
-        """
-        symmetry = self.symmetry.outer(other.symmetry).unique()
-        misorientation = (~self).outer(other)
-        dp_all = Rotation(misorientation).dot_outer(symmetry).data
-        dp = np.max(dp_all, axis=-1)
-        return Scalar(dp)
+        return Scalar(angles)
 
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
@@ -497,7 +505,7 @@ class Orientation(Misorientation):
 
         warnings.filterwarnings("ignore", category=da.PerformanceWarning)
 
-        dp_all = da.einsum(sum_over, misorientation, symmetry.data)
-        dp = da.max(abs(dp_all), axis=-1)
+        all_dot_products = da.einsum(sum_over, misorientation, symmetry.data)
+        highest_dot_product = da.max(abs(all_dot_products), axis=-1)
 
-        return dp
+        return highest_dot_product
