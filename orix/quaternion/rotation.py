@@ -603,7 +603,6 @@ class Rotation(Quaternion):
         `r = Rotation(rarr.compute())`.
         """
         r = super()._outer_dask(other, chunk_size=chunk_size)
-        #        r[..., -1] = np.logical_xor.outer(self.improper, other.improper)
         return r
 
 

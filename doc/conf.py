@@ -29,7 +29,7 @@ release = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    #    "sphinxcontrib.bibtex",
+    "sphinxcontrib.bibtex",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
@@ -128,7 +128,7 @@ nbsphinx_prolog = (
 nbsphinx_execute = "auto"  # auto, always, never
 
 # sphinxcontrib-bibtex configuration
-# bibtex_bibfiles = ["bibliography.bib"]
+bibtex_bibfiles = ["bibliography.bib"]
 
 
 def linkcode_resolve(domain, info):

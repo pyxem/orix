@@ -30,6 +30,11 @@ Added
 - Passing symmetry when initializing an Orientation.
 - Overloaded division for Vector3d (left hand side) by numbers and suitably shaped
   array-like objects
+- Memory-efficient calculation of a misorientation angle (geodesic distance) matrix
+  between orientations using Dask.
+- Symmetry reduced calculations of dot products between orientations.
+- Two notebooks on clustering of orientations (not misorientations) across fundamental
+  region boundaries are added to the user guide from the orix-demos repository.
 
 Changed
 -------
