@@ -21,7 +21,7 @@ import numpy as np
 from orix.plot.orientation_color_keys import OrientationColorKey
 
 
-class RGBColorKey(OrientationColorKey):
+class BungeColorKey(OrientationColorKey):
     def orientation2color(self, orientations, scale=True):
         alpha, beta, gamma = orientations.to_euler_in_fundamental_region().T
         max_alpha, max_beta, max_gamma = self.symmetry.max_euler_angles
@@ -32,3 +32,12 @@ class RGBColorKey(OrientationColorKey):
         if scale:
             rgb /= rgb.max(axis=1)[:, np.newaxis]
         return rgb
+
+    def __repr__(self):
+        sym = self.symmetry
+        max_euler = np.array_str(sym.max_euler_angles, precision=2, suppress_small=True)
+        max_euler = "(" + max_euler.strip("[]") + ")"
+        return (
+            f"{self.__class__.__name__}, symmetry {sym.name}"
+            f"\nMax (phi1, Phi, phi2): {max_euler}"
+        )

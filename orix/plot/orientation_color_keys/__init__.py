@@ -19,6 +19,6 @@
 """Tools for assigning an RGB color to crystal orientations."""
 
 from orix.plot.orientation_color_keys.orientation_color_key import OrientationColorKey
-from orix.plot.orientation_color_keys.rgb_color_key import RGBColorKey
+from orix.plot.orientation_color_keys.bunge_color_key import BungeColorKey
 
 __all__ = ["RGBColorKey"]

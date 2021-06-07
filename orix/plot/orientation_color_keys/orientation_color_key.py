@@ -20,3 +20,6 @@
 class OrientationColorKey:
     def __init__(self, symmetry):
         self.symmetry = symmetry
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}, symmetry {self.symmetry.name}"
