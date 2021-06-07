@@ -51,6 +51,7 @@ from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1
 from orix.scalar import Scalar
+from orix._util import deprecated
 
 
 def _distance(misorientation, verbose, split_size=100):
@@ -383,6 +384,14 @@ class Orientation(Misorientation):
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
         return Scalar(highest_dot_product)
+
+    @deprecated(
+        since="0.7",
+        alternative="orix.quaternion.Orientation.get_distance_matrix",
+        removal="0.8",
+    )
+    def distance(self, verbose=False, split_size=100):
+        return super().distance(verbose=verbose, split_size=split_size)
 
     def get_distance_matrix(self, lazy=False, chunk_size=20, progressbar=True):
         r"""The symmetry reduced smallest angle of rotation transforming

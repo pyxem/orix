@@ -271,6 +271,7 @@ Orientation
 .. currentmodule:: orix.quaternion.Orientation
 .. autosummary::
     angle_with
+    distance
     dot
     dot_outer
     from_euler
