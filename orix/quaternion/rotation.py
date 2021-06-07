@@ -204,14 +204,15 @@ class Rotation(Quaternion):
         Scalar
         """
         other = Rotation(other)
-        angles = Scalar(
-            np.nan_to_num(np.arccos(2 * self.unit.dot(other.unit).data ** 2 - 1))
-        )
+        dp = self.unit.dot(other.unit).data
+        # Round because some dot products are slightly above 1
+        dp = np.round(dp, np.finfo(dp.dtype).precision)
+        angles = Scalar(np.nan_to_num(np.arccos(2 * dp ** 2 - 1)))
         return angles
 
-    def outer(self, other):
+    def outer(self, other, **kwargs):
         """Compute the outer product of this rotation and the other object."""
-        r = super().outer(other)
+        r = super().outer(other, **kwargs)
         if isinstance(r, Rotation):
             r.improper = np.logical_xor.outer(self.improper, other.improper)
         if isinstance(r, Vector3d):
@@ -512,18 +513,18 @@ class Rotation(Quaternion):
 
     @property
     def axis(self):
-        """Vector3d : the axis of rotation."""
+        """The axis of rotation as a :class:`~orix.vector.Vector3d`."""
         axis = Vector3d(np.stack((self.b.data, self.c.data, self.d.data), axis=-1))
-        axis[self.a.data < -1e-6] = -axis[self.a.data < -1e-6]
-        axis[axis.norm.data == 0] = Vector3d.zvector() * np.sign(
-            self.a[axis.norm.data == 0].data
-        )
+        a_is_zero = self.a.data < -1e-6
+        axis[a_is_zero] = -axis[a_is_zero]
+        norm_is_zero = axis.norm.data == 0
+        axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero].data)
         axis.data = axis.data / axis.norm.data[..., np.newaxis]
         return axis
 
     @property
     def angle(self):
-        """Scalar : the angle of rotation."""
+        """The angle of rotation as a :class:`~orix.scalar.Scalar`."""
         return Scalar(2 * np.nan_to_num(np.arccos(np.abs(self.a.data))))
 
     @classmethod
@@ -581,6 +582,29 @@ class Rotation(Quaternion):
         r.improper = self.improper
         return r
 
+    def _outer_dask(self, other, chunk_size=20):
+        """Compute the product of every rotation in this instance to
+        every rotation in another instance, returned as a Dask array.
+
+        Parameters
+        ----------
+        other : orix.quaternion.Rotation
+        chunk_size : int, optional
+            Number of rotations per axis in each rotation instance to
+            include in each iteration of the computation. Default is 20.
+
+        Returns
+        -------
+        dask.array.Array
+
+        Notes
+        -----
+        To get a new rotation from the returned array `rarr`, do
+        `r = Rotation(rarr.compute())`.
+        """
+        r = super()._outer_dask(other, chunk_size=chunk_size)
+        return r
+
 
 def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
     r"""A vastly simplified Von Mises-Fisher distribution calculation.
@@ -606,5 +630,5 @@ def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
     -------
     numpy.ndarray
     """
-    angle = x.angle_with(reference)
+    angle = Rotation(x).angle_with(reference)
     return np.exp(2 * alpha * np.cos(angle.data)) / hyp0f1(1.5, alpha ** 2)

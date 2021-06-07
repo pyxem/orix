@@ -29,7 +29,7 @@ release = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    #    "sphinxcontrib.bibtex",
+    "sphinxcontrib.bibtex",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
@@ -42,6 +42,7 @@ extensions = [
 
 # Create links to references within orix's documentation to these packages
 intersphinx_mapping = {
+    "dask": ("https://docs.dask.org/en/latest", None),
     "diffpy.structure": ("https://www.diffpy.org/diffpy.structure", None),
     "h5py": ("http://docs.h5py.org/en/stable/", None),
     "matplotlib": ("https://matplotlib.org", None),
@@ -124,10 +125,10 @@ nbsphinx_prolog = (
 """
 )
 # https://nbsphinx.readthedocs.io/en/0.8.0/never-execute.html
-nbsphinx_execute = "always"  # auto, always, never
+nbsphinx_execute = "auto"  # auto, always, never
 
 # sphinxcontrib-bibtex configuration
-# bibtex_bibfiles = ["bibliography.bib"]
+bibtex_bibfiles = ["bibliography.bib"]
 
 
 def linkcode_resolve(domain, info):

@@ -270,6 +270,14 @@ Orientation
 ~~~~~~~~~~~
 .. currentmodule:: orix.quaternion.Orientation
 .. autosummary::
+    angle_with
+    distance
+    dot
+    dot_outer
+    from_euler
+    from_matrix
+    from_neo_euler
+    get_distance_matrix
     set_symmetry
 .. autoclass:: orix.quaternion.Orientation
     :show-inheritance:

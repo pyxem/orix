@@ -13,6 +13,8 @@ extra_feature_requirements = {
         "sphinx-rtd-theme >= 0.4.3",
         "sphinx-gallery >= 0.6",
         "sphinxcontrib-bibtex >= 1.0",
+        "scikit-image",
+        "scikit-learn",
     ],
     "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
 }
@@ -46,6 +48,7 @@ setup(
     extras_require=extra_feature_requirements,
     # fmt: off
     install_requires=[
+        "dask[array]",
         "diffpy.structure >= 3",
         "h5py",
         "matplotlib >= 3.3",
