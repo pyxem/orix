@@ -45,6 +45,7 @@ crystal_map
     CrystalMapProperties
     Phase
     PhaseList
+    create_coordinate_arrays
 
 Phase
 -----
@@ -78,6 +79,7 @@ CrystalMap
 .. currentmodule:: orix.crystal_map.CrystalMap
 .. autosummary::
     deepcopy
+    empty
     get_map_data
     plot
 .. autoclass:: orix.crystal_map.CrystalMap
@@ -94,6 +96,12 @@ CrystalMapProperties
     :members:
     :undoc-members:
     :show-inheritance:
+
+Other functions
+---------------
+
+.. currentmodule:: orix.crystal_map
+.. autofunction:: create_coordinate_arrays
 
 ....
 
@@ -262,6 +270,14 @@ Orientation
 ~~~~~~~~~~~
 .. currentmodule:: orix.quaternion.Orientation
 .. autosummary::
+    angle_with
+    distance
+    dot
+    dot_outer
+    from_euler
+    from_matrix
+    from_neo_euler
+    get_distance_matrix
     set_symmetry
 .. autoclass:: orix.quaternion.Orientation
     :show-inheritance:

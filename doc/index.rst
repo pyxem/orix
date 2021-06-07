@@ -25,12 +25,15 @@ Work using orix
     crystal_geometry.ipynb
     stereographic_projection.ipynb
     crystal_map.ipynb
+    clustering_across_fundamental_region_boundaries.ipynb
+    clustering_orientations.ipynb
 
 .. toctree::
     :hidden:
     :caption: Help & reference
 
     reference.rst
+    bibliography.rst
     changelog.rst
     contributing.rst
     related_projects.rst

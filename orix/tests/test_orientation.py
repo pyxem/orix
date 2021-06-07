@@ -19,8 +19,9 @@
 import numpy as np
 import pytest
 
-from orix.quaternion.orientation import Orientation, Misorientation
+from orix.quaternion import Misorientation, Orientation, Rotation
 from orix.quaternion.symmetry import C1, C2, C3, C4, D2, D3, D6, T, O, Oh
+from orix.scalar import Scalar
 from orix.vector import AxAngle, Vector3d
 
 
@@ -127,10 +128,17 @@ def test_repr():
     _ = repr(m)
 
 
+def test_repr_ori():
+    shape = (2, 3)
+    o = Orientation.identity(shape).set_symmetry(O)
+    assert repr(o).split("\n")[0] == f"Orientation {shape} {O.name}"
+
+
 def test_sub():
-    m = Orientation([1, 1, 1, 1])  # any will do
-    m.set_symmetry(C4)  # only one as it a O
-    assert np.allclose((m - m).data, [1, 0, 0, 0])
+    o = Orientation([1, 1, 1, 1])  # any will do
+    o = o.set_symmetry(C4)  # only one as it a O
+    m = o - o
+    assert np.allclose(m.data, [1, 0, 0, 0])
 
 
 def test_sub_orientation_and_other():
@@ -178,3 +186,47 @@ class TestOrientationInitialization:
         assert o2.symmetry.name == "m-3m"
         o3 = o1.set_symmetry(Oh)
         assert np.allclose(o3.data, o2.data)
+
+
+class TestOrientation:
+    @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
+    def test_get_distance_matrix(self, symmetry):
+        q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
+        o = Orientation(q).set_symmetry(symmetry)
+        angles_numpy = o.get_distance_matrix()
+        assert isinstance(angles_numpy, Scalar)
+        assert angles_numpy.shape == (2, 2)
+
+        angles_dask = o.get_distance_matrix(lazy=True)
+        assert isinstance(angles_dask, Scalar)
+        assert angles_dask.shape == (2, 2)
+
+        assert np.allclose(angles_numpy.data, angles_dask.data)
+
+    def test_get_distance_matrix_lazy_parameters(self):
+        shape = (5, 15, 4)
+        rng = np.random.default_rng()
+        abcd = rng.normal(size=np.prod(shape)).reshape(shape)
+        o = Orientation(abcd)
+
+        angle1 = o.get_distance_matrix(lazy=True, chunk_size=5, progressbar=True)
+        angle2 = o.get_distance_matrix(lazy=True, chunk_size=10, progressbar=False)
+
+        assert np.allclose(angle1.data, angle2.data)
+
+    @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
+    def test_angle_with(self, symmetry):
+        q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
+        r = Rotation(q)
+        o = Orientation(q).set_symmetry(symmetry)
+
+        is_equal = np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
+        if symmetry.name in ["1", "m3m"]:
+            assert is_equal
+        else:
+            assert not is_equal
+
+    def test_negate_orientation(self):
+        o = Orientation.identity().set_symmetry(Oh)
+        on = -o
+        assert on.symmetry.name == o.symmetry.name
