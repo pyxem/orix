@@ -16,13 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Tools for assigning colors to crystal orientations."""
+import matplotlib.colors as mcolors
+import numpy as np
 
-from orix.plot.orientation_color_keys.orientation_color_key import OrientationColorKey
-from orix.plot.orientation_color_keys.axis_color_key import AxisColorKey
-from orix.plot.orientation_color_keys.bunge_color_key import BungeColorKey
+from orix.plot.orientation_color_keys import OrientationColorKey
 
-__all__ = [
-    "AxisColorKey",
-    "BungeColorKey",
-]
+
+class AxisColorKey(OrientationColorKey):
+    def orientation2color(self, orientations):
+        """From the NIST OOF2 package.
+        https://github.com/usnistgov/OOF2/blob/master/SRC/engine/angle2color.C
+        """
+        axis = orientations.axis
+        hue = axis.azimuth.data / (2 * np.pi)
+        saturation = orientations.angle.data / np.pi
+        costheta = axis.z.data / np.sqrt(axis.radial.data)
+        value = 0.5 * (costheta + 1)
+        hsv = np.column_stack([hue, saturation, value])
+        return mcolors.hsv_to_rgb(hsv)

@@ -22,20 +22,20 @@ from orix.plot.orientation_color_keys import OrientationColorKey
 
 
 class BungeColorKey(OrientationColorKey):
-    def orientation2color(self, orientations, scale=True):
-        alpha, beta, gamma = orientations.to_euler_in_fundamental_region().T
-        max_alpha, max_beta, max_gamma = self.symmetry.max_euler_angles
+    def orientation2color(self, orientations):
+        alpha, beta, gamma = orientations.in_euler_fundamental_region().T
+        max_alpha, max_beta, max_gamma = self.symmetry.euler_fundamental_region
         r = alpha / max_alpha
         g = beta / max_beta
         b = gamma / max_gamma
         rgb = np.column_stack([r, g, b])
-        if scale:
-            rgb /= rgb.max(axis=1)[:, np.newaxis]
+        rgb /= rgb.max(axis=1)[:, np.newaxis]
         return rgb
 
     def __repr__(self):
         sym = self.symmetry
-        max_euler = np.array_str(sym.max_euler_angles, precision=2, suppress_small=True)
+        max_euler = sym.euler_fundamental_region
+        max_euler = np.array_str(max_euler, precision=2, suppress_small=True)
         max_euler = "(" + max_euler.strip("[]") + ")"
         return (
             f"{self.__class__.__name__}, symmetry {sym.name}"

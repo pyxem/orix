@@ -29,13 +29,14 @@ Example of usage::
 """
 
 from orix.plot.crystal_map_plot import CrystalMapPlot
-from orix.plot.orientation_color_keys import BungeColorKey
+from orix.plot.orientation_color_keys import AxisColorKey, BungeColorKey
 from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
 from orix.plot.stereographic_plot import StereographicPlot
 
 
 # Lists what will be imported when calling "from orix.plot import *"
 __all__ = [
+    "AxisColorKey",
     "BungeColorKey",
     "CrystalMapPlot",
     "AxAnglePlot",

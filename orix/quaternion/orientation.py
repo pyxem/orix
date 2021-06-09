@@ -114,7 +114,7 @@ class Misorientation(Rotation):
     r"""Misorientation object.
 
     Misorientations represent transformations from one orientation,
-    :math:`o_1` to another, :math:`o_2`: :math:`o_2 \\cdot o_1^{-1}`.
+    :math:`o_1` to another, :math:`o_2`: :math:`o_2 \cdot o_1^{-1}`.
 
     They have symmetries associated with each of the starting
     orientations.
@@ -266,12 +266,8 @@ class Orientation(Misorientation):
 
     def __repr__(self):
         """String representation."""
-        cls = self.__class__.__name__
-        shape = str(self.shape)
-        symmetry = self.symmetry.name
         data = np.array_str(self.data, precision=4, suppress_small=True)
-        rep = f"{cls} {shape} {symmetry}\n{data}"
-        return rep
+        return f"{self.__class__.__name__} {self.shape} {self.symmetry.name}\n{data}"
 
     def __sub__(self, other):
         if isinstance(other, Orientation):
@@ -482,31 +478,25 @@ class Orientation(Misorientation):
         """
         return super().set_symmetry(C1, symmetry)
 
-    def to_euler_in_fundamental_region(self):
-        symmetry = self.symmetry.proper_subgroup
-
-        r_special = symmetry.rotations_not_about_primary_axis
-        o2 = self.outer(r_special)
-        alpha, beta, gamma = o2.to_euler().T
-
-        alpha2 = np.mod(alpha, 2 * np.pi)
-        gamma2 = np.mod(gamma, 2 * np.pi / symmetry.primary_axis_order)
-
-        max_alpha, max_beta, max_gamma = symmetry.max_euler_angles
-        is_inside = (alpha2 <= max_alpha) * (beta <= max_beta) * (gamma2 <= max_gamma)
-
-        i = np.argmax(is_inside, axis=0)
-        # TODO: Find appropriate NumPy indexing function to get these
-        # arrays from the indices directly without the loop
-        alpha3 = np.zeros(self.size)
-        beta3 = np.zeros_like(alpha3)
-        gamma3 = np.zeros_like(alpha3)
-        for j, ii in enumerate(i):
-            alpha3[j] = alpha2[ii, j]
-            beta3[j] = beta[ii, j]
-            gamma3[j] = gamma2[ii, j]
-
-        return np.column_stack([alpha3, beta3, gamma3])
+    def in_euler_fundamental_region(self):
+        """From :cite:`nolze2015euler`."""
+        # TODO: Cubic case
+        alpha, beta, gamma = self.to_euler().T
+        max_alpha, _, max_gamma = self.symmetry.euler_fundamental_region
+        alpha = np.mod(alpha, max_alpha)
+        gamma = np.mod(gamma, max_gamma)
+        euler = np.zeros(self.shape + (3,))
+        beta_lower_pi_half = beta <= np.pi / 2
+        euler[..., 0] = np.where(
+            beta_lower_pi_half, alpha, np.mod(np.pi + alpha, 2 * np.pi)
+        )
+        euler[..., 1] = np.where(beta_lower_pi_half, beta, np.pi - beta)
+        euler[..., 2] = np.where(
+            beta_lower_pi_half,
+            np.mod(gamma, max_gamma),
+            np.mod((2 * np.pi) - gamma, max_gamma),
+        )
+        return euler
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this

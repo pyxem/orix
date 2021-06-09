@@ -50,149 +50,120 @@ class Symmetry(Rotation):
     name = ""
 
     def __repr__(self):
-        cls = self.__class__.__name__
-        shape = str(self.shape)
         data = np.array_str(self.data, precision=4, suppress_small=True)
-        rep = "{} {}{pad}{}\n{}".format(
-            cls, shape, self.name, data, pad=self.name and " "
-        )
-        return rep
+        return f"{self.__class__.__name__} {self.shape} {self.name}\n{data}"
 
     def __and__(self, other):
-        return Symmetry.from_generators(
-            *[g for g in self.subgroups if g in other.subgroups]
-        )
+        generators = [g for g in self.subgroups if g in other.subgroups]
+        return Symmetry.from_generators(*generators)
 
     @property
     def order(self):
-        """int : The number of elements of the group."""
+        """Number of elements of the group as :ref:`int`."""
         return self.size
 
     @property
     def is_proper(self):
-        """bool : True if this group contains only proper rotations."""
+        """Whether this group contains only proper rotations as
+        :ref:`bool`.
+        """
         return np.all(np.equal(self.improper, 0))
 
     @property
     def subgroups(self):
-        """list of Symmetry : the groups that are subgroups of this
-        group.
+        """List groups that are subgroups of this group as a :ref:`list`
+        of :class:`Symmetry`.
         """
         return [g for g in _groups if g._tuples <= self._tuples]
 
     @property
     def proper_subgroups(self):
-        """list of Symmetry : the proper groups that are subgroups of
-        this group.
+        """List of proper groups that are subgroups of this group as a
+        :ref:`list` of :class:`Symmetry`.
         """
         return [g for g in self.subgroups if g.is_proper]
 
     @property
     def proper_subgroup(self):
-        """Symmetry : the largest proper group of this subgroup."""
+        """The largest proper group of this subgroup as a
+        :class:`Symmetry`.
+        """
         subgroups = self.proper_subgroups
         subgroups_sorted = sorted(subgroups, key=lambda g: g.order)
         return subgroups_sorted[-1]
 
     @property
     def laue(self):
-        """Symmetry : this group plus inversion."""
+        """This group plus inversion as a :class:`Symmetry`."""
         return Symmetry.from_generators(self, Ci)
 
     @property
     def laue_proper_subgroup(self):
-        """Symmetry : the proper subgroup of this group plus inversion.
+        """The proper subgroup of this group plus inversion as a
+        :class:`Symmetry`.
         """
         return self.laue.proper_subgroup
 
     @property
     def contains_inversion(self):
-        """bool : True if this group contains inversion."""
+        """Whether this group contains inversion as a :ref:`bool`."""
         return Ci._tuples <= self._tuples
 
     @property
     def diads(self):
+        """Diads of this symmetry as a set of
+        :class:`~orix.vector.Vector3d`.
+        """
         axis_orders = self.get_axis_orders()
         diads = [ao for ao in axis_orders if axis_orders[ao] == 2]
         if len(diads) == 0:
             return Vector3d.empty()
-        return Vector3d.stack(diads).flatten()
+        else:
+            return Vector3d.stack(diads).flatten()
 
     @property
-    def primary_axis(self):
-        v001 = Vector3d([0, 0, 1]).unit
-        v111 = Vector3d([1, 1, 1]).unit
-        v100 = Vector3d([1, 0, 0]).unit
-        v010 = Vector3d([0, 1, 0]).unit
-        return dict(
-            triclinic=Vector3d.empty(),
-            monoclinic=v010,
-            orthorhombic=v100,
-            tetragonal=v001,
-            trigonal=v111,
-            hexagonal=v001,
-            cubic=v100,
-        )[self.system]
-
-    @property
-    def secondary_axis(self):
-        v111 = Vector3d([1, 1, 1]).unit
-        v100 = Vector3d([1, 0, 0]).unit
-        v010 = Vector3d([0, 1, 0]).unit
-        v_empty = Vector3d.empty()
-        return dict(
-            triclinic=v_empty,
-            monoclinic=v_empty,
-            orthorhombic=v100,
-            tetragonal=v100,
-            trigonal=v010,
-            hexagonal=v100,
-            cubic=v111,
-        )[self.system]
-
-    @property
-    def tertiary_axis(self):
-        v110 = Vector3d([1, 1, 0]).unit
-        v1bar10 = Vector3d([1, -1, 0]).unit
-        v120 = Vector3d([1, 2, 0]).unit
-        v110 = Vector3d([1, 1, 0]).unit
-        v_empty = Vector3d.empty()
-        return dict(
-            triclinic=v_empty,
-            monoclinic=v_empty,
-            orthorhombic=v110,
-            tetragonal=v110,
-            trigonal=v1bar10,
-            hexagonal=v120,
-            cubic=v110,
-        )[self.system]
-
-    @property
-    def is_primary_axis_rotation(self):
-        parallel_with_e3 = np.isclose(np.abs(self.axis.dot(self.primary_axis).data), 1)
-        not_identity = self.angle.data != 0
-        return parallel_with_e3 * not_identity
-
-    @property
-    def primary_axis_rotation(self):
-        """Rotations with their axis parallel with e3, excluding the
-        identity element.
+    def euler_fundamental_region(self):
+        r"""The fundamental region in Euler angles
+        :math:`(\phi_1, \Phi, \phi_2)` of the proper subgroup as a
+        :class:`numpy.ndarray`, according to Table 5 in
+        :cite:`nolze2015euler`.
         """
-        return self[self.is_primary_axis_rotation]
+        # fmt: off
+        angles = {
+            # Triclinic
+              "1": (360, 180,    360),
+            # Monoclinic
+            "211": (360,  90,    360),
+            "121": (360, 180,    180),
+            "112": (360, 180,    180),
+            # Orthorhombic
+            "222": (360,  90,    180),
+            # Tetragonal
+              "4": (360, 180,     90),
+            "422": (360,  90,     90),
+            # Trigonal
+              "3": (360, 180,    120),
+            "312": (360,  90,    120),
+             "32": (360,  90,    120),
+            # Hexagonal
+              "6": (360, 180,     60),
+            "622": (360,  90,     60),
+            # Cubic
+             "23": (360,  45,    180),
+            "432": (360,  54.74,  90),
+        }
+        # fmt: on
+        return np.radians(angles[self.proper_subgroup.name])
 
     @property
     def primary_axis_order(self):
-        """Order (multiplicity) of the primary rotation axis."""
-        r = self.primary_axis_rotation
-        if r.size == 0:
-            return 1
-        else:
-            # Get smallest angle about this axis or axes
-            smallest_angle = np.min(np.abs(r.angle.data))
-            return int(2 * np.pi / smallest_angle)
+        return int(2 * np.pi / self.euler_fundamental_region[2])
 
     @property
     def system(self):
+        """Which of the seven crystal systems this symmetry belongs to
+        as a :ref:`str`.
+        """
         name = self.name
         if name in ["1", "-1"]:
             return "triclinic"
@@ -210,131 +181,6 @@ class Symmetry(Rotation):
             return "cubic"
         else:
             return None
-
-    @property
-    def max_euler_angles(self):
-        pg = self.proper_subgroup
-        angles = {
-            "1": (360, 180, 360),
-            "211": (360, 90, 360),
-            "112": (360, 180, 180),
-            "222": (360, 90, 180),
-            "3": (360, 180, 120),
-            "321": (360, 90, 120),
-            "4": (360, 180, 90),
-            "422": (360, 90, 90),
-            "6": (360, 180, 60),
-            "622": (360, 90, 60),
-            # MTEX:
-            #            "23": (360, 180, 180),
-            #            "432": (360, 90, 90),
-            "23": (360, 45, 180),
-            "432": (360, 54.74, 90),
-        }
-        return np.deg2rad(angles[pg.name])
-
-    @property
-    def rotations_not_about_primary_axis(self):
-        axis110 = Vector3d([1, 1, 0])
-        axis111 = Vector3d([1, 1, 1])
-        a1 = Vector3d.xvector()
-        a2 = Vector3d.yvector()
-        m = a1 - a2
-        pg = self.proper_subgroup
-        if pg.name in ["1", "211", "121"]:
-            r = ~Rotation(pg)
-        elif pg.name in ["112", "3", "4", "6"]:
-            r = Rotation.identity()
-        elif pg.name in ["222", "321", "422", "622"]:
-            angles = 2 * np.pi / 2 * np.arange(0, 2)
-            r = Rotation.from_neo_euler(AxAngle.from_axes_angles(a1, angles))
-        elif pg.name == "312":
-            angles = 2 * np.pi / 2 * np.arange(0, 2)
-            r = Rotation.from_neo_euler(AxAngle.from_axes_angles(m, angles))
-        elif pg.name == "23":
-            angles1 = 2 * np.pi / 3 * np.arange(0, 3)
-            angles2 = 2 * np.pi / 2 * np.arange(0, 2)
-            r1 = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis111, angles1))
-            r2 = Rotation.from_neo_euler(AxAngle.from_axes_angles(a1, angles2))
-            r = r1.outer(r2)
-        elif pg.name == "432":
-            angles1 = 2 * np.pi / 3 * np.arange(0, 3)
-            angles2 = 2 * np.pi / 2 * np.arange(0, 2)
-            r1 = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis111, angles1))
-            r2 = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis110, angles2))
-            r = r1.outer(r2)
-        return r.flatten()
-
-    #    @property
-    #    def rotations_not_about_primary_axis2(self):
-    #        pg = self.proper_subgroup
-    #        dp = np.abs(pg.primary_axis.dot(pg.axis).data)
-    #        about_primary_axis = np.logical_or(np.isclose(dp, 1), np.isclose(dp, 0))
-    #        return Rotation(pg[~about_primary_axis])
-    ##        r = Rotation(pg[~about_primary_axis])
-    ##        r = r.outer(r).unique()
-    ##        return r
-    #
-    #    @property
-    #    def max_euler_alpha(self):
-    #        return 2 * np.pi
-    #
-    #    @property
-    #    def max_euler_beta(self):
-    #        return np.pi / np.min([2, self.proper_subgroup.secondary_axis_order])
-    #
-    #    @property
-    #    def max_euler_gamma(self):
-    #        return 2 * np.pi / self.proper_subgroup.primary_axis_order
-    #
-    #    @property
-    #    def is_primary_axis_rotation(self):
-    #        parallel_with_e3 = np.isclose(np.abs(self.axis.dot(self.primary_axis).data), 1)
-    #        not_identity = self.angle.data != 0
-    #        return parallel_with_e3 * not_identity
-    #
-    #    @property
-    #    def primary_axis_rotation(self):
-    #        """Rotations with their axis parallel with e3, excluding the
-    #        identity element.
-    #        """
-    #        return self[self.is_primary_axis_rotation]
-    #
-    #    @property
-    #    def is_secondary_axis_rotation(self):
-    #        vz = Vector3d.zvector()
-    #        perpendicular_to_e3 = np.isclose(np.abs(self.axis.dot(vz).data), 0)
-    #        not_identity = self.angle.data != 0
-    #        return perpendicular_to_e3 * not_identity
-    #
-    #    @property
-    #    def secondary_axis_rotation(self):
-    #        """Rotations with their axis perpendicular to e3, excluding the
-    #        identity element.
-    #        """
-    #        return self[self.is_secondary_axis_rotation]
-    #
-    #    @property
-    #    def primary_axis_order(self):
-    #        """Order (multiplicity) of the primary rotation axis."""
-    #        r = self.primary_axis_rotation
-    #        if r.size == 0:
-    #            return 1
-    #        else:
-    #            # Get smallest angle about this axis or axes
-    #            smallest_angle = np.min(np.abs(r.angle.data))
-    #            return int(2 * np.pi / smallest_angle)
-
-    #    @property
-    #    def secondary_axis_order(self):
-    #        """Order (multiplicity) of the secondary rotation axis."""
-    #        r = self.secondary_axis_rotation
-    #        if r.size == 0:
-    #            return 1
-    #        else:
-    #            # Get smallest angle about this axis or axes
-    #            smallest_angle = np.min(np.abs(r.angle.data))
-    #            return int(2 * np.pi / smallest_angle)
 
     @property
     def _tuples(self):
@@ -379,7 +225,7 @@ class Symmetry(Rotation):
         """
         generator = cls((1, 0, 0, 0))
         for g in generators:
-            generator = generator.outer(Symmetry(g)).unique()
+            generator = generator.outer(cls(g)).unique()
         size = 1
         size_new = generator.size
         while size_new != size and size_new < 48:

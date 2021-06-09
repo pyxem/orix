@@ -211,7 +211,17 @@ class Rotation(Quaternion):
         return angles
 
     def outer(self, other, **kwargs):
-        """Compute the outer product of this rotation and the other object."""
+        """Compute the outer product of this rotation and the other
+        rotation or vector.
+
+        Parameters
+        ----------
+        other : Rotation or Vector3d
+
+        Returns
+        -------
+        Rotation or Vector3d
+        """
         r = super().outer(other, **kwargs)
         if isinstance(r, Rotation):
             r.improper = np.logical_xor.outer(self.improper, other.improper)
@@ -284,41 +294,41 @@ class Rotation(Quaternion):
         n = self.data.shape[:-1]
         e = np.zeros(n + (3,))
 
-        # move into pure numpy
+        # Move into pure numpy
         a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
 
-        q_zero_three = a ** 2 + d ** 2
-        q_one_two = b ** 2 + c ** 2
-        chi = np.sqrt(q_zero_three * q_one_two)
+        q03 = a ** 2 + d ** 2
+        q12 = b ** 2 + c ** 2
+        chi = np.sqrt(q03 * q12)
 
         # P = 1
 
-        if np.sum(q_one_two == 0) > 0:  # checks that this occurs somewhere in data
+        q12_is_zero = q12 == 0
+        if np.sum(q12_is_zero) > 0:
             alpha = np.arctan2(-2 * a * d, a ** 2 - d ** 2)
-            cond = [q_one_two == 0]
-            e[..., 0] = np.where(cond, alpha, e[..., 0])
-            e[..., 1] = np.where(cond, 0, e[..., 1])
-            e[..., 2] = np.where(cond, 0, e[..., 2])
+            e[..., 0] = np.where(q12_is_zero, alpha, e[..., 0])
+            e[..., 1] = np.where(q12_is_zero, 0, e[..., 1])
+            e[..., 2] = np.where(q12_is_zero, 0, e[..., 2])
 
-        if np.sum(q_zero_three == 0) > 0:
+        q03_is_zero = q03 == 0
+        if np.sum(q03_is_zero) > 0:
             alpha = np.arctan2(2 * b * c, b ** 2 - c ** 2)
-            cond = [q_zero_three == 0]
-            e[..., 0] = np.where(cond, alpha, e[..., 0])
-            e[..., 1] = np.where(cond, np.pi, e[..., 1])
-            e[..., 2] = np.where(cond, 0, e[..., 2])
+            e[..., 0] = np.where(q03_is_zero, alpha, e[..., 0])
+            e[..., 1] = np.where(q03_is_zero, np.pi, e[..., 1])
+            e[..., 2] = np.where(q03_is_zero, 0, e[..., 2])
 
-        if np.sum(chi != 0) > 0:
+        chi_not_zero = chi != 0
+        if np.sum(chi_not_zero) > 0:
             alpha = np.arctan2(
                 np.divide(b * d - a * c, chi), np.divide(-a * b - c * d, chi)
             )
-            beta = np.arctan2(2 * chi, q_zero_three - q_one_two)
+            beta = np.arctan2(2 * chi, q03 - q12)
             gamma = np.arctan2(
                 np.divide(a * c + b * d, chi), np.divide(c * d - a * b, chi)
             )
-
-            e[..., 0] = np.where(chi != 0, alpha, e[..., 0])
-            e[..., 1] = np.where(chi != 0, beta, e[..., 1])
-            e[..., 2] = np.where(chi != 0, gamma, e[..., 2])
+            e[..., 0] = np.where(chi_not_zero, alpha, e[..., 0])
+            e[..., 1] = np.where(chi_not_zero, beta, e[..., 1])
+            e[..., 2] = np.where(chi_not_zero, gamma, e[..., 2])
 
         return e
 
@@ -355,26 +365,23 @@ class Rotation(Quaternion):
         n = euler.shape[:-1]
         alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
 
+        zeros = np.zeros(n)
+
         if convention == "Krakow_Hielscher":
             # To be applied to the data found at:
             # https://www.repository.cam.ac.uk/handle/1810/263510
             alpha -= np.pi / 2
             gamma -= 3 * np.pi / 2
-            zero = np.zeros(n)
             qalpha = Quaternion(
-                np.stack((np.cos(alpha / 2), zero, zero, np.sin(alpha / 2)), axis=-1)
+                np.stack((np.cos(alpha / 2), zeros, zeros, np.sin(alpha / 2)), axis=-1)
             )
             qbeta = Quaternion(
-                np.stack((np.cos(beta / 2), zero, np.sin(beta / 2), zero), axis=-1)
+                np.stack((np.cos(beta / 2), zeros, np.sin(beta / 2), zeros), axis=-1)
             )
             qgamma = Quaternion(
-                np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)), axis=-1)
+                np.stack((np.cos(gamma / 2), zeros, zeros, np.sin(gamma / 2)), axis=-1)
             )
             data = qalpha * qbeta * qgamma
-
-            rot = cls(data.data)
-            rot.improper = zero
-            return rot
         elif convention == "bunge":
             # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
             # (2015) 083501
@@ -398,9 +405,9 @@ class Rotation(Quaternion):
             if direction == "lab2crystal":
                 data = ~data
 
-            rot = cls(data.data)
-            rot.improper = np.zeros((n))
-            return rot
+        rot = cls(data.data)
+        rot.improper = np.zeros((n))
+        return rot
 
     def to_matrix(self):
         """Rotations as orientation matrices [Rowenhorst2015]_.
