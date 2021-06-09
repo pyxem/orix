@@ -19,40 +19,37 @@
 from matplotlib import pyplot as plt
 import numpy as np
 
-from orix.plot.rotation_plot import RodriguesPlot, AxAnglePlot
-from orix.quaternion.orientation import Misorientation
-from orix.quaternion.symmetry import D6, C1
-from orix.quaternion.orientation_region import OrientationRegion
+from orix.plot import RodriguesPlot, AxAnglePlot
+from orix.quaternion import Misorientation, OrientationRegion
+from orix.quaternion.symmetry import C1, D6
 
 
-def test_init_RodriguesPlot():
+def test_init_rodrigues_plot():
     fig = plt.figure(figsize=(3, 3))
-    _ = RodriguesPlot(fig)
-    return None
+    ax = fig.add_subplot(auto_add_to_figure=False, projection="rodrigues")
+    assert isinstance(ax, RodriguesPlot)
 
 
-def test_init_AxAnglePlot():
+def test_init_axangle_plot():
     fig = plt.figure(figsize=(3, 3))
-    _ = AxAnglePlot(fig)
-    return None
+    ax = fig.add_subplot(auto_add_to_figure=False, projection="axangle")
+    assert isinstance(ax, AxAnglePlot)
 
 
 def test_RotationPlot_methods():
-    """ This code is lifted from demo-3-v0.1 """
+    """This code is lifted from demo-3-v0.1."""
     misori = Misorientation([1, 1, 1, 1])  # any will do
-    fig = plt.figure(figsize=(6, 3))
-    gridspec = plt.GridSpec(1, 1, left=0, right=1, bottom=0, top=1, hspace=0.05)
-    ax_misori = fig.add_subplot(
-        gridspec[0], projection="axangle", proj_type="ortho", aspect="auto"
+    fig = plt.figure()
+    ax = fig.add_subplot(
+        auto_add_to_figure=False, projection="axangle", proj_type="ortho"
     )
-    ax_misori.scatter(misori)
-    ax_misori.plot(misori)
-    ax_misori.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
+    ax.scatter(misori)
+    ax.plot(misori)
+    ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
     plt.close("all")
 
-    # clear the edge case
-    ax_misori.transform(np.asarray([1, 1, 1]))
-    return None
+    # Clear the edge case
+    ax.transform(np.asarray([1, 1, 1]))
 
 
 def test_full_region_plot():

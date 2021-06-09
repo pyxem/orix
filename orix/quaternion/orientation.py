@@ -44,6 +44,7 @@ import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
+import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
@@ -481,6 +482,91 @@ class Orientation(Misorientation):
         [ 0.      1.      0.      0.    ]]
         """
         return super().set_symmetry(C1, symmetry)
+
+    def scatter(
+        self,
+        projection="axangle",
+        figure=None,
+        position=None,
+        return_figure=False,
+        wireframe_kwargs=None,
+        **kwargs,
+    ):
+        """Plot orientations in axis-angle space or the Rodrigues
+        fundamental zone.
+
+        Parameters
+        ----------
+        projection : str, optional
+            Which orientation space to plot orientations in, either
+            "axangle" (default) or "rodrigues".
+        figure : matplotlib.figure.Figure
+            If given, a new plot axis :class:`orix.plot.AxAnglePlot` or
+            :class:`orix.plot.RodriguesPlot` is added to the figure in
+            the position specified by `position`. If not given, a new
+            figure is created.
+        position : int, tuple of int, matplotlib.gridspec.SubplotSpec,
+                optional
+            Where to add the new plot axis. 121 or (1, 2, 1) places it
+            in the first of two positions in a grid of 1 row and 2
+            columns. See :meth:`matplotlib.figure.Figure.add_subplot`
+            for further details. Default is (1, 1, 1).
+        return_figure : bool, optional
+            Whether to return the figure. Default is False.
+        wireframe_kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
+            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+        kwargs
+            Keyword arguments passed to
+            :meth:`orix.plot.AxAnglePlot.scatter` or
+            :meth:`orix.plot.RodriguesPlot.scatter`.
+
+        Returns
+        -------
+        figure
+            Figure with the added plot axis, if `return_figure` is True.
+
+        See Also
+        --------
+        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot
+        """
+        import orix.plot.rotation_plot
+
+        # Create figure if not already created, then add axis to figure
+        if figure is None:
+            figure = plt.figure()
+        subplot_kwds = dict(
+            auto_add_to_figure=False, projection=projection, proj_type="ortho"
+        )
+        if position is None:
+            position = (1, 1, 1)
+        if hasattr(position, "__iter__"):
+            # (nrows, ncols, index)
+            ax = figure.add_subplot(*position, **subplot_kwds)
+        else:
+            # Position, e.g. 121, or `SubplotSpec`
+            ax = figure.add_subplot(position, **subplot_kwds)
+
+        # Make wireframe
+        fundamental_region = OrientationRegion.from_symmetry(self.symmetry)
+        if wireframe_kwargs is None:
+            wireframe_kwargs = dict()
+        d = dict(color="gray", alpha=0.5, linewidth=0.5, rcount=30, ccount=30)
+        for k, v in d.items():
+            wireframe_kwargs.setdefault(k, v)
+        ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
+
+        ax.set_box_aspect((1,) * 3)
+        ax.axis("off")
+        ax.set_xlim(-1, 1)
+        ax.set_ylim(-1, 1)
+        ax.set_zlim(-1, 1)
+
+        ax.scatter(self, **kwargs)
+
+        if return_figure:
+            return figure
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this

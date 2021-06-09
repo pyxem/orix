@@ -278,6 +278,7 @@ Orientation
     from_matrix
     from_neo_euler
     get_distance_matrix
+    scatter
     set_symmetry
 .. autoclass:: orix.quaternion.Orientation
     :show-inheritance:

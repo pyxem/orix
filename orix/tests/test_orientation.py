@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from orix.plot import AxAnglePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
 from orix.quaternion.symmetry import C1, C2, C3, C4, D2, D3, D6, T, O, Oh
 from orix.scalar import Scalar
@@ -230,3 +232,31 @@ class TestOrientation:
         o = Orientation.identity().set_symmetry(Oh)
         on = -o
         assert on.symmetry.name == o.symmetry.name
+
+    def test_scatter(self, orientation):
+        fig_axangle = orientation.scatter(return_figure=True)
+        assert isinstance(fig_axangle.axes[0], AxAnglePlot)
+        fig_rodrigues = orientation.scatter(projection="rodrigues", return_figure=True)
+        assert isinstance(fig_rodrigues.axes[0], RodriguesPlot)
+
+        # Add multiple axes to figure, one at a time
+        fig_multiple = plt.figure(figsize=(10, 5))
+        assert len(fig_multiple.axes) == 0
+        orientation.scatter(figure=fig_multiple, position=(1, 2, 1))
+
+        # Figure is updated inplace
+        assert len(fig_multiple.axes) == 1
+
+        orientation.scatter(
+            figure=fig_multiple,
+            position=122,
+            projection="rodrigues",
+            wireframe_kwargs=dict(color="black", rcount=180),
+            s=50,
+        )
+        assert len(fig_multiple.axes) == 2
+
+        assert isinstance(fig_multiple.axes[0], AxAnglePlot)
+        assert isinstance(fig_multiple.axes[1], RodriguesPlot)
+
+        plt.close("all")
