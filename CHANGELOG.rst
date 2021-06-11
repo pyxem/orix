@@ -19,6 +19,8 @@ Added
   region boundaries are added to the user guide from the orix-demos repository.
 - Convenience method Orientation.scatter() to plot orientations in either axis-angle or
   Rodrigues fundamental zone, without having to set it up via Matplotlib.
+- Method Object3d.get_random_sample(), inherited by all 3D objects, returning a new
+  flattened instance with elements drawn randomly from the original instance.
 
 2021-05-23 - version 0.6.0
 ==========================
