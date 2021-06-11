@@ -208,3 +208,35 @@ class Object3d:
 
     def get_plot_data(self):
         return self
+
+    def get_random_sample(self, size=1, replace=False, shuffle=False):
+        """Return a random sample of a given size in a flattened
+        instance.
+
+        Parameters
+        ----------
+        size : int, optional
+            Number of samples to draw. Cannot be greater than the size
+            of this instance. If not given, a single sample is drawn.
+        replace : bool, optional
+            See :meth:`numpy.random.Generator.choice`.
+        shuffle : bool, optional
+            See :meth:`numpy.random.Generator.choice`.
+
+        Returns
+        -------
+        new
+            New, flattened instance of a given size with elements drawn
+            randomly from this instance.
+
+        See Also
+        --------
+        numpy.random.Generator.choice
+        """
+        n = self.size
+        if size > n:
+            raise ValueError(f"Cannot draw a sample greater than {self.size}")
+        rng = np.random.default_rng()
+        sample = rng.choice(n, size=size, replace=replace, shuffle=shuffle)
+        sample = np.unravel_index(sample, shape=self.shape)
+        return self[sample]

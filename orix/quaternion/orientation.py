@@ -489,7 +489,8 @@ class Orientation(Misorientation):
         figure=None,
         position=None,
         return_figure=False,
-        wireframe_kwargs=None,
+        wireframe_kwargs=dict(),
+        size=None,
         **kwargs,
     ):
         """Plot orientations in axis-angle space or the Rodrigues
@@ -517,6 +518,9 @@ class Orientation(Misorientation):
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
             :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+        size : int, optional
+            If not given, all orientations are plotted. If given, a
+            random sample of this `size` of the orientations is plotted.
         kwargs
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.scatter` or
@@ -524,46 +528,36 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        figure
+        figure : matplotlib.figure.Figure
             Figure with the added plot axis, if `return_figure` is True.
 
         See Also
         --------
         orix.plot.AxAnglePlot, orix.plot.RodriguesPlot
         """
-        import orix.plot.rotation_plot
+        from orix.plot.rotation_plot import _setup_rotation_plot
 
-        # Create figure if not already created, then add axis to figure
-        if figure is None:
-            figure = plt.figure()
-        subplot_kwds = dict(
-            auto_add_to_figure=False, projection=projection, proj_type="ortho"
+        figure, ax = _setup_rotation_plot(
+            figure=figure, projection=projection, position=position
         )
-        if position is None:
-            position = (1, 1, 1)
-        if hasattr(position, "__iter__"):
-            # (nrows, ncols, index)
-            ax = figure.add_subplot(*position, **subplot_kwds)
-        else:
-            # Position, e.g. 121, or `SubplotSpec`
-            ax = figure.add_subplot(position, **subplot_kwds)
 
-        # Make wireframe
+        # Plot wireframe
         fundamental_region = OrientationRegion.from_symmetry(self.symmetry)
-        if wireframe_kwargs is None:
-            wireframe_kwargs = dict()
-        d = dict(color="gray", alpha=0.5, linewidth=0.5, rcount=30, ccount=30)
-        for k, v in d.items():
-            wireframe_kwargs.setdefault(k, v)
         ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
 
-        ax.set_box_aspect((1,) * 3)
-        ax.axis("off")
-        ax.set_xlim(-1, 1)
-        ax.set_ylim(-1, 1)
-        ax.set_zlim(-1, 1)
+        # Correct the aspect ratio of the axes according to the extent
+        # of the boundaries of the fundamental region, and also restrict
+        # the data limits to these boundaries
+        ax._correct_aspect_ratio(fundamental_region, set_limits=True)
 
-        ax.scatter(self, **kwargs)
+        ax.axis("off")
+        figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
+
+        if size is not None:
+            to_plot = self.get_random_sample(size)
+        else:
+            to_plot = self
+        ax.scatter(to_plot, **kwargs)
 
         if return_figure:
             return figure

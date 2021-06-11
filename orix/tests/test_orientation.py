@@ -122,7 +122,7 @@ def test_equivalent(Gl):
     m = Misorientation([1, 1, 1, 1])  # any will do
     m_new = m.set_symmetry(Gl, C4, verbose=True)
     m_new.symmetry
-    _m = m_new.equivalent(grain_exchange=True)
+    _ = m_new.equivalent(grain_exchange=True)
 
 
 def test_repr():
@@ -258,5 +258,8 @@ class TestOrientation:
 
         assert isinstance(fig_multiple.axes[0], AxAnglePlot)
         assert isinstance(fig_multiple.axes[1], RodriguesPlot)
+
+        # Allow plotting a sub sample of the orientations
+        orientation.random_vonmises(200).scatter(size=50)
 
         plt.close("all")
