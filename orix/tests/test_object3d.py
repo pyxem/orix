@@ -160,16 +160,26 @@ def test_flatten(object3d):
 
 @pytest.mark.parametrize("test_object3d", [1,], indirect=["test_object3d"])
 def test_unique(test_object3d):
-    object = test_object3d([[1], [1], [2], [3], [3]])
-    unique = object.unique()
+    o3d = test_object3d([[1], [1], [2], [3], [3]])
+    unique = o3d.unique()
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
-    unique, idx = object.unique(return_index=True)
-    assert np.allclose(unique.data.flatten(), [1, 2, 3])
-    assert np.allclose(idx, [0, 2, 3])
-    unique, inv = object.unique(return_inverse=True)
-    assert np.allclose(unique.data.flatten(), [1, 2, 3])
-    assert np.allclose(inv, [0, 0, 1, 2, 2])
-    unique, idx, inv = object.unique(True, True)
+    unique, idx = o3d.unique(return_index=True)
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
     assert np.allclose(idx, [0, 2, 3])
+    unique, inv = o3d.unique(return_inverse=True)
+    assert np.allclose(unique.data.flatten(), [1, 2, 3])
     assert np.allclose(inv, [0, 0, 1, 2, 2])
+    unique, idx, inv = o3d.unique(True, True)
+    assert np.allclose(unique.data.flatten(), [1, 2, 3])
+    assert np.allclose(idx, [0, 2, 3])
+    assert np.allclose(inv, [0, 0, 1, 2, 2])
+
+
+@pytest.mark.parametrize("test_object3d", [4,], indirect=["test_object3d"])
+def test_get_random_sample(test_object3d):
+    o3d = test_object3d(np.arange(80).reshape((5, 4, 4)))
+    o3d_sample = o3d.get_random_sample(10)
+    assert o3d_sample.size == 10
+
+    with pytest.raises(ValueError, match="Cannot draw a sample greater than 20"):
+        _ = o3d.get_random_sample(21)

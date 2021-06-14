@@ -42,7 +42,7 @@ from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, get_distinguished_points
 from orix.vector.neo_euler import Rodrigues, AxAngle
 
-EPSILON = 1e-9  # small number to avoid round off problems
+_EPSILON = 1e-9  # small number to avoid round off problems
 
 
 def _get_large_cell_normals(s1, s2):
@@ -110,8 +110,8 @@ def get_proper_groups(Gl, Gr):
 
 
 class OrientationRegion(Rotation):
-    """A set of :class:`~orix.quaternion.rotation.Rotation` which are the
-    normals of an orientation region.
+    """A set of :class:`~orix.quaternion.Rotation` which are the normals
+    of an orientation region.
     """
 
     @classmethod
@@ -121,7 +121,6 @@ class OrientationRegion(Rotation):
         Parameters
         ----------
         s1, s2 : Symmetry
-
         """
         s1, s2 = get_proper_groups(s1, s2)
         large_cell_normals = _get_large_cell_normals(s1, s2)
@@ -149,7 +148,6 @@ class OrientationRegion(Rotation):
         Returns
         -------
         Rotation
-
         """
         normal_combinations = list(itertools.combinations(self, 3))
         if len(normal_combinations) < 1:
@@ -179,37 +177,36 @@ class OrientationRegion(Rotation):
         """Overridden greater than method. Applying this to an Orientation
         will return only orientations those that lie within the OrientationRegion
         """
-
         c = Quaternion(self).dot_outer(Quaternion(other)).data
         inside = np.logical_or(
-            np.all(np.greater_equal(c, -EPSILON), axis=0),
-            np.all(np.less_equal(c, +EPSILON), axis=0),
+            np.all(np.greater_equal(c, -_EPSILON), axis=0),
+            np.all(np.less_equal(c, +_EPSILON), axis=0),
         )
         return inside
 
     def get_plot_data(self):
-        """
-        Produces suitable Rotations for the construction of a wireframe for self
-        """
+        """Suitable Rotations for the construction of a wireframe."""
         from orix.vector import Vector3d
 
-        # gets a grid of vector directions
-        theta = np.linspace(0, 2 * np.pi - EPSILON, 361)
-        rho = np.linspace(0, np.pi - EPSILON, 181)
+        # Get a grid of vector directions
+        theta = np.linspace(0, 2 * np.pi - _EPSILON, 361)
+        rho = np.linspace(0, np.pi - _EPSILON, 181)
         theta, rho = np.meshgrid(theta, rho)
         g = Vector3d.from_polar(rho, theta)
 
-        # get the cell vector normal norms
+        # Get the cell vector normal norms
         n = Rodrigues.from_rotation(self).norm.data[:, np.newaxis, np.newaxis]
         if n.size == 0:
             return Rotation.from_neo_euler(AxAngle.from_axes_angles(g, np.pi))
 
         d = (-self.axis).dot_outer(g.unit).data
         x = n * d
-        omega = 2 * np.arctan(np.where(x != 0, x ** -1, np.pi))
+        with np.errstate(divide="ignore"):
+            omega = 2 * np.arctan(np.where(x != 0, x ** -1, np.pi))
 
-        # keeps the smallest allowed angle
+        # Keep the smallest allowed angle
         omega[omega < 0] = np.pi
         omega = np.min(omega, axis=0)
         r = Rotation.from_neo_euler(AxAngle.from_axes_angles(g.unit, omega))
+
         return r

@@ -16,45 +16,72 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from packaging import version
+
+from matplotlib import __version__ as _MPL_VERSION
 from matplotlib import pyplot as plt
 import numpy as np
 
-from orix.plot.rotation_plot import RodriguesPlot, AxAnglePlot
-from orix.quaternion.orientation import Misorientation
-from orix.quaternion.symmetry import D6, C1
-from orix.quaternion.orientation_region import OrientationRegion
+from orix.plot import RodriguesPlot, AxAnglePlot
+from orix.quaternion import Misorientation, Orientation, OrientationRegion
+from orix.quaternion.symmetry import C1, D6
 
 
-def test_init_RodriguesPlot():
+# TODO: Remove when the oldest supported version of Matplotlib
+# increases from 3.3 to 3.4.
+# See: https://matplotlib.org/stable/api/_as_gen/mpl_toolkits.mplot3d.axes3d.Axes3D.html#mpl_toolkits.mplot3d.axes3d.Axes3D
+_SUBPLOT_KWARGS = dict()
+if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
+    _SUBPLOT_KWARGS["auto_add_to_figure"] = False
+
+
+def test_init_rodrigues_plot():
     fig = plt.figure(figsize=(3, 3))
-    _ = RodriguesPlot(fig)
-    return None
+    ax = fig.add_subplot(projection="rodrigues", **_SUBPLOT_KWARGS)
+    assert isinstance(ax, RodriguesPlot)
 
 
-def test_init_AxAnglePlot():
+def test_init_axangle_plot():
     fig = plt.figure(figsize=(3, 3))
-    _ = AxAnglePlot(fig)
-    return None
+    ax = fig.add_subplot(projection="axangle", **_SUBPLOT_KWARGS)
+    assert isinstance(ax, AxAnglePlot)
 
 
 def test_RotationPlot_methods():
-    """ This code is lifted from demo-3-v0.1 """
+    """This code is lifted from demo-3-v0.1."""
     misori = Misorientation([1, 1, 1, 1])  # any will do
-    fig = plt.figure(figsize=(6, 3))
-    gridspec = plt.GridSpec(1, 1, left=0, right=1, bottom=0, top=1, hspace=0.05)
-    ax_misori = fig.add_subplot(
-        gridspec[0], projection="axangle", proj_type="ortho", aspect="auto"
-    )
-    ax_misori.scatter(misori)
-    ax_misori.plot(misori)
-    ax_misori.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="axangle", proj_type="ortho", **_SUBPLOT_KWARGS)
+    ax.scatter(misori)
+    ax.plot(misori)
+    ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
     plt.close("all")
 
-    # clear the edge case
-    ax_misori.transform(np.asarray([1, 1, 1]))
-    return None
+    # Clear the edge case
+    ax.transform(np.asarray([1, 1, 1]))
 
 
 def test_full_region_plot():
     empty = OrientationRegion.from_symmetry(C1, C1)
     _ = empty.get_plot_data()
+
+
+def test_correct_aspect_ratio():
+    # Set up figure the "old" way
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="axangle", proj_type="ortho", **_SUBPLOT_KWARGS)
+
+    # Check aspect ratio
+    x_old, _, z_old = ax.get_box_aspect()
+    assert np.allclose(x_old / z_old, 1.334, atol=1e-3)
+
+    fr = OrientationRegion.from_symmetry(D6)
+    ax._correct_aspect_ratio(fr, set_limits=False)
+
+    x_new, _, z_new = ax.get_box_aspect()
+    assert np.allclose(x_new / z_new, 3, atol=1e-3)
+
+    # Check data limits
+    assert np.allclose(ax.get_xlim(), [0, 1])
+    ax._correct_aspect_ratio(fr)  # set_limits=True is default
+    assert np.allclose(ax.get_xlim(), [-np.pi / 2, np.pi / 2])

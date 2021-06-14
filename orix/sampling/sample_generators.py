@@ -98,7 +98,7 @@ def get_sample_local(resolution=2, center=None, grid_width=10, method="harr_eule
     --------
     :func:`orix.sampling.uniform_SO3_sample`
     """
-    if method is not "quaternion":
+    if method != "quaternion":
         r = uniform_SO3_sample(resolution, method=method, unique=False)
     else:
         r = _three_uniform_samples_method(

@@ -7,6 +7,21 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+Unreleased
+==========
+
+Added
+-----
+- Memory-efficient calculation of a misorientation angle (geodesic distance) matrix
+  between orientations using Dask.
+- Symmetry reduced calculations of dot products between orientations.
+- Two notebooks on clustering of orientations (not misorientations) across fundamental
+  region boundaries are added to the user guide from the orix-demos repository.
+- Convenience method Orientation.scatter() to plot orientations in either axis-angle or
+  Rodrigues fundamental zone, without having to set it up via Matplotlib.
+- Method Object3d.get_random_sample(), inherited by all 3D objects, returning a new
+  flattened instance with elements drawn randomly from the original instance.
+
 2021-05-23 - version 0.6.0
 ==========================
 
@@ -30,11 +45,6 @@ Added
 - Passing symmetry when initializing an Orientation.
 - Overloaded division for Vector3d (left hand side) by numbers and suitably shaped
   array-like objects
-- Memory-efficient calculation of a misorientation angle (geodesic distance) matrix
-  between orientations using Dask.
-- Symmetry reduced calculations of dot products between orientations.
-- Two notebooks on clustering of orientations (not misorientations) across fundamental
-  region boundaries are added to the user guide from the orix-demos repository.
 
 Changed
 -------
