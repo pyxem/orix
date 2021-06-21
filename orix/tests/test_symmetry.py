@@ -1,8 +1,39 @@
+# -*- coding: utf-8 -*-
+# Copyright 2018-2021 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
 from diffpy.structure.spacegroups import GetSpaceGroup
+import numpy as np
 import pytest
 
-from orix.quaternion.symmetry import *
-from orix.quaternion.symmetry import get_point_group, spacegroup2pointgroup_dict
+# fmt: off
+from orix.quaternion.symmetry import (
+    C1, Ci,  # triclinic
+    C2x, C2y, C2z, Csx, Csy, Csz, Cs, C2, C2h,  # monoclinic
+    D2, C2v, D2h,  # orthorhombic
+    C4, S4, C4h, D4, C4v, D2d, D4h,  # tetragonal
+    C3, S6, D3y, D3, C3v, D3d,  # trigonal
+    C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
+    T, Th, O, Td, Oh,  # cubic
+    spacegroup2pointgroup_dict,
+)
+# fmt: on
+from orix.quaternion import get_point_group, Rotation, Symmetry
+from orix.vector import Vector3d
 
 
 @pytest.fixture(params=[(1, 2, 3)])
@@ -150,9 +181,6 @@ def test_symmetry(symmetry, vector, expected):
     vector_calculated = [
         tuple(v.round(3)) for v in symmetry.outer(vector).unique().data
     ]
-    print("Expected\n", expected)
-    print("Calculated\n", vector_calculated)
-    print(symmetry.improper)
     assert set(vector_calculated) == set(expected)
 
 
@@ -305,14 +333,14 @@ def test_eq(symmetry, other, expected):
         ),
     ],
 )
-def test_fundamental_sector(symmetry, expected):
-    fs = symmetry.fundamental_sector()
-    assert np.allclose(fs.data, expected)
+def test_fundamental_region(symmetry, expected):
+    fr = symmetry.fundamental_region()
+    assert np.allclose(fr.data, expected)
 
 
 def test_no_symm_fundemental_sector():
     nosym = Symmetry.from_generators(Rotation([1, 0, 0, 0]))
-    nosym.fundamental_sector()
+    assert nosym.fundamental_region().size == 0
 
 
 def test_get_point_group():

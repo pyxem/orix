@@ -115,6 +115,21 @@ class Symmetry(Rotation):
         tuples = set([tuple(d) for d in s._differentiators()])
         return tuples
 
+    @property
+    def fundamental_sector(self):
+        from orix.vector import SphericalRegion
+
+        name = self.name
+        vx = Vector3d.xvector().data.squeeze()
+        vy = Vector3d.yvector().data.squeeze()
+        vz = Vector3d.zvector().data.squeeze()
+        if name in ["1", "-1"]:
+            n = vz
+        elif name == "m-3m":
+            n = [[1, -1, 0], [-1, 0, 1], vy]
+        n = Vector3d(n)
+        return SphericalRegion(n.unique())
+
     @classmethod
     def from_generators(cls, *generators):
         """Create a Symmetry from a minimum list of generating
@@ -187,7 +202,7 @@ class Symmetry(Rotation):
             return Vector3d.empty()
         return Vector3d.stack(diads).flatten()
 
-    def fundamental_sector(self):
+    def fundamental_region(self):
         from orix.vector.neo_euler import AxAngle
         from orix.vector.spherical_region import SphericalRegion
 

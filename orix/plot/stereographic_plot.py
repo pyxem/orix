@@ -215,12 +215,12 @@ class StereographicPlot(Axes):
 
     @staticmethod
     def can_pan():
-        return False
+        return True
 
     @staticmethod
     def can_zoom():
         # TODO: Implement zoom (https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py#L1437)
-        return False
+        return True
 
     def scatter(self, *args, **kwargs):
         """A scatter plot of vectors.
