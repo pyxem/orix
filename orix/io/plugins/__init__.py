@@ -20,7 +20,7 @@ from orix.io.plugins import ang, bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
 
 plugin_list = [
     ang,
-    emsoft_h5ebsd,
     bruker_h5ebsd,
+    emsoft_h5ebsd,
     orix_hdf5,
 ]

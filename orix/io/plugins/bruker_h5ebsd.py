@@ -102,8 +102,8 @@ class BrukerH5ebsdFile(H5ebsdFile):
 
     def set_coordinate_arrays(self):
         """Set coordinate arrays from dictionaries."""
-        y = self.properties.pop("YSAMPLE")
-        x = self.properties.pop("XSAMPLE")
+        y = self.properties["YSAMPLE"]
+        x = self.properties["XSAMPLE"]
         self.y = y - np.min(y)
         self.x = x - np.min(x)
 
