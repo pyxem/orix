@@ -16,33 +16,35 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import gc
 import re
 
 from diffpy.structure import Lattice, Structure
-from h5py import File
 import numpy as np
 
 from orix.crystal_map import CrystalMap, Phase, PhaseList
+from orix.io.plugins._h5ebsd import H5ebsdFile
 from orix.quaternion.rotation import Rotation
+
 
 # Plugin description
 format_name = "emsoft_h5ebsd"
+manufacturer = "EMEBSD"
 file_extensions = ["h5", "hdf5", "h5ebsd"]
 writes = False
 writes_this = CrystalMap
-footprint = ["Scan 1"]  # Unique HDF5 footprint
 
 
 def file_reader(filename, refined=False, **kwargs):
-    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
-    from a file in EMsoft's dictionary indexing dot product file format.
+    """Return a :class:`~orix.crystal_map.CrystalMap` from a file in
+    EMsoft's dictionary indexing dot product file format.
 
     Parameters
     ----------
     filename : str
         Path and file name.
     refined : bool, optional
-        Whether to return refined orientations (default is False).
+        Whether to return refined orientations. Default is False.
     kwargs
         Keyword arguments passed to :func:`h5py.File`.
 
@@ -50,136 +52,175 @@ def file_reader(filename, refined=False, **kwargs):
     -------
     CrystalMap
     """
-    mode = kwargs.pop("mode", "r")
-    f = File(filename, mode=mode, **kwargs)
-
-    # Get groups for convenience
-    ebsd_group = f["Scan 1/EBSD"]
-    data_group = ebsd_group["Data"]
-    header_group = ebsd_group["Header"]
-    phase_group = header_group["Phase/1"]
-
-    # Get map shape and step sizes
-    ny = header_group["nRows"][:][0]
-    nx = header_group["nColumns"][:][0]
-    step_y = header_group["Step Y"][:][0]
-    map_size = ny * nx
-
-    # Some of the data needed to create a CrystalMap object
-    phase_name, point_group, structure = _get_phase(phase_group)
-    data_dict = {
-        # Get map coordinates ("Y Position" data set is not correct in EMsoft as of
-        # 2020-04, see:
-        # https://github.com/EMsoft-org/EMsoft/blob/7762e1961508fe3e71d4702620764ceb98a78b9e/Source/EMsoftHDFLib/EMh5ebsd.f90#L1093)
-        "x": data_group["X Position"][:],
-        # y = data_group["Y Position"][:]
-        "y": np.sort(np.tile(np.arange(ny) * step_y, nx)),
-        # Get phase IDs
-        "phase_id": data_group["Phase"][:],
-        # Get phase name, point group and structure (lattice)
-        "phase_list": PhaseList(
-            Phase(name=phase_name, point_group=point_group, structure=structure)
-        ),
-        "scan_unit": "um",
-    }
-
-    # Get rotations
-    if refined:
-        euler = data_group["RefinedEulerAngles"][:]  # Radians
-    else:  # Get n top matches for each pixel
-        top_match_idx = data_group["TopMatchIndices"][:][:map_size] - 1
-        dictionary_size = data_group["FZcnt"][:][0]
-        # Degrees
-        dictionary_euler = data_group["DictionaryEulerAngles"][:][:dictionary_size]
-        dictionary_euler = np.deg2rad(dictionary_euler)
-        euler = dictionary_euler[top_match_idx, :]
-    data_dict["rotations"] = Rotation.from_euler(euler)
-
-    # Get number of top matches kept per data point
-    n_top_matches = f["NMLparameters/EBSDIndexingNameListType/nnk"][:][0]
-
-    data_dict["prop"] = _get_properties(
-        data_group=data_group, n_top_matches=n_top_matches, map_size=map_size,
-    )
-
+    f = EMsoftH5ebsdFile(filename)
+    f.read_refined = refined
+    f.open(**kwargs)
+    f.read_data_into_dictionaries()
+    f.set_crystal_map_data()
     f.close()
+    return f.get_crystal_map()
 
-    return CrystalMap(**data_dict)
 
-
-def _get_properties(data_group, n_top_matches, map_size):
-    """Return a dictionary of properties within an EMsoft h5ebsd file,
-    with property names as the dictionary key and arrays as the values.
-
-    Parameters
-    ----------
-    data_group : h5py.Group
-        HDF5 group with the property data sets.
-    n_top_matches : int
-        Number of rotations per point.
-    map_size : int
-        Data size.
-
-    Returns
-    -------
-    properties : dict
-        Property dictionary.
+class EMsoftH5ebsdFile(H5ebsdFile):
+    """EMsoft's HDF5 file in the h5ebsd format containing orientation
+    data from dictionary indexing, to be returned as a crystal map.
     """
-    expected_properties = [
-        "AvDotProductMap",
-        "CI",
+
+    dont_read_data = [
         "CIMap",
-        "IQ",
+        "DictionaryEulerAngles",
+        "EulerAngles",
+        "Fit",
+        "FZcnt",
         "IQMap",
-        "ISM",
         "ISMap",
-        "KAM",
-        "OSM",
-        "RefinedDotProducts",
-        "TopDotProductList",
-        "TopMatchIndices",
+        "Ncubochoric",
+        "NumExptPatterns",
+        "Phi",
+        "Phi1",
+        "Phi2",
+        "SEM Signal",
+        "Valid",
     ]
-    properties = {}
-    for property_name in expected_properties:
-        if property_name in data_group.keys():
-            prop = data_group[property_name][:]
-            if prop.shape[-1] == n_top_matches and np.prod(prop.shape) > map_size:
-                # Not a refined dot product file
-                prop = prop[:map_size].reshape((map_size, n_top_matches))
-            else:
-                # Refined dot product file
-                prop = prop.reshape(map_size)
-            properties[property_name] = prop
-    return properties
+    dont_read_header = [
+        "Camera Azimuthal Angle",
+        "Camera Elevation Angle",
+        "Coordinate System",
+        "Grid Type",
+        "Notes",
+        "Operator",
+        "Pattern Center Calibration",
+        "Pattern Height",
+        "Pattern Width",
+        "Sample ID",
+        "Sample Tilt",
+        "Scan ID",
+        "Working Distance",
+    ]
+    read_refined = False
+    scan_unit = "um"
+
+    scan_group_str = "Scan 1/"
+    ebsd_group_str = scan_group_str + "EBSD/"
+    data_group_str = ebsd_group_str + "Data/"
+    header_group_str = ebsd_group_str + "Header/"
+
+    def read_data_into_dictionaries(self):
+        """Read data from the HDF5 file into dictionaries."""
+        self.data_dict = self.get_dictionary(
+            self.data_group_str, recursive=True, dont_read=self.dont_read_data
+        )
+        self.header_dict = self.get_dictionary(
+            self.header_group_str, recursive=True, dont_read=self.dont_read_header
+        )
+
+    def set_coordinate_arrays(self):
+        """Set coordinate arrays from dictionaries."""
+        # Get map coordinates ("Y Position" data set is not correct in
+        # EMsoft as of 2021-06, see:
+        # https://github.com/EMsoft-org/EMsoft/blob/7762e1961508fe3e71d4702620764ceb98a78b9e/Source/EMsoftHDFLib/EMh5ebsd.f90#L1093)
+        # self.y = self.data_dict["Y Position"][:]
+        ny = self.header_dict["nRows"]
+        nx = self.header_dict["nColumns"]
+        self.map_shape = (ny, nx)
+        step_y = self.header_dict["Step Y"]
+        self.y = np.sort(np.tile(np.arange(ny) * step_y, nx))
+        self.x = self.data_dict["X Position"][:]
+
+    def set_crystal_map_data(self):
+        """Set necessary crystal map data from dictionaries."""
+        self.set_phase_list()  # Prone to break first
+        self.set_coordinate_arrays()
+        self.set_phase_id()
+        self.set_rotations()
+        self.set_properties()
+
+    def set_map_shape(self):
+        """Set the number of map rows and columns."""
+        ny = self.header_dict["nRows"][:][0]
+        nx = self.header_dict["nColumns"][:][0]
+        self.map_shape = (ny, nx)
+
+    def set_phase_id(self):
+        """Set phase ID array from dictionaries."""
+        self.phase_id = self.data_dict["Phase"][:]
+
+    def set_phase_list(self):
+        """Set phase list from dictionaries.
+
+        This is easy, since EMsoft only outputs HDF5 files with single
+        phase results.
+        """
+        phase = dict2phase(self.header_dict["Phase"]["1"])
+        self.phase_list = PhaseList(phase)
+
+    def set_properties(self):
+        """Set dictionary of property arrays from dictionaries."""
+        n_top_matches = self.file["NMLparameters/EBSDIndexingNameListType/nnk"][:][0]
+        map_size = self.map_size
+        expected_properties = [
+            "AvDotProductMap",
+            "CI",
+            "IQ",
+            "ISM",
+            "KAM",
+            "OSM",
+            "RefinedDotProducts",
+            "TopDotProductList",
+            "TopMatchIndices",
+        ]
+        properties = dict()
+        dd = self.data_dict
+        for property_name in expected_properties:
+            if property_name in dd.keys():
+                prop = dd[property_name]
+                if prop.shape[-1] == n_top_matches and np.prod(prop.shape) > map_size:
+                    # Not a refined dot product file
+                    prop = prop[:map_size].reshape((map_size, n_top_matches))
+                else:
+                    # Refined dot product file
+                    prop = prop.reshape(map_size)
+                properties[property_name] = prop
+        self.properties = properties
+
+    def set_rotations(self):
+        """Set rotations from dictionaries."""
+        f = self.file
+        dg = f[self.data_group_str]
+        if self.read_refined:
+            # Radians
+            euler = dg["RefinedEulerAngles"][:]
+        else:  # Get n top matches for each pixel
+            top_match_idx = dg["TopMatchIndices"][:][: self.map_size] - 1
+            dictionary_size = dg["FZcnt"][:][0]
+            # Degrees
+            dictionary_euler = dg["DictionaryEulerAngles"][:][:dictionary_size]
+            dictionary_euler = np.deg2rad(dictionary_euler)
+            euler = dictionary_euler[top_match_idx]
+        # This line is quite memory intensive
+        self.rotations = Rotation.from_euler(euler)
+        gc.collect()
 
 
-def _get_phase(data_group):
-    """Return phase information from a phase data group in an EMsoft dot
-    product file.
+def dict2phase(dictionary):
+    """Return a phase from a dictionary with keys and values from an
+    EMsoft dot product file.
 
     Parameters
     ----------
-    data_group : h5py.Group
-        HDF5 group with the property data sets.
+    dictionary : dict
 
     Returns
     -------
-    name : str
-        Phase name.
-    point_group : str
-        Phase point group.
-    structure : diffpy.structure.Structure
-        Phase structure.
+    Phase
     """
-    name = re.search(r"([A-z0-9]+)", data_group["MaterialName"][:][0].decode()).group(1)
-    point_group = re.search(
-        r"\[([A-z0-9/]+)\]", data_group["Point Group"][:][0].decode()
-    ).group(1)
+    name = re.search(r"([A-z0-9]+)", dictionary["MaterialName"]).group(1)
+    point_group = re.search(r"\[([A-z0-9/]+)\]", dictionary["Point Group"]).group(1)
     lattice = Lattice(
         *tuple(
-            data_group[f"Lattice Constant {i}"][:]
+            dictionary[f"Lattice Constant {i}"]
             for i in ["a", "b", "c", "alpha", "beta", "gamma"]
         )
     )
     structure = Structure(title=name, lattice=lattice)
-    return name, point_group, structure
+    return Phase(name=name, point_group=point_group, structure=structure)

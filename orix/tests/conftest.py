@@ -394,6 +394,7 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
     y = d["y"]
 
     # Create groups used in reader
+    f.create_dataset(name="Manufacturer", data="EMEBSDDictionaryIndexing.f90")
     ebsd_group = f.create_group("Scan 1/EBSD")
     data_group = ebsd_group.create_group("Data")
     header_group = ebsd_group.create_group("Header")

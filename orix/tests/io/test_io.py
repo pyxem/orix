@@ -33,7 +33,7 @@ from orix.io import (
     load,
     save,
     loadctf,
-    _plugin_from_footprints,
+    _plugin_from_manufacturer,
     _overwrite_or_not,
 )
 from orix.io.plugins import ang, emsoft_h5ebsd, orix_hdf5
@@ -88,14 +88,20 @@ class TestGeneralIO:
             _ = load(temp_file_path)
 
     @pytest.mark.parametrize(
-        "top_group, expected_plugin",
-        [("Scan 1", emsoft_h5ebsd), ("crystal_map", orix_hdf5), ("Scan 2", None)],
+        "manufacturer, expected_plugin",
+        [
+            ("EMEBSDDictionaryIndexing.f90", emsoft_h5ebsd),
+            ("orix", orix_hdf5),
+            ("Oxford", None),
+        ],
     )
-    def test_plugin_from_footprints(self, temp_file_path, top_group, expected_plugin):
+    def test_plugin_from_manufacturer(
+        self, temp_file_path, manufacturer, expected_plugin
+    ):
         with File(temp_file_path, mode="w") as f:
-            f.create_group(top_group)
+            f.create_dataset(name="Manufacturer", data=manufacturer)
             assert (
-                _plugin_from_footprints(
+                _plugin_from_manufacturer(
                     temp_file_path, plugins=[emsoft_h5ebsd, orix_hdf5]
                 )
                 is expected_plugin

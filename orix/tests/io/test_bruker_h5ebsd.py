@@ -16,11 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from orix.io.plugins import ang, bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
 
-plugin_list = [
-    ang,
-    emsoft_h5ebsd,
-    bruker_h5ebsd,
-    orix_hdf5,
-]
+class TestBrukerH5ebsdReader:
+    pass
