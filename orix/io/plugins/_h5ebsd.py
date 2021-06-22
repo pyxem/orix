@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from h5py import Dataset, File, Group
+from h5py import File, Group
 import numpy as np
 
 from orix.crystal_map import CrystalMap
@@ -49,25 +49,22 @@ def hdf5group2dict(group, dictionary=None, recursive=False, dont_read=None):
         dont_read = []
     for key, value in group.items():
         # Check whether to extract subgroup or write value the dictionary
-        if key in dont_read:
-            pass
-        elif isinstance(value, Dataset):
-            if key not in dont_read:
-                value = value[()]
+        if isinstance(value, Group):
+            if recursive:
+                dictionary[key] = {}
+                hdf5group2dict(
+                    group=group[key], dictionary=dictionary[key], recursive=recursive,
+                )
+            else:
+                dictionary[key] = value
+        elif key not in dont_read:
+            value = value[()]
+            # Prepare value for entry in dictionary
             if isinstance(value, np.ndarray) and len(value) == 1:
                 value = value[0]
-                key = key.lstrip()  # EDAX has some leading whitespaces
             if isinstance(value, bytes):
                 value = value.decode("latin-1")
             dictionary[key] = value
-        if isinstance(value, Group) and recursive:
-            dictionary[key] = {}
-            hdf5group2dict(
-                group=group[key],
-                dictionary=dictionary[key],
-                recursive=recursive,
-                dont_read=dont_read,
-            )
     return dictionary
 
 
@@ -80,7 +77,7 @@ class H5ebsdFile:
     data_dict = dict()
     header_dict = dict()
     sem_dict = dict()
-    map_shape = None
+    map_shape = (1, 1)
     rotations = None
     x = None
     y = None
@@ -95,10 +92,7 @@ class H5ebsdFile:
     @property
     def map_size(self):
         """Number of map points."""
-        if self.map_shape is not None:
-            return np.prod(self.map_shape)
-        else:
-            return None
+        return np.prod(self.map_shape)
 
     def open(self, **kwargs):
         """Open the HDF5 file."""
@@ -141,3 +135,14 @@ class H5ebsdFile:
             prop=self.properties,
             scan_unit=self.scan_unit,
         )
+
+    def set_scan_group_names(self):
+        """Set name of scan HDF5 groups in top group as a list of
+        strings.
+        """
+        scan_groups = []
+        f = self.file
+        for key in f["/"].keys():
+            if key.lstrip().lower() not in ["manufacturer", "version"]:
+                scan_groups.append(key)
+        self.scan_groups = scan_groups

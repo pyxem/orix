@@ -375,7 +375,7 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
     map_shape : tuple of ints
         Map shape to create.
     step_sizes : tuple of floats
-        Step sizes in x and y coordinates in nanometres.
+        Step sizes in x and y coordinates in microns.
     rotations : np.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
@@ -390,8 +390,6 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
     map_shape, (dy, dx), example_rotations, n_top_matches, refined = request.param
     ny, nx = map_shape
     d, map_size = create_coordinate_arrays(map_shape, (dy, dx))
-    x = d["x"]
-    y = d["y"]
 
     # Create groups used in reader
     f.create_dataset(name="Manufacturer", data="EMEBSDDictionaryIndexing.f90")
@@ -409,21 +407,18 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         header_group.create_dataset(name, data=np.array([data], dtype=dtype))
 
     # Create `data_group` datasets, mostly quality metrics
-    data_group.create_dataset("X Position", data=x)
+    data_group.create_dataset("X Position", data=d["x"])
     # Note that "Y Position" is wrongly written to their h5ebsd file by EMsoft
     data_group.create_dataset(
         "Y Position",
         data=np.tile(np.arange(nx) * dx, ny),  # Wrong
-        # data=y,  # Correct
+        # data=d["y"],  # Correct
     )
     for name, shape, dtype in [
         ("AvDotProductMap", map_shape, np.int32),
         ("CI", map_size, np.float32),
-        ("CIMap", map_shape, np.int32),
         ("IQ", map_size, np.float32),
-        ("IQMap", map_shape, np.int32),
         ("ISM", map_size, np.float32),
-        ("ISMap", map_shape, np.int32),
         ("KAM", map_shape, np.float32),
         ("OSM", map_shape, np.float32),
         ("Phase", map_size, np.uint8),
@@ -479,6 +474,122 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         ("Lattice Constant gamma", "90.0"),
     ]:
         phase_group.create_dataset(name, data=np.array([data], dtype=np.dtype("S")))
+
+    yield f
+    gc.collect()
+
+
+@pytest.fixture(
+    params=[
+        # Tuple with default values for parameters: map_shape,
+        # step_sizes, phase_id, rotations, and whether to shuffle map
+        # points in data arrays
+        (
+            (9, 7),  # map_shape
+            (1.5, 1.5),  # step_sizes
+            np.random.choice([1, 2], 9 * 7),  # phase_id
+            np.array([[35, 75, 13], [14, 0, 26]]),  # rotations
+            False,  # Whether to shuffle order of map points
+        )
+    ]
+)
+def temp_bruker_h5ebsd_file(tmpdir, request):
+    """Create a dummy Bruker h5ebsd .h5 file from input.
+
+    Parameters expected in `request`
+    --------------------------------
+    map_shape : tuple of ints
+        Map shape to create.
+    step_sizes : tuple of floats
+        Step sizes in x and y coordinates in microns.
+    phase_id : np.ndarray
+        Array of map size with phase IDs in header.
+    rotations : np.ndarray
+        A sample, smaller than the map size, of example rotations as
+        rows of Euler angle triplets.
+    """
+    f = File(tmpdir.join("bruker_h5ebsd_file.h5"), mode="w")
+
+    # Unpack parameters
+    map_shape, (dy, dx), phase_id, example_rotations, shuffle_order = request.param
+    ny, nx = map_shape
+    map_rows, map_cols = np.indices(map_shape)
+    map_rows = map_rows.ravel()
+    map_cols = map_cols.ravel()
+    y = map_rows * dy
+    x = map_cols * dx
+    map_size = ny * nx
+
+    # Create groups used in reader
+    f.create_dataset(name="Manufacturer", data=b"Bruker Nano")
+    ebsd_group = f.create_group("Scan 1/EBSD")
+    data_group = ebsd_group.create_group("Data")
+    header_group = ebsd_group.create_group("Header")
+    sem_group = ebsd_group.create_group("SEM")
+
+    # Write phases
+    phases_group = header_group.create_group("Phases")
+    unique_phase_ids = np.unique(phase_id)
+    characters = "abcdefghijklmnopqrstuvwzyx"
+    for i, pid in enumerate(unique_phase_ids):
+        phase_group = phases_group.create_group(str(pid))
+        phase_group.create_dataset("Formula", data=characters[i])
+        phase_group.create_dataset("IT", data=225)
+        lattice_constants = np.array([i + 1] * 3 + [90] * 3)
+        phase_group.create_dataset("LatticeConstants", data=lattice_constants)
+        phase_group.create_dataset("Name", data=characters[i])
+        phase_group.create_dataset("Setting", data=1)
+        phase_group.create_dataset("SpaceGroup", data=b"F m#ovl3m")
+        atom_positions = phase_group.create_group("AtomPositions")
+        for k in range(3):
+            atom_pos_str = f"{characters[k]},{k},{k},{k},1,0".encode()
+            atom_positions.create_dataset(str(k), data=atom_pos_str)
+
+    # Write SEM data
+    if shuffle_order:
+        rng = np.random.default_rng()
+        # Only shuffle within rows (rows are not shuffled)
+        map_cols = map_cols.reshape(map_shape)
+        rng.shuffle(map_cols, axis=0)
+        map_cols = map_cols.ravel()
+    sem_group.create_dataset("IY", data=map_rows)
+    sem_group.create_dataset("IX", data=map_cols)
+
+    rc = np.array([map_rows, map_cols])
+    map_order = np.ravel_multi_index(rc, map_shape).argsort()
+
+    # Write properties
+    zeros_float = np.zeros(map_size, dtype=np.float32)
+    zeros_int = zeros_float.astype(np.int32)
+    for name, data in [
+        ("DD", zeros_float),
+        ("MAD", zeros_float),
+        ("MADPhase", zeros_int),
+        ("NIndexedBands", zeros_int),
+        ("PCX", zeros_float),
+        ("PCY", zeros_float),
+        ("RadonBandCount", zeros_int),
+        ("RadonQuality", zeros_float),
+        ("Y BEAM", map_rows),
+        ("X BEAM", map_cols),
+        ("Y SAMPLE", y[map_order]),
+        ("X SAMPLE", x[map_order][::-1]),  # Bruker flips x in file
+        ("Z SAMPLE", zeros_int),
+        ("Phase", phase_id[map_order]),
+    ]:
+        data_group.create_dataset(name, data=data)
+
+    # Write header
+    header_group.create_dataset("NROWS", data=ny, dtype=np.int32)
+    header_group.create_dataset("NCOLS", data=nx, dtype=np.int32)
+    header_group.create_dataset("Grid Type", data=b"isometric")
+
+    # Write rotations
+    rot_idx = np.random.choice(np.arange(len(example_rotations)), map_size)
+    rot = example_rotations[rot_idx][map_order]
+    data_group.create_dataset("phi1", data=rot[:, 0])
+    data_group.create_dataset("PHI", data=rot[:, 1])
+    data_group.create_dataset("phi2", data=rot[:, 2])
 
     yield f
     gc.collect()

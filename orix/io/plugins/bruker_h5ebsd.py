@@ -49,6 +49,8 @@ def file_reader(filename, **kwargs):
     """
     f = BrukerH5ebsdFile(filename)
     f.open(**kwargs)
+    f.set_scan_group_names()
+    f.set_sem_group_file_location()
     f.read_data_into_dictionaries()
     f.close()
     f.set_map_shape()  # Necessary when checking if we can read the data
@@ -67,7 +69,34 @@ class BrukerH5ebsdFile(H5ebsdFile):
     map.
     """
 
-    dont_read_data = ["RawPatterns"]
+    dont_read_in_data = ["RawPatterns"]
+    dont_read_in_header = [
+        "CameraTilt",
+        "Coordinate Systems",
+        "DetectorFullHeightMicrons",
+        "DetectorFullWidthMicrons",
+        "KV",
+        "MADMax",
+        "Magnification",
+        "MapStepFactor",
+        "MaxRadonBandCount",
+        "MinIndexedBands",
+        "NPoints",
+        "OriginalFile",
+        "PatternHeight",
+        "PatternWidth",
+        "PixelByteCount",
+        "SEPixelSizeX",
+        "SEPixelSizeY",
+        "SampleTilt",
+        "TopClip",
+        "UnClippedPatternHeight",
+        "WD",
+        "XSTEP",
+        "YSTE",
+        "ZOffset",
+    ]
+    dont_read_in_sem = ["ZOffset"]
     is_rectangular = True
     map_cols = None
     map_rows = None
@@ -75,16 +104,15 @@ class BrukerH5ebsdFile(H5ebsdFile):
 
     def can_read(self):
         """Return whether the file can be read."""
-        return self.is_rectangular
+        square_grid = self.header_dict["Grid Type"] == "isometric"
+        return self.is_rectangular * square_grid
 
     def final_preparations(self):
-        """Final preparations of data before creation of a crystal map.
-        """
+        """Final preparations of data before creation of a crystal map."""
         if self.map_rows is not None and self.map_cols is not None:
             # Sort data points into correct order
             rc = np.array([self.map_rows, self.map_cols])
             map_order = np.ravel_multi_index(rc, self.map_shape).argsort()
-            self.y = self.y[map_order]
             self.x = self.x[map_order]
             self.phase_id = self.phase_id[map_order]
             self.rotations = self.rotations[map_order]
@@ -94,11 +122,29 @@ class BrukerH5ebsdFile(H5ebsdFile):
 
     def read_data_into_dictionaries(self):
         """Read data from the HDF5 file into dictionaries."""
-        self.sem_dict = self.get_dictionary("Scan 1/EBSD/SEM", recursive=True)
-        self.header_dict = self.get_dictionary("Scan 1/EBSD/Header", recursive=True)
-        self.data_dict = self.get_dictionary(
-            "Scan 1/EBSD/Data", recursive=True, dont_read=self.dont_read_data
+        if self.sem_group_location is not None:
+            self.sem_dict = self.get_dictionary(
+                self.sem_group_location, recursive=True, dont_read=self.dont_read_in_sem
+            )
+        eg_name = self.scan_groups[0] + "/EBSD/"
+        self.header_dict = self.get_dictionary(
+            eg_name + "Header", recursive=True, dont_read=self.dont_read_in_header
         )
+        self.data_dict = self.get_dictionary(
+            eg_name + "Data", recursive=True, dont_read=self.dont_read_in_data
+        )
+
+    def set_sem_group_file_location(self):
+        """Set 'SEM' group HDF5 file location. This can either be
+        'Scan 1/SEM' or 'Scan 1/EBSD/SEM'.
+        """
+        sg = self.scan_groups[0]
+        potential_places = [sg, sg + "/EBSD"]
+        location = None
+        for pp in potential_places:
+            if "SEM" in self.file[pp].keys():
+                location = pp + "/SEM"
+        self.sem_group_location = location
 
     def set_coordinate_arrays(self):
         """Set coordinate arrays from dictionaries."""
@@ -125,9 +171,19 @@ class BrukerH5ebsdFile(H5ebsdFile):
         order of the data points is correct, and can be reshaped into a
         2D map without changing the order.
         """
-        try:
-            map_rows = self.sem_dict["IY"]
-            map_cols = self.sem_dict["IX"]
+        sd = self.sem_dict
+        potential_names_y = ["IY", "SEM IY"]
+        potential_names_x = ["IX", "SEM IX"]
+        match_y = None
+        match_x = None
+        for key in sd.keys():
+            if key in potential_names_y:
+                match_y = key
+            elif key in potential_names_x:
+                match_x = key
+        if match_y is not None and match_x is not None:
+            map_rows = self.sem_dict[match_y]
+            map_cols = self.sem_dict[match_x]
 
             # If False, we cannot read the data
             self.is_rectangular = _roi_is_rectangular(map_rows, map_cols)
@@ -138,7 +194,7 @@ class BrukerH5ebsdFile(H5ebsdFile):
             ncols = max_c - min_c + 1
             self.map_rows = map_rows - min_r
             self.map_cols = map_cols - min_c
-        except KeyError:
+        else:
             nrows = self.header_dict["NROWS"]
             ncols = self.header_dict["NCOLS"]
         self.map_shape = (nrows, ncols)
@@ -164,6 +220,7 @@ class BrukerH5ebsdFile(H5ebsdFile):
             PCY=self.data_dict["PCY"],
             DD=self.data_dict["DD"],
             MAD=self.data_dict["MAD"],
+            MADPhase=self.data_dict["MADPhase"],
             NIndexedBands=self.data_dict["NIndexedBands"],
             RadonBandCount=self.data_dict["RadonBandCount"],
             RadonQuality=self.data_dict["RadonQuality"],
@@ -259,6 +316,6 @@ def str2atom(atom_positions):
     atom_positions = atom_positions.split(",")
     return Atom(
         atype=atom_positions[0],
-        xyz=np.array(atom_positions[1:4], dtype=int),
+        xyz=np.array(atom_positions[1:4]),
         occupancy=int(atom_positions[-1]),
     )

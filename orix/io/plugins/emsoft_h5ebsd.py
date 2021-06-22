@@ -120,9 +120,7 @@ class EMsoftH5ebsdFile(H5ebsdFile):
         # EMsoft as of 2021-06, see:
         # https://github.com/EMsoft-org/EMsoft/blob/7762e1961508fe3e71d4702620764ceb98a78b9e/Source/EMsoftHDFLib/EMh5ebsd.f90#L1093)
         # self.y = self.data_dict["Y Position"][:]
-        ny = self.header_dict["nRows"]
-        nx = self.header_dict["nColumns"]
-        self.map_shape = (ny, nx)
+        ny, nx = self.map_shape
         step_y = self.header_dict["Step Y"]
         self.y = np.sort(np.tile(np.arange(ny) * step_y, nx))
         self.x = self.data_dict["X Position"][:]
@@ -130,6 +128,7 @@ class EMsoftH5ebsdFile(H5ebsdFile):
     def set_crystal_map_data(self):
         """Set necessary crystal map data from dictionaries."""
         self.set_phase_list()  # Prone to break first
+        self.set_map_shape()
         self.set_coordinate_arrays()
         self.set_phase_id()
         self.set_rotations()
@@ -137,8 +136,8 @@ class EMsoftH5ebsdFile(H5ebsdFile):
 
     def set_map_shape(self):
         """Set the number of map rows and columns."""
-        ny = self.header_dict["nRows"][:][0]
-        nx = self.header_dict["nColumns"][:][0]
+        ny = self.header_dict["nRows"]
+        nx = self.header_dict["nColumns"]
         self.map_shape = (ny, nx)
 
     def set_phase_id(self):

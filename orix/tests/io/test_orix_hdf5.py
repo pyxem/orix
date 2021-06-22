@@ -25,7 +25,6 @@ from orix import __version__ as orix_version
 from orix.crystal_map import CrystalMap, Phase
 from orix.io import load, save
 from orix.io.plugins.orix_hdf5 import (
-    hdf5group2dict,
     dict2crystalmap,
     dict2phaselist,
     dict2phase,
@@ -40,10 +39,7 @@ from orix.io.plugins.orix_hdf5 import (
     lattice2dict,
     atom2dict,
 )
-from orix.io.plugins import ang, emsoft_h5ebsd, orix_hdf5
 from orix.tests.io.test_io import assert_dictionaries_are_equal
-
-plugin_list = [ang, emsoft_h5ebsd, orix_hdf5]
 
 
 class TestOrixHDF5Plugin:
@@ -146,16 +142,6 @@ class TestOrixHDF5Plugin:
         assert np.allclose(lattice1["baserot"], lattice2["baserot"])
         assert_dictionaries_are_equal(structure_dict["atoms"], this_dict["atoms"])
 
-    def test_hdf5group2dict_update_dict(self, temp_file_path, crystal_map):
-        save(temp_file_path, crystal_map)
-        with File(temp_file_path, mode="r") as f:
-            this_dict = {"hello": "there"}
-            this_dict = hdf5group2dict(f["crystal_map"], dictionary=this_dict)
-
-            assert this_dict["hello"] == "there"
-            assert this_dict["data"] == f["crystal_map/data"]
-            assert this_dict["header"] == f["crystal_map/header"]
-
     def test_file_reader(self, crystal_map, temp_file_path):
         save(filename=temp_file_path, object2write=crystal_map)
         cm2 = load(filename=temp_file_path)
@@ -188,8 +174,7 @@ class TestOrixHDF5Plugin:
         assert phase1.structure.lattice.abcABG() == phase2.structure.lattice.abcABG()
 
     def test_dict2phase_spacegroup(self):
-        """Space group number int or None is properly parsed from a dict.
-        """
+        """Space group number int or None is properly parsed from a dict."""
         phase1 = Phase(space_group=200)
         phase_dict = phase2dict(phase1)
         phase2 = dict2phase(phase_dict)

@@ -24,8 +24,8 @@ from h5py import File
 import numpy as np
 
 from orix.crystal_map import CrystalMap, Phase, PhaseList
-from orix.quaternion.rotation import Rotation
 from orix.io.plugins._h5ebsd import hdf5group2dict
+from orix.quaternion.rotation import Rotation
 
 
 # Plugin description
