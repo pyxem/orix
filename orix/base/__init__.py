@@ -54,9 +54,7 @@ class DimensionError(Exception):
 
 
 class Object3d:
-    """Base class for 3d objects.
-
-    """
+    """Base class for 3d objects."""
 
     dim = None
     """int : The number of dimensions for this object."""
@@ -205,6 +203,24 @@ class Object3d:
         obj = self.__class__(self.data.reshape(*shape, self.dim))
         obj._data = self._data.reshape(*shape, -1)
         return obj
+
+    def transpose(self, *order):
+        """Returns a new object containing the same data transposed.
+        If ndim is originally 2, then order may be undefined.
+        In this case the first two dimensions will be transposed."""
+        if not len(order):
+            if len(self.shape) != 2:
+                raise ValueError("order must be defined for more than two dimensions.")
+            else:
+                # swap first two axes
+                order = (1, 0)
+
+        if len(order) != len(self.shape):
+            raise ValueError(
+                f"Number of axes is ill-defined: {tuple(order)} does not fit with {self.shape}."
+            )
+
+        return self.__class__(self.data.transpose(*order, -1))
 
     def get_plot_data(self):
         return self
