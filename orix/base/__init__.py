@@ -204,23 +204,36 @@ class Object3d:
         obj._data = self._data.reshape(*shape, -1)
         return obj
 
-    def transpose(self, *order):
+    def transpose(self, *axes):
         """Returns a new object containing the same data transposed.
         If ndim is originally 2, then order may be undefined.
-        In this case the first two dimensions will be transposed."""
-        if not len(order):
+        In this case the first two dimensions will be transposed.
+
+        Parameters
+        ----------
+        axes: ints
+            The transposed axes order. Only navigation axes need to be defined.
+            May be undefined if self only contains two navigation dimensions.
+
+        Returns
+        -------
+        new
+            The transposed object.
+
+        """
+        if not len(axes):
             if len(self.shape) != 2:
-                raise ValueError("order must be defined for more than two dimensions.")
+                raise ValueError("Axes must be defined for more than two dimensions.")
             else:
                 # swap first two axes
-                order = (1, 0)
+                axes = (1, 0)
 
-        if len(order) != len(self.shape):
+        if len(axes) != len(self.shape):
             raise ValueError(
-                f"Number of axes is ill-defined: {tuple(order)} does not fit with {self.shape}."
+                f"Number of axes is ill-defined: {tuple(axes)} does not fit with {self.shape}."
             )
 
-        return self.__class__(self.data.transpose(*order, -1))
+        return self.__class__(self.data.transpose(*axes, -1))
 
     def get_plot_data(self):
         return self
