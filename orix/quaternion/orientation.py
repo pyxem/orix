@@ -235,7 +235,7 @@ class Misorientation(Rotation):
 
         Parameters
         ----------
-        axes: ints
+        axes: int, optional
             The transposed axes order. Only navigation axes need to be defined.
             May be undefined if self only contains two navigation dimensions.
 
@@ -415,7 +415,7 @@ class Orientation(Misorientation):
 
         Parameters
         ----------
-        axes: ints
+        axes: int, optional
             The transposed axes order. Only navigation axes need to be defined.
             May be undefined if self only contains two navigation dimensions.
 
