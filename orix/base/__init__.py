@@ -217,7 +217,7 @@ class Object3d:
 
         Returns
         -------
-        new
+        obj
             The transposed object.
 
         """
