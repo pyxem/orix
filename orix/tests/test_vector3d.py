@@ -370,6 +370,17 @@ def test_transpose_2d_data_shape(shape, expected_shape):
     assert v2.data.shape == tuple(expected_shape)
 
 
+def test_transpose_3d_no_axes():
+    v1 = Vector3d(np.random.rand(5, 4, 2, 3))
+    try:
+        v2 = v1.transpose()
+        assert False
+    except ValueError:
+        # for more than 2d axes need to be defined
+        # this is not done so VE should be thrown
+        assert True
+
+
 @pytest.mark.parametrize(
     "shape, expected_shape",
     [
