@@ -50,7 +50,7 @@ from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, Symmetry
+from orix.quaternion.symmetry import C1
 from orix.scalar import Scalar
 from orix._util import deprecated
 
@@ -246,17 +246,8 @@ class Misorientation(Rotation):
 
         """
         mori = super().transpose(*axes)
-        if isinstance(self.symmetry, Symmetry):
-            # only one symmetry provided, eg. Orientation
-            mori = mori.set_symmetry(self.symmetry)
-        elif isinstance(self.symmetry, tuple) and all(
-            isinstance(i, Symmetry) for i in self.symmetry
-        ):
-            # Misorientations have two symmetries, as tuple
-            mori = mori.set_symmetry(*self.symmetry)
-        else:
-            # raise error if neither statement is True
-            raise ValueError("Unknown symmetry argument.")
+        sym1, sym2 = self.symmetry
+        mori.set_symmetry(sym1, sym2)
         return mori
 
     def __repr__(self):
