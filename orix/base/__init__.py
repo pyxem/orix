@@ -211,16 +211,21 @@ class Object3d:
 
         Parameters
         ----------
-        axes: int, optional
+        axes : int, optional
             The transposed axes order. Only navigation axes need to be defined.
             May be undefined if self only contains two navigation dimensions.
 
         Returns
         -------
-        obj
-            The transposed object.
+        obj :
+            A transposed instance of the object.
 
         """
+        # 1d object should not be transposed
+        if len(self.shape) == 1:
+            return self
+
+        # allow 2d object to be transposed without specifying axes
         if not len(axes):
             if len(self.shape) != 2:
                 raise ValueError("Axes must be defined for more than two dimensions.")
