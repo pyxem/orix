@@ -249,14 +249,13 @@ class Misorientation(Rotation):
         if isinstance(self.symmetry, Symmetry):
             # only one symmetry provided, eg. Orientation
             mori = mori.set_symmetry(self.symmetry)
-        elif isinstance(self.symmetry, tuple) and all(
-            isinstance(i, Symmetry) for i in self.symmetry
-        ):
+        elif isinstance(self.symmetry, tuple):
             # Misorientations have two symmetries, as tuple
-            mori = mori.set_symmetry(*self.symmetry)
+            mori._symmetry = self._symmetry
         else:
             # raise error if neither statement is True
             raise ValueError("Unknown symmetry argument.")
+
         return mori
 
     def __repr__(self):
@@ -334,6 +333,11 @@ class Orientation(Misorientation):
         if symmetry:
             o = o.set_symmetry(symmetry)
         return o
+
+    def transpose(self, *axes):
+        ori = super().transpose(*axes)
+        ori = ori.set_symmetry(self.symmetry)
+        return ori
 
     @classmethod
     def from_matrix(cls, matrix, symmetry=None):
