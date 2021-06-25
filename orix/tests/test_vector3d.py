@@ -381,6 +381,16 @@ def test_transpose_3d_no_axes():
         assert True
 
 
+def test_transpose_3d_wrong_number_of_axes():
+    v1 = Vector3d(np.random.rand(5, 4, 2, 3))
+    try:
+        v2 = v1.transpose(0, 2)
+        assert False
+    except ValueError:
+        # VE thrown when wrong number of axes provided
+        assert True
+
+
 @pytest.mark.parametrize(
     "shape, expected_shape",
     [
