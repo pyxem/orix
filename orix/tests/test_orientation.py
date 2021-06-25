@@ -112,7 +112,7 @@ def test_getitem(orientation, symmetry):
 
 @pytest.mark.parametrize("Gl", [C4, C2])
 def test_equivalent(Gl):
-    """Tests that the property Misorientation.equivalent runs without error,
+    """ Tests that the property Misorientation.equivalent runs without error,
     use grain_exchange=True as this falls back to grain_exchange=False when
     Gl!=Gr:
 
@@ -147,31 +147,6 @@ def test_sub_orientation_and_other():
     m = Orientation([1, 1, 1, 1])  # any will do
     with pytest.raises(TypeError):
         _ = m - 3
-
-
-def test_transpose_2d():
-    o1 = Orientation.random_vonmises((11, 3))
-    o2 = o1.transpose()
-
-    assert o1.shape == o2.shape[::-1]
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape, axes",
-    [((11, 3, 5), (11, 5, 3), (0, 2, 1)), ((11, 3, 5), (3, 5, 11), (1, 2, 0))],
-)
-def test_transpose_3d(shape, expected_shape, axes):
-    o1 = Orientation.random_vonmises(shape)
-    o2 = o1.transpose(*axes)
-
-    assert o2.shape == tuple(expected_shape)
-
-
-def test_transpose_symmetry():
-    o1 = Orientation.random_vonmises((11, 3)).set_symmetry(Oh)
-    o2 = o1.transpose()
-
-    assert o1.symmetry == o2.symmetry
 
 
 class TestOrientationInitialization:

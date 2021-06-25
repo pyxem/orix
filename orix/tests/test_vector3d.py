@@ -27,29 +27,17 @@ from orix.vector import Vector3d, check_vector
 vectors = [
     (1, 0, 0),
     (0, 0, 1),
-    (
-        (0.5, 0.5, 0.5),
-        (-1, 0, 0),
-    ),
-    [
-        [[-0.707, 0.707, 1], [2, 2, 2]],
-        [[0.1, -0.3, 0.2], [-5, -6, -7]],
-    ],
+    ((0.5, 0.5, 0.5), (-1, 0, 0),),
+    [[[-0.707, 0.707, 1], [2, 2, 2]], [[0.1, -0.3, 0.2], [-5, -6, -7]],],
     np.random.rand(3),
 ]
 
 singles = [
     (1, -1, 1),
     (-5, -5, -6),
-    [
-        [9, 9, 9],
-        [0.001, 0.0001, 0.00001],
-    ],
+    [[9, 9, 9], [0.001, 0.0001, 0.00001],],
     np.array(
-        [
-            [[0.5, 0.25, 0.125], [-0.125, 0.25, 0.5]],
-            [[1, 2, 4], [1, -0.3333, 0.1667]],
-        ]
+        [[[0.5, 0.25, 0.125], [-0.125, 0.25, 0.5]], [[1, 2, 4], [1, -0.3333, 0.1667]],]
     ),
 ]
 
@@ -153,16 +141,8 @@ def test_mul(vector, other, expected):
         ),
         ([4, 8, 12], Scalar([4]), [1, 2, 3]),
         ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
-        (
-            [1, 2, 3],
-            [-1, 2],
-            [[-1, -2, -3], [1 / 2, 1, 3 / 2]],
-        ),
-        (
-            [1, 2, 3],
-            np.array([-1, 1]),
-            [[-1, -2, -3], [1, 2, 3]],
-        ),
+        ([1, 2, 3], [-1, 2], [[-1, -2, -3], [1 / 2, 1, 3 / 2]],),
+        ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]],),
         pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
@@ -222,12 +202,7 @@ def test_polar(azimuth, polar, radial, expected):
 
 
 @pytest.mark.parametrize(
-    "shape",
-    [
-        (1,),
-        (2, 2),
-        (5, 4, 3),
-    ],
+    "shape", [(1,), (2, 2), (5, 4, 3),],
 )
 def test_zero(shape):
     v = Vector3d.zero(shape)
@@ -254,10 +229,7 @@ def test_mul_array(vector):
 
 @pytest.mark.parametrize(
     "vector, x, y, z",
-    [
-        ([1, 2, 3], 1, 2, 3),
-        ([[0, 2, 3], [2, 2, 3]], [0, 2], [2, 2], [3, 3]),
-    ],
+    [([1, 2, 3], 1, 2, 3), ([[0, 2, 3], [2, 2, 3]], [0, 2], [2, 2], [3, 3]),],
     indirect=["vector"],
 )
 def test_xyz(vector, x, y, z):
@@ -330,12 +302,7 @@ def test_assign_z(vector, data, expected):
 
 
 @pytest.mark.parametrize(
-    "vector",
-    [
-        [(1, 0, 0)],
-        [(0.5, 0.5, 1.25), (-1, -1, -1)],
-    ],
-    indirect=["vector"],
+    "vector", [[(1, 0, 0)], [(0.5, 0.5, 1.25), (-1, -1, -1)],], indirect=["vector"],
 )
 def test_perpendicular(vector: Vector3d):
     assert np.allclose(vector.dot(vector.perpendicular).data, 0)
@@ -347,63 +314,6 @@ def test_mean_xyz():
     z = Vector3d.zvector()
     t = Vector3d([3 * x.data, 3 * y.data, 3 * z.data])
     np.allclose(t.mean().data, 1)
-
-
-def test_transpose_1d():
-    v1 = Vector3d(np.random.rand(7, 3))
-    v2 = v1.transpose()
-
-    assert np.allclose(v1.data, v2.data)
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape",
-    [
-        ([6, 4, 3], [4, 6, 3]),
-        ([11, 5, 3], [5, 11, 3]),
-    ],
-)
-def test_transpose_2d_data_shape(shape, expected_shape):
-    v1 = Vector3d(np.random.rand(*shape))
-    v2 = v1.transpose()
-
-    assert v2.data.shape == tuple(expected_shape)
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape",
-    [
-        ([6, 4], [4, 6]),
-        ([11, 5], [5, 11]),
-    ],
-)
-def test_transpose_2d_shape(shape, expected_shape):
-    v1 = Vector3d(np.random.rand(*shape, 3))
-    v2 = v1.transpose()
-
-    assert v2.shape == tuple(expected_shape)
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape, axes",
-    [([6, 4, 5, 3], [4, 5, 6, 3], [1, 2, 0]), ([6, 4, 5, 3], [5, 4, 6, 3], [2, 1, 0])],
-)
-def test_transpose_3d_data_shape(shape, expected_shape, axes):
-    v1 = Vector3d(np.random.rand(*shape))
-    v2 = v1.transpose(*axes)
-
-    assert v2.data.shape == tuple(expected_shape)
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape, axes",
-    [([6, 4, 5], [4, 5, 6], [1, 2, 0]), ([6, 4, 5], [5, 4, 6], [2, 1, 0])],
-)
-def test_transpose_3d_shape(shape, expected_shape, axes):
-    v1 = Vector3d(np.random.rand(*shape, 3))
-    v2 = v1.transpose(*axes)
-
-    assert v2.shape == tuple(expected_shape)
 
 
 @pytest.mark.xfail(strict=True, reason=ValueError)
