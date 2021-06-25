@@ -254,6 +254,7 @@ class Misorientation(Rotation):
             mori._symmetry = self._symmetry
         else:
             # raise error if neither statement is True
+            # this shouldn't happen
             raise ValueError("Unknown symmetry argument.")
 
         return mori
