@@ -50,7 +50,7 @@ from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, Symmetry
+from orix.quaternion.symmetry import C1
 from orix.scalar import Scalar
 from orix._util import deprecated
 
@@ -230,6 +230,7 @@ class Misorientation(Rotation):
 
     def transpose(self, *axes):
         """Returns a new Misorientation containing the same data transposed.
+
         If ndim is originally 2, then order may be undefined.
         In this case the first two dimensions will be transposed.
 
@@ -324,11 +325,6 @@ class Orientation(Misorientation):
         if symmetry:
             o = o.set_symmetry(symmetry)
         return o
-
-    def transpose(self, *axes):
-        ori = super().transpose(*axes)
-        ori = ori.set_symmetry(self.symmetry)
-        return ori
 
     @classmethod
     def from_matrix(cls, matrix, symmetry=None):
