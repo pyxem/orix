@@ -606,6 +606,7 @@ class Miller(Vector3d):
 
     def transpose(self, *axes):
         """Returns a new Miller object containing the same data transposed.
+
         If ndim is originally 2, then order may be undefined.
         In this case the first two dimensions will be transposed.
 
