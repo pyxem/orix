@@ -372,23 +372,14 @@ def test_transpose_2d_data_shape(shape, expected_shape):
 
 def test_transpose_3d_no_axes():
     v1 = Vector3d(np.random.rand(5, 4, 2, 3))
-    try:
-        v2 = v1.transpose()
-        assert False
-    except ValueError:
-        # for more than 2d axes need to be defined
-        # this is not done so VE should be thrown
-        assert True
+    with pytest.raises(ValueError, match="Axes must be defined for more than"):
+        _ = v1.transpose()
 
 
 def test_transpose_3d_wrong_number_of_axes():
     v1 = Vector3d(np.random.rand(5, 4, 2, 3))
-    try:
-        v2 = v1.transpose(0, 2)
-        assert False
-    except ValueError:
-        # VE thrown when wrong number of axes provided
-        assert True
+    with pytest.raises(ValueError, match="Number of axes is ill-defined"):
+        _ = v1.transpose(0, 2)
 
 
 @pytest.mark.parametrize(
