@@ -21,6 +21,7 @@ Added
   Rodrigues fundamental zone, without having to set it up via Matplotlib.
 - Method Object3d.get_random_sample(), inherited by all 3D objects, returning a new
   flattened instance with elements drawn randomly from the original instance.
+- Add transpose method to all 3D classes to transpose navigation dimensions.
 
 2021-05-23 - version 0.6.0
 ==========================
