@@ -104,11 +104,13 @@ class H5ebsdFile:
         self.file.close()
 
     def get_dictionary(self, group_name, **kwargs):
-        """Return a dictionary from a data set group.
+        """Return a dictionary with values from datasets in a group
+        within the file.
 
         Parameters
         ----------
         group_name : str
+            Name of the group.
         kwargs
             Keyword arguments passed to
             :func:`~orix.io.plugins._h5ebsd.hdf5group2dict`.
@@ -116,6 +118,10 @@ class H5ebsdFile:
         Returns
         -------
         dict
+
+        See Also
+        --------
+        orix.io.plugins._h5ebsd.hdf5group2dict
         """
         return hdf5group2dict(self.file[group_name], **kwargs)
 

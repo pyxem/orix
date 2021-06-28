@@ -36,10 +36,8 @@ from orix.io import (
     _plugin_from_manufacturer,
     _overwrite_or_not,
 )
-from orix.io.plugins import ang, emsoft_h5ebsd, orix_hdf5
+from orix.io.plugins import bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
 from orix.quaternion.rotation import Rotation
-
-plugin_list = [ang, emsoft_h5ebsd, orix_hdf5]
 
 
 @contextmanager
@@ -91,6 +89,7 @@ class TestGeneralIO:
         "manufacturer, expected_plugin",
         [
             ("EMEBSDDictionaryIndexing.f90", emsoft_h5ebsd),
+            ("Bruker Nano", bruker_h5ebsd),
             ("orix", orix_hdf5),
             ("Oxford", None),
         ],
@@ -98,12 +97,11 @@ class TestGeneralIO:
     def test_plugin_from_manufacturer(
         self, temp_file_path, manufacturer, expected_plugin
     ):
+        h5ebsd_plugin_list = [bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5]
         with File(temp_file_path, mode="w") as f:
             f.create_dataset(name="Manufacturer", data=manufacturer)
             assert (
-                _plugin_from_manufacturer(
-                    temp_file_path, plugins=[emsoft_h5ebsd, orix_hdf5]
-                )
+                _plugin_from_manufacturer(temp_file_path, plugins=h5ebsd_plugin_list)
                 is expected_plugin
             )
 
