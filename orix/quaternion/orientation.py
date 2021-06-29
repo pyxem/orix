@@ -228,6 +228,28 @@ class Misorientation(Rotation):
         distance = _distance(self, verbose, split_size)
         return distance.reshape(self.shape + self.shape)
 
+    def transpose(self, *axes):
+        """Returns a new Misorientation containing the same data transposed.
+
+        If ndim is originally 2, then order may be undefined.
+        In this case the first two dimensions will be transposed.
+
+        Parameters
+        ----------
+        axes: int, optional
+            The transposed axes order. Only navigation axes need to be defined.
+            May be undefined if self only contains two navigation dimensions.
+
+        Returns
+        -------
+        Misorientation
+            The transposed Misorientation.
+
+        """
+        mori = super().transpose(*axes)
+        mori._symmetry = self._symmetry
+        return mori
+
     def __repr__(self):
         """String representation."""
         cls = self.__class__.__name__

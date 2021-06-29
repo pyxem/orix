@@ -288,6 +288,7 @@ Orientation
     get_distance_matrix
     scatter
     set_symmetry
+    transpose
 .. autoclass:: orix.quaternion.Orientation
     :show-inheritance:
     :members:
@@ -300,6 +301,7 @@ Misorientation
     distance
     equivalent
     set_symmetry
+    transpose
 .. autoclass:: orix.quaternion.Misorientation
     :show-inheritance:
     :members:
@@ -342,6 +344,7 @@ Rotation
     random_vonmises
     to_euler
     to_matrix
+    transpose
     unique
 .. autoclass:: orix.quaternion.Rotation
     :show-inheritance:
@@ -438,6 +441,7 @@ Miller
     rotate
     scatter
     symmetrise
+    transpose
     unique
 .. autoclass:: orix.vector.Miller
     :members:
@@ -485,6 +489,7 @@ Vector3d
     rotate
     scatter
     to_polar
+    transpose
     xvector
     yvector
     zvector
