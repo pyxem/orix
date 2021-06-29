@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Reader of a crystal map from EMsoft's dictionary indexing dot product
+file.
+"""
+
 import gc
 import re
 
@@ -26,6 +30,8 @@ from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.io.plugins._h5ebsd import H5ebsdFile
 from orix.quaternion.rotation import Rotation
 
+
+__all__ = ["file_reader"]
 
 # Plugin description
 format_name = "emsoft_h5ebsd"

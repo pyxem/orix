@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Reader of a crystal map from an .ang text file in formats produced by
+EDAX TSL, NanoMegas ASTAR Index, or EMsoft's EMdpmerge program.
+"""
+
 import re
 import warnings
 

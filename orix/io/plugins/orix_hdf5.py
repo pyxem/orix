@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Reader and writer of a crystal map to and from orix' own HDF5 file
+format.
+"""
+
+
 import copy
 from warnings import warn
 
@@ -27,6 +32,8 @@ from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.io.plugins._h5ebsd import hdf5group2dict
 from orix.quaternion.rotation import Rotation
 
+
+__all__ = ["file_reader", "file_writer"]
 
 # Plugin description
 format_name = "orix_hdf5"

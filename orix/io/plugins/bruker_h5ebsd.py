@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Reader of a crystal map from Bruker's h5ebsd file format."""
+
 from diffpy.structure import Atom, Lattice, Structure
 import numpy as np
 
@@ -23,6 +25,8 @@ from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.io.plugins._h5ebsd import H5ebsdFile
 from orix.quaternion import Rotation
 
+
+__all__ = ["file_reader"]
 
 # Plugin description
 format_name = "bruker_h5ebsd"
