@@ -23,7 +23,7 @@ import numpy as np
 from orix.io import load
 
 
-class TestEMsoftPlugin:
+class TestEMsoftH5ebsdReader:
     @pytest.mark.parametrize(
         "temp_emsoft_h5ebsd_file, map_shape, step_sizes, n_top_matches, refined",
         [
@@ -81,11 +81,8 @@ class TestEMsoftPlugin:
         expected_props = [
             "AvDotProductMap",
             "CI",
-            "CIMap",
             "IQ",
-            "IQMap",
             "ISM",
-            "ISMap",
             "KAM",
             "OSM",
             "TopDotProductList",

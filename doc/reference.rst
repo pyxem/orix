@@ -124,12 +124,20 @@ plugins
 .. currentmodule:: orix.io.plugins
 .. autosummary::
     ang
+    bruker_h5ebsd
     emsoft_h5ebsd
     orix_hdf5
 
 ang
 ~~~
 .. automodule:: orix.io.plugins.ang
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bruker_h5ebsd
+~~~~~~~~~~~~~
+.. automodule:: orix.io.plugins.bruker_h5ebsd
     :members:
     :undoc-members:
     :show-inheritance:

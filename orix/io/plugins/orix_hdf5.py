@@ -16,22 +16,31 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Reader and writer of a crystal map to and from orix' own HDF5 file
+format.
+"""
+
+
 import copy
 from warnings import warn
 
 from diffpy.structure import Atom, Lattice, Structure
-from h5py import File, Group
+from h5py import File
 import numpy as np
 
 from orix.crystal_map import CrystalMap, Phase, PhaseList
+from orix.io.plugins._h5ebsd import hdf5group2dict
 from orix.quaternion.rotation import Rotation
+
+
+__all__ = ["file_reader", "file_writer"]
 
 # Plugin description
 format_name = "orix_hdf5"
+manufacturer = "orix"
 file_extensions = ["h5", "hdf5"]
 writes = True
 writes_this = CrystalMap
-footprint = ["crystal_map"]  # Unique HDF5 footprint
 # TODO: Extend reader/writer to Phase and PhaseList objects
 
 
@@ -54,48 +63,6 @@ def file_reader(filename, **kwargs):
     with File(filename, mode=mode, **kwargs) as f:
         file_dict = hdf5group2dict(f["/"], recursive=True)
     return dict2crystalmap(file_dict["crystal_map"])
-
-
-def hdf5group2dict(group, dictionary=None, recursive=False):
-    """Return a dictionary with values from datasets in a group in an
-    opened HDF5 file.
-
-    Parameters
-    ----------
-    group : h5py:Group
-        HDF5 group object.
-    dictionary : dict, optional
-        To fill dataset values into. If None (default), a new dictionary
-        is created.
-    recursive : bool, optional
-        Whether to add subgroups to dictionary. Default is False.
-
-    Returns
-    -------
-    dictionary : dict
-        Dataset values in group (and subgroups if recursive=True).
-    """
-    if dictionary is None:
-        dictionary = {}
-    for key, val in group.items():
-        # Check whether to extract subgroup or write value the dictionary
-        if isinstance(val, Group):
-            if recursive:
-                dictionary[key] = {}
-                hdf5group2dict(
-                    group=group[key], dictionary=dictionary[key], recursive=recursive,
-                )
-            else:
-                dictionary[key] = val
-        else:
-            val = val[()]
-            # Prepare value for entry in dictionary
-            if isinstance(val, np.ndarray) and len(val) == 1:
-                val = val[0]
-            if isinstance(val, bytes):
-                val = val.decode("latin-1")
-            dictionary[key] = val
-    return dictionary
 
 
 def dict2crystalmap(dictionary):

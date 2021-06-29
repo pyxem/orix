@@ -22,6 +22,7 @@ Added
 - Method Object3d.get_random_sample(), inherited by all 3D objects, returning a new
   flattened instance with elements drawn randomly from the original instance.
 - Add transpose method to all 3D classes to transpose navigation dimensions.
+- Reading of a crystal map from orientation data in Bruker's HDF5 file format.
 
 2021-05-23 - version 0.6.0
 ==========================

@@ -21,10 +21,12 @@
 import os
 from warnings import warn
 
-from h5py import File, Group, is_hdf5
+from h5py import File, is_hdf5
 import numpy as np
 
 from orix.io.plugins import plugin_list
+from orix.io.plugins._h5ebsd import hdf5group2dict
+
 
 extensions = [plugin.file_extensions for plugin in plugin_list if plugin.writes]
 
@@ -116,24 +118,16 @@ def load(filename, **kwargs):
             "report this error."
         )
     elif n_matching_readers > 1 and is_hdf5(filename):
-        reader = _plugin_from_footprints(filename, readers)
+        reader = _plugin_from_manufacturer(filename, readers)
     else:
         reader = readers[0]
 
     return reader.file_reader(filename, **kwargs)
 
 
-def _plugin_from_footprints(filename, plugins):
-    """Find the correct plugin in a list of HDF5 plugins to read a file's
-    content by finding a matching pattern between a plugin's "footprint"
-    and the file.
-
-    The unique footprint is a list of strings that can take on either of
-    two formats:
-        * group/dataset names separated by "/", indicating nested
-          groups/datasets
-        * single group/dataset name indicating that the groups/datasets
-          are in the top group
+def _plugin_from_manufacturer(filename, plugins):
+    """Return the correct plugin based on the manufacturer listed in a
+    top group named 'Manufacturer' in an HDF5 file.
 
     Parameters
     ----------
@@ -144,40 +138,25 @@ def _plugin_from_footprints(filename, plugins):
 
     Returns
     -------
-    plugin
-        One of the potential plugins, or None if no footprint was found.
+    matching_plugin
+        One of the potential plugins, or None if no matching plugin was
+        found.
     """
-
-    def _hdfgroups2dict(group):
-        d = {}
-        for key, val in group.items():
-            key = key.lstrip().lower()
-            if isinstance(val, Group):
-                d[key] = _hdfgroups2dict(val)
-            else:
-                d[key] = 1
-        return d
-
-    def _exists(obj, chain):
-        key = chain.pop(0)
-        if key in obj:
-            return _exists(obj[key], chain) if chain else obj[key]
-
     with File(filename, mode="r") as f:
-        d = _hdfgroups2dict(f["/"])
-        plugin = None
-        plugins_with_footprints = [p for p in plugins if hasattr(p, "footprint")]
-        for p in plugins_with_footprints:
-            n_matches = 0
-            n_desired_matches = len(p.footprint)
-            for fp in p.footprint:
-                fp = fp.lower().split("/")
-                if _exists(d, fp) is not None:
-                    n_matches += 1
-            if n_matches == n_desired_matches:
-                plugin = p
-
-    return plugin
+        d = hdf5group2dict(f["/"])
+        manufacturer = None
+        for key, value in d.items():
+            if key.lower() == "manufacturer":
+                manufacturer = value
+        matching_plugin = None
+        for p in plugins:
+            if (
+                hasattr(p, "manufacturer")
+                and manufacturer is not None
+                and p.manufacturer in manufacturer
+            ):
+                matching_plugin = p
+    return matching_plugin
 
 
 def save(filename, object2write, overwrite=None, **kwargs):
