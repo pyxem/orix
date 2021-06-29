@@ -203,8 +203,7 @@ class Phase:
 
     @property
     def is_hexagonal(self):
-        """Whether the crystal structure is hexagonal/trigonal or not.
-        """
+        """Whether the crystal structure is hexagonal/trigonal or not."""
         return np.allclose(self.structure.lattice.abcABG()[3:], [90, 90, 120])
 
     def __repr__(self):
@@ -560,8 +559,7 @@ class PhaseList:
             raise TypeError(f"{key} is an invalid phase ID or name.")
 
     def __iter__(self):
-        """Return a tuple with phase ID and Phase object, in that order.
-        """
+        """Return a tuple with phase ID and Phase object, in that order."""
         for phase_id, phase in self._dict.items():
             yield phase_id, phase
 
