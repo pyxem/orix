@@ -16,7 +16,6 @@ the :ref:`user guide <user-guide>` and the
 The list of top modules:
 
 .. autosummary::
-    base
     crystal_map
     io
     plot
@@ -25,14 +24,6 @@ The list of top modules:
     sampling
     scalar
     vector
-
-....
-
-base
-====
-.. automodule:: orix.base
-    :members:
-    :show-inheritance:
 
 ....
 
@@ -309,8 +300,6 @@ Misorientation
 
 OrientationRegion
 -----------------
-.. automodule:: orix.quaternion.OrientationRegion
-    :noindex:
 .. currentmodule:: orix.quaternion.OrientationRegion
 .. autosummary::
     from_symmetry
@@ -397,9 +386,9 @@ vector
 .. currentmodule:: orix.vector
 .. autosummary::
     AxAngle
+    FundamentalSector
     Homochoric
     Miller
-    NeoEuler
     Rodrigues
     SphericalRegion
     Vector3d
@@ -414,8 +403,17 @@ AxAngle
     :undoc-members:
     :show-inheritance:
 
+FundamentalSector
+-----------------
+.. currentmodule:: orix.vector.FundamentalSector
+.. autoclass:: orix.vector.FundamentalSector
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Homochoric
 ----------
+.. currentmodule:: orix.vector.Homochoric
 .. autoclass:: orix.vector.Homochoric
     :members:
     :undoc-members:
@@ -444,16 +442,6 @@ Miller
     transpose
     unique
 .. autoclass:: orix.vector.Miller
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-NeoEuler
---------
-.. currentmodule:: orix.vector.NeoEuler
-.. autosummary::
-    from_rotation
-.. autoclass:: orix.vector.NeoEuler
     :members:
     :undoc-members:
     :show-inheritance:

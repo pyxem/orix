@@ -215,12 +215,37 @@ class StereographicPlot(Axes):
 
     @staticmethod
     def can_pan():
-        return True
+        return False
 
     @staticmethod
     def can_zoom():
         # TODO: Implement zoom (https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py#L1437)
-        return True
+        return False
+
+    def plot(self, *args, **kwargs):
+        """Plot vectors as scatter points or draw lines between them.
+
+        This method overwrites :meth:`matplotlib.axes.Axes.plot`, see
+        that method's docstring for parameters.
+
+        Parameters
+        ----------
+        args : Vector3d or tuple of float or numpy.ndarray
+            Vector(s), or azimuth and polar angles, the latter two
+            passed as separate arguments (not keyword arguments).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.plot
+        """
+        new_kwargs = dict(clip_on=False, linewidth=2, color="k", linestyle="-")
+        azimuth, polar, _, updated_kwargs = self._prepare_to_call_inherited_method(
+            args, kwargs, new_kwargs
+        )
+        super().plot(azimuth, polar, **updated_kwargs)
 
     def scatter(self, *args, **kwargs):
         """A scatter plot of vectors.
@@ -242,25 +267,20 @@ class StereographicPlot(Axes):
         matplotlib.axes.Axes.scatter
         """
         new_kwargs = dict(zorder=ZORDER["scatter"], clip_on=False)
-        for k, v in new_kwargs.items():
-            kwargs.setdefault(k, v)
-
-        azimuth, polar = self._pretransform_input(args)
-        visible = self._visible_in_hemisphere(polar)
-        if np.count_nonzero(visible) == 0:
+        out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
+        if out is None:
             return
         else:
-            azimuth = azimuth[visible]
-            polar = polar[visible]
+            azimuth, polar, visible, updated_kwargs = out
 
         # Color(s) and size(s)
-        c = kwargs.pop("c", "C0")
+        c = updated_kwargs.pop("c", "C0")
         c = _get_array_of_values(value=c, visible=visible)
-        s = kwargs.pop("s", None)
+        s = updated_kwargs.pop("s", None)
         if s is not None:
             s = _get_array_of_values(value=s, visible=visible)
 
-        super().scatter(azimuth, polar, c=c, s=s, **kwargs)
+        super().scatter(azimuth, polar, c=c, s=s, **updated_kwargs)
 
     def text(self, *args, **kwargs):
         """Add text to the axes.
@@ -282,18 +302,12 @@ class StereographicPlot(Axes):
         matplotlib.axes.Axes.text
         """
         new_kwargs = dict(va="bottom", ha="center", zorder=ZORDER["text"])
-        for k, v in new_kwargs.items():
-            kwargs.setdefault(k, v)
-
-        azimuth, polar = self._pretransform_input(args)
-        visible = self._visible_in_hemisphere(polar)
-        if np.count_nonzero(visible) == 0:
+        out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
+        if out is None:
             return
         else:
-            azimuth = azimuth[visible]
-            polar = polar[visible]
-
-        super().text(azimuth, polar, **kwargs)
+            azimuth, polar, _, updated_kwargs = out
+        super().text(azimuth, polar, **updated_kwargs)
 
     # ----------- Custom attributes and methods below here ----------- #
 
@@ -565,6 +579,42 @@ class StereographicPlot(Axes):
             to vectors visible in this hemisphere.
         """
         return _visible_in_hemisphere(self.hemisphere, self._polar_cap, polar)
+
+    def _prepare_to_call_inherited_method(self, args, kwargs, new_kwargs=None):
+        """Prepare arguments and keyword arguments passed to methods in
+        :class:`StereographicPlot` inherited from
+        :class:`matplotlib.axes.Axes`.
+
+        Parameters
+        ----------
+        args
+            Any arguments passed to the :class:`StereographicPlot` method.
+        kwargs : dict
+            Any arguments passed to the :class:`StereographicPlot` method.
+        new_kwargs : dict
+            Any default keyword arguments to be passed to the inherited
+            method.
+
+        Returns
+        -------
+        azimuth : numpy.ndarray
+        polar : numpy.ndarray
+        visible : numpy.ndarray
+        updated_kwargs : dict
+        """
+        updated_kwargs = kwargs
+        for k, v in new_kwargs.items():
+            updated_kwargs.setdefault(k, v)
+
+        azimuth, polar = self._pretransform_input(args)
+        visible = self._visible_in_hemisphere(polar)
+        if np.count_nonzero(visible) == 0:
+            return
+        else:
+            azimuth = azimuth[visible]
+            polar = polar[visible]
+
+        return azimuth, polar, visible, updated_kwargs
 
 
 register_projection(StereographicPlot)

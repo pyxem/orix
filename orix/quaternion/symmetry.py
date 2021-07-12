@@ -45,9 +45,7 @@ from orix.vector import Vector3d
 
 
 class Symmetry(Rotation):
-    """The set of rotations comprising a point group.
-
-    """
+    """The set of rotations comprising a point group."""
 
     name = ""
 
@@ -117,18 +115,43 @@ class Symmetry(Rotation):
 
     @property
     def fundamental_sector(self):
-        from orix.vector import SphericalRegion
+        """:class:`~orix.vector.FundamentalSector` describing the
+        inverse pole figure given by the point group name.
+
+        These sectors are taken from MTEX'
+        :code:`crystalSymmetry.fundamental_sector`.
+        """
+        from orix.vector import FundamentalSector
 
         name = self.name
         vx = Vector3d.xvector().data.squeeze()
         vy = Vector3d.yvector().data.squeeze()
         vz = Vector3d.zvector().data.squeeze()
-        if name in ["1", "-1"]:
+
+        #         ['1', '-1', '211', '121', '112', 'm11', '1m1', '11m', '2/m',
+        #         '222', 'mm2', 'mmm', '4', '-4', '4/m', '422', '4mm', '-42m',
+        #         '4/mmm', '3', '-3', '321', '312', '32', '3m', '-3m', '6', '-6',
+        #         '6/m', '622', '6mm', '-6m2', '6/mmm', '23', 'm-3', '432', '-43m', 'm-3m']
+
+        # Get normal(s)
+        n = None
+        if name == "-1":
             n = vz
+        elif name in ["211", "121", "112"]:
+            idx_min_angle = np.argmin(self.angle.data)
+            if np.isclose(self[idx_min_angle].dot(vz), 0):
+                n = vz
+        elif name == "m11":
+            idx_min_angle = np.argmin(self.angle.data)
+            n = -self[idx_min_angle]
         elif name == "m-3m":
             n = [[1, -1, 0], [-1, 0, 1], vy]
-        n = Vector3d(n)
-        return SphericalRegion(n.unique())
+
+        if n is None:
+            n = Vector3d.empty()
+
+        v = Vector3d(n).unique()
+        return FundamentalSector(v)
 
     @classmethod
     def from_generators(cls, *generators):
