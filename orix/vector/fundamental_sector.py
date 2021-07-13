@@ -30,18 +30,35 @@ class FundamentalSector(SphericalRegion):
 
     @property
     def vertices(self):
-        n = self.size
-        vertices = self.zero((n,))
-        i_next = np.arange(1, n + 1)
-        i_next[-1] = 0
-        for i in range(n):
-            i_n = i_next[i]
-            vertices[i_n] = self[i_n].cross(self[i]).squeeze()
-        return Vector3d(vertices).unit
+        n = self.reshape(1, self.size)
+        u = n.cross(n.transpose())
+        return u[u <= self].unique().unit
 
     @property
     def center(self):
-        return self.vertices.mean()
+        """Center vector of the fundamental sector.
+
+        Taken from MTEX' :code:`sphericalRegion.center`.
+        """
+        v = self.vertices.unique()
+        n_vertices = v.size
+        n_normals = self.size
+        if n_normals < 2:
+            return self
+        elif n_vertices < 3:
+            # Find the pair of maximum angle
+            angles = self.angle_with(self.reshape(n_normals, 1)).data
+            indices = np.argmax(angles, axis=1)
+            return self[indices].mean()
+        elif n_vertices < 4:
+            return v.mean()
+        else:
+            # Avoid circular import
+            from orix.sampling import uniform_SO2_sample
+
+            v_all = uniform_SO2_sample(resolution=1)
+            v = v_all[v_all < self]
+            return v.mean()
 
     @property
     def edges(self):
@@ -55,10 +72,16 @@ class FundamentalSector(SphericalRegion):
         :meth:`orix.plot.StereographicPlot.plot` draws bounding lines
         without gaps.
         """
-        edge_steps = 100
+        if self.size == 0:
+            return Vector3d.empty()
+
+        edge_steps = 200
         circles = self.get_circle(steps=edge_steps)
         edges = np.zeros((self.size * edge_steps + 3, 3))
         vertices = self.vertices
+
+        if vertices.size == 0:
+            return circles
 
         j = 0
         for ci, vi in zip(circles, vertices):
@@ -82,4 +105,4 @@ class FundamentalSector(SphericalRegion):
         edges = edges[order]
         edges = np.vstack([edges, edges[0]])
 
-        return Vector3d(edges).squeeze()
+        return Vector3d(edges).flatten()

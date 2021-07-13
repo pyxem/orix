@@ -42,7 +42,6 @@ class Vector3d(Object3d):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from orix.vector import Vector3d
     >>> v = Vector3d((1, 2, 3))
     >>> w = Vector3d(np.array([[1, 0, 0], [0, 1, 1]]))
@@ -400,7 +399,7 @@ class Vector3d(Object3d):
         return cls((0, 0, 1))
 
     def angle_with(self, other):
-        """Calculate the angles between vectors in 'self' and 'other'
+        """Calculate the angles between these vectors and other vectors.
 
         Vectors must have compatible shapes for broadcasting to work.
 
@@ -467,7 +466,7 @@ class Vector3d(Object3d):
         """
         assert self.size == 1, "`get_nearest` only works for single vectors."
         tiebreak = Vector3d.zvector() if tiebreak is None else tiebreak
-        eps = 1e-9 if inclusive else 0.0
+        eps = 1e-9 if inclusive else 0
         cosines = x.dot(self).data
         mask = np.logical_and(-1 - eps < cosines, cosines < 1 + eps)
         x = x[mask]
@@ -512,7 +511,7 @@ class Vector3d(Object3d):
         Returns
         -------
         circles : Vector3d
-            Vectors delinating circles with the `opening_angle` about
+            Vectors delineating circles with the `opening_angle` about
             the vectors.
 
         Notes

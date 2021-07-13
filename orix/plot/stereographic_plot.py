@@ -242,9 +242,12 @@ class StereographicPlot(Axes):
         matplotlib.axes.Axes.plot
         """
         new_kwargs = dict(clip_on=False, linewidth=2, color="k", linestyle="-")
-        azimuth, polar, _, updated_kwargs = self._prepare_to_call_inherited_method(
-            args, kwargs, new_kwargs
-        )
+        out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
+        if out is None:
+            return
+        else:
+            azimuth, polar, _, updated_kwargs = out
+
         super().plot(azimuth, polar, **updated_kwargs)
 
     def scatter(self, *args, **kwargs):

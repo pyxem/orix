@@ -17,7 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 """Functions (broadly internal ones) supporting grid generation within
-rotation space.
+rotation space, *SO(3)*.
 """
 
 import numpy as np
