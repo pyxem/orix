@@ -16,14 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
+
+import matplotlib.transforms as mtransforms
 from matplotlib import rcParams
 from matplotlib.axes import Axes
 from matplotlib.axis import XAxis, YAxis
-from matplotlib.patches import Circle
+from matplotlib.patches import Wedge
 from matplotlib.path import Path
 from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
-from matplotlib.transforms import Affine2D, Affine2DBase, BboxTransformTo, Transform
 import numpy as np
 
 from orix.projections import InverseStereographicProjection, StereographicProjection
@@ -36,7 +38,14 @@ from orix.plot._symmetry_marker import (
 from orix.vector import Vector3d
 
 
-class StereographicTransform(Transform):
+# Inspiration and resources for the stereographic plot:
+# https://matplotlib.org/stable/devel/add_new_projection.html
+# https://matplotlib.org/stable/tutorials/advanced/transforms_tutorial.html
+# https://matplotlib.org/stable/gallery/misc/custom_projection.html
+# https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py
+
+
+class StereographicTransform(mtransforms.Transform):
     """The stereographic transform."""
 
     input_dims = output_dims = 2
@@ -69,7 +78,7 @@ class StereographicTransform(Transform):
         return InvertedStereographicTransform(pole=self.pole)
 
 
-class InvertedStereographicTransform(Transform):
+class InvertedStereographicTransform(mtransforms.Transform):
     input_dims = output_dims = 2
 
     def __init__(self, pole=-1):
@@ -87,26 +96,37 @@ class InvertedStereographicTransform(Transform):
         return StereographicTransform(pole=self.pole)
 
 
-class StereographicAffine(Affine2DBase):
-    def __init__(self, pole=-1, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class StereographicAffine(mtransforms.Affine2DBase):
+    """The affine part of the stereographic projection. Scales the
+    output so that maximum polar angle rests on the edge of the axes
+    circle.
+    """
+
+    def __init__(self, limits, pole=-1):
+        """`limits` is the view limit of the data. The only part of its
+        bounds that is used is the y limits (for the polar limits).
+        The azimuth range is handled by the non-affine transform.
+        """
+        super().__init__()
         self.pole = pole
+        self._limits = limits
+        self.set_children(limits)
+        self._mtx = None
+
+    __str__ = mtransforms._make_str_method("_limits", "pole")
 
     def get_matrix(self):
-        # Only recompute if self._invalid is True?
         if self._invalid:
-            pole = self.pole
-            st = StereographicTransform(pole=pole)
-            xscale, _ = st.transform((0, np.pi / 2))
-            _, yscale = st.transform((np.pi / 2, np.pi / 2))
-            scales = (0.5 / xscale, 0.5 / yscale)
-            self._mtx = Affine2D().scale(*scales).translate(0.5, 0.5)
+            polar_max = self._limits.ymax
+            st = StereographicTransform(pole=self.pole)
+            y_scale, _ = st.transform((0, polar_max))
+            self._mtx = mtransforms.Affine2D().scale(0.5 / y_scale).translate(0.5, 0.5)
             self._inverted = None
             self._invalid = 0
         return self._mtx
 
 
-ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
+ZORDER = dict(text=6, scatter=100, symmetry_marker=4, draw_circle=3)
 
 
 class StereographicPlot(Axes):
@@ -124,11 +144,7 @@ class StereographicPlot(Axes):
     >>> ax.scatter(vector.Vector3d([[0, 0, 1], [1, 0, 1]]))
     """
 
-    # TODO: Extend by taking inspiration from matplotlib.projections.polar:
-    #  https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py
-
-    # See this Matplotlib tutorial for explanations of methods:
-    # https://matplotlib.org/stable/gallery/misc/custom_projection.html
+    # Axes: x - azimuth, y - polar
 
     name = "stereographic"
     _hemisphere = "upper"
@@ -143,6 +159,7 @@ class StereographicPlot(Axes):
         self._stereographic_grid = None
 
         super().__init__(*args, **kwargs)
+        self.use_sticky_edges = True  # ??
         # Set ratio of y-unit to x-unit by adjusting the physical
         # dimension of the Axes (box), and centering the anchor (C)
         self.set_aspect("equal", adjustable="box", anchor="C")
@@ -152,7 +169,6 @@ class StereographicPlot(Axes):
         # Need to override these to get rid of spines
         self.xaxis = XAxis(self)
         self.yaxis = YAxis(self)
-        self.spines["stereographic"].register_axis(self.yaxis)
         self._update_transScale()
 
     def clear(self):
@@ -163,25 +179,62 @@ class StereographicPlot(Axes):
         self.xaxis.set_tick_params(label1On=False)
         self.yaxis.set_tick_params(label1On=False)
 
+        self.title.set_y(1.05)
+
+        self.spines["start"].set_visible(False)
+        self.spines["end"].set_visible(False)
+        self.set_xlim(0, self._azimuth_cap)
+        self.set_ylim(0, self._polar_cap)
+
         self.polar_grid()
         self.azimuth_grid()
         self.grid(rcParams["axes.grid"])
 
-        self.set_xlim(0, self._azimuth_cap)
-        self.set_ylim(0, self._polar_cap)
-
     def _set_lim_and_transforms(self):
+        self._originViewLim = mtransforms.LockableBbox(self.viewLim)
+        self.transScale = mtransforms.TransformWrapper(mtransforms.IdentityTransform())
+        self.axesLim = _WedgeBbox(
+            center=(0.5, 0.5), viewLim=self.viewLim, originLim=self._originViewLim
+        )
+
+        # Scale the wedge to fill the axes
+        self.transWedge = mtransforms.BboxTransformFrom(self.axesLim)
+
+        # Data (azimuth, polar) space into rectilinear space (X, Y)
         self.transProjection = StereographicTransform(pole=self.pole)
-        self.transAffine = StereographicAffine(pole=self.pole)
-        self.transAxes = BboxTransformTo(self.bbox)
+        # Rectilinear space (X, Y) into axes space (0, 0) to (1, 1)
+        self.transProjectionAffine = StereographicAffine(
+            limits=self.viewLim, pole=self.pole
+        )
+        # Axes space to display space. Scale the axes to fill the figure
+        self.transAxes = mtransforms.BboxTransformTo(self.bbox)
 
-        self.transData = self.transProjection + self.transAffine + self.transAxes
+        # Data -> display coordinates
+        self.transData = (
+            self.transScale
+            + self.transProjection
+            + self.transProjectionAffine
+            + self.transWedge
+            + self.transAxes
+        )
 
-        self._xaxis_pretransform = Affine2D().scale(1, self._polar_cap)
-        self._xaxis_transform = self._xaxis_pretransform + self.transData
+        self._xaxis_transform = (
+            mtransforms.blended_transform_factory(
+                x_transform=mtransforms.IdentityTransform(),
+                y_transform=mtransforms.BboxTransformTo(self.viewLim),
+            )
+            + self.transData
+        )
+        self._xaxis_text_transform = self.transData
 
-        self._yaxis_pretransform = Affine2D().scale(self._azimuth_cap, 1)
-        self._yaxis_transform = self._yaxis_pretransform + self.transData
+        self._yaxis_transform = (
+            mtransforms.blended_transform_factory(
+                x_transform=mtransforms.BboxTransformTo(self.viewLim),
+                y_transform=mtransforms.IdentityTransform(),
+            )
+            + self.transData
+        )
+        self._yaxis_text_transform = mtransforms.TransformWrapper(self.transData)
 
     @staticmethod
     def format_coord(azimuth, polar):
@@ -203,24 +256,92 @@ class StereographicPlot(Axes):
         return self._yaxis_transform
 
     def _gen_axes_spines(self):
-        return {"stereographic": Spine.circular_spine(self, (0.5, 0.5), 0.5)}
+        # In axes coordinate system
+        spines = OrderedDict(
+            [
+                (
+                    "stereographic",
+                    Spine.arc_spine(
+                        axes=self,
+                        spine_type="top",
+                        center=(0.5, 0.5),
+                        radius=0.5,
+                        theta1=0,
+                        theta2=360,
+                    ),
+                ),
+                ("start", Spine.linear_spine(self, "left")),
+                ("end", Spine.linear_spine(self, "right")),
+            ]
+        )
+        spines["stereographic"].set_transform(self.transWedge + self.transAxes)
+        spines["start"].set_transform(self._yaxis_transform)
+        spines["end"].set_transform(self._yaxis_transform)
+        return spines
 
-    @staticmethod
-    def _gen_axes_patch():
-        return Circle((0.5, 0.5), 0.5)
+    def _gen_axes_patch(self):
+        # In axes coordinate system
+        return Wedge(center=(0.5, 0.5), r=0.5, theta1=0, theta2=360)
 
-    @staticmethod
-    def get_data_ratio():
+    def get_data_ratio(self):
         return 1
 
-    @staticmethod
-    def can_pan():
+    def can_pan(self):
         return False
 
-    @staticmethod
-    def can_zoom():
-        # TODO: Implement zoom (https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py#L1437)
+    def can_zoom(self):
         return False
+
+    def _restrict_to_fundamental_sector(self, fs):
+        vertices = fs.vertices
+        is_vz = np.isclose(Vector3d.zvector().dot(vertices).data, 1)
+        azimuth = vertices[~is_vz].azimuth.data
+        azimuth_min, azimuth_max = azimuth.min(), azimuth.max()
+        polar = vertices.polar.data
+        self.viewLim.x0 = azimuth_min
+        self.viewLim.x1 = azimuth_max
+        self.viewLim.y0 = polar.min()
+        self.viewLim.y1 = polar.max()
+
+    def set_azimuth_range(self, amin, amax):
+        self.viewLim.x0 = np.deg2rad(amin)
+        self.viewLim.x1 = np.deg2rad(amax)
+
+    def set_polar_max(self, pmax):
+        self.viewLim.y1 = np.deg2rad(pmax)
+
+    def draw(self, renderer):
+        self._unstale_viewLim()
+
+        azimuth_min, azimuth_max = np.rad2deg(self.viewLim.intervalx)
+        polar_min, polar_max = self.viewLim.intervaly
+
+        center = self.transWedge.transform((0.5, 0.5))
+        self.patch.set_center(center)
+        self.patch.set_theta1(azimuth_min)
+        self.patch.set_theta2(azimuth_max)
+
+        edge, _ = self.transWedge.transform((1, 0))
+        radius = edge - center[0]
+        width = min(radius * (polar_max - polar_min) / polar_max, radius)
+        self.patch.set_radius(radius)
+        self.patch.set_width(width)
+
+        is_full_circle = abs(abs(azimuth_max - azimuth_min) - 360) < 1e-12
+        visible = not is_full_circle
+        self.spines["start"].set_visible(visible)
+        self.spines["end"].set_visible(visible)
+
+        if visible:
+            yaxis_text_transform = self._yaxis_transform
+        else:
+            yaxis_text_transform = self.transData
+        if self._yaxis_text_transform != yaxis_text_transform:
+            self._yaxis_text_transform.set(yaxis_text_transform)
+            self.yaxis.reset_ticks()
+            self.yaxis.set_clip_path(self.patch)
+
+        super().draw(renderer)
 
     def plot(self, *args, **kwargs):
         """Plot vectors as scatter points or draw lines between them.
@@ -371,7 +492,7 @@ class StereographicPlot(Axes):
         Parameters
         ----------
         resolution : float, optional
-            Aziumuth grid resolution in degrees. Default is 15 degrees.
+            Azimuth grid resolution in degrees. Default is 15 degrees.
             This can also be set upon initialization of the axes by
             passing `azimuth_resolution` to `subplot_kw`.
 
@@ -547,7 +668,7 @@ class StereographicPlot(Axes):
         Returns
         -------
         azimuth : numpy.ndarray
-            Azimuth coordiantes of unit vectors.
+            Azimuth coordinates of unit vectors.
         polar : numpy.ndarray
             Polar coordinates of unit vectors.
         """
@@ -667,6 +788,7 @@ def _visible_in_hemisphere(hemisphere, polar_cap, polar):
         Boolean array with True for polar angles corresponding to
         vectors visible in this hemisphere.
     """
+    # TODO: Use SphericalRegion, possibly defined by a FundamentalSector
     return polar <= polar_cap if hemisphere == "upper" else polar > polar_cap
 
 
@@ -698,3 +820,55 @@ def _sort_coords_by_shifted_bools(hemisphere, polar_cap, azimuth, polar):
         azimuth = np.roll(azimuth, shift=-to_shift)
         polar = np.roll(polar, shift=-to_shift)
     return azimuth, polar
+
+
+class _WedgeBbox(mtransforms.Bbox):
+    """
+    Transform (theta, r) wedge Bbox into axes bounding box.
+    Parameters
+    ----------
+    center : (float, float)
+        Center of the wedge
+    viewLim : `~matplotlib.transforms.Bbox`
+        Bbox determining the boundaries of the wedge
+    originLim : `~matplotlib.transforms.Bbox`
+        Bbox determining the origin for the wedge, if different from *viewLim*
+    """
+
+    def __init__(self, center, viewLim, originLim, **kwargs):
+        super().__init__([[0, 0], [1, 1]], **kwargs)
+        self._center = center
+        self._viewLim = viewLim
+        self._originLim = originLim
+        self.set_children(viewLim, originLim)
+
+    __str__ = mtransforms._make_str_method("_center", "_viewLim", "_originLim")
+
+    def get_points(self):
+        # docstring inherited
+        if self._invalid:
+            points = self._viewLim.get_points().copy()
+
+            # Scale angular limits to work with Wedge
+            points[:, 0] = np.rad2deg(points[:, 0])
+
+            # Scale radial limits to match axes limits
+            rscale = 0.5 / points[1, 1]
+            points[:, 1] *= rscale
+            width = min(points[1, 1] - points[0, 1], 0.5)
+
+            # Generate bounding box for wedge
+            wedge = Wedge(
+                self._center, points[1, 1], points[0, 0], points[1, 0], width=width
+            )
+            self.update_from_path(wedge.get_path())
+
+            # Ensure equal aspect ratio
+            w, h = self._points[1] - self._points[0]
+            deltah = max(w - h, 0) / 2
+            deltaw = max(h - w, 0) / 2
+            self._points += np.array([[-deltaw, -deltah], [deltaw, deltah]])
+
+            self._invalid = False
+
+        return self._points
