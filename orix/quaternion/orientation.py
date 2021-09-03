@@ -51,6 +51,7 @@ from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1
 from orix.scalar import Scalar
+from orix.vector import AxAngle, Vector3d
 from orix._util import deprecated
 
 
@@ -486,13 +487,13 @@ class Orientation(Misorientation):
         alpha = np.mod(alpha, max_alpha)
         gamma = np.mod(gamma, max_gamma)
         euler = np.zeros(self.shape + (3,))
-        beta_lower_pi_half = beta <= np.pi / 2
+        beta_lower_than_pi_half = beta <= np.pi / 2
         euler[..., 0] = np.where(
-            beta_lower_pi_half, alpha, np.mod(np.pi + alpha, 2 * np.pi)
+            beta_lower_than_pi_half, alpha, np.mod(np.pi + alpha, 2 * np.pi)
         )
-        euler[..., 1] = np.where(beta_lower_pi_half, beta, np.pi - beta)
+        euler[..., 1] = np.where(beta_lower_than_pi_half, beta, np.pi - beta)
         euler[..., 2] = np.where(
-            beta_lower_pi_half,
+            beta_lower_than_pi_half,
             np.mod(gamma, max_gamma),
             np.mod((2 * np.pi) - gamma, max_gamma),
         )

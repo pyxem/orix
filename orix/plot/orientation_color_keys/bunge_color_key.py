@@ -23,7 +23,10 @@ from orix.plot.orientation_color_keys import OrientationColorKey
 
 class BungeColorKey(OrientationColorKey):
     def orientation2color(self, orientations):
-        alpha, beta, gamma = orientations.in_euler_fundamental_region().T
+        return self._euler2color(orientations.in_euler_fundamental_region().T)
+
+    def _euler2color(self, euler):
+        alpha, beta, gamma = euler
         max_alpha, max_beta, max_gamma = self.symmetry.euler_fundamental_region
         r = alpha / max_alpha
         g = beta / max_beta

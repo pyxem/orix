@@ -156,10 +156,6 @@ class Symmetry(Rotation):
         return np.radians(angles[self.proper_subgroup.name])
 
     @property
-    def primary_axis_order(self):
-        return int(2 * np.pi / self.euler_fundamental_region[2])
-
-    @property
     def system(self):
         """Which of the seven crystal systems this symmetry belongs to
         as a :ref:`str`.
