@@ -24,7 +24,7 @@ from orix.quaternion.symmetry import get_point_group
 
 
 def get_sample_fundamental(
-    resolution=2, point_group=None, space_group=None, method="harr_euler"
+    resolution=2, point_group=None, space_group=None, method="harr_euler", **kwargs
 ):
     """Generates an equispaced grid of rotations within a fundamental
     zone.
@@ -39,8 +39,10 @@ def get_sample_fundamental(
     space_group: int, optional
         Between 1 and 231, defaults to None.
     method : str, optional
-        Either "harr_euler" (default) or "quaternion". See
+        "harr_euler" (default), "quaternion" or "chubochoric". See
         :func:`~orix.sampling.uniform_SO3_sample` for details.
+    kwargs
+        Keyword arguments passed on to the sampling method.
 
     Returns
     -------
@@ -61,7 +63,7 @@ def get_sample_fundamental(
         point_group = get_point_group(space_group, proper=True)
 
     # TODO: provide some subspace selection options
-    r = uniform_SO3_sample(resolution, method=method, unique=False)
+    r = uniform_SO3_sample(resolution, method=method, unique=False, **kwargs)
 
     fundamental_region = OrientationRegion.from_symmetry(point_group)
     r = r[r < fundamental_region]

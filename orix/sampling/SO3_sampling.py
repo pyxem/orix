@@ -23,23 +23,26 @@ rotation space.
 import numpy as np
 
 from orix.quaternion import Rotation
+from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 
-def uniform_SO3_sample(resolution, method="harr_euler", unique=True):
+def uniform_SO3_sample(resolution, method="harr_euler", unique=True, **kwargs):
     r"""Returns rotations that are evenly spaced according to the Haar
     measure on *SO(3)*.
 
     Parameters
     ----------
     resolution : float
-        The characteristic distance between a rotation and its neighbour
-        in degrees.
+        The desired characteristic distance between a rotation and its
+        neighbour in degrees.
     method : str
-        The sampling method adopted, either "harr_euler" (default) or
-        "quaternion". See *Notes*.
+        The sampling method adopted, among "harr_euler" (default),
+        "quaternion" or "cubochoric". See *Notes*.
     unique : bool
         Whether only unique rotations should be returned, default is
         True.
+    kwargs
+        Keyword arguments passed on to the sampling method.
 
     Returns
     -------
@@ -76,6 +79,8 @@ def uniform_SO3_sample(resolution, method="harr_euler", unique=True):
         return _euler_angles_harr_measure(resolution, unique)
     elif method == "quaternion":
         return _three_uniform_samples_method(resolution, unique)
+    elif method == "cubochoric":
+        return cubochoric_sampling(resolution=resolution, **kwargs)
 
 
 def _three_uniform_samples_method(resolution, unique, max_angle=None):

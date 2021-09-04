@@ -53,6 +53,7 @@ setup(
         "h5py",
         "matplotlib >= 3.3",
         "matplotlib-scalebar",
+        "numba",
         "numpy",
         "scipy",
         "tqdm",
