@@ -130,6 +130,7 @@ def cu2ho(cu):
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def ho2ax_single(ho):
+    # Constants stolen directly from EMsoft
     # fmt: off
     tfit = np.array([
          0.9999999999999968,     -0.49999999999986866,     -0.025000000000632055,
@@ -297,17 +298,3 @@ def _cubochoric_sampling_loop(n_cube_steps):
                 step += 1
 
     return quaternions
-
-
-@nb.jit(cache=True, nogil=True, nopython=True)
-def is_inside_cubic_region(ro, symmetry="octahedral"):
-    constant = 0.414213562373095
-    if np.isinf(ro[3]):
-        return False
-    v = ro[:3] * ro[3]
-    if symmetry == "octahedral":
-        c1 = np.max(np.abs(v)) - constant <= 1e-8
-    else:
-        c1 = True
-    c2 = np.sum(np.abs(v)) - 1 <= 1e-8
-    return c1 * c2
