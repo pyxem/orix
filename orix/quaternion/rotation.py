@@ -335,7 +335,7 @@ class Rotation(Quaternion):
         direction : str
             "lab2crystal" or "crystal2lab", ignored if "MTEX" convention is in use
         """
-        conventions = ["bunge","MTEX","Krakow_Hielscher"]
+        conventions = ["bunge", "MTEX", "Krakow_Hielscher"]
 
         if convention not in conventions:
             raise ValueError(
@@ -367,7 +367,6 @@ class Rotation(Quaternion):
             # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
             # and orix issue #215
             direction = "lab2crystal"
-
 
         # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
         # (2015) 083501
