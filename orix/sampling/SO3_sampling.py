@@ -27,26 +27,24 @@ from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 
 def uniform_SO3_sample(resolution, method="harr_euler", unique=True, **kwargs):
-    r"""Returns rotations that are evenly spaced according to the Haar
-    measure on *SO(3)*.
+    r"""Uniform sampling of *SO(3)* by a number of methods.
 
     Parameters
     ----------
     resolution : float
-        The desired characteristic distance between a rotation and its
+        Desired characteristic distance between a rotation and its
         neighbour in degrees.
     method : str
-        The sampling method adopted, among "harr_euler" (default),
-        "quaternion" or "cubochoric". See *Notes*.
+        Sampling method, among "harr_euler" (default), "quaternion", or
+        "cubochoric". See *Notes*.
     unique : bool
-        Whether only unique rotations should be returned, default is
-        True.
+        Whether only unique rotations are returned, default is True.
     kwargs
         Keyword arguments passed on to the sampling method.
 
     Returns
     -------
-    q : orix.quaternion.Rotation
+    q : ~orix.quaternion.Rotation
         Grid containing appropriate rotations.
 
     See Also
@@ -56,24 +54,22 @@ def uniform_SO3_sample(resolution, method="harr_euler", unique=True, **kwargs):
 
     Notes
     -----
-    The "quaternion" algorithm has a fairly light-footprint on the
-    internet, it's implemented as described in [LaValle2006]_, the
-    'gem' on which it is based can be found at [Kirk1995]_ and has a
-    reference [Shoemake1992]_.
-
     The sample from the "harr_euler" algorithm is proportional to
     :math:`\cos(\beta) d\alpha \: d\beta \: d\gamma`. See for example:
     https://math.stackexchange.com/questions/3316481/.
 
-    References
-    ----------
-    .. [LaValle2006] LaValle, Steven M. "Generating a random element of
-        *SO(3)*," *From Planning Algorithms*, 2006,
-        http://planning.cs.uiuc.edu/node198.html.
-    .. [Kirk1995] Kirk, David. "Graphics Gems III," 1995,
-        http://inis.jinr.ru/sl/vol1/CMC/Graphics_Gems_3,ed_D.Kirk.pdf.
-    .. [Shoemake1992] Shoemake, Ken. "Uniform random rotations,"
-        *Graphics Gems III (IBM Version)*, pp. 124-132, 1992.
+    The "quaternion" algorithm has a fairly light footprint on the
+    internet, it's implemented as described in
+    :cite:`lavalle2006planning`, the 'gem' on which it is based can be
+    found at :cite:`kirk1995graphics` and has a reference
+    :cite:`shoemake1992uniform`.
+
+    The "cubochoric" algorithm was presented in :cite:`rosca2014anew`
+    and :cite:`singh2016orientation`. It is used in both EMsoft and
+    Dream3D to sample *SO(3)*. The method accepts the parameter
+    `semi_edge_steps` (*N* in EMsoft) as an alternative to
+    `resolution`, which is the number of grid points *N* along the
+    semi-edge of the cubochoric cube.
     """
     if method == "harr_euler":
         return _euler_angles_harr_measure(resolution, unique)
@@ -85,7 +81,9 @@ def uniform_SO3_sample(resolution, method="harr_euler", unique=True, **kwargs):
 
 def _three_uniform_samples_method(resolution, unique, max_angle=None):
     """Returns rotations that are evenly spaced according to the Haar
-    measure on *SO(3)*. The advantage of this method compared to
+    measure on *SO(3)*.
+
+    The advantage of this method compared to
     :func:`_euler_angles_harr_measure` is that it selects values from
     uniform distributions so that we can more easily restrict to a
     subregion of *SO(3)*.
@@ -102,7 +100,7 @@ def _three_uniform_samples_method(resolution, unique, max_angle=None):
 
     Returns
     -------
-    q : orix.quaternion.Rotation
+    q : ~orix.quaternion.Rotation
         Grid containing appropriate rotations.
 
     Notes

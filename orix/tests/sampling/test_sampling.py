@@ -23,7 +23,7 @@ import numpy as np
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C6, D6, get_point_group
 from orix.sampling.SO3_sampling import uniform_SO3_sample, _resolution_to_num_steps
-from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
+from orix.sampling import get_sample_fundamental, get_sample_local
 
 
 @pytest.fixture(scope="session")
@@ -58,7 +58,7 @@ class TestUniformSO3:
         around_zero = sample[sample.a > 0.9]
         moved = fixed_rotation * sample
         elsewhere = moved[sample.a > 0.9]
-        # extra line simplifies the stacktrack
+        # Extra line simplifies the stack trace
         x, y = around_zero.size, elsewhere.size
         assert np.isclose(x, y, rtol=0.025)
 
@@ -90,14 +90,14 @@ class TestGetSampleLocal:
         assert x_size > 0  # If this fails exp will be NaN
         assert np.isclose(exp, theory, atol=0.2)
 
-    def test_get_sample_local_center(self,fixed_rotation):
+    def test_get_sample_local_center(self, fixed_rotation):
         # fixed rotation takes us 30 degrees from origin
-        x = get_sample_local(resolution=3, grid_width = 20, center=fixed_rotation)
+        x = get_sample_local(resolution=3, grid_width=20, center=fixed_rotation)
         # a == cos(omega/2)
-        assert np.all(x.a<np.cos(np.deg2rad(5)))
+        assert np.all(x.a < np.cos(np.deg2rad(5)))
 
 
-class TestSamplingFundamentalSector():
+class TestSampleFundamental:
     @pytest.fixture(scope="session")
     def C6_sample(self):
         return get_sample_fundamental(resolution=4, point_group=C6)

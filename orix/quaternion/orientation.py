@@ -329,7 +329,7 @@ class Orientation(Misorientation):
     @classmethod
     def from_matrix(cls, matrix, symmetry=None):
         """Creates orientation(s) from orientation matrices
-        [Rowenhorst2015]_.
+        :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------

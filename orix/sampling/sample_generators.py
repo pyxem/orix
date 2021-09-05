@@ -18,9 +18,10 @@
 
 import numpy as np
 
-from orix.sampling.SO3_sampling import uniform_SO3_sample, _three_uniform_samples_method
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.symmetry import get_point_group
+from orix.sampling.SO3_sampling import uniform_SO3_sample, _three_uniform_samples_method
+from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 
 def get_sample_fundamental(
@@ -35,18 +36,19 @@ def get_sample_fundamental(
         The characteristic distance between a rotation and its neighbour
         in degrees.
     point_group : orix.quaternion.Symmetry, optional
-        One of the 11 proper point groups, defaults to None.
+        One of the 11 proper point groups. If not given, `space_group`
+        must be.
     space_group: int, optional
-        Between 1 and 231, defaults to None.
+        Between 1 and 231. Must be given if `point_group` is not.
     method : str, optional
-        "harr_euler" (default), "quaternion" or "chubochoric". See
+        "harr_euler" (default), "quaternion", or "chubochoric". See
         :func:`~orix.sampling.uniform_SO3_sample` for details.
     kwargs
         Keyword arguments passed on to the sampling method.
 
     Returns
     -------
-    r : orix.quaternion.Rotation
+    rot : ~orix.quaternion.Rotation
         Grid of rotations lying within the specified fundamental zone.
 
     See Also
@@ -57,23 +59,25 @@ def get_sample_fundamental(
     --------
     >>> from orix.quaternion.symmetry import C2
     >>> from orix.sampling import get_sample_fundamental
-    >>> grid = get_sample_fundamental(1, point_group=C2)
+    >>> rot = get_sample_fundamental(1, point_group=C2)
     """
     if point_group is None:
         point_group = get_point_group(space_group, proper=True)
 
     # TODO: provide some subspace selection options
-    r = uniform_SO3_sample(resolution, method=method, unique=False, **kwargs)
+    rot = uniform_SO3_sample(resolution, method=method, unique=False, **kwargs)
 
     fundamental_region = OrientationRegion.from_symmetry(point_group)
-    r = r[r < fundamental_region]
+    rot = rot[rot < fundamental_region]
 
-    r = r.unique()
+    rot = rot.unique()
 
-    return r
+    return rot
 
 
-def get_sample_local(resolution=2, center=None, grid_width=10, method="harr_euler"):
+def get_sample_local(
+    resolution=2, center=None, grid_width=10, method="harr_euler", **kwargs
+):
     """Generates a grid of rotations about a given rotation.
 
     Parameters
@@ -81,39 +85,43 @@ def get_sample_local(resolution=2, center=None, grid_width=10, method="harr_eule
     resolution : float, optional
         The characteristic distance between a rotation and its neighbour
         in degrees.
-    center : orix.quaternion.Rotation, optional
-        The rotation at which the grid is centered. If None (default)
-        uses the identity.
+    center : ~orix.quaternion.Rotation, optional
+        The rotation at which the grid is centered. The identity is used
+        if not given.
     grid_width : float, optional
         The largest angle of rotation in degrees away from center that
         is acceptable.
     method : str, optional
-        Either "harr_euler" (default) or "quaternion". See
+        "harr_euler" (default), "quaternion", or "cubochoric". See
         :func:`~orix.sampling.uniform_SO3_sample` for details.
+    kwargs
+        Keyword arguments passed on to the sampling method.
 
     Returns
     -------
-    r : orix.quaternion.Rotation
+    r : ~orix.quaternion.Rotation
         Grid of rotations lying within `grid_width` of center.
 
     See Also
     --------
     :func:`orix.sampling.uniform_SO3_sample`
     """
-    if method != "quaternion":
-        r = uniform_SO3_sample(resolution, method=method, unique=False)
-    else:
-        r = _three_uniform_samples_method(
+    if method == "harr_euler":
+        rot = uniform_SO3_sample(resolution, method=method, unique=False)
+    elif method == "quaternion":
+        rot = _three_uniform_samples_method(
             resolution, unique=False, max_angle=grid_width
         )
+    else:  # method == "cubochoric"
+        rot = cubochoric_sampling(resolution=resolution, **kwargs)
 
-    r = _remove_larger_than_angle(r, grid_width)
-    r = r.unique()
+    rot = _remove_larger_than_angle(rot, grid_width)
+    rot = rot.unique()
 
     if center is not None:
-        r = center * r
+        rot = center * rot
 
-    return r
+    return rot
 
 
 def _remove_larger_than_angle(r, max_angle):
@@ -121,7 +129,7 @@ def _remove_larger_than_angle(r, max_angle):
 
     Parameters
     ----------
-    r : orix.quaternion.Rotation
+    r : ~orix.quaternion.Rotation
         Sample of rotations.
     max_angle : float
         Maximum allowable angle (in degrees) from which a rotation can
@@ -129,7 +137,7 @@ def _remove_larger_than_angle(r, max_angle):
 
     Returns
     -------
-    r : orix.quaternion.Rotation
+    r : ~orix.quaternion.Rotation
         Rotations lying within the desired region.
     """
     half_angle = np.deg2rad(max_angle / 2)
