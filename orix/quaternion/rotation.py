@@ -331,11 +331,12 @@ class Rotation(Quaternion):
         euler : array-like
             Euler angles in radians in the Bunge convention.
         convention : str
-            Only "bunge" is supported for new data.
+            "bunge" or "MTEX"
         direction : str
-            "lab2crystal" or "crystal2lab".
+            "lab2crystal" or "crystal2lab", ignored if "MTEX" convention is in use
         """
-        conventions = ["bunge", "Krakow_Hielscher"]
+        conventions = ["bunge","MTEX","Krakow_Hielscher"]
+
         if convention not in conventions:
             raise ValueError(
                 f"The chosen convention is not one of the allowed options {conventions}"
@@ -358,49 +359,41 @@ class Rotation(Quaternion):
         if convention == "Krakow_Hielscher":
             # To be applied to the data found at:
             # https://www.repository.cam.ac.uk/handle/1810/263510
-            alpha -= np.pi / 2
-            gamma -= 3 * np.pi / 2
-            zero = np.zeros(n)
-            qalpha = Quaternion(
-                np.stack((np.cos(alpha / 2), zero, zero, np.sin(alpha / 2)), axis=-1)
-            )
-            qbeta = Quaternion(
-                np.stack((np.cos(beta / 2), zero, np.sin(beta / 2), zero), axis=-1)
-            )
-            qgamma = Quaternion(
-                np.stack((np.cos(gamma / 2), zero, zero, np.sin(gamma / 2)), axis=-1)
-            )
-            data = qalpha * qbeta * qgamma
+            warnings.warn("This method is deprecated, use 'MTEX' instead")
+            convention = "MTEX"
 
-            rot = cls(data.data)
-            rot.improper = zero
-            return rot
-        elif convention == "bunge":
-            # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
-            # (2015) 083501
-            sigma = 0.5 * np.add(alpha, gamma)
-            delta = 0.5 * np.subtract(alpha, gamma)
-            c = np.cos(beta / 2)
-            s = np.sin(beta / 2)
+        if convention == "MTEX":
+            # MTEX uses bunge but with lab2crystal referencing:
+            # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
+            # and orix issue #215
+            direction = "lab2crystal"
 
-            # Using P = 1 from A.6
-            q = np.zeros(n + (4,))
-            q[..., 0] = c * np.cos(sigma)
-            q[..., 1] = -s * np.cos(delta)
-            q[..., 2] = -s * np.sin(delta)
-            q[..., 3] = -c * np.sin(sigma)
 
-            for i in [1, 2, 3, 0]:  # flip the zero element last
-                q[..., i] = np.where(q[..., 0] < 0, -q[..., i], q[..., i])
+        # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
+        # (2015) 083501
+        sigma = 0.5 * np.add(alpha, gamma)
+        delta = 0.5 * np.subtract(alpha, gamma)
+        c = np.cos(beta / 2)
+        s = np.sin(beta / 2)
 
-            data = Quaternion(q)
+        # Using P = 1 from A.6
+        q = np.zeros(n + (4,))
+        q[..., 0] = c * np.cos(sigma)
+        q[..., 1] = -s * np.cos(delta)
+        q[..., 2] = -s * np.sin(delta)
+        q[..., 3] = -c * np.sin(sigma)
 
-            if direction == "lab2crystal":
-                data = ~data
+        for i in [1, 2, 3, 0]:  # flip the zero element last
+            q[..., i] = np.where(q[..., 0] < 0, -q[..., i], q[..., i])
 
-            rot = cls(data.data)
-            rot.improper = np.zeros((n))
-            return rot
+        data = Quaternion(q)
+
+        if direction == "lab2crystal":
+            data = ~data
+
+        rot = cls(data.data)
+        rot.improper = np.zeros((n))
+        return rot
 
     def to_matrix(self):
         """Rotations as orientation matrices [Rowenhorst2015]_.
