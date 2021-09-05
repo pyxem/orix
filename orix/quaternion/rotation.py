@@ -335,17 +335,37 @@ class Rotation(Quaternion):
         direction : str
             "lab2crystal" or "crystal2lab", ignored if "MTEX" convention is in use
         """
-        conventions = ["bunge", "MTEX", "Krakow_Hielscher"]
+        directions = ["lab2crystal", "crystal2lab"]
+        conventions = ["bunge", "mtex"]
+
+        # processing directions
+        if direction not in directions:
+            raise ValueError(
+                f"The chosen direction is not one of the allowed options {directions}"
+            )
+
+        # processing the convention chosen
+
+        convention = convention.lower()
+
+        if convention == "krakow_hielscher":
+            # To be applied to the data found at:
+            # https://www.repository.cam.ac.uk/handle/1810/263510
+            warnings.warn(
+                "This method is deprecated and will be removed in v0.8 use 'MTEX' instead"
+            )
+            convention = "mtex"
 
         if convention not in conventions:
             raise ValueError(
                 f"The chosen convention is not one of the allowed options {conventions}"
             )
-        directions = ["lab2crystal", "crystal2lab"]
-        if direction not in directions:
-            raise ValueError(
-                f"The chosen direction is not one of the allowed options {directions}"
-            )
+
+        if convention == "mtex":
+            # MTEX uses bunge but with lab2crystal referencing:
+            # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
+            # and orix issue #215
+            direction = "lab2crystal"
 
         euler = np.array(euler)
         if np.any(np.abs(euler) > 9):
@@ -355,18 +375,6 @@ class Rotation(Quaternion):
             )
         n = euler.shape[:-1]
         alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
-
-        if convention == "Krakow_Hielscher":
-            # To be applied to the data found at:
-            # https://www.repository.cam.ac.uk/handle/1810/263510
-            warnings.warn("This method is deprecated, use 'MTEX' instead")
-            convention = "MTEX"
-
-        if convention == "MTEX":
-            # MTEX uses bunge but with lab2crystal referencing:
-            # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
-            # and orix issue #215
-            direction = "lab2crystal"
 
         # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
         # (2015) 083501
