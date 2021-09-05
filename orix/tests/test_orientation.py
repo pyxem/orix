@@ -258,7 +258,11 @@ class TestOrientation:
         on = -o
         assert on.symmetry.name == o.symmetry.name
 
-    def test_scatter(self, orientation):
+    @pytest.mark.parametrize("pure_misorientation", [True,False])
+    def test_scatter(self, orientation,pure_misorientation):
+        if pure_misorientation:
+            orientation = Misorientation(orientation)
+            orientation = orientation.set_symmetry(C2,D6)
         fig_axangle = orientation.scatter(return_figure=True)
         assert isinstance(fig_axangle.axes[0], AxAnglePlot)
         fig_rodrigues = orientation.scatter(projection="rodrigues", return_figure=True)
