@@ -24,6 +24,10 @@ Added
 - Add transpose method to all 3D classes to transpose navigation dimensions.
 - Reading of a crystal map from orientation data in Bruker's HDF5 file format.
 
+Changed
+-------
+- to_euler() changed internally, "Krakow_Hielscher" deprecated, use "MTEX" instead
+
 2021-05-23 - version 0.6.0
 ==========================
 
