@@ -262,6 +262,91 @@ class Misorientation(Rotation):
         return rep
 
 
+    def scatter(
+        self,
+        projection="axangle",
+        figure=None,
+        position=None,
+        return_figure=False,
+        wireframe_kwargs=dict(),
+        size=None,
+        **kwargs,
+    ):
+        """Plot orientations in axis-angle space or the Rodrigues
+        fundamental zone.
+
+        Parameters
+        ----------
+        projection : str, optional
+            Which orientation space to plot orientations in, either
+            "axangle" (default) or "rodrigues".
+        figure : matplotlib.figure.Figure
+            If given, a new plot axis :class:`orix.plot.AxAnglePlot` or
+            :class:`orix.plot.RodriguesPlot` is added to the figure in
+            the position specified by `position`. If not given, a new
+            figure is created.
+        position : int, tuple of int, matplotlib.gridspec.SubplotSpec,
+                optional
+            Where to add the new plot axis. 121 or (1, 2, 1) places it
+            in the first of two positions in a grid of 1 row and 2
+            columns. See :meth:`matplotlib.figure.Figure.add_subplot`
+            for further details. Default is (1, 1, 1).
+        return_figure : bool, optional
+            Whether to return the figure. Default is False.
+        wireframe_kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
+            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+        size : int, optional
+            If not given, all orientations are plotted. If given, a
+            random sample of this `size` of the orientations is plotted.
+        kwargs
+            Keyword arguments passed to
+            :meth:`orix.plot.AxAnglePlot.scatter` or
+            :meth:`orix.plot.RodriguesPlot.scatter`.
+
+        Returns
+        -------
+        figure : matplotlib.figure.Figure
+            Figure with the added plot axis, if `return_figure` is True.
+
+        See Also
+        --------
+        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot
+        """
+        from orix.plot.rotation_plot import _setup_rotation_plot
+
+        figure, ax = _setup_rotation_plot(
+            figure=figure, projection=projection, position=position
+        )
+
+        # Plot wireframe
+        if isinstance(self.symmetry,tuple):
+            fundamental_region = OrientationRegion.from_symmetry(s1=self.symmetry[0],s2=self.symmetry[1])
+            ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
+        else:
+            # Orientation via inheritance
+            fundamental_region = OrientationRegion.from_symmetry(self.symmetry)
+            ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
+
+        # Correct the aspect ratio of the axes according to the extent
+        # of the boundaries of the fundamental region, and also restrict
+        # the data limits to these boundaries
+        ax._correct_aspect_ratio(fundamental_region, set_limits=True)
+
+        ax.axis("off")
+        figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
+
+        if size is not None:
+            to_plot = self.get_random_sample(size)
+        else:
+            to_plot = self
+        ax.scatter(to_plot, **kwargs)
+
+        if return_figure:
+            return figure
+
+
 class Orientation(Misorientation):
     """Orientations represent misorientations away from a reference of
     identity and have only one associated symmetry.
@@ -504,85 +589,6 @@ class Orientation(Misorientation):
         [ 0.      1.      0.      0.    ]]
         """
         return super().set_symmetry(C1, symmetry)
-
-    def scatter(
-        self,
-        projection="axangle",
-        figure=None,
-        position=None,
-        return_figure=False,
-        wireframe_kwargs=dict(),
-        size=None,
-        **kwargs,
-    ):
-        """Plot orientations in axis-angle space or the Rodrigues
-        fundamental zone.
-
-        Parameters
-        ----------
-        projection : str, optional
-            Which orientation space to plot orientations in, either
-            "axangle" (default) or "rodrigues".
-        figure : matplotlib.figure.Figure
-            If given, a new plot axis :class:`orix.plot.AxAnglePlot` or
-            :class:`orix.plot.RodriguesPlot` is added to the figure in
-            the position specified by `position`. If not given, a new
-            figure is created.
-        position : int, tuple of int, matplotlib.gridspec.SubplotSpec,
-                optional
-            Where to add the new plot axis. 121 or (1, 2, 1) places it
-            in the first of two positions in a grid of 1 row and 2
-            columns. See :meth:`matplotlib.figure.Figure.add_subplot`
-            for further details. Default is (1, 1, 1).
-        return_figure : bool, optional
-            Whether to return the figure. Default is False.
-        wireframe_kwargs : dict, optional
-            Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
-            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
-        size : int, optional
-            If not given, all orientations are plotted. If given, a
-            random sample of this `size` of the orientations is plotted.
-        kwargs
-            Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.scatter` or
-            :meth:`orix.plot.RodriguesPlot.scatter`.
-
-        Returns
-        -------
-        figure : matplotlib.figure.Figure
-            Figure with the added plot axis, if `return_figure` is True.
-
-        See Also
-        --------
-        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot
-        """
-        from orix.plot.rotation_plot import _setup_rotation_plot
-
-        figure, ax = _setup_rotation_plot(
-            figure=figure, projection=projection, position=position
-        )
-
-        # Plot wireframe
-        fundamental_region = OrientationRegion.from_symmetry(self.symmetry)
-        ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
-
-        # Correct the aspect ratio of the axes according to the extent
-        # of the boundaries of the fundamental region, and also restrict
-        # the data limits to these boundaries
-        ax._correct_aspect_ratio(fundamental_region, set_limits=True)
-
-        ax.axis("off")
-        figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
-
-        if size is not None:
-            to_plot = self.get_random_sample(size)
-        else:
-            to_plot = self
-        ax.scatter(to_plot, **kwargs)
-
-        if return_figure:
-            return figure
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this
