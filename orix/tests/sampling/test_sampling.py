@@ -28,7 +28,7 @@ from orix.sampling import get_sample_fundamental, get_sample_local
 
 @pytest.fixture(scope="session")
 def sample():
-    return uniform_SO3_sample(2)
+    return uniform_SO3_sample(2, method="haar_euler")
 
 
 @pytest.fixture(scope="session")
@@ -48,7 +48,7 @@ class TestSamplingUtils:
 
 class TestUniformSO3:
     def test_sample_size(self):
-        r1 = uniform_SO3_sample(10)
+        r1 = uniform_SO3_sample(10, method="haar_euler")
         assert r1.size > 0
         r2 = uniform_SO3_sample(10, method="quaternion")
         assert r2.size > 0
@@ -66,14 +66,14 @@ class TestUniformSO3:
         """Checks that doubling resolution doubles density (8-fold
         counts).
         """
-        lower = uniform_SO3_sample(4)
+        lower = uniform_SO3_sample(4, method="haar_euler")
         x, y = lower.size * 8, sample.size
         assert np.isclose(x, y, rtol=0.025)
 
 
 class TestGetSampleLocal:
     @pytest.mark.parametrize(
-        "big, small, method", [(180, 90, "quaternion"), (180, 90, "harr_euler")]
+        "big, small, method", [(180, 90, "quaternion"), (180, 90, "haar_euler")]
     )
     def test_get_sample_local_width(self, big, small, method):
         """Checks that size follows the expected trend (X - Sin(X)).
@@ -92,7 +92,9 @@ class TestGetSampleLocal:
 
     def test_get_sample_local_center(self, fixed_rotation):
         # fixed rotation takes us 30 degrees from origin
-        x = get_sample_local(resolution=3, grid_width=20, center=fixed_rotation)
+        x = get_sample_local(
+            resolution=3, grid_width=20, center=fixed_rotation, method="haar_euler"
+        )
         # a == cos(omega/2)
         assert np.all(x.a < np.cos(np.deg2rad(5)))
 
@@ -100,11 +102,11 @@ class TestGetSampleLocal:
 class TestSampleFundamental:
     @pytest.fixture(scope="session")
     def C6_sample(self):
-        return get_sample_fundamental(resolution=4, point_group=C6)
+        return get_sample_fundamental(resolution=4, point_group=C6, method="haar_euler")
 
     def test_get_sample_fundamental_zone_order(self, C6_sample):
         """Cross check point counts to group order terms."""
-        D6_sample = get_sample_fundamental(4, point_group=D6)
+        D6_sample = get_sample_fundamental(4, point_group=D6, method="haar_euler")
         ratio = C6_sample.size / D6_sample.size
         assert np.isclose(ratio, 2, atol=0.2)
 
@@ -112,6 +114,6 @@ class TestSampleFundamental:
         """Going via the `space_group` route."""
         # Assert that space group #3 is has pg C2
         assert C2 == get_point_group(3, proper=True)
-        C2_sample = get_sample_fundamental(4, space_group=3)
+        C2_sample = get_sample_fundamental(4, space_group=3, method="haar_euler")
         ratio = C2_sample.size / C6_sample.size
         assert np.isclose(ratio, 3, atol=0.2)

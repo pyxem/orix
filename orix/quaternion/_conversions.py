@@ -70,7 +70,7 @@ def get_pyramid_single(xyz):
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def cu2ho_single(cu):
     """Conversion from a single set of cubochoric coordinates to
-    homochoric coordinates :cite:`singh2016orientation`.
+    un-normalized homochoric coordinates :cite:`singh2016orientation`.
 
     Parameters
     ----------
@@ -148,8 +148,8 @@ def cu2ho_single(cu):
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
 def cu2ho(cu):
-    """Conversion from multiple cubochoric coordinates to homochoric
-    coordinates :cite:`singh2016orientation`.
+    """Conversion from multiple cubochoric coordinates to un-normalized
+    homochoric coordinates :cite:`singh2016orientation`.
 
     Parameters
     ----------
@@ -175,7 +175,7 @@ def cu2ho(cu):
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def ho2ax_single(ho):
     """Conversion from a single set of homochoric coordinates to an
-    axis-angle pair :cite:`rowenhorst2015consistent`.
+    un-normalized axis-angle pair :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -216,7 +216,7 @@ def ho2ax_single(ho):
             s = s + fit_parameters[i] * hom
         hon = ho / np.sqrt(ho_magnitude)
         s = 2 * np.arccos(s)
-        if np.abs(s - np.pi) < 1e-6:
+        if np.abs(s - np.pi) < 1e-8:  # pragma: no cover
             ax = np.append(hon, np.pi)
         else:
             ax = np.append(hon, s)
@@ -225,8 +225,8 @@ def ho2ax_single(ho):
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
 def ho2ax(ho):
-    """Conversion from multiple homochoric coordinates to axis-angle
-    pairs :cite:`rowenhorst2015consistent`.
+    """Conversion from multiple homochoric coordinates to un-normalized
+    axis-angle pairs :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -252,8 +252,8 @@ def ho2ax(ho):
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def ax2ro_single(ax):
-    """Conversion from a single angle-axis pair to a Rodrigues vector
-    :cite:`rowenhorst2015consistent`.
+    """Conversion from a single angle-axis pair to an un-normalized
+    Rodrigues vector :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -286,8 +286,8 @@ def ax2ro_single(ax):
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
 def ax2ro(ax):
-    """Conversion from multiple axis-angle pairs to Rodrigues vectors
-    :cite:`rowenhorst2015consistent`.
+    """Conversion from multiple axis-angle pairs to un-normalized
+    Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -312,8 +312,8 @@ def ax2ro(ax):
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def ro2ax_single(ro):
-    """Conversion from a single axis-angle pair to a Rodrigues vector
-    :cite:`rowenhorst2015consistent`.
+    """Conversion from a single Rodrigues vector to an un-normalized
+    axis-angle pair :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -341,8 +341,8 @@ def ro2ax_single(ro):
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
 def ro2ax(ro):
-    """Conversion from multiple Rodrigues vectors to axis-angle pairs
-    :cite:`rowenhorst2015consistent`.
+    """Conversion from multiple Rodrigues vectors to un-normalized
+    axis-angle pairs :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -368,8 +368,8 @@ def ro2ax(ro):
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def ax2qu_single(ax):
-    """Conversion from a single axis-angle pair to a quaternion
-    :cite:`rowenhorst2015consistent`.
+    """Conversion from a single axis-angle pair to an un-normalized
+    quaternion :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -396,8 +396,8 @@ def ax2qu_single(ax):
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
 def ax2qu(ax):
-    """Conversion from multiple axis-angle pairs to quaternions
-    :cite:`rowenhorst2015consistent`.
+    """Conversion from multiple axis-angle pairs to un-normalized
+    quaternions :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -423,8 +423,8 @@ def ax2qu(ax):
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def ho2ro_single(ho):
-    """Conversion from a single set of homochoric coordinates to a
-    Rodrigues vector :cite:`rowenhorst2015consistent`.
+    """Conversion from a single set of homochoric coordinates to an
+    un-normalized Rodrigues vector :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -446,8 +446,8 @@ def ho2ro_single(ho):
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
 def ho2ro(ho):
-    """Conversion from multiple homochoric coordinates to Rodrigues
-    vectors :cite:`rowenhorst2015consistent`.
+    """Conversion from multiple homochoric coordinates to un-normalized
+    Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -473,8 +473,8 @@ def ho2ro(ho):
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def cu2ro_single(cu):
-    """Conversion from a single set of cubochoric coordinates to a
-    Rodrigues vector :cite:`rowenhorst2015consistent`.
+    """Conversion from a single set of cubochoric coordinates to an
+    un-normalized Rodrigues vector :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -499,8 +499,8 @@ def cu2ro_single(cu):
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
 def cu2ro(cu):
-    """Conversion from multiple cubochoric coordinates to Rodrigues
-    vectors :cite:`rowenhorst2015consistent`.
+    """Conversion from multiple cubochoric coordinates to un-normalized
+    Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
@@ -522,3 +522,43 @@ def cu2ro(cu):
     for i in nb.prange(n_vectors):
         ro[i] = cu2ro_single(cu[i])
     return ro
+
+
+@nb.jit("float64[:](float64, float64, float64)", cache=True, nogil=True, nopython=True)
+def eu2qu_single(alpha, beta, gamma):
+    """Convert three Euler angles (alpha, beta, gamma) to a unit
+    quaternion.
+
+    Parameters
+    ----------
+    alpha, beta, gamma : float
+        Euler angles in the Bunge convention in radians as 64-bit
+        floats.
+
+    Returns
+    -------
+    qu : numpy.ndarray
+        1D unit quaternion (a, b, c, d) as 64-bit floats.
+
+    Notes
+    -----
+    Uses Eqs. A.5 & A.6 :cite:`rowenhorst2015consistent`.
+
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    sigma = 0.5 * np.add(alpha, gamma)
+    delta = 0.5 * np.subtract(alpha, gamma)
+    c = np.cos(beta / 2)
+    s = np.sin(beta / 2)
+
+    qu = np.zeros(4, dtype=np.float64)
+    qu[0] = c * np.cos(sigma)
+    qu[1] = -s * np.cos(delta)
+    qu[2] = -s * np.sin(delta)
+    qu[3] = -c * np.sin(sigma)
+
+    if qu[0] < 0:
+        qu = -qu
+
+    return qu

@@ -102,7 +102,7 @@ class TestCubochoricSampling:
     def test_cubochoric_sampling_loop(self):
         semi_edge_steps = 10
         quat_arr = _cubochoric_sampling_loop.py_func(semi_edge_steps)
-        assert quat_arr.shape[0] == (2 * semi_edge_steps + 1) ** 3
+        assert quat_arr.shape[0] == (2 * semi_edge_steps + 1) ** 3 - 1261
 
     def test_cubochoric_sampling_raises(self):
         with pytest.raises(ValueError, match="Either `semi_edge_steps` or "):

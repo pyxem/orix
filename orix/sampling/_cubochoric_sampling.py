@@ -29,7 +29,7 @@ for users.
 import numba as nb
 import numpy as np
 
-from orix.quaternion import Quaternion
+from orix.quaternion import Rotation
 from orix.quaternion._conversions import (
     ax2qu_single,
     cu2ro_single,
@@ -56,8 +56,8 @@ def cubochoric_sampling(semi_edge_steps=None, resolution=None):
 
     Returns
     -------
-    ~orix.quaternion.Quaternion
-        Sampled orientations in *SO(3)*.
+    ~orix.quaternion.Rotation
+        Sampled rotations in *SO(3)*.
 
     Notes
     -----
@@ -70,7 +70,7 @@ def cubochoric_sampling(semi_edge_steps=None, resolution=None):
         else:
             semi_edge_steps = resolution_to_semi_edge_steps(resolution)
     quaternions = _cubochoric_sampling_loop(semi_edge_steps)
-    return Quaternion(quaternions)
+    return Rotation(quaternions)
 
 
 @nb.jit(cache=True, nogil=True, nopython=True)
@@ -100,7 +100,7 @@ def _cubochoric_sampling_loop(semi_edge_steps):
     semi_edge_length = 0.5 * np.pi ** (2 / 3)
     step_size = semi_edge_length / semi_edge_steps
     n_points = (2 * semi_edge_steps + 1) ** 3
-    quaternions = np.zeros((n_points, 4))
+    rot = np.zeros((n_points, 4))
 
     xyz = np.zeros(3)
     step = 0
@@ -120,8 +120,8 @@ def _cubochoric_sampling_loop(semi_edge_steps):
                 # vector -> axis-angle pair
                 rodrigues = cu2ro_single(xyz)
                 axis_angle = ro2ax_single(rodrigues)
-                quaternions[step] = ax2qu_single(axis_angle)
+                rot[step] = ax2qu_single(axis_angle)
 
                 step += 1
 
-    return quaternions
+    return rot[:step]

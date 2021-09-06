@@ -18,14 +18,14 @@
 
 import numpy as np
 
-from orix.quaternion.orientation_region import OrientationRegion
+from orix.quaternion import OrientationRegion, Rotation
 from orix.quaternion.symmetry import get_point_group
 from orix.sampling.SO3_sampling import uniform_SO3_sample, _three_uniform_samples_method
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 
 def get_sample_fundamental(
-    resolution=2, point_group=None, space_group=None, method="harr_euler", **kwargs
+    resolution=2, point_group=None, space_group=None, method="cubochoric", **kwargs
 ):
     """Generates an equispaced grid of rotations within a fundamental
     zone.
@@ -41,7 +41,7 @@ def get_sample_fundamental(
     space_group: int, optional
         Between 1 and 231. Must be given if `point_group` is not.
     method : str, optional
-        "harr_euler" (default), "quaternion", or "chubochoric". See
+        "cubochoric" (default), "haar_euler", or, "quaternion". See
         :func:`~orix.sampling.uniform_SO3_sample` for details.
     kwargs
         Keyword arguments passed on to the sampling method.
@@ -76,7 +76,7 @@ def get_sample_fundamental(
 
 
 def get_sample_local(
-    resolution=2, center=None, grid_width=10, method="harr_euler", **kwargs
+    resolution=2, center=None, grid_width=10, method="cubochoric", **kwargs
 ):
     """Generates a grid of rotations about a given rotation.
 
@@ -92,7 +92,7 @@ def get_sample_local(
         The largest angle of rotation in degrees away from center that
         is acceptable.
     method : str, optional
-        "harr_euler" (default), "quaternion", or "cubochoric". See
+        "cubochoric", "haar_euler", or "quaternion". See
         :func:`~orix.sampling.uniform_SO3_sample` for details.
     kwargs
         Keyword arguments passed on to the sampling method.
@@ -106,7 +106,7 @@ def get_sample_local(
     --------
     :func:`orix.sampling.uniform_SO3_sample`
     """
-    if method == "harr_euler":
+    if method == "haar_euler":
         rot = uniform_SO3_sample(resolution, method=method, unique=False)
     elif method == "quaternion":
         rot = _three_uniform_samples_method(

@@ -26,7 +26,7 @@ from orix.quaternion import Rotation
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 
-def uniform_SO3_sample(resolution, method="harr_euler", unique=True, **kwargs):
+def uniform_SO3_sample(resolution, method="cubochoric", unique=True, **kwargs):
     r"""Uniform sampling of *SO(3)* by a number of methods.
 
     Parameters
@@ -35,8 +35,8 @@ def uniform_SO3_sample(resolution, method="harr_euler", unique=True, **kwargs):
         Desired characteristic distance between a rotation and its
         neighbour in degrees.
     method : str
-        Sampling method, among "harr_euler" (default), "quaternion", or
-        "cubochoric". See *Notes*.
+        Sampling method, among "cubochoric" (default), "haar_euler", or
+        "quaternion". See *Notes* for details on each method.
     unique : bool
         Whether only unique rotations are returned, default is True.
     kwargs
@@ -54,7 +54,14 @@ def uniform_SO3_sample(resolution, method="harr_euler", unique=True, **kwargs):
 
     Notes
     -----
-    The sample from the "harr_euler" algorithm is proportional to
+    The "cubochoric" algorithm is presented in :cite:`rosca2014anew`
+    and :cite:`singh2016orientation`. It is used in both EMsoft and
+    Dream3D to sample *SO(3)*. The method accepts the parameter
+    `semi_edge_steps` (*N* in EMsoft) as an alternative to
+    `resolution`, which is the number of grid points *N* along the
+    semi-edge of the cubochoric cube.
+
+    The sample from the "haar_euler" algorithm is proportional to
     :math:`\cos(\beta) d\alpha \: d\beta \: d\gamma`. See for example:
     https://math.stackexchange.com/questions/3316481/.
 
@@ -63,16 +70,9 @@ def uniform_SO3_sample(resolution, method="harr_euler", unique=True, **kwargs):
     :cite:`lavalle2006planning`, the 'gem' on which it is based can be
     found at :cite:`kirk1995graphics` and has a reference
     :cite:`shoemake1992uniform`.
-
-    The "cubochoric" algorithm was presented in :cite:`rosca2014anew`
-    and :cite:`singh2016orientation`. It is used in both EMsoft and
-    Dream3D to sample *SO(3)*. The method accepts the parameter
-    `semi_edge_steps` (*N* in EMsoft) as an alternative to
-    `resolution`, which is the number of grid points *N* along the
-    semi-edge of the cubochoric cube.
     """
-    if method == "harr_euler":
-        return _euler_angles_harr_measure(resolution, unique)
+    if method == "haar_euler":
+        return _euler_angles_haar_measure(resolution, unique)
     elif method == "quaternion":
         return _three_uniform_samples_method(resolution, unique)
     elif method == "cubochoric":
@@ -84,7 +84,7 @@ def _three_uniform_samples_method(resolution, unique, max_angle=None):
     measure on *SO(3)*.
 
     The advantage of this method compared to
-    :func:`_euler_angles_harr_measure` is that it selects values from
+    :func:`_euler_angles_haar_measure` is that it selects values from
     uniform distributions so that we can more easily restrict to a
     subregion of *SO(3)*.
 
@@ -96,7 +96,7 @@ def _three_uniform_samples_method(resolution, unique, max_angle=None):
     unique : bool
         Whether only unique rotations should be returned.
     max_angle : float
-        Only rotations with angles smaller than max_angle are returned
+        Only rotations with angles smaller than max_angle are returned.
 
     Returns
     -------
@@ -116,7 +116,7 @@ def _three_uniform_samples_method(resolution, unique, max_angle=None):
         u_2_min = np.arcsin(e_1_min) / 2 / np.pi
 
         # round these up to avoid zero selection
-        num_1 = int(num_steps * (u_1_max) + 0.5)
+        num_1 = int(num_steps * u_1_max + 0.5)
         num_2 = int(num_steps * (1 - u_2_min) + 0.5)
         u_1 = np.linspace(0, u_1_max, num=num_1, endpoint=True)
         u_2 = np.linspace(u_2_min, 1, num=num_2, endpoint=True)
@@ -147,7 +147,7 @@ def _three_uniform_samples_method(resolution, unique, max_angle=None):
     return q
 
 
-def _euler_angles_harr_measure(resolution, unique):
+def _euler_angles_haar_measure(resolution, unique):
     """Returns rotations that are evenly spaced according to the Haar
     measure on *SO(3)* using the Euler angle parameterization.
 
