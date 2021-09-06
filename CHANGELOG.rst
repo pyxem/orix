@@ -12,6 +12,7 @@ Unreleased
 
 Added
 -----
+- Uniform sampling of orientation space using cubochoric sampling.
 - Memory-efficient calculation of a misorientation angle (geodesic distance) matrix
   between orientations using Dask.
 - Symmetry reduced calculations of dot products between orientations.
@@ -26,7 +27,7 @@ Added
 
 Changed
 -------
-- to_euler() changed internally, "Krakow_Hielscher" deprecated, use "MTEX" instead
+- to_euler() changed internally, "Krakow_Hielscher" deprecated, use "MTEX" instead.
 
 2021-05-23 - version 0.6.0
 ==========================
