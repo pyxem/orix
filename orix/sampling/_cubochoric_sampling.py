@@ -66,7 +66,7 @@ def cubochoric_sampling(semi_edge_steps=None, resolution=None):
     """
     if semi_edge_steps is None:
         if resolution is None:
-            raise ValueError("Either `n_cube_steps` or `resolution` must be passed")
+            raise ValueError("Either `semi_edge_steps` or `resolution` must be passed")
         else:
             semi_edge_steps = resolution_to_semi_edge_steps(resolution)
     quaternions = _cubochoric_sampling_loop(semi_edge_steps)
@@ -113,7 +113,7 @@ def _cubochoric_sampling_loop(semi_edge_steps):
 
                 # Discard the point and move to the next iteration if it
                 # lies outside the cubochoric cube
-                if np.max(np.abs(xyz)) > semi_edge_length:
+                if np.max(np.abs(xyz)) > semi_edge_length:  # pragma: no cover
                     continue
 
                 # Get quaternion via cubochoric coordinates -> Rodrigues

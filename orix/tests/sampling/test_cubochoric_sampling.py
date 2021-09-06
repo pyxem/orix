@@ -17,11 +17,13 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+import pytest
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, C2, D2, C4, D4, C3, D3, C6, D6, T, O
 from orix.sampling import get_sample_fundamental, get_sample_local
 from orix.sampling._cubochoric_sampling import (
+    cubochoric_sampling,
     resolution_to_semi_edge_steps,
     _cubochoric_sampling_loop,
 )
@@ -101,3 +103,7 @@ class TestCubochoricSampling:
         semi_edge_steps = 10
         quat_arr = _cubochoric_sampling_loop.py_func(semi_edge_steps)
         assert quat_arr.shape[0] == (2 * semi_edge_steps + 1) ** 3
+
+    def test_cubochoric_sampling_raises(self):
+        with pytest.raises(ValueError, match="Either `semi_edge_steps` or "):
+            _ = cubochoric_sampling()
