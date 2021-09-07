@@ -162,8 +162,7 @@ class TestStereographicPlot:
         plt.close("all")
 
     @pytest.mark.parametrize(
-        "hemisphere, pole, hemi_str",
-        [("uPPer", -1, "upper"), ("loweR", 1, "lower")],
+        "hemisphere, pole, hemi_str", [("uPPer", -1, "upper"), ("loweR", 1, "lower")]
     )
     def test_hemisphere_pole(self, hemisphere, pole, hemi_str):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
@@ -398,10 +397,7 @@ class TestDrawCircle:
         self, hemisphere, polar_cap, azimuth, polar, desired_azimuth, desired_polar
     ):
         azimuth_out, polar_out = plot.stereographic_plot._sort_coords_by_shifted_bools(
-            hemisphere=hemisphere,
-            polar_cap=polar_cap,
-            azimuth=azimuth,
-            polar=polar,
+            hemisphere=hemisphere, polar_cap=polar_cap, azimuth=azimuth, polar=polar
         )
         assert np.allclose(azimuth_out, desired_azimuth)
         assert np.allclose(polar_out, desired_polar)

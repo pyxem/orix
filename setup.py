@@ -59,8 +59,5 @@ setup(
         "tqdm",
     ],
     # fmt: on
-    package_data={
-        "": ["LICENSE", "README.rst", "readthedocs.yml"],
-        "orix": ["*.py"],
-    },
+    package_data={"": ["LICENSE", "README.rst", "readthedocs.yml"], "orix": ["*.py"]},
 )

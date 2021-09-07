@@ -301,9 +301,7 @@ def dict2phase(dictionary):
     structure = Structure(lattice=lattice, atoms=atoms)
     structure.title = dictionary["Name"]
     return Phase(
-        name=dictionary["Name"],
-        space_group=int(dictionary["IT"]),
-        structure=structure,
+        name=dictionary["Name"], space_group=int(dictionary["IT"]), structure=structure
     )
 
 

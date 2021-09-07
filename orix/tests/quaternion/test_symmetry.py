@@ -1,4 +1,21 @@
-from diffpy.structure.spacegroups import GetSpaceGroup
+# -*- coding: utf-8 -*-
+# Copyright 2018-2021 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
 import pytest
 
 from orix.quaternion.symmetry import *
@@ -18,16 +35,7 @@ def vector(request):
         (Csy, (1, 2, 3), [(1, 2, 3), (1, -2, 3)]),
         (Csz, (1, 2, 3), [(1, 2, 3), (1, 2, -3)]),
         (C2, (1, 2, 3), [(1, 2, 3), (-1, -2, 3)]),
-        (
-            C2v,
-            (1, 2, 3),
-            [
-                (1, 2, 3),
-                (1, -2, 3),
-                (1, -2, -3),
-                (1, 2, -3),
-            ],
-        ),
+        (C2v, (1, 2, 3), [(1, 2, 3), (1, -2, 3), (1, -2, -3), (1, 2, -3)]),
         (
             C4v,
             (1, 2, 3),
@@ -174,13 +182,7 @@ def test_order(symmetry, expected):
 
 
 @pytest.mark.parametrize(
-    "symmetry, expected",
-    [
-        (D2d, False),
-        (C4, True),
-        (C6v, False),
-        (O, True),
-    ],
+    "symmetry, expected", [(D2d, False), (C4, True), (C6v, False), (O, True)]
 )
 def test_is_proper(symmetry, expected):
     assert symmetry.is_proper == expected
@@ -201,11 +203,7 @@ def test_subgroups(symmetry, expected):
 
 @pytest.mark.parametrize(
     "symmetry, expected",
-    [
-        (C1, [C1]),
-        (D2, [C1, C2x, C2y, C2z, D2]),
-        (C6v, [C1, C2z, C3, C6]),
-    ],
+    [(C1, [C1]), (D2, [C1, C2x, C2y, C2z, D2]), (C6v, [C1, C2z, C3, C6])],
 )
 def test_proper_subgroups(symmetry, expected):
     assert set(symmetry.proper_subgroups) == set(expected)
@@ -262,15 +260,7 @@ def test_is_laue():
 
 
 @pytest.mark.parametrize(
-    "symmetry, expected",
-    [
-        (Cs, C2),
-        (C4v, D4),
-        (Th, T),
-        (Td, O),
-        (O, O),
-        (Oh, O),
-    ],
+    "symmetry, expected", [(Cs, C2), (C4v, D4), (Th, T), (Td, O), (O, O), (Oh, O)]
 )
 def test_proper_inversion_subgroup(symmetry, expected):
     assert symmetry.laue_proper_subgroup._tuples == expected._tuples
@@ -299,12 +289,7 @@ def test_contains_inversion(symmetry, expected):
 
 @pytest.mark.parametrize(
     "symmetry, other, expected",
-    [
-        (D2, C1, [C1]),
-        (C1, C1, [C1]),
-        (D2, C2, [C1, C2z]),
-        (C4, S4, [C1, C2z]),
-    ],
+    [(D2, C1, [C1]), (C1, C1, [C1]), (D2, C2, [C1, C2z]), (C4, S4, [C1, C2z])],
 )
 def test_and(symmetry, other, expected):
     overlap = symmetry & other
@@ -312,13 +297,7 @@ def test_and(symmetry, other, expected):
     assert overlap._tuples == expected._tuples
 
 
-@pytest.mark.parametrize(
-    "symmetry, other, expected",
-    [
-        (C1, C1, True),
-        (C1, C2, False),
-    ],
-)
+@pytest.mark.parametrize("symmetry, other, expected", [(C1, C1, True), (C1, C2, False)])
 def test_eq(symmetry, other, expected):
     assert (symmetry == other) == expected
 

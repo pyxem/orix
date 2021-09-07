@@ -53,9 +53,7 @@ def hdf5group2dict(group, dictionary=None, recursive=False, dont_read=None):
             if recursive:
                 dictionary[key] = {}
                 hdf5group2dict(
-                    group=group[key],
-                    dictionary=dictionary[key],
-                    recursive=recursive,
+                    group=group[key], dictionary=dictionary[key], recursive=recursive
                 )
             else:
                 dictionary[key] = value

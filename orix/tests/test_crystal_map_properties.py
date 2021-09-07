@@ -27,11 +27,7 @@ class TestCrystalMapProperties:
         "dictionary, id, is_in_data",
         [
             ({}, np.arange(10), np.ones(10, dtype=bool)),
-            (
-                {"iq": np.arange(10), "dp": np.zeros(10)},
-                np.arange(10),
-                None,
-            ),
+            ({"iq": np.arange(10), "dp": np.zeros(10)}, np.arange(10), None),
             ({}, np.arange(5), np.array([1, 1, 0, 1, 1], dtype=bool)),
         ],
     )

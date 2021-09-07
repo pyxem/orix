@@ -594,9 +594,7 @@ def _get_array_of_values(value, visible):
     if not isinstance(value, str) and hasattr(value, "__iter__") and len(value) != n:
         value = value[0]
     if isinstance(value, str) or not hasattr(value, "__iter__"):
-        value = [
-            value,
-        ] * n
+        value = [value] * n
     return np.asarray(value)[visible]
 
 
