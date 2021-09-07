@@ -174,8 +174,9 @@ class OrientationRegion(Rotation):
         return faces
 
     def __gt__(self, other):
-        """Overridden greater than method. Applying this to an Orientation
-        will return only orientations those that lie within the OrientationRegion
+        """Overridden greater than method. Applying this to an
+        Orientation will return only those orientations that lie within
+        the OrientationRegion.
         """
         c = Quaternion(self).dot_outer(Quaternion(other)).data
         inside = np.logical_or(

@@ -126,6 +126,10 @@ nbsphinx_prolog = (
 )
 # https://nbsphinx.readthedocs.io/en/0.8.0/never-execute.html
 nbsphinx_execute = "auto"  # auto, always, never
+nbsphinx_execute_arguments = [
+    "--InlineBackend.rc=figure.facecolor='w'",
+    "--InlineBackend.rc=font.size=15",
+]
 
 # sphinxcontrib-bibtex configuration
 bibtex_bibfiles = ["bibliography.bib"]

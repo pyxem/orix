@@ -403,21 +403,13 @@ class Rotation(Quaternion):
         return rot
 
     def to_matrix(self):
-        """Rotations as orientation matrices [Rowenhorst2015]_.
+        """Rotations as orientation matrices
+        :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
         ndarray
             Array of orientation matrices.
-
-        References
-        ----------
-        .. [Rowenhorst2015] D. Rowenhorst, A. D. Rollett, G. S. Rohrer,
-            M. Groeber, M. Jackson, P. J. Konijnenberg, M. De Graef,
-            "Consistent representations of and conversions between 3D
-            rotations," *Modelling and Simulation in Materials Science
-            and Engineering* **23** (2015), doi:
-            https://doi.org/10.1088/0965-0393/23/8/083501
 
         Examples
         --------
@@ -458,7 +450,7 @@ class Rotation(Quaternion):
     @classmethod
     def from_matrix(cls, matrix):
         """Creates rotations from orientation matrices
-        [Rowenhorst2015]_.
+        :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
@@ -468,7 +460,7 @@ class Rotation(Quaternion):
         Examples
         --------
         >>> import numpy as np
-        >>> from orix.quaternion.rotation import Rotation
+        >>> from orix.quaternion import Rotation
         >>> r = Rotation.from_matrix(np.eye(3))
         >>> np.allclose(r.data, [1, 0, 0, 0])
         True
