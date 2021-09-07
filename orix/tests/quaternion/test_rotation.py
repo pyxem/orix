@@ -69,7 +69,7 @@ def vector(request):
 def test_init(rotation):
     assert np.allclose(rotation.norm.data, 1)
     assert rotation.improper.shape == rotation.shape
-    assert np.all(rotation.improper is False)
+    assert np.count_nonzero(rotation.improper) == 0
 
 
 def test_slice(rotation):

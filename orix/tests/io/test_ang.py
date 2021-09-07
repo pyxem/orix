@@ -331,12 +331,7 @@ class TestAngReader:
         indirect=["angfile_emsoft"],
     )
     def test_load_ang_emsoft(
-        self,
-        angfile_emsoft,
-        map_shape,
-        step_sizes,
-        phase_id,
-        example_rot,
+        self, angfile_emsoft, map_shape, step_sizes, phase_id, example_rot
     ):
         cm = load(angfile_emsoft)
 
