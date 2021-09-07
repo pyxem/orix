@@ -67,7 +67,7 @@ class TestEMsoftH5ebsdReader:
         indirect=["temp_emsoft_h5ebsd_file"],
     )
     def test_load_emsoft(
-        self, temp_emsoft_h5ebsd_file, map_shape, step_sizes, n_top_matches, refined,
+        self, temp_emsoft_h5ebsd_file, map_shape, step_sizes, n_top_matches, refined
     ):
         xmap = load(temp_emsoft_h5ebsd_file.filename, refined=refined)
 

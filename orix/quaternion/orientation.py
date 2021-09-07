@@ -44,7 +44,6 @@ import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
-import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
@@ -261,7 +260,6 @@ class Misorientation(Rotation):
         rep = "{} {} {}\n{}".format(cls, shape, symm, data)
         return rep
 
-
     def scatter(
         self,
         projection="axangle",
@@ -321,8 +319,10 @@ class Misorientation(Rotation):
         )
 
         # Plot wireframe
-        if isinstance(self.symmetry,tuple):
-            fundamental_region = OrientationRegion.from_symmetry(s1=self.symmetry[0],s2=self.symmetry[1])
+        if isinstance(self.symmetry, tuple):
+            fundamental_region = OrientationRegion.from_symmetry(
+                s1=self.symmetry[0], s2=self.symmetry[1]
+            )
             ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
         else:
             # Orientation via inheritance

@@ -167,7 +167,7 @@ class TestPhase:
         ],
     )
     def test_phase_repr_str(
-        self, name, space_group, desired_sg_str, desired_pg_str, desired_ppg_str,
+        self, name, space_group, desired_sg_str, desired_pg_str, desired_ppg_str
     ):
         p = Phase(name=name, space_group=space_group, color="C0")
         desired = (

@@ -488,7 +488,6 @@ def file_writer(
 
     # Phase ID
     original_phase_ids = xmap.get_map_data("phase_id").reshape(map_size)
-    new_phase_ids = np.zeros(map_size, dtype=int)
     pl = xmap.phases.deepcopy()
     if -1 in pl.ids:
         del pl[-1]
@@ -619,9 +618,7 @@ def _get_column_width(max_value, decimals=5):
     return len(str(int(max_value // 1))) + decimals + 2
 
 
-def _get_prop_arrays(
-    xmap, prop_names, desired_prop_names, map_size, index, decimals=5,
-):
+def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, decimals=5):
     """Return a 2D array (n_points, n_properties) with desired property
     values in, or just zeros.
 
@@ -667,7 +664,7 @@ def _get_prop_arrays(
             fill_value=0,
         )
         if prop is not None:
-            prop_arrays[:, i] = prop.reshape(map_size,)
+            prop_arrays[:, i] = prop.reshape(map_size)
     return prop_arrays
 
 
