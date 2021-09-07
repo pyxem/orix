@@ -48,7 +48,7 @@ setup(
     extras_require=extra_feature_requirements,
     # fmt: off
     install_requires=[
-        "dask[array] >= 2021.8.1",
+        "dask[array]",
         "diffpy.structure >= 3",
         "h5py",
         "matplotlib >= 3.3",
