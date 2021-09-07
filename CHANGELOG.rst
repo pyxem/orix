@@ -10,6 +10,10 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+
+2021-09-07 - version 0.7.0
+==========================
+
 Added
 -----
 - Memory-efficient calculation of a misorientation angle (geodesic distance) matrix
