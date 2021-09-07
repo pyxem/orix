@@ -114,7 +114,9 @@ class TestCrystalMapInit:
         assert xmap.rotations_per_point == expected_rotations_per_point
 
         for actual_coords, expected_coords, expected_nan in zip(
-            xmap._coordinates.values(), coordinate_arrays, expected_coords_nan,
+            xmap._coordinates.values(),
+            coordinate_arrays,
+            expected_coords_nan,
         ):
             if actual_coords is None:
                 assert expected_nan

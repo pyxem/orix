@@ -620,7 +620,12 @@ def _get_column_width(max_value, decimals=5):
 
 
 def _get_prop_arrays(
-    xmap, prop_names, desired_prop_names, map_size, index, decimals=5,
+    xmap,
+    prop_names,
+    desired_prop_names,
+    map_size,
+    index,
+    decimals=5,
 ):
     """Return a 2D array (n_points, n_properties) with desired property
     values in, or just zeros.
@@ -667,7 +672,9 @@ def _get_prop_arrays(
             fill_value=0,
         )
         if prop is not None:
-            prop_arrays[:, i] = prop.reshape(map_size,)
+            prop_arrays[:, i] = prop.reshape(
+                map_size,
+            )
     return prop_arrays
 
 

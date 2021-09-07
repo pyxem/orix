@@ -180,7 +180,11 @@ def test_pow(scalar, other, expected):
 
 @pytest.mark.parametrize(
     "scalar, expected",
-    [((1, 1, 1), (3,)), ([[0, -1], [4, 2]], (2, 2)), ([[5, 1, 0]], (1, 3)),],
+    [
+        ((1, 1, 1), (3,)),
+        ([[0, -1], [4, 2]], (2, 2)),
+        ([[5, 1, 0]], (1, 3)),
+    ],
     indirect=["scalar"],
 )
 def test_shape(scalar, expected):

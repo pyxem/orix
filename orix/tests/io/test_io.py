@@ -153,7 +153,7 @@ class TestGeneralIO:
 
 
 def test_loadctf():
-    """ Crude test of the ctf loader """
+    """Crude test of the ctf loader"""
     z = np.random.rand(100, 8)
     fname = "temp.ctf"
     np.savetxt(fname, z)

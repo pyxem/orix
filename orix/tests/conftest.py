@@ -164,7 +164,10 @@ def temp_file_path(request):
             np.random.choice([2, 3], 7 * 13),  # phase_id
             5,  # Number of unknown columns (one between ci and fit, the rest after fit)
             np.array(
-                [[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589],]
+                [
+                    [4.48549, 0.95242, 0.79150],
+                    [1.34390, 0.27611, 0.82589],
+                ]
             ),  # rotations as rows of Euler angle triplets
         )
     ]
@@ -241,7 +244,10 @@ def angfile_tsl(tmpdir, request):
             (2.86, 2.86),  # step_sizes
             np.ones(7 * 5, dtype=int),  # phase_id
             np.array(
-                [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
+                [
+                    [6.148271, 0.792205, 1.324879],
+                    [6.155951, 0.793078, 1.325229],
+                ]
             ),  # rotations as rows of Euler angle triplets
         )
     ]
@@ -305,7 +311,10 @@ def angfile_astar(tmpdir, request):
             (1.5, 1.5),  # step_sizes
             np.random.choice([1, 2], 9 * 7),  # phase_id
             np.array(
-                [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
+                [
+                    [6.148271, 0.792205, 1.324879],
+                    [6.155951, 0.793078, 1.325229],
+                ]
             ),  # rotations as rows of Euler angle triplets
         )
     ]
@@ -360,7 +369,10 @@ def angfile_emsoft(tmpdir, request):
             (13, 3),  # map_shape
             (1.5, 1.5),  # step_sizes
             np.array(
-                [[6.148271, 0.792205, 1.324879], [6.155951, 0.793078, 1.325229],]
+                [
+                    [6.148271, 0.792205, 1.324879],
+                    [6.155951, 0.793078, 1.325229],
+                ]
             ),  # rotations as rows of Euler angle triplets
             50,  # n_top_matches
             True,  # refined

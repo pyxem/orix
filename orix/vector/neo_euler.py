@@ -35,9 +35,7 @@ from orix.vector import Vector3d
 
 
 class NeoEuler(Vector3d, abc.ABC):
-    """Base class for neo-Eulerian vectors.
-
-    """
+    """Base class for neo-Eulerian vectors."""
 
     @classmethod
     @abc.abstractmethod

@@ -18,7 +18,7 @@ extra_feature_requirements = {
     ],
     "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
 }
-extra_feature_requirements["dev"] = ["black >= 19.3b0", "pre-commit >= 1.16"] + list(
+extra_feature_requirements["dev"] = ["black", "manifix", "pre-commit >= 1.16"] + list(
     chain(*list(extra_feature_requirements.values()))
 )
 
@@ -59,5 +59,8 @@ setup(
         "tqdm",
     ],
     # fmt: on
-    package_data={"": ["LICENSE", "README.rst", "readthedocs.yml"], "orix": ["*.py"],},
+    package_data={
+        "": ["LICENSE", "README.rst", "readthedocs.yml"],
+        "orix": ["*.py"],
+    },
 )

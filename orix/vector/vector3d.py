@@ -761,7 +761,9 @@ class Vector3d(Object3d):
         # Create new figure and axis/axes
         if figure is None:
             figure, axes = plt.subplots(
-                ncols=ncols, subplot_kw=dict(projection=projection), **figure_kwargs,
+                ncols=ncols,
+                subplot_kw=dict(projection=projection),
+                **figure_kwargs,
             )
 
         # Make axes iterable
@@ -774,9 +776,13 @@ class Vector3d(Object3d):
         if grid is None:
             grid = [a._stereographic_grid for a in axes]
             if all(g is None for g in grid):
-                grid = [plt.rcParams["axes.grid"],] * ncols
+                grid = [
+                    plt.rcParams["axes.grid"],
+                ] * ncols
         else:
-            grid = [grid,] * ncols
+            grid = [
+                grid,
+            ] * ncols
         if grid_resolution is None:
             grid_resolution = (None,) * 2
 
