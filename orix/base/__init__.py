@@ -17,7 +17,8 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-from .._util import deprecated
+
+from orix._util import deprecated
 
 
 # Lists what will be imported when calling "from orix.base import *"
@@ -122,7 +123,11 @@ class Object3d:
 
     @property
     def ndim(self):
-        """int: The number of navigation dimensions of the object."""
+        """int : The number of navigation dimensions of the instance.
+
+        For example, if `data` has shape (4, 5, 6), `data_dim` is 3.
+
+        """
         return len(self.shape)
 
     @property
