@@ -16,7 +16,7 @@ Added
 
 Deprecated
 ----------
-- "data_dim" attribute of Object3d to be deprecated in 0.9.0 with a warning from 0.8.0
+- "data_dim" attribute of Object3d is deprecated from 0.8.0 and will be removed in 0.9.0
 
 
 2021-09-07 - version 0.7.0
