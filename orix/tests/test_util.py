@@ -29,43 +29,70 @@ class TestDeprecationWarning:
         gets the desired additions to their docstring.
         """
 
-        @deprecated(since=0.7, message="Hello", alternative="bar", removal=0.8)
-        def foo(n):
-            """Some docstring."""
-            return n + 1
+        class Foo:
+            @property
+            @deprecated(
+                since="1.3",
+                alternative="bar_prop2",
+                removal="1.4",
+                object_type="not a function",
+            )
+            def bar_prop(self):
+                return 1
+
+            @deprecated(since=0.7, alternative="bar_func3", removal=0.8)
+            def bar_func1(self, n):
+                """Some docstring."""
+                return n + 1
+
+            @deprecated(since=1.9)
+            def bar_func2(self, n):
+                """Another docstring.
+
+                Notes
+                -----
+                Some existing notes.
+                """
+                return n + 2
+
+        my_foo = Foo()
 
         with pytest.warns(np.VisibleDeprecationWarning) as record:
-            assert foo(4) == 5
+            assert my_foo.bar_func1(4) == 5
         desired_msg = (
-            "Function `foo()` is deprecated and will be removed in version 0.8. "
-            "Use `bar()` instead."
+            "Function `bar_func1()` is deprecated and will be removed in version 0.8. "
+            "Use `bar_func3()` instead."
         )
         assert str(record[0].message) == desired_msg
-        assert foo.__doc__ == (
+        assert my_foo.bar_func1.__doc__ == (
             "[*Deprecated*] Some docstring.\n"
             "\nNotes\n-----\n"
             ".. deprecated:: 0.7\n"
             f"   {desired_msg}"
         )
 
-        @deprecated(since=1.9)
-        def foo2(n):
-            """Another docstring.
-
-            Notes
-            -----
-            Some existing notes.
-            """
-            return n + 2
-
         with pytest.warns(np.VisibleDeprecationWarning) as record2:
-            assert foo2(4) == 6
-        desired_msg2 = "Function `foo2()` is deprecated."
+            assert my_foo.bar_func2(4) == 6
+        desired_msg2 = "Function `bar_func2()` is deprecated."
         assert str(record2[0].message) == desired_msg2
-        assert foo2.__doc__ == (
+        assert my_foo.bar_func2.__doc__ == (
             "[*Deprecated*] Another docstring.\n"
             "\nNotes\n-----\n"
             "Some existing notes.\n\n"
             ".. deprecated:: 1.9\n"
             f"   {desired_msg2}"
+        )
+
+        with pytest.warns(np.VisibleDeprecationWarning) as record3:
+            assert my_foo.bar_prop == 1
+        desired_msg3 = (
+            "Property `bar_prop` is deprecated and will be removed in version 1.4. "
+            "Use `bar_prop2` instead."
+        )
+        assert str(record3[0].message) == desired_msg3
+        assert my_foo.__class__.bar_prop.__doc__ == (
+            "[*Deprecated*] \n"
+            "\nNotes\n-----\n"
+            ".. deprecated:: 1.3\n"
+            f"   {desired_msg3}"
         )

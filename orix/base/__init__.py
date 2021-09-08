@@ -111,12 +111,7 @@ class Object3d:
         return self.data.shape[:-1]
 
     @property
-    @deprecated(
-        "0.8.0",
-        message="The use of 'data_dim' is deprecated.",
-        alternative="ndim",
-        removal="0.9.0",
-    )
+    @deprecated(since="0.8", alternative="ndim", removal="0.9", object_type="property")
     def data_dim(self):
         """int : The dimensions of the data.
 
