@@ -17,6 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+from .._util import deprecated
 
 
 # Lists what will be imported when calling "from orix.base import *"
@@ -110,12 +111,23 @@ class Object3d:
         return self.data.shape[:-1]
 
     @property
+    @deprecated(
+        "0.7.1",
+        message="The use of 'data_dim' is deprecated.",
+        alternative="ndim",
+        removal="0.8.0",
+    )
     def data_dim(self):
         """int : The dimensions of the data.
 
         For example, if `data` has shape (4, 4, 3), `data_dim` is 3.
 
         """
+        return self.ndim
+
+    @property
+    def ndim(self):
+        """int: The number of navigation dimensions of the object."""
         return len(self.shape)
 
     @property
