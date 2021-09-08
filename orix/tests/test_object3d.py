@@ -158,6 +158,11 @@ def test_data_dim(object3d):
     assert object3d.data_dim == len(object3d.data.shape[:-1])
 
 
+def test_data_dim_warns(object3d):
+    with pytest.warns(np.VisibleDeprecationWarning, match="Function "):
+        _ = object3d.data_dim
+
+
 def test_ndim(object3d):
     assert object3d.ndim == len(object3d.data.shape[:-1])
 
