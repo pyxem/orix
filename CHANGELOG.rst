@@ -10,6 +10,14 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Added
+-----
+- "ndim" attribute to Object3d which returns number of navigation dimensions
+
+Deprecated
+----------
+- "data_dim" attribute of Object3d is deprecated from 0.8.0 and will be removed in 0.9.0
+
 
 2021-09-07 - version 0.7.0
 ==========================

@@ -158,6 +158,10 @@ def test_data_dim(object3d):
     assert object3d.data_dim == len(object3d.data.shape[:-1])
 
 
+def test_ndim(object3d):
+    assert object3d.ndim == len(object3d.data.shape[:-1])
+
+
 def test_size(object3d):
     assert object3d.size == object3d.data.size / object3d.dim
 
@@ -201,3 +205,12 @@ def test_get_random_sample(test_object3d):
 
     with pytest.raises(ValueError, match="Cannot draw a sample greater than 20"):
         _ = o3d.get_random_sample(21)
+
+
+@pytest.mark.parametrize("test_object3d", [3], indirect=["test_object3d"])
+def test_deprecation_warning_data_dim(test_object3d):
+    o3d = test_object3d(np.arange(21).reshape((7, 3)))
+    with pytest.warns(
+        np.VisibleDeprecationWarning, match="Property `data_dim` is deprecated and "
+    ):
+        assert o3d.data_dim == 1
