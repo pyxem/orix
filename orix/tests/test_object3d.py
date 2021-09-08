@@ -158,6 +158,10 @@ def test_data_dim(object3d):
     assert object3d.data_dim == len(object3d.data.shape[:-1])
 
 
+def test_ndim(object3d):
+    assert object3d.ndim == len(object3d.data.shape[:-1])
+
+
 def test_size(object3d):
     assert object3d.size == object3d.data.size / object3d.dim
 
