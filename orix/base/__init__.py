@@ -17,6 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+
 from orix._util import deprecated
 
 
