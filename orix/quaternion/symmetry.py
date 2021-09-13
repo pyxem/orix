@@ -113,6 +113,81 @@ class Symmetry(Rotation):
         tuples = set([tuple(d) for d in s._differentiators()])
         return tuples
 
+    @property
+    def fundamental_sector(self):
+        """:class:`~orix.vector.FundamentalSector` describing the
+        inverse pole figure given by the point group name.
+
+        These sectors are taken from MTEX'
+        :code:`crystalSymmetry.fundamentalSector`.
+        """
+        # Avoid circular import
+        from orix.vector import FundamentalSector
+
+        name = self.name
+        vx = Vector3d.xvector()
+        vy = Vector3d.yvector()
+        vz = Vector3d.zvector()
+
+        # Map everything on the northern hemisphere if there is an
+        # inversion or some symmetry operation not parallel to Z
+        if any(vz.angle_with(self.outer(vz)) > np.pi / 2):
+            n = vz
+        else:
+            n = Vector3d.empty()
+
+        # Region on the northern hemisphere depends just on the number
+        # of symmetry operations
+        if self.size > 1 + n.size:
+            angle = 2 * np.pi * (1 + n.size) / self.size
+            new_v = Vector3d.from_polar(
+                azimuth=[np.pi / 2, angle - np.pi / 2], polar=[np.pi / 2, np.pi / 2]
+            )
+            n = Vector3d(np.vstack([n.data, new_v.data]))
+
+        # We only set the center by hand for T (23), Th (m-3) and O
+        # (432), since the UV S2 sampling isn't uniform enough to
+        # produce the correct center according to MTEX
+        center = None
+
+        # Override normal(s) for some point groups
+        if name == "-1":
+            n = vz
+        elif name in ["211", "121", "112"]:
+            idx_min_angle = np.argmin(self.angle.data)
+            if np.isclose(self[idx_min_angle].dot(vz), 0):
+                n = vz
+        elif name in ["m11", "1m1", "11m"]:
+            idx_min_angle = np.argmin(self.angle.data)
+            n = self[idx_min_angle].axis
+            if name == "m11":
+                n = -n
+        elif name == "mm2":
+            n = self[self.improper].axis  # Mirror planes
+            idx = n.angle_with(-vy) < np.pi / 4
+            n[idx] = -n[idx]
+        elif name in ["321", "312", "3m", "-3m1", "6m2"]:
+            n = n.rotate(angle=-np.pi / 6)
+        elif name == "-42m":
+            n = n.rotate(angle=-np.pi / 4)
+        elif name == "23":
+            n = Vector3d([[1, 1, 0], [1, -1, 0], [0, -1, 1], [0, 1, 1]])
+            # Taken from MTEX
+            center = Vector3d([0.707558, -0.000403, 0.706655])
+        elif name in ["m-3", "432"]:
+            n = Vector3d(np.vstack([vx.data, [0, -1, 1], [-1, 0, 1], vy.data, vz.data]))
+            # Taken from MTEX
+            center = Vector3d([0.349928, 0.348069, 0.869711])
+        elif name == "-43m":
+            n = Vector3d([[1, -1, 0], [1, 1, 0], [-1, 0, 1]])
+        elif name == "m-3m":
+            n = Vector3d(np.vstack([[1, -1, 0], [-1, 0, 1], vy.data]))
+
+        fs = FundamentalSector(n).flatten().unique()
+        fs._center = center
+
+        return fs
+
     @classmethod
     def from_generators(cls, *generators):
         """Create a Symmetry from a minimum list of generating
@@ -185,7 +260,7 @@ class Symmetry(Rotation):
             return Vector3d.empty()
         return Vector3d.stack(diads).flatten()
 
-    def fundamental_sector(self):
+    def fundamental_zone(self):
         from orix.vector.neo_euler import AxAngle
         from orix.vector.spherical_region import SphericalRegion
 
@@ -359,46 +434,49 @@ Td.name = "-43m"
 Oh = Symmetry.from_generators(O, Ci)
 Oh.name = "m-3m"
 
+# fmt: off
 _groups = [
-    C1,
-    Ci,  # triclinic
-    C2x,
-    C2y,
-    C2z,
-    Csx,
-    Csy,
-    Csz,
-    C2h,  # monoclinic
-    D2,
-    C2v,
-    D2h,  # orthorhombic
-    C4,
-    S4,
-    C4h,
-    D4,
-    C4v,
-    D2d,
-    D4h,  # tetragonal
-    C3,
-    S6,
-    D3x,
-    D3y,
-    D3,
-    C3v,
-    D3d,  # trigonal
-    C6,
-    C3h,
-    C6h,
-    D6,
-    C6v,
-    D3h,
-    D6h,  # hexagonal
-    T,
-    Th,
-    O,
-    Td,
-    Oh,  # cubic
+    # Schoenflies   Crystal system  International   Laue class
+    C1,   #         Triclinic        1
+    Ci,   #         Triclinic       -1
+    C2x,  #         Monoclinic       211
+    C2y,  #         Monoclinic       121
+    C2z,  #         Monoclinic       112
+    Csx,  #         Monoclinic       m11
+    Csy,  #         Monoclinic       1m1
+    Csz,  #         Monoclinic       11m
+    C2h,  #         Monoclinic       2/m
+    D2,   #         Orthorhombic     222
+    C2v,  #         Orthorhombic     mm2
+    D2h,  #         Orthorhombic     mmm
+    C4,   #         Tetragonal       4
+    S4,   #         Tetragonal      -4
+    C4h,  #         Tetragonal       4/m
+    D4,   #         Tetragonal       422
+    C4v,  #         Tetragonal       4mm
+    D2d,  #         Tetragonal      -42m
+    D4h,  #         Tetragonal       4/mmm
+    C3,   #         Trigonal         3
+    S6,   #         Trigonal        -3
+    D3x,  #         Trigonal         321
+    D3y,  #         Trigonal         312
+    D3,   #         Trigonal         32
+    C3v,  #         Trigonal         3m
+    D3d,  #         Trigonal        -3m
+    C6,   #         Hexagonal        6
+    C3h,  #         Hexagonal       -6
+    C6h,  #         Hexagonal        6/m
+    D6,   #         Hexagonal        622
+    C6v,  #         Hexagonal        6mm
+    D3h,  #         Hexagonal       -6m2
+    D6h,  #         Hexagonal        6/mmm
+    T,    #         Cubic            23
+    Th,   #         Cubic            m-3
+    O,    #         Cubic            432
+    Td,   #         Cubic           -43m
+    Oh,   #         Cubic            m-3m
 ]
+# fmt: on
 _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]
 
 

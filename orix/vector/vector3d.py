@@ -400,7 +400,7 @@ class Vector3d(Object3d):
         return cls((0, 0, 1))
 
     def angle_with(self, other):
-        """Calculate the angles between vectors in 'self' and 'other'
+        """Calculate the angles between these vectors in other vectors.
 
         Vectors must have compatible shapes for broadcasting to work.
 
@@ -467,7 +467,7 @@ class Vector3d(Object3d):
         """
         assert self.size == 1, "`get_nearest` only works for single vectors."
         tiebreak = Vector3d.zvector() if tiebreak is None else tiebreak
-        eps = 1e-9 if inclusive else 0.0
+        eps = 1e-9 if inclusive else 0
         cosines = x.dot(self).data
         mask = np.logical_and(-1 - eps < cosines, cosines < 1 + eps)
         x = x[mask]
@@ -479,7 +479,7 @@ class Vector3d(Object3d):
         return x[order[-1]]
 
     def mean(self):
-        axis = tuple(range(self.data_dim))
+        axis = tuple(range(self.ndim))
         return self.__class__(self.data.mean(axis=axis))
 
     def to_polar(self):
@@ -512,7 +512,7 @@ class Vector3d(Object3d):
         Returns
         -------
         circles : Vector3d
-            Vectors delinating circles with the `opening_angle` about
+            Vectors delineating circles with the `opening_angle` about
             the vectors.
 
         Notes
@@ -533,14 +533,14 @@ class Vector3d(Object3d):
         self,
         projection="stereographic",
         figure=None,
-        axes_labels=[None, None, None],
+        axes_labels=None,
         vector_labels=None,
         hemisphere=None,
         show_hemisphere_label=None,
         grid=None,
         grid_resolution=None,
-        figure_kwargs=dict(),
-        text_kwargs=dict(),
+        figure_kwargs=None,
+        text_kwargs=None,
         return_figure=False,
         **kwargs,
     ):
@@ -548,21 +548,42 @@ class Vector3d(Object3d):
 
         Parameters
         ----------
-        %s
-        %s
-        %s
+        projection : str, optional
+            Which projection to use. The default is "stereographic", the
+            only current option.
+        figure : matplotlib.figure.Figure, optional
+            Which figure to plot onto. Default is None, which creates a
+            new figure.
+        axes_labels : list of str, optional
+            Reference frame axes labels, defaults to [None, None, None].
         vector_labels : list of str, optional
             Vector text labels, which by default aren't added.
-        %s
-        %s
-        %s
-        %s
-        %s
+        hemisphere : str, optional
+            Which hemisphere(s) to plot the vectors in, defaults to
+            "None", which means "upper" if a new figure is created,
+            otherwise adds to the current figure's hemispheres. Options
+            are "upper", "lower", and "both", which plots two
+            projections side by side.
+        show_hemisphere_label : bool, optional
+            Whether to show hemisphere labels "upper" or "lower".
+            Default is True if `hemisphere` is "both", otherwise False.
+        grid : bool, optional
+            Whether to show the azimuth and polar grid. Default is
+            whatever `axes.grid` is set to in
+            :obj:`matplotlib.rcParams`.
+        grid_resolution : tuple, optional
+            Azimuth and polar grid resolution in degrees, as a tuple.
+            Default is whatever is default in
+            :class:`~orix.plot.StereographicPlot.stereographic_grid`.
+        figure_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
         text_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :func:`~orix.plot.StereographicPlot.text`, which passes
             these on to :meth:`matplotlib.axes.Axes.text`.
-        %s
+        return_figure : bool, optional
+            Whether to return the figure (default is False).
         kwargs : dict, optional
             Keyword arguments passed to
             :func:`~orix.plot.StereographicPlot.scatter`, which passes
@@ -575,7 +596,11 @@ class Vector3d(Object3d):
 
         Notes
         -----
-        %s
+        This is a somewhat customizable convenience method which creates
+        a figure with axes using :class:`~orix.plot.StereographicPlot`,
+        however, it is meant for quick plotting and prototyping. This
+        figure and the axes can also be created using Matplotlib
+        directly, which is more customizable.
 
         See Also
         --------
@@ -588,6 +613,8 @@ class Vector3d(Object3d):
             show_hemisphere_label,
             grid,
             grid_resolution,
+            text_kwargs,
+            axes_labels,
         ) = self._setup_plot(
             projection=projection,
             figure=figure,
@@ -596,22 +623,22 @@ class Vector3d(Object3d):
             grid=grid,
             grid_resolution=grid_resolution,
             figure_kwargs=figure_kwargs,
+            text_kwargs=text_kwargs,
+            axes_labels=axes_labels,
         )
 
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.scatter(self, **kwargs)
-            ax.grid(grid[i])
+            ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
             ax._stereographic_grid = grid[i]
-            ax.azimuth_grid(grid_resolution[0])
-            ax.polar_grid(grid_resolution[1])
             ax.set_labels(*axes_labels)
             if show_hemisphere_label:
                 ax.show_hemisphere_label()
             if vector_labels is not None:
-                for vi, labeli in zip(self, vector_labels):
-                    ax.text(vi, s=labeli, **text_kwargs)
+                for vi, li in zip(self, vector_labels):
+                    ax.text(vi, s=li, **text_kwargs)
 
         if return_figure:
             return fig
@@ -622,12 +649,12 @@ class Vector3d(Object3d):
         figure=None,
         opening_angle=np.pi / 2,
         steps=100,
-        axes_labels=[None, None, None],
+        axes_labels=None,
         hemisphere=None,
         show_hemisphere_label=None,
         grid=None,
         grid_resolution=None,
-        figure_kwargs=dict(),
+        figure_kwargs=None,
         return_figure=False,
         **kwargs,
     ):
@@ -639,21 +666,42 @@ class Vector3d(Object3d):
 
         Parameters
         ----------
-        %s
-        %s
+        projection : str, optional
+            Which projection to use. The default is "stereographic", the
+            only current option.
+        figure : matplotlib.figure.Figure, optional
+            Which figure to plot onto. Default is None, which creates a
+            new figure.
         opening_angle : float or numpy.ndarray, optional
             Opening angle(s) around the vector(s). Default is
             :math:`\pi/2`, giving a great circle. If an array is passed,
             its size must be equal to the number of vectors.
         steps : int, optional
             Number of vectors to describe each circle, default is 100.
-        %s
-        %s
-        %s
-        %s
-        %s
-        %s
-        %s
+        axes_labels : list of str, optional
+            Reference frame axes labels, defaults to [None, None, None].
+        hemisphere : str, optional
+            Which hemisphere(s) to plot the vectors in, defaults to
+            "None", which means "upper" if a new figure is created,
+            otherwise adds to the current figure's hemispheres. Options
+            are "upper", "lower", and "both", which plots two
+            projections side by side.
+        show_hemisphere_label : bool, optional
+            Whether to show hemisphere labels "upper" or "lower".
+            Default is True if `hemisphere` is "both", otherwise False.
+        grid : bool, optional
+            Whether to show the azimuth and polar grid. Default is
+            whatever `axes.grid` is set to in
+            :obj:`matplotlib.rcParams`.
+        grid_resolution : tuple, optional
+            Azimuth and polar grid resolution in degrees, as a tuple.
+            Default is whatever is default in
+            :class:`~orix.plot.StereographicPlot.stereographic_grid`.
+        figure_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
+        return_figure : bool, optional
+            Whether to return the figure (default is False).
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the circles'
@@ -666,7 +714,11 @@ class Vector3d(Object3d):
 
         Notes
         -----
-        %s
+        This is a somewhat customizable convenience method which creates
+        a figure with axes using :class:`~orix.plot.StereographicPlot`,
+        however, it is meant for quick plotting and prototyping. This
+        figure and the axes can also be created using Matplotlib
+        directly, which is more customizable.
 
         See Also
         --------
@@ -680,6 +732,8 @@ class Vector3d(Object3d):
             show_hemisphere_label,
             grid,
             grid_resolution,
+            _,
+            axes_labels,
         ) = self._setup_plot(
             projection=projection,
             figure=figure,
@@ -688,16 +742,15 @@ class Vector3d(Object3d):
             grid=grid,
             grid_resolution=grid_resolution,
             figure_kwargs=figure_kwargs,
+            axes_labels=axes_labels,
         )
 
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.draw_circle(self, opening_angle=opening_angle, steps=steps, **kwargs)
-            ax.grid(grid[i])
+            ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
             ax._stereographic_grid = grid[i]
-            ax.azimuth_grid(grid_resolution[0])
-            ax.polar_grid(grid_resolution[1])
             ax.set_labels(*axes_labels)
             if show_hemisphere_label:
                 ax.show_hemisphere_label()
@@ -713,19 +766,44 @@ class Vector3d(Object3d):
         show_hemisphere_label=None,
         grid=None,
         grid_resolution=None,
-        figure_kwargs=dict(),
+        figure_kwargs=None,
+        text_kwargs=None,
+        axes_labels=None,
     ):
         """Set up a stereographic projection plot.
 
         Parameters
         ----------
-        %s
-        %s
-        %s
-        %s
-        %s
-        %s
-        %s
+        projection : str, optional
+            Which projection to use. The default is "stereographic", the
+            only current option.
+        figure : matplotlib.figure.Figure, optional
+            Which figure to plot onto. Default is None, which creates a
+            new figure.
+        hemisphere : str, optional
+            Which hemisphere(s) to plot the vectors in, defaults to
+            "None", which means "upper" if a new figure is created,
+            otherwise adds to the current figure's hemispheres. Options
+            are "upper", "lower", and "both", which plots two
+            projections side by side.
+        show_hemisphere_label : bool, optional
+            Whether to show hemisphere labels "upper" or "lower".
+            Default is True if `hemisphere` is "both", otherwise False.
+        grid : bool, optional
+            Whether to show the azimuth and polar grid. Default is
+            whatever `axes.grid` is set to in
+            :obj:`matplotlib.rcParams`.
+        grid_resolution : tuple, optional
+            Azimuth and polar grid resolution in degrees, as a tuple.
+            Default is whatever is default in
+            :class:`~orix.plot.StereographicPlot.stereographic_grid`.
+        figure_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
+        text_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :meth:`~orix.plot.StereographicPlot.text`.
+        axes_labels : list, optional
 
         Returns
         -------
@@ -735,6 +813,8 @@ class Vector3d(Object3d):
         show_hemisphere_label : bool
         grid : list of bool
         grid_resolution : tuple
+        text_kwargs : dict
+        axes_labels : list
         """
         if projection.lower() != "stereographic":
             raise NotImplementedError("Stereographic is the only supported projection")
@@ -755,11 +835,13 @@ class Vector3d(Object3d):
         elif hemisphere == "both":
             ncols = 2
             hemisphere = hemispheres
-            if show_hemisphere_label != False:  # True or None
+            if show_hemisphere_label:
                 show_hemisphere_label = True
 
         # Create new figure and axis/axes
         if figure is None:
+            if figure_kwargs is None:
+                figure_kwargs = dict()
             figure, axes = plt.subplots(
                 ncols=ncols, subplot_kw=dict(projection=projection), **figure_kwargs
             )
@@ -780,85 +862,22 @@ class Vector3d(Object3d):
         if grid_resolution is None:
             grid_resolution = [None] * 2
 
-        return figure, axes, hemisphere, show_hemisphere_label, grid, grid_resolution
+        if text_kwargs is None:
+            text_kwargs = dict()
 
+        if axes_labels is None:
+            axes_labels = [None, None, None]
+        elif len(axes_labels) != 3:
+            n_labels = len(axes_labels)
+            axes_labels.append([None] * (3 - n_labels))
 
-PLOT_PROJECTION_DOCSTRING = """projection : str, optional
-            Which projection to use. The default is "stereographic", the
-            only current option.
-    """
-PLOT_FIGURE_DOCSTRING = """figure : matplotlib.figure.Figure, optional
-            Which figure to plot onto. Default is None, which creates a
-            new figure.
-    """
-PLOT_AXES_LABELS_DOCSTRING = """axes_labels : list of str, optional
-            Reference frame axes labels, defaults to [None, None, None].
-    """
-PLOT_HEMISPHERE_DOCTRING = """hemisphere : str, optional
-            Which hemisphere(s) to plot the vectors in, defaults to
-            "None", which means "upper" if a new figure is created,
-            otherwise adds to the current figure's hemispheres. Options
-            are "upper", "lower", and "both", which plots two
-            projections side by side.
-    """
-PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING = """show_hemisphere_label : bool, optional
-            Whether to show hemisphere labels "upper" or "lower".
-            Default is True if `hemisphere` is "both", otherwise False.
-    """
-PLOT_GRID_DOCSTRING = """grid : bool, optional
-            Whether to show the azimuth and polar grid. Default is
-            whatever `axes.grid` is set to in
-            :obj:`matplotlib.rcParams`.
-    """
-PLOT_GRID_RESOLUTION_DOCSTRING = """grid_resolution : tuple, optional
-            Azimuth and polar grid resolution in degrees, as a tuple.
-            Default is whatever is default in
-            :class:`~orix.plot.StereographicPlot.azimuth_grid` and
-            :class:`~orix.plot.StereographicPlot.polar_grid`.
-    """
-PLOT_RETURN_FIGURE_DOCSTRING = """return_figure : bool, optional
-            Whether to return the figure (default is False).
-    """
-PLOT_FIGURE_KWARGS_DOCSTRING = """figure_kwargs : dict, optional
-            Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.subplots`.
-    """
-PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING = """This is a somewhat customizable convenience method which creates
-        a figure with axes using :class:`~orix.plot.StereographicPlot`,
-        however, it is meant for quick plotting and prototyping. This
-        figure and the axes can also be created using Matplotlib
-        directly, which is more customizable.
-    """
-Vector3d.scatter.__doc__ %= (
-    PLOT_PROJECTION_DOCSTRING,
-    PLOT_FIGURE_DOCSTRING,
-    PLOT_AXES_LABELS_DOCSTRING,
-    PLOT_HEMISPHERE_DOCTRING,
-    PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING,
-    PLOT_GRID_DOCSTRING,
-    PLOT_GRID_RESOLUTION_DOCSTRING,
-    PLOT_FIGURE_KWARGS_DOCSTRING,
-    PLOT_RETURN_FIGURE_DOCSTRING,
-    PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING,
-)
-Vector3d.draw_circle.__doc__ %= (
-    PLOT_PROJECTION_DOCSTRING,
-    PLOT_FIGURE_DOCSTRING,
-    PLOT_AXES_LABELS_DOCSTRING,
-    PLOT_HEMISPHERE_DOCTRING,
-    PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING,
-    PLOT_GRID_DOCSTRING,
-    PLOT_GRID_RESOLUTION_DOCSTRING,
-    PLOT_FIGURE_KWARGS_DOCSTRING,
-    PLOT_RETURN_FIGURE_DOCSTRING,
-    PLOT_NOT_SO_CUSTOMIZABLE_NOTE_DOCSTRING,
-)
-Vector3d._setup_plot.__doc__ %= (
-    PLOT_PROJECTION_DOCSTRING,
-    PLOT_FIGURE_DOCSTRING,
-    PLOT_HEMISPHERE_DOCTRING,
-    PLOT_SHOW_HEMISPHERE_LABEL_DOCSTRING,
-    PLOT_GRID_DOCSTRING,
-    PLOT_GRID_RESOLUTION_DOCSTRING,
-    PLOT_FIGURE_KWARGS_DOCSTRING,
-)
+        return (
+            figure,
+            axes,
+            hemisphere,
+            show_hemisphere_label,
+            grid,
+            grid_resolution,
+            text_kwargs,
+            axes_labels,
+        )

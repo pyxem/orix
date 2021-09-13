@@ -16,7 +16,6 @@ the :ref:`user guide <user-guide>` and the
 The list of top modules:
 
 .. autosummary::
-    base
     crystal_map
     io
     plot
@@ -25,14 +24,6 @@ The list of top modules:
     sampling
     scalar
     vector
-
-....
-
-base
-====
-.. automodule:: orix.base
-    :members:
-    :show-inheritance:
 
 ....
 
@@ -205,16 +196,15 @@ StereographicPlot
 -----------------
 .. currentmodule:: orix.plot.StereographicPlot
 .. autosummary::
-    azimuth_grid
     draw_circle
-    polar_grid
     scatter
     show_hemisphere_label
     set_labels
+    stereographic_grid
     symmetry_marker
     text
 .. autoclass:: orix.plot.StereographicPlot
-    :members: azimuth_grid, draw_circle, hemisphere, name, polar_grid, pole, scatter, set_labels, show_hemisphere_label, symmetry_marker, text
+    :members: draw_circle, hemisphere, name, pole, scatter, set_labels, show_hemisphere_label, stereographic_grid, symmetry_marker, text
     :undoc-members:
     :show-inheritance:
 
@@ -397,9 +387,9 @@ vector
 .. currentmodule:: orix.vector
 .. autosummary::
     AxAngle
+    FundamentalSector
     Homochoric
     Miller
-    NeoEuler
     Rodrigues
     SphericalRegion
     Vector3d
@@ -414,8 +404,18 @@ AxAngle
     :undoc-members:
     :show-inheritance:
 
+
+FundamentalSector
+-----------------
+.. currentmodule:: orix.vector.FundamentalSector
+.. autoclass:: orix.vector.FundamentalSector
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Homochoric
 ----------
+.. currentmodule:: orix.vector.Homochoric
 .. autoclass:: orix.vector.Homochoric
     :members:
     :undoc-members:
@@ -444,16 +444,6 @@ Miller
     transpose
     unique
 .. autoclass:: orix.vector.Miller
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-NeoEuler
---------
-.. currentmodule:: orix.vector.NeoEuler
-.. autosummary::
-    from_rotation
-.. autoclass:: orix.vector.NeoEuler
     :members:
     :undoc-members:
     :show-inheritance:

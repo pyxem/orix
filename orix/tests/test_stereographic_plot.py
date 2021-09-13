@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.plot.stereographic_plot import (
+from orix.plot._stereographic_plot2 import (
     StereographicTransform,
     TwoFoldMarker,
     ThreeFoldMarker,
@@ -343,7 +343,7 @@ class TestDrawCircle:
     )
     def test_get_array_of_values(self, value, visible, desired_array):
         assert all(
-            plot.stereographic_plot._get_array_of_values(value=value, visible=visible)
+            plot._stereographic_plot2._get_array_of_values(value=value, visible=visible)
             == desired_array
         )
 
@@ -366,7 +366,7 @@ class TestDrawCircle:
     )
     def test_visible_in_hemisphere(self, hemisphere, polar_cap, polar, desired_array):
         assert np.allclose(
-            plot.stereographic_plot._visible_in_hemisphere(
+            plot._stereographic_plot2._visible_in_hemisphere(
                 hemisphere=hemisphere, polar_cap=polar_cap, polar=polar
             ),
             desired_array,
@@ -396,7 +396,10 @@ class TestDrawCircle:
     def test_sort_coords_by_shifted_bools(
         self, hemisphere, polar_cap, azimuth, polar, desired_azimuth, desired_polar
     ):
-        azimuth_out, polar_out = plot.stereographic_plot._sort_coords_by_shifted_bools(
+        (
+            azimuth_out,
+            polar_out,
+        ) = plot._stereographic_plot2._sort_coords_by_shifted_bools(
             hemisphere=hemisphere, polar_cap=polar_cap, azimuth=azimuth, polar=polar
         )
         assert np.allclose(azimuth_out, desired_azimuth)
