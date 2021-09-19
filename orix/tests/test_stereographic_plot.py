@@ -22,8 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.plot._stereographic_plot2 import (
-    StereographicTransform,
+from orix.plot.stereographic_plot import (
     TwoFoldMarker,
     ThreeFoldMarker,
     FourFoldMarker,

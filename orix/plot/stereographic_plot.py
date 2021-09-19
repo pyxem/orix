@@ -107,7 +107,9 @@ class StereographicPlot(maxes.Axes):
 
     def plot(self, *args, **kwargs):
         new_kwargs = dict(clip_on=True, linewidth=2, color="k", linestyle="-")
-        out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
+        out = self._prepare_to_call_inherited_method(
+            args, kwargs, new_kwargs, sort=True
+        )
         if out is None:
             return
         else:
@@ -255,6 +257,10 @@ class StereographicPlot(maxes.Axes):
         edges = sector.edges
         if edges.size == 0:
             return
+        elif any(sector.vertices.polar.data >= np.pi / 2):
+            equator = Vector3d.zvector().get_circle()
+            edges = Vector3d(np.vstack((edges.data, equator[equator <= sector].data)))
+
         x, y, _ = self._pretransform_input((edges,))
         pad = 0.01
         self.set_xlim(np.min(x) - pad, np.max(x) + pad)
@@ -482,7 +488,9 @@ class StereographicPlot(maxes.Axes):
             circles_collection.set_clip_path(self.patches[sector_index])
         self.add_collection(circles_collection)
 
-    def _prepare_to_call_inherited_method(self, args, kwargs, new_kwargs=None):
+    def _prepare_to_call_inherited_method(
+        self, args, kwargs, new_kwargs=None, sort=False
+    ):
         """Prepare arguments and keyword arguments passed to methods in
         :class:`StereographicAxes` inherited from
         :class:`matplotlib.axes.Axes`.
@@ -509,7 +517,7 @@ class StereographicPlot(maxes.Axes):
             for k, v in new_kwargs.items():
                 updated_kwargs.setdefault(k, v)
 
-        x, y, visible = self._pretransform_input(args)
+        x, y, visible = self._pretransform_input(args, sort=sort)
 
         # Exclude vectors not visible in this hemisphere
         if np.count_nonzero(visible) == 0:  # No circles to draw
@@ -517,7 +525,7 @@ class StereographicPlot(maxes.Axes):
 
         return x, y, visible, updated_kwargs
 
-    def _pretransform_input(self, values):
+    def _pretransform_input(self, values, sort=False):
         """Return arrays of (x, y) from input data.
 
         Parameters
@@ -535,12 +543,21 @@ class StereographicPlot(maxes.Axes):
         y : numpy.ndarray
             Stereographic y coordinates of unit vectors.
         """
+        hemisphere = self.hemisphere
         if len(values) == 2:
-            x, y = self._projection.spherical2xy(azimuth=values[0], polar=values[1])
+            azimuth, polar = values[0], values[1]
+            if sort:
+                order = _order_in_hemisphere(polar, hemisphere=hemisphere)
+                azimuth = azimuth[order]
+                polar = polar[order]
+            x, y = self._projection.spherical2xy(azimuth=azimuth, polar=polar)
             v = self._inverse_projection.xy2vector(x, y)
         else:
             try:
                 v = values[0].flatten().unit
+                if sort:
+                    order = _order_in_hemisphere(v.polar.data, hemisphere=hemisphere)
+                    v = v[order]
                 x, y = self._projection.vector2xy(v)
             except (ValueError, AttributeError):
                 raise ValueError(
@@ -551,7 +568,7 @@ class StereographicPlot(maxes.Axes):
         return x, y, visible
 
     def _restrict_to_fundamental_sector(self, fs):
-        x, y = self._pretransform_input((fs.edges,))
+        x, y = self._pretransform_input((fs.edges,), sort=True)
         pad = 0.01
         self.set_xlim(np.min(x) - pad, np.max(x) + pad)
         self.set_ylim(np.min(y) - pad, np.max(y) + pad)
@@ -605,3 +622,20 @@ def _get_array_of_values(value, visible):
     if isinstance(value, str) or not hasattr(value, "__iter__"):
         value = [value] * n
     return np.asarray(value)[visible]
+
+
+def _order_in_hemisphere(polar, hemisphere):
+    if polar.size == 0:
+        return
+    if hemisphere == "upper":
+        visible = polar <= np.pi / 2
+        func = np.argmax
+    else:
+        visible = polar > np.pi / 2
+        func = np.argmin
+    polar_visible = polar[visible]
+    order = np.arange(visible.size)
+    shift = func(polar_visible)
+    if polar_visible.size != 0 and shift != 0:
+        order = np.roll(order, shift=-(shift + 1))
+    return order

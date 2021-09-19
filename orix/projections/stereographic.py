@@ -78,7 +78,10 @@ class StereographicProjection:
         where :math:`p` is either 1 (north pole as projection point) or
         -1 (south pole as projection point).
         """
-        v = v[v <= self.region]
+        if self.pole == -1:
+            v = v[v <= self.region]
+        else:
+            v = v[v < self.region]
         return _vector2xy(v, pole=self.pole)
 
     def spherical2xy(self, azimuth, polar):
@@ -145,7 +148,7 @@ class StereographicProjection:
         vector2xy
         """
         x_upper, y_upper = _vector2xy(v[v <= _UPPER_HEMISPHERE], pole=-1)
-        x_lower, y_lower = _vector2xy(v[v <= _LOWER_HEMISPHERE], pole=1)
+        x_lower, y_lower = _vector2xy(v[v < _LOWER_HEMISPHERE], pole=1)
         return x_upper, y_upper, x_lower, y_lower
 
     def spherical2xy_split(self, azimuth, polar):

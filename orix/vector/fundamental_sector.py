@@ -103,14 +103,16 @@ class FundamentalSector(SphericalRegion):
 
         j = 0
         for ci, vi in zip(circles, vertices):
-            edges[j] = vi.data  # Add vertex first
-            j += 1
             # Only get the parts of the great circle that are within
             # this spherical region
             ci_inside = ci[ci <= self]
-            ci_n = ci_inside.size
-            edges[j : j + ci_n] = ci_inside.data
-            j += ci_n
+            v_keep = Vector3d(np.vstack((ci_inside.data, vi.data)))
+            v_keep = v_keep.unique()
+            order = np.lexsort((v_keep.azimuth.data, v_keep.polar.data))
+            v_keep = v_keep[order]
+            v_n = v_keep.size
+            edges[j : j + v_n] = v_keep.data
+            j += v_n
         edges = edges[:j]
 
         # Sort
@@ -121,6 +123,5 @@ class FundamentalSector(SphericalRegion):
         edges_rotated = Vector3d(edges).rotate(axis=axis, angle=-angle)
         order = np.argsort(edges_rotated.azimuth.data)
         edges = edges[order]
-        edges = np.vstack([edges, edges[0]])
 
-        return Vector3d(edges).flatten()
+        return Vector3d(edges)
