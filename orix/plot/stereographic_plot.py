@@ -403,6 +403,8 @@ class StereographicPlot(maxes.Axes):
 
         azimuth_start = np.arange(0, np.pi, np.radians(self._azimuth_resolution))
         polar = np.full(azimuth_start.size, np.pi / 2)
+        if self.hemisphere == "lower":
+            polar += 1e-9
         v_start = Vector3d.from_polar(azimuth_start, polar)
         x_start, y_start = self._projection.vector2xy(v_start)
         v_end = Vector3d.from_polar(azimuth_start + np.pi, polar)
