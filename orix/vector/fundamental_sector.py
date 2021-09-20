@@ -113,15 +113,40 @@ class FundamentalSector(SphericalRegion):
             v_n = v_keep.size
             edges[j : j + v_n] = v_keep.data
             j += v_n
-        edges = edges[:j]
+        edges = Vector3d(edges[:j])
 
-        # Sort
-        center = self.center
-        vz = Vector3d.zvector()
-        angle = vz.angle_with(center).data
-        axis = vz.cross(center)
-        edges_rotated = Vector3d(edges).rotate(axis=axis, angle=-angle)
-        order = np.argsort(edges_rotated.azimuth.data)
-        edges = edges[order]
+        order = _order_to_sort_around_center(edges, self.center)
+        sorted_edges = edges[order]
 
-        return Vector3d(edges)
+        return sorted_edges
+
+
+def _order_to_sort_around_center(v, center):
+    vz = Vector3d.zvector()
+    angle = vz.angle_with(center).data
+    axis = vz.cross(center)
+    v_rotated = v.rotate(axis=axis, angle=-angle)
+
+    order1 = np.argsort(v_rotated.azimuth.data)
+    idx_closest_to_001 = np.argmax(v[order1].dot(vz).data)
+    order2 = np.roll(order1, shift=-idx_closest_to_001)
+
+    return order2
+
+
+def _closed_edges_in_upper_hemisphere(edges, sector):
+    is_lower = edges.polar.data >= np.pi / 2
+    idx_after_crossing_equator = np.where(is_lower != is_lower[0])[0][0]
+    equator = Vector3d.zvector().get_circle()
+    equator_within = equator[equator <= sector]
+    upper_edges = edges[~is_lower]
+    edges2 = Vector3d(
+        np.vstack(
+            (
+                upper_edges[:idx_after_crossing_equator].data,
+                equator_within.data,
+                upper_edges[idx_after_crossing_equator:].data,
+            )
+        )
+    )
+    return edges2

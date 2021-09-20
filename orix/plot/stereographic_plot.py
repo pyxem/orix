@@ -32,6 +32,7 @@ from orix.plot._symmetry_marker import (
 )
 from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.vector import Vector3d
+from orix.vector.fundamental_sector import _closed_edges_in_upper_hemisphere
 
 
 ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
@@ -258,8 +259,7 @@ class StereographicPlot(maxes.Axes):
         if edges.size == 0:
             return
         elif any(sector.vertices.polar.data >= np.pi / 2):
-            equator = Vector3d.zvector().get_circle()
-            edges = Vector3d(np.vstack((edges.data, equator[equator <= sector].data)))
+            edges = _closed_edges_in_upper_hemisphere(edges, sector)
 
         x, y, _ = self._pretransform_input((edges,))
         pad = 0.01
@@ -268,11 +268,10 @@ class StereographicPlot(maxes.Axes):
         self.margins(0, 0)
         self.patches[0].set_visible(False)
         patch = mpatches.PathPatch(
-            mpath.Path(np.column_stack([x, y])),
+            mpath.Path(np.column_stack([x, y]), closed=True),
             facecolor="none",
             edgecolor="k",
             linewidth=1,
-            transform=self.transData,
             label="sa_sector",
         )
         self.add_patch(patch)
@@ -568,25 +567,6 @@ class StereographicPlot(maxes.Axes):
                 )
         visible = v <= self._projection.region
         return x, y, visible
-
-    def _restrict_to_fundamental_sector(self, fs):
-        x, y = self._pretransform_input((fs.edges,), sort=True)
-        pad = 0.01
-        self.set_xlim(np.min(x) - pad, np.max(x) + pad)
-        self.set_ylim(np.min(y) - pad, np.max(y) + pad)
-        self.margins(0, 0)
-
-        self.patches[0].set_visible(False)
-
-        patch = mpatches.PathPatch(
-            mpath.Path(np.column_stack([x, y])),
-            facecolor="none",
-            edgecolor="k",
-            linewidth=1,
-            transform=self.transData,
-        )
-        self.add_patch(patch)
-        self.set_clip_path(patch)
 
     def _set_label(self, x, y, label, **kwargs):
         bbox_dict = dict(boxstyle="round, pad=0.1", fc="w", ec="w")
