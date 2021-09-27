@@ -835,7 +835,7 @@ class Vector3d(Object3d):
         elif hemisphere == "both":
             ncols = 2
             hemisphere = hemispheres
-            if show_hemisphere_label:
+            if show_hemisphere_label in [True, None]:
                 show_hemisphere_label = True
 
         # Create new figure and axis/axes

@@ -40,13 +40,11 @@ class TestStereographicPlot:
     def test_scatter(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         assert ax.name == PROJ_NAME
-        assert ax._polar_cap == 0.5 * np.pi
-        assert ax._azimuth_cap == 2 * np.pi
         assert ax._polar_resolution == 10
         assert ax._azimuth_resolution == 10
         assert ax.get_data_ratio() == 1
-        assert ax.can_pan() is False
-        assert ax.can_zoom() is False
+        assert ax.can_pan()
+        assert ax.can_zoom()
 
         v = vector.Vector3d([[0, 0, 1], [2, 0, 2]])
         ax.scatter(v[0])
@@ -81,14 +79,6 @@ class TestStereographicPlot:
 
         plt.close("all")
 
-    def test_transform_path_non_affine(self):
-        # This is just to get this part covered
-        _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        spine_path = ax.spines["stereographic"]._path
-        st = StereographicTransform()
-        spine_path_transformed = st.transform_path_non_affine(spine_path)
-        assert np.allclose(spine_path_transformed.vertices[0], [-0.5463, 0], atol=1e-4)
-
     def test_grids(self):
         azimuth_res = 10
         polar_res = 15
@@ -102,13 +92,11 @@ class TestStereographicPlot:
         assert ax._azimuth_resolution == azimuth_res
         assert ax._polar_resolution == polar_res
 
-        ax.azimuth_grid()
-        ax.polar_grid()
+        ax.stereographic_grid()
         assert ax._azimuth_resolution == azimuth_res
         assert ax._polar_resolution == polar_res
 
-        ax.azimuth_grid(30)
-        ax.polar_grid(45)
+        ax.stereographic_grid(azimuth_resolution=30, polar_resolution=45)
         assert ax._azimuth_resolution == 30
         assert ax._polar_resolution == 45
 
@@ -124,31 +112,33 @@ class TestStereographicPlot:
         ax.set_labels("X", None, None)
         assert len(ax.texts) == 1
         assert ax.texts[0].get_text() == "X"
-        assert np.allclose([ax.texts[0]._x, ax.texts[0]._y], [0, 0.5 * np.pi])
+        assert np.allclose([ax.texts[0]._x, ax.texts[0]._y], [1, 0])
 
         ax.set_labels(None, "TD", None)
         assert len(ax.texts) == 2
         assert ax.texts[1].get_text() == "TD"
-        assert np.allclose([ax.texts[1]._x, ax.texts[1]._y], [0.5 * np.pi, 0.5 * np.pi])
+        assert np.allclose([ax.texts[1]._x, ax.texts[1]._y], [0, 1])
 
         ax.hemisphere = "lower"
         ax.set_labels(False, False, color="xkcd:salmon")
         assert len(ax.texts) == 3
         assert ax.texts[2].get_text() == "z"
         assert ax.texts[2].get_color() == "xkcd:salmon"
-        assert np.allclose([ax.texts[2]._x, ax.texts[2]._y], [0, np.pi])
+        assert np.allclose([ax.texts[2]._x, ax.texts[2]._y], [0, 0])
 
         plt.close("all")
 
     def test_show_hemisphere_label(self):
         _, ax = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
 
+        label_xy = [-0.71, 0.71]
+
         ax[0].scatter(vector.Vector3d([0, 0, 1]))
         ax[0].show_hemisphere_label()
         label_up = ax[0].texts[0]
         assert label_up.get_text() == "upper"
         assert label_up.get_color() == "black"
-        assert np.allclose([label_up._x, label_up._y], [2.356, 1.571], atol=1e-3)
+        assert np.allclose([label_up._x, label_up._y], label_xy)
 
         ax[1].hemisphere = "lower"
         ax[1].scatter(vector.Vector3d([0, 0, -1]))
@@ -156,7 +146,7 @@ class TestStereographicPlot:
         label_low = ax[1].texts[0]
         assert label_low.get_text() == "lower"
         assert label_low.get_color() == "r"
-        assert np.allclose([label_low._x, label_low._y], [2.356, 1.571], atol=1e-3)
+        assert np.allclose([label_low._x, label_low._y], label_xy)
 
         plt.close("all")
 
@@ -166,11 +156,11 @@ class TestStereographicPlot:
     def test_hemisphere_pole(self, hemisphere, pole, hemi_str):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         assert ax.hemisphere == "upper"
-        assert ax.pole == ax.transProjection.pole == ax.transAffine.pole == -1
+        assert ax.pole == ax._projection.pole == -1
 
         ax.hemisphere = hemisphere
         assert ax.hemisphere == hemi_str
-        assert ax.pole == ax.transProjection.pole == ax.transAffine.pole == pole
+        assert ax.pole == ax._projection.pole == pole
 
         plt.close("all")
 

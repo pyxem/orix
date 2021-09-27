@@ -70,8 +70,11 @@ class TestStereographicProjection:
 
         sp_down = StereographicProjection(pole=1)
         x_down, y_down = sp_down.vector2xy(v)
-        assert np.allclose(x_down, x_desired[:-1])
-        assert np.allclose(y_down, y_desired[:-1])
+        assert x_down.size == 0
+        assert y_down.size == 0
+
+    #        assert np.allclose(x_down, x_desired[:-1])
+    #        assert np.allclose(y_down, y_desired[:-1])
 
     def test_vector2xy(self, vectors):
         sp_up = StereographicProjection(pole=-1)
