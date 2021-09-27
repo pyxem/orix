@@ -111,20 +111,18 @@ class StereographicPlot(maxes.Axes):
         out = self._prepare_to_call_inherited_method(
             args, kwargs, new_kwargs, sort=True
         )
-        if out is None:
+        x, y, _, updated_kwargs = out
+        if x.size == 0:
             return
-        else:
-            x, y, _, updated_kwargs = out
 
         super().plot(x, y, **updated_kwargs)
 
     def scatter(self, *args, **kwargs):
         new_kwargs = dict(zorder=ZORDER["scatter"], clip_on=False)
         out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
-        if out is None:
+        x, y, visible, updated_kwargs = out
+        if x.size == 0:
             return
-        else:
-            x, y, visible, updated_kwargs = out
 
         # Color(s) and size(s)
         c = updated_kwargs.pop("c", "C0")
@@ -156,10 +154,9 @@ class StereographicPlot(maxes.Axes):
         """
         new_kwargs = dict(va="bottom", ha="center", zorder=ZORDER["text"])
         out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
-        if out is None:
+        x, y, _, updated_kwargs = out
+        if x.size == 0:
             return
-        else:
-            x, y, _, updated_kwargs = out
         super().text(x, y, **updated_kwargs)
 
     # ----------- Custom attributes and methods below here ----------- #
@@ -232,10 +229,9 @@ class StereographicPlot(maxes.Axes):
         orix.vector.Vector3d.get_circle
         """
         out = self._prepare_to_call_inherited_method(args, kwargs)
-        if out is None:
+        x, y, visible, updated_kwargs = out
+        if x.size == 0:
             return
-        else:
-            x, y, visible, updated_kwargs = out
 
         # Get set of `steps` vectors delineating a circle per vector
         v = self._inverse_projection.xy2vector(x, y)
@@ -258,10 +254,14 @@ class StereographicPlot(maxes.Axes):
         edges = sector.edges
         if edges.size == 0:
             return
-        elif any(sector.vertices.polar.data >= np.pi / 2):
+        elif any(sector.vertices.polar.data > np.pi / 2):
             edges = _closed_edges_in_upper_hemisphere(edges, sector)
 
-        x, y, _ = self._pretransform_input((edges,))
+        out = self._pretransform_input((edges,))
+        x, y, _ = out
+        if x.size == 0:
+            return
+
         pad = 0.01
         self.set_xlim(np.min(x) - pad, np.max(x) + pad)
         self.set_ylim(np.min(y) - pad, np.max(y) + pad)
@@ -521,8 +521,8 @@ class StereographicPlot(maxes.Axes):
         x, y, visible = self._pretransform_input(args, sort=sort)
 
         # Exclude vectors not visible in this hemisphere
-        if np.count_nonzero(visible) == 0:  # No circles to draw
-            return
+        #        if np.count_nonzero(visible) == 0:  # No circles to draw
+        #            return
 
         return x, y, visible, updated_kwargs
 
@@ -548,7 +548,7 @@ class StereographicPlot(maxes.Axes):
         if len(values) == 2:
             azimuth, polar = values[0], values[1]
             if sort:
-                order = _order_in_hemisphere(polar, hemisphere=hemisphere)
+                order = _order_in_hemisphere(polar, hemisphere)
                 azimuth = azimuth[order]
                 polar = polar[order]
             x, y = self._projection.spherical2xy(azimuth=azimuth, polar=polar)
@@ -557,7 +557,7 @@ class StereographicPlot(maxes.Axes):
             try:
                 v = values[0].flatten().unit
                 if sort:
-                    order = _order_in_hemisphere(v.polar.data, hemisphere=hemisphere)
+                    order = _order_in_hemisphere(v.polar.data, hemisphere)
                     v = v[order]
                 x, y = self._projection.vector2xy(v)
             except (ValueError, AttributeError):
@@ -565,7 +565,10 @@ class StereographicPlot(maxes.Axes):
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
                     "arguments"
                 )
-        visible = v <= self._projection.region
+        visible = _is_visible(v.polar.data, hemisphere)
+        if x.size == 0 or y.size == 0:
+            visible = np.zeros(0)
+        #        visible = v <= self._projection.region
         return x, y, visible
 
     def _set_label(self, x, y, label, **kwargs):
@@ -606,14 +609,22 @@ def _get_array_of_values(value, visible):
     return np.asarray(value)[visible]
 
 
-def _order_in_hemisphere(polar, hemisphere):
+def _is_visible(polar, hemisphere):
     if polar.size == 0:
         return
     if hemisphere == "upper":
-        visible = polar <= np.pi / 2
+        return polar <= np.pi / 2
+    else:
+        return polar > np.pi / 2
+
+
+def _order_in_hemisphere(polar, hemisphere):
+    visible = _is_visible(polar, hemisphere)
+    if visible is None or not np.any(visible):
+        return
+    if hemisphere == "upper":
         func = np.argmax
     else:
-        visible = polar > np.pi / 2
         func = np.argmin
     polar_visible = polar[visible]
     order = np.arange(visible.size)
