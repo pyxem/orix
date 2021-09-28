@@ -68,12 +68,10 @@ class Miller(Vector3d):
         The Miller-Bravais indices :math:`UVTW` are defined as
 
         .. math::
-            \begin{align}
-            U &= \frac{2u - v}{3},\\
-            V &= \frac{2v - u}{3},\\
-            T &= -\frac{u + v}{3},\\
+            U &= \frac{2u - v}{3}, \\
+            V &= \frac{2v - u}{3}, \\
+            T &= -\frac{u + v}{3}, \\
             W &= w.
-            \end{align}
         """
         n_passed = np.sum([i is not None for i in [xyz, uvw, UVTW, hkl, hkil]])
         if n_passed == 0 or n_passed > 1:
@@ -219,10 +217,10 @@ class Miller(Vector3d):
         They are defined as
 
         .. math::
-            U = \\frac{2u - v}{3},
-            V = \\frac{2v - u}{3},
-            T = -\\frac{u + v}{3},
-            W = w.
+            U &= \frac{2u - v}{3}, \\
+            V &= \frac{2v - u}{3}, \\
+            T &= -\frac{u + v}{3}, \\
+            W &= w.
         """
         return _uvw2UVTW(self.uvw)
 

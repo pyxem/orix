@@ -197,6 +197,8 @@ StereographicPlot
 .. currentmodule:: orix.plot.StereographicPlot
 .. autosummary::
     draw_circle
+    plot
+    restrict_to_sector
     scatter
     show_hemisphere_label
     set_labels
@@ -204,9 +206,11 @@ StereographicPlot
     symmetry_marker
     text
 .. autoclass:: orix.plot.StereographicPlot
-    :members: draw_circle, hemisphere, name, pole, scatter, set_labels, show_hemisphere_label, stereographic_grid, symmetry_marker, text
+    :members: draw_circle, hemisphere, name, plot, pole, restrict_to_sector, scatter, set_labels, show_hemisphere_label, stereographic_grid, symmetry_marker, text
     :undoc-members:
     :show-inheritance:
+
+    .. automethod:: __init__
 
 ....
 
@@ -367,6 +371,7 @@ sampling
     get_sample_fundamental
     get_sample_local
     uniform_SO3_sample
+    uniform_S2_sample
 .. automodule:: orix.sampling
     :members:
     :show-inheritance:
@@ -447,6 +452,8 @@ Miller
     :members:
     :undoc-members:
     :show-inheritance:
+
+    .. automethod:: __init__
 
 Rodrigues
 ---------

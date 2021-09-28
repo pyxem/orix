@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Stereographic plot inheriting from :class:`~matplotlib.axes.Axes` for
+plotting :class:`~orix.vector.Vector3d`.
+"""
+
 from matplotlib import rcParams
 import matplotlib.axes as maxes
 import matplotlib.collections as mcollections
@@ -50,6 +54,25 @@ class StereographicPlot(maxes.Axes):
         polar_resolution=10,
         **kwargs,
     ):
+        """Create an axis for plotting :class:`~orix.vector.Vector3d`.
+
+        Parameters
+        ----------
+        args
+            Arguments passed to :meth:`matplotlib.axes.Axes.__init__`.
+        hemisphere : str, optional
+            Which hemisphere to plot vectors in, either "upper"
+            (default) or "lower".
+        azimuth_resolution : int or float, optional
+            Resolution of azimuth grid lines in degrees. Default is 10
+            degrees.
+        polar_resolution : int or float, optional
+            Resolution of polar grid lines in degrees. Default is 10
+            degrees.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.__init__`.
+        """
         self.hemisphere = hemisphere
         self._azimuth_resolution = azimuth_resolution
         self._polar_resolution = polar_resolution
@@ -107,6 +130,24 @@ class StereographicPlot(maxes.Axes):
             ).format(azimuth / np.pi, azimuth_deg, polar / np.pi, polar_deg)
 
     def plot(self, *args, **kwargs):
+        """Draw straight lines between vectors.
+
+        This method overwrites :meth:`matplotlib.axes.Axes.plot`, see
+        that method's docstring for parameters.
+
+        Parameters
+        ----------
+        args : Vector3d or tuple of float or numpy.ndarray
+            Vector(s), or azimuth and polar angles, the latter two
+            passed as separate arguments (not keyword arguments).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.plot
+        """
         new_kwargs = dict(clip_on=True, linewidth=2, color="k", linestyle="-")
         x, y, _, updated_kwargs = self._prepare_to_call_inherited_method(
             args, kwargs, new_kwargs, sort=True
@@ -117,6 +158,24 @@ class StereographicPlot(maxes.Axes):
         super().plot(x, y, **updated_kwargs)
 
     def scatter(self, *args, **kwargs):
+        """A scatter plot of vectors.
+
+        This method overwrites :meth:`matplotlib.axes.Axes.scatter`, see
+        that method's docstring for parameters.
+
+        Parameters
+        ----------
+        args : Vector3d or tuple of float or numpy.ndarray
+            Vector(s), or azimuth and polar angles, the latter two
+            passed as separate arguments (not keyword arguments).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.scatter`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.scatter
+        """
         new_kwargs = dict(zorder=ZORDER["scatter"], clip_on=False)
         out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
         x, y, visible, updated_kwargs = out
@@ -163,6 +222,7 @@ class StereographicPlot(maxes.Axes):
     @property
     def hemisphere(self):
         """Hemisphere to plot.
+
         Returns
         -------
         str
@@ -186,6 +246,7 @@ class StereographicPlot(maxes.Axes):
         projection point of the stereographic transform is the south
         (north) pole [00-1] ([001]), i.e. only vectors with z > 0 (z <
         0) are plotted.
+
         Derived from :attr:`hemisphere`.
         """
         return {"upper": -1, "lower": 1}[self.hemisphere]
@@ -249,6 +310,16 @@ class StereographicPlot(maxes.Axes):
             self.plot(c.azimuth.data, c.polar.data, color=color2[i], **kwargs)
 
     def restrict_to_sector(self, sector):
+        """Restrict the stereographic axis to a
+        :class:`~orix.vector.FundamentalSector`, typically obtained from
+        :attr:`~orix.quaternion.Symmetry.fundamental_sector`.
+
+        Parameters
+        ----------
+        sector : ~orix.vector.FundamentalSector
+            Fundamental sector with edges delineating a fundamental
+            sector.
+        """
         edges = sector.edges
         if edges.size == 0:
             return
@@ -321,6 +392,28 @@ class StereographicPlot(maxes.Axes):
     def stereographic_grid(
         self, show_grid=None, azimuth_resolution=None, polar_resolution=None
     ):
+        """Turn a stereographic grid on or off, and set the azimuth and
+        polar grid resolution in degrees.
+
+        Parameters
+        ----------
+        show_grid : bool, optional
+            Whether to show grid lines. If any keyword arguments are
+            passed, this is set to True. If not given and there are no
+            keyword arguments, the grid lines are toggled.
+        azimuth_resolution : float, optional
+            Azimuth grid resolution in degrees. Default is 10 degrees.
+            This can also be set upon initialization of the axes by
+            passing `azimuth_resolution` to `subplot_kw`.
+        polar_resolution : float, optional
+            Polar grid resolution in degrees. Default is 10 degrees.
+            This can also be set upon initialization of the axes by
+            passing `polar_resolution` to `subplot_kw`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.grid
+        """
         if (
             show_grid is None
             and self._stereographic_grid in [None, False]
@@ -601,6 +694,20 @@ def _get_array_of_values(value, visible):
 
 
 def _is_visible(polar, hemisphere):
+    """Return a boolean array describing whether the vector which the
+    polar angles belong to are visible in the current hemisphere.
+
+    Parameters
+    ----------
+    polar : numpy.ndarray
+    hemisphere : str
+
+    Returns
+    -------
+    numpy.ndarray
+        Boolean array with True for polar angles corresponding to
+        vectors visible in this hemisphere.
+    """
     if hemisphere == "upper":
         return polar <= np.pi / 2
     else:
@@ -608,6 +715,22 @@ def _is_visible(polar, hemisphere):
 
 
 def _order_in_hemisphere(polar, hemisphere):
+    """Return order of vectors based on polar angles, so that the ones
+    corresponding to vectors visible in this hemisphere are shifted to
+    the start of the arrays.
+
+    Used in :meth:`StereographicPlot.plot`.
+
+    Parameters
+    ----------
+    polar : numpy.ndarray
+    hemisphere : str
+
+    Returns
+    -------
+    numpy.ndarray or None
+        If no vectors are visible, None is returned.
+    """
     visible = _is_visible(polar, hemisphere)
     if visible.size == 0 or not np.any(visible):
         return

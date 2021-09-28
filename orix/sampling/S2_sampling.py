@@ -24,13 +24,14 @@ from orix.vector import Vector3d
 
 
 def uniform_S2_sample(resolution):
-    r"""Vectors of a UV mesh on a unit sphere *SO2*.
+    r"""Vectors of a UV mesh on a unit sphere *S2*.
 
     The mesh vertices are defined by the parametrization
+
     .. math::
-        x = \sin(u)\cos(v)
-        y = \sin(u)\sin(v)
-        z = \cos(u)
+        x &= \sin(u)\cos(v), \\
+        y &= \sin(u)\sin(v), \\
+        z &= \cos(u).
 
     Parameters
     ----------
