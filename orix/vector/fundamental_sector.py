@@ -27,7 +27,7 @@ from orix.vector import SphericalRegion, Vector3d
 
 class FundamentalSector(SphericalRegion):
     """Fundamental sector for a symmetry in the inverse pole figure,
-    defined by a set of (typically three) normals.
+    defined by a set of sector normals.
     """
 
     # This is only set for T (23), Th (m-3) and O (432), in the
