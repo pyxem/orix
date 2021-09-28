@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -865,11 +867,11 @@ class Vector3d(Object3d):
         if text_kwargs is None:
             text_kwargs = dict()
 
-        if axes_labels is None:
-            axes_labels = [None, None, None]
-        elif len(axes_labels) != 3:
-            n_labels = len(axes_labels)
-            axes_labels.append([None] * (3 - n_labels))
+        new_axes_labels = deepcopy(axes_labels)
+        if new_axes_labels is None:
+            new_axes_labels = [None, None, None]
+        elif len(new_axes_labels) != 3:
+            new_axes_labels += [None] * (3 - len(new_axes_labels))
 
         return (
             figure,
@@ -879,5 +881,5 @@ class Vector3d(Object3d):
             grid,
             grid_resolution,
             text_kwargs,
-            axes_labels,
+            new_axes_labels,
         )

@@ -480,8 +480,12 @@ class TestPlotting:
         plt.rcParams["axes.grid"] = False
         v = self.v
 
-        fig1 = v.scatter(return_figure=True)
+        axes_labels = ["x", "y"]
+        fig1 = v.scatter(return_figure=True, axes_labels=axes_labels)
         assert isinstance(fig1, plt.Figure)
+        texts1 = fig1.axes[0].texts
+        for i in range(len(axes_labels)):
+            assert texts1[i].get_text() == axes_labels[i]
 
         azimuth_res = 15
         polar_res = 20
