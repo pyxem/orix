@@ -145,7 +145,7 @@ class Symmetry(Rotation):
             )
             n = Vector3d(np.vstack([n.data, new_v.data]))
 
-        # We only set the center by hand for T (23), Th (m-3) and O
+        # We only set the center "by hand" for T (23), Th (m-3) and O
         # (432), since the UV S2 sampling isn't uniform enough to
         # produce the correct center according to MTEX
         center = None
@@ -153,10 +153,6 @@ class Symmetry(Rotation):
         # Override normal(s) for some point groups
         if name == "-1":
             n = vz
-        elif name in ["211", "121", "112"]:
-            idx_min_angle = np.argmin(self.angle.data)
-            if np.isclose(self[idx_min_angle].dot(vz), 0):
-                n = vz
         elif name in ["m11", "1m1", "11m"]:
             idx_min_angle = np.argmin(self.angle.data)
             n = self[idx_min_angle].axis

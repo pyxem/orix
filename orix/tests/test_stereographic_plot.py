@@ -29,6 +29,7 @@ from orix.plot.stereographic_plot import (
     SixFoldMarker,
 )
 from orix import plot, vector
+from orix.quaternion.symmetry import C1, C6, Oh
 
 
 plt.rcParams["backend"] = "TkAgg"
@@ -183,6 +184,8 @@ class TestStereographicPlot:
                 "({:.2f}\N{DEGREE SIGN})"
             ).format(a / np.pi, np.rad2deg(a), p / np.pi, np.rad2deg(p))
 
+        assert ax.format_coord(1, 1) == ""
+
         plt.close("all")
 
     def test_empty_scatter(self):
@@ -204,6 +207,36 @@ class TestStereographicPlot:
         v = vector.Vector3d(np.random.normal(size=3 * n).reshape(shape + (3,)))
         v.scatter()
         v.draw_circle()
+
+        plt.close("all")
+
+    def test_order_in_hemisphere(self):
+        v = vector.Vector3d.from_polar(
+            azimuth=np.radians([45, 90, 135, 180]),
+            polar=np.radians([50, 45, 140, 135]),
+        )
+
+        fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
+        ax[1].hemisphere = "lower"
+        x_upper, y_upper, visible_upper = ax[0]._pretransform_input((v,), sort=True)
+        x_lower, y_lower, visible_lower = ax[1]._pretransform_input((v,), sort=True)
+
+        x_upper_desired, y_upper_desired = ax[0]._projection.vector2xy(v[:2])
+        assert np.allclose(x_upper, x_upper_desired)
+        assert np.allclose(y_upper, y_upper_desired)
+
+        x_lower_desired, y_lower_desired = ax[1]._projection.vector2xy(v[2:])
+        assert np.allclose(x_lower, x_lower_desired)
+        assert np.allclose(y_lower, y_lower_desired)
+
+        assert np.allclose(visible_upper, [True, True, False, False])
+        assert np.allclose(visible_lower, [False, False, True, True])
+
+        x_upper2, y_upper2, visible_upper2 = ax[0]._pretransform_input(
+            (v[2:],), sort=True
+        )
+        assert x_upper2.size == y_upper2.size == 0
+        assert not visible_upper2.any()
 
         plt.close("all")
 
@@ -358,3 +391,35 @@ class TestDrawCircle:
         ax.hemisphere = "lower"
         ax.draw_circle(v1)
         assert len(ax.lines) == 0
+
+
+class TestRestrictToFundamentalSector:
+    def test_restrict_to_fundamental_sector(self):
+        fig1, ax1 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        vertices = ax1.patches[0].get_verts()
+
+        # C1's has no fundamental sector, so the circle marking the
+        # edge of the axis region should be unchanged
+        fig2, ax2 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        ax2.restrict_to_sector(C1.fundamental_sector)
+        assert np.allclose(vertices, ax2.patches[0].get_verts())
+
+        # C6's fundamental sector is 1 / 6 of the unit sphere, with
+        # half of it in the upper hemisphere
+        fig3, ax3 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        ax3.restrict_to_sector(C6.fundamental_sector)
+        assert not np.allclose(vertices, ax3.patches[0].get_verts())
+        assert ax3.patches[1].get_label() == "sa_sector"
+
+        # Ensure grid lines are clipped by sector
+        ax3.stereographic_grid(False)
+        ax3.stereographic_grid(True)
+
+        # Oh's fundamental sector is only in the upper hemisphere,
+        # so the same as C1's sector applies
+        fig4, ax4 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        ax4.hemisphere = "lower"
+        ax4.restrict_to_sector(Oh.fundamental_sector)
+        assert np.allclose(vertices, ax4.patches[0].get_verts())
+
+        plt.close("all")

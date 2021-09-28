@@ -389,3 +389,314 @@ def test_get_point_group():
         pg = get_point_group(sg_number, proper=False)
         assert proper_pg == spacegroup2pointgroup_dict[sg.point_group_name]["proper"]
         assert pg == spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
+
+
+class TestFundamentalSectorFromSymmetry:
+    """Test the normals, vertices and centers of the fundamental sector
+    for all 32 crystallographic point groups.
+    """
+
+    def test_fundamental_sector_c1(self):
+        pg = C1  # 1
+        fs = pg.fundamental_sector
+        assert fs.data.size == 0
+        assert fs.vertices.data.size == 0
+        assert fs.center.data.size == 0
+        assert fs.edges.data.size == 0
+
+    def test_fundamental_sector_ci(self):
+        pg = Ci  # -1
+        fs = pg.fundamental_sector
+        normal = [[0, 0, 1]]
+        assert np.allclose(fs.data, normal)
+        assert fs.vertices.data.size == 0
+        assert np.allclose(fs.center.data, normal)
+
+    def test_fundamental_sector_c2(self):
+        pg = C2  # 2
+        fs = pg.fundamental_sector
+        normal = [[0, 1, 0]]
+        assert np.allclose(fs.data, normal)
+        assert fs.vertices.data.size == 0
+        assert np.allclose(fs.center.data, normal)
+
+    def test_fundamental_sector_cs(self):
+        pg = Cs  # m
+        fs = pg.fundamental_sector
+        normal = [[0, 0, 1]]
+        assert np.allclose(fs.data, normal)
+        assert fs.vertices.data.size == 0
+        assert np.allclose(fs.center.data, normal)
+
+    def test_fundamental_sector_c2h(self):
+        pg = C2h  # 2/m
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0]])
+        assert np.allclose(fs.vertices.data, [[1, 0, 0], [-1, 0, 0]])
+        assert np.allclose(fs.center.data, [[0, 0.5, 0.5]])
+
+    def test_fundamental_sector_d2(self):
+        pg = D2  # 222
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0]])
+        assert np.allclose(fs.vertices.data, [[1, 0, 0], [-1, 0, 0]])
+        assert np.allclose(fs.center.data, [[0, 0.5, 0.5]])
+
+    def test_fundamental_sector_c2v(self):
+        pg = C2v  # mm2
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0]])
+        assert np.allclose(fs.vertices.data, [[1, 0, 0], [-1, 0, 0]])
+        assert np.allclose(fs.center.data, [[0, 0.5, 0.5]])
+
+    def test_fundamental_sector_d2h(self):
+        pg = D2h  # mmm
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [1, 0, 0]])
+        assert np.allclose(fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        assert np.allclose(fs.center.data, [[1 / 3, 1 / 3, 1 / 3]])
+
+    def test_fundamental_sector_c4(self):
+        pg = C4  # 4
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 1, 0], [1, 0, 0]])
+        assert np.allclose(fs.vertices.data, [[0, 0, 1], [0, 0, -1]])
+        assert np.allclose(fs.center.data, [[0.5, 0.5, 0]])
+
+    def test_fundamental_sector_s4(self):
+        pg = S4  # -4
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0]])
+        assert np.allclose(fs.vertices.data, [[1, 0, 0], [-1, 0, 0]])
+        assert np.allclose(fs.center.data, [[0, 0.5, 0.5]])
+
+    def test_fundamental_sector_c4h(self):
+        pg = C4h  # 4/m
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [1, 0, 0]])
+        assert np.allclose(fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        assert np.allclose(fs.center.data, [[1 / 3, 1 / 3, 1 / 3]])
+
+    def test_fundamental_sector_d4(self):
+        pg = D4  # 422
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [1, 0, 0]])
+        assert np.allclose(fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        assert np.allclose(fs.center.data, [[1 / 3, 1 / 3, 1 / 3]])
+
+    def test_fundamental_sector_c4v(self):
+        pg = C4v  # 4mm
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 1, 0], [0.7071, -0.7071, 0]], atol=1e-4)
+        assert np.allclose(fs.vertices.data, [[0, 0, 1], [0, 0, -1]])
+        assert np.allclose(fs.center.data, [[0.3536, 0.1464, 0]], atol=1e-4)
+
+    def test_fundamental_sector_d2d(self):
+        pg = D2d  # -42m
+        fs = pg.fundamental_sector
+        assert np.allclose(
+            fs.data, [[0, 0, 1], [0.7071, 0.7071, 0], [0.7071, -0.7071, 0]], atol=1e-4
+        )
+        assert np.allclose(
+            fs.vertices.data, [[0.7071, -0.7071, 0], [0, 0, 1], [0.7071, 0.7071, 0]]
+        )
+        assert np.allclose(fs.center.data, [[0.4714, 0, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_d4h(self):
+        pg = D4h  # 4/mmm
+        fs = pg.fundamental_sector
+        assert np.allclose(
+            fs.data, [[0, 0, 1], [0, 1, 0], [0.7071, -0.7071, 0]], atol=1e-4
+        )
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.7071, 0.7071, 0]], atol=1e-4
+        )
+        assert np.allclose(fs.center.data, [[0.569, 0.2357, 1 / 3]], atol=1e-3)
+
+    def test_fundamental_sector_c3(self):
+        pg = C3  # 3
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 1, 0], [0.866, 0.5, 0]], atol=1e-3)
+        assert np.allclose(fs.vertices.data, [[0, 0, 1], [0, 0, -1]])
+        assert np.allclose(fs.center.data, [[0.433, 0.75, 0]], atol=1e-4)
+
+    def test_fundamental_sector_s6(self):
+        pg = S6  # -3
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, 0.5, 0]], atol=1e-3)
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]], atol=1e-4
+        )
+        assert np.allclose(fs.center.data, [[1 / 6, 0.2887, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_d3(self):
+        pg = D3  # 32
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, 0.5, 0]], atol=1e-3)
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]], atol=1e-4
+        )
+        assert np.allclose(fs.center.data, [[1 / 6, 0.2887, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_c3v(self):
+        pg = C3v  # 3m
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0.5, 0.866, 0], [0.5, -0.866, 0]], atol=1e-3)
+        assert np.allclose(fs.vertices.data, [[0, 0, 1], [0, 0, -1]])
+        assert np.allclose(fs.center.data, [[0.5, 0, 0]])
+
+    def test_fundamental_sector_d3d(self):
+        pg = D3d  # -3m
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]], atol=1e-3
+        )
+        assert np.allclose(fs.center.data, [[0.5, 0.2887, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_c6(self):
+        pg = C6  # 6
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
+        assert np.allclose(fs.vertices.data, [[0, 0, 1], [0, 0, -1]])
+        assert np.allclose(fs.center.data, [[0.433, 0.25, 0]], atol=1e-3)
+
+    def test_fundamental_sector_c3h(self):
+        pg = C3h  # -6
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, 0.5, 0]], atol=1e-3)
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]], atol=1e-3
+        )
+        assert np.allclose(fs.center.data, [[1 / 6, 0.2887, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_c6h(self):
+        pg = C6h  # 6/m
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]], atol=1e-3
+        )
+        assert np.allclose(fs.center.data, [[0.5, 0.2887, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_d6(self):
+        pg = D6  # 622
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]], atol=1e-3
+        )
+        assert np.allclose(fs.center.data, [[0.5, 0.2887, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_c6v(self):
+        pg = C6v  # 6mm
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 1, 0], [0.5, -0.866, 0]], atol=1e-3)
+        assert np.allclose(fs.vertices.data, [[0, 0, 1], [0, 0, -1]])
+        assert np.allclose(fs.center.data, [[0.25, 0.067, 0]], atol=1e-3)
+
+    def test_fundamental_sector_d3h(self):
+        pg = D3h  # -6m2
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]], atol=1e-3
+        )
+        assert np.allclose(fs.center.data, [[0.5, 0.2887, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_d6h(self):
+        pg = D6h  # 6/mmm
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.5, -0.866, 0]], atol=1e-3)
+        assert np.allclose(
+            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.866, 0.5, 0]], atol=1e-3
+        )
+        assert np.allclose(fs.center.data, [[0.622, 0.1667, 1 / 3]], atol=1e-4)
+
+    def test_fundamental_sector_t(self):
+        pg = T  # 23
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[1, 1, 0], [1, -1, 0], [0, -1, 1], [0, 1, 1]])
+        assert np.allclose(
+            fs.vertices.data,
+            [[0, 0, 1], [0.5774, 0.5774, 0.5774], [1, 0, 0], [0.5774, -0.5774, 0.5774]],
+            atol=1e-4,
+        )
+        assert np.allclose(fs.center.data, [[0.7076, -0.0004, 0.7067]], atol=1e-4)
+
+    def test_fundamental_sector_th(self):
+        pg = Th  # m-3
+        fs = pg.fundamental_sector
+        assert np.allclose(
+            fs.data,
+            [[1, 0, 0], [0, -1, 1], [-1, 0, 1], [0, 1, 0], [0, 0, 1]],
+        )
+        assert np.allclose(
+            fs.vertices.data,
+            [
+                [0, 0.7071, 0.7071],
+                [0.5774, 0.5774, 0.5774],
+                [0.7071, 0, 0.7071],
+                [0, 0, 1],
+            ],
+            atol=1e-3,
+        )
+        assert np.allclose(fs.center.data, [[0.3499, 0.3481, 0.8697]], atol=1e-4)
+
+    def test_fundamental_sector_o(self):
+        pg = O  # 432
+        fs = pg.fundamental_sector
+        assert np.allclose(
+            fs.data, [[1, 0, 0], [0, -1, 1], [-1, 0, 1], [0, 1, 0], [0, 0, 1]]
+        )
+        assert np.allclose(
+            fs.vertices.data,
+            [
+                [0, 0.7071, 0.7071],
+                [0.5774, 0.5774, 0.5774],
+                [0.7071, 0, 0.7071],
+                [0, 0, 1],
+            ],
+            atol=1e-3,
+        )
+        assert np.allclose(fs.center.data, [[0.3499, 0.3481, 0.8697]], atol=1e-4)
+
+    def test_fundamental_sector_td(self):
+        pg = Td  # -43m
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[1, -1, 0], [1, 1, 0], [-1, 0, 1]])
+        assert np.allclose(
+            fs.vertices.data,
+            [[0.5774, 0.5774, 0.5774], [0, 0, 1], [0.5774, -0.5774, 0.5774]],
+            atol=1e-3,
+        )
+        assert np.allclose(fs.center.data, [[0.3849, 0, 0.7182]], atol=1e-4)
+
+    def test_fundamental_sector_oh(self):
+        pg = Oh  # m-3m
+        fs = pg.fundamental_sector
+        assert np.allclose(fs.data, [[1, -1, 0], [-1, 0, 1], [0, 1, 0]])
+        assert np.allclose(
+            fs.vertices.data,
+            [[0.5774, 0.5774, 0.5774], [0.7071, 0, 0.7071], [0, 0, 1]],
+            atol=1e-4,
+        )
+        assert np.allclose(fs.center.data, [[0.4282, 0.1925, 0.7615]], atol=1e-4)
+
+    # ---------- End of the 32 crystallographic point groups --------- #
+
+    def test_fundamental_sector_c2x(self):
+        pg = C2x  # 211
+        fs = pg.fundamental_sector
+        normal = [[0, 0, 1]]
+        assert np.allclose(fs.data, normal)
+        assert np.allclose(fs.vertices.data, np.zeros((0, 3)))
+        assert np.allclose(fs.center.data, normal)
+
+    def test_fundamental_sector_csx(self):
+        pg = Csx  # m11
+        fs = pg.fundamental_sector
+        normal = [[0, 0, -1]]
+        assert np.allclose(fs.data, normal)
+        assert np.allclose(fs.vertices.data, np.zeros((0, 3)))
+        assert np.allclose(fs.center.data, normal)
