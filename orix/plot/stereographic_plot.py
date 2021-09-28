@@ -98,7 +98,10 @@ class StereographicPlot(maxes.Axes):
         self.set_xlim(-1 - self._pad_xy, 1 + self._pad_xy)
         self.set_ylim(-1 - self._pad_xy, 1 + self._pad_xy)
 
-        self.spines[["top", "bottom", "left", "right"]].set_visible(False)
+        spines = self.spines
+        for spine in spines.values():
+            spine.set_visible(False)
+
         self.add_patch(
             mpatches.Circle(
                 xy=(0, 0),
