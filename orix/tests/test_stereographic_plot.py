@@ -173,8 +173,10 @@ class TestStereographicPlot:
 
     def test_format_coord(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        for a, p in [(0, 0), (0.75 * np.pi, 0.25 * np.pi)]:
-            assert ax.format_coord(a, p) == (
+        xy = [(0, 0), (-0.2929, 0.2929)]
+        spherical = [(0, 0), (0.75 * np.pi, 0.25 * np.pi)]
+        for (x, y), (a, p) in zip(xy, spherical):
+            assert ax.format_coord(x, y) == (
                 "\N{GREEK SMALL LETTER PHI}={:.2f}\N{GREEK SMALL LETTER PI} "
                 "({:.2f}\N{DEGREE SIGN}), "
                 "\N{GREEK SMALL LETTER theta}={:.2f}\N{GREEK SMALL LETTER PI} "
@@ -249,6 +251,7 @@ class TestSymmetryMarker:
 
     def test_plot_symmetry_marker(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        ax.stereographic_grid(False)
         marker_size = 500
 
         v4fold = vector.Vector3d(
@@ -290,38 +293,6 @@ class TestSymmetryMarker:
         plt.close("all")
 
 
-class TestStereographicTransform:
-    @pytest.mark.parametrize(
-        "pole, azimuth_polar, xy",
-        [
-            (
-                -1,
-                [[0, 0], [0.5 * np.pi, 0.5 * np.pi], [0.25 * np.pi, 0.5 * np.pi]],
-                [[0, 0], [0, 1], [0.5 * np.sqrt(2), 0.5 * np.sqrt(2)]],
-            ),
-            (
-                1,
-                [[0, np.pi], [0.5 * np.pi, 0.5 * np.pi], [0.25 * np.pi, 0.75 * np.pi]],
-                [[0, 0], [0, 1], [1 / (np.sqrt(2) + 2), 1 / (np.sqrt(2) + 2)]],
-            ),
-        ],
-    )
-    def test_transform(self, pole, azimuth_polar, xy):
-        st = StereographicTransform(pole=pole)
-        sti = st.inverted()
-        assert st.pole == sti.pole == pole
-        for ap, xyi in zip(azimuth_polar, xy):
-            assert np.allclose(st.transform(ap), xyi)
-            assert np.allclose(sti.transform(xyi), ap)
-
-    def test_transform_inverted_loop(self):
-        st = StereographicTransform()
-        assert np.allclose(
-            st.inverted().inverted().transform((0.25 * np.pi, 0.5 * np.pi)),
-            (0.5 * np.sqrt(2), 0.5 * np.sqrt(2)),
-        )
-
-
 class TestDrawCircle:
     @pytest.mark.parametrize(
         "value, visible, desired_array",
@@ -332,7 +303,7 @@ class TestDrawCircle:
     )
     def test_get_array_of_values(self, value, visible, desired_array):
         assert all(
-            plot._stereographic_plot2._get_array_of_values(value=value, visible=visible)
+            plot.stereographic_plot._get_array_of_values(value=value, visible=visible)
             == desired_array
         )
 
@@ -355,61 +326,31 @@ class TestDrawCircle:
     )
     def test_visible_in_hemisphere(self, hemisphere, polar_cap, polar, desired_array):
         assert np.allclose(
-            plot._stereographic_plot2._visible_in_hemisphere(
-                hemisphere=hemisphere, polar_cap=polar_cap, polar=polar
-            ),
-            desired_array,
+            plot.stereographic_plot._is_visible(polar, hemisphere), desired_array
         )
-
-    @pytest.mark.parametrize(
-        "hemisphere, polar_cap, azimuth, polar, desired_azimuth, desired_polar",
-        [
-            (
-                "upper",
-                0.5 * np.pi,
-                np.arange(5),
-                np.deg2rad([60, 90, 120, 150, 180, 30]),
-                np.roll(np.arange(5), shift=-5),
-                np.roll(np.deg2rad([60, 90, 120, 150, 180, 30]), shift=-5),
-            ),
-            (
-                "lower",
-                0.5 * np.pi,
-                np.arange(5),
-                np.deg2rad([60, 90, 120, 150, 180, 30]),
-                np.roll(np.arange(5), shift=-5),
-                np.roll(np.deg2rad([60, 90, 120, 150, 180, 30]), shift=-5),
-            ),
-        ],
-    )
-    def test_sort_coords_by_shifted_bools(
-        self, hemisphere, polar_cap, azimuth, polar, desired_azimuth, desired_polar
-    ):
-        (
-            azimuth_out,
-            polar_out,
-        ) = plot._stereographic_plot2._sort_coords_by_shifted_bools(
-            hemisphere=hemisphere, polar_cap=polar_cap, azimuth=azimuth, polar=polar
-        )
-        assert np.allclose(azimuth_out, desired_azimuth)
-        assert np.allclose(polar_out, desired_polar)
 
     def test_draw_circle(self):
         v1 = vector.Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
         v2 = vector.Vector3d(np.append(v1.data, -v1.data, axis=0))
 
+        upper_steps = 100
+        lower_steps = 150
+
         _, ax = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
         c = [f"C{i}" for i in range(6)]
         ax[0].scatter(v2, c=c)
-        ax[0].draw_circle(v2, color=c, steps=100)
+        ax[0].draw_circle(v2, color=c, steps=upper_steps)
         ax[1].hemisphere = "lower"
         ax[1].scatter(v2, c=c)
-        ax[1].draw_circle(v2, color=c, steps=150, linewidth=3)
+        ax[1].draw_circle(v2, color=c, steps=lower_steps, linewidth=3)
 
         # Circles
-        assert len(ax[0].lines) == len(ax[1].lines) == 3
-        assert ax[0].lines[0]._path._vertices.shape == (100, 2)
-        assert ax[1].lines[0]._path._vertices.shape == (150, 2)
+        assert len(ax[0].lines) == 3
+        # Great circle about [001] not visible
+        assert len(ax[1].lines) == 2
+        assert ax[0].lines[0]._path._vertices.shape == (upper_steps, 2)
+        assert ax[1].lines[0]._path._vertices.shape == (lower_steps // 2 + 1, 2)
+        assert ax[1].lines[1]._path._vertices.shape == (lower_steps // 2 + 1, 2)
 
     def test_draw_circle_empty(self):
         v1 = vector.Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])

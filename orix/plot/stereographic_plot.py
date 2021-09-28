@@ -108,10 +108,9 @@ class StereographicPlot(maxes.Axes):
 
     def plot(self, *args, **kwargs):
         new_kwargs = dict(clip_on=True, linewidth=2, color="k", linestyle="-")
-        out = self._prepare_to_call_inherited_method(
+        x, y, _, updated_kwargs = self._prepare_to_call_inherited_method(
             args, kwargs, new_kwargs, sort=True
         )
-        x, y, _, updated_kwargs = out
         if x.size == 0:
             return
 
@@ -247,8 +246,7 @@ class StereographicPlot(maxes.Axes):
             kwargs.setdefault(k, v)
 
         for i, c in enumerate(circles):
-            x, y = self._projection.vector2xy(c)
-            super().plot(x, y, color2[i], **kwargs)
+            self.plot(c.azimuth.data, c.polar.data, color=color2[i], **kwargs)
 
     def restrict_to_sector(self, sector):
         edges = sector.edges
@@ -493,15 +491,17 @@ class StereographicPlot(maxes.Axes):
         self, args, kwargs, new_kwargs=None, sort=False
     ):
         """Prepare arguments and keyword arguments passed to methods in
-        :class:`StereographicAxes` inherited from
+        :class:`StereographicPlot` inherited from
         :class:`matplotlib.axes.Axes`.
 
         Parameters
         ----------
         args
-            Any arguments passed to the :class:`StereographicPlot` method.
+            Any arguments passed to the :class:`StereographicPlot`
+            method.
         kwargs : dict
-            Any arguments passed to the :class:`StereographicPlot` method.
+            Any arguments passed to the :class:`StereographicPlot`
+            method.
         new_kwargs : dict
             Any default keyword arguments to be passed to the inherited
             method.
@@ -517,13 +517,7 @@ class StereographicPlot(maxes.Axes):
         if new_kwargs is not None:
             for k, v in new_kwargs.items():
                 updated_kwargs.setdefault(k, v)
-
         x, y, visible = self._pretransform_input(args, sort=sort)
-
-        # Exclude vectors not visible in this hemisphere
-        #        if np.count_nonzero(visible) == 0:  # No circles to draw
-        #            return
-
         return x, y, visible, updated_kwargs
 
     def _pretransform_input(self, values, sort=False):
@@ -565,10 +559,7 @@ class StereographicPlot(maxes.Axes):
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
                     "arguments"
                 )
-        visible = _is_visible(v.polar.data, hemisphere)
-        if x.size == 0 or y.size == 0:
-            visible = np.zeros(0)
-        #        visible = v <= self._projection.region
+        visible = v <= self._projection.region
         return x, y, visible
 
     def _set_label(self, x, y, label, **kwargs):
@@ -610,8 +601,6 @@ def _get_array_of_values(value, visible):
 
 
 def _is_visible(polar, hemisphere):
-    if polar.size == 0:
-        return
     if hemisphere == "upper":
         return polar <= np.pi / 2
     else:
@@ -620,15 +609,12 @@ def _is_visible(polar, hemisphere):
 
 def _order_in_hemisphere(polar, hemisphere):
     visible = _is_visible(polar, hemisphere)
-    if visible is None or not np.any(visible):
+    if visible.size == 0 or not np.any(visible):
         return
-    if hemisphere == "upper":
-        func = np.argmax
-    else:
-        func = np.argmin
-    polar_visible = polar[visible]
+
+    indices = np.asarray(visible != visible[0]).nonzero()[0]
     order = np.arange(visible.size)
-    shift = func(polar_visible)
-    if polar_visible.size != 0 and shift != 0:
-        order = np.roll(order, shift=-(shift + 1))
+    if indices.size != 0:
+        order = np.roll(order, shift=-(indices[-1] + 1))
+
     return order
