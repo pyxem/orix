@@ -25,6 +25,9 @@ import numpy as np
 from orix.vector import SphericalRegion, Vector3d
 
 
+_EDGE_STEPS = 1000
+
+
 class FundamentalSector(SphericalRegion):
     """Fundamental sector for a symmetry in the inverse pole figure,
     defined by a set of sector normals.
@@ -35,6 +38,9 @@ class FundamentalSector(SphericalRegion):
     # isn't uniform enough to produce the correct center according to
     # MTEX
     _center = None
+
+    # Used when sorting `edges` for restricting stereographic plot
+    _pole = -1
 
     @property
     def vertices(self):
@@ -93,13 +99,12 @@ class FundamentalSector(SphericalRegion):
         if self.size == 0:
             return Vector3d.empty()
 
-        edge_steps = 500
-        circles = self.get_circle(steps=edge_steps)
-        edges = np.zeros((self.size * edge_steps + 3, 3))
+        circles = self.get_circle(steps=_EDGE_STEPS)
+        edges = np.zeros((self.size * _EDGE_STEPS + 3, 3))
         vertices = self.vertices
 
         if vertices.size == 0:
-            return circles
+            return circles.squeeze()
 
         j = 0
         for ci, vi in zip(circles, vertices):
@@ -115,14 +120,16 @@ class FundamentalSector(SphericalRegion):
             j += v_n
         edges = Vector3d(edges[:j])
 
-        order = _order_to_sort_around_center(edges, self.center)
+        order = _order_to_sort_around_center(edges, self.center, self._pole)
         sorted_edges = edges[order]
 
-        return sorted_edges
+        return sorted_edges.squeeze()
 
 
-def _order_to_sort_around_center(v, center):
+def _order_to_sort_around_center(v, center, pole=-1):
     vz = Vector3d.zvector()
+    if pole == 1:
+        vz = -vz
     angle = vz.angle_with(center).data
     axis = vz.cross(center)
     v_rotated = v.rotate(axis=axis, angle=-angle)
@@ -134,19 +141,35 @@ def _order_to_sort_around_center(v, center):
     return order2
 
 
-def _closed_edges_in_upper_hemisphere(edges, sector):
-    is_lower = edges.polar.data >= np.pi / 2
-    idx_after_crossing_equator = np.where(is_lower != is_lower[0])[0][0]
-    equator = Vector3d.zvector().get_circle()
-    equator_within = equator[equator <= sector]
-    upper_edges = edges[~is_lower]
-    edges2 = Vector3d(
-        np.vstack(
-            (
-                upper_edges[:idx_after_crossing_equator].data,
-                equator_within.data,
-                upper_edges[idx_after_crossing_equator:].data,
+def _closed_edges_in_hemisphere(edges, sector, pole=-1):
+    if pole == -1:
+        is_outside = edges.polar.data >= np.pi / 2
+    else:  # pole == 1
+        is_outside = edges.polar.data <= np.pi / 2
+
+    if not np.any(is_outside):
+        return edges
+    elif np.all(is_outside):
+        return Vector3d.empty()
+    else:
+        idx_after_crossing_equator = np.where(is_outside != is_outside[0])[0][0]
+        equator = Vector3d.zvector().get_circle(steps=_EDGE_STEPS)
+        equator_inside = equator[equator <= sector]
+        edges_inside = edges[~is_outside]
+        azimuth_before_equator = edges_inside[
+            [idx_after_crossing_equator - 1, idx_after_crossing_equator]
+        ].azimuth.data
+        v_before_equator = Vector3d.from_polar(
+            azimuth_before_equator, polar=[np.pi / 2] * 2
+        )
+        return Vector3d(
+            np.vstack(
+                (
+                    edges_inside[:idx_after_crossing_equator].data,
+                    v_before_equator[0].data,
+                    equator_inside.data,
+                    v_before_equator[1].data,
+                    edges_inside[idx_after_crossing_equator:].data,
+                )
             )
         )
-    )
-    return edges2

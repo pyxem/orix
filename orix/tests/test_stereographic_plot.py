@@ -341,25 +341,23 @@ class TestDrawCircle:
         )
 
     @pytest.mark.parametrize(
-        "hemisphere, polar_cap, polar, desired_array",
+        "pole, polar, desired_array",
         [
             (
-                "upper",
-                0.5 * np.pi,
+                -1,
                 np.deg2rad([60, 90, 120, 150, 180, 30]),
                 np.array([1, 1, 0, 0, 0, 1], dtype=bool),
             ),
             (
-                "lower",
-                0.5 * np.pi,
+                1,
                 np.deg2rad([60, 90, 120, 150, 180, 30]),
-                np.array([0, 0, 1, 1, 1, 0], dtype=bool),
+                np.array([0, 1, 1, 1, 1, 0], dtype=bool),
             ),
         ],
     )
-    def test_visible_in_hemisphere(self, hemisphere, polar_cap, polar, desired_array):
+    def test_visible_in_hemisphere(self, pole, polar, desired_array):
         assert np.allclose(
-            plot.stereographic_plot._is_visible(polar, hemisphere), desired_array
+            plot.stereographic_plot._is_visible(polar, pole), desired_array
         )
 
     def test_draw_circle(self):
@@ -379,10 +377,10 @@ class TestDrawCircle:
 
         # Circles
         assert len(ax[0].lines) == 3
-        # Great circle about [001] not visible
-        assert len(ax[1].lines) == 2
+        assert len(ax[1].lines) == 3
         assert ax[0].lines[0]._path._vertices.shape == (upper_steps, 2)
-        assert ax[1].lines[0]._path._vertices.shape == (lower_steps // 2 + 1, 2)
+        assert ax[1].lines[0]._path._vertices.shape == (lower_steps, 2)
+        assert ax[1].lines[1]._path._vertices.shape == (lower_steps // 2 + 1, 2)
         assert ax[1].lines[1]._path._vertices.shape == (lower_steps // 2 + 1, 2)
 
     def test_draw_circle_empty(self):
@@ -406,20 +404,38 @@ class TestRestrictToFundamentalSector:
 
         # C6's fundamental sector is 1 / 6 of the unit sphere, with
         # half of it in the upper hemisphere
-        fig3, ax3 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        ax3.restrict_to_sector(C6.fundamental_sector)
-        assert not np.allclose(vertices, ax3.patches[0].get_verts())
-        assert ax3.patches[1].get_label() == "sa_sector"
+        fig3, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
+        ax3[0].restrict_to_sector(C6.fundamental_sector)
+        assert not np.allclose(vertices, ax3[0].patches[0].get_verts())
+        assert ax3[0].patches[1].get_label() == "sa_sector"
 
         # Ensure grid lines are clipped by sector
-        ax3.stereographic_grid(False)
-        ax3.stereographic_grid(True)
+        ax3[0].stereographic_grid(False)
+        ax3[0].stereographic_grid(True)
 
         # Oh's fundamental sector is only in the upper hemisphere,
-        # so the same as C1's sector applies
+        # so the same as C1's sector applies for the lower hemisphere
+        fs = Oh.fundamental_sector
         fig4, ax4 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        ax4.hemisphere = "lower"
-        ax4.restrict_to_sector(Oh.fundamental_sector)
-        assert np.allclose(vertices, ax4.patches[0].get_verts())
+        ax4.restrict_to_sector(fs)
+        upper_patches4 = ax4.patches
+        assert len(upper_patches4) == 2
+        assert upper_patches4[1].get_label() == "sa_sector"
+
+        fig5, ax5 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        ax5.hemisphere = "lower"
+        ax5.restrict_to_sector(fs)
+        lower_patches4 = ax5.patches
+        assert len(lower_patches4) == 1
+        assert lower_patches4[0].get_label() == "sa_circle"
+        assert np.allclose(vertices, lower_patches4[0].get_verts())
+
+        # No lines are added to lower hemisphere, only the upper
+        assert len(ax4.lines) == 0
+        assert len(ax5.lines) == 0
+        ax4.plot(fs.edges)
+        ax5.plot(fs.edges)
+        assert len(ax4.lines) == 1
+        assert len(ax5.lines) == 0
 
         plt.close("all")

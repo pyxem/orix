@@ -20,6 +20,8 @@
 plotting :class:`~orix.vector.Vector3d`.
 """
 
+from copy import deepcopy
+
 from matplotlib import rcParams
 import matplotlib.axes as maxes
 import matplotlib.collections as mcollections
@@ -36,7 +38,7 @@ from orix.plot._symmetry_marker import (
 )
 from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.vector import Vector3d
-from orix.vector.fundamental_sector import _closed_edges_in_upper_hemisphere
+from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
 
 
 ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
@@ -323,16 +325,16 @@ class StereographicPlot(maxes.Axes):
             Fundamental sector with edges delineating a fundamental
             sector.
         """
+        original_pole = deepcopy(sector._pole)
+        sector._pole = self.pole
         edges = sector.edges
         if edges.size == 0:
             return
-        elif any(sector.vertices.polar.data > np.pi / 2):
-            edges = _closed_edges_in_upper_hemisphere(edges, sector)
-
-        out = self._pretransform_input((edges,))
-        x, y, _ = out
-        if x.size == 0:
+        edges = _closed_edges_in_hemisphere(edges, sector, pole=self.pole)
+        sector._pole = original_pole
+        if edges.size == 0:
             return
+        x, y, _ = self._pretransform_input((edges,))
 
         pad = 0.01
         self.set_xlim(np.min(x) - pad, np.max(x) + pad)
@@ -348,7 +350,6 @@ class StereographicPlot(maxes.Axes):
         )
         self.add_patch(patch)
         self.set_clip_path(patch)
-
         labels = ["sa_azimuth_grid", "sa_polar_grid"]
         for c in self.collections:
             if c.get_label() in labels:
@@ -634,11 +635,11 @@ class StereographicPlot(maxes.Axes):
         y : numpy.ndarray
             Stereographic y coordinates of unit vectors.
         """
-        hemisphere = self.hemisphere
+        pole = self.pole
         if len(values) == 2:
             azimuth, polar = values[0], values[1]
             if sort:
-                order = _order_in_hemisphere(polar, hemisphere)
+                order = _order_in_hemisphere(polar, pole)
                 azimuth = azimuth[order]
                 polar = polar[order]
             x, y = self._projection.spherical2xy(azimuth=azimuth, polar=polar)
@@ -647,7 +648,7 @@ class StereographicPlot(maxes.Axes):
             try:
                 v = values[0].flatten().unit
                 if sort:
-                    order = _order_in_hemisphere(v.polar.data, hemisphere)
+                    order = _order_in_hemisphere(v.polar.data, pole)
                     v = v[order]
                 x, y = self._projection.vector2xy(v)
             except (ValueError, AttributeError):
@@ -696,14 +697,14 @@ def _get_array_of_values(value, visible):
     return np.asarray(value)[visible]
 
 
-def _is_visible(polar, hemisphere):
+def _is_visible(polar, pole):
     """Return a boolean array describing whether the vector which the
     polar angles belong to are visible in the current hemisphere.
 
     Parameters
     ----------
     polar : numpy.ndarray
-    hemisphere : str
+    pole : int
 
     Returns
     -------
@@ -711,30 +712,31 @@ def _is_visible(polar, hemisphere):
         Boolean array with True for polar angles corresponding to
         vectors visible in this hemisphere.
     """
-    if hemisphere == "upper":
+    if pole == -1:
         return polar <= np.pi / 2
-    else:
-        return polar > np.pi / 2
+    else:  # pole == 1
+        return polar >= np.pi / 2
 
 
-def _order_in_hemisphere(polar, hemisphere):
+def _order_in_hemisphere(polar, pole):
     """Return order of vectors based on polar angles, so that the ones
     corresponding to vectors visible in this hemisphere are shifted to
     the start of the arrays.
 
-    Used in :meth:`StereographicPlot.plot`.
+    Used in :meth:`StereographicPlot._pretransform_input` when
+    `sort=True`.
 
     Parameters
     ----------
     polar : numpy.ndarray
-    hemisphere : str
+    pole : int
 
     Returns
     -------
     numpy.ndarray or None
         If no vectors are visible, None is returned.
     """
-    visible = _is_visible(polar, hemisphere)
+    visible = _is_visible(polar, pole)
     if visible.size == 0 or not np.any(visible):
         return
 

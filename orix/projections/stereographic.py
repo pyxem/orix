@@ -78,10 +78,7 @@ class StereographicProjection:
         where :math:`p` is either 1 (north pole as projection point) or
         -1 (south pole as projection point).
         """
-        if self.pole == -1:
-            v = v[v <= self.region]
-        else:
-            v = v[v < self.region]
+        v = v[v <= self.region]
         return _vector2xy(v, pole=self.pole)
 
     def spherical2xy(self, azimuth, polar):
@@ -122,6 +119,8 @@ class StereographicProjection:
         """Return two sets of stereographic coordinates (X, Y) from 3D
         unit vectors: one set for vectors in the upper hemisphere, and
         one for the lower.
+
+        Vectors on the equator are included in the upper hemisphere.
 
         Parameters
         ----------

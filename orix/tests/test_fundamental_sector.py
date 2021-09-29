@@ -32,15 +32,16 @@ class TestFundamentalSector:
         assert np.allclose(fs.center.data, [[0.439, 0.2465, 0.6631]], atol=1e-3)
 
     def test_edges(self):
+        edge_steps = 1000
         fs1 = Ci.fundamental_sector
         assert np.allclose(
-            fs1.edges.data, Vector3d.zvector().get_circle(steps=500).data
+            fs1.edges.data, Vector3d.zvector().get_circle(steps=edge_steps).data
         )
 
-        # Make sure that desired parts of the fundamental sector edge is
-        # part of the actual edge
+        # Make sure that desired parts of the fundamental sector edge
+        # are part of the actual edge
         fs2 = Oh.fundamental_sector
-        circles = fs2.get_circle(steps=500)
+        circles = fs2.get_circle(steps=edge_steps)
         desired_edges = circles[circles <= fs2]
         actual_edges = fs2.edges
         actual_edges_data = actual_edges.data
@@ -48,5 +49,5 @@ class TestFundamentalSector:
             assert np.all(np.isclose(edge, actual_edges_data), axis=1).any()
 
         # "Joints" between the three edges are included as well
-        assert desired_edges.size == 187
-        assert actual_edges.size == 190
+        assert desired_edges.size == 375
+        assert actual_edges.size == 378
