@@ -32,11 +32,15 @@ from orix.plot.crystal_map_plot import CrystalMapPlot
 from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
 from orix.plot.stereographic_plot import StereographicPlot
 
+# Must be imported below StereographicPlot since it imports it
+from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot
+
 
 # Lists what will be imported when calling "from orix.plot import *"
 __all__ = [
     "CrystalMapPlot",
     "AxAnglePlot",
+    "InversePoleFigurePlot",
     "RodriguesPlot",
     "RotationPlot",
     "StereographicPlot",

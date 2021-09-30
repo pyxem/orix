@@ -496,6 +496,24 @@ class Vector3d(Object3d):
         """
         return self.azimuth, self.polar, self.radial
 
+    def in_fundamental_sector(self, symmetry):
+        """Project vectors to the fundamental sector of a symmetry's
+        inverse pole figure.
+
+        Parameters
+        ----------
+        symmetry : ~orix.quaternion.Symmetry
+
+        Returns
+        -------
+        Vector3d
+        """
+        fs = symmetry.fundamental_sector
+        center = symmetry * fs.center
+        dist = self.dot_outer(center).data
+        idx_max = np.argmax(dist, axis=-1)
+        return ~symmetry[idx_max] * self
+
     def get_circle(self, opening_angle=np.pi / 2, steps=100):
         r"""Get vectors delineating great or small circle(s) with a
         given `opening_angle` about each vector.

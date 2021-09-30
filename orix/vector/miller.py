@@ -81,7 +81,7 @@ class Miller(Vector3d):
         if xyz is None and phase is None:
             raise ValueError(
                 "A phase with a crystal lattice and symmetry must be passed to create "
-                "direct  or reciprocal lattice vector(s)"
+                "direct or reciprocal lattice vector(s)"
             )
 
         self.phase = phase

@@ -266,7 +266,7 @@ class Misorientation(Rotation):
         figure=None,
         position=None,
         return_figure=False,
-        wireframe_kwargs=dict(),
+        wireframe_kwargs=None,
         size=None,
         **kwargs,
     ):
@@ -319,6 +319,8 @@ class Misorientation(Rotation):
         )
 
         # Plot wireframe
+        if wireframe_kwargs is None:
+            wireframe_kwargs = {}
         if isinstance(self.symmetry, tuple):
             fundamental_region = OrientationRegion.from_symmetry(
                 s1=self.symmetry[0], s2=self.symmetry[1]
@@ -589,6 +591,52 @@ class Orientation(Misorientation):
         [ 0.      1.      0.      0.    ]]
         """
         return super().set_symmetry(C1, symmetry)
+
+    def scatter(
+        self,
+        projection="axangle",
+        figure=None,
+        position=None,
+        return_figure=False,
+        wireframe_kwargs=None,
+        size=None,
+        direction=None,
+        **kwargs,
+    ):
+        if projection.lower() != "ipf":
+            figure = super().scatter(
+                projection=projection,
+                figure=figure,
+                position=position,
+                return_figure=return_figure,
+                wireframe_kwargs=wireframe_kwargs,
+                size=size,
+                **kwargs,
+            )
+        else:
+            from orix.plot.inverse_pole_figure_plot import (
+                _setup_inverse_pole_figure_plot,
+            )
+
+            # Determine which hemisphere(s) to show
+            symmetry = self.symmetry
+            sector = symmetry.fundamental_sector
+            if np.any(sector.vertices.polar.data > np.pi / 2):
+                hemisphere = "both"
+            else:
+                hemisphere = "upper"
+
+            figure, axes = _setup_inverse_pole_figure_plot(
+                symmetry=symmetry, direction=direction, hemisphere=hemisphere
+            )
+
+            for ax in axes:
+                ax.scatter(self, **kwargs)
+
+            figure.tight_layout()
+
+        if return_figure:
+            return figure
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this
