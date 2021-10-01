@@ -74,6 +74,8 @@ class InversePoleFigurePlot(StereographicPlot):
                 self, xi, yi, s=label, ha="center", va="center", fontsize=font_size
             )
 
+        self.margins(0, 0)
+
     @property
     def _edge_patch(self):
         patches = self.patches
