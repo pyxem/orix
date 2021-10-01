@@ -120,8 +120,6 @@ class StereographicProjection:
         unit vectors: one set for vectors in the upper hemisphere, and
         one for the lower.
 
-        Vectors on the equator are included in the upper hemisphere.
-
         Parameters
         ----------
         v : Vector3d
@@ -147,7 +145,7 @@ class StereographicProjection:
         vector2xy
         """
         x_upper, y_upper = _vector2xy(v[v <= _UPPER_HEMISPHERE], pole=-1)
-        x_lower, y_lower = _vector2xy(v[v < _LOWER_HEMISPHERE], pole=1)
+        x_lower, y_lower = _vector2xy(v[v <= _LOWER_HEMISPHERE], pole=1)
         return x_upper, y_upper, x_lower, y_lower
 
     def spherical2xy_split(self, azimuth, polar):

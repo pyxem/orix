@@ -83,13 +83,6 @@ class TestStereographicProjection:
         sp_down = StereographicProjection(pole=1)
         x2, y2 = sp_down.vector2xy(v=vectors)
 
-        # Exclude those on the equator for the lower hemisphere set from
-        # the split vectors
-        r = np.sum(np.square((x2, y2)), axis=0)
-        on_equator = np.isclose(r, 1)
-        x2 = x2[~on_equator]
-        y2 = y2[~on_equator]
-
         assert np.allclose(x1, x_up)
         assert np.allclose(y1, y_up)
         assert np.allclose(x2, x_down)
@@ -105,13 +98,6 @@ class TestStereographicProjection:
         x1, y1 = sp_up.spherical2xy(azimuth=azimuth, polar=polar)
         sp_down = StereographicProjection(pole=1)
         x2, y2 = sp_down.spherical2xy(azimuth=azimuth, polar=polar)
-
-        # Exclude those on the equator for the lower hemisphere set from
-        # the split vectors
-        r = np.sum(np.square((x2, y2)), axis=0)
-        on_equator = np.isclose(r, 1)
-        x2 = x2[~on_equator]
-        y2 = y2[~on_equator]
 
         assert np.allclose(x1, x_up)
         assert np.allclose(y1, y_up)

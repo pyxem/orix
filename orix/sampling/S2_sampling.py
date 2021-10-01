@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Generation of equispaced spherical grids in *S2*."""
+"""Generation of spherical grids in *S2*."""
 
 import numpy as np
 
 from orix.vector import Vector3d
 
 
-def uniform_S2_sample(resolution):
+def sample_S2_uv_mesh(resolution):
     r"""Vectors of a UV mesh on a unit sphere *S2*.
 
     The mesh vertices are defined by the parametrization

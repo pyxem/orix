@@ -77,11 +77,12 @@ class FundamentalSector(SphericalRegion):
             center = self._center
         else:
             # Avoid circular import
-            from orix.sampling import uniform_S2_sample
+            from orix.sampling import sample_S2_uv_mesh
 
-            v_all = uniform_S2_sample(resolution=1)
+            v_all = sample_S2_uv_mesh(resolution=1)
             v = v_all[v_all < self]
             center = v.mean()
+
         return Vector3d(center)
 
     @property

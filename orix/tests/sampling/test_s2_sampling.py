@@ -25,7 +25,7 @@ from orix import sampling
 class TestS2Sampling:
     @pytest.mark.parametrize("resolution, size", [(3, 7320), (4, 4140)])
     def test_uniform_S2_sample(self, resolution, size):
-        v1 = sampling.uniform_S2_sample(resolution)
+        v1 = sampling.sample_S2_uv_mesh(resolution)
         assert v1.size == size
         assert np.allclose(v1.mean().data, [0, 0, 0])
         assert v1.unique().size < size
