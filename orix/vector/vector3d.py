@@ -518,7 +518,7 @@ class Vector3d(Object3d):
             rot = symmetry[:3]
         elif symmetry.name == "-3":
             idx = v.z < 0
-            vv = symmetry[0] * v[idx]
+            vv = symmetry[3] * v[idx]
             if vv.size != 0:
                 v[idx] = vv[idx]
             rot = symmetry[:3]
