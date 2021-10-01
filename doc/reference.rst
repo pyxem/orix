@@ -371,7 +371,7 @@ sampling
     get_sample_fundamental
     get_sample_local
     uniform_SO3_sample
-    uniform_S2_sample
+    sample_S2_uv_mesh
 .. automodule:: orix.sampling
     :members:
     :show-inheritance:

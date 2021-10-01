@@ -18,6 +18,7 @@ Added
 - `StereographicPlot.restrict_to_sector()` to restrict the stereographic projection to
   a sector, typically the inverse pole figure of a `Symmetry`.
 - `StereographicPlot.stereographic_grid()` to control the azimuth and polar grid lines.
+- Sampling of vectors in UV mesh on a unit sphere (*S2*).
 - `ndim` attribute to Object3d and derived classes which returns number of navigation
   dimensions.
 
