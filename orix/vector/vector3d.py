@@ -509,10 +509,25 @@ class Vector3d(Object3d):
         Vector3d
         """
         fs = symmetry.fundamental_sector
-        center = symmetry * fs.center
-        dist = self.dot_outer(center).data
-        idx_max = np.argmax(dist, axis=-1)
-        return ~symmetry[idx_max] * self
+        v = deepcopy(self)
+        if symmetry.name in ["321", "312", "32", "-4"]:
+            idx = v.z < 0
+            vv = symmetry[-1] * v[idx]
+            if vv.size != 0:
+                v[idx] = vv[idx]
+            rot = symmetry[:3]
+        elif symmetry.name == "-3":
+            idx = v.z < 0
+            vv = symmetry[0] * v[idx]
+            if vv.size != 0:
+                v[idx] = vv[idx]
+            rot = symmetry[:3]
+        else:
+            rot = symmetry
+        center = rot * fs.center
+        closeness = v.dot_outer(center).data
+        idx_max = np.argmax(closeness, axis=-1)
+        return ~rot[idx_max] * v
 
     def get_circle(self, opening_angle=np.pi / 2, steps=100):
         r"""Get vectors delineating great or small circle(s) with a

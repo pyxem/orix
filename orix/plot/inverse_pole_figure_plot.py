@@ -22,8 +22,6 @@
 rotated by orientations.
 """
 
-from copy import deepcopy
-
 import matplotlib.axes as maxes
 import matplotlib.pyplot as plt
 import matplotlib.projections as mprojections
@@ -62,19 +60,29 @@ class InversePoleFigurePlot(StereographicPlot):
         fs = self._symmetry.fundamental_sector
         self.restrict_to_sector(fs)
 
-        # Add labels
-        vertices = symmetry.fundamental_sector.vertices
-        labels = _make_ipf_axes_labels(vertices, symmetry)
-        x_edge, y_edge = self._edge_patch.get_path().vertices.T
-        x, y = self._projection.vector2xy(vertices)
-        x2, y2 = _shift_label_positions(x, y, x_edge, y_edge)
-        font_size = plt.rcParams["font.size"] + 4
-        for label, xi, yi in zip(labels, x2, y2):
-            maxes.Axes.text(
-                self, xi, yi, s=label, ha="center", va="center", fontsize=font_size
-            )
+        vertices = fs.vertices
+        if vertices.size > 0:
+            # Add labels for crystal directions [uvw]/[UVTW]
+            labels = _make_ipf_axes_labels(vertices, self._symmetry)
+            x, y = self._projection.vector2xy(vertices)
 
-        self.margins(0, 0)
+            y_edge = self._edge_patch.get_path().vertices[:, 1]
+            y_min_edge, y_max_edge = np.min(y_edge), np.max(y_edge)
+
+            font_size = plt.rcParams["font.size"] + 4
+            text_kw = dict(ha="center", va="center", fontsize=font_size)
+            y_min, y_max = np.min(y), np.max(y)
+            for label, xi, yi in zip(labels, x, y):
+                # Determine x and y coordinates of label so that it
+                # isn't placed over fundamental sector edge
+                if np.isclose(yi, y_max) and y_min != y_max:
+                    text_kw["va"] = "bottom"
+                elif np.isclose(yi, y_min):
+                    text_kw["va"] = "top"
+                if y_min_edge < yi < y_max_edge:
+                    yi += (y_max_edge - yi) / 2
+
+                maxes.Axes.text(self, xi, yi, s=label, **text_kw)
 
     @property
     def _edge_patch(self):
@@ -82,8 +90,8 @@ class InversePoleFigurePlot(StereographicPlot):
         return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
 
     def scatter(self, *args, **kwargs):
-        h = self._rotate_direction(args[0])
-        super().scatter(h, **kwargs)
+        vc = self._rotate_direction(args[0])
+        super().scatter(vc, **kwargs)
 
     def show_hemisphere_label(self, **kwargs):
         """Add a hemisphere label ("upper"/"lower") to the upper left
@@ -106,8 +114,8 @@ class InversePoleFigurePlot(StereographicPlot):
         self.text(v, s=self.hemisphere, **new_kwargs)
 
     def _rotate_direction(self, orientations):
-        m = orientations * self._direction
-        return m.in_fundamental_sector(self._symmetry)
+        vc = orientations * self._direction
+        return vc.in_fundamental_sector(self._symmetry)
 
 
 mprojections.register_projection(InversePoleFigurePlot)
@@ -147,7 +155,21 @@ def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
             hemisphere=hemisphere[i],
         )
         ax = figure.add_subplot(nrows, ncols, i + 1, **subplot_kw)
-        ax.set_title(_make_ipf_title(direction[i]), fontweight="bold")
+
+        label_xy = np.column_stack(
+            ax._projection.vector2xy(symmetry.fundamental_sector.vertices)
+        )
+        loc = None
+        if label_xy.size != 0:
+            # Expected title position
+            expected_xy = np.array(
+                [np.diff(ax.get_xlim())[0] / 2, np.max(ax.get_ylim())]
+            )
+            is_close = np.isclose(label_xy, expected_xy, atol=0.1).all(axis=1)
+            if any(is_close) and plt.rcParams["axes.titley"] is None:
+                loc = "left"
+
+        ax.set_title(_make_ipf_title(direction[i]), loc=loc, fontweight="bold")
         axes.append(ax)
 
     return figure, np.asarray(axes)
@@ -183,21 +205,3 @@ def _make_ipf_axes_labels(vertices, symmetry):
         labels.append(label)
 
     return labels
-
-
-def _shift_label_positions(x, y, x_edge, y_edge):
-    x_min_edge, x_max_edge = np.min(x_edge), np.max(x_edge)
-    y_min_edge, y_max_edge = np.min(y_edge), np.max(y_edge)
-    label_pad = 0.13
-    x_pad = label_pad * abs(x_max_edge - x_min_edge) / 2
-    y_pad = label_pad * abs(y_max_edge - y_min_edge) / 2
-    new_x = deepcopy(x)
-    new_y = deepcopy(y)
-    x_min, x_max = np.min(x), np.max(x)
-    y_min, y_max = np.min(y), np.max(y)
-    for i, (xi, yi) in enumerate(zip(x, y)):
-        if np.isclose(yi, y_min):
-            new_y[i] -= y_pad
-        elif np.isclose(yi, y_max):
-            new_y[i] += y_pad
-    return new_x, new_y
