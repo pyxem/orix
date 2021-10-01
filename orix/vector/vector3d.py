@@ -500,6 +500,9 @@ class Vector3d(Object3d):
         """Project vectors to the fundamental sector of a symmetry's
         inverse pole figure.
 
+        These projection is taken from MTEX'
+        :code:`vector3d.project2fundamentalRegion`.
+
         Parameters
         ----------
         symmetry : ~orix.quaternion.Symmetry
