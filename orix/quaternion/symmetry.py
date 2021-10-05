@@ -37,6 +37,8 @@ improper rotations. A mirror symmetry is equivalent to a 2-fold rotation
 combined with inversion.
 """
 
+from copy import deepcopy
+
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 
@@ -93,12 +95,15 @@ class Symmetry(Rotation):
     @property
     def laue(self):
         """Symmetry : this group plus inversion."""
-        return Symmetry.from_generators(self, Ci)
+        laue = Symmetry.from_generators(self, Ci)
+        laue.name = _get_laue_group_name(self.name)
+        return laue
 
     @property
     def laue_proper_subgroup(self):
         """Symmetry : the proper subgroup of this group plus
-        inversion."""
+        inversion.
+        """
         return self.laue.proper_subgroup
 
     @property
@@ -603,3 +608,30 @@ point_group_aliases = {
     "432": ["43"],
     "m-3m": ["m3m"],
 }
+
+
+def _get_laue_group_name(name):
+    if name in ["1", "-1"]:
+        return "-1"
+    elif name in ["211", "121", "112", "m11", "1m1", "11m", "2/m"]:
+        return "2/m"
+    elif name in ["222", "mm2", "mmm"]:
+        return "mmm"
+    elif name in ["4", "-4", "4/m"]:
+        return "4/m"
+    elif name in ["422", "4mm", "-42m", "4/mmm"]:
+        return "4/mmm"
+    elif name in ["3", "-3"]:
+        return "-3"
+    elif name in ["321", "312", "32", "3m", "-3m"]:
+        return "-3m"
+    elif name in ["6", "-6", "6/m"]:
+        return "6/m"
+    elif name in ["6mm", "-6m2", "6/mmm"]:
+        return "6/mmm"
+    elif name in ["23", "m-3"]:
+        return "m-3"
+    elif name in ["432", "-43m", "m-3m"]:
+        return "m-3m"
+    else:
+        return ""

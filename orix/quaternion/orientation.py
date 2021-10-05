@@ -363,16 +363,29 @@ class Orientation(Misorientation):
         """Symmetry."""
         return self._symmetry[1]
 
+    @symmetry.setter
+    def symmetry(self, value):
+        self._symmetry = (C1, value)
+
     @property
     def unit(self):
         """Unit orientations."""
-        return super().unit.set_symmetry(self.symmetry)
+        #        return super().unit.set_symmetry(self.symmetry)
+        o = super().unit
+        o.symmetry = self.symmetry
+        return o
 
     def __invert__(self):
-        return super().__invert__().set_symmetry(self.symmetry)
+        #        return super().__invert__().set_symmetry(self.symmetry)
+        o = super().__invert__()
+        o.symmetry = self.symmetry
+        return o
 
     def __neg__(self):
-        return super().__neg__().set_symmetry(self.symmetry)
+        #        return super().__neg__().set_symmetry(self.symmetry)
+        o = super().__neg__()
+        o.symmetry = self.symmetry
+        return o
 
     def __repr__(self):
         """String representation."""
@@ -410,7 +423,8 @@ class Orientation(Misorientation):
         """
         o = super().from_euler(euler=euler, convention=convention, direction=direction)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            #            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     @classmethod
@@ -428,7 +442,8 @@ class Orientation(Misorientation):
         """
         o = super().from_matrix(matrix)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            #            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     @classmethod
@@ -446,7 +461,8 @@ class Orientation(Misorientation):
         """
         o = super().from_neo_euler(neo_euler)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            #            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     def angle_with(self, other):

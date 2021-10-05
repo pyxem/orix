@@ -29,6 +29,7 @@ Example of usage::
 """
 
 from orix.plot.crystal_map_plot import CrystalMapPlot
+from orix.plot.orientation_color_keys import IPFColorKeyTSL
 from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
 from orix.plot.stereographic_plot import StereographicPlot
 
@@ -41,6 +42,7 @@ __all__ = [
     "CrystalMapPlot",
     "AxAnglePlot",
     "InversePoleFigurePlot",
+    "IPFColorKeyTSL",
     "RodriguesPlot",
     "RotationPlot",
     "StereographicPlot",

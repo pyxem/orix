@@ -90,7 +90,7 @@ class InversePoleFigurePlot(StereographicPlot):
         return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
 
     def scatter(self, *args, **kwargs):
-        vc = self._rotate_direction(args[0])
+        vc = self._pretransform_input_ipf(args)
         super().scatter(vc, **kwargs)
 
     def show_hemisphere_label(self, **kwargs):
@@ -113,9 +113,14 @@ class InversePoleFigurePlot(StereographicPlot):
         v = self._inverse_projection.xy2vector(np.min(x), np.max(y))
         self.text(v, s=self.hemisphere, **new_kwargs)
 
-    def _rotate_direction(self, orientations):
-        vc = orientations * self._direction
-        return vc.in_fundamental_sector(self._symmetry)
+    def _pretransform_input_ipf(self, values):
+        if len(values) == 2:  # (Azimuth, polar)
+            v = Vector3d.from_polar(azimuth=values[0], polar=values[1])
+        elif isinstance(values[0], Vector3d):
+            v = values[0]
+        else:  # Orientation
+            v = values[0] * self._direction
+        return v.in_fundamental_sector(self._symmetry)
 
 
 mprojections.register_projection(InversePoleFigurePlot)

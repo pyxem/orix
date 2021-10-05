@@ -517,18 +517,18 @@ class Vector3d(Object3d):
             idx = v.z < 0
             vv = symmetry[-1] * v[idx]
             if vv.size != 0:
-                v[idx] = vv[idx]
+                v[idx] = vv
             rot = symmetry[:3]
-        elif symmetry.name == "-3":
+        elif symmetry.name in "-3":
             idx = v.z < 0
             vv = symmetry[3] * v[idx]
             if vv.size != 0:
-                v[idx] = vv[idx]
+                v[idx] = vv
             rot = symmetry[:3]
         else:
             rot = symmetry
-        center = rot * fs.center
-        closeness = v.dot_outer(center).data
+        rotated_centers = rot * fs.center
+        closeness = v.dot_outer(rotated_centers).data
         idx_max = np.argmax(closeness, axis=-1)
         return ~rot[idx_max] * v
 
