@@ -620,6 +620,17 @@ class Orientation(Misorientation):
 
         return Scalar(angles)
 
+    def plot_unit_cell(self, return_figure=False):
+        if self.size > 1:
+            raise ValueError("Can only plot a single unit cell, so *size* must be 1")
+
+        from orix.plot.unit_cell_plot import _plot_unit_cell
+
+        fig = _plot_unit_cell(self)
+
+        if return_figure:
+            return fig
+
     @deprecated(
         since="0.8",
         alternative="orix.quaternion.Orientation.map_into_symmetry_reduced_zone",
