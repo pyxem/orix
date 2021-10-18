@@ -28,7 +28,7 @@ import numpy as np
 from orix.vector import Vector3d
 
 
-def _plot_unit_cell(rotation):
+def _plot_unit_cell(rotation, c=None):
     # TODO: More than only cubic
     # TODO: Add reference frame axes
     d = [-1, 1]
@@ -46,6 +46,6 @@ def _plot_unit_cell(rotation):
         if np.sum(np.abs(s - e)) == (d[1] - d[0]):
             vs = rotation * Vector3d(s)
             ve = rotation * Vector3d(e)
-            ax.plot3D(*zip(vs.data.squeeze(), ve.data.squeeze()), c="b")
+            ax.plot3D(*zip(vs.data.squeeze(), ve.data.squeeze()), c=c)
 
     return fig
