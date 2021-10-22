@@ -500,8 +500,8 @@ class Vector3d(Object3d):
         """Project vectors to the fundamental sector of a symmetry's
         inverse pole figure.
 
-        These projection is taken from MTEX'
-        :code:`vector3d.project2fundamentalRegion`.
+        This projection is taken from MTEX'
+        :code:`project2fundamentalRegion`.
 
         Parameters
         ----------
@@ -513,6 +513,7 @@ class Vector3d(Object3d):
         """
         fs = symmetry.fundamental_sector
         v = deepcopy(self)
+
         if symmetry.name in ["321", "312", "32", "-4"]:
             idx = v.z < 0
             vv = symmetry[-1] * v[idx]
@@ -527,10 +528,17 @@ class Vector3d(Object3d):
             rot = symmetry[:3]
         else:
             rot = symmetry
+
         rotated_centers = rot * fs.center
-        closeness = v.dot_outer(rotated_centers).data
+        closeness = v.dot_outer(rotated_centers).data.round(12)
         idx_max = np.argmax(closeness, axis=-1)
-        return ~rot[idx_max] * v
+        v2 = ~rot[idx_max] * v
+
+        # Keep the ones already inside the sector
+        mask = v <= fs
+        v2[mask] = v[mask]
+
+        return v2
 
     def get_circle(self, opening_angle=np.pi / 2, steps=100):
         r"""Get vectors delineating great or small circle(s) with a

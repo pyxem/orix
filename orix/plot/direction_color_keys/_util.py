@@ -18,8 +18,7 @@
 
 """Private tools for coloring crystal directions.
 
-These are adopted from MTEX. See e.g.
-https://github.com/mtex-toolbox/mtex/blob/develop/geometry/@sphericalRegion/polarCoordinates.m.
+These functions are adopted from MTEX.
 """
 
 import matplotlib.colors as mcolors
@@ -28,61 +27,118 @@ import numpy as np
 from orix.vector import Vector3d
 
 
-def hsl2hsv(hue, saturation, lightness):
+def polar_coordinates_in_sector(sector, v):
+    r"""Calculate the polar coordinates of crystal direction(s)
+    :class:`Vector3d` relative to the (bary)center of a
+    :class:`FundamentalSector` of a Laue group.
+
+    Parameters
+    ----------
+    sector : FundamentalSector
+        A fundamental sector of a Laue group, described by a set of
+        normal vectors, a center, and vertices.
+    v : Vector3d
+        Crystal direction(s) to get polar coordinates for.
+
+    Returns
+    -------
+    azimuth : np.ndarray
+        Azimuthal polar coordinate(s).
+    polar : np.ndarray
+        Polar polar coordinate(s).
+
+    Notes
+    -----
+    This procedure is adopted from MTEX' :code:`polarCoordinates`
+    function, which implements the coloring described in section 2.4 in
+    :cite:`nolze2016orientation` (see Fig. 4 in that reference).
+
+    The azimuthal coordinate is the angle to the barycenter relative to
+    some fixed vertex of the sector, here chosen as the north pole
+    [001]. The polar coordinate is the distance to the barycenter. The
+    barycenter is the center of the fundamental sector.
+    """
+    center = sector.center
+    v = v.unit
+
+    # Azimuthal coordinate
+    rx = Vector3d.zvector() - center  # North pole to sector center
+    rx = (rx - rx.dot(center) * center).unit  # Orthogonal to center
+    ry = center.cross(rx).unit  # Perpendicular to rx
+    distances_azimuthal = (v - center).unit
+    azimuth = np.arctan2(
+        ry.dot(distances_azimuthal).data, rx.dot(distances_azimuthal).data
+    )
+    azimuth = np.mod(azimuth, 2 * np.pi)
+    azimuth[np.isnan(azimuth)] = 0
+
+    # Polar coordinate
+    if np.count_nonzero(sector.dot(center).data) == 0:
+        polar = center.angle_with(v).data / np.pi
+    else:
+        # Normal to plane containing sector center and crystal direction
+        v_center_normal = v.cross(center).unit
+        polar = np.full(v.size, np.inf)
+        for normal in sector:
+            boundary_points = v_center_normal.cross(normal).unit
+            # Some boundary points are zero vectors
+            with np.errstate(invalid="ignore"):
+                distances_polar = (-v).angle_with(boundary_points).data
+                distances_polar /= (-center).angle_with(boundary_points).data
+            distances_polar[np.isnan(distances_polar)] = 1
+            polar = np.minimum(polar, distances_polar)  # Element-wise
+
+    return azimuth, polar
+
+
+def rgb_from_polar_coordinates(azimuth, polar):
+    """Calculate RGB colors from polar coordinates.
+
+    Parameters
+    ----------
+    azimuth : np.ndarray
+        Azimuthal coordinate(s).
+    polar : np.ndarray
+        Polar coordinate(s).
+
+    Returns
+    -------
+    rgb : np.ndarray
+        Color(s).
+    """
+    angle = np.mod(azimuth / (2 * np.pi), 1)
+    h, s, v = hsl_to_hsv(angle, 1, polar / np.pi)
+    return mcolors.hsv_to_rgb(np.column_stack([h, s, v]))
+
+
+def hsl_to_hsv(hue, saturation, lightness):
+    """Convert color described by HSL (hue, saturation and lightness) to
+    HSV (hue, saturation and value).
+
+    Adapted from MTEX' function :code:`hsl2hsv`.
+
+    Parameters
+    ----------
+    hue : np.ndarray or float
+        Hue(s). Not changed by the function, but included in input and
+        output for convenience.
+    saturation : np.ndarray or float
+        Saturation value(s).
+    lightness : np.ndarray or float
+        Lightness value(s).
+
+    Returns
+    -------
+    hue : np.ndarray or float
+        The same copy of hue(s) as input.
+    saturation2 : np.ndarray or float
+        Adjusted saturation value(s).
+    value : np.ndarray or float
+        Value(s).
+    """
     l2 = 2 * lightness
     s2 = np.where(2 * l2 <= 1, saturation * l2, saturation * (2 - l2))
-    saturation = (2 * s2) / (l2 + s2)
-    saturation[np.isnan(saturation)] = 0
+    saturation2 = (2 * s2) / (l2 + s2)
+    saturation2[np.isnan(saturation2)] = 0
     value = (l2 + s2) / 2
-    return hue, saturation, value
-
-
-def polar2rgb(azimuth, polar):
-    angle = np.mod(azimuth / (2 * np.pi), 1)
-    radius = polar / np.pi
-
-    # Compute RGB values from angle and radius
-    gray_value = 1
-    lightness = (radius - 0.5) * gray_value + 0.5
-    saturation = (
-        gray_value * (1 - np.abs(2 * radius - 1)) / (1 - np.abs(2 * lightness - 1))
-    )
-    saturation[np.isnan(saturation)] = 0
-
-    h, s, v = hsl2hsv(angle, saturation, lightness)
-    hsv = np.column_stack([h, s, v])
-
-    return mcolors.hsv_to_rgb(hsv)
-
-
-def calc_angle(center, rx, v):
-    rx2 = (rx - rx.dot(center) * center).unit
-    ry = center.cross(rx2).unit
-    dv = (v - center).unit
-    rho = np.mod(np.arctan2(ry.dot(dv).data, rx2.dot(dv).data), 2 * np.pi)
-    rho[np.isnan(rho)] = 0
-    return rho
-
-
-def polar_coordinates(sector, v, center, ref):
-    v = Vector3d(v).unit
-    vxcenter = v.cross(center).unit
-
-    if np.count_nonzero(sector.dot(center).data) == 0:
-        r = center.angle_with(v).data / np.pi
-    else:
-        r = np.ones(v.size) * np.inf
-        for normal in sector:
-            bc = vxcenter.cross(normal).unit
-            d = v.angle_with(-bc).data / center.angle_with(-bc).data
-            r = np.minimum(r, d)  # Element-wise minimum
-
-    vz = Vector3d.zvector()
-    if np.allclose(center.data, vz.data):
-        rx = ref - center
-    else:
-        rx = vz - center
-
-    azimuth = calc_angle(center=center, rx=rx, v=v)
-
-    return azimuth, r
+    return hue, saturation2, value

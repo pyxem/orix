@@ -192,7 +192,7 @@ class Symmetry(Rotation):
     @property
     def system(self):
         """Which of the seven crystal systems this symmetry belongs to
-        as a :ref:`str`.
+        as a `str`.
         """
         name = self.name
         if name in ["1", "-1"]:
