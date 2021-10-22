@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Base class for 3d objects.
+
+Note that this class is not meant to be used directly.
+"""
+
 import numpy as np
 
 from orix._util import deprecated

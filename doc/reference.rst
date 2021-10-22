@@ -16,6 +16,7 @@ the :ref:`user guide <user-guide>` and the
 The list of top modules:
 
 .. autosummary::
+    base
     crystal_map
     io
     plot
@@ -24,6 +25,14 @@ The list of top modules:
     sampling
     scalar
     vector
+
+....
+
+base
+====
+.. automodule:: orix.base
+    :members:
+    :show-inheritance:
 
 ....
 

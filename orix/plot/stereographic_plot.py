@@ -45,6 +45,11 @@ ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
 
 
 class StereographicPlot(maxes.Axes):
+    """Stereographic plot for plotting :class:`~orix.vector.Vector3d`.
+
+    Inherits from :class:`~matplotlib.axes.Axes`.
+    """
+
     name = "stereographic"
     _pad_xy = 0.05
 
