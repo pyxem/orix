@@ -16,144 +16,83 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Stereographic plot inheriting from :class:`~matplotlib.axes.Axes` for
+plotting :class:`~orix.vector.Vector3d`.
+"""
+
+from copy import deepcopy
+
 from matplotlib import rcParams
-from matplotlib.axes import Axes
-from matplotlib.axis import XAxis, YAxis
-from matplotlib.patches import Circle
-from matplotlib.path import Path
-from matplotlib.projections import register_projection
-from matplotlib.spines import Spine
-from matplotlib.transforms import Affine2D, Affine2DBase, BboxTransformTo, Transform
+import matplotlib.axes as maxes
+import matplotlib.collections as mcollections
+import matplotlib.patches as mpatches
+import matplotlib.path as mpath
+import matplotlib.projections as mprojections
 import numpy as np
 
-from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.plot._symmetry_marker import (
     TwoFoldMarker,
     ThreeFoldMarker,
     FourFoldMarker,
     SixFoldMarker,
 )
+from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.vector import Vector3d
-
-
-class StereographicTransform(Transform):
-    """The stereographic transform."""
-
-    input_dims = output_dims = 2
-
-    def __init__(self, pole=-1):
-        """Create a new stereographic transform.
-
-        Parameters
-        ----------
-        pole : int, optional
-            -1 or 1, where -1 (1) means the projection point of the
-            stereographic transform is the south (north) pole [00-1]
-            ([001]), i.e. only vectors with z > 0 (z < 0) are returned.
-        """
-        super().__init__()
-        self.pole = pole
-
-    def transform_non_affine(self, values):
-        # (azimuth, polar) to (X, Y)
-        azimuth, polar = values.T
-        sp = StereographicProjection(pole=self.pole)
-        x, y = sp.spherical2xy(azimuth=azimuth, polar=polar)
-        return np.column_stack([x, y])
-
-    def transform_path_non_affine(self, path):
-        ipath = path.interpolated(path._interpolation_steps)
-        return Path(self.transform(ipath.vertices), ipath.codes)
-
-    def inverted(self):
-        return InvertedStereographicTransform(pole=self.pole)
-
-
-class InvertedStereographicTransform(Transform):
-    input_dims = output_dims = 2
-
-    def __init__(self, pole=-1):
-        super().__init__()
-        self.pole = pole
-
-    def transform_non_affine(self, values):
-        # (X, Y) to (azimuth, polar)
-        x, y = values.T
-        isp = InverseStereographicProjection(pole=self.pole)
-        azimuth, polar = isp.xy2spherical(x=x, y=y)
-        return np.column_stack([azimuth, polar])
-
-    def inverted(self):
-        return StereographicTransform(pole=self.pole)
-
-
-class StereographicAffine(Affine2DBase):
-    def __init__(self, pole=-1, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.pole = pole
-
-    def get_matrix(self):
-        # Only recompute if self._invalid is True?
-        if self._invalid:
-            pole = self.pole
-            st = StereographicTransform(pole=pole)
-            xscale, _ = st.transform((0, np.pi / 2))
-            _, yscale = st.transform((np.pi / 2, np.pi / 2))
-            scales = (0.5 / xscale, 0.5 / yscale)
-            self._mtx = Affine2D().scale(*scales).translate(0.5, 0.5)
-            self._inverted = None
-            self._invalid = 0
-        return self._mtx
+from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
 
 
 ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
 
 
-class StereographicPlot(Axes):
-    """Stereographic projection plot. The projection is an equal angle
-    projection and is typically used for visualizing 3D vectors in a 2D
-    plane.
+class StereographicPlot(maxes.Axes):
+    """Stereographic plot for plotting :class:`~orix.vector.Vector3d`.
 
-    https://en.wikipedia.org/wiki/Stereographic_projection
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> from orix import plot, vector
-    >>> fig, ax = plt.subplots(subplot_kw=dict(projections="stereographic"))
-    >>> ax.scatter(vector.Vector3d([[0, 0, 1], [1, 0, 1]]))
+    Inherits from :class:`~matplotlib.axes.Axes`.
     """
 
-    # TODO: Extend by taking inspiration from matplotlib.projections.polar:
-    #  https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py
-
-    # See this Matplotlib tutorial for explanations of methods:
-    # https://matplotlib.org/stable/gallery/misc/custom_projection.html
-
     name = "stereographic"
-    _hemisphere = "upper"
+    _pad_xy = 0.05
 
-    def __init__(self, *args, azimuth_resolution=10, polar_resolution=10, **kwargs):
-        self._azimuth_cap = 2 * np.pi
+    def __init__(
+        self,
+        *args,
+        hemisphere="upper",
+        azimuth_resolution=10,
+        polar_resolution=10,
+        **kwargs,
+    ):
+        """Create an axis for plotting :class:`~orix.vector.Vector3d`.
+
+        Parameters
+        ----------
+        args
+            Arguments passed to :meth:`matplotlib.axes.Axes.__init__`.
+        hemisphere : str, optional
+            Which hemisphere to plot vectors in, either "upper"
+            (default) or "lower".
+        azimuth_resolution : int or float, optional
+            Resolution of azimuth grid lines in degrees. Default is 10
+            degrees.
+        polar_resolution : int or float, optional
+            Resolution of polar grid lines in degrees. Default is 10
+            degrees.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.__init__`.
+        """
+        self.hemisphere = hemisphere
         self._azimuth_resolution = azimuth_resolution
-        self._polar_cap = np.pi / 2
         self._polar_resolution = polar_resolution
 
         # Custom attribute to keep track of whether grid is on or off
         self._stereographic_grid = None
 
         super().__init__(*args, **kwargs)
+
         # Set ratio of y-unit to x-unit by adjusting the physical
         # dimension of the Axes (box), and centering the anchor (C)
         self.set_aspect("equal", adjustable="box", anchor="C")
         self.clear()
-
-    def _init_axis(self):
-        # Need to override these to get rid of spines
-        self.xaxis = XAxis(self)
-        self.yaxis = YAxis(self)
-        self.spines["stereographic"].register_axis(self.yaxis)
-        self._update_transScale()
 
     def clear(self):
         super().clear()
@@ -163,64 +102,70 @@ class StereographicPlot(Axes):
         self.xaxis.set_tick_params(label1On=False)
         self.yaxis.set_tick_params(label1On=False)
 
-        self.polar_grid()
-        self.azimuth_grid()
-        self.grid(rcParams["axes.grid"])
+        self.set_xlim(-1 - self._pad_xy, 1 + self._pad_xy)
+        self.set_ylim(-1 - self._pad_xy, 1 + self._pad_xy)
 
-        self.set_xlim(0, self._azimuth_cap)
-        self.set_ylim(0, self._polar_cap)
+        spines = self.spines
+        for spine in spines.values():
+            spine.set_visible(False)
 
-    def _set_lim_and_transforms(self):
-        self.transProjection = StereographicTransform(pole=self.pole)
-        self.transAffine = StereographicAffine(pole=self.pole)
-        self.transAxes = BboxTransformTo(self.bbox)
+        self.add_patch(
+            mpatches.Circle(
+                xy=(0, 0),
+                radius=1,
+                facecolor="none",
+                edgecolor="k",
+                label="sa_circle",
+            )
+        )
 
-        self.transData = self.transProjection + self.transAffine + self.transAxes
+        # Don't show rectangular grid
+        self.grid(False)
+        self.stereographic_grid(rcParams["axes.grid"])
 
-        self._xaxis_pretransform = Affine2D().scale(1, self._polar_cap)
-        self._xaxis_transform = self._xaxis_pretransform + self.transData
+    def format_coord(self, x, y):
+        if np.sqrt(np.sum(np.square([x, y]))) > 1:
+            return ""
+        else:
+            azimuth, polar = self._inverse_projection.xy2spherical(x, y)
+            azimuth = azimuth[0]
+            polar = polar[0]
+            azimuth_deg = np.rad2deg(azimuth)
+            polar_deg = np.rad2deg(polar)
+            return (
+                "\N{GREEK SMALL LETTER PHI}={:.2f}\N{GREEK SMALL LETTER PI} "
+                "({:.2f}\N{DEGREE SIGN}), "
+                "\N{GREEK SMALL LETTER theta}={:.2f}\N{GREEK SMALL LETTER PI} "
+                "({:.2f}\N{DEGREE SIGN})"
+            ).format(azimuth / np.pi, azimuth_deg, polar / np.pi, polar_deg)
 
-        self._yaxis_pretransform = Affine2D().scale(self._azimuth_cap, 1)
-        self._yaxis_transform = self._yaxis_pretransform + self.transData
+    def plot(self, *args, **kwargs):
+        """Draw straight lines between vectors.
 
-    @staticmethod
-    def format_coord(azimuth, polar):
-        azimuth_deg = np.rad2deg(azimuth)
-        polar_deg = np.rad2deg(polar)
-        return (
-            "\N{GREEK SMALL LETTER PHI}={:.2f}\N{GREEK SMALL LETTER PI} "
-            "({:.2f}\N{DEGREE SIGN}), "
-            "\N{GREEK SMALL LETTER theta}={:.2f}\N{GREEK SMALL LETTER PI} "
-            "({:.2f}\N{DEGREE SIGN})"
-        ).format(azimuth / np.pi, azimuth_deg, polar / np.pi, polar_deg)
+        This method overwrites :meth:`matplotlib.axes.Axes.plot`, see
+        that method's docstring for parameters.
 
-    def get_xaxis_transform(self, which="grid"):
-        # Need to override this to get rid of spines.
-        return self._xaxis_transform
+        Parameters
+        ----------
+        args : Vector3d or tuple of float or numpy.ndarray
+            Vector(s), or azimuth and polar angles, the latter two
+            passed as separate arguments (not keyword arguments).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot`.
 
-    def get_yaxis_transform(self, which="grid"):
-        # Need to override this to get rid of spines.
-        return self._yaxis_transform
+        See Also
+        --------
+        matplotlib.axes.Axes.plot
+        """
+        new_kwargs = dict(clip_on=True, linewidth=2, color="k", linestyle="-")
+        x, y, _, updated_kwargs = self._prepare_to_call_inherited_method(
+            args, kwargs, new_kwargs, sort=True
+        )
+        if x.size == 0:
+            return
 
-    def _gen_axes_spines(self):
-        return {"stereographic": Spine.circular_spine(self, (0.5, 0.5), 0.5)}
-
-    @staticmethod
-    def _gen_axes_patch():
-        return Circle((0.5, 0.5), 0.5)
-
-    @staticmethod
-    def get_data_ratio():
-        return 1
-
-    @staticmethod
-    def can_pan():
-        return False
-
-    @staticmethod
-    def can_zoom():
-        # TODO: Implement zoom (https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/projections/polar.py#L1437)
-        return False
+        super().plot(x, y, **updated_kwargs)
 
     def scatter(self, *args, **kwargs):
         """A scatter plot of vectors.
@@ -242,25 +187,19 @@ class StereographicPlot(Axes):
         matplotlib.axes.Axes.scatter
         """
         new_kwargs = dict(zorder=ZORDER["scatter"], clip_on=False)
-        for k, v in new_kwargs.items():
-            kwargs.setdefault(k, v)
-
-        azimuth, polar = self._pretransform_input(args)
-        visible = self._visible_in_hemisphere(polar)
-        if np.count_nonzero(visible) == 0:
+        out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
+        x, y, visible, updated_kwargs = out
+        if x.size == 0:
             return
-        else:
-            azimuth = azimuth[visible]
-            polar = polar[visible]
 
         # Color(s) and size(s)
-        c = kwargs.pop("c", "C0")
+        c = updated_kwargs.pop("c", "C0")
         c = _get_array_of_values(value=c, visible=visible)
-        s = kwargs.pop("s", None)
+        s = updated_kwargs.pop("s", None)
         if s is not None:
             s = _get_array_of_values(value=s, visible=visible)
 
-        super().scatter(azimuth, polar, c=c, s=s, **kwargs)
+        super().scatter(x, y, c=c, s=s, **updated_kwargs)
 
     def text(self, *args, **kwargs):
         """Add text to the axes.
@@ -282,18 +221,11 @@ class StereographicPlot(Axes):
         matplotlib.axes.Axes.text
         """
         new_kwargs = dict(va="bottom", ha="center", zorder=ZORDER["text"])
-        for k, v in new_kwargs.items():
-            kwargs.setdefault(k, v)
-
-        azimuth, polar = self._pretransform_input(args)
-        visible = self._visible_in_hemisphere(polar)
-        if np.count_nonzero(visible) == 0:
+        out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
+        x, y, _, updated_kwargs = out
+        if x.size == 0:
             return
-        else:
-            azimuth = azimuth[visible]
-            polar = polar[visible]
-
-        super().text(azimuth, polar, **kwargs)
+        super().text(x, y, **updated_kwargs)
 
     # ----------- Custom attributes and methods below here ----------- #
 
@@ -317,7 +249,6 @@ class StereographicPlot(Axes):
             self._hemisphere = value
         else:
             raise ValueError(f"Hemisphere must be 'upper' or 'lower', not {value}")
-        self._set_lim_and_transforms()
 
     @property
     def pole(self):
@@ -329,6 +260,105 @@ class StereographicPlot(Axes):
         Derived from :attr:`hemisphere`.
         """
         return {"upper": -1, "lower": 1}[self.hemisphere]
+
+    @property
+    def _projection(self):
+        return StereographicProjection(self.pole)
+
+    @property
+    def _inverse_projection(self):
+        return InverseStereographicProjection(self.pole)
+
+    def draw_circle(self, *args, opening_angle=np.pi / 2, steps=100, **kwargs):
+        r"""Draw great or small circles with a given `opening_angle` to
+        one or multiple vectors.
+
+        A vector must be present in the current hemisphere for its
+        circle to be drawn.
+
+        Parameters
+        ----------
+        args : Vector3d or tuple of float or numpy.ndarray
+            Vector(s), or azimuth and polar angles defining vectors, the
+            latter two passed as separate arguments (not keyword
+            arguments). Circles are drawn perpendicular to these with a
+            given `opening_angle`.
+        opening_angle : float or numpy.ndarray, optional
+            Opening angle(s) around the vector(s). Default is
+            :math:`\pi/2`, giving a great circle. If an array is passed,
+            its size must be equal to the number of circles to draw.
+        steps : int, optional
+            Number of vectors to describe each circle, default is 100.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot` to alter the circles'
+            appearance.
+
+        See Also
+        --------
+        orix.vector.Vector3d.get_circle
+        """
+        out = self._prepare_to_call_inherited_method(args, kwargs)
+        x, y, visible, updated_kwargs = out
+        if x.size == 0:
+            return
+
+        # Get set of `steps` vectors delineating a circle per vector
+        v = self._inverse_projection.xy2vector(x, y)
+        circles = v.get_circle(opening_angle=opening_angle, steps=steps).unit
+
+        # Enable using one color per circle
+        color = kwargs.pop("color", "C0")
+        color2 = _get_array_of_values(value=color, visible=visible)
+
+        # Set above which elements circles will appear (zorder)
+        new_kwargs = dict(zorder=ZORDER["draw_circle"], clip_on=True)
+        for k, v in new_kwargs.items():
+            kwargs.setdefault(k, v)
+
+        for i, c in enumerate(circles):
+            self.plot(c.azimuth.data, c.polar.data, color=color2[i], **kwargs)
+
+    def restrict_to_sector(self, sector):
+        """Restrict the stereographic axis to a
+        :class:`~orix.vector.FundamentalSector`, typically obtained from
+        :attr:`~orix.quaternion.Symmetry.fundamental_sector`.
+
+        Parameters
+        ----------
+        sector : ~orix.vector.FundamentalSector
+            Fundamental sector with edges delineating a fundamental
+            sector.
+        """
+        original_pole = deepcopy(sector._pole)
+        sector._pole = self.pole
+        edges = sector.edges
+        if edges.size == 0:
+            return
+        edges = _closed_edges_in_hemisphere(edges, sector, pole=self.pole)
+        sector._pole = original_pole
+        if edges.size == 0:
+            return
+        x, y, _ = self._pretransform_input((edges,))
+
+        pad = 0.01
+        self.set_xlim(np.min(x) - pad, np.max(x) + pad)
+        self.set_ylim(np.min(y) - pad, np.max(y) + pad)
+        self.margins(0, 0)
+        self.patches[0].set_visible(False)
+        patch = mpatches.PathPatch(
+            mpath.Path(np.column_stack([x, y]), closed=True),
+            facecolor="none",
+            edgecolor="k",
+            linewidth=1,
+            label="sa_sector",
+        )
+        self.add_patch(patch)
+        self.set_clip_path(patch)
+        labels = ["sa_azimuth_grid", "sa_polar_grid"]
+        for c in self.collections:
+            if c.get_label() in labels:
+                c.set_clip_path(patch)
 
     def show_hemisphere_label(self, **kwargs):
         """Add a hemisphere label ("upper"/"lower") to the upper left of
@@ -346,53 +376,7 @@ class StereographicPlot(Axes):
         """
         new_kwargs = dict(ha="right", va="bottom")
         new_kwargs.update(kwargs)
-        Axes.text(self, 0.75 * np.pi, np.pi / 2, s=self.hemisphere, **new_kwargs)
-
-    def azimuth_grid(self, resolution=None):
-        """Set the azimuth grid resolution in degrees.
-
-        Parameters
-        ----------
-        resolution : float, optional
-            Aziumuth grid resolution in degrees. Default is 15 degrees.
-            This can also be set upon initialization of the axes by
-            passing `azimuth_resolution` to `subplot_kw`.
-
-        See Also
-        --------
-        polar_grid
-        matplotlib.axes.Axes.grid
-        """
-        if resolution is not None:
-            self._azimuth_resolution = resolution
-        grid = np.arange(0, self._azimuth_cap, np.deg2rad(self._azimuth_resolution))
-        self.set_xticks(grid)
-
-    def polar_grid(self, resolution=None):
-        """Set the polar grid resolution in degrees.
-
-        Parameters
-        ----------
-        resolution : float, optional
-            Polar grid resolution in degrees. Default is 15 degrees.
-            This can also be set upon initialization of the axes by
-            passing `polar_resolution` to the `subplot_kw` dictionary.
-
-        See Also
-        --------
-        azimuth_grid
-        matplotlib.axes.Axes.grid
-        """
-        if resolution is not None:
-            self._polar_resolution = resolution
-        grid = np.arange(0, self._polar_cap, np.deg2rad(self._polar_resolution))
-        self.set_yticks(grid)
-
-    def _set_label(self, x, y, label, **kwargs):
-        bbox_dict = dict(boxstyle="round, pad=0.1", fc="w", ec="w")
-        new_kwargs = dict(ha="center", va="center", bbox=bbox_dict)
-        new_kwargs.update(kwargs)
-        super().text(x=x, y=y, s=label, **new_kwargs)
+        super().text(-0.71, 0.71, s=self.hemisphere, **new_kwargs)
 
     def set_labels(self, xlabel="x", ylabel="y", zlabel="z", **kwargs):
         """Set the reference frame's axes labels.
@@ -409,15 +393,61 @@ class StereographicPlot(Axes):
             Z axis label, default is "z". If False or None, this label
             is not shown.
         """
-        # z label position
-        if self.pole == -1:
-            z_pos = (0, 0)
-        else:  # == 1
-            z_pos = (0, np.pi)
-        pos = [(0, self._polar_cap), (self._polar_cap,) * 2, z_pos]
+        pos = [(1, 0), (0, 1), (0, 0)]
         for (x, y), label in zip(pos, [xlabel, ylabel, zlabel]):
             if label not in [None, False]:
                 self._set_label(x=x, y=y, label=label, **kwargs)
+
+    def stereographic_grid(
+        self, show_grid=None, azimuth_resolution=None, polar_resolution=None
+    ):
+        """Turn a stereographic grid on or off, and set the azimuth and
+        polar grid resolution in degrees.
+
+        Parameters
+        ----------
+        show_grid : bool, optional
+            Whether to show grid lines. If any keyword arguments are
+            passed, this is set to True. If not given and there are no
+            keyword arguments, the grid lines are toggled.
+        azimuth_resolution : float, optional
+            Azimuth grid resolution in degrees. Default is 10 degrees.
+            This can also be set upon initialization of the axes by
+            passing `azimuth_resolution` to `subplot_kw`.
+        polar_resolution : float, optional
+            Polar grid resolution in degrees. Default is 10 degrees.
+            This can also be set upon initialization of the axes by
+            passing `polar_resolution` to `subplot_kw`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.grid
+        """
+        if (
+            show_grid is None
+            and self._stereographic_grid in [None, False]
+            or show_grid is None
+            and (azimuth_resolution is not None or polar_resolution is not None)
+            or show_grid is True
+        ) and hasattr(self, "patch"):
+            self._azimuth_grid(azimuth_resolution)
+            self._polar_grid(polar_resolution)
+            self._stereographic_grid = True
+        elif show_grid in [None, False] and self._stereographic_grid is True:
+            # Remove grid
+            has_azimuth, index_azimuth = self._has_collection(
+                "sa_azimuth_grid", self.collections
+            )
+            has_polar, index_polar = self._has_collection(
+                "sa_polar_grid", self.collections
+            )
+            if has_azimuth:
+                if index_polar > index_azimuth:
+                    index_polar -= 1
+                self.collections[index_azimuth].remove()
+            if has_polar:
+                self.collections[index_polar].remove()
+            self._stereographic_grid = False
 
     def symmetry_marker(self, v, fold, **kwargs):
         """Plot 2-, 3- 4- or 6-fold symmetry marker(s).
@@ -452,122 +482,196 @@ class StereographicPlot(Axes):
         # TODO: Find a way to control padding, so that markers aren't
         #  clipped
 
-    def draw_circle(self, *args, opening_angle=np.pi / 2, steps=100, **kwargs):
-        r"""Draw great or small circles with a given `opening_angle` to
-        one or multiple vectors.
-
-        A vector must be present in the current hemisphere for its
-        circle to be drawn.
+    def _azimuth_grid(self, resolution=None):
+        """Set the azimuth grid resolution in degrees.
 
         Parameters
         ----------
-        args : Vector3d or tuple of float or numpy.ndarray
-            Vector(s), or azimuth and polar angles defining vectors, the
-            latter two passed as separate arguments (not keyword
-            arguments). Circles are drawn perpendicular to these with a
-            given `opening_angle`.
-        opening_angle : float or numpy.ndarray, optional
-            Opening angle(s) around the vector(s). Default is
-            :math:`\pi/2`, giving a great circle. If an array is passed,
-            its size must be equal to the number of circles to draw.
-        steps : int, optional
-            Number of vectors to describe each circle, default is 100.
-        kwargs
-            Keyword arguments passed to
-            :meth:`matplotlib.axes.Axes.plot` to alter the circles'
-            appearance.
+        resolution : float, optional
+            Azimuth grid resolution in degrees. Default is 10 degrees.
+            This can also be set upon initialization of the axes by
+            passing `azimuth_resolution` to `subplot_kw`.
 
         See Also
         --------
-        orix.vector.Vector3d.get_circle
+        polar_grid
+        matplotlib.axes.Axes.grid
         """
-        azimuth, polar = self._pretransform_input(args)
+        if resolution is not None:
+            self._azimuth_resolution = resolution
 
-        # Exclude vectors not visible in this hemisphere before creating
-        # circles
-        visible = self._visible_in_hemisphere(polar)
-        if np.count_nonzero(visible) == 0:  # No circles to draw
-            return
-        else:
-            azimuth = azimuth[visible]
-            polar = polar[visible]
+        azimuth_start = np.arange(0, np.pi, np.radians(self._azimuth_resolution))
+        polar = np.full(azimuth_start.size, np.pi / 2)
+        if self.hemisphere == "lower":
+            polar += 1e-9
+        v_start = Vector3d.from_polar(azimuth_start, polar)
+        x_start, y_start = self._projection.vector2xy(v_start)
+        v_end = Vector3d.from_polar(azimuth_start + np.pi, polar)
+        x_end, y_end = self._projection.vector2xy(v_end)
 
-        # Get set of `steps` vectors delineating a circle per vector
-        v = Vector3d.from_polar(azimuth=azimuth, polar=polar)
-        circles = v.get_circle(opening_angle=opening_angle, steps=steps).unit
+        kwargs = dict(
+            linewidths=rcParams["grid.linewidth"],
+            linestyle=rcParams["grid.linestyle"],
+            alpha=rcParams["grid.alpha"],
+            color=rcParams["grid.color"],
+            antialiased=True,
+        )
 
-        # Enable using one color per circle
-        color = kwargs.pop("color", "C0")
-        color2 = _get_array_of_values(value=color, visible=visible)
-
-        # Set above which elements circles will appear (zorder)
-        new_kwargs = dict(zorder=ZORDER["draw_circle"], clip_on=False)
-        for k, v in new_kwargs.items():
-            kwargs.setdefault(k, v)
-
-        hemisphere = self.hemisphere
-        polar_cap = self._polar_cap
-        for i, c in enumerate(circles):
-            a, p = _sort_coords_by_shifted_bools(
-                hemisphere=hemisphere,
-                polar_cap=polar_cap,
-                azimuth=c.azimuth.data,
-                polar=c.polar.data,
-            )
-            super().plot(a, p, color=color2[i], **kwargs)
+        label = "sa_azimuth_grid"
+        lines = np.stack(((x_start, x_end), (y_start, y_end))).T
+        lines_collection = mcollections.LineCollection(lines, label=label, **kwargs)
+        has_collection, index = self._has_collection(label, self.collections)
+        if has_collection:
+            self.collections[index].remove()
+        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
+        if has_sector:
+            lines_collection.set_clip_path(self.patches[sector_index])
+        self.add_collection(lines_collection)
 
     @staticmethod
-    def _pretransform_input(values):
-        """Return arrays of azimuth and polar angles from input data.
+    def _has_collection(label, collections):
+        labels = [c.get_label() for c in collections]
+        for i in range(len(labels)):
+            if label == labels[i]:
+                return True, i
+        return False, -1
+
+    def _polar_grid(self, resolution=None):
+        """Set the polar grid resolution in degrees.
+
+        Parameters
+        ----------
+        resolution : float, optional
+            Polar grid resolution in degrees. Default is 15 degrees.
+            This can also be set upon initialization of the axes by
+            passing `polar_resolution` to the `subplot_kw` dictionary.
+
+        See Also
+        --------
+        azimuth_grid
+        matplotlib.axes.Axes.grid
+        """
+        if resolution is not None:
+            self._polar_resolution = resolution
+
+        res = np.radians(self._polar_resolution)
+
+        polar = np.arange(res, np.pi, res)
+        v = Vector3d.from_polar(np.zeros(polar.size), polar)
+        radii, _ = self._projection.vector2xy(v)
+
+        ec = rcParams["grid.color"]
+        kwargs = dict(
+            xy=(0, 0),
+            linewidth=rcParams["grid.linewidth"],
+            linestyle=rcParams["grid.linestyle"],
+            alpha=rcParams["grid.alpha"],
+            ec=ec,
+            fc="none",
+            antialiased=True,
+        )
+
+        circles = []
+        for r in radii:
+            circles.append(mpatches.Circle(radius=r, **kwargs))
+        label = "sa_polar_grid"
+        circles_collection = mcollections.PatchCollection(
+            circles,
+            label=label,
+            edgecolors=kwargs["ec"],
+            facecolors=kwargs["fc"],
+        )
+        has_collection, index = self._has_collection(label, self.collections)
+        if has_collection:
+            self.collections[index].remove()
+        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
+        if has_sector:
+            circles_collection.set_clip_path(self.patches[sector_index])
+        self.add_collection(circles_collection)
+
+    def _prepare_to_call_inherited_method(
+        self, args, kwargs, new_kwargs=None, sort=False
+    ):
+        """Prepare arguments and keyword arguments passed to methods in
+        :class:`StereographicPlot` inherited from
+        :class:`matplotlib.axes.Axes`.
+
+        Parameters
+        ----------
+        args
+            Any arguments passed to the :class:`StereographicPlot`
+            method.
+        kwargs : dict
+            Any arguments passed to the :class:`StereographicPlot`
+            method.
+        new_kwargs : dict
+            Any default keyword arguments to be passed to the inherited
+            method.
+
+        Returns
+        -------
+        x : numpy.ndarray
+        y : numpy.ndarray
+        visible : numpy.ndarray
+        updated_kwargs : dict
+        """
+        updated_kwargs = kwargs
+        if new_kwargs is not None:
+            for k, v in new_kwargs.items():
+                updated_kwargs.setdefault(k, v)
+        x, y, visible = self._pretransform_input(args, sort=sort)
+        return x, y, visible, updated_kwargs
+
+    def _pretransform_input(self, values, sort=False):
+        """Return arrays of (x, y) from input data.
 
         Parameters
         ----------
         values : tuple of numpy.ndarray or Vector3d
             Spherical coordinates (azimuth, polar) or vectors. If
             spherical coordinates are given, they are assumed to
-            describe unit vectors.
+            describe unit vectors. Vectors will be made into unit
+            vectors if they aren't already.
 
         Returns
         -------
-        azimuth : numpy.ndarray
-            Azimuth coordiantes of unit vectors.
-        polar : numpy.ndarray
-            Polar coordinates of unit vectors.
+        x : numpy.ndarray
+            Stereographic x coordinates of unit vectors.
+        y : numpy.ndarray
+            Stereographic y coordinates of unit vectors.
         """
+        pole = self.pole
         if len(values) == 2:
-            azimuth = np.asarray(values[0])
-            polar = np.asarray(values[1])
+            azimuth, polar = values[0], values[1]
+            if sort:
+                order = _order_in_hemisphere(polar, pole)
+                azimuth = azimuth[order]
+                polar = polar[order]
+            x, y = self._projection.spherical2xy(azimuth=azimuth, polar=polar)
+            v = self._inverse_projection.xy2vector(x, y)
         else:
             try:
-                value = values[0].flatten().unit
-                azimuth = value.azimuth.data
-                polar = value.polar.data
+                v = values[0].flatten().unit
+                if sort:
+                    order = _order_in_hemisphere(v.polar.data, pole)
+                    v = v[order]
+                x, y = self._projection.vector2xy(v)
             except (ValueError, AttributeError):
                 raise ValueError(
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
                     "arguments"
                 )
-        return azimuth, polar
+        visible = v <= self._projection.region
+        return x, y, visible
 
-    def _visible_in_hemisphere(self, polar):
-        """Return a boolean array describing whether the vector which
-        the polar angles belong to are visible in the current
-        hemisphere.
-
-        Parameters
-        ----------
-        polar : numpy.ndarray
-
-        Returns
-        -------
-        numpy.ndarray
-            Boolean array with True for the polar angles corresponding
-            to vectors visible in this hemisphere.
-        """
-        return _visible_in_hemisphere(self.hemisphere, self._polar_cap, polar)
+    def _set_label(self, x, y, label, **kwargs):
+        bbox_dict = dict(boxstyle="round, pad=0.1", fc="w", ec="w")
+        new_kwargs = dict(ha="center", va="center", bbox=bbox_dict)
+        new_kwargs.update(kwargs)
+        super().text(x=x, y=y, s=label, **new_kwargs)
 
 
-register_projection(StereographicPlot)
+mprojections.register_projection(StereographicPlot)
 
 
 def _get_array_of_values(value, visible):
@@ -598,15 +702,14 @@ def _get_array_of_values(value, visible):
     return np.asarray(value)[visible]
 
 
-def _visible_in_hemisphere(hemisphere, polar_cap, polar):
+def _is_visible(polar, pole):
     """Return a boolean array describing whether the vector which the
     polar angles belong to are visible in the current hemisphere.
 
     Parameters
     ----------
-    hemisphere : str
-    polar_cap : float
     polar : numpy.ndarray
+    pole : int
 
     Returns
     -------
@@ -614,34 +717,37 @@ def _visible_in_hemisphere(hemisphere, polar_cap, polar):
         Boolean array with True for polar angles corresponding to
         vectors visible in this hemisphere.
     """
-    return polar <= polar_cap if hemisphere == "upper" else polar > polar_cap
+    if pole == -1:
+        return polar <= np.pi / 2
+    else:  # pole == 1
+        return polar >= np.pi / 2
 
 
-def _sort_coords_by_shifted_bools(hemisphere, polar_cap, azimuth, polar):
-    """Shift azimuth and polar coordinate arrays so that the ones
+def _order_in_hemisphere(polar, pole):
+    """Return order of vectors based on polar angles, so that the ones
     corresponding to vectors visible in this hemisphere are shifted to
     the start of the arrays.
 
-    Used in :meth:`StereographicPlot.draw_circle`.
+    Used in :meth:`StereographicPlot._pretransform_input` when
+    `sort=True`.
 
     Parameters
     ----------
-    hemisphere : str
-    polar_cap : float
-    azimuth : numpy.ndarray
     polar : numpy.ndarray
+    pole : int
 
     Returns
     -------
-    azimuth : numpy.ndarray
-    polar : numpy.ndarray
+    numpy.ndarray or None
+        If no vectors are visible, None is returned.
     """
-    visible = _visible_in_hemisphere(
-        hemisphere=hemisphere, polar_cap=polar_cap, polar=polar
-    )
+    visible = _is_visible(polar, pole)
+    if visible.size == 0 or not np.any(visible):
+        return
+
     indices = np.asarray(visible != visible[0]).nonzero()[0]
+    order = np.arange(visible.size)
     if indices.size != 0:
-        to_shift = indices[-1] + 1
-        azimuth = np.roll(azimuth, shift=-to_shift)
-        polar = np.roll(polar, shift=-to_shift)
-    return azimuth, polar
+        order = np.roll(order, shift=-(indices[-1] + 1))
+
+    return order

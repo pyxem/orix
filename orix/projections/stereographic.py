@@ -70,7 +70,7 @@ class StereographicProjection:
         Notes
         -----
         The stereographic coordinates :math:`(X, Y)` are calculated from
-        the unit vectors' cartesian coordiantes :math:`(x, y, z)` as
+        the unit vectors' cartesian coordinates :math:`(x, y, z)` as
 
         .. math::
             (X, Y) = \left(\frac{-px}{z - p}, \frac{-py}{z - p}\right),

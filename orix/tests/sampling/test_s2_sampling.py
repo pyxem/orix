@@ -16,16 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Generation of grids on *S2* or *SO(3)* (rotation space)."""
+import numpy as np
+import pytest
 
-from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
-from orix.sampling.SO3_sampling import uniform_SO3_sample
-from orix.sampling.S2_sampling import sample_S2_uv_mesh
+from orix import sampling
 
-# Lists what will be imported when calling "from orix.sampling import *"
-__all__ = [
-    "get_sample_fundamental",
-    "get_sample_local",
-    "sample_S2_uv_mesh",
-    "uniform_SO3_sample",
-]
+
+class TestS2Sampling:
+    @pytest.mark.parametrize("resolution, size", [(3, 7320), (4, 4140)])
+    def test_uniform_S2_sample(self, resolution, size):
+        v1 = sampling.sample_S2_uv_mesh(resolution)
+        assert v1.size == size
+        assert np.allclose(v1.mean().data, [0, 0, 0])
+        assert v1.unique().size < size
