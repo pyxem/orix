@@ -20,12 +20,14 @@
 
 from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
 from orix.sampling.SO3_sampling import uniform_SO3_sample
-from orix.sampling.S2_sampling import sample_S2_uv_mesh
+from orix.sampling.S2_sampling import sample_S2_cube_mesh, sample_S2_uv_mesh
+
 
 # Lists what will be imported when calling "from orix.sampling import *"
 __all__ = [
     "get_sample_fundamental",
     "get_sample_local",
+    "sample_S2_cube_mesh",
     "sample_S2_uv_mesh",
     "uniform_SO3_sample",
 ]
