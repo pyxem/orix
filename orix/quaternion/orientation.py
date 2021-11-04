@@ -49,7 +49,7 @@ from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1
+from orix.quaternion.symmetry import C1, Symmetry
 from orix.scalar import Scalar
 from orix._util import deprecated
 
@@ -127,6 +127,15 @@ class Misorientation(Rotation):
         """Tuple of :class:`~orix.quaternion.Symmetry`."""
         return self._symmetry
 
+    @symmetry.setter
+    def symmetry(self, values):
+        err_message = "Values must be a tuple of two Symmetry objects."
+        if not isinstance(values, (list, tuple)):
+            raise TypeError(err_message)
+        if len(values) != 2 or not all(isinstance(s, Symmetry) for s in values):
+            raise ValueError(err_message)
+        self._symmetry = values
+
     def __getitem__(self, key):
         m = super().__getitem__(key)
         m._symmetry = self._symmetry
@@ -178,6 +187,30 @@ class Misorientation(Rotation):
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
         """
+        misori = self.__class__(self.data)
+        misori._symmetry = (Gl, Gr)
+        return misori.compute_symmetry_reduced_orientations()
+
+    def compute_symmetry_reduced_orientations(self, verbose=False):
+        """Computes equivalent transformations which have the smallest
+        angle of rotation and assigns these in-place.
+
+        Returns
+        -------
+        Misorientation
+            A new misorientation object with the assigned symmetry.
+
+        Examples
+        --------
+        >>> from orix.quaternion.symmetry import C4, C2
+        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
+        >>> m = Misorientation(data).set_symmetry(C4, C2)
+        >>> m
+        Misorientation (2,) 4, 2
+        [[-0.7071  0.7071  0.      0.    ]
+        [ 0.      1.      0.      0.    ]]
+        """
+        Gl, Gr = self._symmetry
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
             symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
@@ -385,7 +418,8 @@ class Orientation(Misorientation):
         if isinstance(other, Orientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             misorientation = Misorientation(self * ~other).squeeze()
-            return misorientation.set_symmetry(self.symmetry, other.symmetry)
+            misorientation.symmetry = (self.symmetry, other.symmetry)
+            return misorientation.compute_symmetry_reduced_orientations()
         return NotImplemented
 
     @classmethod
