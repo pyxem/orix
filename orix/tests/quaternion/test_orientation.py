@@ -181,6 +181,7 @@ class TestOrientationInitialization:
         assert np.allclose(o1.data, [0, -0.3827, 0, -0.9239], atol=1e-4)
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_euler(euler, symmetry=Oh)
+        o2 = o2.compute_symmetry_reduced_orientations()
         assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
         assert o2.symmetry.name == "m-3m"
         o3 = o1.set_symmetry(Oh)
@@ -196,6 +197,7 @@ class TestOrientationInitialization:
         )
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_matrix(om, symmetry=Oh)
+        o2 = o2.compute_symmetry_reduced_orientations()
         assert np.allclose(
             o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape((4, 4))
         )
@@ -209,6 +211,7 @@ class TestOrientationInitialization:
         assert np.allclose(o1.data, [0.7071, 0, 0, 0.7071])
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_neo_euler(v, symmetry=Oh)
+        o2 = o2.compute_symmetry_reduced_orientations()
         assert np.allclose(o2.data, [-1, 0, 0, 0])
         assert o2.symmetry.name == "m-3m"
         o3 = o1.set_symmetry(Oh)
