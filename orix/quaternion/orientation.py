@@ -620,9 +620,9 @@ class Orientation(Misorientation):
         return Scalar(angles)
 
     @deprecated(
-        since="0.7",
-        alternative="orix.quaternion.Orientation.compute_symmetry_reduced_orientations",
-        removal="0.8",
+        since="0.8",
+        alternative="orix.quaternion.Orientation.assign_smallest_angle",
+        removal="0.9",
     )
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
