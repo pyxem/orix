@@ -128,13 +128,13 @@ class Misorientation(Rotation):
         return self._symmetry
 
     @symmetry.setter
-    def symmetry(self, values):
-        err_message = "Values must be a tuple of two Symmetry objects."
-        if not isinstance(values, (list, tuple)):
+    def symmetry(self, value):
+        err_message = "Value must be a tuple with two Symmetry instances."
+        if not isinstance(value, (list, tuple)):
             raise TypeError(err_message)
-        if len(values) != 2 or not all(isinstance(s, Symmetry) for s in values):
+        if len(value) != 2 or not all(isinstance(s, Symmetry) for s in value):
             raise ValueError(err_message)
-        self._symmetry = tuple(values)
+        self._symmetry = tuple(value)
 
     def __getitem__(self, key):
         m = super().__getitem__(key)
