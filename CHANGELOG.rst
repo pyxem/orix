@@ -28,6 +28,8 @@ Changed
 - `StereographicPlot` doesn't use Matplotlib's `transforms` framework anymore, and
   (X, Y) replaces (azimuth, polar) as internal coordinates.
 - Renamed `Symmetry` method `fundamental_sector()` to `fundamental_zone()`.
+- `Orientation` class methods `from_euler`, `from_matrix`, and `from_neo_euler` no longer 
+  return the smallest angle rotation when `symmetry` argument is provided and not None.
 
 Deprecated
 ----------
@@ -36,9 +38,7 @@ Deprecated
 - Setting (Mis)Orientation symmetry via `set_symmetry()` is deprecated in 0.8, in favour of
   setting it directly via a `symmetry.setter`, and will be removed in 0.9. Use
   `assign_smallest_angle()` instead.
-- `Orientation` class methods `from_euler`, `from_matrix`, and `from_neo_euler` no longer 
-  return the smallest angle rotation when `symmetry` argument is provided and not None.
-   
+ 
 Removed
 -------
 - `StereographicPlot` methods `azimuth_grid()` and `polar_grid()`.
