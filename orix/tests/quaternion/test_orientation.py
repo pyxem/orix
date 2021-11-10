@@ -219,23 +219,28 @@ def test_symmetry_property_wrong_type_orientation():
         o.symmetry = 1
 
 
-@pytest.mark.parametrize("error_type, value", [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)])
+@pytest.mark.parametrize(
+    "error_type, value", [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)]
+)
 def test_symmetry_property_wrong_type_misorientation(error_type, value):
     mori = Misorientation.random((3, 2))
-    with pytest.raises(error_type, match="Values must be a tuple"):
+    with pytest.raises(error_type, match="Value must be a tuple"):
         mori.symmetry = value
 
 
-def test_symmetry_property_too_many_values_misorientation():
+@pytest.mark.parametrize(
+    "error_type, value",
+    [
+        (ValueError, (C1,)),
+        (ValueError, (C1, C2, C1)),
+    ],
+)
+def test_symmetry_property_wrong_number_of_values_misorientation(error_type, value):
     o = Misorientation.random((3, 2))
 
-    with pytest.raises(ValueError, match="Values must be a tuple"):
+    with pytest.raises(error_type, match="Value must be a tuple"):
         # less than 2 Symmetry
-        o.symmetry = (C1,)
-
-    with pytest.raises(ValueError, match="Values must be a tuple"):
-        # more than 2 Symmetry
-        o.symmetry = (C1, C2, C3)
+        o.symmetry = value
 
 
 class TestOrientationInitialization:
