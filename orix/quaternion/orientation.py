@@ -163,9 +163,9 @@ class Misorientation(Rotation):
         return self.__class__(equivalent).flatten()
 
     @deprecated(
-        since="0.7",
-        alternative="orix.quaternion.Misorientation.compute_symmetry_reduced_orientations",
-        removal="0.8",
+        since="0.8",
+        alternative="orix.quaternion.Misorientation.assign_smallest_angle",
+        removal="0.9",
     )
     def set_symmetry(self, Gl, Gr, verbose=False):
         """Assign symmetries to this misorientation.
