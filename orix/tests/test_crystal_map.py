@@ -502,9 +502,11 @@ class TestCrystalMapOrientations:
 
         o = xmap.orientations
 
-        assert np.allclose(
-            o.data, Orientation(r).set_symmetry(point_group).data, atol=1e-3
-        )
+        o1 = Orientation(r)
+        o1.symmetry = point_group
+        o1 = o1.compute_symmetry_reduced_orientations()
+
+        assert np.allclose(o.data, o1.data, atol=1e-3)
         assert np.allclose(o.data, expected_orientation, atol=1e-3)
 
     def test_orientations_none_symmetry_raises(self, crystal_map_input):
@@ -512,7 +514,7 @@ class TestCrystalMapOrientations:
 
         assert xmap.phases.point_groups == [None]
 
-        with pytest.raises(TypeError, match="'NoneType' object is not iterable"):
+        with pytest.raises(TypeError, match="Value must be an instance of"):
             _ = xmap.orientations
 
     def test_orientations_multiple_phases_raises(self, crystal_map, phase_list):
@@ -679,11 +681,10 @@ class TestCrystalMapGetMapData:
         for i, phase in xmap.phases_in_data:
             phase_mask = xmap._phase_id == i
             phase_mask_in_data = xmap.phase_id == i
-            array[phase_mask] = (
-                Orientation(rotations[phase_mask_in_data])
-                .set_symmetry(phase.point_group)
-                .to_euler()
-            )
+            oi = Orientation(rotations[phase_mask_in_data])
+            oi.symmetry = phase.point_group
+            oi = oi.compute_symmetry_reduced_orientations()
+            array[phase_mask] = oi.to_euler()
 
         assert np.allclose(o, array.reshape(o.shape), atol=1e-3)
 

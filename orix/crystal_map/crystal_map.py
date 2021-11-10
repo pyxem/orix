@@ -331,7 +331,9 @@ class CrystalMap:
                 rotations = self.rotations[:, 0]
             else:
                 rotations = self.rotations
-            return Orientation(rotations).set_symmetry(phases[:].point_group)
+            o = Orientation(rotations)
+            o.symmetry = phases[:].point_group
+            return o.compute_symmetry_reduced_orientations()
         else:
             raise ValueError(
                 f"Data has the phases {phases.names}, however, you are executing a "
