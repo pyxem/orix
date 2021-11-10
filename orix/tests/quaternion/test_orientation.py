@@ -381,3 +381,21 @@ class TestOrientation:
         orientation.random_vonmises(200).scatter(size=50)
 
         plt.close("all")
+
+
+def test_set_symmetry_deprecation_warning_orientation():
+    o = Orientation.random((3, 2))
+    with pytest.warns(
+        np.VisibleDeprecationWarning,
+        match="Function `set_symmetry()",
+    ):  # can only get this to work properly with one backtick...
+        _ = o.set_symmetry(C2)
+
+
+def test_set_symmetry_deprecation_warning_misorientation():
+    o = Misorientation.random((3, 2))
+    with pytest.warns(
+        np.VisibleDeprecationWarning,
+        match="Function `set_symmetry()",
+    ):  # can only get this to work properly with one backtick...
+        _ = o.set_symmetry(C2, C2)
