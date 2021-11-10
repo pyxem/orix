@@ -21,7 +21,7 @@ Added
 - Sampling of vectors in UV mesh on a unit sphere (*S2*).
 - `ndim` attribute to Object3d and derived classes which returns number of navigation
   dimensions.
-- `symmetry` property for `Orientation` and `Misorientation` classes.
+- Setting the symmetry of a (Mis)Orientation via a `symmetry.setter`.
 
 Changed
 -------
