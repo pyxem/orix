@@ -501,6 +501,7 @@ class TestCrystalMapOrientations:
         xmap.phases = PhaseList(Phase("a", point_group=point_group))
 
         o = xmap.orientations
+        o = o.compute_symmetry_reduced_orientations()
 
         o1 = Orientation(r)
         o1.symmetry = point_group
@@ -657,13 +658,15 @@ class TestCrystalMapGetMapData:
         o1 = xmap1.get_map_data("orientations")
         o2 = xmap2.get_map_data("orientations")
 
-        expected_o1 = xmap1.orientations.to_euler()
+        expected_o1 = xmap1.orientations
+        expected_o1 = expected_o1.to_euler()
         expected_shape = expected_o1.shape
         assert np.allclose(
             o1[~np.isnan(o1)].reshape(expected_shape), expected_o1, atol=1e-3
         )
 
-        expected_o2 = xmap2.orientations.to_euler()
+        expected_o2 = xmap2.orientations
+        expected_o2 = expected_o2.to_euler()
         expected_shape = expected_o2.shape
         assert np.allclose(
             o2[~np.isnan(o2)].reshape(expected_shape), expected_o2, atol=1e-3
@@ -683,7 +686,6 @@ class TestCrystalMapGetMapData:
             phase_mask_in_data = xmap.phase_id == i
             oi = Orientation(rotations[phase_mask_in_data])
             oi.symmetry = phase.point_group
-            oi = oi.compute_symmetry_reduced_orientations()
             array[phase_mask] = oi.to_euler()
 
         assert np.allclose(o, array.reshape(o.shape), atol=1e-3)
