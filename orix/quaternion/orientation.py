@@ -134,7 +134,7 @@ class Misorientation(Rotation):
             raise TypeError(err_message)
         if len(values) != 2 or not all(isinstance(s, Symmetry) for s in values):
             raise ValueError(err_message)
-        self._symmetry = values
+        self._symmetry = tuple(values)
 
     def __getitem__(self, key):
         m = super().__getitem__(key)
@@ -162,6 +162,11 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
+    @deprecated(
+        since="0.7",
+        alternative="orix.quaternion.Misorientation.compute_symmetry_reduced_orientations",
+        removal="0.8",
+    )
     def set_symmetry(self, Gl, Gr, verbose=False):
         """Assign symmetries to this misorientation.
 
@@ -188,7 +193,7 @@ class Misorientation(Rotation):
         [ 0.      1.      0.      0.    ]]
         """
         misori = self.__class__(self.data)
-        misori._symmetry = (Gl, Gr)
+        misori.symmetry = (Gl, Gr)
         return misori.compute_symmetry_reduced_orientations()
 
     def compute_symmetry_reduced_orientations(self, verbose=False):
@@ -204,8 +209,9 @@ class Misorientation(Rotation):
         --------
         >>> from orix.quaternion.symmetry import C4, C2
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> m = Misorientation(data).set_symmetry(C4, C2)
-        >>> m
+        >>> m = Misorientation(data)
+        >>> m.symmetry = (C4, C2)
+        >>> m.compute_symmetry_reduced_orientations()
         Misorientation (2,) 4, 2
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
@@ -252,7 +258,9 @@ class Misorientation(Rotation):
         >>> from orix.quaternion.symmetry import C4, C2
         >>> from orix.quaternion.orientation import Misorientation
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> m = Misorientation(data).set_symmetry(C4, C2)
+        >>> m = Misorientation(data)
+        >>> m.symmetry = (C4, C2)
+        >>> m = m.compute_symmetry_reduced_orientations()
         >>> m.distance()
         array([[3.14159265, 1.57079633],
                [1.57079633, 0.        ]])
@@ -394,16 +402,30 @@ class Orientation(Misorientation):
         """Symmetry."""
         return self._symmetry[1]
 
+    @symmetry.setter
+    def symmetry(self, value):
+        if not isinstance(value, Symmetry):
+            raise TypeError(
+                "Value must be an instance of orix.quaternion.symmetry.Symmetry."
+            )
+        self._symmetry = (C1, value)
+
     @property
     def unit(self):
         """Unit orientations."""
-        return super().unit.set_symmetry(self.symmetry)
+        o = super().unit
+        o.symmetry = self.symmetry
+        return o
 
     def __invert__(self):
-        return super().__invert__().set_symmetry(self.symmetry)
+        o = super().__invert__()
+        o.symmetry = self.symmetry
+        return o
 
     def __neg__(self):
-        return super().__neg__().set_symmetry(self.symmetry)
+        o = super().__neg__()
+        o.symmetry = self.symmetry
+        return o
 
     def __repr__(self):
         """String representation."""
@@ -442,7 +464,7 @@ class Orientation(Misorientation):
         """
         o = super().from_euler(euler=euler, convention=convention, direction=direction)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     @classmethod
@@ -460,7 +482,7 @@ class Orientation(Misorientation):
         """
         o = super().from_matrix(matrix)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     @classmethod
@@ -478,7 +500,7 @@ class Orientation(Misorientation):
         """
         o = super().from_neo_euler(neo_euler)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     def angle_with(self, other):
@@ -597,6 +619,11 @@ class Orientation(Misorientation):
 
         return Scalar(angles)
 
+    @deprecated(
+        since="0.7",
+        alternative="orix.quaternion.Orientation.compute_symmetry_reduced_orientations",
+        removal="0.8",
+    )
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
 
@@ -616,13 +643,15 @@ class Orientation(Misorientation):
         --------
         >>> from orix.quaternion.symmetry import C4
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> o = Orientation(data).set_symmetry((C4))
+        >>> o = Orientation(data).set_symmetry(C4)
         >>> o
         Orientation (2,) 4
         [[-0.7071  0.     -0.7071  0.    ]
         [ 0.      1.      0.      0.    ]]
         """
-        return super().set_symmetry(C1, symmetry)
+        o = self.__class__(self.data)
+        o.symmetry = symmetry
+        return o.compute_symmetry_reduced_orientations()
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this
