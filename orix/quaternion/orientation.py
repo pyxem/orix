@@ -405,9 +405,7 @@ class Orientation(Misorientation):
     @symmetry.setter
     def symmetry(self, value):
         if not isinstance(value, Symmetry):
-            raise TypeError(
-                "Value must be an instance of orix.quaternion.Symmetry."
-            )
+            raise TypeError("Value must be an instance of orix.quaternion.Symmetry.")
         self._symmetry = (C1, value)
 
     @property
