@@ -21,6 +21,7 @@ Added
 - Sampling of vectors in UV mesh on a unit sphere (*S2*).
 - `ndim` attribute to Object3d and derived classes which returns number of navigation
   dimensions.
+- `symmetry` property for `Orientation` and `Misorientation` classes.
 
 Changed
 -------
@@ -32,6 +33,12 @@ Deprecated
 ----------
 - The `data_dim` attribute of Object3d and all derived classes is deprecated from 0.8
   and will be removed in 0.9. Use `ndim` instead.
+- `set_symmetry` will be deprecated from 0.8 in favour of a `symmetry` property for
+  `Orientation` and `Misorientation` classes. `set_symmetry` will be removed in 0.9.
+  The behaviour of `set_symmetry` can still be achieved by using the following snippet:
+  >>> o = Orientation(data)
+  >>> o.symmetry = symmetry
+  >>> o = o.compute_symmetry_reduced_orientations()
 
 Removed
 -------
