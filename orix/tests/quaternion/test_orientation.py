@@ -104,7 +104,7 @@ def test_orientation_persistence(symmetry, vector):
 )
 def test_distance(orientation, symmetry, expected):
     orientation.symmetry = symmetry
-    orientation = orientation.map_into_symmetry_reduced_zone()
+    orientation = orientation.map_into_symmetry_reduced_zone(verbose=True)
     distance = orientation.distance(verbose=True)
     assert np.allclose(distance, expected, atol=1e-3)
 
