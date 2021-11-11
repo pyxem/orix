@@ -198,7 +198,7 @@ class Misorientation(Rotation):
 
     def compute_symmetry_reduced_orientations(self, verbose=False):
         """Computes equivalent transformations which have the smallest
-        angle of rotation and assigns these in-place.
+        angle of rotation and return these as a new Misorientation object.
 
         Returns
         -------
