@@ -194,9 +194,9 @@ class Misorientation(Rotation):
         """
         misori = self.__class__(self.data)
         misori.symmetry = (Gl, Gr)
-        return misori.compute_symmetry_reduced_orientations()
+        return misori.map_into_symmetry_reduced_zone()
 
-    def compute_symmetry_reduced_orientations(self, verbose=False):
+    def map_into_symmetry_reduced_zone(self, verbose=False):
         """Computes equivalent transformations which have the smallest
         angle of rotation and return these as a new Misorientation object.
 
@@ -211,7 +211,7 @@ class Misorientation(Rotation):
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> m = Misorientation(data)
         >>> m.symmetry = (C4, C2)
-        >>> m.compute_symmetry_reduced_orientations()
+        >>> m.map_into_symmetry_reduced_zone()
         Misorientation (2,) 4, 2
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
@@ -260,7 +260,7 @@ class Misorientation(Rotation):
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> m = Misorientation(data)
         >>> m.symmetry = (C4, C2)
-        >>> m = m.compute_symmetry_reduced_orientations()
+        >>> m = m.map_into_symmetry_reduced_zone()
         >>> m.distance()
         array([[3.14159265, 1.57079633],
                [1.57079633, 0.        ]])
@@ -439,7 +439,7 @@ class Orientation(Misorientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             misorientation = Misorientation(self * ~other).squeeze()
             misorientation.symmetry = (self.symmetry, other.symmetry)
-            return misorientation.compute_symmetry_reduced_orientations()
+            return misorientation.map_into_symmetry_reduced_zone()
         return NotImplemented
 
     @classmethod
@@ -649,7 +649,7 @@ class Orientation(Misorientation):
         """
         o = self.__class__(self.data)
         o.symmetry = symmetry
-        return o.compute_symmetry_reduced_orientations()
+        return o.map_into_symmetry_reduced_zone()
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this
