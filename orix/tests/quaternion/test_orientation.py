@@ -375,7 +375,7 @@ def test_set_symmetry_deprecation_warning_orientation():
     with pytest.warns(
         np.VisibleDeprecationWarning,
         match="Function `set_symmetry()",
-    ):  # can only get this to work properly with one backtick...
+    ):
         _ = o.set_symmetry(C2)
 
 
@@ -384,5 +384,5 @@ def test_set_symmetry_deprecation_warning_misorientation():
     with pytest.warns(
         np.VisibleDeprecationWarning,
         match="Function `set_symmetry()",
-    ):  # can only get this to work properly with one backtick...
+    ):
         _ = o.set_symmetry(C2, C2)
