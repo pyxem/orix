@@ -234,7 +234,7 @@ class Misorientation(Rotation):
         return o_inside
 
     def distance(self, verbose=False, split_size=100):
-        """Symmetry reduced distance
+        """Symmetry reduced distance.
 
         Compute the shortest distance between all orientations
         considering symmetries.
