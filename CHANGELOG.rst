@@ -38,7 +38,7 @@ Deprecated
   and will be removed in 0.9. Use `ndim` instead.
 - Setting (Mis)Orientation symmetry via `set_symmetry()` is deprecated in 0.8, in favour of
   setting it directly via a `symmetry.setter`, and will be removed in 0.9. Use
-  `assign_smallest_angle()` instead.
+  `map_into_symmetry_reduced_zone()` instead.
  
 Removed
 -------
