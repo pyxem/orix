@@ -164,7 +164,7 @@ class Misorientation(Rotation):
 
     @deprecated(
         since="0.8",
-        alternative="orix.quaternion.Misorientation.assign_smallest_angle",
+        alternative="orix.quaternion.Misorientation.map_into_symmetry_reduced_zone",
         removal="0.9",
     )
     def set_symmetry(self, Gl, Gr, verbose=False):
