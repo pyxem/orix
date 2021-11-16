@@ -161,7 +161,6 @@ def test_sub_orientation_and_other():
 def test_transpose_2d():
     o1 = Orientation.random_vonmises((11, 3))
     o2 = o1.transpose()
-
     assert o1.shape == o2.shape[::-1]
 
 
@@ -172,7 +171,6 @@ def test_transpose_2d():
 def test_transpose_3d(shape, expected_shape, axes):
     o1 = Orientation.random_vonmises(shape)
     o2 = o1.transpose(*axes)
-
     assert o2.shape == tuple(expected_shape)
 
 
@@ -181,16 +179,13 @@ def test_transpose_symmetry():
     o1.symmetry = Oh
     o1 = o1.map_into_symmetry_reduced_zone()
     o2 = o1.transpose()
-
     assert o1.symmetry == o2.symmetry
 
 
 def test_symmetry_property_orientation():
     o = Orientation.random((3, 2))
-
     sym = Oh
     o.symmetry = sym
-
     assert o.symmetry == sym
     assert o._symmetry == (C1, sym)
 
@@ -200,21 +195,18 @@ def test_symmetry_property_orientation_data():
     o = Orientation.random((3, 2))
     d1 = o.data.copy()
     o.symmetry = Oh
-
     assert np.allclose(o.data, d1)
 
 
 def test_symmetry_property_misorientation():
     o = Misorientation.random((3, 2))
     o.symmetry = (Oh, C3)
-
     assert o.symmetry == (Oh, C3)
     assert o._symmetry == (Oh, C3)
 
 
 def test_symmetry_property_wrong_type_orientation():
     o = Orientation.random((3, 2))
-
     with pytest.raises(TypeError, match="Value must be an instance of"):
         o.symmetry = 1
 
@@ -237,7 +229,6 @@ def test_symmetry_property_wrong_type_misorientation(error_type, value):
 )
 def test_symmetry_property_wrong_number_of_values_misorientation(error_type, value):
     o = Misorientation.random((3, 2))
-
     with pytest.raises(error_type, match="Value must be a tuple"):
         # less than 2 Symmetry
         o.symmetry = value
