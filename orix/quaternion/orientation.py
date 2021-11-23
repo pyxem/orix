@@ -382,7 +382,7 @@ class Misorientation(Rotation):
             to_plot = self.get_random_sample(size)
         else:
             to_plot = self
-        ax.scatter(to_plot, **kwargs)
+        ax.scatter(to_plot, fundamental_region=fundamental_region, **kwargs)
 
         if return_figure:
             return figure

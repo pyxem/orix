@@ -30,8 +30,25 @@ class RotationPlot(Axes3D):
     name = None
     transformation_class = None
 
-    def transform(self, xs):
-        from orix.quaternion.rotation import Rotation
+    def transform(self, xs, fundamental_region=None):
+        from orix.quaternion import Rotation, Misorientation, OrientationRegion
+
+        # check whether xs is in fundamental region
+        if isinstance(xs, Misorientation):
+            if fundamental_region is None:
+                if isinstance(xs.symmetry, tuple):
+                    fundamental_region = OrientationRegion.from_symmetry(
+                        xs.symmetry[0], xs.symmetry[1]
+                    )
+                else:
+                    fundamental_region = OrientationRegion.from_symmetry(xs.symmetry)
+            # check fundamental_region is properly defined
+            if not isinstance(fundamental_region, OrientationRegion):
+                raise TypeError("Fundamental_region is not OrientationRegion.")
+            region_edge = fundamental_region.get_plot_data().angle.data.max()
+            # if xs is out of fundamental region, calculate symmetry reduction
+            if xs.angle.data.max() > region_edge:
+                xs = xs.map_into_symmetry_reduced_zone()
 
         if isinstance(xs, Rotation):
             transformed = self.transformation_class.from_rotation(xs.get_plot_data())
@@ -40,8 +57,8 @@ class RotationPlot(Axes3D):
         x, y, z = transformed.xyz
         return x, y, z
 
-    def scatter(self, xs, **kwargs):
-        x, y, z = self.transform(xs)
+    def scatter(self, xs, fundamental_region=None, **kwargs):
+        x, y, z = self.transform(xs, fundamental_region=fundamental_region)
         return super().scatter(x, y, z, **kwargs)
 
     def plot(self, xs, **kwargs):
