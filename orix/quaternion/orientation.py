@@ -360,19 +360,19 @@ class Misorientation(Rotation):
 
         # Plot wireframe
         if isinstance(self.symmetry, tuple):
-            fundamental_region = OrientationRegion.from_symmetry(
+            fundamental_zone = OrientationRegion.from_symmetry(
                 s1=self.symmetry[0], s2=self.symmetry[1]
             )
-            ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
+            ax.plot_wireframe(fundamental_zone, **wireframe_kwargs)
         else:
             # Orientation via inheritance
-            fundamental_region = OrientationRegion.from_symmetry(self.symmetry)
-            ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
+            fundamental_zone = OrientationRegion.from_symmetry(self.symmetry)
+            ax.plot_wireframe(fundamental_zone, **wireframe_kwargs)
 
         # Correct the aspect ratio of the axes according to the extent
         # of the boundaries of the fundamental region, and also restrict
         # the data limits to these boundaries
-        ax._correct_aspect_ratio(fundamental_region, set_limits=True)
+        ax._correct_aspect_ratio(fundamental_zone, set_limits=True)
 
         ax.axis("off")
         figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
@@ -381,7 +381,7 @@ class Misorientation(Rotation):
             to_plot = self.get_random_sample(size)
         else:
             to_plot = self
-        ax.scatter(to_plot, fundamental_region, **kwargs)
+        ax.scatter(to_plot, fundamental_zone=fundamental_zone, **kwargs)
 
         if return_figure:
             return figure
