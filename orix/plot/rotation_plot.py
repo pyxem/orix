@@ -30,22 +30,22 @@ class RotationPlot(Axes3D):
     name = None
     transformation_class = None
 
-    def transform(self, xs, fundamental_region=None):
+    def transform(self, xs, fundamental_zone=None):
         from orix.quaternion import Rotation, Misorientation, OrientationRegion
 
         # Project rotations into fundamental zone if necessary
         if isinstance(xs, Misorientation):
-            if fundamental_region is None:
+            if fundamental_zone is None:
                 if isinstance(xs.symmetry, tuple):
-                    fundamental_region = OrientationRegion.from_symmetry(
+                    fundamental_zone = OrientationRegion.from_symmetry(
                         xs.symmetry[0], xs.symmetry[1]
                     )
                 else:
-                    fundamental_region = OrientationRegion.from_symmetry(xs.symmetry)
-            # check fundamental_region is properly defined
-            if not isinstance(fundamental_region, OrientationRegion):
-                raise TypeError("Fundamental_region is not OrientationRegion.")
-            region_edge = fundamental_region.get_plot_data().angle.data.max()
+                    fundamental_zone = OrientationRegion.from_symmetry(xs.symmetry)
+            # check fundamental_zone is properly defined
+            if not isinstance(fundamental_zone, OrientationRegion):
+                raise TypeError("Fundamental_zone is not OrientationRegion.")
+            region_edge = fundamental_zone.get_plot_data().angle.data.max()
             # if xs is out of fundamental region, calculate symmetry reduction
             if xs.angle.data.max() > region_edge:
                 xs = xs.map_into_symmetry_reduced_zone()
@@ -57,8 +57,8 @@ class RotationPlot(Axes3D):
         x, y, z = transformed.xyz
         return x, y, z
 
-    def scatter(self, xs, fundamental_region=None, **kwargs):
-        x, y, z = self.transform(xs, fundamental_region=fundamental_region)
+    def scatter(self, xs, fundamental_zone=None, **kwargs):
+        x, y, z = self.transform(xs, fundamental_zone=fundamental_zone)
         return super().scatter(x, y, z, **kwargs)
 
     def plot(self, xs, **kwargs):
