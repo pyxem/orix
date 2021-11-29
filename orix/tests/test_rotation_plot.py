@@ -70,11 +70,13 @@ def test_full_region_plot():
     _ = empty.get_plot_data()
 
 
-def test_RotationPlot_transform_fundamental_region_raises():
+def test_RotationPlot_transform_fundamental_zone_raises():
     fig = plt.figure()
     rp = RotationPlot(fig)
-    with pytest.raises(TypeError, match="Fundamental_region is not OrientationRegion."):
-        rp.transform(Orientation.random(), fundamental_region=1)
+    with pytest.raises(
+        TypeError, match="Fundamental_zone is not an OrientationRegion object"
+    ):
+        rp.transform(Orientation.random(), fundamental_zone=1)
 
 
 def test_correct_aspect_ratio():
