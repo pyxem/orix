@@ -79,6 +79,23 @@ def test_RotationPlot_transform_fundamental_zone_raises():
         rp.transform(Orientation.random(), fundamental_zone=1)
 
 
+def test_RotationPlot_map_into_symmetry_reduced_zone():
+    # orientations are (in, out) of D6 fundamental zone
+    ori = Orientation(((1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)))
+    ori.symmetry = D6
+    fz = OrientationRegion.from_symmetry(ori.symmetry)
+    assert np.allclose(ori < fz, (True, False))
+    # test map_into_symmetry_reduced_zone in RotationPlot.transform
+    fig = ori.scatter(return_figure=True)
+    xyz_symmetry = fig.axes[0].collections[1]._offsets3d
+    # compute same plot again but with C1 symmetry where both orientations are in C1 FZ
+    ori.symmetry = C1
+    fig2 = ori.scatter(return_figure=True)
+    xyz = fig2.axes[0].collections[1]._offsets3d
+    # test that the plotted points are not the same
+    assert not np.allclose(xyz_symmetry, xyz)
+
+
 def test_correct_aspect_ratio():
     # Set up figure the "old" way
     fig = plt.figure()
