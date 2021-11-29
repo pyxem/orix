@@ -74,7 +74,7 @@ def test_RotationPlot_transform_fundamental_zone_raises():
     fig = plt.figure()
     rp = RotationPlot(fig)
     with pytest.raises(
-        TypeError, match="Fundamental_zone is not an OrientationRegion object"
+        TypeError, match="fundamental_zone is not an OrientationRegion object"
     ):
         rp.transform(Orientation.random(), fundamental_zone=1)
 
