@@ -33,7 +33,7 @@ class RotationPlot(Axes3D):
     def transform(self, xs, fundamental_region=None):
         from orix.quaternion import Rotation, Misorientation, OrientationRegion
 
-        # check whether xs is in fundamental region
+        # Project rotations into fundamental zone if necessary
         if isinstance(xs, Misorientation):
             if fundamental_region is None:
                 if isinstance(xs.symmetry, tuple):
