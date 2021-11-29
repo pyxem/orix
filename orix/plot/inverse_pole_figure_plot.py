@@ -60,29 +60,7 @@ class InversePoleFigurePlot(StereographicPlot):
         fs = self._symmetry.fundamental_sector
         self.restrict_to_sector(fs)
 
-        vertices = fs.vertices
-        if vertices.size > 0:
-            # Add labels for crystal directions [uvw]/[UVTW]
-            labels = _make_ipf_axes_labels(vertices, self._symmetry)
-            x, y = self._projection.vector2xy(vertices)
-
-            y_edge = self._edge_patch.get_path().vertices[:, 1]
-            y_min_edge, y_max_edge = np.min(y_edge), np.max(y_edge)
-
-            font_size = plt.rcParams["font.size"] + 4
-            text_kw = dict(ha="center", va="center", fontsize=font_size)
-            y_min, y_max = np.min(y), np.max(y)
-            for label, xi, yi in zip(labels, x, y):
-                # Determine x and y coordinates of label so that it
-                # isn't placed over fundamental sector edge
-                if np.isclose(yi, y_max) and y_min != y_max:
-                    text_kw["va"] = "bottom"
-                elif np.isclose(yi, y_min):
-                    text_kw["va"] = "top"
-                if y_min_edge < yi < y_max_edge:
-                    yi += (y_max_edge - yi) / 2
-
-                maxes.Axes.text(self, xi, yi, s=label, **text_kw)
+        self._add_crystal_direction_labels()
 
     @property
     def _edge_patch(self):
@@ -112,6 +90,53 @@ class InversePoleFigurePlot(StereographicPlot):
         x, y = self._edge_patch.get_path().vertices.T
         v = self._inverse_projection.xy2vector(np.min(x), np.max(y))
         self.text(v, s=self.hemisphere, **new_kwargs)
+
+    def _add_crystal_direction_labels(self):
+        """Add appropriately placed and nicely formatted crystal
+        direction labels [uvw] or [UVTW] to the sector corners.
+        """
+        fs = self._symmetry.fundamental_sector
+        vertices = fs.vertices
+        if vertices.size > 0:
+            center = fs.center.y.data[0]
+
+            # Nicely formatted labels for crystal directions
+            labels = _get_ipf_axes_labels(vertices, self._symmetry)
+            x, y = self._projection.vector2xy(vertices)
+
+            x_edge, y_edge = self._edge_patch.get_path().vertices.T
+            x_min_edge, x_max_edge = np.min(x_edge), np.max(x_edge)
+            y_min_edge, y_max_edge = np.min(y_edge), np.max(y_edge)
+            pad = 0.01
+            x_pad = pad * (x_max_edge - x_min_edge)
+            y_pad = pad * (y_max_edge - y_min_edge)
+
+            font_size = plt.rcParams["font.size"] + 4
+            text_kw = dict(fontsize=font_size, zorder=10)
+            for label, xi, yi in zip(labels, x, y):
+                # Determine x and y coordinates of label relative to the
+                # sector center, and adjust the alignment (starting
+                # point) and shift accordingly, so that it doesn't cross
+                # over the sector edge
+                ha = "center"
+                if np.isclose(yi, center, atol=1e-2):
+                    va = "center"
+                    if np.isclose(xi, x_min_edge, atol=1e-2):
+                        ha = "right"
+                        xi -= x_pad
+                    else:
+                        ha = "left"
+                        xi += x_pad
+                elif yi > center:
+                    va = "bottom"
+                    # Extra padding ensures [111] in symmetry Th is
+                    # placed outside sector edge
+                    yi = yi + y_pad + (y_max_edge - yi) * 0.2
+                else:
+                    va = "top"
+                    yi -= y_pad
+
+                maxes.Axes.text(self, xi, yi, s=label, va=va, ha=ha, **text_kw)
 
     def _pretransform_input_ipf(self, values):
         if len(values) == 2:  # (Azimuth, polar)
@@ -174,13 +199,25 @@ def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
             if any(is_close) and plt.rcParams["axes.titley"] is None:
                 loc = "left"
 
-        ax.set_title(_make_ipf_title(direction[i]), loc=loc, fontweight="bold")
+        ax.set_title(_get_ipf_title(direction[i]), loc=loc, fontweight="bold")
         axes.append(ax)
 
     return figure, np.asarray(axes)
 
 
-def _make_ipf_title(direction):
+def _get_ipf_title(direction):
+    """Get a nicely formatted sample direction string from vector
+    coordinates.
+
+    Parameters
+    ----------
+    direction : ~orix.vector.Vector3d
+        Single vector denoting the sample direction.
+
+    Returns
+    -------
+    str
+    """
     v = Vector3d(((1, 0, 0), (0, 1, 0), (0, 0, 1)))
     idx = np.where(np.isclose(direction.dot(v).data, 1))[0]
     if idx.size != 0:
@@ -189,7 +226,22 @@ def _make_ipf_title(direction):
         return np.array_str(direction.data.squeeze()).strip("[]")
 
 
-def _make_ipf_axes_labels(vertices, symmetry):
+def _get_ipf_axes_labels(vertices, symmetry):
+    r"""Get nicely formatted crystal direction strings from vector
+    coordinates.
+
+    Parameters
+    ----------
+    vertices : ~orix.vector.Vector3d
+    symmetry : ~orix.quaternion.Symmetry
+        Symmetry to determine which crystal directions `vertices`
+        represent.
+
+    Returns
+    -------
+    list of str
+        List of strings, with -1 formatted like $\bar{1}$.
+    """
     phase = Phase(point_group=symmetry)
     m = Miller(uvw=vertices.data, phase=phase)
     if symmetry.system in ["trigonal", "hexagonal"]:
