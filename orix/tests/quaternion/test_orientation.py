@@ -216,7 +216,7 @@ def test_symmetry_property_wrong_type_orientation():
 )
 def test_symmetry_property_wrong_type_misorientation(error_type, value):
     mori = Misorientation.random((3, 2))
-    with pytest.raises(error_type, match="Value must be a tuple"):
+    with pytest.raises(error_type, match="Value must be a 2-tuple"):
         mori.symmetry = value
 
 
@@ -226,7 +226,7 @@ def test_symmetry_property_wrong_type_misorientation(error_type, value):
 )
 def test_symmetry_property_wrong_number_of_values_misorientation(error_type, value):
     o = Misorientation.random((3, 2))
-    with pytest.raises(error_type, match="Value must be a tuple"):
+    with pytest.raises(error_type, match="Value must be a 2-tuple"):
         # less than 2 Symmetry
         o.symmetry = value
 
