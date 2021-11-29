@@ -658,15 +658,13 @@ class TestCrystalMapGetMapData:
         o1 = xmap1.get_map_data("orientations")
         o2 = xmap2.get_map_data("orientations")
 
-        expected_o1 = xmap1.orientations
-        expected_o1 = expected_o1.to_euler()
+        expected_o1 = xmap1.orientations.to_euler()
         expected_shape = expected_o1.shape
         assert np.allclose(
             o1[~np.isnan(o1)].reshape(expected_shape), expected_o1, atol=1e-3
         )
 
-        expected_o2 = xmap2.orientations
-        expected_o2 = expected_o2.to_euler()
+        expected_o2 = xmap2.orientations.to_euler()
         expected_shape = expected_o2.shape
         assert np.allclose(
             o2[~np.isnan(o2)].reshape(expected_shape), expected_o2, atol=1e-3
