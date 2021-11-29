@@ -36,12 +36,11 @@ class RotationPlot(Axes3D):
         # Project rotations into fundamental zone if necessary
         if isinstance(xs, Misorientation):
             if fundamental_zone is None:
-                if isinstance(xs.symmetry, tuple):
-                    fundamental_zone = OrientationRegion.from_symmetry(
-                        xs.symmetry[0], xs.symmetry[1]
-                    )
-                else:
-                    fundamental_zone = OrientationRegion.from_symmetry(xs.symmetry)
+                symmetry = xs.symmetry
+                # Orientation.symmetry returns a Symmetry object not a tuple, so pack
+                if not isinstance(symmetry, tuple):
+                    symmetry = (symmetry,)
+                fundamental_zone = OrientationRegion.from_symmetry(*symmetry)
             # check fundamental_zone is properly defined
             if not isinstance(fundamental_zone, OrientationRegion):
                 raise TypeError("Fundamental_zone is not an OrientationRegion object.")
