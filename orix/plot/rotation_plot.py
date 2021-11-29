@@ -44,7 +44,7 @@ class RotationPlot(Axes3D):
                     fundamental_zone = OrientationRegion.from_symmetry(xs.symmetry)
             # check fundamental_zone is properly defined
             if not isinstance(fundamental_zone, OrientationRegion):
-                raise TypeError("Fundamental_zone is not OrientationRegion.")
+                raise TypeError("Fundamental_zone is not an OrientationRegion object.")
             region_edge = fundamental_zone.get_plot_data().angle.data.max()
             # if xs is out of fundamental region, calculate symmetry reduction
             if xs.angle.data.max() > region_edge:
