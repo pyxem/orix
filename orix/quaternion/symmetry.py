@@ -167,7 +167,7 @@ class Symmetry(Rotation):
             n = self[self.improper].axis  # Mirror planes
             idx = n.angle_with(-vy) < np.pi / 4
             n[idx] = -n[idx]
-        elif name in ["321", "312", "3m", "-3m1", "6m2"]:
+        elif name in ["321", "312", "3m", "-3m", "6m2"]:
             n = n.rotate(angle=-np.pi / 6)
         elif name == "-42m":
             n = n.rotate(angle=-np.pi / 4)
