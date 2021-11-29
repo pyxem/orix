@@ -29,8 +29,8 @@ Changed
   (X, Y) replaces (azimuth, polar) as internal coordinates.
 - Renamed `Symmetry` method `fundamental_sector()` to `fundamental_zone()`.
 - `Orientation` class methods `from_euler`, `from_matrix`, and `from_neo_euler` no longer 
-  return the smallest angle rotation when `symmetry` argument is provided and not None.
-- `CrystalMap.orientations` no longer returns smallest angle rotation.
+  return the smallest angle orientation when a `symmetry` is given.
+- `CrystalMap.orientations` no longer returns smallest angle orientation.
 
 Deprecated
 ----------
