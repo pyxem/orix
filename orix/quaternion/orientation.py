@@ -129,11 +129,10 @@ class Misorientation(Rotation):
 
     @symmetry.setter
     def symmetry(self, value):
-        err_message = "Value must be a tuple with two Symmetry instances."
         if not isinstance(value, (list, tuple)):
-            raise TypeError(err_message)
+            raise TypeError("Value must be a 2-tuple of Symmetry objects.")
         if len(value) != 2 or not all(isinstance(s, Symmetry) for s in value):
-            raise ValueError(err_message)
+            raise ValueError("Value must be a 2-tuple of Symmetry objects.")
         self._symmetry = tuple(value)
 
     def __getitem__(self, key):
@@ -382,7 +381,7 @@ class Misorientation(Rotation):
             to_plot = self.get_random_sample(size)
         else:
             to_plot = self
-        ax.scatter(to_plot, fundamental_region=fundamental_region, **kwargs)
+        ax.scatter(to_plot, fundamental_region, **kwargs)
 
         if return_figure:
             return figure
