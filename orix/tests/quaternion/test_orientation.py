@@ -222,10 +222,7 @@ def test_symmetry_property_wrong_type_misorientation(error_type, value):
 
 @pytest.mark.parametrize(
     "error_type, value",
-    [
-        (ValueError, (C1,)),
-        (ValueError, (C1, C2, C1)),
-    ],
+    [(ValueError, (C1,)), (ValueError, (C1, C2, C1))],
 )
 def test_symmetry_property_wrong_number_of_values_misorientation(error_type, value):
     o = Misorientation.random((3, 2))
