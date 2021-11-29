@@ -514,13 +514,17 @@ class Vector3d(Object3d):
         fs = symmetry.fundamental_sector
         v = deepcopy(self)
 
+        center = fs.center
+        if center.size == 0:
+            return v
+
         if symmetry.name in ["321", "312", "32", "-4"]:
             idx = v.z < 0
             vv = symmetry[-1] * v[idx]
             if vv.size != 0:
                 v[idx] = vv
             rot = symmetry[:3]
-        elif symmetry.name in "-3":
+        elif symmetry.name == "-3":
             idx = v.z < 0
             vv = symmetry[3] * v[idx]
             if vv.size != 0:
@@ -529,7 +533,7 @@ class Vector3d(Object3d):
         else:
             rot = symmetry
 
-        rotated_centers = rot * fs.center
+        rotated_centers = rot * center
         closeness = v.dot_outer(rotated_centers).data.round(12)
         idx_max = np.argmax(closeness, axis=-1)
         v2 = ~rot[idx_max] * v
