@@ -199,10 +199,10 @@ def test_symmetry_property_orientation_data():
 
 
 def test_symmetry_property_misorientation():
-    o = Misorientation.random((3, 2))
-    o.symmetry = (Oh, C3)
-    assert o.symmetry == (Oh, C3)
-    assert o._symmetry == (Oh, C3)
+    m = Misorientation.random((3, 2))
+    m.symmetry = (Oh, C3)
+    assert m.symmetry == (Oh, C3)
+    assert m._symmetry == (Oh, C3)
 
 
 def test_symmetry_property_wrong_type_orientation():
