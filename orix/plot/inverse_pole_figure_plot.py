@@ -152,6 +152,25 @@ mprojections.register_projection(InversePoleFigurePlot)
 
 
 def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
+    """Set up an inverse pole figure plot.
+
+    Parameters
+    ----------
+    symmetry : ~orix.quaternion.Symmetry
+        Laue group symmetry of crystal to plot directions with.
+    direction : ~orix.vector.Vector3d, optional
+        Sample direction to plot with respect to crystal directions. If
+        not given, the out of plane direction, sample Z, is used.
+    hemisphere : str, optional
+        Which hemisphere(s) to plot the vectors in. If not given,
+        "upper" is used. Options are "upper", "lower", and "both", which
+        plots two projections side by side.
+
+    Returns
+    -------
+    figure : matplotlib.figure.Figure
+    axes : matplotlib.axes.Axes
+    """
     if direction is None:
         direction = Vector3d.zvector()
 

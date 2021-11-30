@@ -678,17 +678,22 @@ class Orientation(Misorientation):
                 _setup_inverse_pole_figure_plot,
             )
 
-            # Determine which hemisphere(s) to show
-            symmetry = self.symmetry
-            sector = symmetry.fundamental_sector
-            if np.any(sector.vertices.polar.data > np.pi / 2):
-                hemisphere = "both"
-            else:
-                hemisphere = "upper"
+            if figure is None:
+                # Determine which hemisphere(s) to show
+                symmetry = self.symmetry
+                sector = symmetry.fundamental_sector
+                if np.any(sector.vertices.polar.data > np.pi / 2):
+                    hemisphere = "both"
+                else:
+                    hemisphere = "upper"
 
-            figure, axes = _setup_inverse_pole_figure_plot(
-                symmetry=symmetry, direction=direction, hemisphere=hemisphere
-            )
+                figure, axes = _setup_inverse_pole_figure_plot(
+                    symmetry=symmetry,
+                    direction=direction,
+                    hemisphere=hemisphere,
+                )
+            else:
+                axes = figure.axes
 
             for ax in axes:
                 ax.scatter(self, **kwargs)
