@@ -39,8 +39,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         h = direction.in_fundamental_sector(laue_group)
         azimuth, polar = polar_coordinates_in_sector(laue_group.fundamental_sector, h)
         polar = 0.5 + polar / 2
-        v = Vector3d.from_polar(azimuth=azimuth, polar=polar * np.pi)
-        return rgb_from_polar_coordinates(v.azimuth.data, v.polar.data)
+        return rgb_from_polar_coordinates(azimuth, polar)
 
     def plot(self, return_figure=False):
         from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot

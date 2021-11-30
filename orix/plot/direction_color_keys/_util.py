@@ -111,7 +111,7 @@ def rgb_from_polar_coordinates(azimuth, polar):
         Color(s).
     """
     angle = np.mod(azimuth / (2 * np.pi), 1)
-    h, s, v = hsl_to_hsv(angle, 1, polar / np.pi)
+    h, s, v = hsl_to_hsv(angle, 1, polar)
     return mcolors.hsv_to_rgb(np.column_stack([h, s, v]))
 
 
@@ -141,7 +141,7 @@ def hsl_to_hsv(hue, saturation, lightness):
         Value(s).
     """
     l2 = 2 * lightness
-    s2 = np.where(2 * l2 <= 1, saturation * l2, saturation * (2 - l2))
+    s2 = saturation * np.where(l2 <= 1, l2, 2 - l2)
     saturation2 = (2 * s2) / (l2 + s2)
     saturation2[np.isnan(saturation2)] = 0
     value = (l2 + s2) / 2
