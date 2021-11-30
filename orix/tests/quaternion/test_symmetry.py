@@ -548,11 +548,13 @@ class TestFundamentalSectorFromSymmetry:
     def test_fundamental_sector_d3d(self):
         pg = D3d  # -3m
         fs = pg.fundamental_sector
-        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]], atol=1e-3
+            fs.data, [[0, 0, 1], [0.5, 0.866, 0], [0.5, -0.866, 0]], atol=1e-3
         )
-        assert np.allclose(fs.center.data, [[0.5, 0.2887, 1 / 3]], atol=1e-4)
+        assert np.allclose(
+            fs.vertices.data, [[0.866, -0.5, 0], [0, 0, 1], [0.866, 0.5, 0]], atol=1e-3
+        )
+        assert np.allclose(fs.center.data, [[0.577, 0, 1 / 3]], atol=1e-3)
 
     def test_fundamental_sector_c6(self):
         pg = C6  # 6
