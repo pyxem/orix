@@ -62,7 +62,11 @@ def polar_coordinates_in_sector(sector, v):
     v = v.unit
 
     # Azimuthal coordinate
-    rx = Vector3d.zvector() - center  # North pole to sector center
+    if sector.vertices.size == 0:
+        # Point group Ci (-1) has no vertices
+        rx = Vector3d.xvector() - center
+    else:
+        rx = Vector3d.zvector() - center  # North pole to sector center
     rx = (rx - rx.dot(center) * center).unit  # Orthogonal to center
     ry = center.cross(rx).unit  # Perpendicular to rx
     distances_azimuthal = (v - center).unit
