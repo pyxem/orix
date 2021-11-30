@@ -21,18 +21,25 @@ Added
 - Sampling of vectors in UV mesh on a unit sphere (*S2*).
 - `ndim` attribute to Object3d and derived classes which returns number of navigation
   dimensions.
+- Setting the symmetry of a (Mis)Orientation via a `symmetry.setter`.
 
 Changed
 -------
 - `StereographicPlot` doesn't use Matplotlib's `transforms` framework anymore, and
   (X, Y) replaces (azimuth, polar) as internal coordinates.
 - Renamed `Symmetry` method `fundamental_sector()` to `fundamental_zone()`.
+- `Orientation` class methods `from_euler`, `from_matrix`, and `from_neo_euler` no longer 
+  return the smallest angle orientation when a `symmetry` is given.
+- `CrystalMap.orientations` no longer returns smallest angle orientation.
 
 Deprecated
 ----------
 - The `data_dim` attribute of Object3d and all derived classes is deprecated from 0.8
   and will be removed in 0.9. Use `ndim` instead.
-
+- Setting (Mis)Orientation symmetry via `set_symmetry()` is deprecated in 0.8, in favour of
+  setting it directly via a `symmetry.setter`, and will be removed in 0.9. Use
+  `map_into_symmetry_reduced_zone()` instead.
+ 
 Removed
 -------
 - `StereographicPlot` methods `azimuth_grid()` and `polar_grid()`.
