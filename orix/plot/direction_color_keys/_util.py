@@ -58,7 +58,7 @@ def polar_coordinates_in_sector(sector, v):
     [001]. The polar coordinate is the distance to the barycenter. The
     barycenter is the center of the fundamental sector.
     """
-    center = sector.center
+    center = sector.center.unit
     v = v.unit
 
     # Azimuthal coordinate
