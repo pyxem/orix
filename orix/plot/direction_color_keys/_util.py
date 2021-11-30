@@ -82,7 +82,7 @@ def polar_coordinates_in_sector(sector, v):
     else:
         # Normal to plane containing sector center and crystal direction
         v_center_normal = v.cross(center).unit
-        polar = np.full(v.size, np.inf)
+        polar = np.full(v.shape, np.inf)
         for normal in sector:
             boundary_points = v_center_normal.cross(normal).unit
             # Some boundary points are zero vectors
@@ -112,7 +112,7 @@ def rgb_from_polar_coordinates(azimuth, polar):
     """
     angle = np.mod(azimuth / (2 * np.pi), 1)
     h, s, v = hsl_to_hsv(angle, 1, polar)
-    return mcolors.hsv_to_rgb(np.column_stack([h, s, v]))
+    return mcolors.hsv_to_rgb(np.stack((h, s, v), axis=-1))
 
 
 def hsl_to_hsv(hue, saturation, lightness):
