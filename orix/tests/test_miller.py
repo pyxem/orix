@@ -221,7 +221,7 @@ class TestMiller:
 
     def test_multiply_orientation(self):
         o = Orientation.from_euler(np.deg2rad([45, 0, 0]))
-        o = o.set_symmetry(CUBIC_PHASE.point_group)
+        o.symmetry = CUBIC_PHASE.point_group
         m = Miller(hkl=[[1, 1, 1], [2, 0, 0]], phase=CUBIC_PHASE)
         m2 = o * m
         assert isinstance(m2, Miller)

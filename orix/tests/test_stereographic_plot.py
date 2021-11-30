@@ -105,10 +105,10 @@ class TestStereographicPlot:
 
     def test_set_labels(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        assert ax.texts == []
+        assert len(ax.texts) == 0
 
         ax.set_labels(None, None, None)
-        assert ax.texts == []
+        assert len(ax.texts) == 0
 
         ax.set_labels("X", None, None)
         assert len(ax.texts) == 1
@@ -197,7 +197,7 @@ class TestStereographicPlot:
         # Not plotted since the vector isn't visible in this hemisphere
         ax.scatter(v)
         ax.text(v, s="1")
-        assert ax.texts == []
+        assert len(ax.texts) == 0
 
         plt.close("all")
 

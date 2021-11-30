@@ -64,10 +64,10 @@ class Object3d:
     """Base class for 3d objects."""
 
     dim = None
-    """int : The number of dimensions for this object."""
+    """int : The number of dimensions for this object."""  # pragma: no cover
 
     _data = None
-    """np.ndarray : Array holding this object's numerical data."""
+    """np.ndarray : Array holding this object's numerical data."""  # pragma: no cover
 
     __array_ufunc__ = None
 

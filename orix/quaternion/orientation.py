@@ -49,7 +49,7 @@ from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1
+from orix.quaternion.symmetry import C1, Symmetry
 from orix.scalar import Scalar
 from orix._util import deprecated
 
@@ -127,6 +127,14 @@ class Misorientation(Rotation):
         """Tuple of :class:`~orix.quaternion.Symmetry`."""
         return self._symmetry
 
+    @symmetry.setter
+    def symmetry(self, value):
+        if not isinstance(value, (list, tuple)):
+            raise TypeError("Value must be a 2-tuple of Symmetry objects.")
+        if len(value) != 2 or not all(isinstance(s, Symmetry) for s in value):
+            raise ValueError("Value must be a 2-tuple of Symmetry objects.")
+        self._symmetry = tuple(value)
+
     def __getitem__(self, key):
         m = super().__getitem__(key)
         m._symmetry = self._symmetry
@@ -153,6 +161,11 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
+    @deprecated(
+        since="0.8",
+        alternative="orix.quaternion.Misorientation.map_into_symmetry_reduced_zone",
+        removal="0.9",
+    )
     def set_symmetry(self, Gl, Gr, verbose=False):
         """Assign symmetries to this misorientation.
 
@@ -178,6 +191,31 @@ class Misorientation(Rotation):
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
         """
+        misori = self.__class__(self.data)
+        misori.symmetry = (Gl, Gr)
+        return misori.map_into_symmetry_reduced_zone()
+
+    def map_into_symmetry_reduced_zone(self, verbose=False):
+        """Computes equivalent transformations which have the smallest
+        angle of rotation and return these as a new Misorientation object.
+
+        Returns
+        -------
+        Misorientation
+            A new misorientation object with the assigned symmetry.
+
+        Examples
+        --------
+        >>> from orix.quaternion.symmetry import C4, C2
+        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
+        >>> m = Misorientation(data)
+        >>> m.symmetry = (C4, C2)
+        >>> m.map_into_symmetry_reduced_zone()
+        Misorientation (2,) 4, 2
+        [[-0.7071  0.7071  0.      0.    ]
+        [ 0.      1.      0.      0.    ]]
+        """
+        Gl, Gr = self._symmetry
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
             symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
@@ -195,7 +233,7 @@ class Misorientation(Rotation):
         return o_inside
 
     def distance(self, verbose=False, split_size=100):
-        """Symmetry reduced distance
+        """Symmetry reduced distance.
 
         Compute the shortest distance between all orientations
         considering symmetries.
@@ -219,7 +257,9 @@ class Misorientation(Rotation):
         >>> from orix.quaternion.symmetry import C4, C2
         >>> from orix.quaternion.orientation import Misorientation
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> m = Misorientation(data).set_symmetry(C4, C2)
+        >>> m = Misorientation(data)
+        >>> m.symmetry = (C4, C2)
+        >>> m = m.map_into_symmetry_reduced_zone()
         >>> m.distance()
         array([[3.14159265, 1.57079633],
                [1.57079633, 0.        ]])
@@ -320,19 +360,19 @@ class Misorientation(Rotation):
 
         # Plot wireframe
         if isinstance(self.symmetry, tuple):
-            fundamental_region = OrientationRegion.from_symmetry(
+            fundamental_zone = OrientationRegion.from_symmetry(
                 s1=self.symmetry[0], s2=self.symmetry[1]
             )
-            ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
+            ax.plot_wireframe(fundamental_zone, **wireframe_kwargs)
         else:
             # Orientation via inheritance
-            fundamental_region = OrientationRegion.from_symmetry(self.symmetry)
-            ax.plot_wireframe(fundamental_region, **wireframe_kwargs)
+            fundamental_zone = OrientationRegion.from_symmetry(self.symmetry)
+            ax.plot_wireframe(fundamental_zone, **wireframe_kwargs)
 
         # Correct the aspect ratio of the axes according to the extent
         # of the boundaries of the fundamental region, and also restrict
         # the data limits to these boundaries
-        ax._correct_aspect_ratio(fundamental_region, set_limits=True)
+        ax._correct_aspect_ratio(fundamental_zone, set_limits=True)
 
         ax.axis("off")
         figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
@@ -341,7 +381,7 @@ class Misorientation(Rotation):
             to_plot = self.get_random_sample(size)
         else:
             to_plot = self
-        ax.scatter(to_plot, **kwargs)
+        ax.scatter(to_plot, fundamental_zone=fundamental_zone, **kwargs)
 
         if return_figure:
             return figure
@@ -361,16 +401,28 @@ class Orientation(Misorientation):
         """Symmetry."""
         return self._symmetry[1]
 
+    @symmetry.setter
+    def symmetry(self, value):
+        if not isinstance(value, Symmetry):
+            raise TypeError("Value must be an instance of orix.quaternion.Symmetry.")
+        self._symmetry = (C1, value)
+
     @property
     def unit(self):
         """Unit orientations."""
-        return super().unit.set_symmetry(self.symmetry)
+        o = super().unit
+        o.symmetry = self.symmetry
+        return o
 
     def __invert__(self):
-        return super().__invert__().set_symmetry(self.symmetry)
+        o = super().__invert__()
+        o.symmetry = self.symmetry
+        return o
 
     def __neg__(self):
-        return super().__neg__().set_symmetry(self.symmetry)
+        o = super().__neg__()
+        o.symmetry = self.symmetry
+        return o
 
     def __repr__(self):
         """String representation."""
@@ -385,7 +437,8 @@ class Orientation(Misorientation):
         if isinstance(other, Orientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             misorientation = Misorientation(self * ~other).squeeze()
-            return misorientation.set_symmetry(self.symmetry, other.symmetry)
+            misorientation.symmetry = (self.symmetry, other.symmetry)
+            return misorientation.map_into_symmetry_reduced_zone()
         return NotImplemented
 
     @classmethod
@@ -408,7 +461,7 @@ class Orientation(Misorientation):
         """
         o = super().from_euler(euler=euler, convention=convention, direction=direction)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     @classmethod
@@ -426,7 +479,7 @@ class Orientation(Misorientation):
         """
         o = super().from_matrix(matrix)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     @classmethod
@@ -444,7 +497,7 @@ class Orientation(Misorientation):
         """
         o = super().from_neo_euler(neo_euler)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     def angle_with(self, other):
@@ -563,6 +616,11 @@ class Orientation(Misorientation):
 
         return Scalar(angles)
 
+    @deprecated(
+        since="0.8",
+        alternative="orix.quaternion.Orientation.map_into_symmetry_reduced_zone",
+        removal="0.9",
+    )
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
 
@@ -582,13 +640,15 @@ class Orientation(Misorientation):
         --------
         >>> from orix.quaternion.symmetry import C4
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> o = Orientation(data).set_symmetry((C4))
+        >>> o = Orientation(data).set_symmetry(C4)
         >>> o
         Orientation (2,) 4
         [[-0.7071  0.     -0.7071  0.    ]
         [ 0.      1.      0.      0.    ]]
         """
-        return super().set_symmetry(C1, symmetry)
+        o = self.__class__(self.data)
+        o.symmetry = symmetry
+        return o.map_into_symmetry_reduced_zone()
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this

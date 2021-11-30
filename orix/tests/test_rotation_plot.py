@@ -21,8 +21,9 @@ from packaging import version
 from matplotlib import __version__ as _MPL_VERSION
 from matplotlib import pyplot as plt
 import numpy as np
+import pytest
 
-from orix.plot import RodriguesPlot, AxAnglePlot
+from orix.plot import RodriguesPlot, AxAnglePlot, RotationPlot
 from orix.quaternion import Misorientation, Orientation, OrientationRegion
 from orix.quaternion.symmetry import C1, D6
 
@@ -50,10 +51,13 @@ def test_init_axangle_plot():
 def test_RotationPlot_methods():
     """This code is lifted from demo-3-v0.1."""
     misori = Misorientation([1, 1, 1, 1])  # any will do
+    ori = Orientation.random()
     fig = plt.figure()
     ax = fig.add_subplot(projection="axangle", proj_type="ortho", **_SUBPLOT_KWARGS)
     ax.scatter(misori)
+    ax.scatter(ori)
     ax.plot(misori)
+    ax.plot(ori)
     ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
     plt.close("all")
 
@@ -64,6 +68,32 @@ def test_RotationPlot_methods():
 def test_full_region_plot():
     empty = OrientationRegion.from_symmetry(C1, C1)
     _ = empty.get_plot_data()
+
+
+def test_RotationPlot_transform_fundamental_zone_raises():
+    fig = plt.figure()
+    rp = RotationPlot(fig)
+    with pytest.raises(
+        TypeError, match="fundamental_zone is not an OrientationRegion object"
+    ):
+        rp.transform(Orientation.random(), fundamental_zone=1)
+
+
+def test_RotationPlot_map_into_symmetry_reduced_zone():
+    # orientations are (in, out) of D6 fundamental zone
+    ori = Orientation(((1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)))
+    ori.symmetry = D6
+    fz = OrientationRegion.from_symmetry(ori.symmetry)
+    assert np.allclose(ori < fz, (True, False))
+    # test map_into_symmetry_reduced_zone in RotationPlot.transform
+    fig = ori.scatter(return_figure=True)
+    xyz_symmetry = fig.axes[0].collections[1]._offsets3d
+    # compute same plot again but with C1 symmetry where both orientations are in C1 FZ
+    ori.symmetry = C1
+    fig2 = ori.scatter(return_figure=True)
+    xyz = fig2.axes[0].collections[1]._offsets3d
+    # test that the plotted points are not the same
+    assert not np.allclose(xyz_symmetry, xyz)
 
 
 def test_correct_aspect_ratio():
