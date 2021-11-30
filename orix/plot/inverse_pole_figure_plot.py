@@ -87,6 +87,8 @@ class InversePoleFigurePlot(StereographicPlot):
         """
         new_kwargs = dict(ha="right", va="bottom")
         new_kwargs.update(kwargs)
+        # TODO: Fix plotting of hemisphere labels for fundamental
+        #  sectors with only two vertices on either side of equator (C3)
         x, y = self._edge_patch.get_path().vertices.T
         v = self._inverse_projection.xy2vector(np.min(x), np.max(y))
         self.text(v, s=self.hemisphere, **new_kwargs)
@@ -175,9 +177,11 @@ def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
         direction = Vector3d.zvector()
 
     n_plots = direction.size
+    add_hemisphere_label = False
     if hemisphere is None:
         hemisphere = ["upper"] * n_plots
     elif hemisphere == "both":
+        add_hemisphere_label = True
         hemisphere = ["upper"] * n_plots + ["lower"] * n_plots
         n_plots *= 2
         direction = Vector3d.stack((direction, direction))
@@ -219,6 +223,10 @@ def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
                 loc = "left"
 
         ax.set_title(_get_ipf_title(direction[i]), loc=loc, fontweight="bold")
+
+        if add_hemisphere_label:
+            ax.show_hemisphere_label()
+
         axes.append(ax)
 
     return figure, np.asarray(axes)

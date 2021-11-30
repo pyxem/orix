@@ -702,3 +702,29 @@ class TestFundamentalSectorFromSymmetry:
         assert np.allclose(fs.data, normal)
         assert np.allclose(fs.vertices.data, np.zeros((0, 3)))
         assert np.allclose(fs.center.data, normal)
+
+
+class TestLaueGroup:
+    def test_crystal_system(self):
+        assert Ci.system == "triclinic"
+        assert C2h.system == "monoclinic"
+        assert D2h.system == "orthorhombic"
+        assert D4h.system == "tetragonal"
+        assert D3d.system == "trigonal"
+        assert D6h.system == "hexagonal"
+        assert Oh.system == "cubic"
+        assert Symmetry(((1, 0, 0, 0), (1, 1, 0, 0))).system is None
+
+    def test_laue_group_name(self):
+        assert Ci.laue.name == "-1"
+        assert C2h.laue.name == "2/m"
+        assert D2h.laue.name == "mmm"
+        assert C4h.laue.name == "4/m"
+        assert D4h.laue.name == "4/mmm"
+        assert S6.laue.name == "-3"
+        assert D3d.laue.name == "-3m"
+        assert C6h.laue.name == "6/m"
+        assert D6h.laue.name == "6/mmm"
+        assert Th.laue.name == "m-3"
+        assert Oh.laue.name == "m-3m"
+        assert Symmetry(((1, 0, 0, 0), (1, 1, 0, 0))).laue.name is None

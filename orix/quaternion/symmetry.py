@@ -634,4 +634,4 @@ def _get_laue_group_name(name):
     elif name in ["432", "-43m", "m-3m"]:
         return "m-3m"
     else:
-        return ""
+        return None

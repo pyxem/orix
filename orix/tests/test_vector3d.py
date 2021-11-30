@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from orix.quaternion import symmetry
 from orix.scalar import Scalar
 from orix.vector import Vector3d, check_vector
 
@@ -598,3 +599,36 @@ class TestPlotting:
         assert fig.axes[0]._stereographic_grid is True
 
         plt.close("all")
+
+
+class TestProjectingToFundamentalSector:
+    def test_in_fundamental_sector_oh(self):
+        # First two outside, last barely within
+        v1 = Vector3d(((1, 0, 0), (1, 1, 0), (1, 0.9, 1.1)))
+        point_group = symmetry.Oh
+        fs = point_group.fundamental_sector
+        assert np.allclose((False, False, True), v1 < fs)
+        v2 = v1.in_fundamental_sector(point_group)
+        assert np.all(v2 <= fs)
+        assert np.allclose(((0, 0, 1), (1, 0, 1), (1, 0.9, 1.1)), v2.data)
+
+    def test_in_fundamental_sector_special(self):
+        v1 = Vector3d(((0, -1.1, 0.1), (0.9, 1, -1), (1, 0.9, 1.1)))
+
+        # Triclinic, which has a sector with no center. Nothing changes
+        point_group = symmetry.C1
+        assert np.allclose(v1.data, v1.in_fundamental_sector(point_group).data)
+
+        # Tetragonal -4
+        point_group = symmetry.S4
+        fs = point_group.fundamental_sector
+        assert np.allclose((False, False, True), v1 < fs)
+        v2 = v1.in_fundamental_sector(point_group)
+        assert np.all(v2 < fs)
+
+        # Trigonal 321, 312, -3
+        point_group = symmetry.S6
+        fs = point_group.fundamental_sector
+        assert np.allclose((False, False, True), v1 < fs)
+        v3 = v1.in_fundamental_sector(point_group)
+        assert np.all(v3 < fs)

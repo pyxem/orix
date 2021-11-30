@@ -688,12 +688,10 @@ class Orientation(Misorientation):
                     hemisphere = "upper"
 
                 figure, axes = _setup_inverse_pole_figure_plot(
-                    symmetry=symmetry,
-                    direction=direction,
-                    hemisphere=hemisphere,
+                    symmetry=symmetry, direction=direction, hemisphere=hemisphere
                 )
             else:
-                axes = figure.axes
+                axes = np.asarray(figure.axes)
 
             for ax in axes:
                 ax.scatter(self, **kwargs)
