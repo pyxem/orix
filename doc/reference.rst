@@ -165,6 +165,9 @@ plot
 .. autosummary::
     AxAnglePlot
     CrystalMapPlot
+    DirectionColorKeyTSL
+    InversePoleFigurePlot
+    IPFColorKeyTSL
     RodriguesPlot
     RotationPlot
     StereographicPlot
@@ -188,6 +191,46 @@ CrystalMapPlot
     :members:
     :undoc-members:
     :show-inheritance:
+
+DirectionColorKeyTSL
+--------------------
+.. currentmodule:: orix.plot.DirectionColorKeyTSL
+.. autosummary::
+    direction2color
+    plot
+.. autoclass:: orix.plot.DirectionColorKeyTSL
+    :members: direction2color, plot
+    :undoc-members:
+    :show-inheritance:
+
+    .. automethod:: __init__
+
+InversePoleFigurePlot
+---------------------
+.. currentmodule:: orix.plot.InversePoleFigurePlot
+.. autosummary::
+    scatter
+    show_hemisphere_label
+    text
+.. autoclass:: orix.plot.InversePoleFigurePlot
+    :members: hemisphere, name, scatter, show_hemisphere_label, text
+    :undoc-members:
+    :show-inheritance:
+
+    .. automethod:: __init__
+
+IPFColorKeyTSL
+--------------
+.. currentmodule:: orix.plot.IPFColorKeyTSL
+.. autosummary::
+    orientation2color
+    plot
+.. autoclass:: orix.plot.IPFColorKeyTSL
+    :members: direction_color_key, orientation2color, plot
+    :undoc-members:
+    :show-inheritance:
+
+    .. automethod:: __init__
 
 RodriguesPlot
 -------------

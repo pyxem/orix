@@ -30,11 +30,43 @@ from orix.vector import Vector3d
 
 
 class DirectionColorKeyTSL(DirectionColorKey):
+    """Assign colors to (crystal) directions rotated by crystal
+    orientations and projected into an inverse pole figure, according to
+    the Laue symmetry of the crystal.
+
+    This is based on the TSL color key implemented in MTEX.
+    """
+
     def __init__(self, symmetry):
+        """Create an inverse pole figure (IPF) color key to color
+        crystal directions according to a Laue symmetry's fundamental
+        sector (IPF).
+
+        Parameters
+        ----------
+        symmetry : orix.quaternion.Symmetry
+            (Laue) symmetry of the crystal. If a non-Laue symmetry
+            is given, the Laue symmetry of that symmetry will be used.
+        """
         laue_symmetry = symmetry.laue
         super().__init__(laue_symmetry)
 
     def direction2color(self, direction):
+        """Return an RGB color per orientation given a Laue symmetry
+        and a sample direction.
+
+        Plot the inverse pole figure color key with :meth:`plot`.
+
+        Parameters
+        ----------
+        direction : orix.vector.Vector3d
+            Directions to color.
+
+        Returns
+        -------
+        rgb : numpy.ndarray
+            Color array of shape `direction.shape` + (3,).
+        """
         laue_group = self.symmetry
         h = direction.in_fundamental_sector(laue_group)
         azimuth, polar = polar_coordinates_in_sector(laue_group.fundamental_sector, h)
@@ -42,6 +74,18 @@ class DirectionColorKeyTSL(DirectionColorKey):
         return rgb_from_polar_coordinates(azimuth, polar)
 
     def plot(self, return_figure=False):
+        """Plot the inverse pole figure color key.
+
+        Parameters
+        ----------
+        return_figure : bool, optional
+            Whether to return the figure. Default is False.
+
+        Returns
+        -------
+        figure : matplotlib.figure.Figure
+            Color key figure, returned if `return_figure` is True.
+        """
         from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
 
         laue_group = self.symmetry

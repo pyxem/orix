@@ -26,16 +26,22 @@ class IPFColorKeyTSL(IPFColorKey):
     the Laue symmetry of the crystal.
 
     This is based on the TSL color key implemented in MTEX.
-
-    Attributes
-    ----------
-    symmetry : orix.quaternion.Symmetry
-        Laue symmetry of the crystal.
-    direction : orix.vector.Vector3d
-        Sample direction.
     """
 
     def __init__(self, symmetry, direction=None):
+        """Create an inverse pole figure (IPF) color key to color
+        orientations according a sample direction and a Laue symmetry's
+        fundamental sector (IPF).
+
+        Parameters
+        ----------
+        symmetry : orix.quaternion.Symmetry
+            (Laue) symmetry of the crystal. If a non-Laue symmetry
+            is given, the Laue symmetry of that symmetry will be used.
+        direction : orix.vector.Vector3d, optional
+            Sample direction. If not given, sample Z direction (out of
+            plane) is used.
+        """
         super().__init__(symmetry.laue, direction=direction)
 
     @property
@@ -43,6 +49,21 @@ class IPFColorKeyTSL(IPFColorKey):
         return DirectionColorKeyTSL(self.symmetry)
 
     def orientation2color(self, orientation):
+        """Return an RGB color per orientation given a Laue symmetry
+        and a sample direction.
+
+        Plot the inverse pole figure color key with :meth:`plot`.
+
+        Parameters
+        ----------
+        orientation : orix.quaternion.Orientation
+            Orientations to color.
+
+        Returns
+        -------
+        rgb : numpy.ndarray
+            Color array of shape `orientation.shape` + (3,).
+        """
         # TODO: Take crystal axes into account, by using Miller instead
         #  of Vector3d
         m = orientation * self.direction
@@ -56,5 +77,10 @@ class IPFColorKeyTSL(IPFColorKey):
         ----------
         return_figure : bool, optional
             Whether to return the figure. Default is False.
+
+        Returns
+        -------
+        figure : matplotlib.figure.Figure
+            Color key figure, returned if `return_figure` is True.
         """
         return self.direction_color_key.plot(return_figure=return_figure)
