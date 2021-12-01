@@ -21,6 +21,20 @@ from orix.plot.direction_color_keys import DirectionColorKeyTSL
 
 
 class IPFColorKeyTSL(IPFColorKey):
+    """Assign colors to crystal directions rotated by crystal
+    orientations and projected into an inverse pole figure, according to
+    the Laue symmetry of the crystal.
+
+    This is based on the TSL color key implemented in MTEX.
+
+    Attributes
+    ----------
+    symmetry : orix.quaternion.Symmetry
+        Laue symmetry of the crystal.
+    direction : orix.vector.Vector3d
+        Sample direction.
+    """
+
     def __init__(self, symmetry, direction=None):
         super().__init__(symmetry.laue, direction=direction)
 
@@ -29,11 +43,18 @@ class IPFColorKeyTSL(IPFColorKey):
         return DirectionColorKeyTSL(self.symmetry)
 
     def orientation2color(self, orientation):
-        # Doesn't take crystal axes into account! Should be Miller, not
-        # Vector3d as it is now.
+        # TODO: Take crystal axes into account, by using Miller instead
+        #  of Vector3d
         m = orientation * self.direction
         rgb = self.direction_color_key.direction2color(m)
         return rgb
 
     def plot(self, return_figure=False):
+        """Plot the inverse pole figure color key.
+
+        Parameters
+        ----------
+        return_figure : bool, optional
+            Whether to return the figure. Default is False.
+        """
         return self.direction_color_key.plot(return_figure=return_figure)

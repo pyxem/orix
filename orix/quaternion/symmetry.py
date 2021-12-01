@@ -613,7 +613,7 @@ point_group_aliases = {
 def _get_laue_group_name(name):
     if name in ["1", "-1"]:
         return "-1"
-    elif name in ["211", "121", "112", "m11", "1m1", "11m", "2/m"]:
+    elif name in ["2", "211", "121", "112", "m11", "1m1", "11m", "2/m"]:
         return "2/m"
     elif name in ["222", "mm2", "mmm"]:
         return "mmm"

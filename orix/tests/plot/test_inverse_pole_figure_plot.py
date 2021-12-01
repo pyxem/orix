@@ -85,6 +85,7 @@ class TestInversePoleFigurePlot:
             )
 
         plt.close("all")
+        plt.rcParams["axes.grid"] = True
 
     def test_setup_inverse_pole_figure_plot(self):
         # Default parameters

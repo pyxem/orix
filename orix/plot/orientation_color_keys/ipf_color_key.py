@@ -44,12 +44,12 @@ class IPFColorKey(abc.ABC):
     @property
     @abc.abstractmethod
     def direction_color_key(self):
-        return NotImplemented
+        return NotImplemented  # pragma: no cover
 
     @abc.abstractmethod
     def orientation2color(self, *args, **kwargs):
-        return NotImplemented
+        return NotImplemented  # pragma: no cover
 
     @abc.abstractmethod
     def plot(self, *args, **kwargs):
-        return NotImplemented
+        return NotImplemented  # pragma: no cover
