@@ -34,6 +34,13 @@ from orix.vector import Miller, Vector3d
 
 
 class InversePoleFigurePlot(StereographicPlot):
+    """Inverse pole figure plot of :class:`~orix.vector.Vector3d`, which
+    is a stereographic plot for showing sample directions with respect
+    to a crystal reference frame.
+
+    Inherits from :class:`~orix.plot.StereographicPlot`.
+    """
+
     name = "ipf"
 
     def __init__(
@@ -44,6 +51,31 @@ class InversePoleFigurePlot(StereographicPlot):
         hemisphere=None,
         **kwargs,
     ):
+        """Create an inverse pole figure axis for plotting
+        :class:`~orix.vector.Vector3d`.
+
+        Parameters
+        ----------
+        args
+            Arguments passed to
+            :meth:`orix.plot.StereographicPlot.__init__`.
+        symmetry : ~orix.quaternion.Symmetry, optional
+            Laue group symmetry of crystal to plot directions with. If
+            not given, point group C1 (only identity rotation) is used.
+        direction : ~orix.vector.Vector3d, optional
+            Sample direction to plot with respect to crystal directions.
+            If not given, the out of plane direction, sample Z, is used.
+        hemisphere : str, optional
+            Which hemisphere(s) to plot the vectors in. If not given,
+            "upper" is used. Options are "upper", "lower", and "both",
+            which plots two projections side by side.
+        hemisphere : str, optional
+            Which hemisphere to plot vectors in, either "upper"
+            (default) or "lower".
+        kwargs
+            Keyword arguments passed to
+            :meth:`orix.plot.StereographicPlot.__init__`.
+        """
         super().__init__(*args, **kwargs)
 
         if hemisphere is not None:
@@ -57,19 +89,19 @@ class InversePoleFigurePlot(StereographicPlot):
             symmetry = C1
         self._symmetry = symmetry
 
-        fs = self._symmetry.fundamental_sector
-        self.restrict_to_sector(fs)
+        self.restrict_to_sector(self._symmetry.fundamental_sector)
 
         self._add_crystal_direction_labels()
 
     @property
     def _edge_patch(self):
+        """Easy access to the fundamental sector border patch."""
         patches = self.patches
         return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
 
     def scatter(self, *args, **kwargs):
-        vc = self._pretransform_input_ipf(args)
-        super().scatter(vc, **kwargs)
+        crystal_directions = self._pretransform_input_ipf(args)
+        super().scatter(crystal_directions, **kwargs)
 
     def show_hemisphere_label(self, **kwargs):
         """Add a hemisphere label ("upper"/"lower") to the upper left
@@ -141,6 +173,29 @@ class InversePoleFigurePlot(StereographicPlot):
                 maxes.Axes.text(self, xi, yi, s=label, va=va, ha=ha, **text_kw)
 
     def _pretransform_input_ipf(self, values):
+        """Return unit vectors within the inverse pole figure from input
+        data.
+
+        A call to
+        :meth:`orix.plot.StereographicPlot._pretransform_input` after
+        this method is required to obtain cartesian coordinates to pass
+        to Matplotlib's methods.
+
+        Parameters
+        ----------
+        values : tuple of numpy.ndarray, Orientation, or Vector3d
+            Spherical coordinates (azimuth, polar), orientations, or
+            vectors. If spherical coordinates are given, they are
+            assumed to describe unit vectors. Vectors will be made into
+            unit vectors if they aren't already. If orientations are
+            passed, the crystal directions returned are the sample
+            direction rotated by the orientations.
+
+        Returns
+        -------
+        v : Vector3d
+            Crystal directions.
+        """
         if len(values) == 2:  # (Azimuth, polar)
             v = Vector3d.from_polar(azimuth=values[0], polar=values[1])
         elif isinstance(values[0], Vector3d):
@@ -200,13 +255,9 @@ def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
 
     figure = plt.figure()
     axes = []
+    subplot_kw = dict(projection="ipf", symmetry=symmetry)
     for i in range(n_plots):
-        subplot_kw = dict(
-            projection="ipf",
-            symmetry=symmetry,
-            direction=direction[i],
-            hemisphere=hemisphere[i],
-        )
+        subplot_kw.update(dict(direction=direction[i], hemisphere=hemisphere[i]))
         ax = figure.add_subplot(nrows, ncols, i + 1, **subplot_kw)
 
         label_xy = np.column_stack(
@@ -246,7 +297,7 @@ def _get_ipf_title(direction):
     str
     """
     v = Vector3d(((1, 0, 0), (0, 1, 0), (0, 0, 1)))
-    idx = np.where(np.isclose(direction.dot(v).data, 1))[0]
+    idx = np.where(np.isclose(direction.unit.dot(v).data, 1))[0]
     if idx.size != 0:
         return ["x", "y", "z"][idx[0]]
     else:
