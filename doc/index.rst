@@ -24,7 +24,7 @@ Work using orix
 
     crystal_geometry.ipynb
     stereographic_projection.ipynb
-    inverse_pole_figure.ipynb
+    inverse_pole_figures.ipynb
     crystal_map.ipynb
     clustering_across_fundamental_region_boundaries.ipynb
     clustering_orientations.ipynb
