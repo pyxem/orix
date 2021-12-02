@@ -100,6 +100,26 @@ class InversePoleFigurePlot(StereographicPlot):
         return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
 
     def scatter(self, *args, **kwargs):
+        """A scatter plot of sample directions rotated by orientations,
+        or orientations to rotate sample directions with.
+
+        Parameters
+        ----------
+        args : tuple of numpy.ndarray, Orientation, or Vector3d
+            Spherical coordinates (azimuth, polar), orientations, or
+            vectors. If spherical coordinates are given, they are
+            assumed to describe unit vectors. Vectors will be made into
+            unit vectors if they aren't already. If orientations are
+            passed, the crystal directions returned are the sample
+            :attr:`direction` rotated by the orientations.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.scatter`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.scatter
+        """
         crystal_directions = self._pretransform_input_ipf(args)
         super().scatter(crystal_directions, **kwargs)
 
@@ -111,7 +131,7 @@ class InversePoleFigurePlot(StereographicPlot):
         ----------
         kwargs
             Keyword arguments passed to
-            :func:`matplotlib.axes.Axes.text`.
+            :meth:`matplotlib.axes.Axes.text`.
 
         See Also
         --------

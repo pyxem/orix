@@ -285,7 +285,7 @@ class InverseStereographicProjection:
         return Vector3d(np.column_stack([vx, vy, vz]))
 
     def xy2spherical(self, x, y):
-        """Return spherical coordinates, azimuth :math:`phi` and
+        r"""Return spherical coordinates, azimuth :math:`phi` and
         polar :math:`theta`, defined as in the ISO 31-11 standard
         [SphericalWolfram]_, from stereographic coordinates (X, Y).
 

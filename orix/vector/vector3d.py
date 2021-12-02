@@ -497,8 +497,8 @@ class Vector3d(Object3d):
         return self.azimuth, self.polar, self.radial
 
     def in_fundamental_sector(self, symmetry):
-        """Project vectors to the fundamental sector of a symmetry's
-        inverse pole figure.
+        """Project vectors to a symmetry's fundamental sector (inverse
+        pole figure).
 
         This projection is taken from MTEX'
         :code:`project2fundamentalRegion`.
@@ -506,6 +506,7 @@ class Vector3d(Object3d):
         Parameters
         ----------
         symmetry : ~orix.quaternion.Symmetry
+            Symmetry with a fundamental sector.
 
         Returns
         -------

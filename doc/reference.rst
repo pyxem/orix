@@ -534,6 +534,7 @@ Vector3d
     from_polar
     get_circle
     get_nearest
+    in_fundamental_sector
     mean
     rotate
     scatter
