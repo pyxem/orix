@@ -29,7 +29,7 @@ class TestFundamentalSector:
         fs = FundamentalSector(v)
 
         assert fs.vertices.size == 6
-        assert np.allclose(fs.center.data, [[0.439, 0.2465, 0.6631]], atol=1e-3)
+        assert np.allclose(fs.center.data, [[0.534, 0.322, 0.534]], atol=1e-3)
 
     def test_edges(self):
         edge_steps = 1000

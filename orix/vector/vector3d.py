@@ -496,6 +496,55 @@ class Vector3d(Object3d):
         """
         return self.azimuth, self.polar, self.radial
 
+    def in_fundamental_sector(self, symmetry):
+        """Project vectors to a symmetry's fundamental sector (inverse
+        pole figure).
+
+        This projection is taken from MTEX'
+        :code:`project2fundamentalRegion`.
+
+        Parameters
+        ----------
+        symmetry : ~orix.quaternion.Symmetry
+            Symmetry with a fundamental sector.
+
+        Returns
+        -------
+        Vector3d
+        """
+        fs = symmetry.fundamental_sector
+        v = deepcopy(self)
+
+        center = fs.center
+        if center.size == 0:
+            return v
+
+        if symmetry.name in ["321", "312", "32", "-4"]:
+            idx = v.z < 0
+            vv = symmetry[-1] * v[idx]
+            if vv.size != 0:
+                v[idx] = vv
+            rot = symmetry[:3]
+        elif symmetry.name == "-3":
+            idx = v.z < 0
+            vv = symmetry[3] * v[idx]
+            if vv.size != 0:
+                v[idx] = vv
+            rot = symmetry[:3]
+        else:
+            rot = symmetry
+
+        rotated_centers = rot * center
+        closeness = v.dot_outer(rotated_centers).data.round(12)
+        idx_max = np.argmax(closeness, axis=-1)
+        v2 = ~rot[idx_max] * v
+
+        # Keep the ones already inside the sector
+        mask = v <= fs
+        v2[mask] = v[mask]
+
+        return v2
+
     def get_circle(self, opening_angle=np.pi / 2, steps=100):
         r"""Get vectors delineating great or small circle(s) with a
         given `opening_angle` about each vector.

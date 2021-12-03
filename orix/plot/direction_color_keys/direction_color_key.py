@@ -16,18 +16,27 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Generation of grids on *S2* or *SO(3)* (rotation space)."""
-
-from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
-from orix.sampling.SO3_sampling import uniform_SO3_sample
-from orix.sampling.S2_sampling import sample_S2_cube_mesh, sample_S2_uv_mesh
+import abc
 
 
-# Lists what will be imported when calling "from orix.sampling import *"
-__all__ = [
-    "get_sample_fundamental",
-    "get_sample_local",
-    "sample_S2_cube_mesh",
-    "sample_S2_uv_mesh",
-    "uniform_SO3_sample",
-]
+class DirectionColorKey(abc.ABC):
+    """Assign colors to crystal directions projected into an inverse
+    pole figure.
+
+    This is an abstract class defining properties and methods required
+    in derived classes.
+    """
+
+    def __init__(self, symmetry):
+        self.symmetry = symmetry
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}, symmetry {self.symmetry.name}"
+
+    @abc.abstractmethod
+    def direction2color(self, direction):
+        return NotImplemented  # pragma: no cover
+
+    @abc.abstractmethod
+    def plot(self):
+        return NotImplemented  # pragma: no cover

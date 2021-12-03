@@ -37,6 +37,8 @@ improper rotations. A mirror symmetry is equivalent to a 2-fold rotation
 combined with inversion.
 """
 
+from copy import deepcopy
+
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 
@@ -93,12 +95,15 @@ class Symmetry(Rotation):
     @property
     def laue(self):
         """Symmetry : this group plus inversion."""
-        return Symmetry.from_generators(self, Ci)
+        laue = Symmetry.from_generators(self, Ci)
+        laue.name = _get_laue_group_name(self.name)
+        return laue
 
     @property
     def laue_proper_subgroup(self):
         """Symmetry : the proper subgroup of this group plus
-        inversion."""
+        inversion.
+        """
         return self.laue.proper_subgroup
 
     @property
@@ -162,7 +167,7 @@ class Symmetry(Rotation):
             n = self[self.improper].axis  # Mirror planes
             idx = n.angle_with(-vy) < np.pi / 4
             n[idx] = -n[idx]
-        elif name in ["321", "312", "3m", "-3m1", "6m2"]:
+        elif name in ["321", "312", "3m", "-3m", "6m2"]:
             n = n.rotate(angle=-np.pi / 6)
         elif name == "-42m":
             n = n.rotate(angle=-np.pi / 4)
@@ -183,6 +188,29 @@ class Symmetry(Rotation):
         fs._center = center
 
         return fs
+
+    @property
+    def system(self):
+        """Which of the seven crystal systems this symmetry belongs to
+        as a `str`.
+        """
+        name = self.name
+        if name in ["1", "-1"]:
+            return "triclinic"
+        elif name in ["211", "121", "112", "2", "m11", "1m1", "11m", "m", "2/m"]:
+            return "monoclinic"
+        elif name in ["222", "mm2", "mmm"]:
+            return "orthorhombic"
+        elif name in ["4", "-4", "4/m", "422", "4mm", "-42m", "4/mmm"]:
+            return "tetragonal"
+        elif name in ["3", "-3", "321", "312", "32", "3m", "-3m"]:
+            return "trigonal"
+        elif name in ["6", "-6", "6/m", "622", "6mm", "-6m2", "6/mmm"]:
+            return "hexagonal"
+        elif name in ["23", "m-3", "432", "-43m", "m-3m"]:
+            return "cubic"
+        else:
+            return None
 
     @classmethod
     def from_generators(cls, *generators):
@@ -433,44 +461,44 @@ Oh.name = "m-3m"
 # fmt: off
 _groups = [
     # Schoenflies   Crystal system  International   Laue class
-    C1,   #         Triclinic        1
-    Ci,   #         Triclinic       -1
-    C2x,  #         Monoclinic       211
-    C2y,  #         Monoclinic       121
-    C2z,  #         Monoclinic       112
-    Csx,  #         Monoclinic       m11
-    Csy,  #         Monoclinic       1m1
-    Csz,  #         Monoclinic       11m
-    C2h,  #         Monoclinic       2/m
-    D2,   #         Orthorhombic     222
-    C2v,  #         Orthorhombic     mm2
-    D2h,  #         Orthorhombic     mmm
-    C4,   #         Tetragonal       4
-    S4,   #         Tetragonal      -4
-    C4h,  #         Tetragonal       4/m
-    D4,   #         Tetragonal       422
-    C4v,  #         Tetragonal       4mm
-    D2d,  #         Tetragonal      -42m
-    D4h,  #         Tetragonal       4/mmm
-    C3,   #         Trigonal         3
-    S6,   #         Trigonal        -3
-    D3x,  #         Trigonal         321
-    D3y,  #         Trigonal         312
-    D3,   #         Trigonal         32
-    C3v,  #         Trigonal         3m
-    D3d,  #         Trigonal        -3m
-    C6,   #         Hexagonal        6
-    C3h,  #         Hexagonal       -6
-    C6h,  #         Hexagonal        6/m
-    D6,   #         Hexagonal        622
-    C6v,  #         Hexagonal        6mm
-    D3h,  #         Hexagonal       -6m2
-    D6h,  #         Hexagonal        6/mmm
-    T,    #         Cubic            23
-    Th,   #         Cubic            m-3
-    O,    #         Cubic            432
-    Td,   #         Cubic           -43m
-    Oh,   #         Cubic            m-3m
+    C1,   #         Triclinic        1              -1
+    Ci,   #         Triclinic       -1              -1
+    C2x,  #         Monoclinic       211             2/m
+    C2y,  #         Monoclinic       121             2/m
+    C2z,  #         Monoclinic       112             2/m
+    Csx,  #         Monoclinic       m11             2/m
+    Csy,  #         Monoclinic       1m1             2/m
+    Csz,  #         Monoclinic       11m             2/m
+    C2h,  #         Monoclinic       2/m             2/m
+    D2,   #         Orthorhombic     222             mmm
+    C2v,  #         Orthorhombic     mm2             mmm
+    D2h,  #         Orthorhombic     mmm             mmm
+    C4,   #         Tetragonal       4               4/m
+    S4,   #         Tetragonal      -4               4/m
+    C4h,  #         Tetragonal       4/m             4/m
+    D4,   #         Tetragonal       422             4/mmm
+    C4v,  #         Tetragonal       4mm             4/mmm
+    D2d,  #         Tetragonal      -42m             4/mmm
+    D4h,  #         Tetragonal       4/mmm           4/mmm
+    C3,   #         Trigonal         3              -3
+    S6,   #         Trigonal        -3              -3
+    D3x,  #         Trigonal         321            -3m
+    D3y,  #         Trigonal         312            -3m
+    D3,   #         Trigonal         32             -3m
+    C3v,  #         Trigonal         3m             -3m
+    D3d,  #         Trigonal        -3m             -3m
+    C6,   #         Hexagonal        6               6/m
+    C3h,  #         Hexagonal       -6               6/m
+    C6h,  #         Hexagonal        6/m             6/m
+    D6,   #         Hexagonal        622             6/mmm
+    C6v,  #         Hexagonal        6mm             6/mmm
+    D3h,  #         Hexagonal       -6m2             6/mmm
+    D6h,  #         Hexagonal        6/mmm           6/mmm
+    T,    #         Cubic            23              m-3
+    Th,   #         Cubic            m-3             m-3
+    O,    #         Cubic            432             m-3m
+    Td,   #         Cubic           -43m             m-3m
+    Oh,   #         Cubic            m-3m            m-3m
 ]
 # fmt: on
 _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]
@@ -580,3 +608,30 @@ point_group_aliases = {
     "432": ["43"],
     "m-3m": ["m3m"],
 }
+
+
+def _get_laue_group_name(name):
+    if name in ["1", "-1"]:
+        return "-1"
+    elif name in ["2", "211", "121", "112", "m11", "1m1", "11m", "2/m"]:
+        return "2/m"
+    elif name in ["222", "mm2", "mmm"]:
+        return "mmm"
+    elif name in ["4", "-4", "4/m"]:
+        return "4/m"
+    elif name in ["422", "4mm", "-42m", "4/mmm"]:
+        return "4/mmm"
+    elif name in ["3", "-3"]:
+        return "-3"
+    elif name in ["321", "312", "32", "3m", "-3m"]:
+        return "-3m"
+    elif name in ["6", "-6", "6/m"]:
+        return "6/m"
+    elif name in ["6mm", "-6m2", "6/mmm"]:
+        return "6/mmm"
+    elif name in ["23", "m-3"]:
+        return "m-3"
+    elif name in ["432", "-43m", "m-3m"]:
+        return "m-3m"
+    else:
+        return None

@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.plot import AxAnglePlot, RodriguesPlot
+from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
 from orix.quaternion.symmetry import C1, C2, C3, C4, D2, D3, D6, T, O, Oh
 from orix.scalar import Scalar
@@ -366,20 +366,62 @@ class TestOrientation:
 
         plt.close("all")
 
+    def test_scatter_ipf(self):
+        plt.rcParams["axes.grid"] = False
+
+        vx = Vector3d.xvector()
+        vz = Vector3d.zvector()
+
+        ori = Orientation.from_euler(np.radians((325, 48, 163)))
+        ori.symmetry = Oh
+
+        # Returned figure has the expected default properties
+        fig = ori.scatter("ipf", return_figure=True)
+        axes = fig.axes[0]
+        assert isinstance(axes, InversePoleFigurePlot)
+        assert len(fig.axes) == 1
+        assert axes._direction.dot(vz).data[0] == 1
+        assert axes._hemisphere == "upper"
+
+        # It's possible to add to an existing figure
+        ori2 = ori * ori
+        ori2.symmetry = ori.symmetry
+        fig2 = ori2.scatter("ipf", figure=fig, return_figure=True)
+        assert fig == fig2
+        assert len(axes.collections) == 2
+        # Vectors plotted are inside the fundamental sector
+        x, y = axes.collections[0].get_offsets().data.squeeze()
+        v1 = axes._projection.inverse.xy2vector(x, y)
+        assert v1 < ori.symmetry.fundamental_sector
+
+        # Passing multiple directions yields multiple plots
+        fig3 = ori.scatter(
+            "ipf", direction=Vector3d.stack((vx, vz)), return_figure=True
+        )
+        assert len(fig3.axes) == 2
+
+        # Plotting an IPF defined by a sector with vertices on both
+        # sides of the equator yields two axes
+        ori.symmetry = C4
+        fig4 = ori.scatter("ipf", return_figure=True)
+        axes4 = fig4.axes
+        assert len(axes4) == 2
+        # Vector not visible in the lower hemisphere
+        assert len(axes4[1].collections) == 0
+        x, y = axes4[0].collections[0].get_offsets().data.squeeze()
+        v2 = axes4[0]._projection.inverse.xy2vector(x, y)
+        assert v2 < ori.symmetry.fundamental_sector
+
+        plt.close("all")
+
 
 def test_set_symmetry_deprecation_warning_orientation():
     o = Orientation.random((3, 2))
-    with pytest.warns(
-        np.VisibleDeprecationWarning,
-        match="Function `set_symmetry()",
-    ):
+    with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
         _ = o.set_symmetry(C2)
 
 
 def test_set_symmetry_deprecation_warning_misorientation():
     o = Misorientation.random((3, 2))
-    with pytest.warns(
-        np.VisibleDeprecationWarning,
-        match="Function `set_symmetry()",
-    ):
+    with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
         _ = o.set_symmetry(C2, C2)

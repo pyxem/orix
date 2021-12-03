@@ -22,6 +22,11 @@ Added
 - `ndim` attribute to Object3d and derived classes which returns number of navigation
   dimensions.
 - Setting the symmetry of a (Mis)Orientation via a `symmetry.setter`.
+- Projection of vectors into the fundamental sector (inverse pole figure) of a symmetry.
+- Plotting of orientations within an inverse pole figure given a Laue symmetry and
+  sample direction.
+- Inverse pole figure colouring of orientations given a Laue symmetry and sample
+  direction.
 
 Changed
 -------
