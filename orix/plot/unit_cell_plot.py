@@ -47,6 +47,11 @@ class Arrow3D(FancyArrowPatch):
         #     self.axes.plot3D(0, 0, 0, m="o")
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
         FancyArrowPatch.draw(self, renderer)
+        zorder = 1
+        return zorder
+
+    # matplotlib>=3.5 compatibility
+    do_3d_projection = draw
 
 
 def _plot_unit_cell(rotation, c=None, axes_length=0.5, **arrow_kwargs):
@@ -83,7 +88,7 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, **arrow_kwargs):
         arrow = Arrow3D(*_data, color=colors[i], **arrow_kwargs)
         ax.add_artist(arrow)
 
-        ax.text3D(*_data[:, 1], labels[i])
+        ax.text3D(*_data[:, 1], f"${labels[i]}_s$")  # s for sample
 
     # add crystal reference frame axes and labels
     for i, v in enumerate(Vector3d(np.eye(3))):
@@ -93,7 +98,7 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, **arrow_kwargs):
             (0, v1[0]), (0, v1[1]), (0, v1[2]), color=colors[i], **arrow_kwargs
         )
         ax.add_artist(arrow)
-        ax.text3D(*v1, labels[i])
+        ax.text3D(*v1, f"${labels[i]}_c$")  # c for crystal
 
     if c is None:
         c = "tab:blue"
