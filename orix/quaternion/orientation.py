@@ -620,13 +620,15 @@ class Orientation(Misorientation):
 
         return Scalar(angles)
 
-    def plot_unit_cell(self, c=None, return_figure=False):
+    def plot_unit_cell(
+        self, c=None, return_figure=False, axes_length=0.5, **arrow_kwargs
+    ):
         if self.size > 1:
             raise ValueError("Can only plot a single unit cell, so *size* must be 1")
 
         from orix.plot.unit_cell_plot import _plot_unit_cell
 
-        fig = _plot_unit_cell(self, c=c)
+        fig = _plot_unit_cell(self, c=c, axes_length=axes_length, **arrow_kwargs)
 
         if return_figure:
             return fig

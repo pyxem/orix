@@ -27,20 +27,76 @@ import numpy as np
 
 from orix.vector import Vector3d
 
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
+import numpy as np
 
-def _plot_unit_cell(rotation, c=None):
+from orix.vector import Vector3d
+
+# taken from SO post https://stackoverflow.com/a/22867877/12063126
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
+        # no in plane projection, ie. vector is vertical
+        # if np.allclose(np.flatten((xs, ys)), 0):
+        #     self.axes.plot3D(0, 0, 0, m="o")
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        FancyArrowPatch.draw(self, renderer)
+
+
+def _plot_unit_cell(rotation, c=None, axes_length=0.5, **arrow_kwargs):
     # TODO: More than only cubic
-    # TODO: Add reference frame axes
     d = [-1, 1]
     xlim, ylim, zlim = (max(d),) * 3
 
     fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
     ax.axis("off")
     ax.set_box_aspect((xlim, ylim, zlim))
-    ax.set_xlim(-xlim, xlim)
-    ax.set_ylim(-ylim, ylim)
-    ax.set_zlim(-zlim, zlim)
+
+    offset = -1.5
+    ax.set_xlim(offset, -offset)
+    ax.set_ylim(offset, -offset)
+    ax.set_zlim(offset, -offset)
     ax.margins(0, 0, 0)
+
+    # default projection to +x -> east/right, +y -> north/upwards, +z out-of-page
+    ax.azim = -90
+    ax.elev = 90 - 1e-6  # add small offset to avoid arrow3D projection errors
+
+    # axes colors from ParaView and TomViz
+    colors = ("tab:red", "yellow", "tab:green")
+    labels = ("x", "y", "z")
+
+    arrow_kwargs.setdefault("mutation_scale", 20)
+    arrow_kwargs.setdefault("arrowstyle", "-")
+
+    # add lab reference frame axes and labels
+    for i in range(3):
+        _data = np.full((3, 2), offset)
+        _data[i, 1] += axes_length
+
+        arrow = Arrow3D(*_data, color=colors[i], **arrow_kwargs)
+        ax.add_artist(arrow)
+
+        ax.text3D(*_data[:, 1], labels[i])
+
+    # add crystal reference frame axes and labels
+    for i, v in enumerate(Vector3d(np.eye(3))):
+        # rotate vector
+        v1 = (rotation * v * axes_length).data.ravel()
+        arrow = Arrow3D(
+            (0, v1[0]), (0, v1[1]), (0, v1[2]), color=colors[i], **arrow_kwargs
+        )
+        ax.add_artist(arrow)
+        ax.text3D(*v1, labels[i])
+
+    if c is None:
+        c = "tab:blue"
 
     for s, e in combinations(np.array(list(product(d, d, d))), 2):
         if np.sum(np.abs(s - e)) == (d[1] - d[0]):
