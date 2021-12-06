@@ -79,6 +79,7 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, **arrow_kwargs):
 
     arrow_kwargs.setdefault("mutation_scale", 20)
     arrow_kwargs.setdefault("arrowstyle", "-")
+    arrow_kwargs.setdefault("linewidth", 2)
 
     # add lab reference frame axes and labels
     for i in range(3):
@@ -93,12 +94,12 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, **arrow_kwargs):
     # add crystal reference frame axes and labels
     for i, v in enumerate(Vector3d(np.eye(3))):
         # rotate vector
-        v1 = (rotation * v * axes_length).data.ravel()
-        arrow = Arrow3D(
-            (0, v1[0]), (0, v1[1]), (0, v1[2]), color=colors[i], **arrow_kwargs
-        )
+        v1 = (rotation * v).data.ravel() * axes_length
+        _data = (np.zeros((3, 2)).T + (-xlim, -ylim, -zlim)).T
+        _data[:, 1] += v1
+        arrow = Arrow3D(*_data, color=colors[i], **arrow_kwargs)
         ax.add_artist(arrow)
-        ax.text3D(*v1, f"${labels[i]}_c$")  # c for crystal
+        ax.text3D(*_data[:, 1], f"${labels[i]}_c$")  # c for
 
     if c is None:
         c = "tab:blue"
