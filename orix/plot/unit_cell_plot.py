@@ -30,6 +30,7 @@ from orix.vector import Vector3d
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 import numpy as np
+from diffpy.structure import Structure
 
 from orix.vector import Vector3d
 
@@ -54,19 +55,51 @@ class Arrow3D(FancyArrowPatch):
     do_3d_projection = draw
 
 
-def _plot_unit_cell(rotation, c=None, axes_length=0.5, **arrow_kwargs):
+def _calculate_basic_unit_cell_vertices(a1, a2, a3, alpha=90, beta=90, gamma=90):
+    verts = np.array(list(product(*zip((0, 0, 0), (a1, a2, a3)))))
+    center = verts.mean(axis=0)
+    return verts - center  # center on (0, 0, 0)
+
+
+def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
+    verts = _calculate_basic_unit_cell_vertices(a1, a2, a3)
+    # get valid edges from all unit cell egde possibilities unit cell
+    edges_valid = [
+        (s, e)
+        for s, e in combinations(verts, 2)
+        if np.isclose((a1, a2, a3), np.linalg.norm(s - e)).any()
+    ]
+    return np.array(edges_valid)
+
+
+def _plot_unit_cell(rotation, c=None, axes_length=0.5, structure=None, **arrow_kwargs):
     # TODO: More than only cubic
-    d = [-1, 1]
-    xlim, ylim, zlim = (max(d),) * 3
+    # introduce some basic non-cubic cell functionality
+
+    if structure is None:
+        a1, a2, a3 = 2, 2, 2
+    else:
+        # TODO: add some Structure support
+        assert isinstance(structure, Structure)
+        raise NotImplementedError
+
+    verts = _calculate_basic_unit_cell_vertices(a1, a2, a3)
+    edges = _calculate_basic_unit_cell_edges(verts, a1, a2, a3)
+    edges_rotated = rotation * Vector3d(edges)
 
     fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
     ax.axis("off")
-    ax.set_box_aspect((xlim, ylim, zlim))
+    ax.set_box_aspect((1, 1, 1))  # equal aspect
 
-    offset = -1.5
-    ax.set_xlim(offset, -offset)
-    ax.set_ylim(offset, -offset)
-    ax.set_zlim(offset, -offset)
+    # xrange, yrange, zrange = np.ptp(verts, axis=0)
+    xmax, ymax, zmax = np.max(np.abs(verts), axis=0)
+    lim = max(xmax, ymax, zmax)
+
+    pad = 1.5
+    axlim = pad * lim
+    ax.set_xlim(-axlim, axlim)
+    ax.set_ylim(-axlim, axlim)
+    ax.set_zlim(-axlim, axlim)
     ax.margins(0, 0, 0)
 
     # default projection to +x -> east/right, +y -> north/upwards, +z out-of-page
@@ -83,31 +116,45 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, **arrow_kwargs):
 
     # add lab reference frame axes and labels
     for i in range(3):
-        _data = np.full((3, 2), offset)
+        _data = np.full((3, 2), -1.4 * lim)  # less padding than axlim
         _data[i, 1] += axes_length
-
-        arrow = Arrow3D(*_data, color=colors[i], **arrow_kwargs)
+        _label = labels[i]
+        arrow = Arrow3D(
+            *_data,
+            color=colors[i],
+            label=f"Sample reference axes {_label}",
+            **arrow_kwargs,
+        )
         ax.add_artist(arrow)
+        ax.text3D(
+            *_data[:, 1], f"${_label}_s$", label=f"Sample reference axes label {_label}"
+        )  # s for sample
 
-        ax.text3D(*_data[:, 1], f"${labels[i]}_s$")  # s for sample
+    if c is None:
+        c = "tab:blue"
+
+    for i, (v1, v2) in enumerate(edges_rotated.data):
+        ax.plot3D(*zip(v1, v2), c=c, label=f"Lattice edge {i}")
 
     # add crystal reference frame axes and labels
     for i, v in enumerate(Vector3d(np.eye(3))):
         # rotate vector
         v1 = (rotation * v).data.ravel() * axes_length
-        _data = (np.zeros((3, 2)).T + (-xlim, -ylim, -zlim)).T
+        v0r = rotation * Vector3d(verts[0])  # offset axes to sit on crystal origin
+        _data = (np.zeros((3, 2)).T + v0r.data).T
         _data[:, 1] += v1
-        arrow = Arrow3D(*_data, color=colors[i], **arrow_kwargs)
+        _label = labels[i]
+        arrow = Arrow3D(
+            *_data,
+            color=colors[i],
+            label=f"Crystal reference axes {_label}",
+            **arrow_kwargs,
+        )
         ax.add_artist(arrow)
-        ax.text3D(*_data[:, 1], f"${labels[i]}_c$")  # c for
-
-    if c is None:
-        c = "tab:blue"
-
-    for s, e in combinations(np.array(list(product(d, d, d))), 2):
-        if np.sum(np.abs(s - e)) == (d[1] - d[0]):
-            vs = rotation * Vector3d(s)
-            ve = rotation * Vector3d(e)
-            ax.plot3D(*zip(vs.data.squeeze(), ve.data.squeeze()), c=c)
+        ax.text3D(
+            *_data[:, 1],
+            f"${_label}_c$",
+            label=f"Crystal reference axes label {_label}",
+        )  # c for crystal
 
     return fig
