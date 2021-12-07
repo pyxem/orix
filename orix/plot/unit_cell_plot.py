@@ -140,9 +140,13 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, structure=None, **arrow_k
     for i, v in enumerate(Vector3d(np.eye(3))):
         # rotate vector
         v1 = (rotation * v).data.ravel() * axes_length
-        v0r = rotation * Vector3d(verts[0])  # offset axes to sit on crystal origin
-        _data = (np.zeros((3, 2)).T + v0r.data).T
+        # setup verts for reference axes
+        _data = np.zeros((3, 2))
         _data[:, 1] += v1
+        # rotate cell origin into new position
+        v0r = rotation * Vector3d(verts[0])
+        # offset axes to sit on cell origin
+        _data = (_data.T + v0r.data).T
         _label = labels[i]
         arrow = Arrow3D(
             *_data,
