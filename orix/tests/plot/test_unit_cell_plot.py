@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from packaging import version
+
 import pytest
+from matplotlib import __version__ as _MPL_VERSION
 
 from diffpy.structure import Structure, Lattice
 from orix.quaternion import Orientation
@@ -29,7 +32,10 @@ def test_unit_cell_plot_default():
     axes = fig.axes[0]
     assert len(axes.lines) == 12  # 12 edges in orthorhombic unit cell
     # 6 Arrow3D -> 3 for both sample and crystal reference frames
-    assert len(axes.patches) == 6
+    if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
+        assert len(axes.patches) == 6
+    else:
+        assert len(axes.artists) == 6
     # test default projection
     assert axes.azim == -90
     assert round(axes.elev) == 90
