@@ -30,7 +30,7 @@ from orix.vector import Vector3d
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 import numpy as np
-from diffpy.structure import Structure
+from diffpy.structure import Structure, Lattice
 
 from orix.vector import Vector3d
 
@@ -91,8 +91,9 @@ def _plot_unit_cell(
     axes_length : float, optional
         Length of the reference axes, by default 0.5.
     structure : diffpy.structure.Structure or None, optional
-        Structure of the unit cell, by default None, in which case a cubic unit cell
-        with lattice parameter a=2 will be plotted.
+        Structure of the unit cell, only orthorhombic lattices are currently
+        supported. By default None, in which case a cubic unit cell with lattice
+        parameter a=2 will be plotted.
     **arrow_kwargs : dict, optional
         Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
 
@@ -101,21 +102,21 @@ def _plot_unit_cell(
     fig: matplotlib.figure.Figure
         The plotted figure.
 
-    Raises
-    ------
-    NotImplementedError
-        structure other than None is currently not implemented.
 
     """
     # TODO: More than only cubic
     # introduce some basic non-cubic cell functionality
-
     if structure is None:
-        a1, a2, a3 = 2, 2, 2
-    else:
-        # TODO: add some Structure support
-        assert isinstance(structure, Structure)
-        raise NotImplementedError
+        structure = Structure(lattice=Lattice(2, 2, 2, 90, 90, 90))
+
+    assert isinstance(
+        structure, Structure
+    ), "Structure must be diffpy.structure.Structure."
+    lattice = structure.lattice
+    assert (
+        lattice.alpha == lattice.beta == lattice.gamma == 90
+    ), "Only orthorhombic lattices are currently supported."
+    a1, a2, a3 = lattice.a, lattice.b, lattice.c
 
     verts = _calculate_basic_unit_cell_vertices(a1, a2, a3)
     edges = _calculate_basic_unit_cell_edges(verts, a1, a2, a3)
