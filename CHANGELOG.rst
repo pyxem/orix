@@ -27,6 +27,10 @@ Added
   sample direction.
 - Inverse pole figure colouring of orientations given a Laue symmetry and sample
   direction.
+- Simple unit cell orientation plotting with `plot_unit_cell` for `Orientation`
+  instances.
+- Interactive notebook demonstrating how Euler angles change the unit cell orientation
+  within the sample reference frame.
 
 Changed
 -------
