@@ -76,7 +76,9 @@ def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
     return np.array(edges_valid)
 
 
-def _plot_unit_cell(rotation, c=None, axes_length=0.5, structure=None, **arrow_kwargs):
+def _plot_unit_cell(
+    rotation, c="tab:blue", axes_length=0.5, structure=None, **arrow_kwargs
+):
     """Plot unit cell orientation.
     TODO: define rotation reference frame (active vs passive).
 
@@ -85,19 +87,19 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, structure=None, **arrow_k
     rotation : orix.quaternion.Rotation
         Rotation of the unit cell (TODO).
     c : str, optional
-        Unit cell edge color, by default None.
+        Unit cell edge color.
     axes_length : float, optional
         Length of the reference axes, by default 0.5.
     structure : diffpy.structure.Structure or None, optional
         Structure of the unit cell, by default None, in which case a cubic unit cell
-        will be plotted.
-    arrow_kwargs: dict
+        with lattice parameter a=2 will be plotted.
+    **arrow_kwargs : dict, optional
         Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
 
     Returns
     -------
     fig: matplotlib.figure.Figure
-
+        The plotted figure.
 
     Raises
     ------
@@ -160,10 +162,7 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, structure=None, **arrow_k
         ax.add_artist(arrow)
         ax.text3D(
             *_data[:, 1], f"${_label}_s$", label=f"Sample reference axes label {_label}"
-        )  # s for sample
-
-    if c is None:
-        c = "tab:blue"
+        )  # _s for sample
 
     for i, (v1, v2) in enumerate(edges_rotated.data):
         ax.plot3D(*zip(v1, v2), c=c, label=f"Lattice edge {i}")
@@ -191,6 +190,6 @@ def _plot_unit_cell(rotation, c=None, axes_length=0.5, structure=None, **arrow_k
             *_data[:, 1],
             f"${_label}_c$",
             label=f"Crystal reference axes label {_label}",
-        )  # c for crystal
+        )  # _c for crystal
 
     return fig

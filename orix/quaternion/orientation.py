@@ -621,8 +621,37 @@ class Orientation(Misorientation):
         return Scalar(angles)
 
     def plot_unit_cell(
-        self, c=None, return_figure=False, axes_length=0.5, **arrow_kwargs
+        self, c="tab:blue", return_figure=False, axes_length=0.5, **arrow_kwargs
     ):
+        """Plot unit cell orientation.
+
+        Parameters
+        ----------
+        c : str, optional
+            Unit cell edge color.
+        return_figure : bool, optional
+            Return the plotted figure.
+        axes_length : float, optional
+            Length of the reference axes, by default 0.5.
+        structure : diffpy.structure.Structure or None, optional
+            Structure of the unit cell, by default None, in which case a cubic unit cell
+            with lattice parameter a=2 will be plotted.
+        **arrow_kwargs : dict, optional
+            Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
+
+        Returns
+        -------
+        fig: matplotlib.figure.Figure
+            The plotted figure.
+
+        Raises
+        ------
+        NotImplementedError
+            Structure other than None is currently not implemented.
+        ValueError
+            If self.size > 1.
+
+        """
         if self.size > 1:
             raise ValueError("Can only plot a single unit cell, so *size* must be 1")
 
