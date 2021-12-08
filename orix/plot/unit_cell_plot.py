@@ -113,9 +113,8 @@ def _plot_unit_cell(
         structure, Structure
     ), "Structure must be diffpy.structure.Structure."
     lattice = structure.lattice
-    assert (
-        lattice.alpha == lattice.beta == lattice.gamma == 90
-    ), "Only orthorhombic lattices are currently supported."
+    if not (lattice.alpha == lattice.beta == lattice.gamma == 90):
+        raise ValueError("Only orthorhombic lattices are currently supported.")
     a1, a2, a3 = lattice.a, lattice.b, lattice.c
 
     verts = _calculate_basic_unit_cell_vertices(a1, a2, a3)
