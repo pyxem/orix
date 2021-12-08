@@ -35,6 +35,12 @@ def test_unit_cell_plot_default():
     assert round(axes.elev) == 90
 
 
+def test_unit_cell_plot_multiple_orientations_raises():
+    ori = Orientation.random((2,))
+    with pytest.raises(ValueError, match="Can only plot a single unit cell"):
+        ori.plot_unit_cell()
+
+
 def test_unit_cell_plot_orthorhombic():
     ori = Orientation.random()
     lattice = Lattice(1, 2, 3, 90, 90, 90)
