@@ -36,6 +36,8 @@ from orix.vector import Vector3d
 
 # taken from SO post https://stackoverflow.com/a/22867877/12063126
 class Arrow3D(FancyArrowPatch):
+    "Matplotlib arrows in 3D."
+
     def __init__(self, xs, ys, zs, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
         self._verts3d = xs, ys, zs
@@ -55,13 +57,15 @@ class Arrow3D(FancyArrowPatch):
     do_3d_projection = draw
 
 
-def _calculate_basic_unit_cell_vertices(a1, a2, a3, alpha=90, beta=90, gamma=90):
+def _calculate_basic_unit_cell_vertices(a1, a2, a3):
+    """Calculate cell vertices for orthorhomic unit cells."""
     verts = np.array(list(product(*zip((0, 0, 0), (a1, a2, a3)))))
     center = verts.mean(axis=0)
     return verts - center  # center on (0, 0, 0)
 
 
 def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
+    """Calculate valid unit cell edges for orthorhombic until cells."""
     verts = _calculate_basic_unit_cell_vertices(a1, a2, a3)
     # get valid edges from all unit cell egde possibilities unit cell
     edges_valid = [
@@ -73,6 +77,34 @@ def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
 
 
 def _plot_unit_cell(rotation, c=None, axes_length=0.5, structure=None, **arrow_kwargs):
+    """Plot unit cell orientation.
+    TODO: define rotation reference frame (active vs passive).
+
+    Parameters
+    ----------
+    rotation : orix.quaternion.Rotation
+        Rotation of the unit cell (TODO).
+    c : str, optional
+        Unit cell edge color, by default None.
+    axes_length : float, optional
+        Length of the reference axes, by default 0.5.
+    structure : diffpy.structure.Structure or None, optional
+        Structure of the unit cell, by default None, in which case a cubic unit cell
+        will be plotted.
+    arrow_kwargs: dict
+        Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
+
+    Returns
+    -------
+    fig: matplotlib.figure.Figure
+
+
+    Raises
+    ------
+    NotImplementedError
+        structure other than None is currently not implemented.
+
+    """
     # TODO: More than only cubic
     # introduce some basic non-cubic cell functionality
 
