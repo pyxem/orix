@@ -89,7 +89,7 @@ def _plot_unit_cell(
     c : str, optional
         Unit cell edge color.
     axes_length : float, optional
-        Length of the reference axes, by default 0.5.
+        Length of the reference axes in Angstroms, by default 0.5.
     structure : diffpy.structure.Structure or None, optional
         Structure of the unit cell, only orthorhombic lattices are currently
         supported. By default None, in which case a cubic unit cell with lattice
