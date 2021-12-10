@@ -80,12 +80,11 @@ def _plot_unit_cell(
     rotation, c="tab:blue", axes_length=0.5, structure=None, **arrow_kwargs
 ):
     """Plot unit cell orientation.
-    TODO: define rotation reference frame (active vs passive).
 
     Parameters
     ----------
     rotation : orix.quaternion.Rotation
-        Rotation of the unit cell (TODO).
+        Active rotation of the unit cell.
     c : str, optional
         Unit cell edge color.
     axes_length : float, optional

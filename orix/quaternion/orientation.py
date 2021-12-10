@@ -661,8 +661,10 @@ class Orientation(Misorientation):
 
         from orix.plot.unit_cell_plot import _plot_unit_cell
 
+        # _plot_unit_cell requires active rotation of the unit cell
+        # => invert passive orientation (~self)
         fig = _plot_unit_cell(
-            self, c=c, axes_length=axes_length, structure=structure, **arrow_kwargs
+            ~self, c=c, axes_length=axes_length, structure=structure, **arrow_kwargs
         )
 
         if return_figure:
