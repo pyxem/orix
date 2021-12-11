@@ -74,7 +74,7 @@ def _plot_unit_cell(
 
     Returns
     -------
-    fig: matplotlib.figure.Figure
+    fig : matplotlib.figure.Figure
         The plotted figure.
 
 
