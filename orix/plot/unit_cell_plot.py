@@ -67,7 +67,9 @@ def _plot_unit_cell(
         Structure of the unit cell, only orthorhombic lattices are currently
         supported. If not given, a cubic unit cell with a lattice parameter of 2
         will be plotted.
-    **arrow_kwargs : dict, optional
+    arrow_kwargs : dict, optional
+        Keyword arguments passed to
+        :class:`matplotlib.patches.FancyArrowPatch`, for example"arrowstyle".
         Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
 
     Returns
