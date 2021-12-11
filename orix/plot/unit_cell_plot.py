@@ -53,7 +53,7 @@ def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
 def _plot_unit_cell(
     rotation, c="tab:blue", axes_length=0.5, structure=None, **arrow_kwargs
 ):
-    """Plot unit cell orientation.
+    """Plot a unit cell orientation, also showing the sample and crystal reference frames.
 
     Parameters
     ----------
