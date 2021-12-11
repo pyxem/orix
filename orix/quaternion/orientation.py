@@ -626,6 +626,7 @@ class Orientation(Misorientation):
         return_figure=False,
         axes_length=0.5,
         structure=None,
+        crystal_reference_frame_axes_position="origin",
         **arrow_kwargs,
     ):
         """Plot the unit cell orientation, showing the sample and
@@ -641,8 +642,11 @@ class Orientation(Misorientation):
             Length of the reference axes in Angstroms, by default 0.5.
         structure : diffpy.structure.Structure or None, optional
             Structure of the unit cell, only orthorhombic lattices are currently
-            supported. By default None, in which case a cubic unit cell with lattice
-            parameter a=2 will be plotted.
+            supported. If not given, a cubic unit cell with a lattice parameter of
+            2 Angstroms will be plotted.
+        crystal_reference_frame_axes_position : str, optional
+            Plot the crystal reference frame axes at the "origin" or "center" of the
+            plotted cell.
         **arrow_kwargs : dict, optional
             Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
 
@@ -662,7 +666,12 @@ class Orientation(Misorientation):
         from orix.plot.unit_cell_plot import _plot_unit_cell
 
         fig = _plot_unit_cell(
-            self, c=c, axes_length=axes_length, structure=structure, **arrow_kwargs
+            self,
+            c=c,
+            axes_length=axes_length,
+            structure=structure,
+            crystal_reference_frame_axes_position=crystal_reference_frame_axes_position,
+            **arrow_kwargs,
         )
 
         if return_figure:

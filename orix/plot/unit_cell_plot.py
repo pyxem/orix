@@ -51,7 +51,12 @@ def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
 
 
 def _plot_unit_cell(
-    rotation, c="tab:blue", axes_length=0.5, structure=None, **arrow_kwargs
+    rotation,
+    c="tab:blue",
+    axes_length=0.5,
+    structure=None,
+    crystal_reference_frame_axes_position="origin",
+    **arrow_kwargs,
 ):
     """Plot the unit cell orientation, showing the sample and crystal reference frames.
 
@@ -65,12 +70,14 @@ def _plot_unit_cell(
         Length of the reference axes in Angstroms, by default 0.5.
     structure : diffpy.structure.Structure or None, optional
         Structure of the unit cell, only orthorhombic lattices are currently
-        supported. If not given, a cubic unit cell with a lattice parameter of 2
-        will be plotted.
+        supported. If not given, a cubic unit cell with a lattice parameter of
+        2 Angstroms will be plotted.
+    crystal_reference_frame_axes_position : str, optional
+        Plot the crystal reference frame axes at the "origin" or "center" of the
+        plotted cell.
     arrow_kwargs : dict, optional
         Keyword arguments passed to
         :class:`matplotlib.patches.FancyArrowPatch`, for example"arrowstyle".
-        Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
 
     Returns
     -------
@@ -79,6 +86,14 @@ def _plot_unit_cell(
     """
     # requires active rotation of the lattice in the sample reference frame
     rotation = ~rotation
+
+    crystal_reference_frame_axes_position = (
+        crystal_reference_frame_axes_position.lower()
+    )
+    if not crystal_reference_frame_axes_position in ("origin", "center"):
+        raise ValueError(
+            'Crystal_reference_frame_axes_position must be either "origin" or "center".'
+        )
     # TODO: More than only cubic
     # introduce some basic non-cubic cell functionality
     if structure is None:
@@ -144,7 +159,11 @@ def _plot_unit_cell(
 
     # add crystal reference frame axes and labels
     v_ref_ax = rotation * Vector3d(np.eye(3))
-    cell_origin = Vector3d(verts[0])
+    if crystal_reference_frame_axes_position == "origin":  # cell origin
+        crys_ref_ax_origin = Vector3d(verts[0])
+    else:
+        crys_ref_ax_origin = Vector3d(np.zeros(3))
+
     for i, v in enumerate(v_ref_ax):
         # rotate vector
         v1 = v.data.ravel() * axes_length
@@ -152,7 +171,7 @@ def _plot_unit_cell(
         data = np.zeros((3, 2))
         data[:, 1] += v1
         # rotate cell origin into new position
-        cell_origin_rotated = rotation * cell_origin
+        cell_origin_rotated = rotation * crys_ref_ax_origin
         # offset axes to sit on cell origin
         data = (data.T + cell_origin_rotated.data).T
         label = labels[i]
