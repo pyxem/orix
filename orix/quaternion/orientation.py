@@ -628,7 +628,8 @@ class Orientation(Misorientation):
         structure=None,
         **arrow_kwargs,
     ):
-        """Plot unit cell orientation.
+        """Plot the unit cell orientation, showing the sample and
+        crystal reference frames.
 
         Parameters
         ----------
@@ -654,17 +655,14 @@ class Orientation(Misorientation):
         ------
         ValueError
             If self.size > 1.
-
         """
         if self.size > 1:
             raise ValueError("Can only plot a single unit cell, so *size* must be 1")
 
         from orix.plot.unit_cell_plot import _plot_unit_cell
 
-        # _plot_unit_cell requires active rotation of the unit cell
-        # => invert passive orientation (~self)
         fig = _plot_unit_cell(
-            ~self, c=c, axes_length=axes_length, structure=structure, **arrow_kwargs
+            self, c=c, axes_length=axes_length, structure=structure, **arrow_kwargs
         )
 
         if return_figure:

@@ -53,7 +53,7 @@ def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
 def _plot_unit_cell(
     rotation, c="tab:blue", axes_length=0.5, structure=None, **arrow_kwargs
 ):
-    """Plot a unit cell orientation, also showing the sample and crystal reference frames.
+    """Plot the unit cell orientation, showing the sample and crystal reference frames.
 
     Parameters
     ----------
@@ -74,9 +74,9 @@ def _plot_unit_cell(
     -------
     fig: matplotlib.figure.Figure
         The plotted figure.
-
-
     """
+    # requires active rotation of the lattice in the sample reference frame
+    rotation = ~rotation
     # TODO: More than only cubic
     # introduce some basic non-cubic cell functionality
     if structure is None:
@@ -133,9 +133,10 @@ def _plot_unit_cell(
             **arrow_kwargs,
         )
         ax.add_artist(arrow)
+        # _s for sample
         ax.text3D(
             *_data[:, 1], f"${_label}_s$", label=f"Sample reference axes label {_label}"
-        )  # _s for sample
+        )
 
     for i, (v1, v2) in enumerate(edges_rotated.data):
         ax.plot3D(*zip(v1, v2), c=c, label=f"Lattice edge {i}")
@@ -159,10 +160,11 @@ def _plot_unit_cell(
             **arrow_kwargs,
         )
         ax.add_artist(arrow)
+        # _c for crystal
         ax.text3D(
             *_data[:, 1],
             f"${_label}_c$",
             label=f"Crystal reference axes label {_label}",
-        )  # _c for crystal
+        )
 
     return fig
