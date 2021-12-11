@@ -20,6 +20,7 @@ from packaging import version
 
 from diffpy.structure import Lattice, Structure
 from matplotlib import __version__ as _MPL_VERSION
+import numpy as np
 import pytest
 
 from orix.quaternion import Orientation
@@ -60,3 +61,41 @@ def test_unit_cell_plot_nonorthorhombic_raises():
     structure = Structure(lattice=lattice)
     with pytest.raises(ValueError, match="Only orthorhombic lattices"):
         fig = ori.plot_unit_cell(return_figure=True, structure=structure)
+
+
+def test_unit_cell_plot_crystal_reference_axes_position_center():
+    ori = Orientation.identity()
+    lattice = Lattice(2, 2, 2, 90, 90, 90)
+    structure = Structure(lattice=lattice)
+    # test cell center
+    fig = ori.plot_unit_cell(
+        return_figure=True,
+        structure=structure,
+        crystal_reference_frame_axes_position="center",
+    )
+    if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
+        arrows = fig.axes[0].patches
+    else:
+        arrows = fig.axes[0].artists
+    crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
+    crys_ref_ax_data = np.concatenate([np.array(a._verts3d) for a in crys_ref_ax])
+    assert np.allclose(crys_ref_ax_data[:, 0], 0)
+
+
+def test_unit_cell_plot_crystal_reference_axes_position_origin():
+    ori = Orientation.identity()
+    lattice = Lattice(2, 2, 2, 90, 90, 90)
+    structure = Structure(lattice=lattice)
+    # test cell center
+    fig = ori.plot_unit_cell(
+        return_figure=True,
+        structure=structure,
+        crystal_reference_frame_axes_position="origin",
+    )
+    if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
+        arrows = fig.axes[0].patches
+    else:
+        arrows = fig.axes[0].artists
+    crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
+    crys_ref_ax_data = np.concatenate([np.array(a._verts3d) for a in crys_ref_ax])
+    assert np.allclose(crys_ref_ax_data[:, 0], -1)
