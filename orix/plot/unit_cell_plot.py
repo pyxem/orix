@@ -41,11 +41,12 @@ def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
     """Calculate valid unit cell edges for orthorhombic until cells."""
     verts = _calculate_basic_unit_cell_vertices(a1, a2, a3)
     # get valid edges from all unit cell egde possibilities unit cell
-    edges_valid = [
-        (s, e)
-        for s, e in combinations(verts, 2)
-        if np.isclose((a1, a2, a3), np.linalg.norm(s - e)).any()
-    ]
+    edges_valid = []
+    # for all possible combinations of vertices, keep if the distance between them is
+    # equal to any of the basis vectors
+    for v1, v2 in combinations(verts, 2):
+        if np.isclose((a1, a2, a3), np.linalg.norm(v2 - v1)).any():
+            edges_valid.append((v1, v2))
     return np.array(edges_valid)
 
 

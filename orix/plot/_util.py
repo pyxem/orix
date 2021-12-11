@@ -24,7 +24,8 @@ class Arrow3D(FancyArrowPatch):
     """Matplotlib arrows in 3D with arrowheads.
 
     Taken from this Stackoverflow answer by user CT Zhu
-    https://stackoverflow.com/a/22867877/12063126."""
+    https://stackoverflow.com/a/22867877/12063126.
+    """
 
     def __init__(self, xs, ys, zs, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
