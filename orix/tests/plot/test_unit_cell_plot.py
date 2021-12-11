@@ -18,10 +18,10 @@
 
 from packaging import version
 
-import pytest
+from diffpy.structure import Lattice, Structure
 from matplotlib import __version__ as _MPL_VERSION
+import pytest
 
-from diffpy.structure import Structure, Lattice
 from orix.quaternion import Orientation
 
 
