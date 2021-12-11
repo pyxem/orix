@@ -20,9 +20,11 @@ from packaging import version
 
 from diffpy.structure import Lattice, Structure
 from matplotlib import __version__ as _MPL_VERSION
+from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
+from orix.plot._util import Arrow3D
 from orix.quaternion import Orientation
 
 
@@ -109,3 +111,10 @@ def test_unit_cell_plot_crystal_reference_axes_position_raises():
         ValueError, match="Crystal_reference_frame_axes_position must be either"
     ):
         ori.plot_unit_cell(crystal_reference_frame_axes_position="test")
+
+
+def test_arrow3D():
+    fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
+    a = Arrow3D((0, 1), (0, 1), (0, 1), arrowstyle="-|>", mutation_scale=20)
+    ax.add_artist(a)
+    plt.draw()
