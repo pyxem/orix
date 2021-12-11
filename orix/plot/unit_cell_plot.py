@@ -58,7 +58,7 @@ def _plot_unit_cell(
     Parameters
     ----------
     rotation : orix.quaternion.Rotation
-        Active rotation of the unit cell.
+        Rotation of the unit cell.
     c : str, optional
         Unit cell edge color.
     axes_length : float, optional
