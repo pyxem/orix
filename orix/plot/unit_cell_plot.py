@@ -100,7 +100,6 @@ def _plot_unit_cell(
     ax.axis("off")
     ax.set_box_aspect((1, 1, 1))  # equal aspect
 
-    # xrange, yrange, zrange = np.ptp(verts, axis=0)
     xmax, ymax, zmax = np.max(np.abs(verts), axis=0)
     lim = max(xmax, ymax, zmax)
 
@@ -125,48 +124,48 @@ def _plot_unit_cell(
 
     # add lab reference frame axes and labels
     for i in range(3):
-        _data = np.full((3, 2), -1.4 * lim)  # less padding than axlim
-        _data[i, 1] += axes_length
-        _label = labels[i]
+        data = np.full((3, 2), -1.4 * lim)  # less padding than axlim
+        data[i, 1] += axes_length
+        label = labels[i]
         arrow = Arrow3D(
-            *_data,
+            *data,
             color=colors[i],
-            label=f"Sample reference axes {_label}",
+            label=f"Sample reference axes {label}",
             **arrow_kwargs,
         )
         ax.add_artist(arrow)
         # _s for sample
         ax.text3D(
-            *_data[:, 1], f"${_label}_s$", label=f"Sample reference axes label {_label}"
+            *data[:, 1], f"${label}_s$", label=f"Sample reference axes label {label}"
         )
 
     for i, (v1, v2) in enumerate(edges_rotated.data):
         ax.plot3D(*zip(v1, v2), c=c, label=f"Lattice edge {i}")
 
     # add crystal reference frame axes and labels
-    for i, v in enumerate(Vector3d(np.eye(3))):
+    v_ref_ax = rotation * Vector3d(np.eye(3))
+    cell_origin = Vector3d(verts[0])
+    for i, v in enumerate(v_ref_ax):
         # rotate vector
-        v1 = (rotation * v).data.ravel() * axes_length
+        v1 = v.data.ravel() * axes_length
         # setup verts for reference axes
-        _data = np.zeros((3, 2))
-        _data[:, 1] += v1
+        data = np.zeros((3, 2))
+        data[:, 1] += v1
         # rotate cell origin into new position
-        v0r = rotation * Vector3d(verts[0])
+        cell_origin_rotated = rotation * cell_origin
         # offset axes to sit on cell origin
-        _data = (_data.T + v0r.data).T
-        _label = labels[i]
+        data = (data.T + cell_origin_rotated.data).T
+        label = labels[i]
         arrow = Arrow3D(
-            *_data,
+            *data,
             color=colors[i],
-            label=f"Crystal reference axes {_label}",
+            label=f"Crystal reference axes {label}",
             **arrow_kwargs,
         )
         ax.add_artist(arrow)
         # _c for crystal
         ax.text3D(
-            *_data[:, 1],
-            f"${_label}_c$",
-            label=f"Crystal reference axes label {_label}",
+            *data[:, 1], f"${label}_c$", label=f"Crystal reference axes label {label}"
         )
 
     return fig
