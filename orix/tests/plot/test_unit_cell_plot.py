@@ -65,7 +65,8 @@ def test_unit_cell_plot_nonorthorhombic_raises():
 
 def test_unit_cell_plot_crystal_reference_axes_position_center():
     ori = Orientation.identity()
-    lattice = Lattice(2, 2, 2, 90, 90, 90)
+    a1, a2, a3 = 1, 1.5, 2
+    lattice = Lattice(a1, a2, a3, 90, 90, 90)
     structure = Structure(lattice=lattice)
     # test cell center
     fig = ori.plot_unit_cell(
@@ -78,13 +79,14 @@ def test_unit_cell_plot_crystal_reference_axes_position_center():
     else:
         arrows = fig.axes[0].artists
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
-    crys_ref_ax_data = np.concatenate([np.array(a._verts3d) for a in crys_ref_ax])
-    assert np.allclose(crys_ref_ax_data[:, 0], 0)
+    crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
+    assert np.allclose(crys_ref_ax_data[:, :, 0], 0)
 
 
 def test_unit_cell_plot_crystal_reference_axes_position_origin():
     ori = Orientation.identity()
-    lattice = Lattice(2, 2, 2, 90, 90, 90)
+    a1, a2, a3 = 1, 1.5, 2
+    lattice = Lattice(a1, a2, a3, 90, 90, 90)
     structure = Structure(lattice=lattice)
     # test cell center
     fig = ori.plot_unit_cell(
@@ -97,5 +99,5 @@ def test_unit_cell_plot_crystal_reference_axes_position_origin():
     else:
         arrows = fig.axes[0].artists
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
-    crys_ref_ax_data = np.concatenate([np.array(a._verts3d) for a in crys_ref_ax])
-    assert np.allclose(crys_ref_ax_data[:, 0], -1)
+    crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
+    assert np.allclose(crys_ref_ax_data[:, :, 0] + np.array((a1, a2, a3)) / 2, 0)
