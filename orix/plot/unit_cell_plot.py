@@ -65,8 +65,8 @@ def _plot_unit_cell(
         Length of the reference axes in Angstroms, by default 0.5.
     structure : diffpy.structure.Structure or None, optional
         Structure of the unit cell, only orthorhombic lattices are currently
-        supported. By default None, in which case a cubic unit cell with lattice
-        parameter a=2 will be plotted.
+        supported. If not given, a cubic unit cell with a lattice parameter of 2
+        will be plotted.
     **arrow_kwargs : dict, optional
         Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
 
