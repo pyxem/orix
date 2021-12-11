@@ -53,7 +53,7 @@ def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
 def _plot_unit_cell(
     rotation, c="tab:blue", axes_length=0.5, structure=None, **arrow_kwargs
 ):
-    """Plot unit cell orientation.
+    """Plot a unit cell orientation, also showing the sample and crystal reference frames.
 
     Parameters
     ----------
@@ -65,8 +65,8 @@ def _plot_unit_cell(
         Length of the reference axes in Angstroms, by default 0.5.
     structure : diffpy.structure.Structure or None, optional
         Structure of the unit cell, only orthorhombic lattices are currently
-        supported. By default None, in which case a cubic unit cell with lattice
-        parameter a=2 will be plotted.
+        supported. If not given, a cubic unit cell with a lattice parameter of 2
+        will be plotted.
     **arrow_kwargs : dict, optional
         Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
 
