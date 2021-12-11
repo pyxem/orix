@@ -22,15 +22,11 @@ orientation.
 
 from itertools import combinations, product
 
-import matplotlib.pyplot as plt
-import numpy as np
-
-from orix.vector import Vector3d
-
+from diffpy.structure import Structure, Lattice
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
+import matplotlib.pyplot as plt
 import numpy as np
-from diffpy.structure import Structure, Lattice
 
 from orix.vector import Vector3d
 
