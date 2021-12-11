@@ -16,15 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-# taken from SO post https://stackoverflow.com/a/22867877/12063126
-
-
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
 
 class Arrow3D(FancyArrowPatch):
-    "Matplotlib arrows in 3D."
+    """Matplotlib arrows in 3D with arrowheads.
+
+    Taken from this Stackoverflow answer by user CT Zhu
+    https://stackoverflow.com/a/22867877/12063126."""
 
     def __init__(self, xs, ys, zs, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
