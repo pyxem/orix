@@ -101,3 +101,11 @@ def test_unit_cell_plot_crystal_reference_axes_position_origin():
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
     crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
     assert np.allclose(crys_ref_ax_data[:, :, 0] + np.array((a1, a2, a3)) / 2, 0)
+
+
+def test_unit_cell_plot_crystal_reference_axes_position_raises():
+    ori = Orientation.identity()
+    with pytest.raises(
+        ValueError, match="Crystal_reference_frame_axes_position must be either"
+    ):
+        ori.plot_unit_cell(crystal_reference_frame_axes_position="test")
