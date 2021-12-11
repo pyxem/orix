@@ -77,7 +77,7 @@ def _plot_unit_cell(
         plotted cell.
     arrow_kwargs : dict, optional
         Keyword arguments passed to
-        :class:`matplotlib.patches.FancyArrowPatch`, for example"arrowstyle".
+        :class:`matplotlib.patches.FancyArrowPatch`, for example "arrowstyle".
 
     Returns
     -------

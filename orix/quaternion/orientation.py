@@ -647,8 +647,9 @@ class Orientation(Misorientation):
         crystal_reference_frame_axes_position : str, optional
             Plot the crystal reference frame axes at the "origin" or "center" of the
             plotted cell.
-        **arrow_kwargs : dict, optional
-            Passed to matplotlib.patches.FancyArrowPatch, for example 'arrowstyle'.
+        arrow_kwargs : dict, optional
+            Keyword arguments passed to
+            :class:`matplotlib.patches.FancyArrowPatch`, for example "arrowstyle".
 
         Returns
         -------
