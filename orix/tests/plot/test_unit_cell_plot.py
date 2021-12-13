@@ -43,6 +43,7 @@ def test_unit_cell_plot_default():
     assert axes.azim == -90
     assert round(axes.elev) == 90
 
+    plt.close("all")
 
 def test_unit_cell_plot_multiple_orientations_raises():
     ori = Orientation.random((2,))
