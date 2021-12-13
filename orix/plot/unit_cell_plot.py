@@ -84,8 +84,8 @@ def _plot_unit_cell(
         supported. If not given, a cubic unit cell with a lattice parameter of
         2 Angstroms will be plotted.
     crystal_reference_frame_axes_position : str, optional
-        Plot the crystal reference frame axes at the "origin" or "center" of the
-        plotted cell.
+        Plot the crystal reference frame axes at the "origin" (default) or
+        "center" of the plotted cell.
     arrow_kwargs : dict, optional
         Keyword arguments passed to
         :class:`matplotlib.patches.FancyArrowPatch`, for example "arrowstyle".
