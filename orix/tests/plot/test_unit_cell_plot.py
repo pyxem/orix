@@ -57,7 +57,7 @@ def test_unit_cell_plot_orthorhombic():
     ori = Orientation.random()
     lattice = Lattice(1, 2, 3, 90, 90, 90)
     structure = Structure(lattice=lattice)
-    fig = ori.plot_unit_cell(return_figure=True, structure=structure)
+    _ = ori.plot_unit_cell(return_figure=True, structure=structure)
 
 
 def test_unit_cell_plot_hexagonal():
