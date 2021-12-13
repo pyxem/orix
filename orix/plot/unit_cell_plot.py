@@ -96,7 +96,7 @@ def _plot_unit_cell(
         The plotted figure.
     """
     # requires active rotation of the lattice in the sample reference frame
-    rotation = ~rotation
+    inv_rotation = ~rotation
 
     crystal_axes_loc = crystal_axes_loc.lower()
     if not crystal_axes_loc in ("origin", "center"):
@@ -114,7 +114,7 @@ def _plot_unit_cell(
 
     verts = _calculate_basic_unit_cell_vertices(lattice_vectors)
     edges = _calculate_basic_unit_cell_edges(verts, lattice_vectors)
-    edges_rotated = rotation * Vector3d(edges)
+    edges_rotated = inv_rotation * Vector3d(edges)
 
     fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
     ax.axis("off")
@@ -163,7 +163,7 @@ def _plot_unit_cell(
         ax.plot3D(*zip(v1, v2), c=c, label=f"Lattice edge {i}")
 
     # add crystal reference frame axes and labels
-    v_ref_ax = rotation * Vector3d(np.eye(3))
+    v_ref_ax = inv_rotation * Vector3d(np.eye(3))
     if crystal_axes_loc == "origin":  # cell origin
         crys_ref_ax_origin = Vector3d(verts[0])
     else:
@@ -176,7 +176,7 @@ def _plot_unit_cell(
         data = np.zeros((3, 2))
         data[:, 1] += v1
         # rotate cell origin into new position
-        cell_origin_rotated = rotation * crys_ref_ax_origin
+        cell_origin_rotated = inv_rotation * crys_ref_ax_origin
         # offset axes to sit on cell origin
         data = (data.T + cell_origin_rotated.data).T
         label = labels[i]
