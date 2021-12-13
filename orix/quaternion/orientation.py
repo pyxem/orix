@@ -626,7 +626,7 @@ class Orientation(Misorientation):
         return_figure=False,
         axes_length=0.5,
         structure=None,
-        crystal_reference_frame_axes_position="origin",
+        crystal_axes_loc="origin",
         **arrow_kwargs,
     ):
         """Plot the unit cell orientation, showing the sample and
@@ -644,9 +644,9 @@ class Orientation(Misorientation):
             Structure of the unit cell, only orthorhombic lattices are currently
             supported. If not given, a cubic unit cell with a lattice parameter of
             2 Angstroms will be plotted.
-        crystal_reference_frame_axes_position : str, optional
-            Plot the crystal reference frame axes at the "origin" or "center" of the
-            plotted cell.
+        crystal_axes_loc : str, optional
+            Plot the crystal reference frame axes at the "origin" (default) or
+            "center" of the plotted cell.
         arrow_kwargs : dict, optional
             Keyword arguments passed to
             :class:`matplotlib.patches.FancyArrowPatch`, for example "arrowstyle".
@@ -671,7 +671,7 @@ class Orientation(Misorientation):
             c=c,
             axes_length=axes_length,
             structure=structure,
-            crystal_reference_frame_axes_position=crystal_reference_frame_axes_position,
+            crystal_axes_loc=crystal_axes_loc,
             **arrow_kwargs,
         )
 

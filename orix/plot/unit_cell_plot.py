@@ -66,7 +66,7 @@ def _plot_unit_cell(
     c="tab:blue",
     axes_length=0.5,
     structure=None,
-    crystal_reference_frame_axes_position="origin",
+    crystal_axes_loc="origin",
     **arrow_kwargs,
 ):
     """Plot the unit cell orientation, showing the sample and crystal reference frames.
@@ -83,7 +83,7 @@ def _plot_unit_cell(
         Structure of the unit cell, only orthorhombic lattices are currently
         supported. If not given, a cubic unit cell with a lattice parameter of
         2 Angstroms will be plotted.
-    crystal_reference_frame_axes_position : str, optional
+    crystal_axes_loc : str, optional
         Plot the crystal reference frame axes at the "origin" (default) or
         "center" of the plotted cell.
     arrow_kwargs : dict, optional
@@ -98,13 +98,9 @@ def _plot_unit_cell(
     # requires active rotation of the lattice in the sample reference frame
     rotation = ~rotation
 
-    crystal_reference_frame_axes_position = (
-        crystal_reference_frame_axes_position.lower()
-    )
-    if not crystal_reference_frame_axes_position in ("origin", "center"):
-        raise ValueError(
-            'Crystal_reference_frame_axes_position must be either "origin" or "center".'
-        )
+    crystal_axes_loc = crystal_axes_loc.lower()
+    if not crystal_axes_loc in ("origin", "center"):
+        raise ValueError('Crystal_axes_loc must be either "origin" or "center".')
     # TODO: More than only cubic
     # introduce some basic non-cubic cell functionality
     if structure is None:
@@ -168,7 +164,7 @@ def _plot_unit_cell(
 
     # add crystal reference frame axes and labels
     v_ref_ax = rotation * Vector3d(np.eye(3))
-    if crystal_reference_frame_axes_position == "origin":  # cell origin
+    if crystal_axes_loc == "origin":  # cell origin
         crys_ref_ax_origin = Vector3d(verts[0])
     else:
         crys_ref_ax_origin = Vector3d(np.zeros(3))

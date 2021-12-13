@@ -42,6 +42,7 @@ def test_unit_cell_plot_default():
     # test default projection
     assert axes.azim == -90
     assert round(axes.elev) == 90
+    plt.close("all")
 
     plt.close("all")
 
@@ -49,6 +50,7 @@ def test_unit_cell_plot_multiple_orientations_raises():
     ori = Orientation.random((2,))
     with pytest.raises(ValueError, match="Can only plot a single unit cell"):
         ori.plot_unit_cell()
+    plt.close("all")
 
 
 def test_unit_cell_plot_orthorhombic():
@@ -65,6 +67,7 @@ def test_unit_cell_plot_hexagonal():
     fig = ori.plot_unit_cell(return_figure=True, structure=structure)
     axes = fig.axes[0]
     assert len(axes.lines) == 12  # 12 edges in orthorhombic unit cell
+    plt.close("all")
 
 
 def test_unit_cell_plot_crystal_reference_axes_position_center():
@@ -76,7 +79,7 @@ def test_unit_cell_plot_crystal_reference_axes_position_center():
     fig = ori.plot_unit_cell(
         return_figure=True,
         structure=structure,
-        crystal_reference_frame_axes_position="center",
+        crystal_axes_loc="center",
     )
     if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
         arrows = fig.axes[0].patches
@@ -85,6 +88,7 @@ def test_unit_cell_plot_crystal_reference_axes_position_center():
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
     crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
     assert np.allclose(crys_ref_ax_data[:, :, 0], 0)
+    plt.close("all")
 
 
 def test_unit_cell_plot_crystal_reference_axes_position_origin():
@@ -96,7 +100,7 @@ def test_unit_cell_plot_crystal_reference_axes_position_origin():
     fig = ori.plot_unit_cell(
         return_figure=True,
         structure=structure,
-        crystal_reference_frame_axes_position="origin",
+        crystal_axes_loc="origin",
     )
     if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
         arrows = fig.axes[0].patches
@@ -105,14 +109,14 @@ def test_unit_cell_plot_crystal_reference_axes_position_origin():
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
     crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
     assert np.allclose(crys_ref_ax_data[:, :, 0] + np.array((a1, a2, a3)) / 2, 0)
+    plt.close("all")
 
 
 def test_unit_cell_plot_crystal_reference_axes_position_raises():
     ori = Orientation.identity()
-    with pytest.raises(
-        ValueError, match="Crystal_reference_frame_axes_position must be either"
-    ):
-        ori.plot_unit_cell(crystal_reference_frame_axes_position="test")
+    with pytest.raises(ValueError, match="Crystal_axes_loc must be either"):
+        ori.plot_unit_cell(crystal_axes_loc="test")
+    plt.close("all")
 
 
 def test_arrow3D():
@@ -120,3 +124,4 @@ def test_arrow3D():
     a = Arrow3D((0, 1), (0, 1), (0, 1), arrowstyle="-|>", mutation_scale=20)
     ax.add_artist(a)
     plt.draw()
+    plt.close("all")
