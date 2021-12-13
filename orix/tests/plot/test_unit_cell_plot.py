@@ -46,6 +46,7 @@ def test_unit_cell_plot_default():
 
     plt.close("all")
 
+
 def test_unit_cell_plot_multiple_orientations_raises():
     ori = Orientation.random((2,))
     with pytest.raises(ValueError, match="Can only plot a single unit cell"):
@@ -120,7 +121,7 @@ def test_unit_cell_plot_crystal_reference_axes_position_raises():
 
 
 def test_arrow3D():
-    fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
+    _, ax = plt.subplots(subplot_kw=dict(projection="3d"))
     a = Arrow3D((0, 1), (0, 1), (0, 1), arrowstyle="-|>", mutation_scale=20)
     ax.add_artist(a)
     plt.draw()
