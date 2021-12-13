@@ -57,12 +57,13 @@ def test_unit_cell_plot_orthorhombic():
     fig = ori.plot_unit_cell(return_figure=True, structure=structure)
 
 
-def test_unit_cell_plot_nonorthorhombic_raises():
+def test_unit_cell_plot_hexagonal():
     ori = Orientation.random()
-    lattice = Lattice(1, 2, 3, 90, 91, 90)
+    lattice = Lattice(1, 1, 2, 90, 90, 120)
     structure = Structure(lattice=lattice)
-    with pytest.raises(ValueError, match="Only orthorhombic lattices"):
-        fig = ori.plot_unit_cell(return_figure=True, structure=structure)
+    fig = ori.plot_unit_cell(return_figure=True, structure=structure)
+    axes = fig.axes[0]
+    assert len(axes.lines) == 12  # 12 edges in orthorhombic unit cell
 
 
 def test_unit_cell_plot_crystal_reference_axes_position_center():

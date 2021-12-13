@@ -30,21 +30,33 @@ from orix.vector import Vector3d
 from orix.plot._util import Arrow3D
 
 
-def _calculate_basic_unit_cell_vertices(a1, a2, a3):
-    """Calculate cell vertices for orthorhomic unit cells."""
-    verts = np.array(list(product(*zip((0, 0, 0), (a1, a2, a3)))))
+def _calculate_basic_unit_cell_vertices(vectors):
+    """Calculate cell vertices for unit cells."""
+    vectors = np.asarray(vectors)
+    assert vectors.shape == (3, 3), "Vectors must be (3, 3) array."
+    # generate list of lattice basis vectors from (000) to (111) (positive only)
+    verts = np.array(list(product(*zip((0, 0, 0), (1, 1, 1)))))
+    verts = (verts[..., np.newaxis] * vectors).sum(axis=1)
     center = verts.mean(axis=0)
     return verts - center  # center on (0, 0, 0)
 
 
-def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
-    """Calculate valid unit cell edges for orthorhombic until cells."""
+def _calculate_basic_unit_cell_edges(verts, vectors):
+    """Calculate valid unit cell edges for unit cells."""
+    vectors = np.asarray(vectors)
+    assert vectors.shape == (3, 3), "Vectors must be (3, 3) array."
+    a1, a2, a3 = np.linalg.norm(vectors, axis=-1)
     # get valid edges from all unit cell egde possibilities unit cell
     edges_valid = []
     # for all possible combinations of vertices, keep if the distance between them is
     # equal to any of the basis vectors
     for v1, v2 in combinations(verts, 2):
         if np.isclose((a1, a2, a3), np.linalg.norm(v2 - v1)).any():
+            # extra case for hexagonal unit cells, do not plot (0000)-(11-20) edge
+            # in hexagonal cells the 120 degree angle is between vectors[0] and [1]
+            # if xy of (v2 - v1) is equal to xy of vectors[0] + vectors[1] -> skip
+            if np.isclose((v2 - v1)[:-1], (vectors[0] + vectors[1])[:-1]).all():
+                continue
             edges_valid.append((v1, v2))
     return np.array(edges_valid)
 
@@ -102,17 +114,14 @@ def _plot_unit_cell(
         structure, Structure
     ), "Structure must be diffpy.structure.Structure."
     lattice = structure.lattice
-    if not (lattice.alpha == lattice.beta == lattice.gamma == 90):
-        raise ValueError("Only orthorhombic lattices are currently supported.")
-    a1, a2, a3 = lattice.a, lattice.b, lattice.c
+    lattice_vectors = lattice.base
 
-    verts = _calculate_basic_unit_cell_vertices(a1, a2, a3)
-    edges = _calculate_basic_unit_cell_edges(verts, a1, a2, a3)
+    verts = _calculate_basic_unit_cell_vertices(lattice_vectors)
+    edges = _calculate_basic_unit_cell_edges(verts, lattice_vectors)
     edges_rotated = rotation * Vector3d(edges)
 
     fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
     ax.axis("off")
-    ax.set_box_aspect((1, 1, 1))  # equal aspect
 
     xmax, ymax, zmax = np.max(np.abs(verts), axis=0)
     lim = max(xmax, ymax, zmax)
@@ -122,6 +131,7 @@ def _plot_unit_cell(
     ax.set_xlim(-axlim, axlim)
     ax.set_ylim(-axlim, axlim)
     ax.set_zlim(-axlim, axlim)
+    ax.set_box_aspect((1, 1, 1))  # equal aspect
     ax.margins(0, 0, 0)
 
     # default projection to +x -> east/right, +y -> north/upwards, +z out-of-page
