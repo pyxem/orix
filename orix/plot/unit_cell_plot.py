@@ -53,7 +53,7 @@ def _calculate_basic_unit_cell_edges(verts, vectors):
     for v1, v2 in combinations(verts, 2):
         if np.isclose((a1, a2, a3), np.linalg.norm(v2 - v1)).any():
             # extra case for hexagonal unit cells, do not plot (0000)-(11-20) edge
-            # in hexagonal cells the 120 degree angle is between vectors[0] and [1]
+            # in hexagonal cells the gamma angle is 120 degrees (between a1 and a2)
             # if xy of (v2 - v1) is equal to xy of vectors[0] + vectors[1] -> skip
             if np.isclose((v2 - v1)[:-1], (vectors[0] + vectors[1])[:-1]).all():
                 continue
