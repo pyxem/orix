@@ -46,7 +46,7 @@ def _calculate_basic_unit_cell_edges(verts, vectors):
     vectors = np.asarray(vectors)
     assert vectors.shape == (3, 3), "Vectors must be (3, 3) array."
     a1, a2, a3 = np.linalg.norm(vectors, axis=-1)
-    # get valid edges from all unit cell egde possibilities unit cell
+    # get valid edges from all unit cell edge possibilities unit cell
     edges_valid = []
     # for all possible combinations of vertices, keep if the distance between them is
     # equal to any of the basis vectors
