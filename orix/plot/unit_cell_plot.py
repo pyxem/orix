@@ -39,7 +39,6 @@ def _calculate_basic_unit_cell_vertices(a1, a2, a3):
 
 def _calculate_basic_unit_cell_edges(verts, a1, a2, a3):
     """Calculate valid unit cell edges for orthorhombic until cells."""
-    verts = _calculate_basic_unit_cell_vertices(a1, a2, a3)
     # get valid edges from all unit cell egde possibilities unit cell
     edges_valid = []
     # for all possible combinations of vertices, keep if the distance between them is
