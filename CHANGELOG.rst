@@ -29,8 +29,6 @@ Added
   direction.
 - Simple unit cell orientation plotting with `plot_unit_cell` for `Orientation`
   instances.
-- Interactive notebook demonstrating how Euler angles change the unit cell orientation
-  within the sample reference frame.
 
 Changed
 -------
