@@ -67,7 +67,9 @@ def test_unit_cell_plot_hexagonal():
     structure = Structure(lattice=lattice)
     fig = ori.plot_unit_cell(return_figure=True, structure=structure)
     axes = fig.axes[0]
-    assert len(axes.lines) == 12  # 12 edges in orthorhombic unit cell
+    # should only be 12 edges in hexagonal unit cell, this test checks
+    # that the edges parallel to (0000)-(11-20) are not plotted
+    assert len(axes.lines) == 12
     plt.close("all")
 
 
