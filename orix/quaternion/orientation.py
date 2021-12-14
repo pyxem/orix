@@ -122,6 +122,11 @@ class Misorientation(Rotation):
 
     _symmetry = (C1, C1)
 
+    def __init__(self, data, symmetry=None):
+        super().__init__(data)
+        if symmetry:
+            self.symmetry = symmetry
+
     @property
     def symmetry(self):
         """Tuple of :class:`~orix.quaternion.Symmetry`."""
@@ -141,7 +146,7 @@ class Misorientation(Rotation):
         return m
 
     def equivalent(self, grain_exchange=False):
-        r"""Equivalent misorientations
+        r"""Equivalent misorientations.
 
         grain_exchange : bool
             If True the rotation $g$ and $g^{-1}$ are considered to be
