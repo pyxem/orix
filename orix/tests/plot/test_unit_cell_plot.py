@@ -37,7 +37,7 @@ def test_unit_cell_plot_default():
     # 6 Arrow3D -> 3 for both sample and crystal reference frames
     if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
         assert len(axes.patches) == 6
-    else:
+    else:  # pragma: no cover
         assert len(axes.artists) == 6
     # test default projection
     assert axes.azim == -90
