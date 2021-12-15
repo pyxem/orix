@@ -150,11 +150,6 @@ class Misorientation(Rotation):
         m._symmetry = self._symmetry
         return m
 
-    def transpose(self, *axes):
-        m = super().transpose(*axes)
-        m._symmetry = self._symmetry
-        return m
-
     def flatten(self):
         m = super().flatten()
         m._symmetry = self._symmetry
