@@ -32,7 +32,7 @@ Example of usage::
 
 from orix.plot.crystal_map_plot import CrystalMapPlot
 from orix.plot.direction_color_keys import DirectionColorKeyTSL
-from orix.plot.orientation_color_keys import AxisColorKey, BungeColorKey, IPFColorKeyTSL
+from orix.plot.orientation_color_keys import AxisColorKey, EulerColorKey, IPFColorKeyTSL
 from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
 from orix.plot.stereographic_plot import StereographicPlot
 
@@ -42,11 +42,11 @@ from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot
 
 # Lists what will be imported when calling "from orix.plot import *"
 __all__ = [
-    "AxisColorKey",
-    "BungeColorKey",
-    "CrystalMapPlot",
     "AxAnglePlot",
+    "AxisColorKey",
+    "CrystalMapPlot",
     "DirectionColorKeyTSL",
+    "EulerColorKey",
     "InversePoleFigurePlot",
     "IPFColorKeyTSL",
     "RodriguesPlot",

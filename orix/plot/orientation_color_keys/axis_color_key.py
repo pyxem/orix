@@ -19,17 +19,22 @@
 import matplotlib.colors as mcolors
 import numpy as np
 
-from orix.plot.orientation_color_keys import OrientationColorKey
 
+class AxisColorKey:
+    def __init__(self):
+        pass
 
-class AxisColorKey(OrientationColorKey):
-    def orientation2color(self, orientations):
+    def __repr__(self):
+        return f"{self.__class__.__name__}"
+
+    @staticmethod
+    def orientation2color(orientation):
         """From the NIST OOF2 package.
         https://github.com/usnistgov/OOF2/blob/master/SRC/engine/angle2color.C
         """
-        axis = orientations.axis
+        axis = orientation.axis
         hue = axis.azimuth.data / (2 * np.pi)
-        saturation = orientations.angle.data / np.pi
+        saturation = orientation.angle.data / np.pi
         costheta = axis.z.data / np.sqrt(axis.radial.data)
         value = 0.5 * (costheta + 1)
         hsv = np.column_stack([hue, saturation, value])

@@ -18,22 +18,10 @@
 
 import numpy as np
 
-from orix.plot.orientation_color_keys import OrientationColorKey
 
-
-class BungeColorKey(OrientationColorKey):
-    def orientation2color(self, orientations):
-        return self._euler2color(orientations.in_euler_fundamental_region().T)
-
-    def _euler2color(self, euler):
-        alpha, beta, gamma = euler
-        max_alpha, max_beta, max_gamma = self.symmetry.euler_fundamental_region
-        r = alpha / max_alpha
-        g = beta / max_beta
-        b = gamma / max_gamma
-        rgb = np.column_stack([r, g, b])
-        rgb /= rgb.max(axis=1)[:, np.newaxis]
-        return rgb
+class EulerColorKey:
+    def __init__(self, symmetry):
+        self.symmetry = symmetry
 
     def __repr__(self):
         sym = self.symmetry
@@ -44,3 +32,16 @@ class BungeColorKey(OrientationColorKey):
             f"{self.__class__.__name__}, symmetry {sym.name}"
             f"\nMax (phi1, Phi, phi2): {max_euler}"
         )
+
+    def orientation2color(self, orientation):
+        return self._euler2color(orientation.in_euler_fundamental_region().T)
+
+    def _euler2color(self, euler):
+        alpha, beta, gamma = euler
+        max_alpha, max_beta, max_gamma = self.symmetry.euler_fundamental_region
+        r = alpha / max_alpha
+        g = beta / max_beta
+        b = gamma / max_gamma
+        rgb = np.column_stack([r, g, b])
+        rgb /= rgb.max(axis=1)[:, np.newaxis]
+        return rgb
