@@ -27,6 +27,7 @@ Added
   sample direction.
 - Inverse pole figure colouring of orientations given a Laue symmetry and sample
   direction.
+- `Orientation`-based classes now accept a `symmetry` argument for `__init__()`.
 
 Changed
 -------
