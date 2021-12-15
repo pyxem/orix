@@ -46,7 +46,7 @@ import numpy as np
 from scipy.special import hyp0f1
 
 from orix.quaternion import Quaternion
-from orix.vector import Vector3d
+from orix.vector import AxAngle, Vector3d
 from orix.scalar import Scalar
 
 # Used to round values below 1e-16 to zero
@@ -62,11 +62,11 @@ class Rotation(Quaternion):
     - Inversion.
     - Multiplication with other rotations and vectors.
 
-    Rotations inherit all methods from :class:`Quaternion` although behaviour is
-    different in some cases.
+    Rotations inherit all methods from :class:`Quaternion` although
+    behaviour is different in some cases.
 
-    Rotations can be converted to other parametrizations, notably the neo-Euler
-    representations. See :class:`NeoEuler`.
+    Rotations can be converted to other parametrizations, notably the
+    neo-Euler representations. See :class:`NeoEuler`.
     """
 
     def __init__(self, data):
@@ -210,8 +210,8 @@ class Rotation(Quaternion):
         return angles
 
     def outer(self, other, **kwargs):
-        """Compute the outer product of this rotation and the other object."""
-        r = super().outer(other, **kwargs)
+        """Compute the outer product of this rotation and the other."""
+        r = super().outer(other)
         if isinstance(r, Rotation):
             r.improper = np.logical_xor.outer(self.improper, other.improper)
         if isinstance(r, Vector3d):
@@ -260,6 +260,37 @@ class Rotation(Quaternion):
         d = s * neo_euler.axis.z.data
         r = cls(np.stack([a, b, c, d], axis=-1))
         return r
+
+    @classmethod
+    def from_axes_angles(cls, axes, angles):
+        """Creates rotation(s) from axis-angle pair(s).
+
+        Parameters
+        ----------
+        axes : Vector3d or array_like
+            The axis of rotation.
+        angles : array_like
+            The angle of rotation, in radians.
+
+        Returns
+        -------
+        Rotation
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from orix.quaternion import Rotation
+        >>> rot = Rotation.from_axes_angles((0, 0, -1), np.pi / 2)
+        >>> rot
+        Rotation (1,)
+        [[ 0.7071  0.      0.     -0.7071]]
+
+        See Also
+        --------
+        from_neo_euler
+        """
+        axangle = AxAngle.from_axes_angles(axes, angles)
+        return cls.from_neo_euler(axangle)
 
     def to_euler(self, convention="bunge"):
         """Rotations as Euler angles.
