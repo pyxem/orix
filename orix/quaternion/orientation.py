@@ -49,7 +49,7 @@ from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1
+from orix.quaternion.symmetry import C1, Symmetry
 from orix.scalar import Scalar
 from orix.vector import AxAngle, Vector3d
 from orix._util import deprecated
@@ -128,16 +128,24 @@ class Misorientation(Rotation):
         """Tuple of :class:`~orix.quaternion.Symmetry`."""
         return self._symmetry
 
+    @symmetry.setter
+    def symmetry(self, value):
+        if not isinstance(value, (list, tuple)):
+            raise TypeError("Value must be a 2-tuple of Symmetry objects.")
+        if len(value) != 2 or not all(isinstance(s, Symmetry) for s in value):
+            raise ValueError("Value must be a 2-tuple of Symmetry objects.")
+        self._symmetry = tuple(value)
+
     def __getitem__(self, key):
         m = super().__getitem__(key)
         m._symmetry = self._symmetry
         return m
 
     def equivalent(self, grain_exchange=False):
-        """Equivalent misorientations
+        r"""Equivalent misorientations
 
         grain_exchange : bool
-            If True the rotation g and g^{-1} are considered to be
+            If True the rotation $g$ and $g^{-1}$ are considered to be
             identical. Default is False.
 
         Returns
@@ -154,6 +162,11 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
+    @deprecated(
+        since="0.8",
+        alternative="orix.quaternion.Misorientation.map_into_symmetry_reduced_zone",
+        removal="0.9",
+    )
     def set_symmetry(self, Gl, Gr, verbose=False):
         """Assign symmetries to this misorientation.
 
@@ -179,6 +192,31 @@ class Misorientation(Rotation):
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
         """
+        misori = self.__class__(self.data)
+        misori.symmetry = (Gl, Gr)
+        return misori.map_into_symmetry_reduced_zone()
+
+    def map_into_symmetry_reduced_zone(self, verbose=False):
+        """Computes equivalent transformations which have the smallest
+        angle of rotation and return these as a new Misorientation object.
+
+        Returns
+        -------
+        Misorientation
+            A new misorientation object with the assigned symmetry.
+
+        Examples
+        --------
+        >>> from orix.quaternion.symmetry import C4, C2
+        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
+        >>> m = Misorientation(data)
+        >>> m.symmetry = (C4, C2)
+        >>> m.map_into_symmetry_reduced_zone()
+        Misorientation (2,) 4, 2
+        [[-0.7071  0.7071  0.      0.    ]
+        [ 0.      1.      0.      0.    ]]
+        """
+        Gl, Gr = self._symmetry
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
             symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
@@ -196,7 +234,7 @@ class Misorientation(Rotation):
         return o_inside
 
     def distance(self, verbose=False, split_size=100):
-        """Symmetry reduced distance
+        """Symmetry reduced distance.
 
         Compute the shortest distance between all orientations
         considering symmetries.
@@ -220,13 +258,38 @@ class Misorientation(Rotation):
         >>> from orix.quaternion.symmetry import C4, C2
         >>> from orix.quaternion.orientation import Misorientation
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> m = Misorientation(data).set_symmetry(C4, C2)
+        >>> m = Misorientation(data)
+        >>> m.symmetry = (C4, C2)
+        >>> m = m.map_into_symmetry_reduced_zone()
         >>> m.distance()
         array([[3.14159265, 1.57079633],
                [1.57079633, 0.        ]])
         """
         distance = _distance(self, verbose, split_size)
         return distance.reshape(self.shape + self.shape)
+
+    def transpose(self, *axes):
+        """Returns a new Misorientation containing the same data
+        transposed.
+
+        If ndim is originally 2, then order may be undefined. In this
+        case the first two dimensions will be transposed.
+
+        Parameters
+        ----------
+        axes: int, optional
+            The transposed axes order. Only navigation axes need to be
+            defined. May be undefined if self only contains two
+            navigation dimensions.
+
+        Returns
+        -------
+        Misorientation
+            The transposed Misorientation.
+        """
+        mori = super().transpose(*axes)
+        mori._symmetry = self._symmetry
+        return mori
 
     def __repr__(self):
         """String representation."""
@@ -238,6 +301,95 @@ class Misorientation(Rotation):
         data = np.array_str(self.data, precision=4, suppress_small=True)
         rep = "{} {} {}\n{}".format(cls, shape, symm, data)
         return rep
+
+    def scatter(
+        self,
+        projection="axangle",
+        figure=None,
+        position=None,
+        return_figure=False,
+        wireframe_kwargs=None,
+        size=None,
+        **kwargs,
+    ):
+        """Plot misorientations in axis-angle space or the Rodrigues
+        fundamental zone.
+
+        Parameters
+        ----------
+        projection : str, optional
+            Which misorientation space to plot misorientations in,
+            either "axangle" (default) or "rodrigues".
+        figure : matplotlib.figure.Figure
+            If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
+            :class:`~orix.plot.RodriguesPlot` is added to the figure in
+            the position specified by `position`. If not given, a new
+            figure is created.
+        position : int, tuple of int, matplotlib.gridspec.SubplotSpec,
+                optional
+            Where to add the new plot axis. 121 or (1, 2, 1) places it
+            in the first of two positions in a grid of 1 row and 2
+            columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
+            for further details. Default is (1, 1, 1).
+        return_figure : bool, optional
+            Whether to return the figure. Default is False.
+        wireframe_kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
+            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+        size : int, optional
+            If not given, all misorientations are plotted. If given, a
+            random sample of this `size` of the misorientations is
+            plotted.
+        kwargs
+            Keyword arguments passed to
+            :meth:`orix.plot.AxAnglePlot.scatter` or
+            :meth:`orix.plot.RodriguesPlot.scatter`.
+
+        Returns
+        -------
+        figure : matplotlib.figure.Figure
+            Figure with the added plot axis, if `return_figure` is True.
+
+        See Also
+        --------
+        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot
+        """
+        from orix.plot.rotation_plot import _setup_rotation_plot
+
+        figure, ax = _setup_rotation_plot(
+            figure=figure, projection=projection, position=position
+        )
+
+        # Plot wireframe
+        if wireframe_kwargs is None:
+            wireframe_kwargs = {}
+        if isinstance(self.symmetry, tuple):
+            fundamental_zone = OrientationRegion.from_symmetry(
+                s1=self.symmetry[0], s2=self.symmetry[1]
+            )
+            ax.plot_wireframe(fundamental_zone, **wireframe_kwargs)
+        else:
+            # Orientation via inheritance
+            fundamental_zone = OrientationRegion.from_symmetry(self.symmetry)
+            ax.plot_wireframe(fundamental_zone, **wireframe_kwargs)
+
+        # Correct the aspect ratio of the axes according to the extent
+        # of the boundaries of the fundamental region, and also restrict
+        # the data limits to these boundaries
+        ax._correct_aspect_ratio(fundamental_zone, set_limits=True)
+
+        ax.axis("off")
+        figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
+
+        if size is not None:
+            to_plot = self.get_random_sample(size)
+        else:
+            to_plot = self
+        ax.scatter(to_plot, fundamental_zone=fundamental_zone, **kwargs)
+
+        if return_figure:
+            return figure
 
 
 class Orientation(Misorientation):
@@ -254,16 +406,28 @@ class Orientation(Misorientation):
         """Symmetry."""
         return self._symmetry[1]
 
+    @symmetry.setter
+    def symmetry(self, value):
+        if not isinstance(value, Symmetry):
+            raise TypeError("Value must be an instance of orix.quaternion.Symmetry.")
+        self._symmetry = (C1, value)
+
     @property
     def unit(self):
         """Unit orientations."""
-        return super().unit.set_symmetry(self.symmetry)
+        o = super().unit
+        o.symmetry = self.symmetry
+        return o
 
     def __invert__(self):
-        return super().__invert__().set_symmetry(self.symmetry)
+        o = super().__invert__()
+        o.symmetry = self.symmetry
+        return o
 
     def __neg__(self):
-        return super().__neg__().set_symmetry(self.symmetry)
+        o = super().__neg__()
+        o.symmetry = self.symmetry
+        return o
 
     def __repr__(self):
         """String representation."""
@@ -274,7 +438,8 @@ class Orientation(Misorientation):
         if isinstance(other, Orientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             misorientation = Misorientation(self * ~other).squeeze()
-            return misorientation.set_symmetry(self.symmetry, other.symmetry)
+            misorientation.symmetry = (self.symmetry, other.symmetry)
+            return misorientation.map_into_symmetry_reduced_zone()
         return NotImplemented
 
     @classmethod
@@ -297,13 +462,13 @@ class Orientation(Misorientation):
         """
         o = super().from_euler(euler=euler, convention=convention, direction=direction)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     @classmethod
     def from_matrix(cls, matrix, symmetry=None):
         """Creates orientation(s) from orientation matrices
-        [Rowenhorst2015]_.
+        :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
@@ -315,7 +480,7 @@ class Orientation(Misorientation):
         """
         o = super().from_matrix(matrix)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     @classmethod
@@ -333,7 +498,7 @@ class Orientation(Misorientation):
         """
         o = super().from_neo_euler(neo_euler)
         if symmetry:
-            o = o.set_symmetry(symmetry)
+            o.symmetry = symmetry
         return o
 
     def angle_with(self, other):
@@ -452,6 +617,11 @@ class Orientation(Misorientation):
 
         return Scalar(angles)
 
+    @deprecated(
+        since="0.8",
+        alternative="orix.quaternion.Orientation.map_into_symmetry_reduced_zone",
+        removal="0.9",
+    )
     def set_symmetry(self, symmetry):
         """Assign a symmetry to this orientation.
 
@@ -471,13 +641,114 @@ class Orientation(Misorientation):
         --------
         >>> from orix.quaternion.symmetry import C4
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> o = Orientation(data).set_symmetry((C4))
+        >>> o = Orientation(data).set_symmetry(C4)
         >>> o
         Orientation (2,) 4
         [[-0.7071  0.     -0.7071  0.    ]
         [ 0.      1.      0.      0.    ]]
         """
-        return super().set_symmetry(C1, symmetry)
+        o = self.__class__(self.data)
+        o.symmetry = symmetry
+        return o.map_into_symmetry_reduced_zone()
+
+    def scatter(
+        self,
+        projection="axangle",
+        figure=None,
+        position=None,
+        return_figure=False,
+        wireframe_kwargs=None,
+        size=None,
+        direction=None,
+        **kwargs,
+    ):
+        """Plot orientations in axis-angle space, the Rodrigues
+        fundamental zone, or an inverse pole figure (IPF) given a sample
+        direction.
+
+        Parameters
+        ----------
+        projection : str, optional
+            Which orientation space to plot orientations in, either
+            "axangle" (default), "rodrigues" or "ipf" (inverse pole
+            figure).
+        figure : matplotlib.figure.Figure
+            If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
+            :class:`~orix.plot.RodriguesPlot` is added to the figure in
+            the position specified by `position`. If not given, a new
+            figure is created.
+        position : int, tuple of int, matplotlib.gridspec.SubplotSpec,
+                optional
+            Where to add the new plot axis. 121 or (1, 2, 1) places it
+            in the first of two positions in a grid of 1 row and 2
+            columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
+            for further details. Default is (1, 1, 1).
+        return_figure : bool, optional
+            Whether to return the figure. Default is False.
+        wireframe_kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
+            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+        size : int, optional
+            If not given, all orientations are plotted. If given, a
+            random sample of this `size` of the orientations is plotted.
+        direction : Vector3d, optional
+            Sample direction to plot with respect to crystal directions.
+            If not given, the out of plane direction, sample Z, is used.
+            Only used when plotting IPF(s).
+        kwargs
+            Keyword arguments passed to
+            :meth:`orix.plot.AxAnglePlot.scatter`,
+            :meth:`orix.plot.RodriguesPlot.scatter`, or
+            :meth:`orix.plot.InversePoleFigurePlot.scatter`.
+
+        Returns
+        -------
+        figure : matplotlib.figure.Figure
+            Figure with the added plot axis, if `return_figure` is True.
+
+        See Also
+        --------
+        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot,
+        orix.plot.InversePoleFigurePlot
+        """
+        if projection.lower() != "ipf":
+            figure = super().scatter(
+                projection=projection,
+                figure=figure,
+                position=position,
+                return_figure=return_figure,
+                wireframe_kwargs=wireframe_kwargs,
+                size=size,
+                **kwargs,
+            )
+        else:
+            from orix.plot.inverse_pole_figure_plot import (
+                _setup_inverse_pole_figure_plot,
+            )
+
+            if figure is None:
+                # Determine which hemisphere(s) to show
+                symmetry = self.symmetry
+                sector = symmetry.fundamental_sector
+                if np.any(sector.vertices.polar.data > np.pi / 2):
+                    hemisphere = "both"
+                else:
+                    hemisphere = "upper"
+
+                figure, axes = _setup_inverse_pole_figure_plot(
+                    symmetry=symmetry, direction=direction, hemisphere=hemisphere
+                )
+            else:
+                axes = np.asarray(figure.axes)
+
+            for ax in axes:
+                ax.scatter(self, **kwargs)
+
+            figure.tight_layout()
+
+        if return_figure:
+            return figure
 
     def in_euler_fundamental_region(self):
         """From :cite:`nolze2015euler`."""

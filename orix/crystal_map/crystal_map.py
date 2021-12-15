@@ -331,7 +331,9 @@ class CrystalMap:
                 rotations = self.rotations[:, 0]
             else:
                 rotations = self.rotations
-            return Orientation(rotations).set_symmetry(phases[:].point_group)
+            orientations = Orientation(rotations)
+            orientations.symmetry = phases[:].point_group
+            return orientations
         else:
             raise ValueError(
                 f"Data has the phases {phases.names}, however, you are executing a "
@@ -731,7 +733,7 @@ class CrystalMap:
                 # Fill in orientations per phase
                 # TODO: Consider whether orientations should be calculated
                 #  upon loading
-                for i, phase in self.phases_in_data:
+                for i, _ in self.phases_in_data:
                     phase_mask = (self._phase_id == i) * self.is_in_data
                     phase_mask_in_data = self.phase_id == i
                     array[phase_mask] = self[phase_mask_in_data].orientations.to_euler()

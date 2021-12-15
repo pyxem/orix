@@ -7,10 +7,10 @@ from orix import __name__, __version__, __author__, __author_email__, __descript
 # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
 extra_feature_requirements = {
     "doc": [
+        "furo",
         "ipykernel",  # https://github.com/spatialaudio/nbsphinx/issues/121
         "nbsphinx >= 0.7",
         "sphinx >= 3.0.2",
-        "sphinx-rtd-theme >= 0.4.3",
         "sphinx-gallery >= 0.6",
         "sphinxcontrib-bibtex >= 1.0",
         "scikit-image",
@@ -18,7 +18,7 @@ extra_feature_requirements = {
     ],
     "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
 }
-extra_feature_requirements["dev"] = ["black >= 19.3b0", "pre-commit >= 1.16"] + list(
+extra_feature_requirements["dev"] = ["black", "manifix", "pre-commit >= 1.16"] + list(
     chain(*list(extra_feature_requirements.values()))
 )
 
@@ -53,10 +53,11 @@ setup(
         "h5py",
         "matplotlib >= 3.3",
         "matplotlib-scalebar",
+        "numba",
         "numpy",
         "scipy",
         "tqdm",
     ],
     # fmt: on
-    package_data={"": ["LICENSE", "README.rst", "readthedocs.yml"], "orix": ["*.py"],},
+    package_data={"": ["LICENSE", "README.rst", "readthedocs.yml"], "orix": ["*.py"]},
 )

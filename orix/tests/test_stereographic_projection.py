@@ -65,11 +65,14 @@ class TestStereographicProjection:
 
         sp_up = StereographicProjection(pole=-1)
         x_up, y_up = sp_up.vector2xy(v)
+        assert x_up.size == y_up.size == 5
         assert np.allclose(x_up, x_desired)
         assert np.allclose(y_up, y_desired)
 
         sp_down = StereographicProjection(pole=1)
         x_down, y_down = sp_down.vector2xy(v)
+        assert x_down.size == y_down.size == 4
+
         assert np.allclose(x_down, x_desired[:-1])
         assert np.allclose(y_down, y_desired[:-1])
 
@@ -101,7 +104,7 @@ class TestStereographicProjection:
         assert np.allclose(x2, x_down)
         assert np.allclose(y2, y_down)
 
-    def test_project_iproject_xy(self, vectors):
+    def test_project_loop_xy(self, vectors):
         is_up = vectors.z >= 0
         v_up_in = vectors[is_up]
         v_down_in = vectors[~is_up]
@@ -117,7 +120,7 @@ class TestStereographicProjection:
         assert np.allclose(v_up_in.data, v_up_out.data)
         assert np.allclose(v_down_in.data, v_down_out.data)
 
-    def test_project_iproject_spherical(self, vectors):
+    def test_project_loop_spherical(self, vectors):
         is_up = vectors.z >= 0
         v_up = vectors[is_up]
         v_down = vectors[~is_up]

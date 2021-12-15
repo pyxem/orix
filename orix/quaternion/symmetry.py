@@ -41,7 +41,7 @@ from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.vector import AxAngle, Vector3d
+from orix.vector import Vector3d
 
 
 class Symmetry(Rotation):
@@ -95,7 +95,9 @@ class Symmetry(Rotation):
     @property
     def laue(self):
         """This group plus inversion as a :class:`Symmetry`."""
-        return Symmetry.from_generators(self, Ci)
+        laue = Symmetry.from_generators(self, Ci)
+        laue.name = _get_laue_group_name(self.name)
+        return laue
 
     @property
     def laue_proper_subgroup(self):
@@ -185,6 +187,77 @@ class Symmetry(Rotation):
         tuples = set([tuple(d) for d in s._differentiators()])
         return tuples
 
+    @property
+    def fundamental_sector(self):
+        """:class:`~orix.vector.FundamentalSector` describing the
+        inverse pole figure given by the point group name.
+
+        These sectors are taken from MTEX'
+        :code:`crystalSymmetry.fundamentalSector`.
+        """
+        # Avoid circular import
+        from orix.vector import FundamentalSector
+
+        name = self.name
+        vx = Vector3d.xvector()
+        vy = Vector3d.yvector()
+        vz = Vector3d.zvector()
+
+        # Map everything on the northern hemisphere if there is an
+        # inversion or some symmetry operation not parallel to Z
+        if any(vz.angle_with(self.outer(vz)) > np.pi / 2):
+            n = vz
+        else:
+            n = Vector3d.empty()
+
+        # Region on the northern hemisphere depends just on the number
+        # of symmetry operations
+        if self.size > 1 + n.size:
+            angle = 2 * np.pi * (1 + n.size) / self.size
+            new_v = Vector3d.from_polar(
+                azimuth=[np.pi / 2, angle - np.pi / 2], polar=[np.pi / 2, np.pi / 2]
+            )
+            n = Vector3d(np.vstack([n.data, new_v.data]))
+
+        # We only set the center "by hand" for T (23), Th (m-3) and O
+        # (432), since the UV S2 sampling isn't uniform enough to
+        # produce the correct center according to MTEX
+        center = None
+
+        # Override normal(s) for some point groups
+        if name == "-1":
+            n = vz
+        elif name in ["m11", "1m1", "11m"]:
+            idx_min_angle = np.argmin(self.angle.data)
+            n = self[idx_min_angle].axis
+            if name == "m11":
+                n = -n
+        elif name == "mm2":
+            n = self[self.improper].axis  # Mirror planes
+            idx = n.angle_with(-vy) < np.pi / 4
+            n[idx] = -n[idx]
+        elif name in ["321", "312", "3m", "-3m", "6m2"]:
+            n = n.rotate(angle=-np.pi / 6)
+        elif name == "-42m":
+            n = n.rotate(angle=-np.pi / 4)
+        elif name == "23":
+            n = Vector3d([[1, 1, 0], [1, -1, 0], [0, -1, 1], [0, 1, 1]])
+            # Taken from MTEX
+            center = Vector3d([0.707558, -0.000403, 0.706655])
+        elif name in ["m-3", "432"]:
+            n = Vector3d(np.vstack([vx.data, [0, -1, 1], [-1, 0, 1], vy.data, vz.data]))
+            # Taken from MTEX
+            center = Vector3d([0.349928, 0.348069, 0.869711])
+        elif name == "-43m":
+            n = Vector3d([[1, -1, 0], [1, 1, 0], [-1, 0, 1]])
+        elif name == "m-3m":
+            n = Vector3d(np.vstack([[1, -1, 0], [-1, 0, 1], vy.data]))
+
+        fs = FundamentalSector(n).flatten().unique()
+        fs._center = center
+
+        return fs
+
     @classmethod
     def from_generators(cls, *generators):
         """Create a Symmetry from a minimum list of generating
@@ -230,9 +303,27 @@ class Symmetry(Rotation):
             size_new = generator.size
         return generator
 
-    def fundamental_sector(self):
-        from orix.vector.neo_euler import AxAngle
-        from orix.vector.spherical_region import SphericalRegion
+    def get_axis_orders(self):
+        s = self[self.angle > 0]
+        if s.size == 0:
+            return {}
+        return {
+            Vector3d(a): b + 1
+            for a, b in zip(*np.unique(s.axis.data, axis=0, return_counts=True))
+        }
+
+    def get_highest_order_axis(self):
+        axis_orders = self.get_axis_orders()
+        if len(axis_orders) == 0:
+            return Vector3d.zvector(), np.infty
+        highest_order = max(axis_orders.values())
+        axes = Vector3d.stack(
+            [ao for ao in axis_orders if axis_orders[ao] == highest_order]
+        ).flatten()
+        return axes, highest_order
+
+    def fundamental_zone(self):
+        from orix.vector import AxAngle, SphericalRegion
 
         symmetry = self.antipodal
         symmetry = symmetry[symmetry.angle > 0]
@@ -264,25 +355,6 @@ class Symmetry(Rotation):
         n = Vector3d(np.concatenate((n.data, n1.data, n2.data)))
         sr = SphericalRegion(n.unique())
         return sr
-
-    def get_axis_orders(self):
-        s = self[self.angle > 0]
-        if s.size == 0:
-            return {}
-        return {
-            Vector3d(a): b + 1
-            for a, b in zip(*np.unique(s.axis.data, axis=0, return_counts=True))
-        }
-
-    def get_highest_order_axis(self):
-        axis_orders = self.get_axis_orders()
-        if len(axis_orders) == 0:
-            return Vector3d.zvector(), np.infty
-        highest_order = max(axis_orders.values())
-        axes = Vector3d.stack(
-            [ao for ao in axis_orders if axis_orders[ao] == highest_order]
-        ).flatten()
-        return axes, highest_order
 
 
 # Triclinic
@@ -423,55 +495,50 @@ Td.name = "-43m"
 Oh = Symmetry.from_generators(O, Ci)
 Oh.name = "m-3m"
 
-
 # Collections of groups for convenience
+# fmt: off
 _groups = [
-    # Triclinic
-    C1,
-    Ci,
-    # Monoclinic
-    C2x,
-    C2y,
-    C2z,
-    Csx,
-    Csy,
-    Csz,
-    C2h,
-    # Orthorhombic
-    D2,
-    C2v,
-    D2h,
-    # Tetragonal
-    C4,
-    S4,
-    C4h,
-    D4,
-    C4v,
-    D2d,
-    D4h,
-    # Trigonal
-    C3,
-    S6,
-    D3x,
-    D3y,
-    D3,
-    C3v,
-    D3d,
-    # Hexagonal
-    C6,
-    C3h,
-    C6h,
-    D6,
-    C6v,
-    D3h,
-    D6h,
-    # Cubic
-    T,
-    Th,
-    O,
-    Td,
-    Oh,
+    # Schoenflies   Crystal system  International   Laue class
+    C1,   #         Triclinic        1              -1
+    Ci,   #         Triclinic       -1              -1
+    C2x,  #         Monoclinic       211             2/m
+    C2y,  #         Monoclinic       121             2/m
+    C2z,  #         Monoclinic       112             2/m
+    Csx,  #         Monoclinic       m11             2/m
+    Csy,  #         Monoclinic       1m1             2/m
+    Csz,  #         Monoclinic       11m             2/m
+    C2h,  #         Monoclinic       2/m             2/m
+    D2,   #         Orthorhombic     222             mmm
+    C2v,  #         Orthorhombic     mm2             mmm
+    D2h,  #         Orthorhombic     mmm             mmm
+    C4,   #         Tetragonal       4               4/m
+    S4,   #         Tetragonal      -4               4/m
+    C4h,  #         Tetragonal       4/m             4/m
+    D4,   #         Tetragonal       422             4/mmm
+    C4v,  #         Tetragonal       4mm             4/mmm
+    D2d,  #         Tetragonal      -42m             4/mmm
+    D4h,  #         Tetragonal       4/mmm           4/mmm
+    C3,   #         Trigonal         3              -3
+    S6,   #         Trigonal        -3              -3
+    D3x,  #         Trigonal         321            -3m
+    D3y,  #         Trigonal         312            -3m
+    D3,   #         Trigonal         32             -3m
+    C3v,  #         Trigonal         3m             -3m
+    D3d,  #         Trigonal        -3m             -3m
+    C6,   #         Hexagonal        6               6/m
+    C3h,  #         Hexagonal       -6               6/m
+    C6h,  #         Hexagonal        6/m             6/m
+    D6,   #         Hexagonal        622             6/mmm
+    C6v,  #         Hexagonal        6mm             6/mmm
+    D3h,  #         Hexagonal       -6m2             6/mmm
+    D6h,  #         Hexagonal        6/mmm           6/mmm
+    T,    #         Cubic            23              m-3
+    Th,   #         Cubic            m-3             m-3
+    O,    #         Cubic            432             m-3m
+    Td,   #         Cubic           -43m             m-3m
+    Oh,   #         Cubic            m-3m            m-3m
 ]
+# fmt: on
 _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]
 groups_dict = dict(zip([g.name for g in _groups], _groups))
 proper_groups_dict = dict(zip([pg.name for pg in _proper_groups], _proper_groups))
@@ -574,10 +641,37 @@ def get_point_group(space_group_number, proper=False):
 # Analysis 7.2, e.g. point group 432 is entered as 43.
 # Used when reading a phase's point group from an EDAX ANG file header
 point_group_aliases = {
-    "121": ["20",],
+    "121": ["20"],
     "2/m": ["2"],
-    "222": ["22",],
+    "222": ["22"],
     "422": ["42"],
-    "432": ["43",],
+    "432": ["43"],
     "m-3m": ["m3m"],
 }
+
+
+def _get_laue_group_name(name):
+    if name in ["1", "-1"]:
+        return "-1"
+    elif name in ["2", "211", "121", "112", "m11", "1m1", "11m", "2/m"]:
+        return "2/m"
+    elif name in ["222", "mm2", "mmm"]:
+        return "mmm"
+    elif name in ["4", "-4", "4/m"]:
+        return "4/m"
+    elif name in ["422", "4mm", "-42m", "4/mmm"]:
+        return "4/mmm"
+    elif name in ["3", "-3"]:
+        return "-3"
+    elif name in ["321", "312", "32", "3m", "-3m"]:
+        return "-3m"
+    elif name in ["6", "-6", "6/m"]:
+        return "6/m"
+    elif name in ["6mm", "-6m2", "6/mmm"]:
+        return "6/mmm"
+    elif name in ["23", "m-3"]:
+        return "m-3"
+    elif name in ["432", "-43m", "m-3m"]:
+        return "m-3m"
+    else:
+        return None

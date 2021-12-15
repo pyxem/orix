@@ -61,13 +61,12 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_css_files = ["style.css"]
 
 # Syntax highlighting
 pygments_style = "friendly"
@@ -126,6 +125,10 @@ nbsphinx_prolog = (
 )
 # https://nbsphinx.readthedocs.io/en/0.8.0/never-execute.html
 nbsphinx_execute = "auto"  # auto, always, never
+nbsphinx_execute_arguments = [
+    "--InlineBackend.rc=figure.facecolor='w'",
+    "--InlineBackend.rc=font.size=15",
+]
 
 # sphinxcontrib-bibtex configuration
 bibtex_bibfiles = ["bibliography.bib"]

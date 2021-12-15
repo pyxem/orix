@@ -1,13 +1,15 @@
 __name__ = "orix"
-__version__ = "0.7.0-dev"
-__author__ = "Ben Martineau, Phillip Crout, Håkon Wiik Ånes, Duncan Johnstone"
+__version__ = "0.8.dev0"
+__author__ = "orix developers"
 __author_email__ = "pyxem.team@gmail.com"
 __description__ = "orix is an open-source python library for handling crystal orientation mapping data."
+# Initial committer first, then sorted by line contributions
 __credits__ = [
     "Ben Martineau",
-    "Phillip Crout",
     "Håkon Wiik Ånes",
+    "Phillip Crout",
     "Duncan Johnstone",
-    "Simon Høgås",
+    "Paddy Harrison",
     "Niels Cautaerts",
+    "Simon Høgås",
 ]

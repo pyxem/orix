@@ -18,7 +18,9 @@
 
 """Extensions of Matplotlib's projections framework for plotting
 :class:`~orix.vector.Vector3d`, :class:`~orix.quaternion.Rotation`,
-and :class:`~orix.crystal_map.CrystalMap` objects.
+:class:`~orix.quaternion.Orientation`,
+:class:`~orix.quaternion.Misorientation`, and
+:class:`~orix.crystal_map.CrystalMap`.
 
 Example of usage::
 
@@ -29,9 +31,13 @@ Example of usage::
 """
 
 from orix.plot.crystal_map_plot import CrystalMapPlot
-from orix.plot.orientation_color_keys import AxisColorKey, BungeColorKey
+from orix.plot.direction_color_keys import DirectionColorKeyTSL
+from orix.plot.orientation_color_keys import AxisColorKey, BungeColorKey, IPFColorKeyTSL
 from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
 from orix.plot.stereographic_plot import StereographicPlot
+
+# Must be imported below StereographicPlot since it imports it
+from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot
 
 
 # Lists what will be imported when calling "from orix.plot import *"
@@ -40,6 +46,9 @@ __all__ = [
     "BungeColorKey",
     "CrystalMapPlot",
     "AxAnglePlot",
+    "DirectionColorKeyTSL",
+    "InversePoleFigurePlot",
+    "IPFColorKeyTSL",
     "RodriguesPlot",
     "RotationPlot",
     "StereographicPlot",

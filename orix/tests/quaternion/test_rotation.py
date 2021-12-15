@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+# Copyright 2018-2021 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
 from diffpy.structure.spacegroups import sg225
 from math import cos, sin, tan, pi
 import numpy as np
@@ -12,7 +30,7 @@ rotations = [
     (0.5, -0.5, -0.5, 0.5),
     (0.0, 0.0, 0.0, 1.0),
     (1.0, 1.0, 1.0, 1.0),
-    ((0.5, -0.5, -0.5, 0.5), (0.0, 0.0, 0.0, 1.0),),
+    ((0.5, -0.5, -0.5, 0.5), (0.0, 0.0, 0.0, 1.0)),
     Rotation([(2, 4, 6, 8), (-1, -2, -3, -4)]),
     np.array((4, 3, 2, 1)),
 ]
@@ -20,14 +38,14 @@ rotations = [
 quaternions = [
     (0.881, 0.665, 0.123, 0.517),
     (0.111, 0.222, 0.333, 0.444),
-    ((1, 0, 0.5, 0), (3, 1, -1, -2),),
+    ((1, 0, 0.5, 0), (3, 1, -1, -2)),
     [
-        [[0.343, 0.343, 0, -0.333], [-7, -8, -9, -10],],
+        [[0.343, 0.343, 0, -0.333], [-7, -8, -9, -10]],
         [[0.00001, -0.0001, 0.001, -0.01], [0, 0, 0, 0]],
     ],
 ]
 
-vectors = [(1, 0, 0), (1, 1, 0), (0.7, 0.8, 0.9), [[1, 1, 1], [0.4, 0.5, -0.6],]]
+vectors = [(1, 0, 0), (1, 1, 0), (0.7, 0.8, 0.9), [[1, 1, 1], [0.4, 0.5, -0.6]]]
 
 
 @pytest.fixture(params=rotations)
@@ -51,7 +69,7 @@ def vector(request):
 def test_init(rotation):
     assert np.allclose(rotation.norm.data, 1)
     assert rotation.improper.shape == rotation.shape
-    assert np.all(rotation.improper == False)
+    assert np.count_nonzero(rotation.improper) == 0
 
 
 def test_slice(rotation):
@@ -181,7 +199,7 @@ def test_mul_failing(rotation):
 
 @pytest.mark.parametrize(
     "rotation, i, expected_i",
-    [([0.5, 0.5, 0.5, 0.5], 0, 1), ([0.5, 0.5, 0.5, 0.5], 1, 0),],
+    [([0.5, 0.5, 0.5, 0.5], 0, 1), ([0.5, 0.5, 0.5, 0.5], 1, 0)],
     indirect=["rotation"],
 )
 def test_neg(rotation, i, expected_i):
@@ -240,27 +258,27 @@ class TestToFromEuler:
     "rotation, improper, expected, improper_expected",
     [
         (
-            np.array([[0.5, 0.5, 0.5, 0.5], [1, 0, 0, 1],]),
+            np.array([[0.5, 0.5, 0.5, 0.5], [1, 0, 0, 1]]),
             [0, 0],
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.707106, 0, 0, 0.707106],]),
+            np.array([[0.5, 0.5, 0.5, 0.5], [0.707106, 0, 0, 0.707106]]),
             [0, 0],
         ),
         (
-            np.array([[0.5, 0.5, 0.5, 0.5], [1, 0, 0, 1],]),
+            np.array([[0.5, 0.5, 0.5, 0.5], [1, 0, 0, 1]]),
             [0, 1],
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.707106, 0, 0, 0.707106],]),
+            np.array([[0.5, 0.5, 0.5, 0.5], [0.707106, 0, 0, 0.707106]]),
             [0, 1],
         ),
         (
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5],]),
+            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
             [0, 0],
-            np.array([[0.5, 0.5, 0.5, 0.5],]),
+            np.array([[0.5, 0.5, 0.5, 0.5]]),
             [0],
         ),
         (
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5],]),
+            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
             [0, 1],
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5],]),
+            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
             [0, 1],
         ),
     ],
@@ -274,7 +292,7 @@ def test_unique(rotation, improper, expected, improper_expected):
 
 
 def test_kwargs_unique(rotation):
-    """ return_index and return_inverse edge cases"""
+    """return_index and return_inverse edge cases"""
     rotation.unique(return_index=True, return_inverse=True)
     rotation.unique(return_index=True, return_inverse=False)
     rotation.unique(return_index=False, return_inverse=True)
@@ -328,7 +346,7 @@ def test_inv(rotation, improper, expected, improper_expected):
                 ]
             ),
             [0, 1],
-            np.array([[0.1001, 0], [0.2947, 0], [0.3412, 0],]),
+            np.array([[0.1001, 0], [0.2947, 0], [0.3412, 0]]),
         ),
         (
             np.array(
@@ -406,7 +424,7 @@ def test_dot_outer_rot(rotation, improper, rotation_2, improper_2, expected):
                     [0.969802, 0.089686, 0.186519, -0.12904],
                 ]
             ),
-            np.array([[0.4585, 0.8002], [0.8800, 0.1127], [0, 0],]),
+            np.array([[0.4585, 0.8002], [0.8800, 0.1127], [0, 0]]),
         ),
     ],
     indirect=["rotation", "quaternion"],
@@ -424,7 +442,7 @@ def test_dot_outer_quat(rotation, improper, quaternion, expected):
         ([1, 0, 0, 0], [0, 0, 1]),
         ([-1, 0, 0, 0], [0, 0, -1]),
         ([0, 0.5 ** 0.5, 0.5 ** 0.5, 0], [0.5 ** 0.5, 0.5 ** 0.5, 0]),
-        ([[1, 0, 0, 0], [-1, 0, 0, 0],], [[0, 0, 1], [0, 0, -1]]),
+        ([[1, 0, 0, 0], [-1, 0, 0, 0]], [[0, 0, 1], [0, 0, -1]]),
     ],
     indirect=["rotation"],
 )
@@ -435,7 +453,10 @@ def test_axis(rotation, expected):
 
 @pytest.mark.parametrize(
     "rotation, improper",
-    [([(1, 0, 0, 0), (1, 0, 0, 0)], [0, 1]), ([(0.5 ** 0.5, 0, 0, 0.5 ** 0.5)], [1]),],
+    [
+        ([(1, 0, 0, 0), (1, 0, 0, 0)], [0, 1]),
+        ([(0.5 ** 0.5, 0, 0, 0.5 ** 0.5)], [1]),
+    ],
 )
 def test_antipodal(rotation, improper):
     rotation = Rotation(rotation)

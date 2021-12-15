@@ -110,3 +110,6 @@ ENV/
 # Visual Studio Code
 *.code-workspace
 .vscode
+
+# MacOS
+.DS_Store

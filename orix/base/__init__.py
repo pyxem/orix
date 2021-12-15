@@ -16,7 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Base class for 3d objects.
+
+Note that this class is not meant to be used directly.
+"""
+
 import numpy as np
+
+from orix._util import deprecated
 
 
 # Lists what will be imported when calling "from orix.base import *"
@@ -54,15 +61,13 @@ class DimensionError(Exception):
 
 
 class Object3d:
-    """Base class for 3d objects.
-
-    """
+    """Base class for 3d objects."""
 
     dim = None
-    """int : The number of dimensions for this object."""
+    """int : The number of dimensions for this object."""  # pragma: no cover
 
     _data = None
-    """np.ndarray : Array holding this object's numerical data."""
+    """np.ndarray : Array holding this object's numerical data."""  # pragma: no cover
 
     __array_ufunc__ = None
 
@@ -112,10 +117,20 @@ class Object3d:
         return self.data.shape[:-1]
 
     @property
+    @deprecated(since="0.8", alternative="ndim", removal="0.9", object_type="property")
     def data_dim(self):
         """int : The dimensions of the data.
 
-        For example, if `data` has shape (4, 4, 3), `data_dim` is 3.
+        For example, if `data` has shape (4, 5, 6), `data_dim` is 3.
+
+        """
+        return self.ndim
+
+    @property
+    def ndim(self):
+        """int : The number of navigation dimensions of the instance.
+
+        For example, if `data` has shape (4, 5, 6), `data_dim` is 3.
 
         """
         return len(self.shape)
@@ -206,5 +221,74 @@ class Object3d:
         obj._data = self._data.reshape(*shape, -1)
         return obj
 
+    def transpose(self, *axes):
+        """Returns a new object containing the same data transposed.
+
+        If ndim is originally 2, then order may be undefined.
+        In this case the first two dimensions will be transposed.
+
+        Parameters
+        ----------
+        axes : int, optional
+            The transposed axes order. Only navigation axes need to be defined.
+            May be undefined if self only contains two navigation dimensions.
+
+        Returns
+        -------
+        obj :
+            A transposed instance of the object.
+
+        """
+        # 1d object should not be transposed
+        if len(self.shape) == 1:
+            return self
+
+        # allow 2d object to be transposed without specifying axes
+        if not len(axes):
+            if len(self.shape) != 2:
+                raise ValueError("Axes must be defined for more than two dimensions.")
+            else:
+                # swap first two axes
+                axes = (1, 0)
+
+        if len(axes) != len(self.shape):
+            raise ValueError(
+                f"Number of axes is ill-defined: {tuple(axes)} does not fit with {self.shape}."
+            )
+
+        return self.__class__(self.data.transpose(*axes, -1))
+
     def get_plot_data(self):
         return self
+
+    def get_random_sample(self, size=1, replace=False, shuffle=False):
+        """Return a random sample of a given size in a flattened
+        instance.
+
+        Parameters
+        ----------
+        size : int, optional
+            Number of samples to draw. Cannot be greater than the size
+            of this instance. If not given, a single sample is drawn.
+        replace : bool, optional
+            See :meth:`numpy.random.Generator.choice`.
+        shuffle : bool, optional
+            See :meth:`numpy.random.Generator.choice`.
+
+        Returns
+        -------
+        new
+            New, flattened instance of a given size with elements drawn
+            randomly from this instance.
+
+        See Also
+        --------
+        numpy.random.Generator.choice
+        """
+        n = self.size
+        if size > n:
+            raise ValueError(f"Cannot draw a sample greater than {self.size}")
+        rng = np.random.default_rng()
+        sample = rng.choice(n, size=size, replace=replace, shuffle=shuffle)
+        sample = np.unravel_index(sample, shape=self.shape)
+        return self[sample]

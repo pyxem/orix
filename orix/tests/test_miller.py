@@ -221,7 +221,7 @@ class TestMiller:
 
     def test_multiply_orientation(self):
         o = Orientation.from_euler(np.deg2rad([45, 0, 0]))
-        o = o.set_symmetry(CUBIC_PHASE.point_group)
+        o.symmetry = CUBIC_PHASE.point_group
         m = Miller(hkl=[[1, 1, 1], [2, 0, 0]], phase=CUBIC_PHASE)
         m2 = o * m
         assert isinstance(m2, Miller)
@@ -305,6 +305,31 @@ class TestMiller:
         m6 = m1.reshape(*shape2)
         assert np.allclose(m6.hkl, v.reshape(shape2 + (3,)))
         assert m1._compatible_with(m6)  # Phase carries over
+
+    def test_transpose(self):
+        # test 2d
+        shape = (11, 5)
+        v = np.random.randint(-5, 5, shape + (3,))
+
+        m1 = Miller(hkl=v, phase=TETRAGONAL_PHASE)
+        m2 = m1.transpose()
+
+        assert m1.shape == m2.shape[::-1]
+        assert m1.phase == m2.phase
+
+        # test 2d
+        shape = (11, 5, 4)
+        v = np.random.randint(-5, 5, shape + (3,))
+
+        m1 = Miller(hkl=v, phase=TETRAGONAL_PHASE)
+        m2 = m1.transpose(0, 2, 1)
+
+        assert m2.shape == (11, 4, 5)
+        assert m1.phase == m2.phase
+
+        m2 = m1.transpose(1, 0, 2)
+        assert m2.shape == (5, 11, 4)
+        assert m1.phase == m2.phase
 
 
 class TestMillerBravais:

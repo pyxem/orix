@@ -23,7 +23,7 @@ import numpy as np
 from orix.io import load
 
 
-class TestEMsoftPlugin:
+class TestEMsoftH5ebsdReader:
     @pytest.mark.parametrize(
         "temp_emsoft_h5ebsd_file, map_shape, step_sizes, n_top_matches, refined",
         [
@@ -67,7 +67,7 @@ class TestEMsoftPlugin:
         indirect=["temp_emsoft_h5ebsd_file"],
     )
     def test_load_emsoft(
-        self, temp_emsoft_h5ebsd_file, map_shape, step_sizes, n_top_matches, refined,
+        self, temp_emsoft_h5ebsd_file, map_shape, step_sizes, n_top_matches, refined
     ):
         xmap = load(temp_emsoft_h5ebsd_file.filename, refined=refined)
 
@@ -81,11 +81,8 @@ class TestEMsoftPlugin:
         expected_props = [
             "AvDotProductMap",
             "CI",
-            "CIMap",
             "IQ",
-            "IQMap",
             "ISM",
-            "ISMap",
             "KAM",
             "OSM",
             "TopDotProductList",

@@ -347,7 +347,7 @@ class TestCrystalMapPlotUtilities:
 
     @pytest.mark.parametrize(
         "cmap, label, position",
-        [("viridis", "a", "right"), ("cividis", "b", "left"), ("inferno", "c", "top"),],
+        [("viridis", "a", "right"), ("cividis", "b", "left"), ("inferno", "c", "top")],
     )
     def test_add_colorbar(self, crystal_map, cmap, label, position):
         fig = plt.figure()

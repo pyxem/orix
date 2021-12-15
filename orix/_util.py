@@ -36,8 +36,8 @@ import numpy as np
 
 
 class deprecated:
-    """Decorator to mark deprecated functions with an informative
-    warning.
+    """Decorator to mark deprecated functions or properties with an
+    informative warning.
 
     Adapted from
     `scikit-image
@@ -46,38 +46,48 @@ class deprecated:
     <https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/_api/deprecation.py#L122>`_.
     """
 
-    def __init__(self, since, message=None, alternative=None, removal=None):
+    def __init__(self, since, alternative=None, removal=None, object_type="function"):
         """Visible deprecation warning.
 
         Parameters
         ----------
-        since : str
+        since : str, int or float
             The release at which this API became deprecated.
-        message : str, optional
-            The deprecation message.
         alternative : str, optional
             An alternative API that the user may use in place of the
             deprecated API.
-        removal : str, optional
+        removal : str, int or float, optional
             The expected removal version.
+        object_type : str, optional
+            Type of the deprecated object, either "function" or
+            "property".
         """
         self.since = since
-        self.message = message
         self.alternative = alternative
         self.removal = removal
+        self.object_type = object_type
 
     def __call__(self, func):
-        # Wrap function to raise warning when called, and add warning to
-        # docstring
+        # Wrap function or property to raise warning when called, and
+        # add warning to docstring
+        if self.object_type.lower() != "function":
+            object_type = "Property"
+            parentheses = ""
+        else:
+            object_type = "Function"
+            parentheses = "()"
         if self.alternative is not None:
-            alt_msg = f" Use `{self.alternative}()` instead."
+            alt_msg = f" Use `{self.alternative}{parentheses}` instead."
         else:
             alt_msg = ""
         if self.removal is not None:
             rm_msg = f" and will be removed in version {self.removal}"
         else:
             rm_msg = ""
-        msg = f"Function `{func.__name__}()` is deprecated{rm_msg}.{alt_msg}"
+        msg = (
+            f"{object_type} `{func.__name__}{parentheses}` is deprecated"
+            f"{rm_msg}.{alt_msg}"
+        )
 
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
@@ -102,8 +112,6 @@ class deprecated:
             f".. deprecated:: {self.since}\n"
             f"   {msg.strip()}"  # Matplotlib uses three spaces
         )
-        if not old_doc:
-            new_doc += r"\ "
         wrapped.__doc__ = new_doc
 
         return wrapped

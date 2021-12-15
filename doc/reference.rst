@@ -124,12 +124,20 @@ plugins
 .. currentmodule:: orix.io.plugins
 .. autosummary::
     ang
+    bruker_h5ebsd
     emsoft_h5ebsd
     orix_hdf5
 
 ang
 ~~~
 .. automodule:: orix.io.plugins.ang
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bruker_h5ebsd
+~~~~~~~~~~~~~
+.. automodule:: orix.io.plugins.bruker_h5ebsd
     :members:
     :undoc-members:
     :show-inheritance:
@@ -157,6 +165,9 @@ plot
 .. autosummary::
     AxAnglePlot
     CrystalMapPlot
+    DirectionColorKeyTSL
+    InversePoleFigurePlot
+    IPFColorKeyTSL
     RodriguesPlot
     RotationPlot
     StereographicPlot
@@ -181,6 +192,46 @@ CrystalMapPlot
     :undoc-members:
     :show-inheritance:
 
+DirectionColorKeyTSL
+--------------------
+.. currentmodule:: orix.plot.DirectionColorKeyTSL
+.. autosummary::
+    direction2color
+    plot
+.. autoclass:: orix.plot.DirectionColorKeyTSL
+    :members: direction2color, plot
+    :undoc-members:
+    :show-inheritance:
+
+    .. automethod:: __init__
+
+InversePoleFigurePlot
+---------------------
+.. currentmodule:: orix.plot.InversePoleFigurePlot
+.. autosummary::
+    scatter
+    show_hemisphere_label
+    text
+.. autoclass:: orix.plot.InversePoleFigurePlot
+    :members: hemisphere, name, scatter, show_hemisphere_label, text
+    :undoc-members:
+    :show-inheritance:
+
+    .. automethod:: __init__
+
+IPFColorKeyTSL
+--------------
+.. currentmodule:: orix.plot.IPFColorKeyTSL
+.. autosummary::
+    orientation2color
+    plot
+.. autoclass:: orix.plot.IPFColorKeyTSL
+    :members: direction_color_key, orientation2color, plot
+    :undoc-members:
+    :show-inheritance:
+
+    .. automethod:: __init__
+
 RodriguesPlot
 -------------
 .. currentmodule:: orix.plot.RodriguesPlot
@@ -197,18 +248,21 @@ StereographicPlot
 -----------------
 .. currentmodule:: orix.plot.StereographicPlot
 .. autosummary::
-    azimuth_grid
     draw_circle
-    polar_grid
+    plot
+    restrict_to_sector
     scatter
     show_hemisphere_label
     set_labels
+    stereographic_grid
     symmetry_marker
     text
 .. autoclass:: orix.plot.StereographicPlot
-    :members: azimuth_grid, draw_circle, hemisphere, name, polar_grid, pole, scatter, set_labels, show_hemisphere_label, symmetry_marker, text
+    :members: draw_circle, hemisphere, name, plot, pole, restrict_to_sector, scatter, set_labels, show_hemisphere_label, stereographic_grid, symmetry_marker, text
     :undoc-members:
     :show-inheritance:
+
+    .. automethod:: __init__
 
 ....
 
@@ -278,7 +332,9 @@ Orientation
     from_matrix
     from_neo_euler
     get_distance_matrix
+    scatter
     set_symmetry
+    transpose
 .. autoclass:: orix.quaternion.Orientation
     :show-inheritance:
     :members:
@@ -291,6 +347,7 @@ Misorientation
     distance
     equivalent
     set_symmetry
+    transpose
 .. autoclass:: orix.quaternion.Misorientation
     :show-inheritance:
     :members:
@@ -333,6 +390,7 @@ Rotation
     random_vonmises
     to_euler
     to_matrix
+    transpose
     unique
 .. autoclass:: orix.quaternion.Rotation
     :show-inheritance:
@@ -365,6 +423,7 @@ sampling
     get_sample_fundamental
     get_sample_local
     uniform_SO3_sample
+    sample_S2_uv_mesh
 .. automodule:: orix.sampling
     :members:
     :show-inheritance:
@@ -385,9 +444,9 @@ vector
 .. currentmodule:: orix.vector
 .. autosummary::
     AxAngle
+    FundamentalSector
     Homochoric
     Miller
-    NeoEuler
     Rodrigues
     SphericalRegion
     Vector3d
@@ -402,8 +461,18 @@ AxAngle
     :undoc-members:
     :show-inheritance:
 
+
+FundamentalSector
+-----------------
+.. currentmodule:: orix.vector.FundamentalSector
+.. autoclass:: orix.vector.FundamentalSector
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Homochoric
 ----------
+.. currentmodule:: orix.vector.Homochoric
 .. autoclass:: orix.vector.Homochoric
     :members:
     :undoc-members:
@@ -429,21 +498,14 @@ Miller
     rotate
     scatter
     symmetrise
+    transpose
     unique
 .. autoclass:: orix.vector.Miller
     :members:
     :undoc-members:
     :show-inheritance:
 
-NeoEuler
---------
-.. currentmodule:: orix.vector.NeoEuler
-.. autosummary::
-    from_rotation
-.. autoclass:: orix.vector.NeoEuler
-    :members:
-    :undoc-members:
-    :show-inheritance:
+    .. automethod:: __init__
 
 Rodrigues
 ---------
@@ -472,10 +534,12 @@ Vector3d
     from_polar
     get_circle
     get_nearest
+    in_fundamental_sector
     mean
     rotate
     scatter
     to_polar
+    transpose
     xvector
     yvector
     zvector

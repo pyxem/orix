@@ -1,5 +1,22 @@
+# -*- coding: utf-8 -*-
+# Copyright 2018-2021 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
 import pytest
-import numpy
 
 from orix.quaternion.symmetry import *
 from orix.quaternion.orientation import Orientation
@@ -52,52 +69,52 @@ def test_get_distinguished_points(s1, s2, expected):
     "s1, s2, expected",
     [
         (C2, C1, [[0.5 ** 0.5, 0, 0, -(0.5 ** 0.5)], [0.5 ** 0.5, 0, 0, 0.5 ** 0.5]]),
-        (C6, C1, [[0.258819, 0, 0, -0.965926,], [0.258819, 0, 0, 0.965926,]]),
+        (C6, C1, [[0.258819, 0, 0, -0.965926], [0.258819, 0, 0, 0.965926]]),
         (C3, C3, [[0.5, 0, 0, -0.866], [0.5, 0, 0, 0.866]]),
         (
             D2,
             C1,
             [
-                [0.5 ** 0.5, -(0.5 ** 0.5), 0, 0,],
-                [0.5 ** 0.5, 0, -(0.5 ** 0.5), 0,],
-                [0.5 ** 0.5, 0, 0, -(0.5 ** 0.5),],
-                [0.5 ** 0.5, 0, 0, 0.5 ** 0.5,],
-                [0.5 ** 0.5, 0, 0.5 ** 0.5, 0,],
-                [0.5 ** 0.5, 0.5 ** 0.5, 0, 0,],
+                [0.5 ** 0.5, -(0.5 ** 0.5), 0, 0],
+                [0.5 ** 0.5, 0, -(0.5 ** 0.5), 0],
+                [0.5 ** 0.5, 0, 0, -(0.5 ** 0.5)],
+                [0.5 ** 0.5, 0, 0, 0.5 ** 0.5],
+                [0.5 ** 0.5, 0, 0.5 ** 0.5, 0],
+                [0.5 ** 0.5, 0.5 ** 0.5, 0, 0],
             ],
         ),
         (
             D3,
             C1,
             [
-                [0.707107, -0.707107, 0, 0,],
-                [0.707107, -0.353553, -0.612372, 0,],
-                [0.707107, -0.353553, 0.612372, 0,],
-                [0.5, 0, 0, -0.866025,],
-                [0.5, 0, 0, 0.866025,],
-                [0.707107, 0.353553, -0.612372, 0,],
-                [0.707107, 0.353553, 0.612372, 0,],
-                [0.707107, 0.707107, 0, 0,],
+                [0.707107, -0.707107, 0, 0],
+                [0.707107, -0.353553, -0.612372, 0],
+                [0.707107, -0.353553, 0.612372, 0],
+                [0.5, 0, 0, -0.866025],
+                [0.5, 0, 0, 0.866025],
+                [0.707107, 0.353553, -0.612372, 0],
+                [0.707107, 0.353553, 0.612372, 0],
+                [0.707107, 0.707107, 0, 0],
             ],
         ),
         (
             D6,
             C1,
             [
-                [0.707107, -0.707107, 0, 0,],
-                [0.707107, -0.612372, -0.353553, 0,],
-                [0.707107, -0.612372, 0.353553, 0,],
-                [0.707107, -0.353553, -0.612372, 0,],
-                [0.707107, -0.353553, 0.612372, 0,],
-                [0.707107, 0, -0.707107, 0,],
-                [0.258819, 0, 0, -0.965926,],
-                [0.258819, 0, 0, 0.965926,],
-                [0.707107, 0, 0.707107, 0,],
-                [0.707107, 0.353553, -0.612372, 0,],
-                [0.707107, 0.353553, 0.612372, 0,],
-                [0.707107, 0.612372, -0.353553, 0,],
-                [0.707107, 0.612372, 0.353553, 0,],
-                [0.707107, 0.707107, 0, 0,],
+                [0.707107, -0.707107, 0, 0],
+                [0.707107, -0.612372, -0.353553, 0],
+                [0.707107, -0.612372, 0.353553, 0],
+                [0.707107, -0.353553, -0.612372, 0],
+                [0.707107, -0.353553, 0.612372, 0],
+                [0.707107, 0, -0.707107, 0],
+                [0.258819, 0, 0, -0.965926],
+                [0.258819, 0, 0, 0.965926],
+                [0.707107, 0, 0.707107, 0],
+                [0.707107, 0.353553, -0.612372, 0],
+                [0.707107, 0.353553, 0.612372, 0],
+                [0.707107, 0.612372, -0.353553, 0],
+                [0.707107, 0.612372, 0.353553, 0],
+                [0.707107, 0.707107, 0, 0],
             ],
         ),
     ],
@@ -134,5 +151,5 @@ def test_get_proper_point_groups(Gl, Gr):
 
 @pytest.mark.xfail(raises=NotImplementedError, strict=True)
 def test_get_proper_point_group_not_implemented():
-    """ Double inversion case not yet implemented """
+    """Double inversion case not yet implemented"""
     get_proper_groups(Csz, Csz)

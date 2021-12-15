@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+# Copyright 2018-2021 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+
 import pytest
 import numpy as np
 
@@ -51,12 +69,12 @@ def test_object3d(request):
         (4,),
         (8,),
         (100,),
-        (1, 1,),
+        (1, 1),
         (2, 1),
         (1, 2),
-        (2, 2,),
-        (5, 5,),
-        (100, 100,),
+        (2, 2),
+        (5, 5),
+        (100, 100),
         (1, 1, 1),
         (2, 1, 1),
         (1, 2, 1),
@@ -76,20 +94,20 @@ def object3d(request, test_object3d):
     "test_object3d, data",
     [
         (2, (2,)),
-        (2, (3, 2,)),
-        (2, (4, 3, 2,)),
-        (2, (5, 4, 3, 2,)),
+        (2, (3, 2)),
+        (2, (4, 3, 2)),
+        (2, (5, 4, 3, 2)),
         pytest.param(2, (3,), marks=pytest.mark.xfail(raises=DimensionError)),
         pytest.param(2, (2, 1), marks=pytest.mark.xfail(raises=DimensionError)),
         pytest.param(2, (3, 3), marks=pytest.mark.xfail(raises=DimensionError)),
         pytest.param(2, (3, 3, 3), marks=pytest.mark.xfail(raises=DimensionError)),
         (3, (3,)),
-        (3, (4, 3,)),
-        (3, (5, 4, 3,)),
-        (3, (2, 5, 4, 3,)),
+        (3, (4, 3)),
+        (3, (5, 4, 3)),
+        (3, (2, 5, 4, 3)),
         pytest.param(3, (2,), marks=pytest.mark.xfail(raises=DimensionError)),
-        pytest.param(3, (3, 1,), marks=pytest.mark.xfail(raises=DimensionError)),
-        pytest.param(3, (2, 2,), marks=pytest.mark.xfail(raises=DimensionError)),
+        pytest.param(3, (3, 1), marks=pytest.mark.xfail(raises=DimensionError)),
+        pytest.param(3, (2, 2), marks=pytest.mark.xfail(raises=DimensionError)),
         pytest.param(3, (2, 2, 4), marks=pytest.mark.xfail(raises=DimensionError)),
     ],
     indirect=["test_object3d", "data"],
@@ -111,7 +129,7 @@ def test_init(test_object3d, data):
         pytest.param(
             2,
             (5, 2),
-            (slice(1), slice(1), slice(1),),
+            (slice(1), slice(1), slice(1)),
             marks=pytest.mark.xfail(raises=IndexError),
         ),
         pytest.param(2, (5, 2), slice(7, 8)),
@@ -140,6 +158,10 @@ def test_data_dim(object3d):
     assert object3d.data_dim == len(object3d.data.shape[:-1])
 
 
+def test_ndim(object3d):
+    assert object3d.ndim == len(object3d.data.shape[:-1])
+
+
 def test_size(object3d):
     assert object3d.size == object3d.data.size / object3d.dim
 
@@ -158,18 +180,37 @@ def test_flatten(object3d):
     assert flat.shape[0] == object3d.size
 
 
-@pytest.mark.parametrize("test_object3d", [1,], indirect=["test_object3d"])
+@pytest.mark.parametrize("test_object3d", [1], indirect=["test_object3d"])
 def test_unique(test_object3d):
-    object = test_object3d([[1], [1], [2], [3], [3]])
-    unique = object.unique()
+    o3d = test_object3d([[1], [1], [2], [3], [3]])
+    unique = o3d.unique()
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
-    unique, idx = object.unique(return_index=True)
-    assert np.allclose(unique.data.flatten(), [1, 2, 3])
-    assert np.allclose(idx, [0, 2, 3])
-    unique, inv = object.unique(return_inverse=True)
-    assert np.allclose(unique.data.flatten(), [1, 2, 3])
-    assert np.allclose(inv, [0, 0, 1, 2, 2])
-    unique, idx, inv = object.unique(True, True)
+    unique, idx = o3d.unique(return_index=True)
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
     assert np.allclose(idx, [0, 2, 3])
+    unique, inv = o3d.unique(return_inverse=True)
+    assert np.allclose(unique.data.flatten(), [1, 2, 3])
     assert np.allclose(inv, [0, 0, 1, 2, 2])
+    unique, idx, inv = o3d.unique(True, True)
+    assert np.allclose(unique.data.flatten(), [1, 2, 3])
+    assert np.allclose(idx, [0, 2, 3])
+    assert np.allclose(inv, [0, 0, 1, 2, 2])
+
+
+@pytest.mark.parametrize("test_object3d", [4], indirect=["test_object3d"])
+def test_get_random_sample(test_object3d):
+    o3d = test_object3d(np.arange(80).reshape((5, 4, 4)))
+    o3d_sample = o3d.get_random_sample(10)
+    assert o3d_sample.size == 10
+
+    with pytest.raises(ValueError, match="Cannot draw a sample greater than 20"):
+        _ = o3d.get_random_sample(21)
+
+
+@pytest.mark.parametrize("test_object3d", [3], indirect=["test_object3d"])
+def test_deprecation_warning_data_dim(test_object3d):
+    o3d = test_object3d(np.arange(21).reshape((7, 3)))
+    with pytest.warns(
+        np.VisibleDeprecationWarning, match="Property `data_dim` is deprecated and "
+    ):
+        assert o3d.data_dim == 1

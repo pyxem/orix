@@ -18,11 +18,14 @@
 
 """Tools for assigning colors to crystal orientations."""
 
-from orix.plot.orientation_color_keys.orientation_color_key import OrientationColorKey
 from orix.plot.orientation_color_keys.axis_color_key import AxisColorKey
 from orix.plot.orientation_color_keys.bunge_color_key import BungeColorKey
+from orix.plot.orientation_color_keys.ipf_color_key import IPFColorKey
+from orix.plot.orientation_color_keys.ipf_color_key_tsl import IPFColorKeyTSL
+
 
 __all__ = [
     "AxisColorKey",
     "BungeColorKey",
+    "IPFColorKeyTSL",
 ]

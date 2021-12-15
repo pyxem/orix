@@ -124,7 +124,7 @@ class TestAngReader:
         indirect=["angfile_tsl"],
     )
     def test_load_ang_tsl(
-        self, angfile_tsl, map_shape, step_sizes, phase_id, example_rot,
+        self, angfile_tsl, map_shape, step_sizes, phase_id, example_rot
     ):
         xmap = load(angfile_tsl)
 
@@ -229,7 +229,7 @@ class TestAngReader:
         indirect=["angfile_astar"],
     )
     def test_load_ang_astar(
-        self, angfile_astar, map_shape, step_sizes, phase_id, example_rot,
+        self, angfile_astar, map_shape, step_sizes, phase_id, example_rot
     ):
         cm = load(angfile_astar)
 
@@ -331,7 +331,7 @@ class TestAngReader:
         indirect=["angfile_emsoft"],
     )
     def test_load_ang_emsoft(
-        self, angfile_emsoft, map_shape, step_sizes, phase_id, example_rot,
+        self, angfile_emsoft, map_shape, step_sizes, phase_id, example_rot
     ):
         cm = load(angfile_emsoft)
 
@@ -517,7 +517,7 @@ class TestAngWriter:
         xmap_reload = load(filename=fname)
 
         assert np.allclose(
-            xmap_reload.rotations.to_euler(), crystal_map.rotations.to_euler(),
+            xmap_reload.rotations.to_euler(), crystal_map.rotations.to_euler()
         )
         assert np.allclose(xmap_reload.phase_id - 1, crystal_map.phase_id)
 
@@ -590,7 +590,7 @@ class TestAngWriter:
         assert np.allclose(xmap2.is_in_data, xmap_reload.is_indexed)
 
     @pytest.mark.parametrize(
-        "extra_phase_names", ["ni", ["ferrite", "austenite"], ["si", "al", "cu"]],
+        "extra_phase_names", ["ni", ["ferrite", "austenite"], ["si", "al", "cu"]]
     )
     def test_extra_phases(self, crystal_map, tmp_path, extra_phase_names):
         crystal_map.phases.add_not_indexed()
