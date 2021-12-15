@@ -36,6 +36,9 @@ Changed
 - `Orientation` class methods `from_euler`, `from_matrix`, and `from_neo_euler` no longer 
   return the smallest angle orientation when a `symmetry` is given.
 - `CrystalMap.orientations` no longer returns smallest angle orientation.
+- The methods `flatten`, `reshape`, and `squeeze` have been overridden in
+  `Misorientation`-based classes to maintain the initial symmetry of the object for the 
+  returned object.
 
 Deprecated
 ----------
