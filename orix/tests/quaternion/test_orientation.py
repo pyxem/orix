@@ -138,6 +138,15 @@ def test_flatten_maintains_symmetry(symmetry):
         assert s1._tuples == s2._tuples
 
 
+@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
+def test_squeeze_maintains_symmetry(symmetry):
+    m = Misorientation.random((4, 5, 1))
+    m.symmetry = symmetry
+    m1 = m.squeeze()
+    for s1, s2 in zip(m1.symmetry, symmetry):
+        assert s1._tuples == s2._tuples
+
+
 @pytest.mark.parametrize("Gl", [C4, C2])
 def test_equivalent(Gl):
     """Tests that the property Misorientation.equivalent runs without error,

@@ -160,6 +160,11 @@ class Misorientation(Rotation):
         m._symmetry = self._symmetry
         return m
 
+    def squeeze(self):
+        m = super().squeeze()
+        m._symmetry = self._symmetry
+        return m
+
     def equivalent(self, grain_exchange=False):
         r"""Equivalent misorientations.
 
