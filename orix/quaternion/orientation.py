@@ -145,6 +145,21 @@ class Misorientation(Rotation):
         m._symmetry = self._symmetry
         return m
 
+    def reshape(self, *shape):
+        m = super().reshape(*shape)
+        m._symmetry = self._symmetry
+        return m
+
+    def transpose(self, *axes):
+        m = super().transpose(*axes)
+        m._symmetry = self._symmetry
+        return m
+
+    def flatten(self):
+        m = super().flatten()
+        m._symmetry = self._symmetry
+        return m
+
     def equivalent(self, grain_exchange=False):
         r"""Equivalent misorientations.
 
