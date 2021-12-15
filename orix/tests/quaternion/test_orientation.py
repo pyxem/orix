@@ -114,14 +114,24 @@ def test_getitem(orientation, symmetry):
 
 
 @pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
-def test_reshape_maintains_symmetry(symmetry):
+def test_reshape_maintains_symmetry_misorientation(symmetry):
     m = Misorientation.random((4, 5))
     m.symmetry = symmetry
     m1 = m.reshape(5, 4)
+    for s1, s2 in zip(m1.symmetry, symmetry):
+        assert s1._tuples == s2._tuples
+
+
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+def test_reshape_maintains_symmetry_orientation(symmetry):
+    o = Orientation.random((4, 5))
+    o.symmetry = symmetry
+    o1 = o.reshape(5, 4)
+    assert o1.symmetry._tuples == symmetry._tuples
 
 
 @pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
-def test_transpose_maintains_symmetry(symmetry):
+def test_transpose_maintains_symmetry_misorientation(symmetry):
     m = Misorientation.random((4, 5))
     m.symmetry = symmetry
     m1 = m.transpose()
@@ -129,8 +139,16 @@ def test_transpose_maintains_symmetry(symmetry):
         assert s1._tuples == s2._tuples
 
 
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+def test_transpose_maintains_symmetry_orientation(symmetry):
+    o = Orientation.random((4, 5))
+    o.symmetry = symmetry
+    o1 = o.transpose()
+    assert o1.symmetry._tuples == symmetry._tuples
+
+
 @pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
-def test_flatten_maintains_symmetry(symmetry):
+def test_flatten_maintains_symmetry_misorientation(symmetry):
     m = Misorientation.random((4, 5))
     m.symmetry = symmetry
     m1 = m.flatten()
@@ -138,13 +156,29 @@ def test_flatten_maintains_symmetry(symmetry):
         assert s1._tuples == s2._tuples
 
 
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+def test_flatten_maintains_symmetry_orientation(symmetry):
+    o = Orientation.random((4, 5))
+    o.symmetry = symmetry
+    o1 = o.flatten()
+    assert o1.symmetry._tuples == symmetry._tuples
+
+
 @pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
-def test_squeeze_maintains_symmetry(symmetry):
+def test_squeeze_maintains_symmetry_misorientation(symmetry):
     m = Misorientation.random((4, 5, 1))
     m.symmetry = symmetry
     m1 = m.squeeze()
     for s1, s2 in zip(m1.symmetry, symmetry):
         assert s1._tuples == s2._tuples
+
+
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+def test_squeeze_maintains_symmetry_orientation(symmetry):
+    o = Orientation.random((4, 5))
+    o.symmetry = symmetry
+    o1 = o.squeeze()
+    assert o1.symmetry._tuples == symmetry._tuples
 
 
 @pytest.mark.parametrize("Gl", [C4, C2])
