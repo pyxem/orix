@@ -209,7 +209,7 @@ class Rotation(Quaternion):
         angles = Scalar(np.nan_to_num(np.arccos(2 * dp ** 2 - 1)))
         return angles
 
-    def outer(self, other, **kwargs):
+    def outer(self, other):
         """Compute the outer product of this rotation and the other."""
         r = super().outer(other)
         if isinstance(r, Rotation):
