@@ -41,7 +41,7 @@ from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.vector import Vector3d
+from orix.vector import AxAngle, Vector3d
 
 
 class Symmetry(Rotation):
@@ -126,36 +126,34 @@ class Symmetry(Rotation):
     @property
     def euler_fundamental_region(self):
         r"""The fundamental region in Euler angles
-        :math:`(\phi_1, \Phi, \phi_2)` of the proper subgroup as a
-        :class:`numpy.ndarray`, according to Table 5 in
+        :math:`(\phi_1, \Phi, \phi_2)` in degrees of the proper subgroup
+        as a :class:`numpy.ndarray`, according to Table 5 in
         :cite:`nolze2015euler`.
         """
         # fmt: off
         angles = {
-            # Triclinic
-              "1": (360, 180,    360),
-            # Monoclinic
-            "211": (360,  90,    360),
-            "121": (360, 180,    180),
-            "112": (360, 180,    180),
-            # Orthorhombic
-            "222": (360,  90,    180),
-            # Tetragonal
-              "4": (360, 180,     90),
-            "422": (360,  90,     90),
-            # Trigonal
-              "3": (360, 180,    120),
-            "312": (360,  90,    120),
-             "32": (360,  90,    120),
-            # Hexagonal
-              "6": (360, 180,     60),
-            "622": (360,  90,     60),
-            # Cubic
-             "23": (360,  45,    180),
-            "432": (360,  54.74,  90),
+              "1": (360, 180,   360),  # Triclinic
+            "211": (360,  90,   360),  # Monoclinic
+            "121": (360, 180,   180),
+            "112": (360, 180,   180),
+            "222": (360,  90,   180),  # Orthorhombic
+              "4": (360, 180,    90),  # Tetragonal
+            "422": (360,  90,    90),
+              "3": (360, 180,   120),  # Trigonal
+            "312": (360,  90,   120),
+             "32": (360,  90,   120),
+              "6": (360, 180,    60),  # Hexagonal
+            "622": (360,  90,    60),
+             "23": (360,  45,   180),  # Cubic
+            "432": (360,  54.74, 90),
         }
         # fmt: on
-        return np.radians(angles[self.proper_subgroup.name])
+        proper_subgroup_name = self.proper_subgroup.name
+        if proper_subgroup_name in angles.keys():
+            region = angles[proper_subgroup_name]
+        else:  # Assume no symmetry with unknown symmetry
+            region = angles["1"]
+        return region
 
     @property
     def system(self):
@@ -257,6 +255,57 @@ class Symmetry(Rotation):
         fs._center = center
 
         return fs
+
+    @property
+    def _primary_axis_order(self):
+        """Order of primary rotation axis for the proper subgroup as an
+        `int`.
+        """
+        # TODO: Find this dynamically
+        name = self.proper_subgroup.name
+        if name in ["1", "211", "121"]:
+            return 1
+        elif name in ["112", "222", "23"]:
+            return 2
+        elif name in ["3", "321", "312", "32"]:
+            return 3
+        elif name in ["4", "422", "432"]:
+            return 4
+        elif name in ["6", "622"]:
+            return 6
+        else:
+            return None
+
+    @property
+    def _special_rotation(self):
+        def symmetry_axis(v, n):
+            angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
+            return Rotation.from_neo_euler(AxAngle.from_axes_angles(v, angles))
+
+        vx = Vector3d.xvector()
+        m = Vector3d((1, -1, 0))  # Mirror
+        axis110 = Vector3d((1, 1, 0))
+        axis111 = Vector3d((1, 1, 1))
+
+        name = self.proper_subgroup.name
+        if name in ["1", "211", "121"]:
+            rot = self[self.improper]
+        elif name in ["112", "3", "4", "6"]:
+            rot = self[0]
+        elif name in ["222", "422", "622", "321"]:
+            rot = symmetry_axis(-vx, 2)
+        elif name == "312":
+            rot = symmetry_axis(-m, 2)
+        elif name in ["23", "432"]:
+            rot = symmetry_axis(-axis111, 3)
+            if name == "23":
+                rot = rot.outer(symmetry_axis(-vx, 2))
+            else:  # 432
+                rot = rot.outer(symmetry_axis(-axis110, 2))
+        else:
+            rot = Rotation.identity((1,))
+
+        return rot.flatten()
 
     @classmethod
     def from_generators(cls, *generators):
@@ -498,50 +547,48 @@ Oh.name = "m-3m"
 # Collections of groups for convenience
 # fmt: off
 _groups = [
-    # Schoenflies   Crystal system  International   Laue class
-    C1,   #         Triclinic        1              -1
-    Ci,   #         Triclinic       -1              -1
-    C2x,  #         Monoclinic       211             2/m
-    C2y,  #         Monoclinic       121             2/m
-    C2z,  #         Monoclinic       112             2/m
-    Csx,  #         Monoclinic       m11             2/m
-    Csy,  #         Monoclinic       1m1             2/m
-    Csz,  #         Monoclinic       11m             2/m
-    C2h,  #         Monoclinic       2/m             2/m
-    D2,   #         Orthorhombic     222             mmm
-    C2v,  #         Orthorhombic     mm2             mmm
-    D2h,  #         Orthorhombic     mmm             mmm
-    C4,   #         Tetragonal       4               4/m
-    S4,   #         Tetragonal      -4               4/m
-    C4h,  #         Tetragonal       4/m             4/m
-    D4,   #         Tetragonal       422             4/mmm
-    C4v,  #         Tetragonal       4mm             4/mmm
-    D2d,  #         Tetragonal      -42m             4/mmm
-    D4h,  #         Tetragonal       4/mmm           4/mmm
-    C3,   #         Trigonal         3              -3
-    S6,   #         Trigonal        -3              -3
-    D3x,  #         Trigonal         321            -3m
-    D3y,  #         Trigonal         312            -3m
-    D3,   #         Trigonal         32             -3m
-    C3v,  #         Trigonal         3m             -3m
-    D3d,  #         Trigonal        -3m             -3m
-    C6,   #         Hexagonal        6               6/m
-    C3h,  #         Hexagonal       -6               6/m
-    C6h,  #         Hexagonal        6/m             6/m
-    D6,   #         Hexagonal        622             6/mmm
-    C6v,  #         Hexagonal        6mm             6/mmm
-    D3h,  #         Hexagonal       -6m2             6/mmm
-    D6h,  #         Hexagonal        6/mmm           6/mmm
-    T,    #         Cubic            23              m-3
-    Th,   #         Cubic            m-3             m-3
-    O,    #         Cubic            432             m-3m
-    Td,   #         Cubic           -43m             m-3m
-    Oh,   #         Cubic            m-3m            m-3m
+    # Schoenflies   Crystal system  International   Laue class  Proper point group
+    C1,   #         Triclinic        1              -1          1
+    Ci,   #         Triclinic       -1              -1          1
+    C2x,  #         Monoclinic       211             2/m        211
+    C2y,  #         Monoclinic       121             2/m        121
+    C2z,  #         Monoclinic       112             2/m        112
+    Csx,  #         Monoclinic       m11             2/m        1
+    Csy,  #         Monoclinic       1m1             2/m        1
+    Csz,  #         Monoclinic       11m             2/m        1
+    C2h,  #         Monoclinic       2/m             2/m        112
+    D2,   #         Orthorhombic     222             mmm        222
+    C2v,  #         Orthorhombic     mm2             mmm        211
+    D2h,  #         Orthorhombic     mmm             mmm        222
+    C4,   #         Tetragonal       4               4/m        4
+    S4,   #         Tetragonal      -4               4/m        112
+    C4h,  #         Tetragonal       4/m             4/m        4
+    D4,   #         Tetragonal       422             4/mmm      422
+    C4v,  #         Tetragonal       4mm             4/mmm      4
+    D2d,  #         Tetragonal      -42m             4/mmm      222
+    D4h,  #         Tetragonal       4/mmm           4/mmm      422
+    C3,   #         Trigonal         3              -3          3
+    S6,   #         Trigonal        -3              -3          3
+    D3x,  #         Trigonal         321            -3m         32
+    D3y,  #         Trigonal         312            -3m         32
+    D3,   #         Trigonal         32             -3m         32
+    C3v,  #         Trigonal         3m             -3m         3
+    D3d,  #         Trigonal        -3m             -3m         32
+    C6,   #         Hexagonal        6               6/m        6
+    C3h,  #         Hexagonal       -6               6/m        6
+    C6h,  #         Hexagonal        6/m             6/m        622
+    D6,   #         Hexagonal        622             6/mmm      622
+    C6v,  #         Hexagonal        6mm             6/mmm      6
+    D3h,  #         Hexagonal       -6m2             6/mmm      312
+    D6h,  #         Hexagonal        6/mmm           6/mmm      622
+    T,    #         Cubic            23              m-3        23
+    Th,   #         Cubic            m-3             m-3        23
+    O,    #         Cubic            432             m-3m       432
+    Td,   #         Cubic           -43m             m-3m       23
+    Oh,   #         Cubic            m-3m            m-3m       432
 ]
 # fmt: on
 _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]
-groups_dict = dict(zip([g.name for g in _groups], _groups))
-proper_groups_dict = dict(zip([pg.name for pg in _proper_groups], _proper_groups))
 
 
 def get_distinguished_points(s1, s2=C1):

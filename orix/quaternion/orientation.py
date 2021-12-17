@@ -51,7 +51,6 @@ from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry
 from orix.scalar import Scalar
-from orix.vector import AxAngle, Vector3d
 from orix._util import deprecated
 
 
@@ -751,24 +750,28 @@ class Orientation(Misorientation):
             return figure
 
     def in_euler_fundamental_region(self):
-        """From :cite:`nolze2015euler`."""
-        # TODO: Cubic case
-        alpha, beta, gamma = self.to_euler().T
-        max_alpha, _, max_gamma = self.symmetry.euler_fundamental_region
-        alpha = np.mod(alpha, max_alpha)
-        gamma = np.mod(gamma, max_gamma)
-        euler = np.zeros(self.shape + (3,))
-        beta_lower_than_pi_half = beta <= np.pi / 2
-        euler[..., 0] = np.where(
-            beta_lower_than_pi_half, alpha, np.mod(np.pi + alpha, 2 * np.pi)
+        """From Eq. (31) in :cite:`nolze2015euler`."""
+        pg = self.symmetry.proper_subgroup
+        max_alpha, max_beta, max_gamma = np.radians(pg.euler_fundamental_region)
+
+        ori2 = pg._special_rotation.outer(self)
+        euler = ori2.to_euler()
+        alpha, beta, gamma = euler.T
+
+        gamma = np.mod(gamma, 2 * np.pi / pg._primary_axis_order)
+
+        is_inside = (alpha <= max_alpha) * (beta <= max_beta) * (gamma <= max_gamma)
+        first_nonzero = np.argmax(is_inside, axis=1)
+
+        euler2 = np.column_stack(
+            (
+                np.choose(first_nonzero, alpha.T),
+                np.choose(first_nonzero, beta.T),
+                np.choose(first_nonzero, gamma.T),
+            )
         )
-        euler[..., 1] = np.where(beta_lower_than_pi_half, beta, np.pi - beta)
-        euler[..., 2] = np.where(
-            beta_lower_than_pi_half,
-            np.mod(gamma, max_gamma),
-            np.mod((2 * np.pi) - gamma, max_gamma),
-        )
-        return euler
+
+        return euler2
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this
