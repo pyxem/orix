@@ -646,7 +646,10 @@ def crystal_map_input(request, rotations):
     if rotations_per_point > 1:
         data_shape += (rotations_per_point,)
     d["rotations"] = rotations[rot_idx].reshape(*data_shape)
-    d["phase_id"] = np.random.choice(unique_phase_ids, map_size)
+    phase_id = np.random.choice(unique_phase_ids, map_size)
+    for i in range(len(unique_phase_ids)):
+        phase_id[i] = unique_phase_ids[i]
+    d["phase_id"] = phase_id
     return d
 
 
