@@ -123,6 +123,11 @@ class Misorientation(Rotation):
 
     _symmetry = (C1, C1)
 
+    def __init__(self, data, symmetry=None):
+        super().__init__(data)
+        if symmetry:
+            self.symmetry = symmetry
+
     @property
     def symmetry(self):
         """Tuple of :class:`~orix.quaternion.Symmetry`."""
@@ -141,8 +146,28 @@ class Misorientation(Rotation):
         m._symmetry = self._symmetry
         return m
 
+    def reshape(self, *shape):
+        m = super().reshape(*shape)
+        m._symmetry = self._symmetry
+        return m
+
+    def flatten(self):
+        m = super().flatten()
+        m._symmetry = self._symmetry
+        return m
+
+    def squeeze(self):
+        m = super().squeeze()
+        m._symmetry = self._symmetry
+        return m
+
+    def transpose(self, *axes):
+        m = super().transpose(*axes)
+        m._symmetry = self._symmetry
+        return m
+
     def equivalent(self, grain_exchange=False):
-        r"""Equivalent misorientations
+        r"""Equivalent misorientations.
 
         grain_exchange : bool
             If True the rotation $g$ and $g^{-1}$ are considered to be
@@ -266,29 +291,6 @@ class Misorientation(Rotation):
         """
         distance = _distance(self, verbose, split_size)
         return distance.reshape(self.shape + self.shape)
-
-    def transpose(self, *axes):
-        """Returns a new Misorientation containing the same data
-        transposed.
-
-        If `ndim` is originally 2, then order may be undefined. In this
-        case the first two dimensions will be transposed.
-
-        Parameters
-        ----------
-        axes : int, optional
-            The transposed axes order. Only navigation axes need to be
-            defined. May be undefined if self only contains two
-            navigation dimensions.
-
-        Returns
-        -------
-        Misorientation
-            The transposed Misorientation.
-        """
-        mori = super().transpose(*axes)
-        mori._symmetry = self._symmetry
-        return mori
 
     def __repr__(self):
         """String representation."""

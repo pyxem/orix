@@ -57,8 +57,7 @@ def orientation(request):
     indirect=["orientation"],
 )
 def test_set_symmetry(orientation, symmetry, expected):
-    o = Orientation(orientation.data)
-    o.symmetry = symmetry
+    o = Orientation(orientation.data, symmetry=symmetry)
     o = o.map_into_symmetry_reduced_zone()
     assert np.allclose(o.data, expected, atol=1e-3)
 
@@ -71,8 +70,7 @@ def test_set_symmetry(orientation, symmetry, expected):
 def test_orientation_persistence(symmetry, vector):
     v = symmetry.outer(vector).flatten()
     o = Orientation.random()
-    oc = Orientation(o.data)
-    oc.symmetry = symmetry
+    oc = Orientation(o.data, symmetry=symmetry)
     oc = oc.map_into_symmetry_reduced_zone()
     v1 = o * v
     v1 = Vector3d(v1.data.round(4))
@@ -115,6 +113,74 @@ def test_getitem(orientation, symmetry):
     assert orientation[0].symmetry._tuples == symmetry._tuples
 
 
+@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
+def test_reshape_maintains_symmetry_misorientation(symmetry):
+    m = Misorientation.random((4, 5))
+    m.symmetry = symmetry
+    m1 = m.reshape(5, 4)
+    for s1, s2 in zip(m1.symmetry, symmetry):
+        assert s1._tuples == s2._tuples
+
+
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+def test_reshape_maintains_symmetry_orientation(symmetry):
+    o = Orientation.random((4, 5))
+    o.symmetry = symmetry
+    o1 = o.reshape(5, 4)
+    assert o1.symmetry._tuples == symmetry._tuples
+
+
+@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
+def test_transpose_maintains_symmetry_misorientation(symmetry):
+    m = Misorientation.random((4, 5))
+    m.symmetry = symmetry
+    m1 = m.transpose()
+    for s1, s2 in zip(m1.symmetry, symmetry):
+        assert s1._tuples == s2._tuples
+
+
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+def test_transpose_maintains_symmetry_orientation(symmetry):
+    o = Orientation.random((4, 5))
+    o.symmetry = symmetry
+    o1 = o.transpose()
+    assert o1.symmetry._tuples == symmetry._tuples
+
+
+@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
+def test_flatten_maintains_symmetry_misorientation(symmetry):
+    m = Misorientation.random((4, 5))
+    m.symmetry = symmetry
+    m1 = m.flatten()
+    for s1, s2 in zip(m1.symmetry, symmetry):
+        assert s1._tuples == s2._tuples
+
+
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+def test_flatten_maintains_symmetry_orientation(symmetry):
+    o = Orientation.random((4, 5))
+    o.symmetry = symmetry
+    o1 = o.flatten()
+    assert o1.symmetry._tuples == symmetry._tuples
+
+
+@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
+def test_squeeze_maintains_symmetry_misorientation(symmetry):
+    m = Misorientation.random((4, 5, 1))
+    m.symmetry = symmetry
+    m1 = m.squeeze()
+    for s1, s2 in zip(m1.symmetry, symmetry):
+        assert s1._tuples == s2._tuples
+
+
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+def test_squeeze_maintains_symmetry_orientation(symmetry):
+    o = Orientation.random((4, 5))
+    o.symmetry = symmetry
+    o1 = o.squeeze()
+    assert o1.symmetry._tuples == symmetry._tuples
+
+
 @pytest.mark.parametrize("Gl", [C4, C2])
 def test_equivalent(Gl):
     """Tests that the property Misorientation.equivalent runs without error,
@@ -125,8 +191,7 @@ def test_equivalent(Gl):
     Gl == C2 is no grain exchange
     """
     m = Misorientation([1, 1, 1, 1])  # any will do
-    m_new = Misorientation(m.data)
-    m_new.symmetry = (Gl, C4)
+    m_new = Misorientation(m.data, symmetry=(Gl, C4))
     m_new = m_new.map_into_symmetry_reduced_zone()
     _ = m_new.equivalent(grain_exchange=True)
 
@@ -145,8 +210,7 @@ def test_repr_ori():
 
 
 def test_sub():
-    o = Orientation([1, 1, 1, 1])  # any will do
-    o.symmetry = C4
+    o = Orientation([1, 1, 1, 1], symmetry=C4)  # any will do
     o = o.map_into_symmetry_reduced_zone()
     m = o - o
     assert np.allclose(m.data, [1, 0, 0, 0])
@@ -241,8 +305,7 @@ class TestOrientationInitialization:
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
         assert o2.symmetry.name == "m-3m"
-        o3 = Orientation(o1.data)
-        o3.symmetry = Oh
+        o3 = Orientation(o1.data, symmetry=Oh)
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
 
@@ -261,8 +324,7 @@ class TestOrientationInitialization:
             o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape((4, 4))
         )
         assert o2.symmetry.name == "m-3m"
-        o3 = Orientation(o1.data)
-        o3.symmetry = Oh
+        o3 = Orientation(o1.data, symmetry=Oh)
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
 
@@ -275,8 +337,7 @@ class TestOrientationInitialization:
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(o2.data, [-1, 0, 0, 0])
         assert o2.symmetry.name == "m-3m"
-        o3 = Orientation(o1.data)
-        o3.symmetry = Oh
+        o3 = Orientation(o1.data, symmetry=Oh)
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
 
@@ -296,8 +357,7 @@ class TestOrientation:
     @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
     def test_get_distance_matrix(self, symmetry):
         q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
-        o = Orientation(q)
-        o.symmetry = symmetry
+        o = Orientation(q, symmetry=symmetry)
         o = o.map_into_symmetry_reduced_zone()
         angles_numpy = o.get_distance_matrix()
         assert isinstance(angles_numpy, Scalar)
@@ -324,8 +384,7 @@ class TestOrientation:
     def test_angle_with(self, symmetry):
         q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
         r = Rotation(q)
-        o = Orientation(q)
-        o.symmetry = symmetry
+        o = Orientation(q, symmetry=symmetry)
         o = o.map_into_symmetry_reduced_zone()
 
         is_equal = np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
@@ -383,8 +442,7 @@ class TestOrientation:
         vx = Vector3d.xvector()
         vz = Vector3d.zvector()
 
-        ori = Orientation.from_euler(np.radians((325, 48, 163)))
-        ori.symmetry = Oh
+        ori = Orientation.from_euler(np.radians((325, 48, 163)), symmetry=Oh)
 
         # Returned figure has the expected default properties
         fig = ori.scatter("ipf", return_figure=True)

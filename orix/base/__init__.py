@@ -149,26 +149,28 @@ class Object3d:
         return obj
 
     def flatten(self):
-        """Object3d : A new object with the same data in a single column."""
+        """Returns a new object with the same data in a single column."""
         obj = self.__class__(self.data.T.reshape(self.dim, -1).T)
         real_dim = self._data.shape[-1]
         obj._data = self._data.T.reshape(real_dim, -1).T
         return obj
 
     def unique(self, return_index=False, return_inverse=False):
-        """Returns a new object containing only this object's unique entries.
+        """Returns a new object containing only this object's unique
+        entries.
 
-        Unless overridden, this method returns the numerically unique entries.
-        Also removes zero entries which are assumed to be degenerate.
+        Unless overridden, this method returns the numerically unique
+        entries. Also removes zero entries which are assumed to be
+        degenerate.
 
         Parameters
         ----------
         return_index : bool, optional
-            If True, will also return the indices of the (flattened) data where
-            the unique entries were found.
+            If True, will also return the indices of the (flattened)
+            data where the unique entries were found.
         return_inverse : bool, optional
-            If True, will also return the indices to reconstruct the (flattened)
-            data from the unique data.
+            If True, will also return the indices to reconstruct the
+            (flattened) data from the unique data.
 
         Returns
         -------
@@ -211,6 +213,7 @@ class Object3d:
             return obj
 
     def squeeze(self):
+        """Returns a new object with length one dimensions removed."""
         obj = self.__class__(self)
         obj._data = np.atleast_2d(np.squeeze(self._data))
         return obj
@@ -230,8 +233,9 @@ class Object3d:
         Parameters
         ----------
         axes : int, optional
-            The transposed axes order. Only navigation axes need to be defined.
-            May be undefined if self only contains two navigation dimensions.
+            The transposed axes order. Only navigation axes need to be
+            defined. May be undefined if self only contains two
+            navigation dimensions.
 
         Returns
         -------
@@ -253,7 +257,8 @@ class Object3d:
 
         if len(axes) != len(self.shape):
             raise ValueError(
-                f"Number of axes is ill-defined: {tuple(axes)} does not fit with {self.shape}."
+                "Number of axes is ill-defined: "
+                + f"{tuple(axes)} does not fit with {self.shape}."
             )
 
         return self.__class__(self.data.transpose(*axes, -1))
