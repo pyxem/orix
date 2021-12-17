@@ -338,12 +338,15 @@ class Rotation(Quaternion):
             e[..., 2] = np.where(cond, 0, e[..., 2])
 
         if np.sum(chi != 0) > 0:
+            not_zero = chi != 0
             alpha = np.arctan2(
-                np.divide(b * d - a * c, chi), np.divide(-a * b - c * d, chi)
+                np.divide(b * d - a * c, chi, where=not_zero, out=np.zeros_like(chi)),
+                np.divide(-a * b - c * d, chi, where=not_zero, out=np.zeros_like(chi)),
             )
             beta = np.arctan2(2 * chi, q_zero_three - q_one_two)
             gamma = np.arctan2(
-                np.divide(a * c + b * d, chi), np.divide(c * d - a * b, chi)
+                np.divide(a * c + b * d, chi, where=not_zero, out=np.zeros_like(chi)),
+                np.divide(c * d - a * b, chi, where=not_zero, out=np.zeros_like(chi)),
             )
 
             e[..., 0] = np.where(chi != 0, alpha, e[..., 0])
