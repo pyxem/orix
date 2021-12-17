@@ -619,9 +619,6 @@ class Rotation(Quaternion):
         r.improper = self.improper
         return r
 
-    def project2euler_fundamental_region(self, fold):
-        pass
-
     def _outer_dask(self, other, chunk_size=20):
         """Compute the product of every rotation in this instance to
         every rotation in another instance, returned as a Dask array.

@@ -48,12 +48,10 @@ class EulerColorKey:
 
     def __repr__(self):
         sym = self.symmetry
-        max_euler = sym.euler_fundamental_region
-        max_euler = np.array_str(max_euler, precision=2, suppress_small=True)
-        max_euler = "(" + max_euler.strip("[]") + ")"
+        phi1, Phi, phi2 = sym.euler_fundamental_region
         return (
             f"{self.__class__.__name__}, symmetry {sym.name}"
-            f"\nMax (phi1, Phi, phi2): {max_euler}"
+            f"\nMax (phi1, Phi, phi2): ({phi1}, {Phi}, {phi2})"
         )
 
     def orientation2color(self, orientation):
@@ -129,6 +127,7 @@ class EulerColorKey:
         fig.axes[0].set_title(
             self.symmetry.proper_subgroup.name, ha="center", fontweight="bold"
         )
+        fig.subplots_adjust(top=0.75)  # Show title
 
         if return_figure:
             return fig

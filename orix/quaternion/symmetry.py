@@ -89,8 +89,11 @@ class Symmetry(Rotation):
         :class:`Symmetry`.
         """
         subgroups = self.proper_subgroups
-        subgroups_sorted = sorted(subgroups, key=lambda g: g.order)
-        return subgroups_sorted[-1]
+        if len(subgroups) == 0:
+            return Symmetry(self)
+        else:
+            subgroups_sorted = sorted(subgroups, key=lambda g: g.order)
+            return subgroups_sorted[-1]
 
     @property
     def laue(self):
@@ -125,8 +128,7 @@ class Symmetry(Rotation):
 
     @property
     def euler_fundamental_region(self):
-        r"""Fundamental Euler angle region of the proper subgroup as
-        defined in Table 5 in :cite:`nolze2015euler`.
+        r"""Fundamental Euler angle region of the proper subgroup.
 
         Returns
         -------
@@ -137,20 +139,20 @@ class Symmetry(Rotation):
         """
         # fmt: off
         angles = {
-              "1": (360, 180,   360),  # Triclinic
-            "211": (360,  90,   360),  # Monoclinic
-            "121": (360, 180,   180),
-            "112": (360, 180,   180),
-            "222": (360,  90,   180),  # Orthorhombic
-              "4": (360, 180,    90),  # Tetragonal
-            "422": (360,  90,    90),
-              "3": (360, 180,   120),  # Trigonal
-            "312": (360,  90,   120),
-             "32": (360,  90,   120),
-              "6": (360, 180,    60),  # Hexagonal
-            "622": (360,  90,    60),
-             "23": (360,  45,   180),  # Cubic
-            "432": (360,  54.74, 90),
+              "1": (360, 180, 360),  # Triclinic
+            "211": (360,  90, 360),  # Monoclinic
+            "121": (360, 180, 180),
+            "112": (360, 180, 180),
+            "222": (360,  90, 180),  # Orthorhombic
+              "4": (360, 180,  90),  # Tetragonal
+            "422": (360,  90,  90),
+              "3": (360, 180, 120),  # Trigonal
+            "312": (360,  90, 120),
+             "32": (360,  90, 120),
+              "6": (360, 180,  60),  # Hexagonal
+            "622": (360,  90,  60),
+             "23": (360, 180, 180),  # Cubic
+            "432": (360,  90,  90),
         }
         # fmt: on
         proper_subgroup_name = self.proper_subgroup.name
@@ -284,7 +286,7 @@ class Symmetry(Rotation):
             return 1
         elif name in ["112", "222", "23"]:
             return 2
-        elif name in ["3", "321", "312", "32"]:
+        elif name in ["3", "312", "32"]:
             return 3
         elif name in ["4", "422", "432"]:
             return 4
@@ -323,16 +325,16 @@ class Symmetry(Rotation):
 
         name = self.proper_subgroup.name
         if name in ["1", "211", "121"]:
-            # Inversion
-            rot = self[self.improper]
+            # All proper operations
+            rot = self[~self.improper]
         elif name in ["112", "3", "4", "6"]:
             # Identity
             rot = self[0]
-        elif name in ["222", "422", "622", "321"]:
+        elif name in ["222", "422", "622", "32"]:
             # Two-fold rotation about a-axis perpendicular to c-axis
             rot = symmetry_axis(-vx, 2)
         elif name == "312":
-            # Mirror plane perpendicular to c-axis
+            # Mirror plane perpendicular to c-axis?
             rot = symmetry_axis(-mirror, 2)
         elif name in ["23", "432"]:
             # Three-fold rotation about [111]
@@ -611,7 +613,7 @@ _groups = [
     C3,   #         Trigonal         3              -3          3
     S6,   #         Trigonal        -3              -3          3
     D3x,  #         Trigonal         321            -3m         32
-    D3y,  #         Trigonal         312            -3m         32
+    D3y,  #         Trigonal         312            -3m         312
     D3,   #         Trigonal         32             -3m         32
     C3v,  #         Trigonal         3m             -3m         3
     D3d,  #         Trigonal        -3m             -3m         32
