@@ -27,6 +27,8 @@ Added
   sample direction.
 - Inverse pole figure colouring of orientations given a Laue symmetry and sample
   direction.
+- `from_axes_angles()` method to `Rotation` and `Orientation` as a shortcut to
+  `from_neo_euler()` for axis/angle pairs.
 - `Orientation` based classes now accept a `symmetry` argument upon initialisation.
 
 Changed

@@ -198,12 +198,12 @@ class Quaternion(Object3d):
         return Scalar(dots)
 
     def mean(self):
-        """Calculates the mean quarternion with unitary weights.
+        """Calculates the mean quaternion with unitary weights.
 
         Notes
         -----
         The method used here corresponds to Equation (13) in
-        http://www.acsu.buffalo.edu/~johnc/ave_quat07.pdf.
+        https://arc.aiaa.org/doi/pdf/10.2514/1.28949.
         """
         q = self.flatten().data.T
         qq = q.dot(q.T)

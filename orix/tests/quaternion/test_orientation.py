@@ -341,6 +341,17 @@ class TestOrientationInitialization:
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
 
+    def test_from_axes_angles(self, rotations):
+        axis = Vector3d.xvector() - Vector3d.yvector()
+        angle = np.pi / 2
+        axangle = AxAngle.from_axes_angles(axis, angle)
+        ori = Orientation.from_neo_euler(axangle, Oh)
+        ori2 = Orientation.from_axes_angles(axis, angle, Oh)
+        assert np.allclose(ori.to_euler(), (3 * np.pi / 4, np.pi / 2, -3 * np.pi / 4))
+        assert np.allclose(ori.data, ori2.data)
+        assert ori.symmetry.name == ori2.symmetry.name == "m-3m"
+        assert np.allclose(ori.symmetry.data, ori2.symmetry.data)
+
 
 class TestOrientation:
     @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])

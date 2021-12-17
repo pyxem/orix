@@ -328,6 +328,7 @@ Orientation
     distance
     dot
     dot_outer
+    from_axes_angles
     from_euler
     from_matrix
     from_neo_euler
@@ -381,6 +382,7 @@ Rotation
     angle_with
     dot_outer
     flatten
+    from_axes_angles
     from_euler
     from_matrix
     from_neo_euler
