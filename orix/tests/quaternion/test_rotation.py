@@ -16,14 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from diffpy.structure.spacegroups import sg225
 from math import cos, sin, tan, pi
+
+from diffpy.structure.spacegroups import sg225
 import numpy as np
 import pytest
 
-from orix.quaternion import Quaternion
-from orix.quaternion.rotation import Rotation
-from orix.vector import Vector3d
+from orix.quaternion import Quaternion, Rotation
+from orix.vector import AxAngle, Vector3d
+
 
 rotations = [
     (0.707, 0.0, 0.0, 0.707),
@@ -527,3 +528,13 @@ class TestFromToMatrix:
         """
         r = Rotation.from_matrix([i.R for i in sg225.symop_list])
         assert not np.isnan(r.data).any()
+
+
+class TestFromAxesAngles:
+    """These tests address Rotation.from_axes_angles()."""
+
+    def test_from_axes_angles(self, rotations):
+        axangle = AxAngle.from_rotation(rotations)
+        rotations2 = Rotation.from_neo_euler(axangle)
+        rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle.data)
+        assert np.allclose(rotations2.data, rotations3.data)
