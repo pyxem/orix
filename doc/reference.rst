@@ -342,6 +342,7 @@ Orientation
     from_matrix
     from_neo_euler
     get_distance_matrix
+    in_euler_fundamental_region
     scatter
     set_symmetry
     transpose
