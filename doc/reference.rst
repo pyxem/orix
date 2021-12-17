@@ -32,7 +32,6 @@ base
 ====
 .. automodule:: orix.base
     :members:
-    :show-inheritance:
 
 ....
 
@@ -55,7 +54,6 @@ Phase
 .. autoclass:: orix.crystal_map.Phase
     :members:
     :undoc-members:
-    :show-inheritance:
 
     .. automethod:: __init__
 
@@ -70,7 +68,6 @@ PhaseList
 .. autoclass:: orix.crystal_map.PhaseList
     :members:
     :undoc-members:
-    :show-inheritance:
 
     .. automethod:: __init__
 
@@ -85,7 +82,6 @@ CrystalMap
 .. autoclass:: orix.crystal_map.CrystalMap
     :members:
     :undoc-members:
-    :show-inheritance:
 
     .. automethod:: __init__
 
@@ -166,6 +162,7 @@ plot
     AxAnglePlot
     CrystalMapPlot
     DirectionColorKeyTSL
+    EulerColorKey
     InversePoleFigurePlot
     IPFColorKeyTSL
     RodriguesPlot
@@ -202,6 +199,18 @@ DirectionColorKeyTSL
     :members: direction2color, plot
     :undoc-members:
     :show-inheritance:
+
+    .. automethod:: __init__
+
+EulerColorKey
+-------------
+.. currentmodule:: orix.plot.EulerColorKey
+.. autosummary::
+    orientation2color
+    plot
+.. autoclass:: orix.plot.EulerColorKey
+    :members: orientation2color, plot
+    :undoc-members:
 
     .. automethod:: __init__
 

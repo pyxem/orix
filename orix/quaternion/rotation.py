@@ -303,7 +303,7 @@ class Rotation(Quaternion):
         return cls.from_neo_euler(axangle)
 
     def to_euler(self, convention="bunge"):
-        """Rotations as Euler angles.
+        r"""Rotations as Euler angles :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
@@ -313,7 +313,9 @@ class Rotation(Quaternion):
         Returns
         -------
         ndarray
-            Array of Euler angles in radians.
+            Array of Euler angles in radians, in the ranges
+            :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
+            :math:`\phi_1 \in [0, 2\pi]`.
         """
         # TODO: other conventions
         if convention != "bunge":
@@ -324,7 +326,6 @@ class Rotation(Quaternion):
         n = self.data.shape[:-1]
         e = np.zeros(n + (3,))
 
-        # Move into pure numpy
         a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
 
         q03 = a ** 2 + d ** 2
@@ -361,10 +362,8 @@ class Rotation(Quaternion):
             e[..., 2] = np.where(chi_not_zero, gamma, e[..., 2])
 
         # Reduce Euler angles to definition range
-        e[np.abs(e) < 1.0e-6] = 0
-        e = np.where(
-            e < 0, (e + 2 * np.pi) % np.array([2 * np.pi, np.pi, 2 * np.pi]), e
-        )
+        e[np.abs(e) < _FLOAT_EPS] = 0
+        e = np.where(e < 0, np.mod(e + 2 * np.pi, (2 * np.pi, np.pi, 2 * np.pi)), e)
 
         return e
 

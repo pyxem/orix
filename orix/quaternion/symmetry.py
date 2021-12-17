@@ -59,27 +59,27 @@ class Symmetry(Rotation):
 
     @property
     def order(self):
-        """Number of elements of the group as :ref:`int`."""
+        """Number of elements of the group as :class:`int`."""
         return self.size
 
     @property
     def is_proper(self):
         """Whether this group contains only proper rotations as
-        :ref:`bool`.
+        :class:`bool`.
         """
         return np.all(np.equal(self.improper, 0))
 
     @property
     def subgroups(self):
-        """List groups that are subgroups of this group as a :ref:`list`
-        of :class:`Symmetry`.
+        """List groups that are subgroups of this group as a
+        :class:`list` of :class:`Symmetry`.
         """
         return [g for g in _groups if g._tuples <= self._tuples]
 
     @property
     def proper_subgroups(self):
         """List of proper groups that are subgroups of this group as a
-        :ref:`list` of :class:`Symmetry`.
+        :class:`list` of :class:`Symmetry`.
         """
         return [g for g in self.subgroups if g.is_proper]
 
@@ -108,7 +108,7 @@ class Symmetry(Rotation):
 
     @property
     def contains_inversion(self):
-        """Whether this group contains inversion as a :ref:`bool`."""
+        """Whether this group contains inversion as a :class:`bool`."""
         return Ci._tuples <= self._tuples
 
     @property
@@ -125,10 +125,15 @@ class Symmetry(Rotation):
 
     @property
     def euler_fundamental_region(self):
-        r"""The fundamental region in Euler angles
-        :math:`(\phi_1, \Phi, \phi_2)` in degrees of the proper subgroup
-        as a :class:`numpy.ndarray`, according to Table 5 in
-        :cite:`nolze2015euler`.
+        r"""Fundamental Euler angle region of the proper subgroup as
+        defined in Table 5 in :cite:`nolze2015euler`.
+
+        Returns
+        -------
+        region : tuple
+            Maximum Euler angles :math:`(\phi_{1, max}, \Phi_{max},
+            \phi_{2, max})` in degrees. No symmetry is assumed if the
+            proper subgroup name is not recognized.
         """
         # fmt: off
         angles = {
@@ -151,14 +156,18 @@ class Symmetry(Rotation):
         proper_subgroup_name = self.proper_subgroup.name
         if proper_subgroup_name in angles.keys():
             region = angles[proper_subgroup_name]
-        else:  # Assume no symmetry with unknown symmetry
+        else:
             region = angles["1"]
         return region
 
     @property
     def system(self):
-        """Which of the seven crystal systems this symmetry belongs to
-        as a :ref:`str`.
+        """Which of the seven crystal systems this symmetry belongs to.
+
+        Returns
+        -------
+        str or None
+            None is returned if the symmetry name is not recognized.
         """
         name = self.name
         if name in ["1", "-1"]:
@@ -258,8 +267,16 @@ class Symmetry(Rotation):
 
     @property
     def _primary_axis_order(self):
-        """Order of primary rotation axis for the proper subgroup as an
-        `int`.
+        """Order of primary rotation axis for the proper subgroup.
+
+        Used in to map Euler angles into the fundamental region in
+        :meth:`~orix.quaternion.Orientation.in_euler_fundamental_region`.
+
+         Returns
+         -------
+         int or None
+            None is returned if the proper subgroup name is not
+            recognized.
         """
         # TODO: Find this dynamically
         name = self.proper_subgroup.name
@@ -278,29 +295,53 @@ class Symmetry(Rotation):
 
     @property
     def _special_rotation(self):
+        """Symmetry operations of the proper subgroup different from
+        rotation about the c-axis.
+
+        Used in to map Euler angles into the fundamental region in
+        :meth:`~orix.quaternion.Orientation.in_euler_fundamental_region`.
+
+        These sectors are taken from MTEX'
+        :code:`Symmetry.rotation_special`.
+
+        Returns
+        -------
+        rot : Rotation
+            The identity rotation is returned if the proper subgroup
+            name is not recognized.
+        """
+
         def symmetry_axis(v, n):
             angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
             return Rotation.from_neo_euler(AxAngle.from_axes_angles(v, angles))
 
+        # Symmetry axes
         vx = Vector3d.xvector()
-        m = Vector3d((1, -1, 0))  # Mirror
+        mirror = Vector3d((1, -1, 0))
         axis110 = Vector3d((1, 1, 0))
         axis111 = Vector3d((1, 1, 1))
 
         name = self.proper_subgroup.name
         if name in ["1", "211", "121"]:
+            # Inversion
             rot = self[self.improper]
         elif name in ["112", "3", "4", "6"]:
+            # Identity
             rot = self[0]
         elif name in ["222", "422", "622", "321"]:
+            # Two-fold rotation about a-axis perpendicular to c-axis
             rot = symmetry_axis(-vx, 2)
         elif name == "312":
-            rot = symmetry_axis(-m, 2)
+            # Mirror plane perpendicular to c-axis
+            rot = symmetry_axis(-mirror, 2)
         elif name in ["23", "432"]:
+            # Three-fold rotation about [111]
             rot = symmetry_axis(-axis111, 3)
             if name == "23":
+                # Combined with two-fold rotation about a-axis
                 rot = rot.outer(symmetry_axis(-vx, 2))
-            else:  # 432
+            else:
+                # Combined with two-fold rotation about [110]
                 rot = rot.outer(symmetry_axis(-axis110, 2))
         else:
             rot = Rotation.identity((1,))

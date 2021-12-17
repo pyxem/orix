@@ -21,7 +21,29 @@ import numpy as np
 
 
 class EulerColorKey:
+    r"""Assign colors to crystal orientations from their Euler angle
+    triplet :math:`(\phi_1, \Phi, \phi_2)` in the fundamental Euler
+    region of the orientations' proper subgroup.
+
+    The Euler angle ranges of each proper subgroup are given in
+    :attr:`~orix.quaternion.Symmetry.euler_fundamental_region`. The
+    mapping of orientations' Euler angles to the fundamental Euler
+    region is done with
+    :meth:`~orix.quaternion.Orientation.in_euler_fundamental_region`.
+    """
+
     def __init__(self, symmetry):
+        """Create a Euler color key to color orientations according
+        their Euler angle triplet in the fundamental Euler region of the
+        proper subgroup.
+
+        Parameters
+        ----------
+        symmetry : orix.quaternion.Symmetry
+            Proper point group of the crystal. If an improper point
+            group is given, the proper point group is derived from it
+            if possible.
+        """
         self.symmetry = symmetry
 
     def __repr__(self):
@@ -35,6 +57,21 @@ class EulerColorKey:
         )
 
     def orientation2color(self, orientation):
+        """Return an RGB color per orientation given a proper point
+        group symmetry.
+
+        Plot the Euler color key with :meth:`plot`.
+
+        Parameters
+        ----------
+        orientation : orix.quaternion.Orientation
+            Orientations to color.
+
+        Returns
+        -------
+        rgb : numpy.ndarray
+            Color array of shape `orientation.shape` + (3,).
+        """
         return self._euler2color(orientation.in_euler_fundamental_region())
 
     def plot(self, return_figure=False):
@@ -88,6 +125,10 @@ class EulerColorKey:
             )
             ax.set_xticks([], [])
             ax.set_yticks([], [])
+
+        fig.axes[0].set_title(
+            self.symmetry.proper_subgroup.name, ha="center", fontweight="bold"
+        )
 
         if return_figure:
             return fig

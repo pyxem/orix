@@ -684,6 +684,45 @@ class Orientation(Misorientation):
         o.symmetry = symmetry
         return o.map_into_symmetry_reduced_zone()
 
+    def in_euler_fundamental_region(self):
+        """Euler angles in the fundamental Euler region of the proper
+        subgroup.
+
+        The Euler angle ranges of each proper subgroup are given in
+        :attr:`~orix.quaternion.Symmetry.euler_fundamental_region`.
+
+        From the procedure in MTEX' :code:`quaternion.project2EulerFR`.
+
+        Returns
+        -------
+        euler_in_region : numpy.ndarray
+            Euler angles in radians.
+        """
+        pg = self.symmetry.proper_subgroup
+
+        # Symmetrize every orientation by operations of the proper
+        # subgroup different from rotation about the c-axis
+        ori = pg._special_rotation.outer(self)
+
+        alpha, beta, gamma = ori.to_euler().T
+        gamma = np.mod(gamma, 2 * np.pi / pg._primary_axis_order)
+
+        # Find the first triplet among the symmetrically equivalent ones
+        # inside the fundamental region
+        max_alpha, max_beta, max_gamma = np.radians(pg.euler_fundamental_region)
+        is_inside = (alpha <= max_alpha) * (beta <= max_beta) * (gamma <= max_gamma)
+        first_nonzero = np.argmax(is_inside, axis=1)
+
+        euler_in_region = np.column_stack(
+            (
+                np.choose(first_nonzero, alpha.T),
+                np.choose(first_nonzero, beta.T),
+                np.choose(first_nonzero, gamma.T),
+            )
+        )
+
+        return euler_in_region
+
     def scatter(
         self,
         projection="axangle",
@@ -782,30 +821,6 @@ class Orientation(Misorientation):
 
         if return_figure:
             return figure
-
-    def in_euler_fundamental_region(self):
-        """From Eq. (31) in :cite:`nolze2015euler`."""
-        pg = self.symmetry.proper_subgroup
-        max_alpha, max_beta, max_gamma = np.radians(pg.euler_fundamental_region)
-
-        ori2 = pg._special_rotation.outer(self)
-        euler = ori2.to_euler()
-        alpha, beta, gamma = euler.T
-
-        gamma = np.mod(gamma, 2 * np.pi / pg._primary_axis_order)
-
-        is_inside = (alpha <= max_alpha) * (beta <= max_beta) * (gamma <= max_gamma)
-        first_nonzero = np.argmax(is_inside, axis=1)
-
-        euler2 = np.column_stack(
-            (
-                np.choose(first_nonzero, alpha.T),
-                np.choose(first_nonzero, beta.T),
-                np.choose(first_nonzero, gamma.T),
-            )
-        )
-
-        return euler2
 
     def _dot_outer_dask(self, other, chunk_size=20):
         """Symmetry reduced dot product of every orientation in this
