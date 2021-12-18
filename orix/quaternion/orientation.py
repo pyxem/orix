@@ -656,6 +656,64 @@ class Orientation(Misorientation):
 
         return Scalar(angles)
 
+    def plot_unit_cell(
+        self,
+        c="tab:blue",
+        return_figure=False,
+        axes_length=0.5,
+        structure=None,
+        crystal_axes_loc="origin",
+        **arrow_kwargs,
+    ):
+        """Plot the unit cell orientation, showing the sample and
+        crystal reference frames.
+
+        Parameters
+        ----------
+        c : str, optional
+            Unit cell edge color.
+        return_figure : bool, optional
+            Return the plotted figure.
+        axes_length : float, optional
+            Length of the reference axes in Angstroms, by default 0.5.
+        structure : diffpy.structure.Structure or None, optional
+            Structure of the unit cell, only orthorhombic lattices are currently
+            supported. If not given, a cubic unit cell with a lattice parameter of
+            2 Angstroms will be plotted.
+        crystal_axes_loc : str, optional
+            Plot the crystal reference frame axes at the "origin" (default) or
+            "center" of the plotted cell.
+        arrow_kwargs : dict, optional
+            Keyword arguments passed to
+            :class:`matplotlib.patches.FancyArrowPatch`, for example "arrowstyle".
+
+        Returns
+        -------
+        fig: matplotlib.figure.Figure
+            The plotted figure.
+
+        Raises
+        ------
+        ValueError
+            If self.size > 1.
+        """
+        if self.size > 1:
+            raise ValueError("Can only plot a single unit cell, so *size* must be 1")
+
+        from orix.plot.unit_cell_plot import _plot_unit_cell
+
+        fig = _plot_unit_cell(
+            self,
+            c=c,
+            axes_length=axes_length,
+            structure=structure,
+            crystal_axes_loc=crystal_axes_loc,
+            **arrow_kwargs,
+        )
+
+        if return_figure:
+            return fig
+
     @deprecated(
         since="0.8",
         alternative="orix.quaternion.Orientation.map_into_symmetry_reduced_zone",

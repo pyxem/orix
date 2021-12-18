@@ -30,6 +30,8 @@ Added
 - `from_axes_angles()` method to `Rotation` and `Orientation` as a shortcut to
   `from_neo_euler()` for axis/angle pairs.
 - `Orientation` based classes now accept a `symmetry` argument upon initialisation.
+- Simple unit cell orientation plotting with `plot_unit_cell` for `Orientation`
+  instances.
 
 Changed
 -------
