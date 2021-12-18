@@ -12,3 +12,11 @@ find useful:
   electron backscatter diffraction (EBSD) patterns.
 - `MTEX <https://mtex-toolbox.github.io>`_: Matlab toolbox for analyzing and
   modelling crystallographic textures by means of EBSD or pole figure data.
+- `DefDAP <https://defdap.readthedocs.io/en/latest/?badge=latest>`_: Python package for
+  correlating EBSD and high-resolution digital image correlation data.
+- `quaternion <https://github.com/moble/quaternion>`_: Python package that adds a built
+  in quaternion data dtype to NumPy.
+- `texture <https://github.com/usnistgov/texture>`_: Python scripts for analysis of
+  crystallographic texture.
+- `pymicro <https://github.com/heprom/pymicro/>`_: Python package to work with material
+  microstructures and 3D data sets.
