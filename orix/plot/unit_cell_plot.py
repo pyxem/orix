@@ -26,14 +26,15 @@ from diffpy.structure import Structure, Lattice
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.vector import Vector3d
 from orix.plot._util import Arrow3D
+from orix.vector import Vector3d
 
 
 def _calculate_basic_unit_cell_vertices(vectors):
     """Calculate cell vertices for unit cells."""
     vectors = np.asarray(vectors)
-    assert vectors.shape == (3, 3), "Vectors must be (3, 3) array."
+    if vectors.shape != (3, 3):
+        raise ValueError("Vectors must be (3, 3) array.")
     # generate list of lattice basis vectors from (000) to (111) (+ve)
     verts = np.array(list(product(*zip((0, 0, 0), (1, 1, 1)))))
     verts = (verts[..., np.newaxis] * vectors).sum(axis=1)
@@ -44,7 +45,8 @@ def _calculate_basic_unit_cell_vertices(vectors):
 def _calculate_basic_unit_cell_edges(verts, vectors):
     """Calculate valid unit cell edges for unit cells."""
     vectors = np.asarray(vectors)
-    assert vectors.shape == (3, 3), "Vectors must be (3, 3) array."
+    if vectors.shape != (3, 3):
+        raise ValueError("Vectors must be (3, 3) array.")
     a1, a2, a3 = np.linalg.norm(vectors, axis=-1)
     # get valid edges from all unit cell edge possibilities unit cell
     edges_valid = []
@@ -92,7 +94,7 @@ def _plot_unit_cell(
     arrow_kwargs : dict, optional
         Keyword arguments passed to
         :class:`matplotlib.patches.FancyArrowPatch`, for example
-        "arrowstyle".
+        `arrowstyle`.
 
     Returns
     -------
@@ -110,9 +112,8 @@ def _plot_unit_cell(
     if structure is None:
         structure = Structure(lattice=Lattice(2, 2, 2, 90, 90, 90))
 
-    assert isinstance(
-        structure, Structure
-    ), "Structure must be diffpy.structure.Structure."
+    if not isinstance(structure, Structure):
+        raise TypeError("Structure must be diffpy.structure.Structure.")
     lattice = structure.lattice
     lattice_vectors = lattice.base
 
