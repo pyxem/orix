@@ -21,11 +21,9 @@ from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 import pytest
 
-from orix.crystal_map import CrystalMap
-from orix.crystal_map.phase_list import Phase, PhaseList
+from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.plot import CrystalMapPlot
-from orix.quaternion.orientation import Orientation
-from orix.quaternion.rotation import Rotation
+from orix.quaternion import Orientation, Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
 
 
@@ -512,9 +510,7 @@ class TestCrystalMapOrientations:
 
     def test_orientations_none_symmetry_raises(self, crystal_map_input):
         xmap = CrystalMap(**crystal_map_input)
-
-        assert xmap.phases.point_groups == [None]
-
+        assert xmap.phases[:].point_group is None
         with pytest.raises(TypeError, match="Value must be an instance of"):
             _ = xmap.orientations
 
@@ -757,6 +753,20 @@ class TestCrystalMapGetMapData:
 
         assert not xmap.is_in_data.all()
         assert xmap.get_map_data(prop_name, fill_value=None).dtype == float
+
+    def test_get_map_data(self, crystal_map):
+        # Test decimals paramter
+        crystal_map.prop["iq"] = np.random.random(crystal_map.size)
+        iq1 = crystal_map.get_map_data("iq").flatten()
+        assert np.allclose(iq1, crystal_map.iq)
+        iq2 = crystal_map.get_map_data("iq", decimals=3).flatten()
+        assert not np.allclose(iq2, crystal_map.iq)
+        assert np.allclose(iq2, crystal_map.iq, atol=1e-3)
+
+        # Test https://github.com/pyxem/orix/issues/220
+        xmap2 = CrystalMap.empty((3,))
+        x = xmap2.get_map_data("x")
+        x2 = xmap2.get_map_data(xmap2.x)
 
 
 class TestCrystalMapRepresentation:
