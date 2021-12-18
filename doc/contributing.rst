@@ -54,7 +54,7 @@ Code style
 
 The code making up orix is formatted closely following the `Style Guide for Python Code
 <https://www.python.org/dev/peps/pep-0008/>`_ with `The Black Code style
-<https://black.readthedocs.io/en/stable/the_black_code_style.html>`_. We use
+<https://black.readthedocs.io/en/stable/the_black_code_style/index.html>`_. We use
 `pre-commit <https://pre-commit.com>`_ to run ``black`` automatically prior to each
 local commit. Please install it in your environment::
 
@@ -164,6 +164,10 @@ files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
 - The Sphinx gallery thumbnail used for a notebook is set by adding the
 - ``nbsphinx-thumbnail`` tag to a code cell with an image output. The notebook must be
   added to the gallery in the README.rst to be included in the documentation pages.
+- The Furo Sphinx theme displays the documentation in a light or dark theme, depending
+  on the browser/OS setting. It is important to make sure the documentation is readable
+  with both themes. This means for example displaying all figures with a white
+  background for axes labels and ticks and figure titles etc. to be readable.
 
 Deprecations
 ============

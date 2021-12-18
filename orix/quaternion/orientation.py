@@ -51,6 +51,7 @@ from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry
 from orix.scalar import Scalar
+from orix.vector import AxAngle
 from orix._util import deprecated
 
 
@@ -122,6 +123,11 @@ class Misorientation(Rotation):
 
     _symmetry = (C1, C1)
 
+    def __init__(self, data, symmetry=None):
+        super().__init__(data)
+        if symmetry:
+            self.symmetry = symmetry
+
     @property
     def symmetry(self):
         """Tuple of :class:`~orix.quaternion.Symmetry`."""
@@ -140,8 +146,28 @@ class Misorientation(Rotation):
         m._symmetry = self._symmetry
         return m
 
+    def reshape(self, *shape):
+        m = super().reshape(*shape)
+        m._symmetry = self._symmetry
+        return m
+
+    def flatten(self):
+        m = super().flatten()
+        m._symmetry = self._symmetry
+        return m
+
+    def squeeze(self):
+        m = super().squeeze()
+        m._symmetry = self._symmetry
+        return m
+
+    def transpose(self, *axes):
+        m = super().transpose(*axes)
+        m._symmetry = self._symmetry
+        return m
+
     def equivalent(self, grain_exchange=False):
-        r"""Equivalent misorientations
+        r"""Equivalent misorientations.
 
         grain_exchange : bool
             If True the rotation $g$ and $g^{-1}$ are considered to be
@@ -254,11 +280,10 @@ class Misorientation(Rotation):
         Examples
         --------
         >>> import numpy as np
-        >>> from orix.quaternion.symmetry import C4, C2
-        >>> from orix.quaternion.orientation import Misorientation
+        >>> from orix.quaternion import Misorientation, symmetry
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> m = Misorientation(data)
-        >>> m.symmetry = (C4, C2)
+        >>> m.symmetry = (symmetry.C4, symmetry.C2)
         >>> m = m.map_into_symmetry_reduced_zone()
         >>> m.distance()
         array([[3.14159265, 1.57079633],
@@ -266,29 +291,6 @@ class Misorientation(Rotation):
         """
         distance = _distance(self, verbose, split_size)
         return distance.reshape(self.shape + self.shape)
-
-    def transpose(self, *axes):
-        """Returns a new Misorientation containing the same data
-        transposed.
-
-        If ndim is originally 2, then order may be undefined. In this
-        case the first two dimensions will be transposed.
-
-        Parameters
-        ----------
-        axes: int, optional
-            The transposed axes order. Only navigation axes need to be
-            defined. May be undefined if self only contains two
-            navigation dimensions.
-
-        Returns
-        -------
-        Misorientation
-            The transposed Misorientation.
-        """
-        mori = super().transpose(*axes)
-        mori._symmetry = self._symmetry
-        return mori
 
     def __repr__(self):
         """String representation."""
@@ -504,8 +506,42 @@ class Orientation(Misorientation):
             o.symmetry = symmetry
         return o
 
+    @classmethod
+    def from_axes_angles(cls, axes, angles, symmetry=None):
+        """Creates orientation(s) from axis-angle pair(s).
+
+        Parameters
+        ----------
+        axes : Vector3d or array_like
+            The axis of rotation.
+        angles : array_like
+            The angle of rotation, in radians.
+        symmetry : Symmetry, optional
+            Symmetry of orientation(s). If None (default), no symmetry
+            is set.
+
+        Returns
+        -------
+        Orientation
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from orix.quaternion import Orientation, symmetry
+        >>> ori = Orientation.from_axes_angles((0, 0, -1), np.pi / 2, symmetry.Oh)
+        >>> ori
+        Orientation (1,) m-3m
+        [[ 0.7071  0.      0.     -0.7071]]
+
+        See Also
+        --------
+        from_neo_euler
+        """
+        axangle = AxAngle.from_axes_angles(axes, angles)
+        return cls.from_neo_euler(axangle, symmetry)
+
     def angle_with(self, other):
-        """The symmetry reduced smallest angle of rotation transforming
+        """The smallest symmetry reduced angle of rotation transforming
         this orientation to the other.
 
         Parameters
