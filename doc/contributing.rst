@@ -54,7 +54,7 @@ Code style
 
 The code making up orix is formatted closely following the `Style Guide for Python Code
 <https://www.python.org/dev/peps/pep-0008/>`_ with `The Black Code style
-<https://black.readthedocs.io/en/stable/the_black_code_style.html>`_. We use
+<https://black.readthedocs.io/en/stable/the_black_code_style/index.html>`_. We use
 `pre-commit <https://pre-commit.com>`_ to run ``black`` automatically prior to each
 local commit. Please install it in your environment::
 

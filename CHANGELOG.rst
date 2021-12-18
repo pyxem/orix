@@ -29,6 +29,7 @@ Added
   direction.
 - `from_axes_angles()` method to `Rotation` and `Orientation` as a shortcut to
   `from_neo_euler()` for axis/angle pairs.
+- `Orientation` based classes now accept a `symmetry` argument upon initialisation.
 - Euler angle colouring of orientations given a proper point group symmetry.
 
 Changed
@@ -39,6 +40,9 @@ Changed
 - `Orientation` class methods `from_euler`, `from_matrix`, and `from_neo_euler` no longer 
   return the smallest angle orientation when a `symmetry` is given.
 - `CrystalMap.orientations` no longer returns smallest angle orientation.
+- The methods `flatten`, `reshape`, and `squeeze` have been overridden in
+  `Misorientation` based classes to maintain the initial symmetry of the returned
+  instance.
 - `Rotation.to_euler()` returns angles in the ranges (0, 2 pi), (0, pi), and (0, 2 pi).
 
 Deprecated
