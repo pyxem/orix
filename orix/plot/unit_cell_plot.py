@@ -107,12 +107,11 @@ def _plot_unit_cell(
     crystal_axes_loc = crystal_axes_loc.lower()
     if crystal_axes_loc not in ("origin", "center"):
         raise ValueError('Crystal_axes_loc must be either "origin" or "center".')
-    # TODO: More than only cubic
-    # introduce some basic non-cubic cell functionality
+
+    # TODO: Introduce some basic non-cubic cell functionality
     if structure is None:
         structure = Structure(lattice=Lattice(2, 2, 2, 90, 90, 90))
-
-    if not isinstance(structure, Structure):
+    elif not isinstance(structure, Structure):
         raise TypeError("Structure must be diffpy.structure.Structure.")
     lattice = structure.lattice
     lattice_vectors = lattice.base

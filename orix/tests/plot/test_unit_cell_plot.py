@@ -25,6 +25,10 @@ import numpy as np
 import pytest
 
 from orix.plot._util import Arrow3D
+from orix.plot.unit_cell_plot import (
+    _calculate_basic_unit_cell_edges,
+    _calculate_basic_unit_cell_vertices,
+)
 from orix.quaternion import Orientation
 
 
@@ -86,7 +90,7 @@ def test_unit_cell_plot_crystal_reference_axes_position_center():
     )
     if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
         arrows = fig.axes[0].patches
-    else:
+    else:  # pragma: no cover
         arrows = fig.axes[0].artists
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
     crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
@@ -107,7 +111,7 @@ def test_unit_cell_plot_crystal_reference_axes_position_origin():
     )
     if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
         arrows = fig.axes[0].patches
-    else:
+    else:  # pragma: no cover
         arrows = fig.axes[0].artists
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
     crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
@@ -120,6 +124,21 @@ def test_unit_cell_plot_crystal_reference_axes_position_raises():
     with pytest.raises(ValueError, match="Crystal_axes_loc must be either"):
         ori.plot_unit_cell(crystal_axes_loc="test")
     plt.close("all")
+
+
+def test_calculate_basic_unit_cell_raises():
+    lattice = Lattice()
+    with pytest.raises(ValueError, match=r"Vectors must be \(3, 3\) array."):
+        _ = _calculate_basic_unit_cell_edges(lattice.base, np.ones((3, 4)))
+
+    with pytest.raises(ValueError, match=r"Vectors must be \(3, 3\) array."):
+        _ = _calculate_basic_unit_cell_vertices(np.ones((3, 4)))
+
+
+def test_unit_cell_plot_invalid_structure_raises():
+    ori = Orientation.random((1,))
+    with pytest.raises(TypeError, match=r"Structure must be diffpy.structure."):
+        ori.plot_unit_cell(structure=np.arange(3))
 
 
 def test_arrow3D():
