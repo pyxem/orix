@@ -58,6 +58,10 @@ Removed
 - `StereographicPlot` methods `azimuth_grid()` and `polar_grid()`.
   Use `stereographic_grid()` instead.
 
+Fixed
+-----
+- Reading of point groups with "-" sign, like -43m, from EMsoft h5ebsd files.
+
 2021-09-07 - version 0.7.0
 ==========================
 
