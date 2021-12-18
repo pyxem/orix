@@ -50,7 +50,7 @@ class CrystalMap:
         """
         Parameters
         ----------
-        rotations : orix.quaternion.rotation.Rotation
+        rotations : orix.quaternion.Rotation
             Rotation of each data point. Must be passed with all spatial
             dimensions in the first array axis (flattened). May contain
             multiple rotations per point, included in the second array
@@ -110,7 +110,7 @@ class CrystalMap:
         ...     )
         ... ]
         >>> pl = PhaseList(space_groups=[225, 229], structures=structures)
-        >>> cm = CrystalMap(
+        >>> xmap = CrystalMap(
         ...     rotations=rotations,
         ...     phase_id=phase_id,
         ...     x=x,
@@ -321,9 +321,6 @@ class CrystalMap:
     @property
     def orientations(self):
         """Rotations, respecting symmetry, in data."""
-        # TODO: Consider whether orientations should be calculated upon
-        #  loading since computing orientations are slow (should benefit
-        #  from dask!)
         phases = self.phases_in_data
         if phases.size == 1:
             # Extract top matching rotations per point, if more than one
@@ -331,6 +328,9 @@ class CrystalMap:
                 rotations = self.rotations[:, 0]
             else:
                 rotations = self.rotations
+            # Point group can be None, so it cannot be passed upon
+            # initialization to Orientation but has to be set afterwards
+            # to trigger the checks
             orientations = Orientation(rotations)
             orientations.symmetry = phases[:].point_group
             return orientations
@@ -417,57 +417,57 @@ class CrystalMap:
         --------
         A CrystalMap object can be indexed in multiple ways...
 
-        >>> cm
+        >>> xmap
         Phase  Orientations       Name  Space group  Point group  Proper point group       Color
             1  5657 (48.4%)  austenite         None          432                 432    tab:blue
             2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
-        >>> cm.shape
+        >>> xmap.shape
         (100, 117)
 
         ... by slicing with slices, integers, or both
 
-        >>> cm2 = cm[20:40, 50:60]
-        >>> cm2
+        >>> xmap2 = xmap[20:40, 50:60]
+        >>> xmap2
         Phase  Orientations       Name  Space group  Point group  Proper point group       Color
             1   148 (74.0%)  austenite         None          432                 432    tab:blue
             2    52 (26.0%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
-        >>> cm2.shape
+        >>> xmap2.shape
         (20, 10)
-        >>> cm2 = cm[20:40, 3]
-        >>> cm2
+        >>> xmap2 = xmap[20:40, 3]
+        >>> xmap2
         Phase  Orientations       Name  Space group  Point group  Proper point group       Color
             1    16 (80.0%)  austenite         None          432                 432    tab:blue
             2     4 (20.0%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
-        >>> cm2.shape
+        >>> xmap2.shape
         (20, 3)
 
         Note that 1-dimensions are NOT removed
 
-        >>> cm2 = cm[10, 10]
-        >>> cm2
+        >>> xmap2 = xmap[10, 10]
+        >>> xmap2
         Phase  Orientations     Name  Space group  Point group  Proper point group       Color
             2    1 (100.0%)  ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
-        >>> cm.shape
+        >>> xmap.shape
         (1, 1)
 
         ... by phase name(s)
 
-        >>> cm2 = cm["austenite"]
+        >>> xmap2 = xmap["austenite"]
         Phase  Orientations       Name  Space group  Point group  Proper point group     Color
             1  5657 (100.0%)  austenite         None          432                 432  tab:blue
         Properties: iq, dp
         Scan unit: um
-        >>> cm2.shape
+        >>> xmap2.shape
         (100, 117)
-        >>> cm["austenite", "ferrite"]
+        >>> xmap["austenite", "ferrite"]
         Phase  Orientations       Name  Space group  Point group  Proper point group       Color
             1  5657 (48.4%)  austenite         None          432                 432    tab:blue
             2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
@@ -476,24 +476,24 @@ class CrystalMap:
 
         ... by "indexed" and "not_indexed"
 
-        >>> cm["indexed"]
+        >>> xmap["indexed"]
         Phase  Orientations       Name  Space group  Point group  Proper point group       Color
             1  5657 (48.4%)  austenite         None          432                 432    tab:blue
             2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
-        >>> cm["not_indexed"]
+        >>> xmap["not_indexed"]
         No data.
 
         ... or by boolean arrays ((chained) conditional(s))
 
-        >>> cm[cm.dp > 0.81]
+        >>> xmap[xmap.dp > 0.81]
         Phase  Orientations       Name  Space group  Point group  Proper point group       Color
             1  4092 (44.8%)  austenite         None          432                 432    tab:blue
             2  5035 (55.2%)    ferrite         None          432                 432  tab:orange
         Properties: iq, dp
         Scan unit: um
-        >>> cm[(cm.iq > np.mean(cm.iq)) & (cm.phase_id == 1)]
+        >>> xmap[(xmap.iq > np.mean(xmap.iq)) & (xmap.phase_id == 1)]
         Phase  Orientations       Name  Space group  Point group  Proper point group     Color
             1  1890 (100.0%)  austenite         None          432                 432  tab:blue
         Properties: iq, dp
@@ -652,7 +652,6 @@ class CrystalMap:
         -------
         CrystalMap
 
-
         Examples
         --------
         >>> from orix.crystal_map import CrystalMap
@@ -668,7 +667,7 @@ class CrystalMap:
         d["rotations"] = Rotation.identity((n,))
         return cls(**d)
 
-    def get_map_data(self, item, decimals=3, fill_value=None):
+    def get_map_data(self, item, decimals=None, fill_value=None):
         """Return an array of a class instance attribute, with values
         equal to ``False`` in ``self.is_in_data`` set to `fill_value`, of
         map data shape.
@@ -682,8 +681,8 @@ class CrystalMap:
         item : str or numpy.ndarray
             Name of the class instance attribute or a numpy.ndarray.
         decimals : int, optional
-            How many decimals to round data point values to (default is
-            3).
+            Number of decimals to round data point values to. If not
+            given, no rounding is done.
         fill_value : None, optional
             Value to fill points not in the data with. If None
             (default), np.nan is used.
@@ -691,8 +690,8 @@ class CrystalMap:
         Returns
         -------
         output_array : numpy.ndarray
-            Array of the class instance attribute with points not in data
-            set to `fill_value`, of float data type.
+            Array of the class instance attribute with points not in
+            data set to `fill_value`, of float data type.
         """
         # TODO: Consider an `axes` argument along which to get map data
         #  if > 2D
@@ -707,7 +706,7 @@ class CrystalMap:
         map_size = np.prod(map_shape)
         if isinstance(item, np.ndarray):
             array = np.empty(map_size, dtype=item.dtype)
-            if item.shape[-1] == 3:  # Assume RGB
+            if item.shape[-1] == 3 and map_size > 3:  # Assume RGB
                 map_shape += (3,)
                 array = np.column_stack((array,) * 3)
         elif item in ["orientations", "rotations"]:  # Definitely RGB
@@ -752,7 +751,7 @@ class CrystalMap:
         sliced_array = reshaped_array[slices]
 
         # Reshape and slice mask with points not in data
-        if array.shape[-1] == 3:  # RGB
+        if array.shape[-1] == 3 and map_size > 3:  # RGB
             not_in_data = np.dstack((~self.is_in_data,) * 3)
         else:  # Scalar
             not_in_data = ~self.is_in_data
@@ -765,10 +764,10 @@ class CrystalMap:
             sliced_array[not_in_data] = fill_value
 
         # Round values
-        if np.issubdtype(array.dtype, np.bool_):
-            output_array = sliced_array
-        else:
+        if decimals is not None:
             output_array = np.round(sliced_array, decimals=decimals)
+        else:  # np.issubdtype(array.dtype, np.bool_):
+            output_array = sliced_array
 
         return output_array
 

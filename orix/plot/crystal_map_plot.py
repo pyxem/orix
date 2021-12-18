@@ -50,6 +50,7 @@ class CrystalMapPlot(Axes):
         legend_properties=None,
         axes=None,
         depth=None,
+        override_status_bar=False,
         **kwargs,
     ) -> AxesImage:
         r"""Plot a 2D map with any CrystalMap attribute as map values.
@@ -71,20 +72,25 @@ class CrystalMapPlot(Axes):
             Dictionary of keyword arguments passed to
             :func:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
         legend : bool, optional
-            Whether to add a legend to the plot. This is only implemented
-            for a phase plot (in which case default is True).
+            Whether to add a legend to the plot. This is only
+            implemented for a phase plot (in which case default is
+            True).
         legend_properties : dict
             Dictionary of keyword arguments passed to
             :meth:`matplotlib.axes.legend`.
         axes : tuple of ints, optional
-            Which data axes to plot if data has more than two dimensions.
-            The index of data to plot in the final dimension is determined
-            by `depth`. If None (default), data along the two last axes is
-            plotted.
+            Which data axes to plot if data has more than two
+            dimensions. The index of data to plot in the final dimension
+            is determined by `depth`. If None (default), data along the
+            two last axes is plotted.
         depth : int, optional
-            Which layer along the third axis to plot if data has more than
-            two dimensions. If None (default), data in the first index
-            (layer) is plotted.
+            Which layer along the third axis to plot if data has more
+            than two dimensions. If None (default), data in the first
+            index (layer) is plotted.
+        override_status_bar : bool, optional
+            Whether to display Euler angles and any overlay values in
+            the status bar when hovering over the map (default is
+            False).
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.imshow`.
@@ -110,23 +116,23 @@ class CrystalMapPlot(Axes):
 
         Import a crystal map
 
-        >>> cm = load("/some/directory/data.ang")
+        >>> xmap = load("/some/directory/data.ang")
 
         Plot a phase map
 
         >>> fig = plt.figure()  # Get figure
         >>> ax = fig.add_subplot(projection="plot_map")  # Get axes
-        >>> im = ax.plot_map(cm)  # Get image
+        >>> im = ax.plot_map(xmap)  # Get image
 
         Add an overlay
 
-        >>> ax.add_overlay(cm, cm.iq)
+        >>> ax.add_overlay(xmap, xmap.iq)
 
         Plot an arbitrary map property, also changing scalebar location
 
         >>> ax = plt.subplot(projection="plot_map")
         >>> ax.plot_map(
-        ...     cm, cm.dp, cmap="cividis", scalebar_properties={"loc": 4}
+        ...     xmap, xmap.dp, cmap="cividis", scalebar_properties={"loc": 4}
         ... )
 
         Add a colorbar
@@ -135,11 +141,11 @@ class CrystalMapPlot(Axes):
 
         Plot orientation angle in degrees of one phase
 
-        >>> cm2 = cm["austenite"]
-        >>> austenite_angles = cm2.orientations.angle.data * 180 / np.pi
+        >>> xmap2 = xmap["austenite"]
+        >>> austenite_angles = xmap2.orientations.angle.data * 180 / np.pi
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
-        >>> im = ax.plot_map(cm2, austenite_angles)
+        >>> im = ax.plot_map(xmap2, austenite_angles)
         >>> ax.add_colorbar("Orientation angle [$^{\circ}$]")
 
         Remove all figure and axes padding
@@ -199,7 +205,8 @@ class CrystalMapPlot(Axes):
             _ = self.add_scalebar(crystal_map, **scalebar_properties)
 
         im = self.imshow(X=data, **kwargs)
-        im = self._override_status_bar(im, crystal_map)
+        if override_status_bar:
+            im = self._override_status_bar(im, crystal_map)
 
         return im
 
@@ -288,7 +295,7 @@ class CrystalMapPlot(Axes):
 
         Examples
         --------
-        >>> cm
+        >>> xmap
         Phase  Orientations   Name       Symmetry  Color
         1      5657 (48.4%)   austenite  432       tab:blue
         2      6043 (51.6%)   ferrite    432       tab:orange
@@ -299,8 +306,8 @@ class CrystalMapPlot(Axes):
 
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
-        >>> im = ax.plot_map(cm)
-        >>> ax.add_overlay(cm, cm.dp)
+        >>> im = ax.plot_map(xmap)
+        >>> ax.add_overlay(xmap, xmap.dp)
 
         """
         image = self.images[0]
@@ -341,7 +348,7 @@ class CrystalMapPlot(Axes):
 
         Examples
         --------
-        >>> cm
+        >>> xmap
         Phase  Orientations   Name       Symmetry  Color
         1      5657 (48.4%)   austenite  432       tab:blue
         2      6043 (51.6%)   ferrite    432       tab:orange
@@ -352,7 +359,7 @@ class CrystalMapPlot(Axes):
 
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
-        >>> im = ax.plot_map(cm, cm.dp, cmap="inferno")
+        >>> im = ax.plot_map(xmap, xmap.dp, cmap="inferno")
         >>> cbar = ax.add_colorbar("Dot product")
 
         If the default options are not satisfactory, the colorbar can be
@@ -382,7 +389,7 @@ class CrystalMapPlot(Axes):
 
         Examples
         --------
-        >>> cm
+        >>> xmap
         Phase  Orientations   Name       Symmetry  Color
         1      5657 (48.4%)   austenite  432       tab:blue
         2      6043 (51.6%)   ferrite    432       tab:orange
@@ -393,7 +400,7 @@ class CrystalMapPlot(Axes):
 
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
-        >>> ax.plot_map(cm)
+        >>> ax.plot_map(xmap)
         >>> ax.remove_padding()
         """
         self.set_axis_off()

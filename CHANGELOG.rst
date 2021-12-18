@@ -44,6 +44,10 @@ Changed
 - The methods `flatten`, `reshape`, and `squeeze` have been overridden in
   `Misorientation` based classes to maintain the initial symmetry of the returned
   instance.
+- `CrystalMap.get_map_data()` doesn't round values by default anymore. Passing
+  `decimals=3` retains the old behaviour.
+- `CrystalMap.plot()` doesn't override the Matplotlib status bar by default anymore.
+  Passing `override_status_bar=True` retains the old behaviour.
 
 Deprecated
 ----------
@@ -60,7 +64,11 @@ Removed
 
 Fixed
 -----
+
+- `CrystalMap.get_map_data()` can return an array of shape (3,) if there are that many
+  points in the map.
 - Reading of point groups with "-" sign, like -43m, from EMsoft h5ebsd files.
+
 
 2021-09-07 - version 0.7.0
 ==========================
