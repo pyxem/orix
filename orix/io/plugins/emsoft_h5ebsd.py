@@ -220,7 +220,7 @@ def dict2phase(dictionary):
     Phase
     """
     name = re.search(r"([A-z0-9]+)", dictionary["MaterialName"]).group(1)
-    point_group = re.search(r"\[([A-z0-9/]+)\]", dictionary["Point Group"]).group(1)
+    point_group = re.search(r"\[([A-z0-9/-]+)]", dictionary["Point Group"]).group(1)
     lattice = Lattice(
         *tuple(
             dictionary[f"Lattice Constant {i}"]

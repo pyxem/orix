@@ -30,6 +30,8 @@ Added
 - `from_axes_angles()` method to `Rotation` and `Orientation` as a shortcut to
   `from_neo_euler()` for axis/angle pairs.
 - `Orientation` based classes now accept a `symmetry` argument upon initialisation.
+- Simple unit cell orientation plotting with `plot_unit_cell` for `Orientation`
+  instances.
 
 Changed
 -------
@@ -62,8 +64,11 @@ Removed
 
 Fixed
 -----
+
 - `CrystalMap.get_map_data()` can return an array of shape (3,) if there are that many
   points in the map.
+- Reading of point groups with "-" sign, like -43m, from EMsoft h5ebsd files.
+
 
 2021-09-07 - version 0.7.0
 ==========================
