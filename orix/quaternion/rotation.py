@@ -389,14 +389,6 @@ class Rotation(Quaternion):
 
         convention = convention.lower()
 
-        if convention == "krakow_hielscher":
-            # To be applied to the data found at:
-            # https://www.repository.cam.ac.uk/handle/1810/263510
-            warnings.warn(
-                "This method is deprecated and will be removed in v0.8 use 'MTEX' instead"
-            )
-            convention = "mtex"
-
         if convention not in conventions:
             raise ValueError(
                 f"The chosen convention is not one of the allowed options {conventions}"
