@@ -538,3 +538,10 @@ class TestFromAxesAngles:
         rotations2 = Rotation.from_neo_euler(axangle)
         rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle.data)
         assert np.allclose(rotations2.data, rotations3.data)
+
+
+def test_to_euler_not_warning():
+    rot = Rotation(((0, 1, 0, 0), (1, 0, 0, 0), (1, 1, 0, 0)))
+    with pytest.warns(None) as record:
+        _ = rot.to_euler()
+    assert len(record) == 0
