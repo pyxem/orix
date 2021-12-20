@@ -740,7 +740,7 @@ class TestEulerFundamentalRegion:
         # fmt: off
         assert np.allclose(C1.euler_fundamental_region,  (360, 180, 360))
         assert np.allclose(C2x.euler_fundamental_region, (360,  90, 360))
-        assert np.allclose(C2y.euler_fundamental_region, (360, 180, 180))
+        assert np.allclose(C2y.euler_fundamental_region, (360,  90, 360))
         assert np.allclose(C2z.euler_fundamental_region, (360, 180, 180))
         assert np.allclose(D2.euler_fundamental_region,  (360,  90, 180))
         assert np.allclose(C4.euler_fundamental_region,  (360, 180,  90))
@@ -750,7 +750,7 @@ class TestEulerFundamentalRegion:
         assert np.allclose(D3y.euler_fundamental_region, (360,  90, 120))
         assert np.allclose(C6.euler_fundamental_region,  (360, 180,  60))
         assert np.allclose(D6.euler_fundamental_region,  (360,  90,  60))
-        assert np.allclose(T.euler_fundamental_region,   (360, 180, 180))
+        assert np.allclose(T.euler_fundamental_region,   (360,  90, 180))
         assert np.allclose(O.euler_fundamental_region,   (360,  90, 90))
         # fmt: on
 
