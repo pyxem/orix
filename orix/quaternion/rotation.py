@@ -348,7 +348,6 @@ class Rotation(Quaternion):
             e[..., 1] = np.where(q03_is_zero, np.pi, e[..., 1])
             e[..., 2] = np.where(q03_is_zero, 0, e[..., 2])
 
-
         if np.sum(chi != 0) > 0:
             not_zero = ~np.isclose(chi, 0)
             alpha = np.arctan2(
@@ -372,11 +371,10 @@ class Rotation(Quaternion):
             e[..., 1] = np.where(not_zero, beta, e[..., 1])
             e[..., 2] = np.where(not_zero, gamma, e[..., 2])
 
-
         # Reduce Euler angles to definition range
         e[np.abs(e) < _FLOAT_EPS] = 0
         e = np.where(e < 0, np.mod(e + 2 * np.pi, (2 * np.pi, np.pi, 2 * np.pi)), e)
-        
+
         return e
 
     @classmethod
