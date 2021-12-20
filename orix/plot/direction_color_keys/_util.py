@@ -212,6 +212,8 @@ def _correct_azimuth(azimuth, sector, rx):
     if vertices.size == 3:
         angle = _calculate_azimuth(center, rx, vertices)
         azimuth3 = np.round(m * np.sort(angle) / (2 * np.pi)).astype(int)
+        if azimuth3[0] < 10:
+            azimuth3 = np.delete(azimuth3, 0)
         idx = np.arange(azimuth3[0])
         polar[idx] /= np.sum(polar[idx]) / 3
         idx = np.arange(azimuth3[0], azimuth3[1])

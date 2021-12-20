@@ -56,6 +56,16 @@ class TestIPFColorKeyTSL:
         rgb_c2h = ckey_c2h.orientation2color(ori2)
         assert np.allclose(rgb_c2h, ((1, 0, 0), (0, 1, 0.23), (0, 0.23, 1)), atol=0.2)
 
+        # Color vertices of D3d IPF red, green and blue
+        pg_d3d = symmetry.D3d  # -3m
+        ori3 = Orientation.from_euler(
+            np.radians(((0, 0, 0), (0, -90, 60), (0, 90, 60))),
+            symmetry=pg_d3d,
+        )
+        ckey_d3d = IPFColorKeyTSL(pg_d3d)
+        rgb_d3d = ckey_d3d.orientation2color(ori3)
+        assert np.allclose(rgb_d3d, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=1e-2)
+
     def test_triclinic(self):
         # Complete circle, three vectors on equator 120 degrees apart
         pg_c1 = symmetry.C1
