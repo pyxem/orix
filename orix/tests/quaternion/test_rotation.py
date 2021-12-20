@@ -222,10 +222,10 @@ class TestToFromEuler:
         r = Rotation.from_euler(e)
         e2 = r.to_euler()
         assert np.allclose(e, e2.data)
-    
+
     def test_mtex(self, e):
         _ = Rotation.from_euler(e, convention="mtex")
-      
+
     def test_direction_kwarg(self, e):
         _ = Rotation.from_euler(e, direction="lab2crystal")
 
