@@ -61,7 +61,7 @@ Removed
 -------
 - `StereographicPlot` methods `azimuth_grid()` and `polar_grid()`.
   Use `stereographic_grid()` instead.
-- `fromo_euler()' no longer accepts "Krakow_Hielscher" as a convention, use "MTEX" instead.
+- `from_euler()` no longer accepts "Krakow_Hielscher" as a convention, use "MTEX" instead.
 
 Fixed
 -----
