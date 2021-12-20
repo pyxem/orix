@@ -210,7 +210,17 @@ class Rotation(Quaternion):
         return angles
 
     def outer(self, other):
-        """Compute the outer product of this rotation and the other."""
+        """Compute the outer product of this rotation and the other
+        rotation or vector.
+
+        Parameters
+        ----------
+        other : Rotation or Vector3d
+
+        Returns
+        -------
+        Rotation or Vector3d
+        """
         r = super().outer(other)
         if isinstance(r, Rotation):
             r.improper = np.logical_xor.outer(self.improper, other.improper)
@@ -293,7 +303,7 @@ class Rotation(Quaternion):
         return cls.from_neo_euler(axangle)
 
     def to_euler(self, convention="bunge"):
-        """Rotations as Euler angles.
+        r"""Rotations as Euler angles :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
@@ -303,7 +313,9 @@ class Rotation(Quaternion):
         Returns
         -------
         ndarray
-            Array of Euler angles in radians.
+            Array of Euler angles in radians, in the ranges
+            :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
+            :math:`\phi_1 \in [0, 2\pi]`.
         """
         # TODO: other conventions
         if convention != "bunge":
@@ -314,28 +326,27 @@ class Rotation(Quaternion):
         n = self.data.shape[:-1]
         e = np.zeros(n + (3,))
 
-        # move into pure numpy
         a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
 
-        q_zero_three = a ** 2 + d ** 2
-        q_one_two = b ** 2 + c ** 2
-        chi = np.sqrt(q_zero_three * q_one_two)
+        q03 = a ** 2 + d ** 2
+        q12 = b ** 2 + c ** 2
+        chi = np.sqrt(q03 * q12)
 
         # P = 1
 
-        if np.sum(q_one_two == 0) > 0:  # checks that this occurs somewhere in data
+        q12_is_zero = q12 == 0
+        if np.sum(q12_is_zero) > 0:
             alpha = np.arctan2(-2 * a * d, a ** 2 - d ** 2)
-            cond = [q_one_two == 0]
-            e[..., 0] = np.where(cond, alpha, e[..., 0])
-            e[..., 1] = np.where(cond, 0, e[..., 1])
-            e[..., 2] = np.where(cond, 0, e[..., 2])
+            e[..., 0] = np.where(q12_is_zero, alpha, e[..., 0])
+            e[..., 1] = np.where(q12_is_zero, 0, e[..., 1])
+            e[..., 2] = np.where(q12_is_zero, 0, e[..., 2])
 
-        if np.sum(q_zero_three == 0) > 0:
+        q03_is_zero = q03 == 0
+        if np.sum(q03_is_zero) > 0:
             alpha = np.arctan2(2 * b * c, b ** 2 - c ** 2)
-            cond = [q_zero_three == 0]
-            e[..., 0] = np.where(cond, alpha, e[..., 0])
-            e[..., 1] = np.where(cond, np.pi, e[..., 1])
-            e[..., 2] = np.where(cond, 0, e[..., 2])
+            e[..., 0] = np.where(q03_is_zero, alpha, e[..., 0])
+            e[..., 1] = np.where(q03_is_zero, np.pi, e[..., 1])
+            e[..., 2] = np.where(q03_is_zero, 0, e[..., 2])
 
         if np.sum(chi != 0) > 0:
             not_zero = ~np.isclose(chi, 0)
@@ -347,7 +358,7 @@ class Rotation(Quaternion):
                     -a * b - c * d, chi, where=not_zero, out=np.full_like(chi, np.inf)
                 ),
             )
-            beta = np.arctan2(2 * chi, q_zero_three - q_one_two)
+            beta = np.arctan2(2 * chi, q03 - q12)
             gamma = np.arctan2(
                 np.divide(
                     a * c + b * d, chi, where=not_zero, out=np.full_like(chi, np.inf)
@@ -356,10 +367,13 @@ class Rotation(Quaternion):
                     c * d - a * b, chi, where=not_zero, out=np.full_like(chi, np.inf)
                 ),
             )
-
             e[..., 0] = np.where(not_zero, alpha, e[..., 0])
             e[..., 1] = np.where(not_zero, beta, e[..., 1])
             e[..., 2] = np.where(not_zero, gamma, e[..., 2])
+
+        # Reduce Euler angles to definition range
+        e[np.abs(e) < _FLOAT_EPS] = 0
+        e = np.where(e < 0, np.mod(e + 2 * np.pi, (2 * np.pi, np.pi, 2 * np.pi)), e)
 
         return e
 
@@ -440,7 +454,7 @@ class Rotation(Quaternion):
             data = ~data
 
         rot = cls(data.data)
-        rot.improper = np.zeros((n))
+        rot.improper = np.zeros(n)
         return rot
 
     def to_matrix(self):

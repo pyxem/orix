@@ -37,13 +37,11 @@ improper rotations. A mirror symmetry is equivalent to a 2-fold rotation
 combined with inversion.
 """
 
-from copy import deepcopy
-
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.vector import Vector3d
+from orix.vector import AxAngle, Vector3d
 
 
 class Symmetry(Rotation):
@@ -52,68 +50,148 @@ class Symmetry(Rotation):
     name = ""
 
     def __repr__(self):
-        cls = self.__class__.__name__
-        shape = str(self.shape)
         data = np.array_str(self.data, precision=4, suppress_small=True)
-        rep = "{} {}{pad}{}\n{}".format(
-            cls, shape, self.name, data, pad=self.name and " "
-        )
-        return rep
+        return f"{self.__class__.__name__} {self.shape} {self.name}\n{data}"
 
     def __and__(self, other):
-        return Symmetry.from_generators(
-            *[g for g in self.subgroups if g in other.subgroups]
-        )
+        generators = [g for g in self.subgroups if g in other.subgroups]
+        return Symmetry.from_generators(*generators)
 
     @property
     def order(self):
-        """int : The number of elements of the group."""
+        """Number of elements of the group as :class:`int`."""
         return self.size
 
     @property
     def is_proper(self):
-        """bool : True if this group contains only proper rotations."""
+        """Whether this group contains only proper rotations as
+        :class:`bool`.
+        """
         return np.all(np.equal(self.improper, 0))
 
     @property
     def subgroups(self):
-        """list of Symmetry : the groups that are subgroups of this group."""
+        """List groups that are subgroups of this group as a
+        :class:`list` of :class:`Symmetry`.
+        """
         return [g for g in _groups if g._tuples <= self._tuples]
 
     @property
     def proper_subgroups(self):
-        """list of Symmetry : the proper groups that are subgroups of this group."""
+        """List of proper groups that are subgroups of this group as a
+        :class:`list` of :class:`Symmetry`.
+        """
         return [g for g in self.subgroups if g.is_proper]
 
     @property
     def proper_subgroup(self):
-        """Symmetry : the largest proper group of this subgroup."""
+        """The largest proper group of this subgroup as a
+        :class:`Symmetry`.
+        """
         subgroups = self.proper_subgroups
-        subgroups_sorted = sorted(subgroups, key=lambda g: g.order)
-        return subgroups_sorted[-1]
+        if len(subgroups) == 0:
+            return Symmetry(self)
+        else:
+            subgroups_sorted = sorted(subgroups, key=lambda g: g.order)
+            return subgroups_sorted[-1]
 
     @property
     def laue(self):
-        """Symmetry : this group plus inversion."""
+        """This group plus inversion as a :class:`Symmetry`."""
         laue = Symmetry.from_generators(self, Ci)
         laue.name = _get_laue_group_name(self.name)
         return laue
 
     @property
     def laue_proper_subgroup(self):
-        """Symmetry : the proper subgroup of this group plus
-        inversion.
+        """The proper subgroup of this group plus inversion as a
+        :class:`Symmetry`.
         """
         return self.laue.proper_subgroup
 
     @property
     def contains_inversion(self):
-        """bool : True if this group contains inversion."""
+        """Whether this group contains inversion as a :class:`bool`."""
         return Ci._tuples <= self._tuples
 
     @property
+    def diads(self):
+        """Diads of this symmetry as a set of
+        :class:`~orix.vector.Vector3d`.
+        """
+        axis_orders = self.get_axis_orders()
+        diads = [ao for ao in axis_orders if axis_orders[ao] == 2]
+        if len(diads) == 0:
+            return Vector3d.empty()
+        else:
+            return Vector3d.stack(diads).flatten()
+
+    @property
+    def euler_fundamental_region(self):
+        r"""Fundamental Euler angle region of the proper subgroup.
+
+        Returns
+        -------
+        region : tuple
+            Maximum Euler angles :math:`(\phi_{1, max}, \Phi_{max},
+            \phi_{2, max})` in degrees. No symmetry is assumed if the
+            proper subgroup name is not recognized.
+        """
+        # fmt: off
+        angles = {
+              "1": (360, 180, 360),  # Triclinic
+            "211": (360,  90, 360),  # Monoclinic
+            "121": (360,  90, 360),
+            "112": (360, 180, 180),
+            "222": (360,  90, 180),  # Orthorhombic
+              "4": (360, 180,  90),  # Tetragonal
+            "422": (360,  90,  90),
+              "3": (360, 180, 120),  # Trigonal
+            "312": (360,  90, 120),
+             "32": (360,  90, 120),
+              "6": (360, 180,  60),  # Hexagonal
+            "622": (360,  90,  60),
+             "23": (360,  90, 180),  # Cubic
+            "432": (360,  90,  90),
+        }
+        # fmt: on
+        proper_subgroup_name = self.proper_subgroup.name
+        if proper_subgroup_name in angles.keys():
+            region = angles[proper_subgroup_name]
+        else:
+            region = angles["1"]
+        return region
+
+    @property
+    def system(self):
+        """Which of the seven crystal systems this symmetry belongs to.
+
+        Returns
+        -------
+        str or None
+            None is returned if the symmetry name is not recognized.
+        """
+        name = self.name
+        if name in ["1", "-1"]:
+            return "triclinic"
+        elif name in ["211", "121", "112", "2", "m11", "1m1", "11m", "m", "2/m"]:
+            return "monoclinic"
+        elif name in ["222", "mm2", "mmm"]:
+            return "orthorhombic"
+        elif name in ["4", "-4", "4/m", "422", "4mm", "-42m", "4/mmm"]:
+            return "tetragonal"
+        elif name in ["3", "-3", "321", "312", "32", "3m", "-3m"]:
+            return "trigonal"
+        elif name in ["6", "-6", "6/m", "622", "6mm", "-6m2", "6/mmm"]:
+            return "hexagonal"
+        elif name in ["23", "m-3", "432", "-43m", "m-3m"]:
+            return "cubic"
+        else:
+            return None
+
+    @property
     def _tuples(self):
-        """set of tuple : the differentiators of this group."""
+        """Set of tuple : the differentiators of this group."""
         s = Rotation(self.flatten())
         tuples = set([tuple(d) for d in s._differentiators()])
         return tuples
@@ -190,27 +268,87 @@ class Symmetry(Rotation):
         return fs
 
     @property
-    def system(self):
-        """Which of the seven crystal systems this symmetry belongs to
-        as a `str`.
+    def _primary_axis_order(self):
+        """Order of primary rotation axis for the proper subgroup.
+
+        Used in to map Euler angles into the fundamental region in
+        :meth:`~orix.quaternion.Orientation.in_euler_fundamental_region`.
+
+         Returns
+         -------
+         int or None
+            None is returned if the proper subgroup name is not
+            recognized.
         """
-        name = self.name
-        if name in ["1", "-1"]:
-            return "triclinic"
-        elif name in ["211", "121", "112", "2", "m11", "1m1", "11m", "m", "2/m"]:
-            return "monoclinic"
-        elif name in ["222", "mm2", "mmm"]:
-            return "orthorhombic"
-        elif name in ["4", "-4", "4/m", "422", "4mm", "-42m", "4/mmm"]:
-            return "tetragonal"
-        elif name in ["3", "-3", "321", "312", "32", "3m", "-3m"]:
-            return "trigonal"
-        elif name in ["6", "-6", "6/m", "622", "6mm", "-6m2", "6/mmm"]:
-            return "hexagonal"
-        elif name in ["23", "m-3", "432", "-43m", "m-3m"]:
-            return "cubic"
+        # TODO: Find this dynamically
+        name = self.proper_subgroup.name
+        if name in ["1", "211", "121"]:
+            return 1
+        elif name in ["112", "222", "23"]:
+            return 2
+        elif name in ["3", "312", "32"]:
+            return 3
+        elif name in ["4", "422", "432"]:
+            return 4
+        elif name in ["6", "622"]:
+            return 6
         else:
             return None
+
+    @property
+    def _special_rotation(self):
+        """Symmetry operations of the proper subgroup different from
+        rotation about the c-axis.
+
+        Used in to map Euler angles into the fundamental region in
+        :meth:`~orix.quaternion.Orientation.in_euler_fundamental_region`.
+
+        These sectors are taken from MTEX'
+        :code:`Symmetry.rotation_special`.
+
+        Returns
+        -------
+        rot : Rotation
+            The identity rotation is returned if the proper subgroup
+            name is not recognized.
+        """
+
+        def symmetry_axis(v, n):
+            angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
+            return Rotation.from_neo_euler(AxAngle.from_axes_angles(v, angles))
+
+        # Symmetry axes
+        vx = Vector3d.xvector()
+        mirror = Vector3d((1, -1, 0))
+        axis110 = Vector3d((1, 1, 0))
+        axis111 = Vector3d((1, 1, 1))
+
+        name = self.proper_subgroup.name
+        if name in ["1", "211", "121"]:
+            # All proper operations
+            rot = self[~self.improper]
+        elif name in ["112", "3", "4", "6"]:
+            # Identity
+            rot = self[0]
+        elif name in ["222", "422", "622", "32"]:
+            # Two-fold rotation about a-axis perpendicular to c-axis
+            rot = symmetry_axis(-vx, 2)
+        elif name == "312":
+            # Mirror plane perpendicular to c-axis?
+            rot = symmetry_axis(-mirror, 2)
+        elif name in ["23", "432"]:
+            # Three-fold rotation about [111]
+            rot = symmetry_axis(-axis111, 3)
+            if name == "23":
+                # Combined with two-fold rotation about a-axis
+                rot = rot.outer(symmetry_axis(-vx, 2))
+            else:
+                # Combined with two-fold rotation about [110]
+                rot = rot.outer(symmetry_axis(-axis110, 2))
+        else:
+            rot = Rotation.identity((1,))
+
+        return rot.flatten()
 
     @classmethod
     def from_generators(cls, *generators):
@@ -248,7 +386,7 @@ class Symmetry(Rotation):
         """
         generator = cls((1, 0, 0, 0))
         for g in generators:
-            generator = generator.outer(Symmetry(g)).unique()
+            generator = generator.outer(cls(g)).unique()
         size = 1
         size_new = generator.size
         while size_new != size and size_new < 48:
@@ -276,17 +414,8 @@ class Symmetry(Rotation):
         ).flatten()
         return axes, highest_order
 
-    @property
-    def diads(self):
-        axis_orders = self.get_axis_orders()
-        diads = [ao for ao in axis_orders if axis_orders[ao] == 2]
-        if len(diads) == 0:
-            return Vector3d.empty()
-        return Vector3d.stack(diads).flatten()
-
     def fundamental_zone(self):
-        from orix.vector.neo_euler import AxAngle
-        from orix.vector.spherical_region import SphericalRegion
+        from orix.vector import AxAngle, SphericalRegion
 
         symmetry = self.antipodal
         symmetry = symmetry[symmetry.angle > 0]
@@ -458,47 +587,48 @@ Td.name = "-43m"
 Oh = Symmetry.from_generators(O, Ci)
 Oh.name = "m-3m"
 
+# Collections of groups for convenience
 # fmt: off
 _groups = [
-    # Schoenflies   Crystal system  International   Laue class
-    C1,   #         Triclinic        1              -1
-    Ci,   #         Triclinic       -1              -1
-    C2x,  #         Monoclinic       211             2/m
-    C2y,  #         Monoclinic       121             2/m
-    C2z,  #         Monoclinic       112             2/m
-    Csx,  #         Monoclinic       m11             2/m
-    Csy,  #         Monoclinic       1m1             2/m
-    Csz,  #         Monoclinic       11m             2/m
-    C2h,  #         Monoclinic       2/m             2/m
-    D2,   #         Orthorhombic     222             mmm
-    C2v,  #         Orthorhombic     mm2             mmm
-    D2h,  #         Orthorhombic     mmm             mmm
-    C4,   #         Tetragonal       4               4/m
-    S4,   #         Tetragonal      -4               4/m
-    C4h,  #         Tetragonal       4/m             4/m
-    D4,   #         Tetragonal       422             4/mmm
-    C4v,  #         Tetragonal       4mm             4/mmm
-    D2d,  #         Tetragonal      -42m             4/mmm
-    D4h,  #         Tetragonal       4/mmm           4/mmm
-    C3,   #         Trigonal         3              -3
-    S6,   #         Trigonal        -3              -3
-    D3x,  #         Trigonal         321            -3m
-    D3y,  #         Trigonal         312            -3m
-    D3,   #         Trigonal         32             -3m
-    C3v,  #         Trigonal         3m             -3m
-    D3d,  #         Trigonal        -3m             -3m
-    C6,   #         Hexagonal        6               6/m
-    C3h,  #         Hexagonal       -6               6/m
-    C6h,  #         Hexagonal        6/m             6/m
-    D6,   #         Hexagonal        622             6/mmm
-    C6v,  #         Hexagonal        6mm             6/mmm
-    D3h,  #         Hexagonal       -6m2             6/mmm
-    D6h,  #         Hexagonal        6/mmm           6/mmm
-    T,    #         Cubic            23              m-3
-    Th,   #         Cubic            m-3             m-3
-    O,    #         Cubic            432             m-3m
-    Td,   #         Cubic           -43m             m-3m
-    Oh,   #         Cubic            m-3m            m-3m
+    # Schoenflies   Crystal system  International   Laue class  Proper point group
+    C1,   #         Triclinic        1              -1          1
+    Ci,   #         Triclinic       -1              -1          1
+    C2x,  #         Monoclinic       211             2/m        211
+    C2y,  #         Monoclinic       121             2/m        121
+    C2z,  #         Monoclinic       112             2/m        112
+    Csx,  #         Monoclinic       m11             2/m        1
+    Csy,  #         Monoclinic       1m1             2/m        1
+    Csz,  #         Monoclinic       11m             2/m        1
+    C2h,  #         Monoclinic       2/m             2/m        112
+    D2,   #         Orthorhombic     222             mmm        222
+    C2v,  #         Orthorhombic     mm2             mmm        211
+    D2h,  #         Orthorhombic     mmm             mmm        222
+    C4,   #         Tetragonal       4               4/m        4
+    S4,   #         Tetragonal      -4               4/m        112
+    C4h,  #         Tetragonal       4/m             4/m        4
+    D4,   #         Tetragonal       422             4/mmm      422
+    C4v,  #         Tetragonal       4mm             4/mmm      4
+    D2d,  #         Tetragonal      -42m             4/mmm      222
+    D4h,  #         Tetragonal       4/mmm           4/mmm      422
+    C3,   #         Trigonal         3              -3          3
+    S6,   #         Trigonal        -3              -3          3
+    D3x,  #         Trigonal         321            -3m         32
+    D3y,  #         Trigonal         312            -3m         312
+    D3,   #         Trigonal         32             -3m         32
+    C3v,  #         Trigonal         3m             -3m         3
+    D3d,  #         Trigonal        -3m             -3m         32
+    C6,   #         Hexagonal        6               6/m        6
+    C3h,  #         Hexagonal       -6               6/m        6
+    C6h,  #         Hexagonal        6/m             6/m        622
+    D6,   #         Hexagonal        622             6/mmm      622
+    C6v,  #         Hexagonal        6mm             6/mmm      6
+    D3h,  #         Hexagonal       -6m2             6/mmm      312
+    D6h,  #         Hexagonal        6/mmm           6/mmm      622
+    T,    #         Cubic            23              m-3        23
+    Th,   #         Cubic            m-3             m-3        23
+    O,    #         Cubic            432             m-3m       432
+    Td,   #         Cubic           -43m             m-3m       23
+    Oh,   #         Cubic            m-3m            m-3m       432
 ]
 # fmt: on
 _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]

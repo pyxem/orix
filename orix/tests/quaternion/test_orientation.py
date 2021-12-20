@@ -22,7 +22,19 @@ import pytest
 
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
-from orix.quaternion.symmetry import C1, C2, C3, C4, D2, D3, D6, T, O, Oh
+from orix.quaternion.symmetry import (
+    C1,
+    C2,
+    C3,
+    C4,
+    D2,
+    D3,
+    D6,
+    T,
+    O,
+    Oh,
+    _proper_groups,
+)
 from orix.scalar import Scalar
 from orix.vector import AxAngle, Vector3d
 
@@ -347,7 +359,7 @@ class TestOrientationInitialization:
         axangle = AxAngle.from_axes_angles(axis, angle)
         ori = Orientation.from_neo_euler(axangle, Oh)
         ori2 = Orientation.from_axes_angles(axis, angle, Oh)
-        assert np.allclose(ori.to_euler(), (3 * np.pi / 4, np.pi / 2, -3 * np.pi / 4))
+        assert np.allclose(ori.to_euler(), (3 * np.pi / 4, np.pi / 2, 5 * np.pi / 4))
         assert np.allclose(ori.data, ori2.data)
         assert ori.symmetry.name == ori2.symmetry.name == "m-3m"
         assert np.allclose(ori.symmetry.data, ori2.symmetry.data)
@@ -482,6 +494,22 @@ class TestOrientation:
         assert v2 < ori.symmetry.fundamental_sector
 
         plt.close("all")
+
+    def test_in_fundamental_region(self):
+        # (2 pi, pi, 2 pi) and some random orientations
+        ori = Orientation(
+            (
+                (0, -1, 0, 0),
+                (0.4094, 0.7317, -0.4631, -0.2875),
+                (-0.3885, 0.5175, -0.7589, 0.0726),
+                (-0.5407, -0.7796, 0.2955, -0.1118),
+                (-0.3874, 0.6708, -0.1986, 0.6004),
+            )
+        )
+        for pg in _proper_groups:
+            ori.symmetry = pg
+            region = np.radians(pg.euler_fundamental_region)
+            assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
 
 
 def test_set_symmetry_deprecation_warning_orientation():

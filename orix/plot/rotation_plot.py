@@ -22,7 +22,7 @@ from matplotlib import projections, __version__
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
-from orix.vector.neo_euler import AxAngle, Rodrigues
+from orix.vector import AxAngle, Rodrigues
 
 
 class RotationPlot(Axes3D):

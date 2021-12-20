@@ -30,6 +30,7 @@ Added
 - `from_axes_angles()` method to `Rotation` and `Orientation` as a shortcut to
   `from_neo_euler()` for axis/angle pairs.
 - `Orientation` based classes now accept a `symmetry` argument upon initialisation.
+- Euler angle colouring of orientations given a proper point group symmetry.
 - Simple unit cell orientation plotting with `plot_unit_cell` for `Orientation`
   instances.
 
@@ -44,6 +45,7 @@ Changed
 - The methods `flatten`, `reshape`, and `squeeze` have been overridden in
   `Misorientation` based classes to maintain the initial symmetry of the returned
   instance.
+- `Rotation.to_euler()` returns angles in the ranges (0, 2 pi), (0, pi), and (0, 2 pi).
 - `CrystalMap.get_map_data()` doesn't round values by default anymore. Passing
   `decimals=3` retains the old behaviour.
 - `CrystalMap.plot()` doesn't override the Matplotlib status bar by default anymore.

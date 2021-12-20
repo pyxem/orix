@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.plot import IPFColorKeyTSL
+from orix.plot import EulerColorKey, IPFColorKeyTSL
 from orix.quaternion import Orientation, symmetry
 from orix.vector import Vector3d
 
@@ -65,3 +66,68 @@ class TestIPFColorKeyTSL:
         ckey_c1 = IPFColorKeyTSL(pg_c1)
         rgb = ckey_c1.orientation2color(ori)
         assert np.allclose(rgb, ((1, 0, 0), (0, 1, 0), (0, 0, 1)))
+
+
+class TestEulerColorKey:
+    def test_orientation2color(self):
+        # (2 pi, pi, 2 pi) and some random orientations
+        ori = Orientation(
+            (
+                (0, -1, 0, 0),
+                (0.4094, 0.7317, -0.4631, -0.2875),
+                (-0.3885, 0.5175, -0.7589, 0.0726),
+                (-0.5407, -0.7796, 0.2955, -0.1118),
+                (-0.3874, 0.6708, -0.1986, 0.6004),
+            )
+        )
+
+        ckey_1 = EulerColorKey(symmetry.C1)
+        assert repr(ckey_1) == (
+            "EulerColorKey, symmetry 1\n" "Max (phi1, Phi, phi2): (360, 180, 360)"
+        )
+        rgb_1 = ckey_1.orientation2color(ori)
+        assert np.allclose(
+            rgb_1,
+            (
+                (0, 1, 0),
+                (0.508, 0.666, 0.687),
+                (0.875, 0.741, 0.184),
+                (0.410, 0.628, 0.525),
+                (0.113, 0.493, 0.205),
+            ),
+            atol=1e-3,
+        )
+
+        ckey_432 = EulerColorKey(symmetry.O)
+        assert repr(ckey_432) == (
+            "EulerColorKey, symmetry 432\n" "Max (phi1, Phi, phi2): (360, 90, 90)"
+        )
+        rgb_432 = ckey_432.orientation2color(ori)
+        assert np.allclose(
+            rgb_432,
+            (
+                (0, 1, 0),
+                (0.508, 1, 1),
+                (0.875, 1, 0.737),
+                (0.410, 1, 1),
+                (0.113, 0.987, 0.818),
+            ),
+            atol=1e-3,
+        )
+
+    def test_plot(self):
+        ckey_432 = EulerColorKey(symmetry.O)
+        fig = ckey_432.plot(return_figure=True)
+        assert isinstance(fig, plt.Figure)
+        assert len(fig.axes) == 3
+
+        labels = ["$\\phi_1$", "$\\Phi$", "$\\phi_2$"]
+        angles = ckey_432.symmetry.euler_fundamental_region
+        for i, ax in enumerate(fig.axes):
+            if i == 0:
+                assert ax.get_title() == "432"
+            texts = ax.texts
+            assert texts[0].get_text() == labels[i]
+            assert texts[1].get_text() == str(angles[i]) + "$^{\\circ}$"
+
+        plt.close("all")

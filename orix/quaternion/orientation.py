@@ -432,12 +432,8 @@ class Orientation(Misorientation):
 
     def __repr__(self):
         """String representation."""
-        cls = self.__class__.__name__
-        shape = str(self.shape)
-        symmetry = self.symmetry.name
         data = np.array_str(self.data, precision=4, suppress_small=True)
-        rep = f"{cls} {shape} {symmetry}\n{data}"
-        return rep
+        return f"{self.__class__.__name__} {self.shape} {self.symmetry.name}\n{data}"
 
     def __sub__(self, other):
         if isinstance(other, Orientation):
@@ -747,6 +743,45 @@ class Orientation(Misorientation):
         o = self.__class__(self.data)
         o.symmetry = symmetry
         return o.map_into_symmetry_reduced_zone()
+
+    def in_euler_fundamental_region(self):
+        """Euler angles in the fundamental Euler region of the proper
+        subgroup.
+
+        The Euler angle ranges of each proper subgroup are given in
+        :attr:`~orix.quaternion.Symmetry.euler_fundamental_region`.
+
+        From the procedure in MTEX' :code:`quaternion.project2EulerFR`.
+
+        Returns
+        -------
+        euler_in_region : numpy.ndarray
+            Euler angles in radians.
+        """
+        pg = self.symmetry.proper_subgroup
+
+        # Symmetrize every orientation by operations of the proper
+        # subgroup different from rotation about the c-axis
+        ori = pg._special_rotation.outer(self)
+
+        alpha, beta, gamma = ori.to_euler().T
+        gamma = np.mod(gamma, 2 * np.pi / pg._primary_axis_order)
+
+        # Find the first triplet among the symmetrically equivalent ones
+        # inside the fundamental region
+        max_alpha, max_beta, max_gamma = np.radians(pg.euler_fundamental_region)
+        is_inside = (alpha <= max_alpha) * (beta <= max_beta) * (gamma <= max_gamma)
+        first_nonzero = np.argmax(is_inside, axis=1)
+
+        euler_in_region = np.column_stack(
+            (
+                np.choose(first_nonzero, alpha.T),
+                np.choose(first_nonzero, beta.T),
+                np.choose(first_nonzero, gamma.T),
+            )
+        )
+
+        return euler_in_region
 
     def scatter(
         self,

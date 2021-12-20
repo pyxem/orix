@@ -26,10 +26,10 @@ from orix.quaternion.symmetry import (
     C2x, C2y, C2z, Csx, Csy, Csz, Cs, C2, C2h,  # monoclinic
     D2, C2v, D2h,  # orthorhombic
     C4, S4, C4h, D4, C4v, D2d, D4h,  # tetragonal
-    C3, S6, D3y, D3, C3v, D3d,  # trigonal
+    C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
     T, Th, O, Td, Oh,  # cubic
-    spacegroup2pointgroup_dict,
+    spacegroup2pointgroup_dict, _groups,
 )
 # fmt: on
 from orix.quaternion import get_point_group, Rotation, Symmetry
@@ -728,3 +728,102 @@ class TestLaueGroup:
         assert Th.laue.name == "m-3"
         assert Oh.laue.name == "m-3m"
         assert Symmetry(((1, 0, 0, 0), (1, 1, 0, 0))).laue.name is None
+
+
+class TestEulerFundamentalRegion:
+    """Test functionality used in
+    :meth:`~orix.quaternion.Orientation.in_euler_fundamental_region`.
+    """
+
+    def test_euler_fundamental_region(self):
+        # Proper subgroups
+        # fmt: off
+        assert np.allclose(C1.euler_fundamental_region,  (360, 180, 360))
+        assert np.allclose(C2x.euler_fundamental_region, (360,  90, 360))
+        assert np.allclose(C2y.euler_fundamental_region, (360,  90, 360))
+        assert np.allclose(C2z.euler_fundamental_region, (360, 180, 180))
+        assert np.allclose(D2.euler_fundamental_region,  (360,  90, 180))
+        assert np.allclose(C4.euler_fundamental_region,  (360, 180,  90))
+        assert np.allclose(D4.euler_fundamental_region,  (360,  90,  90))
+        assert np.allclose(C3.euler_fundamental_region,  (360, 180, 120))
+        assert np.allclose(D3.euler_fundamental_region,  (360,  90, 120))
+        assert np.allclose(D3y.euler_fundamental_region, (360,  90, 120))
+        assert np.allclose(C6.euler_fundamental_region,  (360, 180,  60))
+        assert np.allclose(D6.euler_fundamental_region,  (360,  90,  60))
+        assert np.allclose(T.euler_fundamental_region,   (360,  90, 180))
+        assert np.allclose(O.euler_fundamental_region,   (360,  90, 90))
+        # fmt: on
+
+        # Unknown symmetry
+        unrecognized_symmetry = Symmetry.random((4,))
+        assert np.allclose(
+            unrecognized_symmetry.euler_fundamental_region, (360, 180, 360)
+        )
+
+        # All point groups provide a region
+        for pg in _groups:
+            angles = pg.euler_fundamental_region
+            if pg.name in ["1", "-1", "2", "m11", "1m1", "11m"]:
+                assert np.allclose(angles, (360, 180, 360))
+            else:
+                assert not np.allclose(angles, (360, 180, 360))
+
+    def test_primary_axis_order(self):
+        for pg in [C1, C2x, C2y]:
+            assert pg._primary_axis_order == 1
+        for pg in [C2z, D2, T]:
+            assert pg._primary_axis_order == 2
+        for pg in [C3, D3x, D3y, D3]:
+            assert pg._primary_axis_order == 3
+        for pg in [C4, D4, Oh]:
+            assert pg._primary_axis_order == 4
+        for pg in [C6, D6]:
+            assert pg._primary_axis_order == 6
+
+        unrecognized_symmetry = Symmetry.random((4,))
+        assert unrecognized_symmetry._primary_axis_order is None
+
+        # All point groups provide an order
+        for pg in _groups:
+            assert pg._primary_axis_order != 0
+
+    def test_special_rotation(self):
+        for pg in [C1, C2z, C3, C4, C6]:
+            assert np.allclose(pg._special_rotation.data, (1, 0, 0, 0))
+        assert np.allclose(C2x._special_rotation.data, ((1, 0, 0, 0), (0, 1, 0, 0)))
+        assert np.allclose(C2y._special_rotation.data, ((1, 0, 0, 0), (0, 0, 1, 0)))
+        for pg in [D2, D4, D6, D3]:
+            assert np.allclose(pg._special_rotation.data, ((1, 0, 0, 0), (0, -1, 0, 0)))
+        assert np.allclose(
+            D3y._special_rotation.data,
+            ((1, 0, 0, 0), (0, -1 / np.sqrt(2), 1 / np.sqrt(2), 0)),
+        )
+        assert np.allclose(
+            T._special_rotation.data,
+            (
+                (1, 0, 0, 0),
+                (0.5, -0.5, -0.5, -0.5),
+                (-0.5, -0.5, -0.5, -0.5),
+                (0, -1, 0, 0),
+                (-0.5, -0.5, 0.5, -0.5),
+                (-0.5, 0.5, 0.5, -0.5),
+            ),
+        )
+        assert np.allclose(
+            O._special_rotation.data,
+            (
+                (1, 0, 0, 0),
+                (0.5, -0.5, -0.5, -0.5),
+                (-0.5, -0.5, -0.5, -0.5),
+                (0, -1 / np.sqrt(2), -1 / np.sqrt(2), 0),
+                (-1 / np.sqrt(2), -1 / np.sqrt(2), 0, 0),
+                (-1 / np.sqrt(2), 0, 1 / np.sqrt(2), 0),
+            ),
+        )
+
+        unrecognized_symmetry = Symmetry.random((4,))
+        assert np.allclose(unrecognized_symmetry._special_rotation.data, (1, 0, 0, 0))
+
+        # All point groups provide at least one rotation
+        for pg in _groups:
+            assert isinstance(pg._special_rotation.data, np.ndarray)
