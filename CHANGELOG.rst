@@ -31,6 +31,8 @@ Added
   `from_neo_euler()` for axis/angle pairs.
 - `Orientation` based classes now accept a `symmetry` argument upon initialisation.
 - Euler angle colouring of orientations given a proper point group symmetry.
+- Simple unit cell orientation plotting with `plot_unit_cell` for `Orientation`
+  instances.
 
 Changed
 -------
@@ -44,6 +46,10 @@ Changed
   `Misorientation` based classes to maintain the initial symmetry of the returned
   instance.
 - `Rotation.to_euler()` returns angles in the ranges (0, 2 pi), (0, pi), and (0, 2 pi).
+- `CrystalMap.get_map_data()` doesn't round values by default anymore. Passing
+  `decimals=3` retains the old behaviour.
+- `CrystalMap.plot()` doesn't override the Matplotlib status bar by default anymore.
+  Passing `override_status_bar=True` retains the old behaviour.
 
 Deprecated
 ----------
@@ -57,6 +63,14 @@ Removed
 -------
 - `StereographicPlot` methods `azimuth_grid()` and `polar_grid()`.
   Use `stereographic_grid()` instead.
+
+Fixed
+-----
+
+- `CrystalMap.get_map_data()` can return an array of shape (3,) if there are that many
+  points in the map.
+- Reading of point groups with "-" sign, like -43m, from EMsoft h5ebsd files.
+
 
 2021-09-07 - version 0.7.0
 ==========================

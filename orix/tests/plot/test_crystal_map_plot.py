@@ -25,8 +25,7 @@ from matplotlib_scalebar import scalebar
 import pytest
 
 from orix.plot import CrystalMapPlot
-from orix.crystal_map import CrystalMap
-from orix.crystal_map.phase_list import PhaseList
+from orix.crystal_map import CrystalMap, PhaseList
 
 plt.rcParams["backend"] = "Agg"
 
@@ -384,7 +383,11 @@ class TestStatusBar:
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
         _ = ax.plot_map(crystal_map)
+        assert ax.format_coord(0, 0) == "x=0 y=0"
 
+        fig = plt.figure()
+        ax = fig.add_subplot(projection=PLOT_MAP)
+        _ = ax.plot_map(crystal_map, override_status_bar=True)
         assert ax.format_coord(0, 0) == ""
 
         plt.close("all")
@@ -399,9 +402,9 @@ class TestStatusBar:
         f.canvas.flush_events()
 
         if to_plot == "rgb":
-            im = ax.plot_map(crystal_map)
+            im = ax.plot_map(crystal_map, override_status_bar=True)
         else:  # scalar
-            im = ax.plot_map(crystal_map, crystal_map.id)
+            im = ax.plot_map(crystal_map, crystal_map.id, override_status_bar=True)
 
         # Get figure canvas (x, y) from transformation from data (x, y)
         data_idx = (2, 2)
