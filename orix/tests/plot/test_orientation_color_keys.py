@@ -26,7 +26,7 @@ from orix.vector import Vector3d
 
 class TestIPFColorKeyTSL:
     def test_orientation2color(self):
-        # Color vertices of Oh IPF red, green and close to blue
+        # Color vertices of Oh IPF red, green and blue
         pg_o = symmetry.O  # 432
         pg_oh = pg_o.laue  # m-3m
         ori = Orientation.from_euler(
@@ -41,13 +41,13 @@ class TestIPFColorKeyTSL:
         ax_o = fig_o.axes[0]
         assert ax_o._symmetry.name == pg_oh.name
         rgb_oh = ckey_oh.orientation2color(ori)
-        assert np.allclose(rgb_oh, ((1, 0, 0), (0, 1, 0), (0, 1 / 3, 1)), atol=0.1)
+        assert np.allclose(rgb_oh, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=0.1)
 
         # Color [001] and "diagonals" of 2/m IPF red, green and blue
         pg_c2 = symmetry.C2  # 2
         pg_c2h = pg_c2.laue  # 2/m
         ori2 = Orientation.from_euler(
-            np.radians(((-90, -90, 0), (0, 90, -45), (0, 90, 45))),
+            np.radians(((-90, -90, 0), (0, 90, -55), (0, 90, 55))),
             symmetry=pg_c2h,
         )
         ckey_c2h = IPFColorKeyTSL(pg_c2, Vector3d.xvector())
@@ -55,7 +55,17 @@ class TestIPFColorKeyTSL:
         assert np.allclose(ckey_c2h.direction.data, (1, 0, 0))
         assert repr(ckey_c2h) == "IPFColorKeyTSL, symmetry: 2/m, direction: [1 0 0]"
         rgb_c2h = ckey_c2h.orientation2color(ori2)
-        assert np.allclose(rgb_c2h, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=0.1)
+        assert np.allclose(rgb_c2h, ((1, 0, 0), (0, 1, 0.23), (0, 0.23, 1)), atol=0.2)
+
+        # Color vertices of D3d IPF red, green and blue
+        pg_d3d = symmetry.D3d  # -3m
+        ori3 = Orientation.from_euler(
+            np.radians(((0, 0, 0), (0, -90, 60), (0, 90, 60))),
+            symmetry=pg_d3d,
+        )
+        ckey_d3d = IPFColorKeyTSL(pg_d3d)
+        rgb_d3d = ckey_d3d.orientation2color(ori3)
+        assert np.allclose(rgb_d3d, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=1e-2)
 
     def test_triclinic(self):
         # Complete circle, three vectors on equator 120 degrees apart

@@ -24,6 +24,7 @@ These functions are adopted from MTEX.
 import matplotlib.colors as mcolors
 import numpy as np
 
+from orix.quaternion import Rotation
 from orix.vector import Vector3d
 
 
@@ -59,22 +60,18 @@ def polar_coordinates_in_sector(sector, v):
     barycenter is the center of the fundamental sector.
     """
     center = sector.center.unit
+    n_vertices = sector.vertices.size
     v = v.unit
 
     # Azimuthal coordinate
-    if sector.vertices.size == 0:
+    if n_vertices == 0:
         # Point group Ci (-1) has no vertices
         rx = Vector3d.xvector() - center
     else:
         rx = Vector3d.zvector() - center  # North pole to sector center
-    rx = (rx - rx.dot(center) * center).unit  # Orthogonal to center
-    ry = center.cross(rx).unit  # Perpendicular to rx
-    distances_azimuthal = (v - center).unit
-    azimuth = np.arctan2(
-        ry.dot(distances_azimuthal).data, rx.dot(distances_azimuthal).data
-    )
-    azimuth = np.mod(azimuth, 2 * np.pi)
-    azimuth[np.isnan(azimuth)] = 0
+    azimuth = _calculate_azimuth(center, rx, v)
+    if n_vertices != 0:
+        azimuth = _correct_azimuth(azimuth, sector, rx)
 
     # Polar coordinate
     if np.count_nonzero(sector.dot(center).data) == 0:
@@ -146,3 +143,85 @@ def hsl_to_hsv(hue, saturation, lightness):
     saturation2[np.isnan(saturation2)] = 0
     value = (l2 + s2) / 2
     return hue, saturation2, value
+
+
+def _calculate_azimuth(center, rx, v):
+    """Calculate the azimuthal coordinate of the polar coordinates of a
+    fundamental sector (inverse pole figure).
+
+    Taken from MTEX' :code:`calcAngle` function.
+
+    Parameters
+    ----------
+    center : ~orix.vector.Vector3d
+    rx : ~orix.vector.Vector3d
+    v : ~orix.vector.Vector3d
+
+    Returns
+    -------
+    azimuth : numpy.ndarray
+    """
+    rx = (rx - rx.dot(center) * center).unit  # Orthogonal to center
+    ry = center.cross(rx).unit  # Perpendicular to rx
+    distances_azimuthal = (v - center).unit
+    azimuth = np.arctan2(
+        ry.dot(distances_azimuthal).data, rx.dot(distances_azimuthal).data
+    )
+    azimuth = np.mod(azimuth, 2 * np.pi)
+    azimuth[np.isnan(azimuth)] = 0
+    return azimuth
+
+
+def _correct_azimuth(azimuth, sector, rx):
+    """Correct the azimuthal coordinate of the polar coordinates of a
+    fundamental sector (inverse pole figure) when vertices are not
+    an equal distance from each other.
+
+    This ensures for example that the entirely blue part of the m-3m
+    sector is in the [111] direction, and not in the direction
+    corresponding to the sector position perpendicular to the
+    [001]-[101] line (straight north from the barycenter).
+
+    Taken from MTEX' :code:`correctAngle` function.
+
+    Parameters
+    ----------
+    azimuth : numpy.ndarray
+    sector : ~orix.vector.FundamentalSector
+    rx : ~orix.vector.Vector3d
+
+    Returns
+    -------
+    azimuth : numpy.ndarray
+        Corrected azimuthal coordinates.
+    """
+    center = sector.center.unit
+    vertices = sector.vertices.unit
+
+    m = 1000
+    azimuth2 = np.linspace(0, 2 * np.pi, m)
+    rot = Rotation.from_axes_angles(center, azimuth2[:-1])
+    normals = rot * rx.cross(center).unit
+
+    # Distance between center and all boundary points
+    cross_outer = Vector3d.zero((sector.size, m - 1))
+    for i in range(sector.size):
+        cross_outer[i] = sector[i].cross(normals)
+    polar = np.min(cross_outer.angle_with(center).data, axis=0)
+
+    if vertices.size == 3:
+        angle = _calculate_azimuth(center, rx, vertices)
+        azimuth3 = np.round(m * np.sort(angle) / (2 * np.pi)).astype(int)
+        if azimuth3[0] < 10:
+            azimuth3 = np.delete(azimuth3, 0)
+        idx = np.arange(azimuth3[0])
+        polar[idx] /= np.sum(polar[idx]) / 3
+        idx = np.arange(azimuth3[0], azimuth3[1])
+        polar[idx] /= np.sum(polar[idx]) / 3
+        idx = np.arange(azimuth3[1], polar.size)
+        polar[idx] /= np.sum(polar[idx]) / 3
+
+    polar = 2 * np.pi * np.cumsum(np.append(np.zeros(1), polar / np.sum(polar)))
+    azimuth = np.interp(azimuth, azimuth2, polar)
+
+    return azimuth
