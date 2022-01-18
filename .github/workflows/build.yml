@@ -53,6 +53,8 @@ jobs:
       - name: Install oldest supported version
         if: ${{ matrix.OLDEST_SUPPORTED_VERSION }}
         run: pip install ${{ matrix.DEPENDENCIES }}
+      - name: Display package versions
+        run: pip list
       - name: Run tests
         run: pytest --cov=orix --pyargs orix
       - name: Generate line coverage
