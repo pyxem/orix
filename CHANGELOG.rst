@@ -10,6 +10,10 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Added
+-----
+- Python 3.10 support.
+
 2021-12-21 - version 0.8.0
 ==========================
 

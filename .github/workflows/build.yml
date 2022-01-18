@@ -23,7 +23,7 @@ jobs:
         run: python setup.py manifix
 
   build-with-pip:
-    name: ${{ matrix.os }}/py${{ matrix.python-version }}/pip
+    name: ${{ matrix.os }}-py${{ matrix.python-version }}${{ matrix.LABEL }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     env:
@@ -32,20 +32,20 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.8, 3.9]
+        python-version: [3.9, '3.10']
         include:
-          # Oldest supported version of main dependencies on Python 3.6
           - os: ubuntu-latest
             python-version: 3.6
             OLDEST_SUPPORTED_VERSION: true
             DEPENDENCIES: diffpy.structure==3  matplotlib==3.3
+            LABEL: -oldest
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Display versions
+      - name: Display Python and pip versions
         run: python -V; pip -V
       - name: Install depedencies and package
         shell: bash

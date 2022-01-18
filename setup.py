@@ -36,6 +36,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
@@ -49,9 +50,9 @@ setup(
     # fmt: off
     install_requires=[
         "dask[array]",
-        "diffpy.structure >= 3",
+        "diffpy.structure       >= 3",
         "h5py",
-        "matplotlib >= 3.3",
+        "matplotlib             >= 3.3",
         "matplotlib-scalebar",
         "numba",
         "numpy",
