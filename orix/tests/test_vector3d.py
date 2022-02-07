@@ -181,7 +181,7 @@ def test_rdiv():
 
 
 def test_dot(vector, something):
-    assert np.allclose(vector.dot(vector).data, (vector.data ** 2).sum(axis=-1))
+    assert np.allclose(vector.dot(vector).data, (vector.data**2).sum(axis=-1))
     assert np.allclose(vector.dot(something).data, something.dot(vector).data)
 
 

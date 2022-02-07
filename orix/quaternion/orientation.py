@@ -549,7 +549,7 @@ class Orientation(Misorientation):
         Scalar
         """
         dot_products = self.unit.dot(other.unit).data
-        angles = np.nan_to_num(np.arccos(2 * dot_products ** 2 - 1))
+        angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return Scalar(angles)
 
     def dot(self, other):
@@ -635,7 +635,7 @@ class Orientation(Misorientation):
             n_decimals = np.finfo(dot_products.dtype).precision
             dot_products = da.round(dot_products, n_decimals)
 
-            angles_dask = da.arccos(2 * dot_products ** 2 - 1)
+            angles_dask = da.arccos(2 * dot_products**2 - 1)
             angles_dask = da.nan_to_num(angles_dask)
 
             # Create array in memory and overwrite, chunk by chunk
@@ -647,7 +647,7 @@ class Orientation(Misorientation):
                 da.store(sources=angles_dask, targets=angles)
         else:
             dot_products = ori.dot_outer(ori).data
-            angles = np.arccos(2 * dot_products ** 2 - 1)
+            angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
         return Scalar(angles)
