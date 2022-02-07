@@ -199,7 +199,7 @@ class OrientationRegion(Rotation):
         d = (-self.axis).dot_outer(g.unit).data
         x = n * d
         with np.errstate(divide="ignore"):
-            omega = 2 * np.arctan(np.where(x != 0, x ** -1, np.pi))
+            omega = 2 * np.arctan(np.where(x != 0, x**-1, np.pi))
 
         # Keep the smallest allowed angle
         omega[omega < 0] = np.pi
