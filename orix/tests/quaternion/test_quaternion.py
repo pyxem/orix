@@ -84,7 +84,7 @@ class TestQuaternion:
 
     def test_norm(self, quaternion):
         q = quaternion
-        assert np.allclose(q.norm.data, (q.data**2).sum(axis=-1) ** 0.5)
+        assert np.allclose(q.norm.data, (q.data ** 2).sum(axis=-1) ** 0.5)
 
     def test_unit(self, quaternion):
         assert np.allclose(quaternion.unit.norm.data, 1)
@@ -123,7 +123,7 @@ class TestQuaternion:
 
     def test_dot(self, quaternion, something):
         q = quaternion
-        assert np.allclose(q.dot(q).data, np.sum(q.data**2, axis=-1))
+        assert np.allclose(q.dot(q).data, np.sum(q.data ** 2, axis=-1))
         assert np.allclose(q.dot(something).data, something.dot(q).data)
 
     def test_dot_outer(self, quaternion, something):

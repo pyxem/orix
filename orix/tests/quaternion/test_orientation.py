@@ -44,7 +44,7 @@ def vector(request):
     return Vector3d(request.param)
 
 
-@pytest.fixture(params=[(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)])
+@pytest.fixture(params=[(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)])
 def orientation(request):
     return Orientation(request.param)
 
@@ -368,7 +368,7 @@ class TestOrientationInitialization:
 class TestOrientation:
     @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
     def test_get_distance_matrix(self, symmetry):
-        q = [(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)]
+        q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
         o = Orientation(q, symmetry=symmetry)
         o = o.map_into_symmetry_reduced_zone()
         angles_numpy = o.get_distance_matrix()
@@ -394,7 +394,7 @@ class TestOrientation:
 
     @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
     def test_angle_with(self, symmetry):
-        q = [(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)]
+        q = [(0.5, 0.5, 0.5, 0.5), (0.5 ** 0.5, 0, 0, 0.5 ** 0.5)]
         r = Rotation(q)
         o = Orientation(q, symmetry=symmetry)
         o = o.map_into_symmetry_reduced_zone()

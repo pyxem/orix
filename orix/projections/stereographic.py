@@ -278,10 +278,10 @@ class InverseStereographicProjection:
         where :math:`p` is either 1 (north pole as projection point) or
         -1 (south pole as projection point).
         """
-        denom = 1 + x**2 + y**2
+        denom = 1 + x ** 2 + y ** 2
         vx = 2 * x / denom
         vy = 2 * y / denom
-        vz = -self.pole * (1 - x**2 - y**2) / denom
+        vz = -self.pole * (1 - x ** 2 - y ** 2) / denom
         return Vector3d(np.column_stack([vx, vy, vz]))
 
     def xy2spherical(self, x, y):

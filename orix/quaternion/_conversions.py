@@ -131,8 +131,8 @@ def cu2ho_single(cu):
                 q = prefactor * y / np.sqrt(sqrt2 - cosq)
                 t1 = sqrt2 * sinq * q
                 t2 = (sqrt2 * cosq - 1) * q
-            c = t1**2 + t2**2
-            s = np.pi * c / (24 * z**2)
+            c = t1 ** 2 + t2 ** 2
+            s = np.pi * c / (24 * z ** 2)
             c = np.sqrt(np.pi) * c / np.sqrt(24) / z
             q = np.sqrt(1 - s)
 
@@ -204,7 +204,7 @@ def ho2ax_single(ho):
         -2.401996891720091e-7,    4.386887017466388e-8,   -3.5917775353564864e-9
     ])
     # fmt: on
-    ho_magnitude = np.sum(ho**2)
+    ho_magnitude = np.sum(ho ** 2)
     if (ho_magnitude > -1e-8) and (ho_magnitude < 1e-8):
         ax = np.array([0, 0, 1, 0], dtype=np.float64)
     else:

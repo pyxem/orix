@@ -183,10 +183,10 @@ class Rotation(Quaternion):
         i = self.improper
         abcd = np.stack(
             (
-                a**2,
-                b**2,
-                c**2,
-                d**2,
+                a ** 2,
+                b ** 2,
+                c ** 2,
+                d ** 2,
                 a * b,
                 a * c,
                 a * d,
@@ -211,7 +211,7 @@ class Rotation(Quaternion):
         dp = self.unit.dot(other.unit).data
         # Round because some dot products are slightly above 1
         dp = np.round(dp, np.finfo(dp.dtype).precision)
-        angles = Scalar(np.nan_to_num(np.arccos(2 * dp**2 - 1)))
+        angles = Scalar(np.nan_to_num(np.arccos(2 * dp ** 2 - 1)))
         return angles
 
     def outer(self, other):
@@ -333,22 +333,22 @@ class Rotation(Quaternion):
 
         a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
 
-        q03 = a**2 + d**2
-        q12 = b**2 + c**2
+        q03 = a ** 2 + d ** 2
+        q12 = b ** 2 + c ** 2
         chi = np.sqrt(q03 * q12)
 
         # P = 1
 
         q12_is_zero = q12 == 0
         if np.sum(q12_is_zero) > 0:
-            alpha = np.arctan2(-2 * a * d, a**2 - d**2)
+            alpha = np.arctan2(-2 * a * d, a ** 2 - d ** 2)
             e[..., 0] = np.where(q12_is_zero, alpha, e[..., 0])
             e[..., 1] = np.where(q12_is_zero, 0, e[..., 1])
             e[..., 2] = np.where(q12_is_zero, 0, e[..., 2])
 
         q03_is_zero = q03 == 0
         if np.sum(q03_is_zero) > 0:
-            alpha = np.arctan2(2 * b * c, b**2 - c**2)
+            alpha = np.arctan2(2 * b * c, b ** 2 - c ** 2)
             e[..., 0] = np.where(q03_is_zero, alpha, e[..., 0])
             e[..., 1] = np.where(q03_is_zero, np.pi, e[..., 1])
             e[..., 2] = np.where(q03_is_zero, 0, e[..., 2])
@@ -477,10 +477,10 @@ class Rotation(Quaternion):
         a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
         om = np.zeros(self.shape + (3, 3))
 
-        bb = b**2
-        cc = c**2
-        dd = d**2
-        qq = a**2 - (bb + cc + dd)
+        bb = b ** 2
+        cc = c ** 2
+        dd = d ** 2
+        qq = a ** 2 - (bb + cc + dd)
         bc = b * c
         ad = a * d
         bd = b * d
@@ -586,7 +586,7 @@ class Rotation(Quaternion):
         while len(rotations) < n:
             r = np.random.uniform(-1, 1, (3 * n, cls.dim))
             r2 = np.sum(np.square(r), axis=1)
-            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
+            r = r[np.logical_and(1e-9 ** 2 < r2, r2 <= 1)]
             rotations += list(r)
         return cls(np.array(rotations[:n])).reshape(*shape)
 
@@ -675,4 +675,4 @@ def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
     numpy.ndarray
     """
     angle = Rotation(x).angle_with(reference)
-    return np.exp(2 * alpha * np.cos(angle.data)) / hyp0f1(1.5, alpha**2)
+    return np.exp(2 * alpha * np.cos(angle.data)) / hyp0f1(1.5, alpha ** 2)

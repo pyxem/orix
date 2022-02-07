@@ -178,11 +178,11 @@ class Scalar(Object3d):
 
     def __pow__(self, power, modulo=None):
         if isinstance(power, (int, float)):
-            return self.__class__(self.data**power)
+            return self.__class__(self.data ** power)
         elif isinstance(power, (list, tuple)):
             power = np.array(power)
         if isinstance(power, np.ndarray):
-            return self.__class__(self.data**power)
+            return self.__class__(self.data ** power)
         return NotImplemented
 
     @classmethod

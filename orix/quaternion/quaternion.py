@@ -95,7 +95,7 @@ class Quaternion(Object3d):
         return Quaternion(q)
 
     def __invert__(self):
-        return self.__class__(self.conj.data / (self.norm.data**2)[..., np.newaxis])
+        return self.__class__(self.conj.data / (self.norm.data ** 2)[..., np.newaxis])
 
     def __mul__(self, other):
         if isinstance(other, Quaternion):
@@ -112,13 +112,13 @@ class Quaternion(Object3d):
         elif isinstance(other, Vector3d):
             a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
             x, y, z = other.x.data, other.y.data, other.z.data
-            x_new = (a**2 + b**2 - c**2 - d**2) * x + 2 * (
+            x_new = (a ** 2 + b ** 2 - c ** 2 - d ** 2) * x + 2 * (
                 (a * c + b * d) * z + (b * c - a * d) * y
             )
-            y_new = (a**2 - b**2 + c**2 - d**2) * y + 2 * (
+            y_new = (a ** 2 - b ** 2 + c ** 2 - d ** 2) * y + 2 * (
                 (a * d + b * c) * x + (c * d - a * b) * z
             )
-            z_new = (a**2 - b**2 - c**2 + d**2) * z + 2 * (
+            z_new = (a ** 2 - b ** 2 - c ** 2 + d ** 2) * z + 2 * (
                 (a * b + c * d) * y + (b * d - a * c) * x
             )
             v = np.stack((x_new, y_new, z_new), axis=-1)
@@ -241,13 +241,13 @@ class Quaternion(Object3d):
         elif isinstance(other, Vector3d):
             a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
             x, y, z = other.x.data, other.y.data, other.z.data
-            x_new = e(a**2 + b**2 - c**2 - d**2, x) + 2 * (
+            x_new = e(a ** 2 + b ** 2 - c ** 2 - d ** 2, x) + 2 * (
                 e(a * c + b * d, z) + e(b * c - a * d, y)
             )
-            y_new = e(a**2 - b**2 + c**2 - d**2, y) + 2 * (
+            y_new = e(a ** 2 - b ** 2 + c ** 2 - d ** 2, y) + 2 * (
                 e(a * d + b * c, x) + e(c * d - a * b, z)
             )
-            z_new = e(a**2 - b**2 - c**2 + d**2, z) + 2 * (
+            z_new = e(a ** 2 - b ** 2 - c ** 2 + d ** 2, z) + 2 * (
                 e(a * b + c * d, y) + e(b * d - a * c, x)
             )
             v = np.stack((x_new, y_new, z_new), axis=-1)

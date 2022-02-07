@@ -192,7 +192,7 @@ def test_le(scalar, other, expected):
     indirect=["scalar"],
 )
 def test_pow(scalar, other, expected):
-    pow = scalar**other
+    pow = scalar ** other
     assert np.allclose(pow.data, expected)
 
 
