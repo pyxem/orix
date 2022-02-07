@@ -299,6 +299,13 @@ def test_kwargs_unique(rotation):
     rotation.unique(return_index=False, return_inverse=True)
 
 
+def test_unique_inverse():
+    r = Rotation.random((20,))
+    u, inverse = r.unique(return_inverse=True)
+    m = u[inverse] * ~r
+    assert np.allclose(m.angle.data, 0)
+
+
 @pytest.mark.parametrize(
     "rotation, improper, expected, improper_expected",
     [
