@@ -907,7 +907,7 @@ def _round_indices(indices, max_index=12):
     error = 1e-7 * np.round(
         1e7
         * np.sum((idx_scaled - np.round(idx_scaled)) ** 2, axis=-1)
-        / np.sum(idx_scaled ** 2, axis=-1)
+        / np.sum(idx_scaled**2, axis=-1)
     )
     idx_min_error = np.argmin(error, axis=0)
     multiplier = (idx_min_error + 1) / max_per_set
