@@ -14,6 +14,11 @@ Added
 -----
 - Python 3.10 support.
 
+Fixed
+-----
+- The inverse indices returned from `Rotation.unique()` now correctly recreate the
+  original `Rotation` instance.
+
 2021-12-21 - version 0.8.0
 ==========================
 
