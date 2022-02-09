@@ -523,17 +523,19 @@ def test_set_symmetry_deprecation_warning_misorientation():
         _ = o.set_symmetry(C2, C2)
 
 
-class TestOrientationMultiplication:
-    def test_get_identity(self):
-        o1 = Orientation([0.4884, 0.1728, 0.2661, 0.8129])
-        o2 = Orientation([0.8171, -0.2734, 0.161, -0.4813])
+def test_get_identity():
+    """Get the identity orientation via two alternative routes."""
+    o1 = Orientation([0.4884, 0.1728, 0.2661, 0.8129])
+    o2 = Orientation([0.8171, -0.2734, 0.161, -0.4813])
 
-        m12_1 = o2 - o1
-        o3_1 = (m12_1 * o1) * ~o2
+    # Route 1 from a Misorientation instance
+    m12_1 = o2 - o1
+    o3_1 = (m12_1 * o1) * ~o2
 
-        m12_2 = o2 * ~o1
-        o3_2 = (m12_2 * o1) * ~o2
+    # Route 2 from a third Orientation instance
+    m12_2 = o2 * ~o1
+    o3_2 = (m12_2 * o1) * ~o2
 
-        assert np.allclose(m12_1.data, m12_2.data)
-        assert np.allclose(o3_1.data, o3_2.data)
-        assert np.allclose(o3_1.data, [1, 0, 0, 0])
+    assert np.allclose(m12_1.data, m12_2.data)
+    assert np.allclose(o3_1.data, o3_2.data)
+    assert np.allclose(o3_1.data, [1, 0, 0, 0])
