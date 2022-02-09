@@ -562,7 +562,7 @@ class Orientation(Misorientation):
         dot_outer
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
-        misorientation = (~self) * other
+        misorientation = other * ~self
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
         return Scalar(highest_dot_product)
@@ -577,7 +577,7 @@ class Orientation(Misorientation):
         dot
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
-        misorientation = (~self).outer(other)
+        misorientation = other.outer(~self)
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
         return Scalar(highest_dot_product)
