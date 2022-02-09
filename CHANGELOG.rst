@@ -16,7 +16,7 @@ Added
 
 Fixed
 -----
-- Orientation disorientation angles and dot products returned from `angle_with()` and
+- `Orientation` disorientation angles and dot products returned from `angle_with()` and
   `dot()` and `dot_outer()`, which now calculates the misorientation as other * ~self.
 
 2021-12-21 - version 0.8.0
