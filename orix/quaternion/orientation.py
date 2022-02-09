@@ -905,7 +905,7 @@ class Orientation(Misorientation):
         `dp = dparr.compute()`.
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
-        misorientation = (~self)._outer_dask(other, chunk_size=chunk_size)
+        misorientation = other._outer_dask(~self, chunk_size=chunk_size)
 
         # Summation subscripts
         str1 = "abcdefghijklmnopqrstuvwxy"[: misorientation.ndim]
