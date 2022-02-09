@@ -397,7 +397,6 @@ class TestOrientation:
         q = [(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)]
         r = Rotation(q)
         o = Orientation(q, symmetry=symmetry)
-        o = o.map_into_symmetry_reduced_zone()
 
         is_equal = np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
         if symmetry.name in ["1", "m3m"]:
@@ -522,3 +521,19 @@ def test_set_symmetry_deprecation_warning_misorientation():
     o = Misorientation.random((3, 2))
     with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
         _ = o.set_symmetry(C2, C2)
+
+
+class TestOrientationMultiplication:
+    def test_get_identity(self):
+        o1 = Orientation([0.4884, 0.1728, 0.2661, 0.8129])
+        o2 = Orientation([0.8171, -0.2734, 0.161, -0.4813])
+
+        m12_1 = o2 - o1
+        o3_1 = (m12_1 * o1) * ~o2
+
+        m12_2 = o2 * ~o1
+        o3_2 = (m12_2 * o1) * ~o2
+
+        assert np.allclose(m12_1.data, m12_2.data)
+        assert np.allclose(o3_1.data, o3_2.data)
+        assert np.allclose(o3_1.data, [1, 0, 0, 0])
