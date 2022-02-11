@@ -311,6 +311,7 @@ class Misorientation(Rotation):
         return_figure=False,
         wireframe_kwargs=None,
         size=None,
+        figure_kwargs=None,
         **kwargs,
     ):
         """Plot misorientations in axis-angle space or the Rodrigues
@@ -342,6 +343,9 @@ class Misorientation(Rotation):
             If not given, all misorientations are plotted. If given, a
             random sample of this `size` of the misorientations is
             plotted.
+        figure_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.figure` if `figure` is not given.
         kwargs
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.scatter` or
@@ -359,7 +363,10 @@ class Misorientation(Rotation):
         from orix.plot.rotation_plot import _setup_rotation_plot
 
         figure, ax = _setup_rotation_plot(
-            figure=figure, projection=projection, position=position
+            figure=figure,
+            projection=projection,
+            position=position,
+            figure_kwargs=figure_kwargs,
         )
 
         # Plot wireframe
@@ -792,6 +799,7 @@ class Orientation(Misorientation):
         wireframe_kwargs=None,
         size=None,
         direction=None,
+        figure_kwargs=None,
         **kwargs,
     ):
         """Plot orientations in axis-angle space, the Rodrigues
@@ -828,6 +836,9 @@ class Orientation(Misorientation):
             Sample direction to plot with respect to crystal directions.
             If not given, the out of plane direction, sample Z, is used.
             Only used when plotting IPF(s).
+        figure_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.figure` if `figure` is not given.
         kwargs
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.scatter`,
@@ -852,6 +863,7 @@ class Orientation(Misorientation):
                 return_figure=return_figure,
                 wireframe_kwargs=wireframe_kwargs,
                 size=size,
+                figure_kwargs=figure_kwargs,
                 **kwargs,
             )
         else:
@@ -869,7 +881,10 @@ class Orientation(Misorientation):
                     hemisphere = "upper"
 
                 figure, axes = _setup_inverse_pole_figure_plot(
-                    symmetry=symmetry, direction=direction, hemisphere=hemisphere
+                    symmetry=symmetry,
+                    direction=direction,
+                    hemisphere=hemisphere,
+                    figure_kwargs=figure_kwargs,
                 )
             else:
                 axes = np.asarray(figure.axes)

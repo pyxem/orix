@@ -417,7 +417,11 @@ class TestOrientation:
             orientation = Misorientation(orientation)
             orientation.symmetry = (C2, D6)
             orientation = orientation.map_into_symmetry_reduced_zone()
-        fig_axangle = orientation.scatter(return_figure=True)
+        fig_size = (5, 5)
+        fig_axangle = orientation.scatter(
+            return_figure=True, figure_kwargs=dict(figsize=fig_size)
+        )
+        assert (fig_axangle.get_size_inches() == fig_size).all()
         assert isinstance(fig_axangle.axes[0], AxAnglePlot)
         fig_rodrigues = orientation.scatter(projection="rodrigues", return_figure=True)
         assert isinstance(fig_rodrigues.axes[0], RodriguesPlot)
@@ -456,7 +460,11 @@ class TestOrientation:
         ori = Orientation.from_euler(np.radians((325, 48, 163)), symmetry=Oh)
 
         # Returned figure has the expected default properties
-        fig = ori.scatter("ipf", return_figure=True)
+        fig_size = (5, 5)
+        fig = ori.scatter(
+            "ipf", return_figure=True, figure_kwargs=dict(figsize=fig_size)
+        )
+        assert (fig.get_size_inches() == fig_size).all()
         axes = fig.axes[0]
         assert isinstance(axes, InversePoleFigurePlot)
         assert len(fig.axes) == 1

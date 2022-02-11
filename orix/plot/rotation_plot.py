@@ -122,7 +122,12 @@ projections.register_projection(RodriguesPlot)
 projections.register_projection(AxAnglePlot)
 
 
-def _setup_rotation_plot(figure=None, projection="axangle", position=None):
+def _setup_rotation_plot(
+    figure=None,
+    projection="axangle",
+    position=None,
+    figure_kwargs=None,
+):
     """Return a figure and rotation plot axis of the correct type.
 
     This is a convenience method used in e.g.
@@ -144,6 +149,9 @@ def _setup_rotation_plot(figure=None, projection="axangle", position=None):
         in the first of two positions in a grid of 1 row and 2
         columns. See :meth:`matplotlib.figure.Figure.add_subplot`
         for further details. Default is (1, 1, 1).
+    figure_kwargs : dict, optional
+        Dictionary of keyword arguments passed to
+        :func:`matplotlib.pyplot.figure` if `figure` is not given.
 
     Returns
     -------
@@ -153,7 +161,9 @@ def _setup_rotation_plot(figure=None, projection="axangle", position=None):
     """
     # Create figure if not already created, then add axis to figure
     if figure is None:
-        figure = plt.figure()
+        if figure_kwargs is None:
+            figure_kwargs = dict()
+        figure = plt.figure(**figure_kwargs)
 
     subplot_kwds = dict(projection=projection, proj_type="ortho")
 

@@ -228,7 +228,12 @@ class InversePoleFigurePlot(StereographicPlot):
 mprojections.register_projection(InversePoleFigurePlot)
 
 
-def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
+def _setup_inverse_pole_figure_plot(
+    symmetry,
+    direction=None,
+    hemisphere=None,
+    figure_kwargs=None,
+):
     """Set up an inverse pole figure plot.
 
     Parameters
@@ -242,6 +247,9 @@ def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
         Which hemisphere(s) to plot the vectors in. If not given,
         "upper" is used. Options are "upper", "lower", and "both", which
         plots two projections side by side.
+    figure_kwargs : dict, optional
+        Dictionary of keyword arguments passed to
+        :func:`matplotlib.pyplot.figure`.
 
     Returns
     -------
@@ -273,7 +281,9 @@ def _setup_inverse_pole_figure_plot(symmetry, direction=None, hemisphere=None):
         ncols = 3
         nrows = int(np.ceil(n_plots / 3))
 
-    figure = plt.figure()
+    if figure_kwargs is None:
+        figure_kwargs = dict()
+    figure = plt.figure(**figure_kwargs)
     axes = []
     subplot_kw = dict(projection="ipf", symmetry=symmetry)
     for i in range(n_plots):
