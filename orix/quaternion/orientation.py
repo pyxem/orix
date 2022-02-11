@@ -345,8 +345,7 @@ class Misorientation(Rotation):
             plotted.
         figure_kwargs : dict, optional
             Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.figure` if `figure` is not given,
-            else :func:`matplotlib.pyplot.subplots`.
+            :func:`matplotlib.pyplot.figure` if `figure` is not given.
         kwargs
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.scatter` or
