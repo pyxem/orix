@@ -21,6 +21,7 @@ Fixed
   Disorientation angles `(o2 - o1).angle` and `o1.angle_with(o2)` are now the same.
 - The inverse indices returned from `Rotation.unique()` now correctly recreate the
   original `Rotation` instance.
+- Handling of property arrays in .ang writer with multiple values per map point.
 
 2021-12-21 - version 0.8.0
 ==========================
