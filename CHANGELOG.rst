@@ -13,6 +13,7 @@ Unreleased
 Added
 -----
 - Python 3.10 support.
+- Option to pass figure initialization keyword arguments Matplotlib in plotting methods.
 
 Fixed
 -----
