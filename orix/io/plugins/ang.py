@@ -401,27 +401,30 @@ def file_writer(
     image_quality_prop : str, optional
         Which map property to use as the image quality. If None
         (default), "iq" or "imagequality", if present, is used, or just
-        zeros. If the property has more than one value per point, only
-        the first value is used.
+        zeros. If the property has more than one value per point and
+        `index` is not given, only the first value is used.
     confidence_index_prop : str, optional
         Which map property to use as the confidence index. If None
-        (default), "ci" or "confidenceindex", if present, is used, or
-        just zeros. If the property has more than one value per point,
-        only the first value is used.
+        (default), "ci", "confidenceindex", "scores", or "correlation",
+        if present, is used, or just zeros. If the property has more
+        than one value per point and `index` is not given, only the
+        first value is used.
     detector_signal_prop : str, optional
         Which map property to use as the detector signal. If None
-        (default), "ds", or "detectorsignal", if present, is used, or
-        just zeros. If the property has more than one value per point,
-        only the first value is used.
+        (default), "ds", or "detector_signal", if present, is used, or
+        just zeros. If the property has more than one value per point
+        and `index` is not given, only the first value is used.
     pattern_fit_prop : str, optional
         Which map property to use as the pattern fit. If None
         (default), "fit" or "patternfit", if present, is used, or just
-        zeros. If the property has more than one value per point, only
-        the first value is used.
+        zeros. If the property has more than one value per point and
+        `index` is not given, only the first value is used.
     extra_prop : str or list of str, optional
         One or multiple properties to add as extra columns in the .ang
         file, as a string or a list of strings. If None (default), no
-        extra properties are added.
+        extra properties are added. If a property has more than one
+        value per point and `index` is not given, only the first value
+        is used.
     """
     if xmap.ndim > 2:
         raise ValueError("Writing a 3D dataset to an .ang file is not supported")
@@ -437,13 +440,12 @@ def file_writer(
     if index is not None:
         eulers = xmap.get_map_data(
             xmap.rotations[:, index].to_euler(), decimals=decimals, fill_value=0
-        ).reshape((map_size, 3))
+        )
     else:
-        eulers = xmap.get_map_data(
-            "rotations", decimals=decimals, fill_value=0
-        ).reshape((map_size, 3))
+        eulers = xmap.get_map_data("rotations", decimals=decimals, fill_value=0)
+    eulers = eulers.reshape((map_size, 3))
     indexed_points = xmap.get_map_data(xmap.is_indexed, fill_value=False).reshape(
-        map_size,
+        map_size
     )
     eulers[~indexed_points] = 4 * np.pi
 
@@ -503,8 +505,8 @@ def file_writer(
     # Extend header with column names
     header += (
         "\n"
-        "Column names: phi1, Phi, phi2, x, y, confidence_index, image_quality, "
-        "phase_id, pattern_fit, detector_signal"
+        "Column names: phi1, Phi, phi2, x, y, image_quality, confidence_index, "
+        "phase_id, detector_signal, pattern_fit"
     )
 
     # Get data formats
@@ -636,29 +638,29 @@ def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, deci
 
     Returns
     -------
-    np.ndarray
+    numpy.ndarray
     """
-    # "Image_quality" -> "imagequality"
+    # "Image_quality" -> "imagequality" etc.
     prop_names_lower = [k.lower().replace("_", "") for k in prop_names]
     prop_names_lower_arr = np.array(prop_names_lower)
     # Potential extra names added so that lists are of the same length
     # in the loop
     all_expected_prop_names = [
-        ["iq", "image_quality", "imagequality"],
-        ["ci", "confidence_index", "confidenceindex"],
-        ["ss", "sem_signal", "semsignal"],
-        ["fit", "pattern_fit", "patternfit"],
+        ["iq", "imagequality"],
+        ["ci", "confidenceindex", "scores", "correlation"],
+        ["ss", "semsignal", "detectorsignal"],
+        ["fit", "patternfit"],
     ] + desired_prop_names[4:]
     n_desired_props = len(desired_prop_names)
     prop_arrays = np.zeros((map_size, n_desired_props), dtype=np.float32)
     for i, (name, names) in enumerate(zip(desired_prop_names, all_expected_prop_names)):
         prop = _get_prop_array(
             xmap=xmap,
+            map_size=map_size,
             prop_name=name,
             expected_prop_names=names,
             prop_names=prop_names,
             prop_names_lower_arr=prop_names_lower_arr,
-            map_size=map_size,
             decimals=decimals,
             index=index,
             fill_value=0,
@@ -670,11 +672,11 @@ def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, deci
 
 def _get_prop_array(
     xmap,
+    map_size,
     prop_name,
     expected_prop_names,
     prop_names,
     prop_names_lower_arr,
-    map_size,
     index,
     decimals=5,
     fill_value=0,
@@ -689,44 +691,41 @@ def _get_prop_array(
     Parameters
     ----------
     xmap : CrystalMap
+    map_size : int
     prop_name : str
     expected_prop_names : list of str
     prop_names : list of str
     prop_names : list of str
-    map_size : int
     index : int or None
     decimals : int, optional
     fill_value : int, float, or bool, optional
 
     Returns
     -------
-    np.ndarray or None
+    numpy.ndarray or None
     """
     kwargs = dict(decimals=decimals, fill_value=fill_value)
-    if prop_name is not None:
-        if index is None:
-            prop = xmap.get_map_data(prop_name, **kwargs)
-        else:
-            try:
-                prop = xmap.get_map_data(xmap.prop[prop_name][:, index], **kwargs)
-            except IndexError:
-                return
-    elif len(prop_names_lower_arr) == 0:
+    if len(prop_names_lower_arr) == 0 and prop_name is None:
         return
     else:
-        for k in expected_prop_names:
-            is_equal = k == prop_names_lower_arr
-            if is_equal.any():
-                prop_name = prop_names[np.argmax(is_equal)]
-                break
         if prop_name is None:
-            return
-        else:
-            if index is None:
-                prop = xmap.get_map_data(prop_name, **kwargs)
+            # Search for a suitable property
+            for k in expected_prop_names:
+                is_equal = k == prop_names_lower_arr
+                if is_equal.any():
+                    prop_name = prop_names[np.argmax(is_equal)]
+                    break
+            else:  # If no suitable property was found
+                return
+        # There is a property
+        try:
+            prop_array_size = xmap.prop[prop_name].size
+            if prop_array_size == map_size:
+                # Return the single array even if `index` is given
+                return xmap.get_map_data(prop_name, **kwargs)
             else:
-                try:
-                    prop = xmap.get_map_data(xmap.prop[prop_name][:, index], **kwargs)
-                except IndexError:
-                    return
-    return prop
+                if index is None:
+                    index = 0
+                return xmap.get_map_data(xmap.prop[prop_name][:, index], **kwargs)
+        except IndexError:
+            return

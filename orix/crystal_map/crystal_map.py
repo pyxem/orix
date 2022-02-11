@@ -781,10 +781,10 @@ class CrystalMap:
         legend_properties=None,
         colorbar=False,
         colorbar_label=None,
-        colorbar_properties=dict(),
+        colorbar_properties=None,
         remove_padding=False,
         return_figure=False,
-        figure_kwargs=dict(),
+        figure_kwargs=None,
         **kwargs,
     ):
         r"""Plot a 2D map with any crystallographic map property as map
@@ -821,15 +821,9 @@ class CrystalMap:
         colorbar_properties : dict, optional
             Keyword arguments passed to
             :meth:`orix.plot.CrystalMapPlot.add_colorbar`.
-        axes : tuple of ints, optional
-            Which data axes to plot if data has more than two
-            dimensions. The index of data to plot in the final dimension
-            is determined by `depth`. If None (default), data along the
-            two last axes is plotted.
-        depth : int, optional
-            Which layer along the third axis to plot if data has more
-            than two dimensions. If None (default), data in the first
-            index (layer) is plotted.
+        remove_padding : bool, optional
+            Whether to remove white padding around figure, default is
+            False.
         return_figure: bool, optional
             Whether to return the figure (default is False).
         figure_kwargs : dict, optional
@@ -855,6 +849,9 @@ class CrystalMap:
         # Register "plot_map" projection with Matplotlib
         import orix.plot.crystal_map_plot
 
+        if figure_kwargs is None:
+            figure_kwargs = dict()
+
         fig, ax = plt.subplots(subplot_kw=dict(projection="plot_map"), **figure_kwargs)
         ax.plot_map(
             self,
@@ -870,6 +867,8 @@ class CrystalMap:
         if remove_padding:
             ax.remove_padding()
         if colorbar:
+            if colorbar_properties is None:
+                colorbar_properties = dict()
             ax.add_colorbar(label=colorbar_label, **colorbar_properties)
         if return_figure:
             return fig
