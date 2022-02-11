@@ -16,6 +16,9 @@ Added
 
 Fixed
 -----
+- `Orientation` disorientation angles and dot products returned from `angle_with()` and
+  `dot()` and `dot_outer()`, which now calculates the misorientation as `other * ~self`.
+  Disorientation angles `(o2 - o1).angle` and `o1.angle_with(o2)` are now the same.
 - The inverse indices returned from `Rotation.unique()` now correctly recreate the
   original `Rotation` instance.
 
@@ -83,7 +86,6 @@ Fixed
 - `CrystalMap.get_map_data()` can return an array of shape (3,) if there are that many
   points in the map.
 - Reading of point groups with "-" sign, like -43m, from EMsoft h5ebsd files.
-
 
 2021-09-07 - version 0.7.0
 ==========================
