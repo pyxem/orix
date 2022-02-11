@@ -158,7 +158,12 @@ class Rotation(Quaternion):
                 axis=-1,
             ).round(6)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
-        idx_sort = np.sort(idx)
+        idx_argsort = np.argsort(idx)
+        idx_sort = idx[idx_argsort]
+        # build inverse index map
+        inv_map = np.empty_like(idx_argsort)
+        inv_map[idx_argsort] = np.arange(idx_argsort.size)
+        inv = inv_map[inv]
         dat = rotation[idx_sort]
         dat.improper = rotation.improper[idx_sort]
         if return_index and return_inverse:
