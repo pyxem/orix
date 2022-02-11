@@ -19,6 +19,8 @@ Fixed
 - `Orientation` disorientation angles and dot products returned from `angle_with()` and
   `dot()` and `dot_outer()`, which now calculates the misorientation as `other * ~self`.
   Disorientation angles `(o2 - o1).angle` and `o1.angle_with(o2)` are now the same.
+- The inverse indices returned from `Rotation.unique()` now correctly recreate the
+  original `Rotation` instance.
 
 2021-12-21 - version 0.8.0
 ==========================
