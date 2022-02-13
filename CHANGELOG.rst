@@ -24,6 +24,7 @@ Fixed
 - The inverse indices returned from `Rotation.unique()` now correctly recreate the
   original `Rotation` instance.
 - Handling of property arrays in .ang writer with multiple values per map point.
+- `CrystalMap`'s handling of a non-rectangular mask of which points are in the data.
 
 2021-12-21 - version 0.8.0
 ==========================
