@@ -15,14 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
-
-import pytest
-import numpy as np
 import itertools
 
-from orix.vector.neo_euler import AxAngle
-from orix.vector import Vector3d
-from orix.quaternion.rotation import Rotation
+import numpy as np
+import pytest
+
+from orix.vector import AxAngle, Vector3d
+from orix.quaternion import Rotation
 
 
 axes = [

@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
+import pytest
 
 from orix.scalar import Scalar
-from orix.vector import Vector3d
 
 
 @pytest.fixture(params=[(1,)])

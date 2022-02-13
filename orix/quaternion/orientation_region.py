@@ -35,12 +35,13 @@ Rotations or orientations can be inside or outside of an orientation region.
 """
 
 import itertools
+
 import numpy as np
 
 from orix.quaternion import Quaternion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, get_distinguished_points
-from orix.vector.neo_euler import Rodrigues, AxAngle
+from orix.vector import AxAngle, Rodrigues
 
 _EPSILON = 1e-9  # small number to avoid round off problems
 
