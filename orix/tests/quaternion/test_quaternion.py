@@ -21,7 +21,7 @@ import numpy as np
 import pytest
 
 from orix.base import DimensionError
-from orix.quaternion import Quaternion, check_quaternion
+from orix.quaternion import QuaternionNumpy as Quaternion, check_quaternion
 from orix.vector import Vector3d
 
 # fmt: off

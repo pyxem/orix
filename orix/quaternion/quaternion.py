@@ -20,6 +20,7 @@ import warnings
 
 import dask.array as da
 import numpy as np
+import quaternion
 
 from orix.base import check, Object3d
 from orix.scalar import Scalar
@@ -339,3 +340,83 @@ class Quaternion(Object3d):
 
         new_chunks = tuple(chunks1[:-1]) + tuple(chunks2[:-1]) + (-1,)
         return da.stack((a, b, c, d), axis=-1).rechunk(new_chunks)
+
+
+class QuaternionNumpy(Quaternion):
+    r"""Basic quaternion object.
+
+    Quaternions support the following mathematical operations:
+
+    - Unary negation.
+    - Inversion.
+    - Multiplication with other quaternions and vectors.
+
+    Attributes
+    ----------
+    data : numpy.ndarray
+        The numpy array containing the quaternion data.
+    a, b, c, d : Scalar
+        The individual elements of each vector.
+    conj : Quaternion
+        The conjugate of this quaternion :math:`q^* = a - bi - cj - dk`.
+    """
+
+    @property
+    def conj(self):
+        q = quaternion.from_float_array(self.data).conj()
+        return Quaternion(quaternion.as_float_array(q))
+
+    def __mul__(self, other):
+        if isinstance(other, Quaternion):
+            q1 = quaternion.from_float_array(self.data)
+            q2 = quaternion.from_float_array(other.data)
+            return other.__class__(quaternion.as_float_array(q1 * q2))
+        elif isinstance(other, Vector3d):
+            # check broadcast shape is correct before calculation, as
+            # quaternion.rotat_vectors will perform outer product
+            # this keeps current __mul__ broadcast behaviour
+            q1 = quaternion.from_float_array(self.data)
+            v = quaternion.as_vector_part(
+                (q1 * quaternion.from_vector_part(other.data)) * ~q1
+            )
+            if isinstance(other, Miller):
+                m = other.__class__(xyz=v, phase=other.phase)
+                m.coordinate_format = other.coordinate_format
+                return m
+            else:
+                return other.__class__(v)
+        return NotImplemented
+
+    def outer(self, other):
+        """Compute the outer product of this quaternion and the other
+        quaternion or vector.
+
+        Parameters
+        ----------
+        other : orix.quaternion.Quaternion or orix.vector.Vector3d
+
+        Returns
+        -------
+        orix.quaternion.Quaternion or orix.vector.Vector3d
+        """
+
+        if isinstance(other, Quaternion):
+            q1 = quaternion.from_float_array(self.data)
+            q2 = quaternion.from_float_array(other.data)
+            # np.outer works with flattened array
+            q = np.outer(q1, q2).reshape(q1.shape + q2.shape)
+            return other.__class__(quaternion.as_float_array(q))
+        elif isinstance(other, Vector3d):
+            q = quaternion.from_float_array(self.data)
+            v = quaternion.rotate_vectors(q, other.data)
+            if isinstance(other, Miller):
+                m = other.__class__(xyz=v, phase=other.phase)
+                m.coordinate_format = other.coordinate_format
+                return m
+            else:
+                return other.__class__(v)
+        else:
+            raise NotImplementedError(
+                "This operation is currently not avaliable in orix, please use outer "
+                "with `other` of type `Quaternion` or `Vector3d`"
+            )
