@@ -16,11 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
+import pytest
 
-from orix.vector.neo_euler import Rodrigues, Homochoric
-from orix.quaternion.rotation import Rotation
+from orix.vector import Homochoric, Rodrigues
+from orix.quaternion import Rotation
 
 
 # Rodrigues

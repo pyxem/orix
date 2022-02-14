@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 
 from orix.projections import StereographicProjection
-from orix.vector.vector3d import Vector3d
+from orix.vector import Vector3d
 
 
 @pytest.fixture

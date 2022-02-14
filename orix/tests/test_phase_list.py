@@ -21,7 +21,7 @@ from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
 
-from orix.crystal_map.phase_list import Phase, PhaseList
+from orix.crystal_map import Phase, PhaseList
 from orix.quaternion.symmetry import Symmetry, O
 
 

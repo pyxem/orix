@@ -19,7 +19,7 @@
 import numpy as np
 import pytest
 
-from orix.crystal_map.crystal_map_properties import CrystalMapProperties
+from orix.crystal_map import CrystalMapProperties
 
 
 class TestCrystalMapProperties:
