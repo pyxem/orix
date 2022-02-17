@@ -23,8 +23,7 @@ import numpy as np
 
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
 from orix.crystal_map.phase_list import Phase, PhaseList
-from orix.quaternion.orientation import Orientation
-from orix.quaternion.rotation import Rotation
+from orix.quaternion import Orientation, Rotation
 
 
 class CrystalMap:
@@ -212,7 +211,7 @@ class CrystalMap:
 
         # Set original data shape (needed if data shape changes in
         # __getitem__())
-        self._original_shape = self._data_shape_from_coordinates()
+        self._original_shape = self._data_shape_from_coordinates(only_is_in_data=False)
 
     @property
     def id(self):
@@ -292,7 +291,8 @@ class CrystalMap:
         unique_ids = np.unique(self.phase_id)
         phase_list = self.phases[np.intersect1d(unique_ids, self.phases.ids)]
         if isinstance(phase_list, Phase):  # One phase in data
-            # Get phase ID so it carries over to the new `PhaseList` object
+            # Get phase ID so it carries over to the new `PhaseList`
+            # instance
             phase = phase_list  # Since it's actually a single phase
             phase_id = self.phases.id_from_name(phase.name)
             return PhaseList(phases=phase, ids=phase_id)
@@ -311,7 +311,7 @@ class CrystalMap:
 
     @property
     def rotations_shape(self):
-        """Shape of rotation object.
+        """Shape of rotation instance.
 
         Map shape and possible multiple rotations per point are accounted
         for. 1-dimensions are squeezed out.
@@ -352,8 +352,8 @@ class CrystalMap:
 
     @property
     def prop(self):
-        """:class:`~orix.crystal_map.CrystalMapProperties` dictionary with
-        data properties in each data point.
+        """:class:`~orix.crystal_map.CrystalMapProperties` dictionary
+        with data properties in each data point.
         """
         self._prop.is_in_data = self.is_in_data
         self._prop.id = self.id
@@ -365,6 +365,13 @@ class CrystalMap:
         # TODO: Make this "dynamic"/dependable when enabling specimen
         #  reference frame
         return {"z": self.z, "y": self.y, "x": self.x}
+
+    @property
+    def _all_coordinates(self):
+        """Dictionary of coordinates of all points."""
+        # TODO: Make this "dynamic"/dependable when enabling specimen
+        #  reference frame
+        return {"z": self._z, "y": self._y, "x": self._x}
 
     @property
     def _step_sizes(self):
@@ -383,7 +390,7 @@ class CrystalMap:
 
     def __getattr__(self, item):
         """Get an attribute in the `prop` dictionary directly from the
-        CrystalMap object.
+        CrystalMap instance.
 
         Called when the default attribute access fails with an
         AttributeError.
@@ -403,7 +410,7 @@ class CrystalMap:
             return object.__setattr__(self, name, value)
 
     def __getitem__(self, key):
-        """Get a masked copy of the CrystalMap object.
+        """Get a masked copy of the CrystalMap instance.
 
         Parameters
         ----------
@@ -415,7 +422,7 @@ class CrystalMap:
 
         Examples
         --------
-        A CrystalMap object can be indexed in multiple ways...
+        A CrystalMap instance can be indexed in multiple ways...
 
         >>> xmap
         Phase  Orientations       Name  Space group  Point group  Proper point group       Color
@@ -503,16 +510,16 @@ class CrystalMap:
         #  or last row/column are masked out by the key), i.e. not just mask the values
 
         # Initiate a mask to be added to the returned copy of the
-        # CrystalMap object, to ensure that only the unmasked values are
-        # in the data of the copy (True in `is_in_data`). First, no points
-        # are in the data, but are added if they satisfy the condition in
-        # the input key.
+        # CrystalMap instance, to ensure that only the unmasked values
+        # are in the data of the copy (True in `is_in_data`). First, no
+        # points are in the data, but are added if they satisfy the
+        # condition in the input key.
         is_in_data = np.zeros(self.size, dtype=bool)
 
-        # The original object might already have set some points to not be
-        # in the data. If so, `is_in_data` is used to update the original
-        # `is_in_data`. Since `new_is_in_data` is not initiated for all
-        # key types, we declare it here and check for it later.
+        # The original instance might already have set some points to
+        # not be in the data. If so, `is_in_data` is used to update the
+        # original `is_in_data`. Since `new_is_in_data` is not initiated
+        # for all key types, we declare it here and check for it later.
         new_is_in_data = None
 
         # Override mask values
@@ -549,8 +556,8 @@ class CrystalMap:
             # the data are still kept out by this boolean multiplication
             new_is_in_data = new_is_in_data.flatten() * self.is_in_data
 
-        # Insert the mask into a mask with the full map shape, if not done
-        # already
+        # Insert the mask into a mask with the full map shape, if not
+        # done already
         if new_is_in_data is None:
             new_is_in_data = np.zeros_like(self.is_in_data, dtype=bool)  # 1D
             new_is_in_data[self.id] = is_in_data
@@ -701,8 +708,8 @@ class CrystalMap:
 
         # Declare array of correct shape, accounting for RGB
         # TODO: Better account for `item.shape`, e.g. quaternions
-        #  (item.shape[-1] == 4) in a more general way than here (not more
-        #  if/else)!
+        #  (item.shape[-1] == 4) in a more general way than here (not
+        #  more if/else)!
         map_size = np.prod(map_shape)
         if isinstance(item, np.ndarray):
             array = np.empty(map_size, dtype=item.dtype)
@@ -781,10 +788,10 @@ class CrystalMap:
         legend_properties=None,
         colorbar=False,
         colorbar_label=None,
-        colorbar_properties=dict(),
+        colorbar_properties=None,
         remove_padding=False,
         return_figure=False,
-        figure_kwargs=dict(),
+        figure_kwargs=None,
         **kwargs,
     ):
         r"""Plot a 2D map with any crystallographic map property as map
@@ -821,15 +828,9 @@ class CrystalMap:
         colorbar_properties : dict, optional
             Keyword arguments passed to
             :meth:`orix.plot.CrystalMapPlot.add_colorbar`.
-        axes : tuple of ints, optional
-            Which data axes to plot if data has more than two
-            dimensions. The index of data to plot in the final dimension
-            is determined by `depth`. If None (default), data along the
-            two last axes is plotted.
-        depth : int, optional
-            Which layer along the third axis to plot if data has more
-            than two dimensions. If None (default), data in the first
-            index (layer) is plotted.
+        remove_padding : bool, optional
+            Whether to remove white padding around figure, default is
+            False.
         return_figure: bool, optional
             Whether to return the figure (default is False).
         figure_kwargs : dict, optional
@@ -855,6 +856,9 @@ class CrystalMap:
         # Register "plot_map" projection with Matplotlib
         import orix.plot.crystal_map_plot
 
+        if figure_kwargs is None:
+            figure_kwargs = dict()
+
         fig, ax = plt.subplots(subplot_kw=dict(projection="plot_map"), **figure_kwargs)
         ax.plot_map(
             self,
@@ -870,6 +874,8 @@ class CrystalMap:
         if remove_padding:
             ax.remove_padding()
         if colorbar:
+            if colorbar_properties is None:
+                colorbar_properties = dict()
             ax.add_colorbar(label=colorbar_label, **colorbar_properties)
         if return_figure:
             return fig
@@ -894,31 +900,45 @@ class CrystalMap:
             step_size = unique_sorted[1] - unique_sorted[0]
         return step_size
 
-    def _data_slices_from_coordinates(self):
+    def _data_slices_from_coordinates(self, only_is_in_data=True):
         """Return a tuple of slices defining the current data extent in
         all directions.
+
+        Parameters
+        ----------
+        only_is_in_data : bool, optional
+            Whether to determine slices of points in data or all points.
+            Default is True.
 
         Returns
         -------
         slices : tuple of slices
             Data slice in each existing dimension, in (z, y, x) order.
         """
-        slices = []
+        if only_is_in_data:
+            coordinates = self._coordinates
+        else:
+            coordinates = self._all_coordinates
 
         # Loop over dimension coordinates and step sizes
-        for coordinates, step in zip(
-            self._coordinates.values(), self._step_sizes.values()
-        ):
-            if coordinates is not None:
-                c_min, c_max = np.min(coordinates), np.max(coordinates)
+        slices = []
+        for coords, step in zip(coordinates.values(), self._step_sizes.values()):
+            if coords is not None and step != 0:
+                c_min, c_max = np.min(coords), np.max(coords)
                 i_min = int(np.around(c_min / step))
                 i_max = int(np.around((c_max / step) + 1))
                 slices.append(slice(i_min, i_max))
 
         return tuple(slices)
 
-    def _data_shape_from_coordinates(self):
+    def _data_shape_from_coordinates(self, only_is_in_data=True):
         """Return data shape based upon coordinate arrays.
+
+        Parameters
+        ----------
+        only_is_in_data : bool, optional
+            Whether to determine shape of points in data or all points.
+            Default is True.
 
         Returns
         -------
@@ -926,7 +946,7 @@ class CrystalMap:
             Shape of data in all existing dimensions, in (z, y, x) order.
         """
         data_shape = []
-        for dim_slice in self._data_slices_from_coordinates():
+        for dim_slice in self._data_slices_from_coordinates(only_is_in_data):
             data_shape.append(dim_slice.stop - dim_slice.start)
         return tuple(data_shape)
 

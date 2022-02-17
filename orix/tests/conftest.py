@@ -25,9 +25,8 @@ from h5py import File
 import numpy as np
 import pytest
 
-from orix.crystal_map import CrystalMap, create_coordinate_arrays
-from orix.crystal_map.phase_list import PhaseList
-from orix.quaternion.rotation import Rotation
+from orix.crystal_map import CrystalMap, create_coordinate_arrays, PhaseList
+from orix.quaternion import Rotation
 
 
 @pytest.fixture

@@ -654,7 +654,7 @@ class TestAngWriter:
         ],
         indirect=["crystal_map_input"],
     )
-    def test_write_data_layer_i(self, crystal_map_input, tmp_path, index):
+    def test_write_data_index(self, crystal_map_input, tmp_path, index):
         xmap = CrystalMap(**crystal_map_input)
         xmap.prop["ci"] = np.arange(xmap.size * xmap.rotations_per_point).reshape(
             (xmap.size, xmap.rotations_per_point)
@@ -670,6 +670,6 @@ class TestAngWriter:
         assert np.allclose(
             xmap.rotations[:, index].to_euler(), xmap_reload.rotations.to_euler()
         )
-        assert np.allclose(xmap_reload.iq, np.zeros(xmap.size))
+        assert np.allclose(xmap_reload.iq, xmap.iq)
         assert np.allclose(xmap_reload.ci, xmap.ci[:, index])
         assert np.allclose(xmap_reload.iq_times_ci, xmap.iq_times_ci[:, index])

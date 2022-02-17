@@ -49,13 +49,11 @@ class TestCrystalMapInit:
         assert isinstance(xmap.rotations, Rotation)
         assert np.allclose(xmap.rotations.data, rotations.data)
 
-    @pytest.mark.parametrize("rotation_format", ["array", "list"])
-    def test_init_with_invalid_rotations(self, rotations, rotation_format):
+    def test_init_with_invalid_rotations(self, rotations):
         with pytest.raises(ValueError):
-            if rotation_format == "array":
-                _ = CrystalMap(rotations=rotations.data)
-            else:  # rotation_format == "list"
-                _ = CrystalMap(rotations=list(rotations.data))
+            _ = CrystalMap(rotations=rotations.data)
+        with pytest.raises(ValueError):
+            _ = CrystalMap(rotations=list(rotations.data))
 
     @pytest.mark.parametrize(
         (
@@ -235,7 +233,7 @@ class TestCrystalMapInit:
             ),
         ],
     )
-    def test_classmethod_empty(
+    def test_class_method_empty(
         self, shape, step_sizes, desired_coordinates, desired_step_sizes
     ):
         xmap = CrystalMap.empty(shape=shape, step_sizes=step_sizes)
@@ -256,6 +254,48 @@ class TestCrystalMapInit:
                 assert coords == desired_coords
             else:
                 assert np.allclose(coords, desired_coords)
+
+    def test_is_in_data(self, crystal_map_input):
+        """Ensure `CrystalMap._original_shape` is correct when set upon
+        initialization of a `CrystalMap` where some points are not in
+        the data.
+        """
+        map_shape = (4, 3)
+        is_in_data = np.ones(map_shape, dtype=bool)
+
+        # All points in data
+        xmap = CrystalMap(is_in_data=is_in_data.flatten(), **crystal_map_input)
+        assert xmap.shape == xmap._original_shape == map_shape
+        assert np.allclose(xmap.get_map_data("phase_id"), np.zeros(is_in_data.shape))
+
+        # First row not in data
+        is_in_data1 = is_in_data.copy()
+        is_in_data1[0, :] = False
+        xmap1 = CrystalMap(is_in_data=is_in_data1.flatten(), **crystal_map_input)
+        new_shape1 = (map_shape[0] - 1, map_shape[1])
+        assert xmap1.shape == new_shape1
+        assert xmap1._original_shape == map_shape
+        assert np.allclose(xmap1.get_map_data("phase_id"), np.zeros(new_shape1))
+
+        # Second row not in data
+        is_in_data2 = is_in_data.copy()
+        is_in_data2[1, :] = False
+        xmap2 = CrystalMap(is_in_data=is_in_data2.flatten(), **crystal_map_input)
+        assert xmap2.shape == xmap2._original_shape == map_shape
+        desired_phase_id = np.zeros(is_in_data.shape)
+        desired_phase_id[1, :] = np.nan
+        assert np.allclose(
+            xmap2.get_map_data("phase_id"), desired_phase_id, equal_nan=True
+        )
+
+        # Last column not in data
+        is_in_data3 = is_in_data.copy()
+        is_in_data3[:, -1] = False
+        xmap3 = CrystalMap(is_in_data=is_in_data3.flatten(), **crystal_map_input)
+        new_shape3 = (map_shape[0], map_shape[1] - 1)
+        assert xmap3.shape == new_shape3
+        assert xmap3._original_shape == map_shape
+        assert np.allclose(xmap3.get_map_data("phase_id"), np.zeros(new_shape3))
 
 
 class TestCrystalMapGetItem:

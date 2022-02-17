@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
-Unreleased
-==========
+2022-02-14 - version 0.8.1
+==========================
 
 Added
 -----
@@ -23,6 +23,8 @@ Fixed
   Disorientation angles `(o2 - o1).angle` and `o1.angle_with(o2)` are now the same.
 - The inverse indices returned from `Rotation.unique()` now correctly recreate the
   original `Rotation` instance.
+- Handling of property arrays in .ang writer with multiple values per map point.
+- `CrystalMap`'s handling of a mask of which points are in the data.
 
 2021-12-21 - version 0.8.0
 ==========================
