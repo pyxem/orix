@@ -87,7 +87,7 @@ def sample_S2_cube_mesh(resolution, grid_type="spherified_corner"):
         steps = np.ceil(max_distance / grid_length)
         i = np.arange(-steps, steps) / steps
     elif grid_type == grid_types[1]:
-        steps = np.ceil((max_angle / res).round(1))
+        steps = np.ceil((max_angle / res).round(2))
         k = np.arange(-steps, steps)
         theta = np.arctan(max_distance) / steps
         i = np.tan(k * theta)
