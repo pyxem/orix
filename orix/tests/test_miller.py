@@ -215,9 +215,9 @@ class TestMiller:
         m2 = m.unique(use_symmetry=True)
         assert m2.size == 285
         m3, idx = m2.unit.unique(return_index=True)
-        assert m3.size == 345
+        assert m3.size == 205
         assert isinstance(m3, Miller)
-        assert np.allclose(idx[:10], [74, 448, 434, 409, 374, 330, 278, 447, 412, 432])
+        assert np.allclose(idx[:10], [65, 283, 278, 269, 255, 235, 208, 282, 272, 276])
 
     def test_multiply_orientation(self):
         o = Orientation.from_euler(np.deg2rad([45, 0, 0]))
