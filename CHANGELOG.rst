@@ -10,6 +10,12 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Changed
+-------
+- `orix.quaternion.Quaternion` now relies on `numpy-quaternion <https://quaternion.readthedocs.io/en/latest/>`_
+  for quaternion conjugation, quaternion-quaternion and quaternion-vector multiplication,
+  and quaternion-quaternion and quaternion-vector outer products.
+
 2022-02-14 - version 0.8.1
 ==========================
 
