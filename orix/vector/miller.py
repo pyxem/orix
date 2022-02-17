@@ -542,7 +542,7 @@ class Miller(Vector3d):
             cosines = self.dot_outer(other2).data / (
                 self.norm.data[..., np.newaxis] * other2.norm.data[np.newaxis, ...]
             )
-            cosines = np.round(cosines, 9)
+            cosines = np.round(cosines, 12)
             angles = np.min(np.arccos(cosines), axis=-1)
             return Scalar(angles)
         else:

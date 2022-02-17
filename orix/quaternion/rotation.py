@@ -156,7 +156,7 @@ class Rotation(Quaternion):
                     rotation.improper,
                 ],
                 axis=-1,
-            ).round(6)
+            ).round(12)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         idx_argsort = np.argsort(idx)
         idx_sort = idx[idx_argsort]
@@ -196,7 +196,7 @@ class Rotation(Quaternion):
                 i,
             ),
             axis=-1,
-        ).round(6)
+        ).round(12)
         return abcd
 
     def angle_with(self, other):

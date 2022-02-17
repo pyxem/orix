@@ -411,7 +411,7 @@ class Vector3d(Object3d):
         Scalar
             The angle between the vectors, in radians.
         """
-        cosines = np.round(self.dot(other).data / self.norm.data / other.norm.data, 9)
+        cosines = np.round(self.dot(other).data / self.norm.data / other.norm.data, 12)
         return Scalar(np.arccos(cosines))
 
     def rotate(self, axis=None, angle=0):
