@@ -670,7 +670,6 @@ class Miller(Vector3d):
         if use_symmetry:
             operations = self.phase.point_group
             n_v = v.size
-            v2 = operations.outer(v).flatten()
             v2 = operations.outer(v).flatten().reshape(*(n_v, operations.size))
             data = v2.data
             data_sorted = np.zeros_like(data)

@@ -213,7 +213,7 @@ class TestMiller:
         m = Miller.from_highest_indices(phase=diamond, uvw=[10, 10, 10])
         assert m.size == 9260
         m2 = m.unique(use_symmetry=True)
-        assert m2.size == 450
+        assert m2.size == 285
         m3, idx = m2.unit.unique(return_index=True)
         assert m3.size == 345
         assert isinstance(m3, Miller)
