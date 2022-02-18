@@ -294,8 +294,8 @@ class Vector3d(Object3d):
     def dot_outer(self, other):
         """The outer dot product of a vector with another vector.
 
-        The dot product for every combination of vectors in `self` and `other`
-        is computed.
+        The dot product for every combination of vectors in `self` and
+        `other` is computed.
 
         Returns
         -------
@@ -501,7 +501,7 @@ class Vector3d(Object3d):
         pole figure).
 
         This projection is taken from MTEX'
-        :code:`project2fundamentalRegion`.
+        :code:`project2FundamentalRegion`.
 
         Parameters
         ----------
@@ -511,6 +511,18 @@ class Vector3d(Object3d):
         Returns
         -------
         Vector3d
+
+        Examples
+        --------
+        >>> from orix.quaternion.symmetry import D6h, Oh
+        >>> from orix.vector import Vector3d
+        >>> v = Vector3d((-1, 1, 0))
+        >>> v.in_fundamental_sector(Oh)
+        Vector3d (1,)
+        [[1. 0. 1.]]
+        >>> v.in_fundamental_sector(D6h)
+        Vector3d (1,)
+        [[1.366 0.366 0.   ]]
         """
         fs = symmetry.fundamental_sector
         v = deepcopy(self)

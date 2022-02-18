@@ -10,6 +10,10 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Fixed
+-----
+- `Miller.in_fundamental_sector()` doesn't raise errors.
+
 2022-02-14 - version 0.8.1
 ==========================
 

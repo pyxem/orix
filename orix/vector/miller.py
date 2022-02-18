@@ -514,7 +514,7 @@ class Miller(Vector3d):
         else:
             return compatible
 
-    # ------------- Overwritten Vector3d/Object3d methods- ----------- #
+    # ------------- Overwritten Vector3d/Object3d methods ------------ #
 
     def angle_with(self, other, use_symmetry=False):
         """Calculate angles between vectors in `self` and `other`,
@@ -522,7 +522,7 @@ class Miller(Vector3d):
         smallest angle under symmetry.
 
         Vectors must have compatible shapes, and be in the same space
-        (direct or recprocal) and crystal reference frames.
+        (direct or reciprocal) and crystal reference frames.
 
         Parameters
         ----------
@@ -554,7 +554,7 @@ class Miller(Vector3d):
         vectors.
 
         Vectors must have compatible shapes, and be in the same space
-        (direct or recprocal) and crystal reference frames.
+        (direct or reciprocal) and crystal reference frames.
 
         Returns
         -------
@@ -572,7 +572,7 @@ class Miller(Vector3d):
         """Dot product of a vector with another vector.
 
         Vectors must have compatible shapes, and be in the same space
-        (direct or recprocal) and crystal reference frames.
+        (direct or reciprocal) and crystal reference frames.
 
         Returns
         -------
@@ -584,7 +584,7 @@ class Miller(Vector3d):
     def dot_outer(self, other):
         """Outer dot product of a vector with another vector.
 
-        Vectors must be in the same space (direct or recprocal) and
+        Vectors must be in the same space (direct or reciprocal) and
         crystal reference frames.
 
         The dot product for every combination of vectors in `self` and
@@ -603,22 +603,23 @@ class Miller(Vector3d):
         return m
 
     def transpose(self, *axes):
-        """Returns a new Miller object containing the same data transposed.
+        """Returns a new Miller object containing the same data
+        transposed.
 
-        If ndim is originally 2, then order may be undefined.
-        In this case the first two dimensions will be transposed.
+        If `self.ndim` is originally 2, then order may be undefined. In
+        this case the first two dimensions will be transposed.
 
         Parameters
         ----------
         axes : int, optional
-            The transposed axes order. Only navigation axes need to be defined.
-            May be undefined if self only contains two navigation dimensions.
+            The transposed axes order. Only navigation axes need to be
+            defined. May be undefined if self only contains two
+            navigation dimensions.
 
         Returns
         -------
-        Miller :
-            A transposed Miller instance of the object.
-
+        Miller
+            New transposed Miller instance of the original instance.
         """
         m = self.__class__(xyz=super().transpose(*axes).data, phase=self.phase)
         m.coordinate_format = self.coordinate_format
@@ -687,6 +688,50 @@ class Miller(Vector3d):
             return m, idx
         else:
             return m
+
+    def in_fundamental_sector(self, symmetry=None):
+        """Project Miller indices to a symmetry's fundamental sector
+        (inverse pole figure).
+
+        This projection is taken from MTEX'
+        :code:`project2FundamentalRegion`.
+
+        Parameters
+        ----------
+        symmetry : ~orix.quaternion.Symmetry, optional
+            Symmetry with a fundamental sector, possibly not equal to
+            `self.phase.point_group`. If not given,
+            `self.phase.point_group` is used if valid, otherwise an
+            error is raised.
+
+        Returns
+        -------
+        Miller
+
+        Examples
+        --------
+        >>> from orix.crystal_map import Phase
+        >>> from orix.quaternion.symmetry import D6h
+        >>> from orix.vector import Miller
+        >>> h = Miller(uvw=(-1, 1, 0), phase=Phase(point_group="m-3m"))
+        >>> h.in_fundamental_sector()
+        Miller (1,), point group m-3m, uvw
+        [[1. 0. 1.]]
+        >>> h.in_fundamental_sector(D6h)
+        Miller (1,), point group m-3m, uvw
+        [[1.366 0.366 0.   ]]
+        """
+        if symmetry is None:
+            symmetry = self.phase.point_group
+            if symmetry is None:
+                raise ValueError(
+                    "`symmetry` must be passed or `self.phase.point_group` must be a "
+                    "`Symmetry` with a `Symmetry.fundamental_sector`"
+                )
+        v = Vector3d(self.data).in_fundamental_sector(symmetry)
+        m = self.__class__(xyz=v.data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
+        return m
 
 
 def _uvw2xyz(uvw, lattice):
