@@ -35,7 +35,7 @@ class TestS2Sampling:
         [
             ("spherified_corner", 3, 8666),
             ("normalized", 4, 5402),
-            ("spherified_edge", 5, 2402),
+            ("spherified_edge", 5, 1946),
         ],
     )
     def test_cube_mesh(self, grid_type, resolution, size):

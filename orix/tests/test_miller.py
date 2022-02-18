@@ -21,17 +21,17 @@ import numpy as np
 import pytest
 
 from orix.crystal_map import Phase
-from orix.quaternion import Orientation
+from orix.quaternion import Orientation, symmetry
 from orix.vector import Miller
 from orix.vector.miller import _round_indices, _uvw2UVTW, _UVTW2uvw
 
 
+TRIGONAL_PHASE = Phase(
+    point_group="321", structure=Structure(lattice=Lattice(4.9, 4.9, 5.4, 90, 90, 120))
+)
 TETRAGONAL_LATTICE = Lattice(0.5, 0.5, 1, 90, 90, 90)
 TETRAGONAL_PHASE = Phase(
     point_group="4", structure=Structure(lattice=TETRAGONAL_LATTICE)
-)
-TRIGONAL_PHASE = Phase(
-    point_group="321", structure=Structure(lattice=Lattice(4.9, 4.9, 5.4, 90, 90, 120))
 )
 CUBIC_PHASE = Phase(point_group="m-3m")
 
@@ -47,7 +47,7 @@ class TestMiller:
 
     def test_repr(self):
         m = Miller(hkil=[1, 1, -2, 0], phase=TRIGONAL_PHASE)
-        assert repr(m) == ("Miller (1,), point group 321, hkil\n" "[[ 1.  1. -2.  0.]]")
+        assert repr(m) == "Miller (1,), point group 321, hkil\n" "[[ 1.  1. -2.  0.]]"
 
     def test_coordinate_format_raises(self):
         m = Miller(hkl=[1, 1, 1], phase=TETRAGONAL_PHASE)
@@ -213,11 +213,11 @@ class TestMiller:
         m = Miller.from_highest_indices(phase=diamond, uvw=[10, 10, 10])
         assert m.size == 9260
         m2 = m.unique(use_symmetry=True)
-        assert m2.size == 450
+        assert m2.size == 285
         m3, idx = m2.unit.unique(return_index=True)
-        assert m3.size == 345
+        assert m3.size == 205
         assert isinstance(m3, Miller)
-        assert np.allclose(idx[:10], [74, 448, 434, 409, 374, 330, 278, 447, 412, 432])
+        assert np.allclose(idx[:10], [65, 283, 278, 269, 255, 235, 208, 282, 272, 276])
 
     def test_multiply_orientation(self):
         o = Orientation.from_euler(np.deg2rad([45, 0, 0]))
@@ -330,6 +330,31 @@ class TestMiller:
         m2 = m1.transpose(1, 0, 2)
         assert m2.shape == (5, 11, 4)
         assert m1.phase == m2.phase
+
+    def test_in_fundamental_sector(self):
+        """Ensure projecting Miller indices to a fundamental sector
+        retains type and coordinate format, gives the correct indices,
+        and that it's possible to project to a different point group's
+        sector.
+        """
+        h = Miller(uvw=(-1, 1, 0), phase=Phase())
+        with pytest.raises(ValueError, match="`symmetry` must be passed or "):
+            _ = h.in_fundamental_sector()
+
+        h.phase = CUBIC_PHASE
+
+        h2 = h.in_fundamental_sector()
+        assert isinstance(h2, Miller)
+        assert np.allclose(h2.phase.point_group.data, h.phase.point_group.data)
+        assert h2.coordinate_format == h.coordinate_format
+
+        h3 = h.in_fundamental_sector(CUBIC_PHASE.point_group)
+        assert np.allclose((h2.data, h3.data), (1, 0, 1))
+        assert h2 <= h.phase.point_group.fundamental_sector
+
+        h4 = h.in_fundamental_sector(symmetry.D6h)
+        assert np.allclose(h4.phase.point_group.data, h.phase.point_group.data)
+        assert np.allclose(h4.data, (1.366, 0.366, 0), atol=1e-3)
 
 
 class TestMillerBravais:

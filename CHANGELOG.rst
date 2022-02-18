@@ -15,6 +15,13 @@ Changed
 - `orix.quaternion.Quaternion` now relies on `numpy-quaternion <https://quaternion.readthedocs.io/en/latest/>`_
   for quaternion conjugation, quaternion-quaternion and quaternion-vector multiplication,
   and quaternion-quaternion and quaternion-vector outer products.
+- Rounding in functions is now set consistently at 12 dp, eg. `Object3d.unique` and 
+  `Rotation.unique`.
+
+Fixed
+-----
+- `Miller.in_fundamental_sector()` doesn't raise errors.
+- `Miller.unique()` now correctly returns unique vectors due to implemented rounding.
 
 2022-02-14 - version 0.8.1
 ==========================
