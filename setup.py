@@ -58,7 +58,7 @@ setup(
         "numpy",
         "numpy-quaternion",
         "scipy",
-        "tqdm"
+        "tqdm",
     ],
     # fmt: on
     package_data={"": ["LICENSE", "README.rst", "readthedocs.yml"], "orix": ["*.py"]},

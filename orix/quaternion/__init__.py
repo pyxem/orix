@@ -38,7 +38,6 @@ from orix.quaternion.symmetry import get_distinguished_points, get_point_group, 
 __all__ = [
     "check_quaternion",
     "Quaternion",
-    "QuaternionNumpy",
     "Rotation",
     "von_mises",
     "Misorientation",
