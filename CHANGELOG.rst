@@ -10,6 +10,15 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Changed
+-------
+- Rounding in functions is now set consistently at 12 dp, eg. `Object3d.unique` and 
+  `Rotation.unique`.
+
+Fixed
+-----
+- `Miller.unique` now correctly returns unique vectors due to implemented rounding.
+
 2022-02-14 - version 0.8.1
 ==========================
 
