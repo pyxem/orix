@@ -108,12 +108,12 @@ class DirectionColorKeyTSL(DirectionColorKey):
         x_min = np.min(x)
         x_max = np.max(x)
         grid_step = 0.001
-        grid_yx = np.mgrid[y_min:y_max:grid_step, x_min:x_max:grid_step]
+        grid_y, grid_x = np.mgrid[y_min:y_max:grid_step, x_min:x_max:grid_step]
 
-        griddata_kwargs = dict(points=yx, xi=tuple(grid_yx))
-        r2 = griddata(values=r, **griddata_kwargs)
-        g2 = griddata(values=g, **griddata_kwargs)
-        b2 = griddata(values=b, **griddata_kwargs)
+        method = "linear"
+        r2 = griddata(yx, r, (grid_y, grid_x), method=method)
+        g2 = griddata(yx, g, (grid_y, grid_x), method=method)
+        b2 = griddata(yx, b, (grid_y, grid_x), method=method)
         rgb_grid = np.clip(np.dstack((r2, g2, b2)), 0, 1)
         rgb_grid[np.isnan(r2)] = 1
         rgb_grid = np.flipud(rgb_grid)
