@@ -182,11 +182,9 @@ class Object3d:
             The indices of the (flattened) data in the unique array.
 
         """
-        data = self.flatten()._data.round(9)
+        data = self.flatten()._data.round(12)
         data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
-        _, idx, inv = np.unique(
-            data.round(4), axis=0, return_index=True, return_inverse=True
-        )
+        _, idx, inv = np.unique(data, axis=0, return_index=True, return_inverse=True)
         obj = self.__class__(data[np.sort(idx), : self.dim])
         obj._data = data[np.sort(idx)]
         if return_index and return_inverse:
