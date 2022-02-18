@@ -91,28 +91,26 @@ class DirectionColorKeyTSL(DirectionColorKey):
         laue_group = self.symmetry
         sector = laue_group.fundamental_sector
 
-        # Set S2 sampling and color grid interpolation resolutions
-        resolution_s2 = 2
-        resolution_grid = 0.001
-
-        v = sample_S2_cube_mesh(resolution_s2)
+        v = sample_S2_cube_mesh(2)
         v2 = Vector3d(np.row_stack((v[v <= sector].data, sector.edges.data)))
 
         rgb = self.direction2color(v2)
         r, g, b = rgb.T
 
         x, y = StereographicProjection().vector2xy(v2)
+        # Round, otherwise `scipy.interpolate.griddata` is too slow
+        x = x.round(11)
+        y = y.round(11)
         yx = np.column_stack((y, x))
 
         y_min = np.min(y)
         y_max = np.max(y)
         x_min = np.min(x)
         x_max = np.max(x)
-        grid_y, grid_x = np.mgrid[
-            y_min:y_max:resolution_grid, x_min:x_max:resolution_grid
-        ]
+        grid_step = 0.001
+        grid_y, grid_x = np.mgrid[y_min:y_max:grid_step, x_min:x_max:grid_step]
 
-        method = "cubic"
+        method = "linear"
         r2 = griddata(yx, r, (grid_y, grid_x), method=method)
         g2 = griddata(yx, g, (grid_y, grid_x), method=method)
         b2 = griddata(yx, b, (grid_y, grid_x), method=method)
