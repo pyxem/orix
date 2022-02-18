@@ -4,7 +4,7 @@ include LICENSE
 include MANIFEST.in
 include README.rst
 include RELEASE.rst
-include readthedocs.yaml
+include readthedocs.yml
 include setup.cfg
 include setup.py
 
