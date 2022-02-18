@@ -18,7 +18,7 @@ Changed
 Fixed
 -----
 - `Miller.in_fundamental_sector()` doesn't raise errors.
-- `Miller.unique` now correctly returns unique vectors due to implemented rounding.
+- `Miller.unique()` now correctly returns unique vectors due to implemented rounding.
 
 2022-02-14 - version 0.8.1
 ==========================
