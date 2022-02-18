@@ -110,7 +110,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         grid_step = 0.001
         grid_yx = np.mgrid[y_min:y_max:grid_step, x_min:x_max:grid_step]
 
-        griddata_kwargs = dict(points=yx, xi=tuple(grid_yx))
+        griddata_kwargs = dict(points=yx, xi=tuple(grid_yx), method="cubic")
         r2 = griddata(values=r, **griddata_kwargs)
         g2 = griddata(values=g, **griddata_kwargs)
         b2 = griddata(values=b, **griddata_kwargs)
