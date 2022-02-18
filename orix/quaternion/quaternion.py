@@ -40,6 +40,31 @@ class Quaternion(Object3d):
     - Inversion.
     - Multiplication with other quaternions and vectors.
 
+    Quaternion-quaternion multiplication for two quaternions
+    :math:`q_1 = (a_1, b_1, c_1, d_1)`
+    and :math:`q_2 = (a_2, b_2, c_2, d_2)`
+    with :math:`q_3 = (a_3, b_3, c_3, d_3) = q_1 * q_2` follows as:
+
+    .. math::
+       a_3 = (a_1 * a_2 - b_1 * b_2 - c_1 * c_2 - d_1 * d_2)
+
+       b_3 = (a_1 * b_2 + b_1 * a_2 + c_1 * d_2 - d_1 * c_2)
+
+       c_3 = (a_1 * c_2 - b_1 * d_2 + c_1 * a_2 + d_1 * b_2)
+
+       d_3 = (a_1 * d_2 + b_1 * c_2 - c_1 * b_2 + d_1 * a_2)
+
+    Quaternion-vector multiplication with a three-dimensional vector
+    :math:`v = (x, y, z)` calculates a rotated vector
+    :math:`v' = q * v * q^{-1}` and follows as:
+
+    .. math::
+       v'_x = x(a^2 + b^2 - c^2 - d^2) + 2z(a * c + b * d) + y(b * c - a * d)
+
+       v'_y = y(a^2 - b^2 + c^2 - d^2) + 2x(a * d + b * c) + z(c * d - a * b)
+
+       v'_z = z(a^2 - b^2 - c^2 + d^2) + 2y(a * b + c * d) + x(b * d - a * c)
+
     Attributes
     ----------
     data : numpy.ndarray
