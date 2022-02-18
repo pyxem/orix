@@ -56,6 +56,7 @@ setup(
         "matplotlib-scalebar",
         "numba",
         "numpy",
+        "numpy-quaternion",
         "scipy",
         "tqdm",
     ],
