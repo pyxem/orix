@@ -1,13 +1,15 @@
 How to make a new release of ``orix``
 =====================================
 
-Create a PR to the `master` branch and go through the following steps.
+Create a PR to the ``master`` branch and go through the following steps.
 
 Preparation
 -----------
-- Bump ``__version__`` in `orix/__init__.py`, for example "0.8.2".
-- Update the changelog `CHANGELOG.rst`.
-- Let the PR collect comments for a day to ensure that other maintainers are 
+- Review the contributor list ``__credits__`` in ``orix/__init__.py`` to ensure all
+  contributors are included and sorted correctly.
+- Bump ``__version__`` in ``orix/__init__.py``, for example to "0.8.2".
+- Update the changelog ``CHANGELOG.rst``.
+- Let the PR collect comments for a day to ensure that other maintainers are
   comfortable with releasing. Merge.
 
 Release (and tag)
@@ -20,10 +22,9 @@ Release (and tag)
 
 Post-release action
 -------------------
-- Monitor the documentation build at
-  https://readthedocs.org/projects/orix/builds to make sure the new stable
-  documentation is successfully built from the release.
+- Monitor the `documentation build <https://readthedocs.org/projects/orix/builds>`_ to
+  ensure that the new stable documentation is successfully built from the release.
 - Make a post-release PR to ``master`` with ``__version__`` updated (or 
   reverted), e.g. to "0.9.dev0", and any updates to this guide if necessary.
-- Tidy up and close corresponding milestone.
+- Tidy up GitHub issues and close the corresponding milestone.
 - A PR to the conda-forge feedstock will be created by the conda-forge bot.
