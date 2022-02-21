@@ -7,14 +7,15 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
-Unreleased
-==========
+2022-02-21 - version 0.8.2
+==========================
 
 Changed
 -------
-- `orix.quaternion.Quaternion` now relies on `numpy-quaternion <https://quaternion.readthedocs.io/en/latest/>`_
-  for quaternion conjugation, quaternion-quaternion and quaternion-vector multiplication,
-  and quaternion-quaternion and quaternion-vector outer products.
+- `orix.quaternion.Quaternion` now relies on `numpy-quaternion
+  <https://quaternion.readthedocs.io/en/latest/>`_ for quaternion conjugation,
+  quaternion-quaternion and quaternion-vector multiplication, and quaternion-quaternion
+  and quaternion-vector outer products.
 - Rounding in functions is now set consistently at 12 dp, eg. `Object3d.unique` and 
   `Rotation.unique`.
 
@@ -74,8 +75,8 @@ Changed
 - `StereographicPlot` doesn't use Matplotlib's `transforms` framework anymore, and
   (X, Y) replaces (azimuth, polar) as internal coordinates.
 - Renamed `Symmetry` method `fundamental_sector()` to `fundamental_zone()`.
-- `Orientation` class methods `from_euler`, `from_matrix`, and `from_neo_euler` no longer 
-  return the smallest angle orientation when a `symmetry` is given.
+- `Orientation` class methods `from_euler`, `from_matrix`, and `from_neo_euler` no
+  longer  return the smallest angle orientation when a `symmetry` is given.
 - `CrystalMap.orientations` no longer returns smallest angle orientation.
 - The methods `flatten`, `reshape`, and `squeeze` have been overridden in
   `Misorientation` based classes to maintain the initial symmetry of the returned
@@ -90,8 +91,8 @@ Deprecated
 ----------
 - The `data_dim` attribute of Object3d and all derived classes is deprecated from 0.8
   and will be removed in 0.9. Use `ndim` instead.
-- Setting (Mis)Orientation symmetry via `set_symmetry()` is deprecated in 0.8, in favour of
-  setting it directly via a `symmetry.setter`, and will be removed in 0.9. Use
+- Setting (Mis)Orientation symmetry via `set_symmetry()` is deprecated in 0.8, in favour
+  of setting it directly via a `symmetry.setter`, and will be removed in 0.9. Use
   `map_into_symmetry_reduced_zone()` instead.
  
 Removed
@@ -102,7 +103,6 @@ Removed
 
 Fixed
 -----
-
 - `CrystalMap.get_map_data()` can return an array of shape (3,) if there are that many
   points in the map.
 - Reading of point groups with "-" sign, like -43m, from EMsoft h5ebsd files.
