@@ -26,6 +26,7 @@ setup(
     name=__name__,
     version=str(__version__),
     license="GPLv3",
+    url="https://orix.readthedocs.io",
     author=__author__,
     author_email=__author_email__,
     description=__description__,
