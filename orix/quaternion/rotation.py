@@ -394,13 +394,15 @@ class Rotation(Quaternion):
             "lab2crystal" or "crystal2lab". If "MTEX" is provided then
             the convention is "crystal2lab".
         """
-        if direction.lower() == "mtex":
+        direction = direction.lower()
+
+        if direction == "mtex":
             direction = "crystal2lab"
 
         directions = ["lab2crystal", "crystal2lab"]
 
         # processing directions
-        if direction.lower() not in directions:
+        if direction not in directions:
             raise ValueError(
                 f"The chosen direction is not one of the allowed options {directions}"
             )
