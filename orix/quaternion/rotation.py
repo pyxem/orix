@@ -48,6 +48,7 @@ from scipy.special import hyp0f1
 from orix.quaternion import Quaternion
 from orix.vector import AxAngle, Vector3d
 from orix.scalar import Scalar
+from orix._util import deprecated
 
 # Used to round values below 1e-16 to zero
 _FLOAT_EPS = np.finfo(float).eps
@@ -374,6 +375,14 @@ class Rotation(Quaternion):
         return e
 
     @classmethod
+    @deprecated(
+        "0.8.3",
+        "direction",
+        "0.9",
+        "argument",
+        "convention",
+        "Convention argument will be ignored",
+    )
     def from_euler(cls, euler, direction="lab2crystal"):
         """Creates a rotation from an array of Euler angles in radians.
 

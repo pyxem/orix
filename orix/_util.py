@@ -46,7 +46,15 @@ class deprecated:
     <https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/_api/deprecation.py#L122>`_.
     """
 
-    def __init__(self, since, alternative=None, removal=None, object_type="function"):
+    def __init__(
+        self,
+        since,
+        alternative=None,
+        removal=None,
+        object_type="function",
+        argument=None,
+        extra=None,
+    ):
         """Visible deprecation warning.
 
         Parameters
@@ -59,23 +67,38 @@ class deprecated:
         removal : str, int or float, optional
             The expected removal version.
         object_type : str, optional
-            Type of the deprecated object, either "function" or
-            "property".
+            Type of the deprecated object, either "function",
+            "argument", or "property".
+        argument : str, optional
+            The name of the argument to deprecate if object_type is
+            "argument".
+        extra : str, optional
+            Extra message to display to the user.
         """
         self.since = since
         self.alternative = alternative
         self.removal = removal
         self.object_type = object_type
+        self.argument = argument
+        self.extra = extra
 
     def __call__(self, func):
         # Wrap function or property to raise warning when called, and
         # add warning to docstring
-        if self.object_type.lower() != "function":
+        if self.object_type.lower() == "function":
             object_type = "Property"
             parentheses = ""
+            name = func.__name__
+        elif self.object_type.lower() == "argument":
+            object_type = "Argument"
+            parentheses = ""
+            if self.argument is None:
+                raise TypeError("argument must be defined for object_type 'argument'.")
+            name = self.argument
         else:
             object_type = "Function"
             parentheses = "()"
+            name = func.__name__
         if self.alternative is not None:
             alt_msg = f" Use `{self.alternative}{parentheses}` instead."
         else:
@@ -85,12 +108,16 @@ class deprecated:
         else:
             rm_msg = ""
         msg = (
-            f"{object_type} `{func.__name__}{parentheses}` is deprecated"
-            f"{rm_msg}.{alt_msg}"
+            f"{object_type} `{name}{parentheses}` is deprecated"
+            f"{rm_msg}.{alt_msg} {self.extra}."
         )
 
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
+            if self.object_type.lower() == "argument" and self.argument not in kwargs:
+                return func(*args, **kwargs)
+            else:
+                del kwargs[self.argument]
             warnings.simplefilter(
                 action="always", category=np.VisibleDeprecationWarning
             )
