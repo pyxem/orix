@@ -531,6 +531,13 @@ def test_set_symmetry_deprecation_warning_misorientation():
         _ = o.set_symmetry(C2, C2)
 
 
+def test_from_euler_convention_warns():
+    with pytest.warns(
+        np.VisibleDeprecationWarning, match=r"Argument `convention` is deprecated "
+    ):
+        _ = Orientation.from_euler((10, 0, 30), convention="bunge")
+
+
 def test_get_identity():
     """Get the identity orientation via two alternative routes."""
     o1 = Orientation([0.4884, 0.1728, 0.2661, 0.8129])
