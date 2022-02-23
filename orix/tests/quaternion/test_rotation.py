@@ -224,7 +224,16 @@ class TestToFromEuler:
         assert np.allclose(e, e2.data)
 
     def test_mtex(self, e):
-        _ = Rotation.from_euler(e, convention="mtex")
+        _ = Rotation.from_euler(e, direction="mtex")
+
+    def test_direction_values(self, e):
+        r_mtex = Rotation.from_euler(e, direction="mtex")
+        r_c2l = Rotation.from_euler(e, direction="crystal2lab")
+        r_l2c = Rotation.from_euler(e, direction="lab2crystal")
+        r_default = Rotation.from_euler(e)
+        assert np.allclose(r_default.data, r_l2c.data)
+        assert np.allclose(r_mtex.data, r_c2l.data)
+        assert np.allclose((r_l2c * r_c2l).angle.data, 0)
 
     def test_direction_kwarg(self, e):
         _ = Rotation.from_euler(e, direction="lab2crystal")
@@ -233,14 +242,16 @@ class TestToFromEuler:
         with pytest.raises(ValueError, match="The chosen direction is not one of "):
             _ = Rotation.from_euler(e, direction="dumb_direction")
 
-    def test_unsupported_conv_to(self, e):
+    def test_unsupported_conv(self, e):
         r = Rotation.from_euler(e)
-        with pytest.raises(ValueError, match="The chosen convention is not supported,"):
-            _ = r.to_euler(convention="unsupported")
+        with pytest.raises(TypeError, match=r"to_euler\(\) got an unexpected keyword "):
+            _ = r.to_euler(convention="bunge")
 
     def test_unsupported_conv_from(self, e):
-        with pytest.raises(ValueError, match="The chosen convention is not one of "):
-            _ = Rotation.from_euler(e, convention="unsupported")
+        with pytest.raises(
+            TypeError, match=r"from_euler\(\) got an unexpected keyword "
+        ):
+            _ = Rotation.from_euler(e, convention="bunge")
 
     def test_edge_cases_to_euler(self):
         x = np.sqrt(1 / 2)
@@ -251,7 +262,7 @@ class TestToFromEuler:
 
     def test_passing_degrees_warns(self):
         with pytest.warns(UserWarning, match="Angles are assumed to be in radians, "):
-            r = Rotation.from_euler([90, 0, 0], convention="bunge")
+            r = Rotation.from_euler([90, 0, 0])
             assert np.allclose(r.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
 
 

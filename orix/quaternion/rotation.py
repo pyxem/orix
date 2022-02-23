@@ -307,13 +307,9 @@ class Rotation(Quaternion):
         axangle = AxAngle.from_axes_angles(axes, angles)
         return cls.from_neo_euler(axangle)
 
-    def to_euler(self, convention="bunge"):
-        r"""Rotations as Euler angles :cite:`rowenhorst2015consistent`.
-
-        Parameters
-        ----------
-        convention : str, optional
-            The Euler angle convention used. Only "bunge" is supported.
+    def to_euler(self):
+        r"""Rotations as Euler angles in the Bunge convention
+        :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
@@ -322,11 +318,6 @@ class Rotation(Quaternion):
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
-        # TODO: other conventions
-        if convention != "bunge":
-            raise ValueError(
-                "The chosen convention is not supported, 'bunge' is the only option"
-            )
         # A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
         n = self.data.shape[:-1]
         e = np.zeros(n + (3,))
@@ -392,7 +383,7 @@ class Rotation(Quaternion):
             Euler angles in radians in the Bunge convention.
         direction : str
             "lab2crystal" or "crystal2lab". If "MTEX" is provided then
-            the convention is "crystal2lab".
+            the direction is "crystal2lab".
         """
         direction = direction.lower()
 

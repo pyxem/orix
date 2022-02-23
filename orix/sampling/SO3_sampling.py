@@ -177,7 +177,7 @@ def _euler_angles_haar_measure(resolution, unique):
     q = np.array(np.meshgrid(alpha, beta, gamma)).T.reshape((-1, 3))
 
     # Convert to quaternions
-    q = Rotation.from_euler(q, convention="bunge", direction="crystal2lab")
+    q = Rotation.from_euler(q, direction="crystal2lab")
 
     if unique:
         q = q.unique()

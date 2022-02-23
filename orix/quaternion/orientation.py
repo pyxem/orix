@@ -463,7 +463,7 @@ class Orientation(Misorientation):
             is set.
         direction : str
             "lab2crystal" or "crystal2lab". If "MTEX" is provided then
-            the convention is "crystal2lab".
+            the direction is "crystal2lab".
         """
         o = super().from_euler(euler=euler, direction=direction)
         if symmetry:
