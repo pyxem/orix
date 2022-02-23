@@ -85,7 +85,7 @@ class deprecated:
     def __call__(self, func):
         # Wrap function or property to raise warning when called, and
         # add warning to docstring
-        if self.object_type.lower() == "function":
+        if self.object_type.lower() == "property":
             object_type = "Property"
             parentheses = ""
             name = func.__name__
@@ -95,10 +95,14 @@ class deprecated:
             if self.argument is None:
                 raise TypeError("argument must be defined for object_type 'argument'.")
             name = self.argument
-        else:
+        elif self.object_type.lower() == "function":
             object_type = "Function"
             parentheses = "()"
             name = func.__name__
+        else:
+            raise ValueError(
+                "object_type must be one of 'argument', 'function', or 'property'."
+            )
         if self.alternative is not None:
             alt_msg = f" Use `{self.alternative}{parentheses}` instead."
         else:
@@ -107,10 +111,9 @@ class deprecated:
             rm_msg = f" and will be removed in version {self.removal}"
         else:
             rm_msg = ""
-        msg = (
-            f"{object_type} `{name}{parentheses}` is deprecated"
-            f"{rm_msg}.{alt_msg} {self.extra}."
-        )
+        msg = f"{object_type} `{name}{parentheses}` is deprecated" f"{rm_msg}.{alt_msg}"
+        if self.extra is not None:
+            msg += f" {self.extra}."
 
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
