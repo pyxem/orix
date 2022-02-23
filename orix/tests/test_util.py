@@ -133,3 +133,12 @@ class TestDeprecationWarning:
             "Use `other_kwarg` instead. This is the extra."
         )
         assert str(record5[0].message) == desired_msg5
+
+        # test incorrect object_type
+        with pytest.raises(ValueError, match="object_type must be one of"):
+
+            @deprecated("1.4", object_type="not possible")
+            def foo1():
+                return 0
+
+            foo1()
