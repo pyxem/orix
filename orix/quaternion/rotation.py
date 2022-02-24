@@ -375,14 +375,6 @@ class Rotation(Quaternion):
         return e
 
     @classmethod
-    @deprecated(
-        "0.8.3",
-        "direction",
-        "1.0",
-        "argument",
-        "convention",
-        "Convention argument will be ignored",
-    )
     def from_euler(cls, euler, direction="lab2crystal"):
         """Creates a rotation from an array of Euler angles in radians.
 
