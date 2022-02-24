@@ -69,7 +69,7 @@ class Homochoric(NeoEuler):
 
     @classmethod
     def from_rotation(cls, rotation):
-        theta = rotation.angle.data
+        theta = rotation.angle
         n = rotation.axis
         magnitude = (0.75 * (theta - np.sin(theta))) ** (1 / 3)
         return cls(n * magnitude)

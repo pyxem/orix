@@ -303,7 +303,7 @@ def test_unique_inverse():
     r = Rotation.random((20,))
     u, inverse = r.unique(return_inverse=True)
     m = u[inverse] * ~r
-    assert np.allclose(m.angle.data, 0)
+    assert np.allclose(m.angle, 0)
 
 
 @pytest.mark.parametrize(
@@ -543,7 +543,7 @@ class TestFromAxesAngles:
     def test_from_axes_angles(self, rotations):
         axangle = AxAngle.from_rotation(rotations)
         rotations2 = Rotation.from_neo_euler(axangle)
-        rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle.data)
+        rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
         assert np.allclose(rotations2.data, rotations3.data)
 
 

@@ -452,9 +452,7 @@ class TestSphericalCoordinates:
 
     def test_polar_loop(self, vector):
         azimuth, polar, radial = vector.to_polar()
-        vector2 = Vector3d.from_polar(
-            azimuth=azimuth.data, polar=polar.data, radial=radial.data
-        )
+        vector2 = Vector3d.from_polar(azimuth=azimuth, polar=polar, radial=radial)
         assert np.allclose(vector.data, vector2.data)
 
 
@@ -467,8 +465,8 @@ class TestGetCircle:
         assert c.size == 101
         assert np.allclose(c.z, 0)
         assert np.allclose(v.angle_with(c), oa)
-        assert np.allclose(c.mean(), [0, 0, 0], atol=1e-2)
-        assert np.allclose(v.cross(c[0, 0]), [1, 0, 0])
+        assert np.allclose(c.mean().data, [0, 0, 0], atol=1e-2)
+        assert np.allclose(v.cross(c[0, 0]).data, [1, 0, 0])
 
 
 class TestPlotting:

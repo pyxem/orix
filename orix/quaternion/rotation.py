@@ -267,11 +267,11 @@ class Rotation(Quaternion):
         neo_euler : NeoEuler
             Vector parametrization of a rotation.
         """
-        s = np.sin(neo_euler.angle.data / 2)
-        a = np.cos(neo_euler.angle.data / 2)
-        b = s * neo_euler.axis.x.data
-        c = s * neo_euler.axis.y.data
-        d = s * neo_euler.axis.z.data
+        s = np.sin(neo_euler.angle / 2)
+        a = np.cos(neo_euler.angle / 2)
+        b = s * neo_euler.axis.x
+        c = s * neo_euler.axis.y
+        d = s * neo_euler.axis.z
         r = cls(np.stack([a, b, c, d], axis=-1))
         return r
 

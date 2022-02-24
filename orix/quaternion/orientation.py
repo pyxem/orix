@@ -100,7 +100,7 @@ def _distance(misorientation, verbose, split_size=100):
             # This works through all the identity rotations
             for s_2_1, s_2_2 in icombinations(S_2, 2):
                 m = s_2_1 * mis2orientation * s_2_2
-                angle = m.angle.data.min(axis=axis)
+                angle = m.angle.min(axis=axis)
                 distance[index_slice_a, index_slice_b] = np.minimum(
                     distance[index_slice_a, index_slice_b], angle
                 )
@@ -874,7 +874,7 @@ class Orientation(Misorientation):
                 # Determine which hemisphere(s) to show
                 symmetry = self.symmetry
                 sector = symmetry.fundamental_sector
-                if np.any(sector.vertices.polar.data > np.pi / 2):
+                if np.any(sector.vertices.polar > np.pi / 2):
                     hemisphere = "both"
                 else:
                     hemisphere = "upper"

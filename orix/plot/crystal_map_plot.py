@@ -141,7 +141,7 @@ class CrystalMapPlot(Axes):
         Plot orientation angle in degrees of one phase
 
         >>> xmap2 = xmap["austenite"]
-        >>> austenite_angles = xmap2.orientations.angle.data * 180 / np.pi
+        >>> austenite_angles = xmap2.orientations.angle * 180 / np.pi
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap2, austenite_angles)

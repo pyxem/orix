@@ -114,7 +114,7 @@ class FundamentalSector(SphericalRegion):
             ci_inside = ci[ci <= self]
             v_keep = Vector3d(np.vstack((ci_inside.data, vi.data)))
             v_keep = v_keep.unique()
-            order = np.lexsort((v_keep.azimuth.data, v_keep.polar.data))
+            order = np.lexsort((v_keep.azimuth, v_keep.polar))
             v_keep = v_keep[order]
             v_n = v_keep.size
             edges[j : j + v_n] = v_keep.data
@@ -135,7 +135,7 @@ def _order_to_sort_around_center(v, center, pole=-1):
     axis = vz.cross(center)
     v_rotated = v.rotate(axis=axis, angle=-angle)
 
-    order1 = np.argsort(v_rotated.azimuth.data)
+    order1 = np.argsort(v_rotated.azimuth)
     idx_closest_to_001 = np.argmax(v[order1].dot(vz))
     order2 = np.roll(order1, shift=-idx_closest_to_001)
 
@@ -144,9 +144,9 @@ def _order_to_sort_around_center(v, center, pole=-1):
 
 def _closed_edges_in_hemisphere(edges, sector, pole=-1):
     if pole == -1:
-        is_outside = edges.polar.data >= np.pi / 2
+        is_outside = edges.polar >= np.pi / 2
     else:  # pole == 1
-        is_outside = edges.polar.data <= np.pi / 2
+        is_outside = edges.polar <= np.pi / 2
 
     if not np.any(is_outside):
         return edges
@@ -159,7 +159,7 @@ def _closed_edges_in_hemisphere(edges, sector, pole=-1):
         edges_inside = edges[~is_outside]
         azimuth_before_equator = edges_inside[
             [idx_after_crossing_equator - 1, idx_after_crossing_equator]
-        ].azimuth.data
+        ].azimuth
         v_before_equator = Vector3d.from_polar(
             azimuth_before_equator, polar=[np.pi / 2] * 2
         )

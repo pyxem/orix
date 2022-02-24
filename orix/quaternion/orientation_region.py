@@ -49,8 +49,8 @@ _EPSILON = 1e-9  # small number to avoid round off problems
 def _get_large_cell_normals(s1, s2):
     dp = get_distinguished_points(s1, s2)
     normals = Rodrigues.zero(dp.shape + (2,))
-    planes1 = dp.axis * np.tan(dp.angle.data / 4)
-    planes2 = -dp.axis * np.tan(dp.angle.data / 4) ** -1
+    planes1 = dp.axis * np.tan(dp.angle / 4)
+    planes2 = -dp.axis * np.tan(dp.angle / 4) ** -1
     planes2.data[np.isnan(planes2.data)] = 0
     normals[:, 0] = planes1
     normals[:, 1] = planes2
@@ -65,7 +65,7 @@ def _get_large_cell_normals(s1, s2):
     for i in np.unique(inv):
         n = normals[inv == i]
         axes_unique.append(n.axis.data[0])
-        angles_unique.append(n.angle.data.max())
+        angles_unique.append(n.angle.max())
     normals = Rotation.from_neo_euler(
         AxAngle.from_axes_angles(np.array(axes_unique), angles_unique)
     )
