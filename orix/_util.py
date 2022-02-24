@@ -117,11 +117,6 @@ class deprecated:
 
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
-            if self.object_type.lower() == "argument":
-                if self.argument in kwargs:
-                    del kwargs[self.argument]
-                else:
-                    return func(*args, **kwargs)
             warnings.simplefilter(
                 action="always", category=np.VisibleDeprecationWarning
             )
