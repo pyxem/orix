@@ -91,11 +91,9 @@ class Rodrigues(NeoEuler):
 
     @classmethod
     def from_rotation(cls, rotation):
-        a = np.float64(rotation.a.data)
+        a = np.float64(rotation.a)
         with np.errstate(divide="ignore", invalid="ignore"):
-            data = np.stack(
-                (rotation.b.data / a, rotation.c.data / a, rotation.d.data / a), axis=-1
-            )
+            data = np.stack((rotation.b / a, rotation.c / a, rotation.d / a), axis=-1)
         data[np.isnan(data)] = 0
         r = cls(data)
         return r

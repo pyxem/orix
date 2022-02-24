@@ -97,15 +97,15 @@ class TestQuaternion:
     def test_mul(self, quaternion, something):
         q = quaternion
         s = something
-        sa, sb, sc, sd = s.a.data, s.b.data, s.c.data, s.d.data
-        qa, qb, qc, qd = q.a.data, q.b.data, q.c.data, q.d.data
+        sa, sb, sc, sd = s.a, s.b, s.c, s.d
+        qa, qb, qc, qd = q.a, q.b, q.c, q.d
 
         q1 = q * s
         assert isinstance(q1, Quaternion)
-        assert np.allclose(q1.a.data, sa * qa - sb * qb - sc * qc - sd * qd)
-        assert np.allclose(q1.b.data, qa * sb + qb * sa + qc * sd - qd * sc)
-        assert np.allclose(q1.c.data, qa * sc - qb * sd + qc * sa + qd * sb)
-        assert np.allclose(q1.d.data, qa * sd + qb * sc - qc * sb + qd * sa)
+        assert np.allclose(q1.a, sa * qa - sb * qb - sc * qc - sd * qd)
+        assert np.allclose(q1.b, qa * sb + qb * sa + qc * sd - qd * sc)
+        assert np.allclose(q1.c, qa * sc - qb * sd + qc * sa + qd * sb)
+        assert np.allclose(q1.d, qa * sd + qb * sc - qc * sb + qd * sa)
 
     def test_mul_identity(self, quaternion, identity):
         assert np.allclose((quaternion * identity).data, quaternion.data)
@@ -118,7 +118,7 @@ class TestQuaternion:
     def test_inverse(self, quaternion):
         q = quaternion
         assert np.allclose((q * ~q).data, (~q * q).data)
-        assert np.allclose((q * ~q).a.data, 1)
+        assert np.allclose((q * ~q).a, 1)
         assert np.allclose((q * ~q).data[..., 1:], 0)
 
     def test_dot(self, quaternion, something):

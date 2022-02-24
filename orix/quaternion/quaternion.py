@@ -157,9 +157,9 @@ class Quaternion(Object3d):
         -------
         q : orix.quaternion.Quaternion
         """
-        q1a, q1b, q1c, q1d = q1.a.data, q1.b.data, q1.c.data, q1.d.data
-        q2a, q2b, q2c, q2d = q2.a.data, q2.b.data, q2.c.data, q2.d.data
-        q3a, q3b, q3c, q3d = q3.a.data, q3.b.data, q3.c.data, q3.d.data
+        q1a, q1b, q1c, q1d = q1.a, q1.b, q1.c, q1.d
+        q2a, q2b, q2c, q2d = q2.a, q2.b, q2.c, q2.d
+        q3a, q3b, q3c, q3d = q3.a, q3.b, q3.c, q3.d
         a = (
             +q1b * q2c * q3d
             - q1b * q3c * q2d
