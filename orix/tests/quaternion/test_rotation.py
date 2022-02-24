@@ -68,7 +68,7 @@ def vector(request):
 
 
 def test_init(rotation):
-    assert np.allclose(rotation.norm.data, 1)
+    assert np.allclose(rotation.norm, 1)
     assert rotation.improper.shape == rotation.shape
     assert np.count_nonzero(rotation.improper) == 0
 
@@ -81,7 +81,7 @@ def test_slice(rotation):
 
 def test_unit(rotation):
     assert isinstance(rotation.unit, Rotation)
-    assert np.allclose(rotation.unit.norm.data, 1)
+    assert np.allclose(rotation.unit.norm, 1)
 
 
 @pytest.mark.parametrize(

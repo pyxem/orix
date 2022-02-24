@@ -35,7 +35,6 @@ from orix.quaternion.symmetry import (
     Oh,
     _proper_groups,
 )
-from orix.scalar import Scalar
 from orix.vector import AxAngle, Vector3d
 
 
@@ -372,11 +371,11 @@ class TestOrientation:
         o = Orientation(q, symmetry=symmetry)
         o = o.map_into_symmetry_reduced_zone()
         angles_numpy = o.get_distance_matrix()
-        assert isinstance(angles_numpy, Scalar)
+        assert isinstance(angles_numpy, np.ndarray)
         assert angles_numpy.shape == (2, 2)
 
         angles_dask = o.get_distance_matrix(lazy=True)
-        assert isinstance(angles_dask, Scalar)
+        assert isinstance(angles_dask, np.ndarray)
         assert angles_dask.shape == (2, 2)
 
         assert np.allclose(angles_numpy.data, angles_dask.data)

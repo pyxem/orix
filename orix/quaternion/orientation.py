@@ -50,7 +50,6 @@ from tqdm import tqdm
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry
-from orix.scalar import Scalar
 from orix.vector import AxAngle
 from orix._util import deprecated
 
@@ -553,16 +552,16 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        Scalar
+        np.ndarray
         """
         dot_products = self.unit.dot(other.unit).data
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
-        return Scalar(angles)
+        return angles
 
     def dot(self, other):
         """Symmetry reduced dot product of orientations in this instance
         to orientations in another instance, returned as
-        :class:`~orix.scalar.Scalar`.
+        :class:`np.ndarray`.
 
         See Also
         --------
@@ -572,12 +571,12 @@ class Orientation(Misorientation):
         misorientation = other * ~self
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
-        return Scalar(highest_dot_product)
+        return highest_dot_product
 
     def dot_outer(self, other):
         """Symmetry reduced dot product of every orientation in this
         instance to every orientation in another instance, returned as
-        :class:`~orix.scalar.Scalar`.
+        :class:`np.ndarray`.
 
         See Also
         --------
@@ -587,7 +586,7 @@ class Orientation(Misorientation):
         misorientation = other.outer(~self)
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
-        return Scalar(highest_dot_product)
+        return highest_dot_product
 
     @deprecated(
         since="0.7",
@@ -620,7 +619,7 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        Scalar
+        np.ndarray
 
         Notes
         -----
@@ -657,7 +656,7 @@ class Orientation(Misorientation):
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
-        return Scalar(angles)
+        return angles
 
     def plot_unit_cell(
         self,

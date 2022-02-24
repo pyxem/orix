@@ -193,7 +193,7 @@ class OrientationRegion(Rotation):
         g = Vector3d.from_polar(rho, theta)
 
         # Get the cell vector normal norms
-        n = Rodrigues.from_rotation(self).norm.data[:, np.newaxis, np.newaxis]
+        n = Rodrigues.from_rotation(self).norm[:, np.newaxis, np.newaxis]
         if n.size == 0:
             return Rotation.from_neo_euler(AxAngle.from_axes_angles(g, np.pi))
 

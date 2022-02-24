@@ -23,7 +23,6 @@ import numpy as np
 import quaternion
 
 from orix.base import check, Object3d
-from orix.scalar import Scalar
 from orix.vector import Miller, Vector3d
 
 
@@ -69,7 +68,7 @@ class Quaternion(Object3d):
     ----------
     data : numpy.ndarray
         The numpy array containing the quaternion data.
-    a, b, c, d : Scalar
+    a, b, c, d : np.ndarray
         The individual elements of each vector.
     conj : Quaternion
         The conjugate of this quaternion :math:`q^* = a - bi - cj - dk`.
@@ -79,7 +78,7 @@ class Quaternion(Object3d):
 
     @property
     def a(self):
-        return Scalar(self.data[..., 0])
+        return self.data[..., 0]
 
     @a.setter
     def a(self, value):
@@ -87,7 +86,7 @@ class Quaternion(Object3d):
 
     @property
     def b(self):
-        return Scalar(self.data[..., 1])
+        return self.data[..., 1]
 
     @b.setter
     def b(self, value):
@@ -95,7 +94,7 @@ class Quaternion(Object3d):
 
     @property
     def c(self):
-        return Scalar(self.data[..., 2])
+        return self.data[..., 2]
 
     @c.setter
     def c(self, value):
@@ -103,7 +102,7 @@ class Quaternion(Object3d):
 
     @property
     def d(self):
-        return Scalar(self.data[..., 3])
+        return self.data[..., 3]
 
     @d.setter
     def d(self, value):
@@ -119,7 +118,7 @@ class Quaternion(Object3d):
         return Quaternion(quaternion.as_float_array(q))
 
     def __invert__(self):
-        return self.__class__(self.conj.data / (self.norm.data**2)[..., np.newaxis])
+        return self.__class__(self.conj.data / (self.norm**2)[..., np.newaxis])
 
     def __mul__(self, other):
         if isinstance(other, Quaternion):
@@ -198,16 +197,16 @@ class Quaternion(Object3d):
 
     def dot(self, other):
         """Dot product of this quaternion and the other as a
-        :class:`~orix.scalar.Scalar`.
+        :class:`~np.ndarray.
         """
-        return Scalar(np.sum(self.data * other.data, axis=-1))
+        return np.sum(self.data * other.data, axis=-1)
 
     def dot_outer(self, other):
         """Outer dot product of this quaternion and the other as a
-        :class:`~orix.scalar.Scalar`.
+        :class:`~np.ndarray`.
         """
         dots = np.tensordot(self.data, other.data, axes=(-1, -1))
-        return Scalar(dots)
+        return dots
 
     def mean(self):
         """Calculates the mean quaternion with unitary weights.

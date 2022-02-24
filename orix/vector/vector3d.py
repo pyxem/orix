@@ -22,7 +22,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.base import check, Object3d
-from orix.scalar import Scalar
 
 
 def check_vector(obj):
@@ -49,7 +48,7 @@ class Vector3d(Object3d):
     >>> v = Vector3d((1, 2, 3))
     >>> w = Vector3d(np.array([[1, 0, 0], [0, 1, 1]]))
     >>> w.x
-    Scalar (2,)
+    np.ndarray (2,)
     [1 0]
     >>> v.unit
     Vector3d (1,)
@@ -81,8 +80,8 @@ class Vector3d(Object3d):
 
     @property
     def x(self):
-        """Scalar : This vector's x data."""
-        return Scalar(self.data[..., 0])
+        """np.ndarray : This vector's x data."""
+        return self.data[..., 0]
 
     @x.setter
     def x(self, value):
@@ -90,8 +89,8 @@ class Vector3d(Object3d):
 
     @property
     def y(self):
-        """Scalar : This vector's y data."""
-        return Scalar(self.data[..., 1])
+        """np.ndarray : This vector's y data."""
+        return self.data[..., 1]
 
     @y.setter
     def y(self, value):
@@ -99,8 +98,8 @@ class Vector3d(Object3d):
 
     @property
     def z(self):
-        """Scalar : This vector's z data."""
-        return Scalar(self.data[..., 2])
+        """np.ndarray : This vector's z data."""
+        return self.data[..., 2]
 
     @z.setter
     def z(self, value):
@@ -137,12 +136,10 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        Scalar
+        np.ndarray
         """
-        return Scalar(
-            np.sqrt(
-                self.data[..., 0] ** 2 + self.data[..., 1] ** 2 + self.data[..., 2] ** 2
-            )
+        return np.sqrt(
+            self.data[..., 0] ** 2 + self.data[..., 1] ** 2 + self.data[..., 2] ** 2
         )
 
     @property
@@ -154,11 +151,11 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        Scalar
+        np.ndarray
         """
         azimuth = np.arctan2(self.data[..., 1], self.data[..., 0])
         azimuth += (azimuth < 0) * 2 * np.pi
-        return Scalar(azimuth)
+        return azimuth
 
     @property
     def polar(self):
@@ -169,9 +166,9 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        Scalar
+        np.ndarray
         """
-        return Scalar(np.arccos(self.data[..., 2] / self.radial.data))
+        return np.arccos(self.data[..., 2] / self.radial.data)
 
     def __neg__(self):
         return self.__class__(-self.data)
@@ -179,23 +176,21 @@ class Vector3d(Object3d):
     def __add__(self, other):
         if isinstance(other, Vector3d):
             return self.__class__(self.data + other.data)
-        elif isinstance(other, Scalar):
-            return self.__class__(self.data + other.data[..., np.newaxis])
         elif isinstance(other, (int, float)):
             return self.__class__(self.data + other)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
+
         if isinstance(other, np.ndarray):
             return self.__class__(self.data + other[..., np.newaxis])
         return NotImplemented
 
     def __radd__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data[..., np.newaxis] + self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other + self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
+
         if isinstance(other, np.ndarray):
             return self.__class__(other[..., np.newaxis] + self.data)
         return NotImplemented
@@ -203,23 +198,21 @@ class Vector3d(Object3d):
     def __sub__(self, other):
         if isinstance(other, Vector3d):
             return self.__class__(self.data - other.data)
-        elif isinstance(other, Scalar):
-            return self.__class__(self.data - other.data[..., np.newaxis])
         elif isinstance(other, (int, float)):
             return self.__class__(self.data - other)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
+
         if isinstance(other, np.ndarray):
             return self.__class__(self.data - other[..., np.newaxis])
         return NotImplemented
 
     def __rsub__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data[..., np.newaxis] - self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other - self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
+
         if isinstance(other, np.ndarray):
             return self.__class__(other[..., np.newaxis] - self.data)
         return NotImplemented
@@ -230,8 +223,6 @@ class Vector3d(Object3d):
                 "Multiplying one vector with another is ambiguous. "
                 "Try `.dot` or `.cross` instead."
             )
-        elif isinstance(other, Scalar):
-            return self.__class__(self.data * other.data[..., np.newaxis])
         elif isinstance(other, (int, float)):
             return self.__class__(self.data * other)
         elif isinstance(other, (list, tuple)):
@@ -241,12 +232,11 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __rmul__(self, other):
-        if isinstance(other, Scalar):
-            return self.__class__(other.data[..., np.newaxis] * self.data)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.__class__(other * self.data)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
+
         if isinstance(other, np.ndarray):
             return self.__class__(other[..., np.newaxis] * self.data)
         return NotImplemented
@@ -254,12 +244,11 @@ class Vector3d(Object3d):
     def __truediv__(self, other):
         if isinstance(other, Vector3d):
             raise ValueError("Dividing vectors is undefined")
-        elif isinstance(other, Scalar):
-            return self.__class__(self.data / other.data[..., np.newaxis])
         elif isinstance(other, (int, float)):
             return self.__class__(self.data / other)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
+
         if isinstance(other, np.ndarray):
             return self.__class__(self.data / other[..., np.newaxis])
         return NotImplemented
@@ -274,22 +263,22 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        Scalar
+        np.ndarray
 
         Examples
         --------
         >>> v = Vector3d((0, 0, 1.0))
         >>> w = Vector3d(((0, 0, 0.5), (0.4, 0.6, 0)))
         >>> v.dot(w)
-        Scalar (2,)
+        np.ndarray (2,)
         [ 0.5  0. ]
         >>> w.dot(v)
-        Scalar (2,)
+        np.ndarray (2,)
         [ 0.5  0. ]
         """
         if not isinstance(other, Vector3d):
             raise ValueError("{} is not a vector!".format(other))
-        return Scalar(np.sum(self.data * other.data, axis=-1))
+        return np.sum(self.data * other.data, axis=-1)
 
     def dot_outer(self, other):
         """The outer dot product of a vector with another vector.
@@ -299,24 +288,24 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        Scalar
+        np.ndarray
 
         Examples
         --------
         >>> v = Vector3d(((0.0, 0.0, 1.0), (1.0, 0.0, 0.0)))  # shape = (2, )
         >>> w = Vector3d(((0.0, 0.0, 0.5), (0.4, 0.6, 0.0), (0.5, 0.5, 0.5)))  # shape = (3, )
         >>> v.dot_outer(w)
-        Scalar (2, 3)
+        np.ndarray (2, 3)
         [[ 0.5  0.   0.5]
          [ 0.   0.4  0.5]]
         >>> w.dot_outer(v)  # shape = (3, 2)
-        Scalar (3, 2)
+        np.ndarray (3, 2)
         [[ 0.5  0. ]
          [ 0.   0.4]
          [ 0.5  0.5]]
         """
         dots = np.tensordot(self.data, other.data, axes=(-1, -1))
-        return Scalar(dots)
+        return dots
 
     def cross(self, other):
         """The cross product of a vector with another vector.
@@ -408,11 +397,11 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        Scalar
+        np.ndarray
             The angle between the vectors, in radians.
         """
-        cosines = np.round(self.dot(other).data / self.norm.data / other.norm.data, 12)
-        return Scalar(np.arccos(cosines))
+        cosines = np.round(self.dot(other).data / self.norm / other.norm, 12)
+        return np.arccos(cosines)
 
     def rotate(self, axis=None, angle=0):
         """Convenience function for rotating this vector.
@@ -492,7 +481,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        azimuth, polar, radial : Scalar
+        azimuth, polar, radial : np.ndarray
         """
         return self.azimuth, self.polar, self.radial
 

@@ -58,7 +58,7 @@ def axangle(request):
 
 
 def test_angle(axangle):
-    assert np.allclose(axangle.angle.data, axangle.norm.data)
+    assert np.allclose(axangle.angle.data, axangle.norm)
 
 
 def test_axis(axangle):

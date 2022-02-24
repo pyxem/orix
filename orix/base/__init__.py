@@ -198,16 +198,12 @@ class Object3d:
 
     @property
     def norm(self):
-        from orix.scalar import Scalar
-
-        return Scalar(np.sqrt(np.sum(np.square(self.data), axis=-1)))
+        return np.sqrt(np.sum(np.square(self.data), axis=-1))
 
     @property
     def unit(self):
         with np.errstate(divide="ignore", invalid="ignore"):
-            obj = self.__class__(
-                np.nan_to_num(self.data / self.norm.data[..., np.newaxis])
-            )
+            obj = self.__class__(np.nan_to_num(self.data / self.norm[..., np.newaxis]))
             return obj
 
     def squeeze(self):

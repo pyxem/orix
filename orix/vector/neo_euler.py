@@ -30,7 +30,6 @@ about a fixed axis.
 import abc
 
 import numpy as np
-from orix.scalar import Scalar
 from orix.vector import Vector3d
 
 
@@ -46,7 +45,7 @@ class NeoEuler(Vector3d, abc.ABC):
     @property
     @abc.abstractmethod
     def angle(self):  # pragma: no cover
-        """Scalar : the angle of rotation."""
+        """np.ndarray : the angle of rotation."""
         pass
 
     @property
@@ -103,7 +102,7 @@ class Rodrigues(NeoEuler):
 
     @property
     def angle(self):
-        return Scalar(np.arctan(self.norm.data) * 2)
+        return np.arctan(self.norm) * 2
 
 
 class AxAngle(NeoEuler):
@@ -120,7 +119,7 @@ class AxAngle(NeoEuler):
 
     @property
     def angle(self):
-        return Scalar(self.norm.data)
+        return self.norm
 
     @classmethod
     def from_axes_angles(cls, axes, angles):

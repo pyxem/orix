@@ -21,7 +21,6 @@ import numpy as np
 import pytest
 
 from orix.quaternion import symmetry
-from orix.scalar import Scalar
 from orix.vector import Vector3d, check_vector
 
 
@@ -85,7 +84,7 @@ def test_neg(vector):
     "vector, other, expected",
     [
         ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[2, 4, 6], [-2, 0, 2]]),
-        ([1, 2, 3], Scalar([4]), [5, 6, 7]),
+        ([1, 2, 3], [4], [5, 6, 7]),
         ([1, 2, 3], 0.5, [1.5, 2.5, 3.5]),
         ([1, 2, 3], [-1, 2], [[0, 1, 2], [3, 4, 5]]),
         ([1, 2, 3], np.array([-1, 1]), [[0, 1, 2], [2, 3, 4]]),
@@ -104,7 +103,7 @@ def test_add(vector, other, expected):
     "vector, other, expected",
     [
         ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[0, 0, 0], [4, 4, 4]]),
-        ([1, 2, 3], Scalar([4]), [-3, -2, -1]),
+        ([1, 2, 3], [4], [-3, -2, -1]),
         ([1, 2, 3], 0.5, [0.5, 1.5, 2.5]),
         ([1, 2, 3], [-1, 2], [[2, 3, 4], [-1, 0, 1]]),
         ([1, 2, 3], np.array([-1, 1]), [[2, 3, 4], [0, 1, 2]]),
@@ -128,7 +127,7 @@ def test_sub(vector, other, expected):
             [[0, 0, 0], [4, 4, 4]],
             marks=pytest.mark.xfail(raises=ValueError),
         ),
-        ([1, 2, 3], Scalar([4]), [4, 8, 12]),
+        ([1, 2, 3], [4], [4, 8, 12]),
         ([1, 2, 3], 0.5, [0.5, 1.0, 1.5]),
         ([1, 2, 3], [-1, 2], [[-1, -2, -3], [2, 4, 6]]),
         ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]]),
@@ -152,7 +151,7 @@ def test_mul(vector, other, expected):
             [[0, 0, 0], [4, 4, 4]],
             marks=pytest.mark.xfail(raises=ValueError),
         ),
-        ([4, 8, 12], Scalar([4]), [1, 2, 3]),
+        ([4, 8, 12], [4], [1, 2, 3]),
         ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
         (
             [1, 2, 3],
