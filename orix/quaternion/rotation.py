@@ -207,7 +207,7 @@ class Rotation(Quaternion):
         np.ndarray
         """
         other = Rotation(other)
-        dp = self.unit.dot(other.unit).data
+        dp = self.unit.dot(other.unit)
         # Round because some dot products are slightly above 1
         dp = np.round(dp, np.finfo(dp.dtype).precision)
         angles = np.nan_to_num(np.arccos(2 * dp**2 - 1))
@@ -249,7 +249,7 @@ class Rotation(Quaternion):
 
     def dot_outer(self, other):
         """np.ndarray : the outer dot product of this rotation and the other."""
-        cosines = np.abs(super().dot_outer(other).data)
+        cosines = np.abs(super().dot_outer(other))
         if isinstance(other, Rotation):
             improper = self.improper.reshape(self.shape + (1,) * len(other.shape))
             i = np.logical_xor(improper, other.improper)

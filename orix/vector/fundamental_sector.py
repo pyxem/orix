@@ -65,7 +65,7 @@ class FundamentalSector(SphericalRegion):
             center = self
         elif n_vertices < 3:
             # Find the pair of maximum angle
-            angles = self.angle_with(self.reshape(n_normals, 1)).data
+            angles = self.angle_with(self.reshape(n_normals, 1))
             indices = np.argmax(angles, axis=1)
             center = self[indices].mean()
         elif n_vertices < 4:
@@ -131,12 +131,12 @@ def _order_to_sort_around_center(v, center, pole=-1):
     vz = Vector3d.zvector()
     if pole == 1:
         vz = -vz
-    angle = vz.angle_with(center).data
+    angle = vz.angle_with(center)
     axis = vz.cross(center)
     v_rotated = v.rotate(axis=axis, angle=-angle)
 
     order1 = np.argsort(v_rotated.azimuth.data)
-    idx_closest_to_001 = np.argmax(v[order1].dot(vz).data)
+    idx_closest_to_001 = np.argmax(v[order1].dot(vz))
     order2 = np.roll(order1, shift=-idx_closest_to_001)
 
     return order2

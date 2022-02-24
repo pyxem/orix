@@ -327,7 +327,7 @@ def _get_ipf_title(direction):
     str
     """
     v = Vector3d(((1, 0, 0), (0, 1, 0), (0, 0, 1)))
-    idx = np.where(np.isclose(direction.unit.dot(v).data, 1))[0]
+    idx = np.where(np.isclose(direction.unit.dot(v), 1))[0]
     if idx.size != 0:
         return ["x", "y", "z"][idx[0]]
     else:

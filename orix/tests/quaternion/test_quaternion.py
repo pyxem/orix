@@ -123,8 +123,8 @@ class TestQuaternion:
 
     def test_dot(self, quaternion, something):
         q = quaternion
-        assert np.allclose(q.dot(q).data, np.sum(q.data**2, axis=-1))
-        assert np.allclose(q.dot(something).data, something.dot(q).data)
+        assert np.allclose(q.dot(q), np.sum(q.data**2, axis=-1))
+        assert np.allclose(q.dot(something), something.dot(q))
 
     def test_dot_outer(self, quaternion, something):
         q = quaternion
@@ -134,7 +134,7 @@ class TestQuaternion:
         assert d.shape == q.shape + s.shape
         for i in np.ndindex(q.shape):
             for j in np.ndindex(s.shape):
-                assert np.allclose(d[i + j].data, q[i].dot(s[j]).data)
+                assert np.allclose(d[i + j], q[i].dot(s[j]))
 
     @pytest.mark.parametrize(
         "quaternion, vector, expected",

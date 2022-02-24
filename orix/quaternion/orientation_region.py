@@ -133,9 +133,7 @@ class OrientationRegion(Rotation):
         vertices = orientation_region.vertices()
         if vertices.size:
             orientation_region = orientation_region[
-                np.any(
-                    np.isclose(orientation_region.dot_outer(vertices).data, 0), axis=1
-                )
+                np.any(np.isclose(orientation_region.dot_outer(vertices), 0), axis=1)
             ]
         return orientation_region
 
@@ -158,7 +156,7 @@ class OrientationRegion(Rotation):
         v = Rotation.triple_cross(c1, c2, c3)
         v = v[~np.any(np.isnan(v.data), axis=-1)]
         v = v[v < self].unique()
-        surface = np.any(np.isclose(v.dot_outer(self).data, 0), axis=1)
+        surface = np.any(np.isclose(v.dot_outer(self), 0), axis=1)
         return v[surface]
 
     def faces(self):
@@ -166,7 +164,7 @@ class OrientationRegion(Rotation):
         vertices = self.vertices()
         faces = []
         for n in normals:
-            faces.append(vertices[np.isclose(vertices.dot(n).data, 0)])
+            faces.append(vertices[np.isclose(vertices.dot(n), 0)])
         faces = [f for f in faces if f.size > 2]
         return faces
 
@@ -175,7 +173,7 @@ class OrientationRegion(Rotation):
         Orientation will return only those orientations that lie within
         the OrientationRegion.
         """
-        c = Quaternion(self).dot_outer(Quaternion(other)).data
+        c = Quaternion(self).dot_outer(Quaternion(other))
         inside = np.logical_or(
             np.all(np.greater_equal(c, -_EPSILON), axis=0),
             np.all(np.less_equal(c, +_EPSILON), axis=0),
@@ -197,7 +195,7 @@ class OrientationRegion(Rotation):
         if n.size == 0:
             return Rotation.from_neo_euler(AxAngle.from_axes_angles(g, np.pi))
 
-        d = (-self.axis).dot_outer(g.unit).data
+        d = (-self.axis).dot_outer(g.unit)
         x = n * d
         with np.errstate(divide="ignore"):
             omega = 2 * np.arctan(np.where(x != 0, x**-1, np.pi))

@@ -538,7 +538,7 @@ class Miller(Vector3d):
         self._compatible_with(other, raise_error=True)
         if use_symmetry:
             other2 = other.symmetrise(unique=True)
-            cosines = self.dot_outer(other2).data / (
+            cosines = self.dot_outer(other2) / (
                 self.norm[..., np.newaxis] * other2.norm[np.newaxis, ...]
             )
             cosines = np.round(cosines, 12)

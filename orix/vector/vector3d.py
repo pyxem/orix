@@ -108,7 +108,7 @@ class Vector3d(Object3d):
     @property
     def xyz(self):
         """tuple of ndarray : This vector's components, useful for plotting."""
-        return self.x.data, self.y.data, self.z.data
+        return self.x, self.y, self.z
 
     @property
     def _tuples(self):
@@ -119,12 +119,12 @@ class Vector3d(Object3d):
 
     @property
     def perpendicular(self):
-        if np.any(self.x.data == 0) and np.any(self.y.data == 0):
-            if np.any(self.z.data == 0):
+        if np.any(self.x == 0) and np.any(self.y == 0):
+            if np.any(self.z == 0):
                 raise ValueError("No vectors are perpendicular")
             return Vector3d.xvector()
-        x = -self.y.data
-        y = self.x.data
+        x = -self.y
+        y = self.x
         z = np.zeros_like(x)
         return Vector3d(np.stack((x, y, z), axis=-1))
 
@@ -400,7 +400,7 @@ class Vector3d(Object3d):
         np.ndarray
             The angle between the vectors, in radians.
         """
-        cosines = np.round(self.dot(other).data / self.norm / other.norm, 12)
+        cosines = np.round(self.dot(other) / self.norm / other.norm, 12)
         return np.arccos(cosines)
 
     def rotate(self, axis=None, angle=0):
@@ -459,13 +459,13 @@ class Vector3d(Object3d):
         assert self.size == 1, "`get_nearest` only works for single vectors."
         tiebreak = Vector3d.zvector() if tiebreak is None else tiebreak
         eps = 1e-9 if inclusive else 0
-        cosines = x.dot(self).data
+        cosines = x.dot(self)
         mask = np.logical_and(-1 - eps < cosines, cosines < 1 + eps)
         x = x[mask]
         if x.size == 0:
             return Vector3d.empty()
         cosines = cosines[mask]
-        verticality = x.dot(tiebreak).data
+        verticality = x.dot(tiebreak)
         order = np.lexsort((cosines, verticality))
         return x[order[-1]]
 
@@ -536,7 +536,7 @@ class Vector3d(Object3d):
             rot = symmetry
 
         rotated_centers = rot * center
-        closeness = v.dot_outer(rotated_centers).data.round(12)
+        closeness = v.dot_outer(rotated_centers).round(12)
         idx_max = np.argmax(closeness, axis=-1)
         v2 = ~rot[idx_max] * v
 

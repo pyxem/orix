@@ -180,8 +180,8 @@ def test_rdiv():
 
 
 def test_dot(vector, something):
-    assert np.allclose(vector.dot(vector).data, (vector.data**2).sum(axis=-1))
-    assert np.allclose(vector.dot(something).data, something.dot(vector).data)
+    assert np.allclose(vector.dot(vector), (vector.data**2).sum(axis=-1))
+    assert np.allclose(vector.dot(something), something.dot(vector))
 
 
 def test_dot_error(vector, number):
@@ -190,11 +190,11 @@ def test_dot_error(vector, number):
 
 
 def test_dot_outer(vector, something):
-    d = vector.dot_outer(something).data
+    d = vector.dot_outer(something)
     assert d.shape == vector.shape + something.shape
     for i in np.ndindex(vector.shape):
         for j in np.ndindex(something.shape):
-            assert np.allclose(d[i + j], vector[i].dot(something[j]).data)
+            assert np.allclose(d[i + j], vector[i].dot(something[j]))
 
 
 def test_cross(vector, something):
@@ -236,9 +236,9 @@ def test_zero(shape):
 
 
 def test_angle_with(vector, something):
-    a = vector.angle_with(vector).data
+    a = vector.angle_with(vector)
     assert np.allclose(a, 0)
-    a = vector.angle_with(something).data
+    a = vector.angle_with(something)
     assert np.all(a >= 0)
     assert np.all(a <= np.pi)
 
@@ -338,7 +338,7 @@ def test_assign_z(vector, data, expected):
     indirect=["vector"],
 )
 def test_perpendicular(vector: Vector3d):
-    assert np.allclose(vector.dot(vector.perpendicular).data, 0)
+    assert np.allclose(vector.dot(vector.perpendicular), 0)
 
 
 def test_mean_xyz():
@@ -465,10 +465,10 @@ class TestGetCircle:
         c = v.get_circle(opening_angle=oa, steps=101)
 
         assert c.size == 101
-        assert np.allclose(c.z.data, 0)
-        assert np.allclose(v.angle_with(c).data, oa)
-        assert np.allclose(c.mean().data, [0, 0, 0], atol=1e-2)
-        assert np.allclose(v.cross(c[0, 0]).data, [1, 0, 0])
+        assert np.allclose(c.z, 0)
+        assert np.allclose(v.angle_with(c), oa)
+        assert np.allclose(c.mean(), [0, 0, 0], atol=1e-2)
+        assert np.allclose(v.cross(c[0, 0]), [1, 0, 0])
 
 
 class TestPlotting:

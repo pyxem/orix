@@ -397,7 +397,7 @@ class TestOrientation:
         r = Rotation(q)
         o = Orientation(q, symmetry=symmetry)
 
-        is_equal = np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
+        is_equal = np.allclose((~o).angle_with(o), (~r).angle_with(r))
         if symmetry.name in ["1", "m3m"]:
             assert is_equal
         else:
@@ -467,7 +467,7 @@ class TestOrientation:
         axes = fig.axes[0]
         assert isinstance(axes, InversePoleFigurePlot)
         assert len(fig.axes) == 1
-        assert axes._direction.dot(vz).data[0] == 1
+        assert axes._direction.dot(vz)[0] == 1
         assert axes._hemisphere == "upper"
 
         # It's possible to add to an existing figure

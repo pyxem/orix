@@ -554,7 +554,7 @@ class Orientation(Misorientation):
         -------
         np.ndarray
         """
-        dot_products = self.unit.dot(other.unit).data
+        dot_products = self.unit.dot(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 
@@ -569,7 +569,7 @@ class Orientation(Misorientation):
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = other * ~self
-        all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
         highest_dot_product = np.max(all_dot_products, axis=-1)
         return highest_dot_product
 
@@ -584,7 +584,7 @@ class Orientation(Misorientation):
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = other.outer(~self)
-        all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
         highest_dot_product = np.max(all_dot_products, axis=-1)
         return highest_dot_product
 
@@ -652,7 +652,7 @@ class Orientation(Misorientation):
             else:
                 da.store(sources=angles_dask, targets=angles)
         else:
-            dot_products = ori.dot_outer(ori).data
+            dot_products = ori.dot_outer(ori)
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
