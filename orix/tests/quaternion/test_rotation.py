@@ -244,14 +244,14 @@ class TestToFromEuler:
         with pytest.raises(ValueError, match="The chosen direction is not one of "):
             _ = Rotation.from_euler(e, direction="dumb_direction")
 
-    def test_unsupported_conv_to(self, e):
+    def test_conv_to_raises(self, e):
         r = Rotation.from_euler(e)
         with pytest.raises(TypeError, match=r"to_euler\(\) got an unexpected keyword "):
             _ = r.to_euler(convention="bunge")
 
-    def test_unsupported_conv_from(self, e):
-        with pytest.warns(
-            np.VisibleDeprecationWarning, match=r"Argument `convention` is deprecated "
+    def test_conv_from_raises(self, e):
+        with pytest.raises(
+            TypeError, match=r"from_euler\(\) got an unexpected keyword "
         ):
             _ = Rotation.from_euler(e, convention="bunge")
 
