@@ -451,14 +451,6 @@ class Orientation(Misorientation):
         return NotImplemented
 
     @classmethod
-    @deprecated(
-        "0.8.3",
-        "direction",
-        "0.9",
-        "argument",
-        "convention",
-        "Convention argument will be ignored",
-    )
     def from_euler(cls, euler, symmetry=None, direction="lab2crystal"):
         """Creates orientation(s) from an array of Euler angles.
 

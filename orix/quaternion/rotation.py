@@ -378,7 +378,7 @@ class Rotation(Quaternion):
     @deprecated(
         "0.8.3",
         "direction",
-        "0.9",
+        "1.0",
         "argument",
         "convention",
         "Convention argument will be ignored",
