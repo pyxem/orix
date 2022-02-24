@@ -76,6 +76,20 @@ class TestDeprecationWarning:
             def bar_arg_extra(self, other_kwarg=2):
                 return other_kwarg
 
+            with pytest.raises(
+                TypeError, match="argument must be defined for object_type"
+            ):
+                # fmt: off
+                @deprecated(
+                    since="1.3",
+                    alternative="other_kwarg",
+                    removal="1.4",
+                    object_type="argument",
+                    argument=None,
+                )
+                def bar_arg_no_arg(self, other_kwarg=2): pass
+                # fmt: on
+
         my_foo = Foo()
 
         with pytest.warns(np.VisibleDeprecationWarning) as record:
@@ -138,7 +152,8 @@ class TestDeprecationWarning:
         with pytest.raises(ValueError, match="object_type must be one of"):
 
             @deprecated("1.4", object_type="not possible")
-            def foo1():
-                return 0
+            # fmt: off
+            def foo1(): pass
+            # fmt: on
 
             foo1()
