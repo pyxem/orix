@@ -9,7 +9,7 @@ the :ref:`user guide <user-guide>` and the
 
 .. caution::
 
-    orix is in an alpha stage, so there will be breaking changes with each release.
+    orix is in an alpha stage, so there may be breaking changes with each release.
 
 .. module:: orix
 
