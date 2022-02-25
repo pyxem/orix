@@ -560,8 +560,11 @@ class Orientation(Misorientation):
 
     def dot(self, other):
         """Symmetry reduced dot product of orientations in this instance
-        to orientations in another instance, returned as
-        numpy.ndarray.
+        to orientations in another instance.
+
+        Returns
+        -------
+        numpy.ndarray
 
         See Also
         --------
@@ -575,8 +578,11 @@ class Orientation(Misorientation):
 
     def dot_outer(self, other):
         """Symmetry reduced dot product of every orientation in this
-        instance to every orientation in another instance, returned as
-        numpy.ndarray.
+        instance to every orientation in another instance.
+
+        Returns
+        -------
+        numpy.ndarray
 
         See Also
         --------
