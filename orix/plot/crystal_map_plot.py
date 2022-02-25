@@ -183,8 +183,6 @@ class CrystalMapPlot(Axes):
             for _, p in crystal_map.phases_in_data:
                 patches.append(mpatches.Patch(color=p.color_rgb, label=p.name))
         else:  # Create masked array of correct shape
-            if isinstance(value, Vector3d):
-                value = value.data
             data = crystal_map.get_map_data(value)
             data = data[self._data_slices]
 
