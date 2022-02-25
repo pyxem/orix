@@ -182,6 +182,7 @@ class Vector3d(Object3d):
 
         if isinstance(other, np.ndarray):
             return self.__class__(self.data + other[..., np.newaxis])
+
         return NotImplemented
 
     def __radd__(self, other):
@@ -192,6 +193,7 @@ class Vector3d(Object3d):
 
         if isinstance(other, np.ndarray):
             return self.__class__(other[..., np.newaxis] + self.data)
+
         return NotImplemented
 
     def __sub__(self, other):
@@ -204,6 +206,7 @@ class Vector3d(Object3d):
 
         if isinstance(other, np.ndarray):
             return self.__class__(self.data - other[..., np.newaxis])
+
         return NotImplemented
 
     def __rsub__(self, other):
@@ -214,6 +217,7 @@ class Vector3d(Object3d):
 
         if isinstance(other, np.ndarray):
             return self.__class__(other[..., np.newaxis] - self.data)
+
         return NotImplemented
 
     def __mul__(self, other):
@@ -226,8 +230,10 @@ class Vector3d(Object3d):
             return self.__class__(self.data * other)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
+
         if isinstance(other, np.ndarray):
             return self.__class__(self.data * other[..., np.newaxis])
+
         return NotImplemented
 
     def __rmul__(self, other):
@@ -238,6 +244,7 @@ class Vector3d(Object3d):
 
         if isinstance(other, np.ndarray):
             return self.__class__(other[..., np.newaxis] * self.data)
+
         return NotImplemented
 
     def __truediv__(self, other):
@@ -250,6 +257,7 @@ class Vector3d(Object3d):
 
         if isinstance(other, np.ndarray):
             return self.__class__(self.data / other[..., np.newaxis])
+
         return NotImplemented
 
     def __rtruediv__(self, other):
