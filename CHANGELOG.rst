@@ -10,6 +10,11 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Changed
+-------
+- `orix.scalar.Scalar` class has been removed and the data held by `Scalar` is now
+  returned directly as a `numpy.ndarray`.
+
 2022-02-21 - version 0.8.2
 ==========================
 
