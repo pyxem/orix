@@ -68,7 +68,7 @@ class Quaternion(Object3d):
     ----------
     data : numpy.ndarray
         The numpy array containing the quaternion data.
-    a, b, c, d : np.ndarray
+    a, b, c, d : numpy.ndarray
         The individual elements of each vector.
     conj : Quaternion
         The conjugate of this quaternion :math:`q^* = a - bi - cj - dk`.
@@ -197,13 +197,13 @@ class Quaternion(Object3d):
 
     def dot(self, other):
         """Dot product of this quaternion and the other as a
-        :class:`~np.ndarray.
+        numpy.ndarray.
         """
         return np.sum(self.data * other.data, axis=-1)
 
     def dot_outer(self, other):
         """Outer dot product of this quaternion and the other as a
-        :class:`~np.ndarray`.
+        numpy.ndarray.
         """
         dots = np.tensordot(self.data, other.data, axes=(-1, -1))
         return dots

@@ -48,8 +48,7 @@ class Vector3d(Object3d):
     >>> v = Vector3d((1, 2, 3))
     >>> w = Vector3d(np.array([[1, 0, 0], [0, 1, 1]]))
     >>> w.x
-    np.ndarray (2,)
-    [1 0]
+    array([1, 0])
     >>> v.unit
     Vector3d (1,)
     [[ 0.2673  0.5345  0.8018]]
@@ -80,7 +79,7 @@ class Vector3d(Object3d):
 
     @property
     def x(self):
-        """np.ndarray : This vector's x data."""
+        """numpy.ndarray : This vector's x data."""
         return self.data[..., 0]
 
     @x.setter
@@ -89,7 +88,7 @@ class Vector3d(Object3d):
 
     @property
     def y(self):
-        """np.ndarray : This vector's y data."""
+        """numpy.ndarray : This vector's y data."""
         return self.data[..., 1]
 
     @y.setter
@@ -98,7 +97,7 @@ class Vector3d(Object3d):
 
     @property
     def z(self):
-        """np.ndarray : This vector's z data."""
+        """numpy.ndarray : This vector's z data."""
         return self.data[..., 2]
 
     @z.setter
@@ -136,7 +135,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
         """
         return np.sqrt(
             self.data[..., 0] ** 2 + self.data[..., 1] ** 2 + self.data[..., 2] ** 2
@@ -151,7 +150,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
         """
         azimuth = np.arctan2(self.data[..., 1], self.data[..., 0])
         azimuth += (azimuth < 0) * 2 * np.pi
@@ -166,7 +165,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
         """
         return np.arccos(self.data[..., 2] / self.radial.data)
 
@@ -263,18 +262,16 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        np.ndarray
+        nnumpyp.ndarray
 
         Examples
         --------
         >>> v = Vector3d((0, 0, 1.0))
         >>> w = Vector3d(((0, 0, 0.5), (0.4, 0.6, 0)))
         >>> v.dot(w)
-        np.ndarray (2,)
-        [ 0.5  0. ]
+        array([0.5, 0.])
         >>> w.dot(v)
-        np.ndarray (2,)
-        [ 0.5  0. ]
+        array([0.5, 0.])
         """
         if not isinstance(other, Vector3d):
             raise ValueError("{} is not a vector!".format(other))
@@ -288,21 +285,19 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
 
         Examples
         --------
         >>> v = Vector3d(((0.0, 0.0, 1.0), (1.0, 0.0, 0.0)))  # shape = (2, )
         >>> w = Vector3d(((0.0, 0.0, 0.5), (0.4, 0.6, 0.0), (0.5, 0.5, 0.5)))  # shape = (3, )
         >>> v.dot_outer(w)
-        np.ndarray (2, 3)
-        [[ 0.5  0.   0.5]
-         [ 0.   0.4  0.5]]
+        array([[ 0.5,  0.,  0.5]
+               [  0., 0.4,  0.5]])
         >>> w.dot_outer(v)  # shape = (3, 2)
-        np.ndarray (3, 2)
-        [[ 0.5  0. ]
-         [ 0.   0.4]
-         [ 0.5  0.5]]
+        array([[ 0.5,  0. ]
+               [  0.,  0.4]
+               [ 0.5,  0.5]])
         """
         dots = np.tensordot(self.data, other.data, axes=(-1, -1))
         return dots
@@ -397,7 +392,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The angle between the vectors, in radians.
         """
         cosines = np.round(self.dot(other) / self.norm / other.norm, 12)
@@ -481,7 +476,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        azimuth, polar, radial : np.ndarray
+        azimuth, polar, radial : numpy.ndarray
         """
         return self.azimuth, self.polar, self.radial
 

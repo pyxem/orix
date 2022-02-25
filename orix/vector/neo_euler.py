@@ -45,7 +45,7 @@ class NeoEuler(Vector3d, abc.ABC):
     @property
     @abc.abstractmethod
     def angle(self):  # pragma: no cover
-        """np.ndarray : the angle of rotation."""
+        """numpy.ndarray : the angle of rotation."""
         pass
 
     @property

@@ -204,7 +204,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
         """
         other = Rotation(other)
         dp = self.unit.dot(other.unit)
@@ -248,7 +248,7 @@ class Rotation(Quaternion):
         self._data[..., -1] = value
 
     def dot_outer(self, other):
-        """np.ndarray : the outer dot product of this rotation and the other."""
+        """numpy.ndarray : the outer dot product of this rotation and the other."""
         cosines = np.abs(super().dot_outer(other))
         if isinstance(other, Rotation):
             improper = self.improper.reshape(self.shape + (1,) * len(other.shape))
@@ -567,7 +567,7 @@ class Rotation(Quaternion):
 
     @property
     def angle(self):
-        """The angle of rotation as a :class:`~np.ndarray`."""
+        """The angle of rotation as a numpy.ndarray."""
         return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
 
     @classmethod

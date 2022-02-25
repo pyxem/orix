@@ -532,7 +532,7 @@ class Miller(Vector3d):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The angle between the vectors, in radians.
         """
         self._compatible_with(other, raise_error=True)
@@ -575,7 +575,7 @@ class Miller(Vector3d):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
         """
         self._compatible_with(other, raise_error=True)
         return super().dot(other)
@@ -591,7 +591,7 @@ class Miller(Vector3d):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
         """
         self._compatible_with(other, raise_error=True)
         return super().dot_outer(other)

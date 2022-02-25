@@ -552,7 +552,7 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
         """
         dot_products = self.unit.dot(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
@@ -561,7 +561,7 @@ class Orientation(Misorientation):
     def dot(self, other):
         """Symmetry reduced dot product of orientations in this instance
         to orientations in another instance, returned as
-        :class:`np.ndarray`.
+        numpy.ndarray.
 
         See Also
         --------
@@ -576,7 +576,7 @@ class Orientation(Misorientation):
     def dot_outer(self, other):
         """Symmetry reduced dot product of every orientation in this
         instance to every orientation in another instance, returned as
-        :class:`np.ndarray`.
+        numpy.ndarray.
 
         See Also
         --------
@@ -619,7 +619,7 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
 
         Notes
         -----

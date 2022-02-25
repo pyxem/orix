@@ -67,7 +67,7 @@ class Object3d:
     """int : The number of dimensions for this object."""  # pragma: no cover
 
     _data = None
-    """np.ndarray : Array holding this object's numerical data."""  # pragma: no cover
+    """numpy.ndarray : Array holding this object's numerical data."""  # pragma: no cover
 
     __array_ufunc__ = None
 
