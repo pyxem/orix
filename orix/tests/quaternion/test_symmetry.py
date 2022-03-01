@@ -19,6 +19,7 @@
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
+from orix.quaternion import symmetry
 
 # fmt: off
 from orix.quaternion.symmetry import (
@@ -41,8 +42,7 @@ def vector(request):
     return Vector3d(request.param)
 
 
-@pytest.fixture
-def all_symmetries():
+def _all_symmetries():
     # fmt: off
     symmetries = [C1, Ci,  # triclinic
                   C2x, C2y, C2z, Csx, Csy, Csz, Cs, C2, C2h,  # monoclinic
@@ -52,8 +52,12 @@ def all_symmetries():
                   C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
                   T, Th, O, Td, Oh]  # cubic
     # fmt: on
-    for s in symmetries:
-        yield s
+    return symmetries
+
+
+@pytest.fixture(params=_all_symmetries())
+def all_symmetries(request):
+    return request.param
 
 
 @pytest.mark.parametrize(
