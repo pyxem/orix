@@ -10,6 +10,22 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Changed
+-------
+- `from_euler()` method of `Rotation`-based classes now interprets angles in Bunge
+  convention by default, ie. `direction="lab2crystal"`. The returned `Rotation` from
+  this function may be inverted from prior releases and users are advised to check their
+  code.
+- The `direction` parameter in `from_euler()` methods, in addition to `"lab2crystal"`
+  (now default) and `"crystal2lab"`, now also accepts a convenience argument `"mtex"
+  which is consistent with the default `"crystal2lab"` direction in
+  `MTEX <https://mtex-toolbox.github.io/MTEXvsBungeConvention.html>`_.
+
+Deprecated
+----------
+- The `convention` parameter in `from_euler()` methods has been deprecated in favour of
+  `direction`. This parameter will be removed in release 1.0.
+
 2022-02-21 - version 0.8.2
 ==========================
 

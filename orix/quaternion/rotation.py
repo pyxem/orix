@@ -48,6 +48,7 @@ from scipy.special import hyp0f1
 from orix.quaternion import Quaternion
 from orix.vector import AxAngle, Vector3d
 from orix.scalar import Scalar
+from orix._util import deprecated
 
 # Used to round values below 1e-16 to zero
 _FLOAT_EPS = np.finfo(float).eps
@@ -307,13 +308,9 @@ class Rotation(Quaternion):
         axangle = AxAngle.from_axes_angles(axes, angles)
         return cls.from_neo_euler(axangle)
 
-    def to_euler(self, convention="bunge"):
-        r"""Rotations as Euler angles :cite:`rowenhorst2015consistent`.
-
-        Parameters
-        ----------
-        convention : str, optional
-            The Euler angle convention used. Only "bunge" is supported.
+    def to_euler(self):
+        r"""Rotations as Euler angles in the Bunge convention
+        :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
@@ -322,11 +319,6 @@ class Rotation(Quaternion):
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
-        # TODO: other conventions
-        if convention != "bunge":
-            raise ValueError(
-                "The chosen convention is not supported, 'bunge' is the only option"
-            )
         # A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
         n = self.data.shape[:-1]
         e = np.zeros(n + (3,))
@@ -383,7 +375,8 @@ class Rotation(Quaternion):
         return e
 
     @classmethod
-    def from_euler(cls, euler, convention="bunge", direction="crystal2lab"):
+    @deprecated("0.9", "direction", "1.0", "argument", "convention")
+    def from_euler(cls, euler, convention="bunge", direction="lab2crystal"):
         """Creates a rotation from an array of Euler angles in radians.
 
         Parameters
@@ -391,12 +384,31 @@ class Rotation(Quaternion):
         euler : array-like
             Euler angles in radians in the Bunge convention.
         convention : str
-            "bunge" or "MTEX"
+            Deprecated, please use "direction" argument instead.
         direction : str
-            "lab2crystal" or "crystal2lab", ignored if "MTEX" convention is in use
+            "lab2crystal" (default) or "crystal2lab". "lab2crystal"
+            is the Bunge convention. If "MTEX" is provided then the
+            direction is "crystal2lab".
         """
-        directions = ["lab2crystal", "crystal2lab"]
+        direction = direction.lower()
         conventions = ["bunge", "mtex"]
+
+        # processing the convention chosen
+        convention = convention.lower()
+        if convention not in conventions:
+            raise ValueError(
+                f"The chosen convention is not one of the allowed options {conventions}"
+            )
+        if convention == "mtex":
+            # MTEX uses bunge but with lab2crystal referencing:
+            # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
+            # and orix issue #215
+            direction = "mtex"
+
+        if direction == "mtex":
+            direction = "crystal2lab"
+
+        directions = ["lab2crystal", "crystal2lab"]
 
         # processing directions
         if direction not in directions:
@@ -404,26 +416,11 @@ class Rotation(Quaternion):
                 f"The chosen direction is not one of the allowed options {directions}"
             )
 
-        # processing the convention chosen
-
-        convention = convention.lower()
-
-        if convention not in conventions:
-            raise ValueError(
-                f"The chosen convention is not one of the allowed options {conventions}"
-            )
-
-        if convention == "mtex":
-            # MTEX uses bunge but with lab2crystal referencing:
-            # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
-            # and orix issue #215
-            direction = "lab2crystal"
-
-        euler = np.array(euler)
+        euler = np.asarray(euler)
         if np.any(np.abs(euler) > 9):
             warnings.warn(
                 "Angles are assumed to be in radians, but degrees might have been "
-                "passed"
+                "passed."
             )
         n = euler.shape[:-1]
         alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
@@ -447,7 +444,7 @@ class Rotation(Quaternion):
 
         data = Quaternion(q)
 
-        if direction == "lab2crystal":
+        if direction == "crystal2lab":
             data = ~data
 
         rot = cls(data.data)

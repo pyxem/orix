@@ -35,7 +35,7 @@ class TestDeprecationWarning:
                 since="1.3",
                 alternative="bar_prop2",
                 removal="1.4",
-                object_type="not a function",
+                object_type="property",
             )
             def bar_prop(self):
                 return 1
@@ -54,6 +54,38 @@ class TestDeprecationWarning:
                 Some existing notes.
                 """
                 return n + 2
+
+            @deprecated(
+                since="1.3",
+                alternative=None,
+                removal="1.4",
+                object_type="argument",
+                argument="kwarg1",
+            )
+            def bar_arg(self, kwarg1=1):
+                return kwarg1
+
+            @deprecated(
+                since="1.3",
+                alternative="kwarg2",
+                removal="1.4",
+                object_type="argument",
+                argument="kwarg1",
+                extra=None,
+            )
+            def bar_arg_alt(self, kwarg1=1):
+                return kwarg1
+
+            @deprecated(
+                since="1.3",
+                alternative=None,
+                removal="1.4",
+                object_type="argument",
+                argument="kwarg1",
+                extra="This is the extra",
+            )
+            def bar_arg_extra(self, kwarg1=1):
+                return kwarg1
 
         my_foo = Foo()
 
@@ -96,3 +128,36 @@ class TestDeprecationWarning:
             ".. deprecated:: 1.3\n"
             f"   {desired_msg3}"
         )
+
+        with pytest.warns(np.VisibleDeprecationWarning) as record4:
+            assert my_foo.bar_arg(kwarg1=3) == 3
+        desired_msg4 = (
+            "Argument `kwarg1` is deprecated and will be removed in version 1.4."
+        )
+        assert str(record4[0].message) == desired_msg4
+
+        with pytest.warns(np.VisibleDeprecationWarning) as record5:
+            assert my_foo.bar_arg_extra(kwarg1=3) == 3
+        desired_msg5 = (
+            "Argument `kwarg1` is deprecated and will be removed in version 1.4. "
+            "This is the extra."
+        )
+        assert str(record5[0].message) == desired_msg5
+
+        with pytest.warns(np.VisibleDeprecationWarning) as record6:
+            assert my_foo.bar_arg_alt(kwarg1=3) == 3
+        desired_msg6 = (
+            "Argument `kwarg1` is deprecated and will be removed in version 1.4. "
+            "Use `kwarg2` instead."
+        )
+        assert str(record6[0].message) == desired_msg6
+
+        # test incorrect object_type
+        with pytest.raises(ValueError, match="object_type must be one of"):
+
+            @deprecated("1.4", object_type="not possible")
+            # fmt: off
+            def foo1(): pass
+            # fmt: on
+
+            foo1()
