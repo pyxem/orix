@@ -570,7 +570,11 @@ class Orientation(Misorientation):
         --------
         dot_outer
         """
-        symmetry = self.symmetry.outer(other.symmetry).unique()
+        # this is checking the symmetry ids
+        if self.symmetry == other.symmetry:
+            symmetry = self.symmetry
+        else:
+            symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = other * ~self
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
@@ -585,7 +589,11 @@ class Orientation(Misorientation):
         --------
         dot
         """
-        symmetry = self.symmetry.outer(other.symmetry).unique()
+        # this is checking the symmetry ids
+        if self.symmetry == other.symmetry:
+            symmetry = self.symmetry
+        else:
+            symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = other.outer(~self)
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
