@@ -19,6 +19,7 @@
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
+from orix.quaternion import symmetry
 
 # fmt: off
 from orix.quaternion.symmetry import (
@@ -39,6 +40,21 @@ from orix.vector import Vector3d
 @pytest.fixture(params=[(1, 2, 3)])
 def vector(request):
     return Vector3d(request.param)
+
+
+@pytest.fixture
+def all_symmetries():
+    # fmt: off
+    symmetries = [C1, Ci,  # triclinic
+                  C2x, C2y, C2z, Csx, Csy, Csz, Cs, C2, C2h,  # monoclinic
+                  D2, C2v, D2h,  # orthorhombic
+                  C4, S4, C4h, D4, C4v, D2d, D4h,  # tetragonal
+                  C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
+                  C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
+                  T, Th, O, Td, Oh]  # cubic
+    # fmt: on
+    for s in symmetries:
+        yield s
 
 
 @pytest.mark.parametrize(
@@ -191,6 +207,14 @@ def test_symmetry(symmetry, vector, expected):
         tuple(v.round(3)) for v in symmetry.outer(vector).unique().data
     ]
     assert set(vector_calculated) == set(expected)
+
+
+def test_same_symmetry_unique(all_symmetries):
+    symmetry = all_symmetries
+    u = symmetry.outer(symmetry).unique()
+    assert u.size == symmetry.size
+    delta = (symmetry * ~u).angle.data
+    assert np.allclose(delta, 0)
 
 
 @pytest.mark.parametrize(
