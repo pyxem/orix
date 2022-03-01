@@ -380,6 +380,7 @@ class TestOrientation:
         assert angles_dask.shape == (2, 2)
 
         assert np.allclose(angles_numpy.data, angles_dask.data)
+        assert np.allclose(np.diag(angles_numpy.data), 0)
 
     def test_get_distance_matrix_lazy_parameters(self):
         shape = (5, 15, 4)
@@ -391,6 +392,18 @@ class TestOrientation:
         angle2 = o.get_distance_matrix(lazy=True, chunk_size=10, progressbar=False)
 
         assert np.allclose(angle1.data, angle2.data)
+
+    @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
+    def test_angle_with_outer(self, symmetry):
+        shape = (5,)
+        o = Orientation.random(shape)
+        o.symmetry = symmetry
+
+        dist = o.get_distance_matrix().data
+        awo_self = o.angle_with_outer(o).data
+        assert awo_self.shape == (5, 5)
+        assert np.allclose(dist, awo_self)
+        assert np.allclose(np.diag(awo_self), 0)
 
     @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
     def test_angle_with(self, symmetry):
