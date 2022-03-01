@@ -30,7 +30,6 @@ about a fixed axis.
 import abc
 
 import numpy as np
-from orix.scalar import Scalar
 from orix.vector import Vector3d
 
 
@@ -46,7 +45,7 @@ class NeoEuler(Vector3d, abc.ABC):
     @property
     @abc.abstractmethod
     def angle(self):  # pragma: no cover
-        """Scalar : the angle of rotation."""
+        """numpy.ndarray : the angle of rotation."""
         pass
 
     @property
@@ -70,7 +69,7 @@ class Homochoric(NeoEuler):
 
     @classmethod
     def from_rotation(cls, rotation):
-        theta = rotation.angle.data
+        theta = rotation.angle
         n = rotation.axis
         magnitude = (0.75 * (theta - np.sin(theta))) ** (1 / 3)
         return cls(n * magnitude)
@@ -92,18 +91,16 @@ class Rodrigues(NeoEuler):
 
     @classmethod
     def from_rotation(cls, rotation):
-        a = np.float64(rotation.a.data)
+        a = np.float64(rotation.a)
         with np.errstate(divide="ignore", invalid="ignore"):
-            data = np.stack(
-                (rotation.b.data / a, rotation.c.data / a, rotation.d.data / a), axis=-1
-            )
+            data = np.stack((rotation.b / a, rotation.c / a, rotation.d / a), axis=-1)
         data[np.isnan(data)] = 0
         r = cls(data)
         return r
 
     @property
     def angle(self):
-        return Scalar(np.arctan(self.norm.data) * 2)
+        return np.arctan(self.norm) * 2
 
 
 class AxAngle(NeoEuler):
@@ -120,7 +117,7 @@ class AxAngle(NeoEuler):
 
     @property
     def angle(self):
-        return Scalar(self.norm.data)
+        return self.norm
 
     @classmethod
     def from_axes_angles(cls, axes, angles):

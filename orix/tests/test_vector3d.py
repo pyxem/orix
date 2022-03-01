@@ -21,7 +21,6 @@ import numpy as np
 import pytest
 
 from orix.quaternion import symmetry
-from orix.scalar import Scalar
 from orix.vector import Vector3d, check_vector
 
 
@@ -85,7 +84,7 @@ def test_neg(vector):
     "vector, other, expected",
     [
         ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[2, 4, 6], [-2, 0, 2]]),
-        ([1, 2, 3], Scalar([4]), [5, 6, 7]),
+        ([1, 2, 3], [4], [5, 6, 7]),
         ([1, 2, 3], 0.5, [1.5, 2.5, 3.5]),
         ([1, 2, 3], [-1, 2], [[0, 1, 2], [3, 4, 5]]),
         ([1, 2, 3], np.array([-1, 1]), [[0, 1, 2], [2, 3, 4]]),
@@ -104,7 +103,7 @@ def test_add(vector, other, expected):
     "vector, other, expected",
     [
         ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[0, 0, 0], [4, 4, 4]]),
-        ([1, 2, 3], Scalar([4]), [-3, -2, -1]),
+        ([1, 2, 3], [4], [-3, -2, -1]),
         ([1, 2, 3], 0.5, [0.5, 1.5, 2.5]),
         ([1, 2, 3], [-1, 2], [[2, 3, 4], [-1, 0, 1]]),
         ([1, 2, 3], np.array([-1, 1]), [[2, 3, 4], [0, 1, 2]]),
@@ -128,7 +127,7 @@ def test_sub(vector, other, expected):
             [[0, 0, 0], [4, 4, 4]],
             marks=pytest.mark.xfail(raises=ValueError),
         ),
-        ([1, 2, 3], Scalar([4]), [4, 8, 12]),
+        ([1, 2, 3], [4], [4, 8, 12]),
         ([1, 2, 3], 0.5, [0.5, 1.0, 1.5]),
         ([1, 2, 3], [-1, 2], [[-1, -2, -3], [2, 4, 6]]),
         ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]]),
@@ -152,7 +151,7 @@ def test_mul(vector, other, expected):
             [[0, 0, 0], [4, 4, 4]],
             marks=pytest.mark.xfail(raises=ValueError),
         ),
-        ([4, 8, 12], Scalar([4]), [1, 2, 3]),
+        ([4, 8, 12], [4], [1, 2, 3]),
         ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
         (
             [1, 2, 3],
@@ -181,8 +180,8 @@ def test_rdiv():
 
 
 def test_dot(vector, something):
-    assert np.allclose(vector.dot(vector).data, (vector.data**2).sum(axis=-1))
-    assert np.allclose(vector.dot(something).data, something.dot(vector).data)
+    assert np.allclose(vector.dot(vector), (vector.data**2).sum(axis=-1))
+    assert np.allclose(vector.dot(something), something.dot(vector))
 
 
 def test_dot_error(vector, number):
@@ -191,11 +190,11 @@ def test_dot_error(vector, number):
 
 
 def test_dot_outer(vector, something):
-    d = vector.dot_outer(something).data
+    d = vector.dot_outer(something)
     assert d.shape == vector.shape + something.shape
     for i in np.ndindex(vector.shape):
         for j in np.ndindex(something.shape):
-            assert np.allclose(d[i + j], vector[i].dot(something[j]).data)
+            assert np.allclose(d[i + j], vector[i].dot(something[j]))
 
 
 def test_cross(vector, something):
@@ -237,9 +236,9 @@ def test_zero(shape):
 
 
 def test_angle_with(vector, something):
-    a = vector.angle_with(vector).data
+    a = vector.angle_with(vector)
     assert np.allclose(a, 0)
-    a = vector.angle_with(something).data
+    a = vector.angle_with(something)
     assert np.all(a >= 0)
     assert np.all(a <= np.pi)
 
@@ -339,7 +338,7 @@ def test_assign_z(vector, data, expected):
     indirect=["vector"],
 )
 def test_perpendicular(vector: Vector3d):
-    assert np.allclose(vector.dot(vector.perpendicular).data, 0)
+    assert np.allclose(vector.dot(vector.perpendicular), 0)
 
 
 def test_mean_xyz():
@@ -453,9 +452,7 @@ class TestSphericalCoordinates:
 
     def test_polar_loop(self, vector):
         azimuth, polar, radial = vector.to_polar()
-        vector2 = Vector3d.from_polar(
-            azimuth=azimuth.data, polar=polar.data, radial=radial.data
-        )
+        vector2 = Vector3d.from_polar(azimuth=azimuth, polar=polar, radial=radial)
         assert np.allclose(vector.data, vector2.data)
 
 
@@ -466,8 +463,8 @@ class TestGetCircle:
         c = v.get_circle(opening_angle=oa, steps=101)
 
         assert c.size == 101
-        assert np.allclose(c.z.data, 0)
-        assert np.allclose(v.angle_with(c).data, oa)
+        assert np.allclose(c.z, 0)
+        assert np.allclose(v.angle_with(c), oa)
         assert np.allclose(c.mean().data, [0, 0, 0], atol=1e-2)
         assert np.allclose(v.cross(c[0, 0]).data, [1, 0, 0])
 

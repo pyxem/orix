@@ -68,7 +68,7 @@ def vector(request):
 
 
 def test_init(rotation):
-    assert np.allclose(rotation.norm.data, 1)
+    assert np.allclose(rotation.norm, 1)
     assert rotation.improper.shape == rotation.shape
     assert np.count_nonzero(rotation.improper) == 0
 
@@ -81,7 +81,7 @@ def test_slice(rotation):
 
 def test_unit(rotation):
     assert isinstance(rotation.unit, Rotation)
-    assert np.allclose(rotation.unit.norm.data, 1)
+    assert np.allclose(rotation.unit.norm, 1)
 
 
 @pytest.mark.parametrize(
@@ -320,7 +320,7 @@ def test_unique_inverse():
     r = Rotation.random((20,))
     u, inverse = r.unique(return_inverse=True)
     m = u[inverse] * ~r
-    assert np.allclose(m.angle.data, 0)
+    assert np.allclose(m.angle, 0)
 
 
 @pytest.mark.parametrize(
@@ -560,7 +560,7 @@ class TestFromAxesAngles:
     def test_from_axes_angles(self, rotations):
         axangle = AxAngle.from_rotation(rotations)
         rotations2 = Rotation.from_neo_euler(axangle)
-        rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle.data)
+        rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
         assert np.allclose(rotations2.data, rotations3.data)
 
 

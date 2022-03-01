@@ -12,6 +12,8 @@ Unreleased
 
 Changed
 -------
+- `orix.scalar.Scalar` class has been removed and the data held by `Scalar` is now
+  returned directly as a `numpy.ndarray`.
 - `from_euler()` method of `Rotation`-based classes now interprets angles in Bunge
   convention by default, ie. `direction="lab2crystal"`. The returned `Rotation` from
   this function may be inverted from prior releases and users are advised to check their

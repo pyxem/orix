@@ -152,7 +152,7 @@ class InversePoleFigurePlot(StereographicPlot):
         fs = self._symmetry.fundamental_sector
         vertices = fs.vertices
         if vertices.size > 0:
-            center = fs.center.y.data[0]
+            center = fs.center.y[0]
 
             # Nicely formatted labels for crystal directions
             labels = _get_ipf_axes_labels(vertices, self._symmetry)
@@ -327,7 +327,7 @@ def _get_ipf_title(direction):
     str
     """
     v = Vector3d(((1, 0, 0), (0, 1, 0), (0, 0, 1)))
-    idx = np.where(np.isclose(direction.unit.dot(v).data, 1))[0]
+    idx = np.where(np.isclose(direction.unit.dot(v), 1))[0]
     if idx.size != 0:
         return ["x", "y", "z"][idx[0]]
     else:

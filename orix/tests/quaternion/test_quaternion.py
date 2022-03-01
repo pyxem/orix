@@ -84,10 +84,10 @@ class TestQuaternion:
 
     def test_norm(self, quaternion):
         q = quaternion
-        assert np.allclose(q.norm.data, (q.data**2).sum(axis=-1) ** 0.5)
+        assert np.allclose(q.norm, (q.data**2).sum(axis=-1) ** 0.5)
 
     def test_unit(self, quaternion):
-        assert np.allclose(quaternion.unit.norm.data, 1)
+        assert np.allclose(quaternion.unit.norm, 1)
 
     def test_conj(self, quaternion):
         q = quaternion
@@ -97,15 +97,15 @@ class TestQuaternion:
     def test_mul(self, quaternion, something):
         q = quaternion
         s = something
-        sa, sb, sc, sd = s.a.data, s.b.data, s.c.data, s.d.data
-        qa, qb, qc, qd = q.a.data, q.b.data, q.c.data, q.d.data
+        sa, sb, sc, sd = s.a, s.b, s.c, s.d
+        qa, qb, qc, qd = q.a, q.b, q.c, q.d
 
         q1 = q * s
         assert isinstance(q1, Quaternion)
-        assert np.allclose(q1.a.data, sa * qa - sb * qb - sc * qc - sd * qd)
-        assert np.allclose(q1.b.data, qa * sb + qb * sa + qc * sd - qd * sc)
-        assert np.allclose(q1.c.data, qa * sc - qb * sd + qc * sa + qd * sb)
-        assert np.allclose(q1.d.data, qa * sd + qb * sc - qc * sb + qd * sa)
+        assert np.allclose(q1.a, sa * qa - sb * qb - sc * qc - sd * qd)
+        assert np.allclose(q1.b, qa * sb + qb * sa + qc * sd - qd * sc)
+        assert np.allclose(q1.c, qa * sc - qb * sd + qc * sa + qd * sb)
+        assert np.allclose(q1.d, qa * sd + qb * sc - qc * sb + qd * sa)
 
     def test_mul_identity(self, quaternion, identity):
         assert np.allclose((quaternion * identity).data, quaternion.data)
@@ -118,13 +118,13 @@ class TestQuaternion:
     def test_inverse(self, quaternion):
         q = quaternion
         assert np.allclose((q * ~q).data, (~q * q).data)
-        assert np.allclose((q * ~q).a.data, 1)
+        assert np.allclose((q * ~q).a, 1)
         assert np.allclose((q * ~q).data[..., 1:], 0)
 
     def test_dot(self, quaternion, something):
         q = quaternion
-        assert np.allclose(q.dot(q).data, np.sum(q.data**2, axis=-1))
-        assert np.allclose(q.dot(something).data, something.dot(q).data)
+        assert np.allclose(q.dot(q), np.sum(q.data**2, axis=-1))
+        assert np.allclose(q.dot(something), something.dot(q))
 
     def test_dot_outer(self, quaternion, something):
         q = quaternion
@@ -134,7 +134,7 @@ class TestQuaternion:
         assert d.shape == q.shape + s.shape
         for i in np.ndindex(q.shape):
             for j in np.ndindex(s.shape):
-                assert np.allclose(d[i + j].data, q[i].dot(s[j]).data)
+                assert np.allclose(d[i + j], q[i].dot(s[j]))
 
     @pytest.mark.parametrize(
         "quaternion, vector, expected",
