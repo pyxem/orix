@@ -452,7 +452,7 @@ class Orientation(Misorientation):
 
     @classmethod
     def from_euler(
-        cls, euler, symmetry=None, convention="bunge", direction="crystal2lab"
+        cls, euler, symmetry=None, convention="bunge", direction="lab2crystal"
     ):
         """Creates orientation(s) from an array of Euler angles.
 
@@ -464,9 +464,11 @@ class Orientation(Misorientation):
             Symmetry of orientation(s). If None (default), no symmetry
             is set.
         convention : str
-            Only 'bunge' is currently supported for new data
+            Deprecated, please use "direction" argument instead.
         direction : str
-            'lab2crystal' or 'crystal2lab'
+            "lab2crystal" (default) or "crystal2lab". "lab2crystal"
+            is the Bunge convention. If "MTEX" is provided then the
+            direction is "crystal2lab".
         """
         o = super().from_euler(euler=euler, convention=convention, direction=direction)
         if symmetry:

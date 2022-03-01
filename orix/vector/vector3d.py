@@ -417,8 +417,8 @@ class Vector3d(Object3d):
     def rotate(self, axis=None, angle=0):
         """Convenience function for rotating this vector.
 
-        Shapes of 'axis' and 'angle' must be compatible with shape of this
-        vector for broadcasting.
+        Shapes of 'axis' and 'angle' must be compatible with shape of
+        this vector for broadcasting.
 
         Parameters
         ----------
@@ -880,7 +880,7 @@ class Vector3d(Object3d):
         axes_labels : list
         """
         if projection.lower() != "stereographic":
-            raise NotImplementedError("Stereographic is the only supported projection")
+            raise NotImplementedError("Stereographic is the only supported projection.")
 
         import orix.plot.stereographic_plot
 
