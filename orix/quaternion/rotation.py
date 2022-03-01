@@ -375,18 +375,35 @@ class Rotation(Quaternion):
         return e
 
     @classmethod
-    def from_euler(cls, euler, direction="lab2crystal"):
+    @deprecated("0.9", "direction", "1.0", "argument", "convention")
+    def from_euler(cls, euler, convention="bunge", direction="lab2crystal"):
         """Creates a rotation from an array of Euler angles in radians.
 
         Parameters
         ----------
         euler : array-like
             Euler angles in radians in the Bunge convention.
+        convention : str
+            Deprecated, please use "direction" argument instead.
         direction : str
-            "lab2crystal" or "crystal2lab". If "MTEX" is provided then
-            the direction is "crystal2lab".
+            "lab2crystal" (default) or "crystal2lab". "lab2crystal"
+            is the Bunge convention. If "MTEX" is provided then the
+            direction is "crystal2lab".
         """
         direction = direction.lower()
+        conventions = ["bunge", "mtex"]
+
+        # processing the convention chosen
+        convention = convention.lower()
+        if convention not in conventions:
+            raise ValueError(
+                f"The chosen convention is not one of the allowed options {conventions}"
+            )
+        if convention == "mtex":
+            # MTEX uses bunge but with lab2crystal referencing:
+            # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
+            # and orix issue #215
+            direction = "mtex"
 
         if direction == "mtex":
             direction = "crystal2lab"

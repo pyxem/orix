@@ -238,22 +238,26 @@ class TestToFromEuler:
     def test_direction_kwarg(self, e):
         _ = Rotation.from_euler(e, direction="lab2crystal")
 
-    # def test_convention_arg
-
     def test_direction_kwarg_dumb(self, e):
         with pytest.raises(ValueError, match="The chosen direction is not one of "):
             _ = Rotation.from_euler(e, direction="dumb_direction")
 
-    def test_conv_to_raises(self, e):
+    def test_unsupported_conv_to_raises(self, e):
         r = Rotation.from_euler(e)
         with pytest.raises(TypeError, match=r"to_euler\(\) got an unexpected keyword "):
             _ = r.to_euler(convention="bunge")
 
-    def test_conv_from_raises(self, e):
-        with pytest.raises(
-            TypeError, match=r"from_euler\(\) got an unexpected keyword "
+    def test_unsupported_conv_from_raises(self, e):
+        with pytest.raises(ValueError, match="The chosen convention is not one of "):
+            _ = Rotation.from_euler(e, convention="unsupported")
+
+    # TODO: remove in 1.0
+    def test_conv_from_warns(self, e):
+        with pytest.warns(
+            np.VisibleDeprecationWarning,
+            match=r"Argument `convention` is deprecated and",
         ):
-            _ = Rotation.from_euler(e, convention="bunge")
+            _ = Rotation.from_euler(e)
 
     def test_edge_cases_to_euler(self):
         x = np.sqrt(1 / 2)

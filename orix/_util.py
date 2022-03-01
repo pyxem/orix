@@ -92,8 +92,6 @@ class deprecated:
         elif self.object_type.lower() == "argument":
             object_type = "Argument"
             parentheses = ""
-            if self.argument is None:
-                raise TypeError("argument must be defined for object_type 'argument'.")
             name = self.argument
         elif self.object_type.lower() == "function":
             object_type = "Function"

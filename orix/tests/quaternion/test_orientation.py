@@ -531,9 +531,12 @@ def test_set_symmetry_deprecation_warning_misorientation():
         _ = o.set_symmetry(C2, C2)
 
 
-def test_from_euler_convention_raises():
-    with pytest.raises(TypeError, match=r"from_euler\(\) got an unexpected keyword "):
-        _ = Orientation.from_euler((10, 0, 30), convention="bunge")
+# TODO: remove in 1.0
+def test_from_euler_convention_warns():
+    with pytest.warns(
+        np.VisibleDeprecationWarning, match="Argument `convention` is deprecated and"
+    ):
+        _ = Orientation.from_euler((10, 0, 30))
 
 
 def test_get_identity():
