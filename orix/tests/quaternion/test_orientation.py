@@ -401,9 +401,16 @@ class TestOrientation:
 
         dist = o.get_distance_matrix().data
         awo_self = o.angle_with_outer(o).data
-        assert awo_self.shape == (5, 5)
+        assert awo_self.shape == shape + shape
         assert np.allclose(dist, awo_self)
         assert np.allclose(np.diag(awo_self), 0)
+
+        o2 = Orientation.random((6,))
+        dist = o.angle_with_outer(o2).data
+        assert dist.shape == o2.shape + o.shape
+
+        dist = o2.angle_with_outer(o).data
+        assert dist.shape == o.shape + o2.shape
 
     @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
     def test_angle_with(self, symmetry):
