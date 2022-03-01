@@ -618,7 +618,7 @@ class Orientation(Misorientation):
             else:
                 da.store(sources=angles_dask, targets=angles)
         else:
-            dot_products = ori.dot_outer(ori).data
+            dot_products = ori.dot_outer(other).data
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
