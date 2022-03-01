@@ -537,7 +537,7 @@ def test_set_symmetry_deprecation_warning_misorientation():
 
 
 @pytest.mark.parametrize("symmetry", [Oh, D6h, D3d, D4, D2h, C2, C1])
-def test_symmetry_dot_unique_same_symmetry_same(symmetry):
+def test_symmetry_dot_unique_same_symmetry_equal(symmetry):
     o1 = Orientation.random()
     o2 = Orientation.random()
     o1.symmetry = symmetry
