@@ -19,7 +19,6 @@
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
-from orix.quaternion import symmetry
 
 # fmt: off
 from orix.quaternion.symmetry import (
