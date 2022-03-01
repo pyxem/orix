@@ -270,7 +270,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        nnumpyp.ndarray
+        numpy.ndarray
 
         Examples
         --------
