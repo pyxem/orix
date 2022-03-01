@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -29,9 +30,13 @@ from orix.quaternion.symmetry import (
     C4,
     D2,
     D3,
+    D4,
     D6,
     T,
     O,
+    D2h,
+    D3d,
+    D6h,
     Oh,
     _proper_groups,
 )
@@ -529,6 +534,21 @@ def test_set_symmetry_deprecation_warning_misorientation():
     o = Misorientation.random((3, 2))
     with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
         _ = o.set_symmetry(C2, C2)
+
+
+@pytest.mark.parametrize("symmetry", [Oh, D6h, D3d, D4, D2h, C2, C1])
+def test_symmetry_dot_unique_same_symmetry_same(symmetry):
+    o1 = Orientation.random()
+    o2 = Orientation.random()
+    o1.symmetry = symmetry
+    o2.symmetry = symmetry
+    assert o1.symmetry == o2.symmetry
+    dp1 = o1.dot(o2)
+    o2.symmetry = deepcopy(Oh)
+    assert o1.symmetry != o2.symmetry
+    assert np.allclose(o1.symmetry.data, o2.symmetry.data)
+    dp2 = o1.dot(o2)
+    assert np.allclose(dp1.data, dp2.data)
 
 
 # TODO: remove in 1.0
