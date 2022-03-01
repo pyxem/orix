@@ -544,7 +544,7 @@ def test_symmetry_dot_unique_same_symmetry_equal(symmetry):
     o2.symmetry = symmetry
     assert o1.symmetry == o2.symmetry
     dp1 = o1.dot(o2)
-    o2.symmetry = deepcopy(Oh)
+    o2.symmetry = deepcopy(o2.symmetry)
     assert o1.symmetry != o2.symmetry
     assert np.allclose(o1.symmetry.data, o2.symmetry.data)
     dp2 = o1.dot(o2)
