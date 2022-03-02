@@ -556,6 +556,10 @@ class Orientation(Misorientation):
         Returns
         -------
         Scalar
+
+        See also
+        --------
+        angle_with_outer
         """
         dot_products = self.unit.dot(other.unit).data
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
@@ -587,6 +591,10 @@ class Orientation(Misorientation):
         -------
         Scalar
 
+        See also
+        --------
+        angle_with
+
         Notes
         -----
         Given two orientations :math:`g_i` and :math:`g_j`, the smallest
@@ -598,6 +606,21 @@ class Orientation(Misorientation):
 
         where :math:`(g_i \cdot g_j)` is the highest dot product between
         symmetrically equivalent orientations to :math:`g_{i,j}`.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from orix.quaternion import Orientation, symmetry
+        >>> ori1 = Orientation.random((5, 3))
+        >>> ori2 = Orientation.random((6, 2))
+        >>> dist1 = ori1.angle_with_outer(ori2)
+        >>> dist1.shape
+        (6, 2, 5, 3)
+        >>> ori1.symmetry = symmetry.Oh
+        >>> ori2.symmetry = symmetry.Oh
+        >>> dist_sym = ori1.angle_with_outer(ori2)
+        >>> np.allclose(dist1.data, dist_sym.data)
+        False
         """
         ori = self.unit
         if lazy:
