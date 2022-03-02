@@ -10,6 +10,11 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Added
+-----
+- `Rotation` objects can now be checked for equality. Equality is determined by
+  comparing their shape, data, and whether the rotations are improper.
+
 Changed
 -------
 - `from_euler()` method of `Rotation`-based classes now interprets angles in Bunge
