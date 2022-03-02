@@ -32,7 +32,7 @@ from orix.quaternion.symmetry import (
     spacegroup2pointgroup_dict, _groups,
 )
 # fmt: on
-from orix.quaternion import get_point_group, Rotation, Symmetry
+from orix.quaternion import get_point_group, Rotation, symmetry, Symmetry
 from orix.vector import Vector3d
 
 
@@ -389,6 +389,12 @@ def test_get_point_group():
         pg = get_point_group(sg_number, proper=False)
         assert proper_pg == spacegroup2pointgroup_dict[sg.point_group_name]["proper"]
         assert pg == spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
+
+
+def test_hash():
+    groups = symmetry._groups
+    h = [hash(s) for s in groups]
+    assert len(set(h)) == len(groups)
 
 
 class TestFundamentalSectorFromSymmetry:
