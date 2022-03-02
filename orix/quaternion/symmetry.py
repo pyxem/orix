@@ -57,6 +57,9 @@ class Symmetry(Rotation):
         generators = [g for g in self.subgroups if g in other.subgroups]
         return Symmetry.from_generators(*generators)
 
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.size))
+
     @property
     def order(self):
         """Number of elements of the group as :class:`int`."""
