@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
+
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
@@ -395,6 +397,13 @@ def test_hash():
     groups = symmetry._groups
     h = [hash(s) for s in groups]
     assert len(set(h)) == len(groups)
+
+
+def test_hash_persistence():
+    groups = symmetry._groups
+    h1 = [hash(s) for s in groups]
+    h2 = [hash(deepcopy(s)) for s in groups]
+    assert all(h1a == h2a for h1a, h2a in zip(h1, h2))
 
 
 class TestFundamentalSectorFromSymmetry:
