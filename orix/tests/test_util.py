@@ -106,20 +106,11 @@ class TestDeprecateArgument:
         """
 
         class Foo:
-            @deprecated_argument(
-                name="a",
-                since="1.3",
-                removal="1.4",
-            )
+            @deprecated_argument(name="a", since="1.3", removal="1.4")
             def bar_arg(self, **kwargs):
                 return kwargs
 
-            @deprecated_argument(
-                name="a",
-                since="1.3",
-                removal="1.4",
-                alternative="b",
-            )
+            @deprecated_argument(name="a", since="1.3", removal="1.4", alternative="b")
             def bar_arg_alt(self, **kwargs):
                 return kwargs
 
