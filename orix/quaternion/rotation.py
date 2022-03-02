@@ -119,19 +119,16 @@ class Rotation(Quaternion):
         r.improper = self.improper
         return r
 
-    def __eq__(self, value):
+    def __eq__(self, other):
         """Check if Rotation objects are equal by their shape and values."""
-        if not isinstance(value, Rotation):
-            raise TypeError(
-                "Rotation objects can only be checked for equality against other"
-                "Rotation objects."
-            )
+        if not isinstance(other, Rotation):
+            return False
         # only return equal if shape, values, and improper arrays are equal
-        if self.shape != value.shape:
+        if self.shape != other.shape:
             return False
-        if not np.allclose(self.data, value.data):
+        if not np.allclose(self.data, other.data):
             return False
-        if not np.allclose(self.improper, value.improper):
+        if not np.allclose(self.improper, other.improper):
             return False
         return True
 
