@@ -48,7 +48,7 @@ from scipy.special import hyp0f1
 from orix.quaternion import Quaternion
 from orix.vector import AxAngle, Vector3d
 from orix.scalar import Scalar
-from orix._util import deprecated
+from orix._util import deprecated_argument
 
 # Used to round values below 1e-16 to zero
 _FLOAT_EPS = np.finfo(float).eps
@@ -341,7 +341,9 @@ class Rotation(Quaternion):
         axangle = AxAngle.from_axes_angles(axes, angles)
         return cls.from_neo_euler(axangle)
 
-    def to_euler(self):
+    # TODO: Remove decorator and **kwargs in 1.0
+    @deprecated_argument("convention", since="0.9", removal="1.0")
+    def to_euler(self, **kwargs):
         r"""Rotations as Euler angles in the Bunge convention
         :cite:`rowenhorst2015consistent`.
 
@@ -407,38 +409,28 @@ class Rotation(Quaternion):
 
         return e
 
+    # TODO: Remove decorator, **kwargs, and use of "convention" in 1.0
     @classmethod
-    @deprecated("0.9", "direction", "1.0", "argument", "convention")
-    def from_euler(cls, euler, convention="bunge", direction="lab2crystal"):
+    @deprecated_argument("convention", "0.9", "1.0", "direction")
+    def from_euler(cls, euler, direction="lab2crystal", **kwargs):
         """Creates a rotation from an array of Euler angles in radians.
 
         Parameters
         ----------
         euler : array-like
             Euler angles in radians in the Bunge convention.
-        convention : str
-            Deprecated, please use "direction" argument instead.
         direction : str
             "lab2crystal" (default) or "crystal2lab". "lab2crystal"
             is the Bunge convention. If "MTEX" is provided then the
             direction is "crystal2lab".
         """
         direction = direction.lower()
-        conventions = ["bunge", "mtex"]
-
-        # processing the convention chosen
-        convention = convention.lower()
-        if convention not in conventions:
-            raise ValueError(
-                f"The chosen convention is not one of the allowed options {conventions}"
-            )
-        if convention == "mtex":
+        if direction == "mtex" or (
+            "convention" in kwargs and kwargs["convention"] == "mtex"
+        ):
             # MTEX uses bunge but with lab2crystal referencing:
             # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
             # and orix issue #215
-            direction = "mtex"
-
-        if direction == "mtex":
             direction = "crystal2lab"
 
         directions = ["lab2crystal", "crystal2lab"]

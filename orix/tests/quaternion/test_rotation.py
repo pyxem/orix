@@ -242,23 +242,6 @@ class TestToFromEuler:
         with pytest.raises(ValueError, match="The chosen direction is not one of "):
             _ = Rotation.from_euler(e, direction="dumb_direction")
 
-    def test_unsupported_conv_to_raises(self, e):
-        r = Rotation.from_euler(e)
-        with pytest.raises(TypeError, match=r"to_euler\(\) got an unexpected keyword "):
-            _ = r.to_euler(convention="bunge")
-
-    def test_unsupported_conv_from_raises(self, e):
-        with pytest.raises(ValueError, match="The chosen convention is not one of "):
-            _ = Rotation.from_euler(e, convention="unsupported")
-
-    # TODO: remove in 1.0
-    def test_conv_from_warns(self, e):
-        with pytest.warns(
-            np.VisibleDeprecationWarning,
-            match=r"Argument `convention` is deprecated and",
-        ):
-            _ = Rotation.from_euler(e)
-
     def test_edge_cases_to_euler(self):
         x = np.sqrt(1 / 2)
         q = Rotation(np.asarray([x, 0, 0, x]))
@@ -270,6 +253,54 @@ class TestToFromEuler:
         with pytest.warns(UserWarning, match="Angles are assumed to be in radians, "):
             r = Rotation.from_euler([90, 0, 0])
             assert np.allclose(r.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
+
+    # TODO: Remove in 1.0
+    def test_from_euler_warns(self, e):
+        """Rotation.from_euler() warns only when "convention" argument
+        is passed.
+        """
+        with pytest.warns(None) as record:
+            _ = Rotation.from_euler(e)
+        assert len(record) == 0
+
+        msg = (
+            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"To avoid this warning, please do not use `convention`. "
+            r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
+            "more details."
+        )
+        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
+            _ = Rotation.from_euler(e, convention="whatever")
+
+    # TODO: Remove in 1.0
+    def test_from_euler_convention_mtex(self, e):
+        """Passing convention="mtex" to Rotation.from_euler() works but
+        warns.
+        """
+        rot1 = Rotation.from_euler(e, direction="crystal2lab")
+        with pytest.warns(np.VisibleDeprecationWarning, match=r"Argument `convention`"):
+            rot2 = Rotation.from_euler(e, convention="mtex")
+        assert np.allclose(rot1.data, rot2.data)
+
+    # TODO: Remove in 1.0
+    def test_to_euler_convention_warns(self, e):
+        """Rotation.to_euler() warns only when "convention" argument is
+        passed.
+        """
+        rot1 = Rotation.from_euler(e)
+
+        with pytest.warns(None) as record:
+            rot2 = rot1.to_euler()
+        assert len(record) == 0
+
+        msg = (
+            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"To avoid this warning, please do not use `convention`. "
+            r"See the documentation of `to_euler\(\)` for more details."
+        )
+        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
+            rot3 = rot1.to_euler(convention="whatever")
+        assert np.allclose(rot2, rot3)
 
 
 @pytest.mark.parametrize(
@@ -580,10 +611,3 @@ class TestFromAxesAngles:
         rotations2 = Rotation.from_neo_euler(axangle)
         rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle.data)
         assert np.allclose(rotations2.data, rotations3.data)
-
-
-def test_to_euler_not_warning():
-    rot = Rotation(((0, 1, 0, 0), (1, 0, 0, 0), (1, 1, 0, 0)))
-    with pytest.warns(None) as record:
-        _ = rot.to_euler()
-    assert len(record) == 0

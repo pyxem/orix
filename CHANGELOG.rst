@@ -30,8 +30,9 @@ Changed
 
 Deprecated
 ----------
-- The `convention` parameter in `from_euler()` methods has been deprecated in favour of
-  `direction`. This parameter will be removed in release 1.0.
+- The `convention` parameter in `from_euler()` and `to_euler()` methods has been
+  deprecated, in favour of `direction` in the former. This parameter will be removed in
+  release 1.0.
 
 2022-02-21 - version 0.8.2
 ==========================
