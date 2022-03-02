@@ -98,6 +98,9 @@ def test_equality():
     # test shape not equal
     r3 = Rotation.random((5, 1))
     assert r3 != r1
+    # test not Rotation returns False
+    assert r1 != 2
+    assert r1 != "test"
 
 
 @pytest.mark.parametrize(
