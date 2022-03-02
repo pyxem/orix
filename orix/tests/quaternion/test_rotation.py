@@ -323,6 +323,24 @@ def test_unique_inverse():
     assert np.allclose(m.angle.data, 0)
 
 
+def test_angle_with_outer():
+    shape = (5,)
+    r = Rotation.random(shape)
+
+    awo_self = r.angle_with_outer(r).data
+    assert awo_self.shape == shape + shape
+    assert np.allclose(np.diag(awo_self), 0)
+
+    r2 = Rotation.random((6,))
+    dist = r.angle_with_outer(r2).data
+    assert dist.shape == r.shape + r2.shape
+
+    dist2 = r2.angle_with_outer(r).data
+    assert dist2.shape == r2.shape + r.shape
+
+    assert np.allclose(dist, dist2.T)
+
+
 @pytest.mark.parametrize(
     "rotation, improper, expected, improper_expected",
     [
