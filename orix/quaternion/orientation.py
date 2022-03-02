@@ -450,10 +450,9 @@ class Orientation(Misorientation):
             return misorientation.map_into_symmetry_reduced_zone()
         return NotImplemented
 
+    # TODO: Remove use of **kwargs in 1.0
     @classmethod
-    def from_euler(
-        cls, euler, symmetry=None, convention="bunge", direction="lab2crystal"
-    ):
+    def from_euler(cls, euler, symmetry=None, direction="lab2crystal", **kwargs):
         """Creates orientation(s) from an array of Euler angles.
 
         Parameters
@@ -463,14 +462,12 @@ class Orientation(Misorientation):
         symmetry : Symmetry, optional
             Symmetry of orientation(s). If None (default), no symmetry
             is set.
-        convention : str
-            Deprecated, please use "direction" argument instead.
         direction : str
             "lab2crystal" (default) or "crystal2lab". "lab2crystal"
             is the Bunge convention. If "MTEX" is provided then the
             direction is "crystal2lab".
         """
-        o = super().from_euler(euler=euler, convention=convention, direction=direction)
+        o = super().from_euler(euler=euler, direction=direction, **kwargs)
         if symmetry:
             o.symmetry = symmetry
         return o

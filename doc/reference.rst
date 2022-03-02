@@ -345,6 +345,7 @@ Orientation
     in_euler_fundamental_region
     scatter
     set_symmetry
+    to_euler
     transpose
 .. autoclass:: orix.quaternion.Orientation
     :show-inheritance:
