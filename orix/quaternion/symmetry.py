@@ -58,7 +58,7 @@ class Symmetry(Rotation):
         return Symmetry.from_generators(*generators)
 
     def __hash__(self):
-        return hash((self.__class__.__name__, self.size))
+        return hash(self.data.tobytes())
 
     @property
     def order(self):
