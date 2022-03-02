@@ -10,6 +10,11 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Added
+-----
+- `Orientation.angle_with_outer()` has been added which computes the symmetry-reduced 
+  misorientation angle between every `Orientation` in the two sets of `Orientation`.  
+
 Changed
 -------
 - `from_euler()` method of `Rotation`-based classes now interprets angles in Bunge
