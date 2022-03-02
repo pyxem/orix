@@ -369,6 +369,75 @@ class TestOrientationInitialization:
         assert ori.symmetry.name == ori2.symmetry.name == "m-3m"
         assert np.allclose(ori.symmetry.data, ori2.symmetry.data)
 
+    def test_get_identity(self):
+        """Get the identity orientation via two alternative routes."""
+        o1 = Orientation([0.4884, 0.1728, 0.2661, 0.8129])
+        o2 = Orientation([0.8171, -0.2734, 0.161, -0.4813])
+
+        # Route 1 from a Misorientation instance
+        m12_1 = o2 - o1
+        o3_1 = (m12_1 * o1) * ~o2
+
+        # Route 2 from a third Orientation instance
+        m12_2 = o2 * ~o1
+        o3_2 = (m12_2 * o1) * ~o2
+
+        assert np.allclose(m12_1.data, m12_2.data)
+        assert np.allclose(o3_1.data, o3_2.data)
+        assert np.allclose(o3_1.data, [1, 0, 0, 0])
+
+    # TODO: Remove in 1.0
+    def test_from_euler_warns(self):
+        """Orientation.from_euler() warns only once when "convention"
+        argument is passed.
+        """
+        euler = np.random.rand(10, 3)
+
+        with pytest.warns(None) as record1:
+            _ = Orientation.from_euler(euler)
+        assert len(record1) == 0
+
+        msg = (
+            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"To avoid this warning, please do not use `convention`. "
+            r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
+            "more details."
+        )
+        with pytest.warns(np.VisibleDeprecationWarning, match=msg) as record2:
+            _ = Orientation.from_euler(euler, convention="whatever")
+        assert len(record2) == 1
+
+    # TODO: Remove in 1.0
+    def test_from_euler_convention_mtex(self):
+        """Passing convention="mtex" to Orientation.from_euler() works
+        but warns once.
+        """
+        euler = np.random.rand(10, 3)
+        ori1 = Orientation.from_euler(euler, direction="crystal2lab")
+        with pytest.warns(np.VisibleDeprecationWarning, match=r"Argument `convention`"):
+            ori2 = Orientation.from_euler(euler, convention="mtex")
+        assert np.allclose(ori1.data, ori2.data)
+
+    # TODO: Remove in 1.0
+    def test_to_euler_convention_warns(self):
+        """Orientation.to_euler() warns only once when "convention"
+        argument is passed.
+        """
+        ori1 = Orientation.from_euler(np.random.rand(10, 3))
+
+        with pytest.warns(None) as record:
+            ori2 = ori1.to_euler()
+        assert len(record) == 0
+
+        msg = (
+            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"To avoid this warning, please do not use `convention`. "
+            r"See the documentation of `to_euler\(\)` for more details."
+        )
+        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
+            ori3 = ori1.to_euler(convention="whatever")
+        assert np.allclose(ori2, ori3)
+
 
 class TestOrientation:
     @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
