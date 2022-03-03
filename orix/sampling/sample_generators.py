@@ -141,7 +141,7 @@ def _remove_larger_than_angle(r, max_angle):
         Rotations lying within the desired region.
     """
     half_angle = np.deg2rad(max_angle / 2)
-    half_angles = np.arccos(r.a.data)  # Returns between 0 and pi
+    half_angles = np.arccos(r.a)  # Returns between 0 and pi
     mask = half_angles < half_angle
     r = r[mask]
     return r

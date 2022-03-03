@@ -237,7 +237,7 @@ class Symmetry(Rotation):
         if name == "-1":
             n = vz
         elif name in ["m11", "1m1", "11m"]:
-            idx_min_angle = np.argmin(self.angle.data)
+            idx_min_angle = np.argmin(self.angle)
             n = self[idx_min_angle].axis
             if name == "m11":
                 n = -n

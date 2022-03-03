@@ -82,7 +82,7 @@ class CrystalMap:
             Dictionary of properties of each data point.
         scan_unit : str, optional
             Length unit of the data. If None (default), "px" is used.
-        is_in_data : np.ndarray, optional
+        is_in_data : numpy.ndarray, optional
             Array of booleans signifying whether a point is in the data.
 
         Examples

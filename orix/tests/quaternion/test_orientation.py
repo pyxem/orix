@@ -35,7 +35,6 @@ from orix.quaternion.symmetry import (
     Oh,
     _proper_groups,
 )
-from orix.scalar import Scalar
 from orix.vector import AxAngle, Vector3d
 
 
@@ -441,11 +440,11 @@ class TestOrientation:
         o = Orientation(q, symmetry=symmetry)
         o = o.map_into_symmetry_reduced_zone()
         angles_numpy = o.get_distance_matrix()
-        assert isinstance(angles_numpy, Scalar)
+        assert isinstance(angles_numpy, np.ndarray)
         assert angles_numpy.shape == (2, 2)
 
         angles_dask = o.get_distance_matrix(lazy=True)
-        assert isinstance(angles_dask, Scalar)
+        assert isinstance(angles_dask, np.ndarray)
         assert angles_dask.shape == (2, 2)
 
         assert np.allclose(angles_numpy.data, angles_dask.data)
@@ -515,7 +514,7 @@ class TestOrientation:
         r = Rotation(q)
         o = Orientation(q, symmetry=symmetry)
 
-        is_equal = np.allclose((~o).angle_with(o).data, (~r).angle_with(r).data)
+        is_equal = np.allclose((~o).angle_with(o), (~r).angle_with(r))
         if symmetry.name in ["1", "m3m"]:
             assert is_equal
         else:
@@ -585,7 +584,7 @@ class TestOrientation:
         axes = fig.axes[0]
         assert isinstance(axes, InversePoleFigurePlot)
         assert len(fig.axes) == 1
-        assert axes._direction.dot(vz).data[0] == 1
+        assert axes._direction.dot(vz)[0] == 1
         assert axes._hemisphere == "upper"
 
         # It's possible to add to an existing figure

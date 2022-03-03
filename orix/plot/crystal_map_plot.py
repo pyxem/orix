@@ -24,7 +24,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib_scalebar import dimension, scalebar
 import numpy as np
 
-from orix.scalar import Scalar
 from orix.vector import Vector3d
 
 
@@ -142,7 +141,7 @@ class CrystalMapPlot(Axes):
         Plot orientation angle in degrees of one phase
 
         >>> xmap2 = xmap["austenite"]
-        >>> austenite_angles = xmap2.orientations.angle.data * 180 / np.pi
+        >>> austenite_angles = xmap2.orientations.angle * 180 / np.pi
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap2, austenite_angles)
@@ -184,8 +183,6 @@ class CrystalMapPlot(Axes):
             for _, p in crystal_map.phases_in_data:
                 patches.append(mpatches.Patch(color=p.color_rgb, label=p.name))
         else:  # Create masked array of correct shape
-            if isinstance(value, (Scalar, Vector3d)):
-                value = value.data
             data = crystal_map.get_map_data(value)
             data = data[self._data_slices]
 

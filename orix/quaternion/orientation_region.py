@@ -49,8 +49,8 @@ _EPSILON = 1e-9  # small number to avoid round off problems
 def _get_large_cell_normals(s1, s2):
     dp = get_distinguished_points(s1, s2)
     normals = Rodrigues.zero(dp.shape + (2,))
-    planes1 = dp.axis * np.tan(dp.angle.data / 4)
-    planes2 = -dp.axis * np.tan(dp.angle.data / 4) ** -1
+    planes1 = dp.axis * np.tan(dp.angle / 4)
+    planes2 = -dp.axis * np.tan(dp.angle / 4) ** -1
     planes2.data[np.isnan(planes2.data)] = 0
     normals[:, 0] = planes1
     normals[:, 1] = planes2
@@ -65,7 +65,7 @@ def _get_large_cell_normals(s1, s2):
     for i in np.unique(inv):
         n = normals[inv == i]
         axes_unique.append(n.axis.data[0])
-        angles_unique.append(n.angle.data.max())
+        angles_unique.append(n.angle.max())
     normals = Rotation.from_neo_euler(
         AxAngle.from_axes_angles(np.array(axes_unique), angles_unique)
     )
@@ -133,9 +133,7 @@ class OrientationRegion(Rotation):
         vertices = orientation_region.vertices()
         if vertices.size:
             orientation_region = orientation_region[
-                np.any(
-                    np.isclose(orientation_region.dot_outer(vertices).data, 0), axis=1
-                )
+                np.any(np.isclose(orientation_region.dot_outer(vertices), 0), axis=1)
             ]
         return orientation_region
 
@@ -158,7 +156,7 @@ class OrientationRegion(Rotation):
         v = Rotation.triple_cross(c1, c2, c3)
         v = v[~np.any(np.isnan(v.data), axis=-1)]
         v = v[v < self].unique()
-        surface = np.any(np.isclose(v.dot_outer(self).data, 0), axis=1)
+        surface = np.any(np.isclose(v.dot_outer(self), 0), axis=1)
         return v[surface]
 
     def faces(self):
@@ -166,7 +164,7 @@ class OrientationRegion(Rotation):
         vertices = self.vertices()
         faces = []
         for n in normals:
-            faces.append(vertices[np.isclose(vertices.dot(n).data, 0)])
+            faces.append(vertices[np.isclose(vertices.dot(n), 0)])
         faces = [f for f in faces if f.size > 2]
         return faces
 
@@ -175,7 +173,7 @@ class OrientationRegion(Rotation):
         Orientation will return only those orientations that lie within
         the OrientationRegion.
         """
-        c = Quaternion(self).dot_outer(Quaternion(other)).data
+        c = Quaternion(self).dot_outer(Quaternion(other))
         inside = np.logical_or(
             np.all(np.greater_equal(c, -_EPSILON), axis=0),
             np.all(np.less_equal(c, +_EPSILON), axis=0),
@@ -193,11 +191,11 @@ class OrientationRegion(Rotation):
         g = Vector3d.from_polar(rho, theta)
 
         # Get the cell vector normal norms
-        n = Rodrigues.from_rotation(self).norm.data[:, np.newaxis, np.newaxis]
+        n = Rodrigues.from_rotation(self).norm[:, np.newaxis, np.newaxis]
         if n.size == 0:
             return Rotation.from_neo_euler(AxAngle.from_axes_angles(g, np.pi))
 
-        d = (-self.axis).dot_outer(g.unit).data
+        d = (-self.axis).dot_outer(g.unit)
         x = n * d
         with np.errstate(divide="ignore"):
             omega = 2 * np.arctan(np.where(x != 0, x**-1, np.pi))

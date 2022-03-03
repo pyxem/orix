@@ -50,7 +50,6 @@ from tqdm import tqdm
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry
-from orix.scalar import Scalar
 from orix.vector import AxAngle
 from orix._util import deprecated
 
@@ -101,7 +100,7 @@ def _distance(misorientation, verbose, split_size=100):
             # This works through all the identity rotations
             for s_2_1, s_2_2 in icombinations(S_2, 2):
                 m = s_2_1 * mis2orientation * s_2_2
-                angle = m.angle.data.min(axis=axis)
+                angle = m.angle.min(axis=axis)
                 distance[index_slice_a, index_slice_b] = np.minimum(
                     distance[index_slice_a, index_slice_b], angle
                 )
@@ -558,9 +557,9 @@ class Orientation(Misorientation):
         --------
         angle_with_outer
         """
-        dot_products = self.unit.dot(other.unit).data
+        dot_products = self.unit.dot(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
-        return Scalar(angles)
+        return angles
 
     def angle_with_outer(self, other, lazy=False, chunk_size=20, progressbar=True):
         r"""The symmetry reduced smallest angle of rotation transforming
@@ -622,7 +621,6 @@ class Orientation(Misorientation):
         ori = self.unit
         if lazy:
             dot_products = ori._dot_outer_dask(other, chunk_size=chunk_size)
-
             # Round because some dot products are slightly above 1
             n_decimals = np.finfo(dot_products.dtype).precision
             dot_products = da.round(dot_products, n_decimals)
@@ -642,7 +640,7 @@ class Orientation(Misorientation):
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
-        return Scalar(angles)
+        return angles
 
     def get_distance_matrix(self, lazy=False, chunk_size=20, progressbar=True):
         r"""The symmetry reduced smallest angle of rotation transforming
@@ -667,7 +665,7 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
 
         Notes
         -----
@@ -699,7 +697,7 @@ class Orientation(Misorientation):
         misorientation = other * ~self
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
-        return Scalar(highest_dot_product)
+        return highest_dot_product
 
     def dot_outer(self, other):
         """Symmetry reduced dot product of every orientation in this
@@ -718,7 +716,7 @@ class Orientation(Misorientation):
         order = tuple(range(self.ndim, self.ndim + other.ndim)) + tuple(
             range(self.ndim)
         )
-        return Scalar(highest_dot_product.transpose(*order))
+        return highest_dot_product.transpose(*order)
 
     @deprecated(
         since="0.7",
@@ -944,7 +942,7 @@ class Orientation(Misorientation):
                 # Determine which hemisphere(s) to show
                 symmetry = self.symmetry
                 sector = symmetry.fundamental_sector
-                if np.any(sector.vertices.polar.data > np.pi / 2):
+                if np.any(sector.vertices.polar > np.pi / 2):
                     hemisphere = "both"
                 else:
                     hemisphere = "upper"
