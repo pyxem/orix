@@ -212,7 +212,7 @@ class Rotation(Quaternion):
         angle_with
         """
         other = Rotation(other)
-        dot_products = self.unit.dot(other.unit).data
+        dot_products = self.unit.dot(other.unit)
         # Round because some dot products are slightly above 1
         dot_products = np.round(dot_products, np.finfo(dot_products.dtype).precision)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
@@ -242,7 +242,7 @@ class Rotation(Quaternion):
         >>> dist.shape
         (5, 3, 6, 2)
         """
-        dot_products = self.unit.dot_outer(other.unit).data
+        dot_products = self.unit.dot_outer(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 

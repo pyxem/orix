@@ -467,18 +467,18 @@ class TestOrientation:
         o = Orientation.random(shape)
         o.symmetry = symmetry
 
-        dist = o.get_distance_matrix().data
-        awo_self = o.angle_with_outer(o).data
+        dist = o.get_distance_matrix()
+        awo_self = o.angle_with_outer(o)
         assert awo_self.shape == shape + shape
         assert np.allclose(dist, awo_self)
         assert np.allclose(np.diag(awo_self), 0)
 
         o2 = Orientation.random((6,))
-        dist = o.angle_with_outer(o2).data
-        assert dist.shape == o2.shape + o.shape
+        dist = o.angle_with_outer(o2)
+        assert dist.shape == o.shape + o2.shape
 
-        dist2 = o2.angle_with_outer(o).data
-        assert dist2.shape == o.shape + o2.shape
+        dist2 = o2.angle_with_outer(o)
+        assert dist2.shape == o2.shape + o.shape
 
         assert np.allclose(dist, dist2.T)
 
@@ -488,23 +488,23 @@ class TestOrientation:
         o1 = Orientation.random(shape1)
         o2 = Orientation.random(shape2)
 
-        awo_o12 = o1.angle_with_outer(o2).data
+        awo_o12 = o1.angle_with_outer(o2)
         assert awo_o12.shape == shape1 + shape2
 
-        awo_o21 = o2.angle_with_outer(o1).data
+        awo_o21 = o2.angle_with_outer(o1)
         assert awo_o21.shape == shape2 + shape1
 
         r1 = Rotation(o1)
         r2 = Rotation(o2)
-        awo_r12 = r1.angle_with_outer(r2).data
-        awo_r21 = r2.angle_with_outer(r1).data
+        awo_r12 = r1.angle_with_outer(r2)
+        awo_r21 = r2.angle_with_outer(r1)
         assert awo_o12.shape == awo_r12.shape
         assert awo_o21.shape == awo_r21.shape
         assert np.allclose(awo_o12, awo_r12)
         assert np.allclose(awo_o21, awo_r21)
 
         o1.symmetry = Oh
-        awo_o12s = o1.angle_with_outer(o2).data
+        awo_o12s = o1.angle_with_outer(o2)
         assert awo_o12s.shape == awo_r12.shape
         assert not np.allclose(awo_o12s, awo_r12)
 

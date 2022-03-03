@@ -636,7 +636,7 @@ class Orientation(Misorientation):
             else:
                 da.store(sources=angles_dask, targets=angles)
         else:
-            dot_products = ori.dot_outer(other).data
+            dot_products = ori.dot_outer(other)
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
@@ -695,7 +695,7 @@ class Orientation(Misorientation):
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = other * ~self
-        all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
         highest_dot_product = np.max(all_dot_products, axis=-1)
         return highest_dot_product
 
@@ -710,7 +710,7 @@ class Orientation(Misorientation):
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = other.outer(~self)
-        all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
         highest_dot_product = np.max(all_dot_products, axis=-1)
         # need to return axes order so that self is first
         order = tuple(range(self.ndim, self.ndim + other.ndim)) + tuple(
