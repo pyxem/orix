@@ -640,7 +640,7 @@ def test_from_euler_convention_warns():
     with pytest.warns(
         np.VisibleDeprecationWarning, match="Argument `convention` is deprecated and"
     ):
-        _ = Orientation.from_euler((10, 0, 30))
+        _ = Orientation.from_euler((10, 0, 30), convention="mtex")
 
 
 # TODO: remove in 1.0
