@@ -42,20 +42,7 @@ def vector(request):
     return Vector3d(request.param)
 
 
-def _all_symmetries():
-    # fmt: off
-    symmetries = [C1, Ci,  # triclinic
-                  C2x, C2y, C2z, Csx, Csy, Csz, Cs, C2, C2h,  # monoclinic
-                  D2, C2v, D2h,  # orthorhombic
-                  C4, S4, C4h, D4, C4v, D2d, D4h,  # tetragonal
-                  C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
-                  C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
-                  T, Th, O, Td, Oh]  # cubic
-    # fmt: on
-    return symmetries
-
-
-@pytest.fixture(params=_all_symmetries())
+@pytest.fixture(params=symmetry._groups)
 def all_symmetries(request):
     return request.param
 
