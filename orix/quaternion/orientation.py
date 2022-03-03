@@ -714,7 +714,11 @@ class Orientation(Misorientation):
         misorientation = other.outer(~self)
         all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
         highest_dot_product = np.max(all_dot_products, axis=-1)
-        return Scalar(highest_dot_product)
+        # need to return axes order so that self is first
+        order = tuple(range(self.ndim, self.ndim + other.ndim)) + tuple(
+            range(self.ndim)
+        )
+        return Scalar(highest_dot_product.transpose(*order))
 
     @deprecated(
         since="0.7",

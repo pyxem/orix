@@ -213,11 +213,11 @@ class Rotation(Quaternion):
         angle_with
         """
         other = Rotation(other)
-        dp = self.unit.dot(other.unit).data
+        dot_products = self.unit.dot(other.unit).data
         # Round because some dot products are slightly above 1
-        dp = np.round(dp, np.finfo(dp.dtype).precision)
-        angles = Scalar(np.nan_to_num(np.arccos(2 * dp**2 - 1)))
-        return angles
+        dot_products = np.round(dot_products, np.finfo(dot_products.dtype).precision)
+        angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
+        return Scalar(angles)
 
     def angle_with_outer(self, other):
         """The angle of rotation transforming this rotation to the other.
@@ -244,8 +244,7 @@ class Rotation(Quaternion):
         (5, 3, 6, 2)
         """
         dot_products = self.unit.dot_outer(other.unit).data
-        angles = np.arccos(2 * dot_products**2 - 1)
-        angles = np.nan_to_num(angles)
+        angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return Scalar(angles)
 
     def outer(self, other):
