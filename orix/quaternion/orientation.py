@@ -50,7 +50,6 @@ from tqdm import tqdm
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry
-from orix.scalar import Scalar
 from orix.vector import AxAngle
 from orix._util import deprecated
 
@@ -101,7 +100,7 @@ def _distance(misorientation, verbose, split_size=100):
             # This works through all the identity rotations
             for s_2_1, s_2_2 in icombinations(S_2, 2):
                 m = s_2_1 * mis2orientation * s_2_2
-                angle = m.angle.data.min(axis=axis)
+                angle = m.angle.min(axis=axis)
                 distance[index_slice_a, index_slice_b] = np.minimum(
                     distance[index_slice_a, index_slice_b], angle
                 )
@@ -552,16 +551,19 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
         """
-        dot_products = self.unit.dot(other.unit).data
+        dot_products = self.unit.dot(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
-        return Scalar(angles)
+        return angles
 
     def dot(self, other):
         """Symmetry reduced dot product of orientations in this instance
-        to orientations in another instance, returned as
-        :class:`~orix.scalar.Scalar`.
+        to orientations in another instance.
+
+        Returns
+        -------
+        numpy.ndarray
 
         See Also
         --------
@@ -569,14 +571,17 @@ class Orientation(Misorientation):
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = other * ~self
-        all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
         highest_dot_product = np.max(all_dot_products, axis=-1)
-        return Scalar(highest_dot_product)
+        return highest_dot_product
 
     def dot_outer(self, other):
         """Symmetry reduced dot product of every orientation in this
-        instance to every orientation in another instance, returned as
-        :class:`~orix.scalar.Scalar`.
+        instance to every orientation in another instance.
+
+        Returns
+        -------
+        numpy.ndarray
 
         See Also
         --------
@@ -584,9 +589,9 @@ class Orientation(Misorientation):
         """
         symmetry = self.symmetry.outer(other.symmetry).unique()
         misorientation = other.outer(~self)
-        all_dot_products = Rotation(misorientation).dot_outer(symmetry).data
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
         highest_dot_product = np.max(all_dot_products, axis=-1)
-        return Scalar(highest_dot_product)
+        return highest_dot_product
 
     @deprecated(
         since="0.7",
@@ -619,7 +624,7 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
 
         Notes
         -----
@@ -652,11 +657,11 @@ class Orientation(Misorientation):
             else:
                 da.store(sources=angles_dask, targets=angles)
         else:
-            dot_products = ori.dot_outer(ori).data
+            dot_products = ori.dot_outer(ori)
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
-        return Scalar(angles)
+        return angles
 
     def plot_unit_cell(
         self,
@@ -874,7 +879,7 @@ class Orientation(Misorientation):
                 # Determine which hemisphere(s) to show
                 symmetry = self.symmetry
                 sector = symmetry.fundamental_sector
-                if np.any(sector.vertices.polar.data > np.pi / 2):
+                if np.any(sector.vertices.polar > np.pi / 2):
                     hemisphere = "both"
                 else:
                     hemisphere = "upper"

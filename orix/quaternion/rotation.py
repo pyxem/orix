@@ -47,7 +47,6 @@ from scipy.special import hyp0f1
 
 from orix.quaternion import Quaternion
 from orix.vector import AxAngle, Vector3d
-from orix.scalar import Scalar
 from orix._util import deprecated_argument
 
 # Used to round values below 1e-16 to zero
@@ -76,7 +75,7 @@ class Rotation(Quaternion):
         if isinstance(data, Rotation):
             self.improper = data.improper
         with np.errstate(divide="ignore", invalid="ignore"):
-            self.data = self.data / self.norm.data[..., np.newaxis]
+            self.data = self.data / self.norm[..., np.newaxis]
 
     def __mul__(self, other):
         if isinstance(other, Rotation):
@@ -150,10 +149,10 @@ class Rotation(Quaternion):
         else:
             abcd = np.stack(
                 [
-                    rotation.a.data,
-                    rotation.b.data,
-                    rotation.c.data,
-                    rotation.d.data,
+                    rotation.a,
+                    rotation.b,
+                    rotation.c,
+                    rotation.d,
                     rotation.improper,
                 ],
                 axis=-1,
@@ -177,10 +176,10 @@ class Rotation(Quaternion):
             return dat
 
     def _differentiators(self):
-        a = self.a.data
-        b = self.b.data
-        c = self.c.data
-        d = self.d.data
+        a = self.a
+        b = self.b
+        c = self.c
+        d = self.d
         i = self.improper
         abcd = np.stack(
             (
@@ -206,13 +205,13 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
         """
         other = Rotation(other)
-        dp = self.unit.dot(other.unit).data
+        dp = self.unit.dot(other.unit)
         # Round because some dot products are slightly above 1
         dp = np.round(dp, np.finfo(dp.dtype).precision)
-        angles = Scalar(np.nan_to_num(np.arccos(2 * dp**2 - 1)))
+        angles = np.nan_to_num(np.arccos(2 * dp**2 - 1))
         return angles
 
     def outer(self, other):
@@ -250,15 +249,15 @@ class Rotation(Quaternion):
         self._data[..., -1] = value
 
     def dot_outer(self, other):
-        """Scalar : the outer dot product of this rotation and the other."""
-        cosines = np.abs(super().dot_outer(other).data)
+        """numpy.ndarray : the outer dot product of this rotation and the other."""
+        cosines = np.abs(super().dot_outer(other))
         if isinstance(other, Rotation):
             improper = self.improper.reshape(self.shape + (1,) * len(other.shape))
             i = np.logical_xor(improper, other.improper)
             cosines = np.minimum(~i, cosines)
         else:
             cosines[self.improper] = 0
-        return Scalar(cosines)
+        return cosines
 
     @classmethod
     def from_neo_euler(cls, neo_euler):
@@ -269,11 +268,11 @@ class Rotation(Quaternion):
         neo_euler : NeoEuler
             Vector parametrization of a rotation.
         """
-        s = np.sin(neo_euler.angle.data / 2)
-        a = np.cos(neo_euler.angle.data / 2)
-        b = s * neo_euler.axis.x.data
-        c = s * neo_euler.axis.y.data
-        d = s * neo_euler.axis.z.data
+        s = np.sin(neo_euler.angle / 2)
+        a = np.cos(neo_euler.angle / 2)
+        b = s * neo_euler.axis.x
+        c = s * neo_euler.axis.y
+        d = s * neo_euler.axis.z
         r = cls(np.stack([a, b, c, d], axis=-1))
         return r
 
@@ -325,7 +324,7 @@ class Rotation(Quaternion):
         n = self.data.shape[:-1]
         e = np.zeros(n + (3,))
 
-        a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
+        a, b, c, d = self.a, self.b, self.c, self.d
 
         q03 = a**2 + d**2
         q12 = b**2 + c**2
@@ -439,7 +438,7 @@ class Rotation(Quaternion):
         if direction == "crystal2lab":
             data = ~data
 
-        rot = cls(data.data)
+        rot = cls(data)
         rot.improper = np.zeros(n)
         return rot
 
@@ -463,7 +462,7 @@ class Rotation(Quaternion):
         >>> np.allclose(r.to_matrix(), np.diag([1, -1, -1]))
         True
         """
-        a, b, c, d = self.a.data, self.b.data, self.c.data, self.d.data
+        a, b, c, d = self.a, self.b, self.c, self.d
         om = np.zeros(self.shape + (3, 3))
 
         bb = b**2
@@ -547,18 +546,18 @@ class Rotation(Quaternion):
     @property
     def axis(self):
         """The axis of rotation as a :class:`~orix.vector.Vector3d`."""
-        axis = Vector3d(np.stack((self.b.data, self.c.data, self.d.data), axis=-1))
-        a_is_zero = self.a.data < -1e-6
+        axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
+        a_is_zero = self.a < -1e-6
         axis[a_is_zero] = -axis[a_is_zero]
-        norm_is_zero = axis.norm.data == 0
+        norm_is_zero = axis.norm == 0
         axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero].data)
-        axis.data = axis.data / axis.norm.data[..., np.newaxis]
+        axis.data = axis.data / axis.norm[..., np.newaxis]
         return axis
 
     @property
     def angle(self):
-        """The angle of rotation as a :class:`~orix.scalar.Scalar`."""
-        return Scalar(2 * np.nan_to_num(np.arccos(np.abs(self.a.data))))
+        """The angle of rotation as a numpy.ndarray."""
+        return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
 
     @classmethod
     def random(cls, shape=(1,)):

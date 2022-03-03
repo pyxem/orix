@@ -87,7 +87,7 @@ class TestCrystalMapPlot:
     def test_plot_scalar(self, crystal_map):
         cm = crystal_map
 
-        angles = cm.rotations.angle.data
+        angles = cm.rotations.angle
 
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(projection=PLOT_MAP)

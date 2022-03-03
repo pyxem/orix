@@ -183,11 +183,11 @@ def angfile_tsl(tmpdir, request):
         Map shape to create.
     step_sizes : tuple of floats
         Step sizes in x and y coordinates in microns.
-    phase_id : np.ndarray
+    phase_id : numpy.ndarray
         Array of map size with phase IDs in header.
     n_unknown_columns : int
         Number of columns with unknown values.
-    rotations : np.ndarray
+    rotations : numpy.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
     """
@@ -257,9 +257,9 @@ def angfile_astar(tmpdir, request):
         Map shape to create.
     step_sizes : tuple of floats
         Step sizes in x and y coordinates in nanometres.
-    phase_id : np.ndarray
+    phase_id : numpy.ndarray
         Array of map size with phase IDs in header.
-    rotations : np.ndarray
+    rotations : numpy.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
     """
@@ -321,9 +321,9 @@ def angfile_emsoft(tmpdir, request):
         Map shape to create.
     step_sizes : tuple of floats
         Step sizes in x and y coordinates in nanometres.
-    phase_id : np.ndarray
+    phase_id : numpy.ndarray
         Array of map size with phase IDs in header.
-    rotations : np.ndarray
+    rotations : numpy.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
     """
@@ -378,7 +378,7 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         Map shape to create.
     step_sizes : tuple of floats
         Step sizes in x and y coordinates in microns.
-    rotations : np.ndarray
+    rotations : numpy.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
     n_top_matches : int
@@ -504,9 +504,9 @@ def temp_bruker_h5ebsd_file(tmpdir, request):
         Map shape to create.
     step_sizes : tuple of floats
         Step sizes in x and y coordinates in microns.
-    phase_id : np.ndarray
+    phase_id : numpy.ndarray
         Array of map size with phase IDs in header.
-    rotations : np.ndarray
+    rotations : numpy.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
     """

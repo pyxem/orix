@@ -75,8 +75,8 @@ def sample_S2_cube_mesh(resolution, grid_type="spherified_corner"):
     """
     vz = Vector3d.zvector()
     v011 = Vector3d((0, 1, 1))
-    max_angle = vz.angle_with(v011).data  # = pi / 4
-    max_distance = vz.dot(v011).data  # = 1
+    max_angle = vz.angle_with(v011)  # = pi / 4
+    max_distance = vz.dot(v011)  # = 1
 
     res = np.radians(resolution)
 
@@ -93,7 +93,7 @@ def sample_S2_cube_mesh(resolution, grid_type="spherified_corner"):
         i = np.tan(k * theta)
     elif grid_type == grid_types[2]:
         v111 = Vector3d((1, 1, 1))
-        max_angle = vz.angle_with(v111).data
+        max_angle = vz.angle_with(v111)
 
         steps = np.ceil(max_angle / res)
         k = np.arange(-steps, steps)
