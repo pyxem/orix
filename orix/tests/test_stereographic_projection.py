@@ -90,8 +90,8 @@ class TestStereographicProjection:
 
     def test_spherical2xy(self, vectors):
         sp_up = StereographicProjection(pole=-1)
-        azimuth = vectors.azimuth.data
-        polar = vectors.polar.data
+        azimuth = vectors.azimuth
+        polar = vectors.polar
         x_up, y_up, x_down, y_down = sp_up.spherical2xy_split(
             azimuth=azimuth, polar=polar
         )
@@ -124,10 +124,10 @@ class TestStereographicProjection:
         is_up = vectors.z >= 0
         v_up = vectors[is_up]
         v_down = vectors[~is_up]
-        azimuth_up_in = v_up.azimuth.data
-        polar_up_in = v_up.polar.data
-        azimuth_down_in = v_down.azimuth.data
-        polar_down_in = v_down.polar.data
+        azimuth_up_in = v_up.azimuth
+        polar_up_in = v_up.polar
+        azimuth_down_in = v_down.azimuth
+        polar_down_in = v_down.polar
 
         sp_up = StereographicProjection(pole=-1)
         sp_down = StereographicProjection(pole=1)

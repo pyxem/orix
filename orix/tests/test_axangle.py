@@ -58,7 +58,7 @@ def axangle(request):
 
 
 def test_angle(axangle):
-    assert np.allclose(axangle.angle.data, axangle.norm.data)
+    assert np.allclose(axangle.angle, axangle.norm)
 
 
 def test_axis(axangle):
@@ -75,7 +75,7 @@ def test_axis(axangle):
 def test_from_axes_angles(axis, angle, expected_axis):
     ax = AxAngle.from_axes_angles(axis, angle)
     assert np.allclose(ax.axis.data, expected_axis)
-    assert np.allclose(ax.angle.data, abs(angle))
+    assert np.allclose(ax.angle, abs(angle))
 
 
 @pytest.mark.parametrize(

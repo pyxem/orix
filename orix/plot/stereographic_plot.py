@@ -317,7 +317,7 @@ class StereographicPlot(maxes.Axes):
             kwargs.setdefault(k, v)
 
         for i, c in enumerate(circles):
-            self.plot(c.azimuth.data, c.polar.data, color=color2[i], **kwargs)
+            self.plot(c.azimuth, c.polar, color=color2[i], **kwargs)
 
     def restrict_to_sector(self, sector):
         """Restrict the stereographic axis to a
@@ -653,7 +653,7 @@ class StereographicPlot(maxes.Axes):
             try:
                 v = values[0].flatten().unit
                 if sort:
-                    order = _order_in_hemisphere(v.polar.data, pole)
+                    order = _order_in_hemisphere(v.polar, pole)
                     v = v[order]
                 x, y = self._projection.vector2xy(v)
             except (ValueError, AttributeError):

@@ -23,7 +23,6 @@ The list of top modules:
     projections
     quaternion
     sampling
-    scalar
     vector
 
 ....
@@ -438,14 +437,6 @@ sampling
     uniform_SO3_sample
     sample_S2_uv_mesh
 .. automodule:: orix.sampling
-    :members:
-    :show-inheritance:
-
-....
-
-scalar
-======
-.. automodule:: orix.scalar
     :members:
     :show-inheritance:
 

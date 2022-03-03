@@ -40,7 +40,7 @@ class SymmetryMarker:
 
     @property
     def angle_deg(self):
-        return np.rad2deg(self._vector.azimuth.data) + 90
+        return np.rad2deg(self._vector.azimuth) + 90
 
     @property
     def size(self):
@@ -61,7 +61,7 @@ class TwoFoldMarker(SymmetryMarker):
     @property
     def size(self):
         # Assuming maximum polar angle is 90 degrees
-        radial = np.tan(self._vector.polar.data / 2)
+        radial = np.tan(self._vector.polar / 2)
         radial = np.where(radial == 0, 1, radial)
         return self._size / np.sqrt(radial)
 
@@ -74,7 +74,7 @@ class TwoFoldMarker(SymmetryMarker):
         ellipse = mpath.Path(verts, circle.codes)
 
         # Set up rotations of ellipse
-        azimuth = self._vector.azimuth.data
+        azimuth = self._vector.azimuth
         trans = [mtransforms.Affine2D().rotate(a + (np.pi / 2)) for a in azimuth]
 
         return [ellipse.deepcopy().transformed(i) for i in trans]
