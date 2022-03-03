@@ -312,4 +312,4 @@ class InverseStereographicProjection:
         StereographicProjection.spherical2xy
         """
         v = self.xy2vector(x=x, y=y)
-        return v.azimuth.data, v.polar.data
+        return v.azimuth, v.polar

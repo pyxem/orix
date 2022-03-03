@@ -32,6 +32,11 @@ Deprecated
   deprecated, in favour of `direction` in the former. This parameter will be removed in
   release 1.0.
 
+Removed
+-------
+- `orix.scalar.Scalar` class has been removed and the data held by `Scalar` is now
+  returned directly as a `numpy.ndarray`.
+
 2022-02-21 - version 0.8.2
 ==========================
 

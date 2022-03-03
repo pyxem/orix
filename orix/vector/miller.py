@@ -21,7 +21,6 @@ from itertools import product
 
 import numpy as np
 
-from orix.scalar import Scalar
 from orix.vector import Vector3d
 
 
@@ -288,7 +287,7 @@ class Miller(Vector3d):
         elif self.coordinate_format in ["uvw", "UVTW"]:
             return self.phase.structure.lattice.norm(self.uvw)
         else:
-            return self.norm.data
+            return self.norm
 
     @property
     def multiplicity(self):
@@ -533,18 +532,18 @@ class Miller(Vector3d):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
             The angle between the vectors, in radians.
         """
         self._compatible_with(other, raise_error=True)
         if use_symmetry:
             other2 = other.symmetrise(unique=True)
-            cosines = self.dot_outer(other2).data / (
-                self.norm.data[..., np.newaxis] * other2.norm.data[np.newaxis, ...]
+            cosines = self.dot_outer(other2) / (
+                self.norm[..., np.newaxis] * other2.norm[np.newaxis, ...]
             )
             cosines = np.round(cosines, 12)
             angles = np.min(np.arccos(cosines), axis=-1)
-            return Scalar(angles)
+            return angles
         else:
             return super().angle_with(other)
 
@@ -576,7 +575,7 @@ class Miller(Vector3d):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
         """
         self._compatible_with(other, raise_error=True)
         return super().dot(other)
@@ -592,7 +591,7 @@ class Miller(Vector3d):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
         """
         self._compatible_with(other, raise_error=True)
         return super().dot_outer(other)

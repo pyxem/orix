@@ -43,9 +43,9 @@ def polar_coordinates_in_sector(sector, v):
 
     Returns
     -------
-    azimuth : np.ndarray
+    azimuth : numpy.ndarray
         Azimuthal polar coordinate(s).
-    polar : np.ndarray
+    polar : numpy.ndarray
         Polar polar coordinate(s).
 
     Notes
@@ -74,8 +74,8 @@ def polar_coordinates_in_sector(sector, v):
         azimuth = _correct_azimuth(azimuth, sector, rx)
 
     # Polar coordinate
-    if np.count_nonzero(sector.dot(center).data) == 0:
-        polar = center.angle_with(v).data / np.pi
+    if np.count_nonzero(sector.dot(center)) == 0:
+        polar = center.angle_with(v) / np.pi
     else:
         # Normal to plane containing sector center and crystal direction
         v_center_normal = v.cross(center).unit
@@ -84,8 +84,8 @@ def polar_coordinates_in_sector(sector, v):
             boundary_points = v_center_normal.cross(normal).unit
             # Some boundary points are zero vectors
             with np.errstate(invalid="ignore"):
-                distances_polar = (-v).angle_with(boundary_points).data
-                distances_polar /= (-center).angle_with(boundary_points).data
+                distances_polar = (-v).angle_with(boundary_points)
+                distances_polar /= (-center).angle_with(boundary_points)
             distances_polar[np.isnan(distances_polar)] = 1
             polar = np.minimum(polar, distances_polar)  # Element-wise
 
@@ -97,14 +97,14 @@ def rgb_from_polar_coordinates(azimuth, polar):
 
     Parameters
     ----------
-    azimuth : np.ndarray
+    azimuth : numpy.ndarray
         Azimuthal coordinate(s).
-    polar : np.ndarray
+    polar : numpy.ndarray
         Polar coordinate(s).
 
     Returns
     -------
-    rgb : np.ndarray
+    rgb : numpy.ndarray
         Color(s).
     """
     angle = np.mod(azimuth / (2 * np.pi), 1)
@@ -120,21 +120,21 @@ def hsl_to_hsv(hue, saturation, lightness):
 
     Parameters
     ----------
-    hue : np.ndarray or float
+    hue : numpy.ndarray or float
         Hue(s). Not changed by the function, but included in input and
         output for convenience.
-    saturation : np.ndarray or float
+    saturation : numpy.ndarray or float
         Saturation value(s).
-    lightness : np.ndarray or float
+    lightness : numpy.ndarray or float
         Lightness value(s).
 
     Returns
     -------
-    hue : np.ndarray or float
+    hue : numpy.ndarray or float
         The same copy of hue(s) as input.
-    saturation2 : np.ndarray or float
+    saturation2 : numpy.ndarray or float
         Adjusted saturation value(s).
-    value : np.ndarray or float
+    value : numpy.ndarray or float
         Value(s).
     """
     l2 = 2 * lightness
@@ -164,9 +164,7 @@ def _calculate_azimuth(center, rx, v):
     rx = (rx - rx.dot(center) * center).unit  # Orthogonal to center
     ry = center.cross(rx).unit  # Perpendicular to rx
     distances_azimuthal = (v - center).unit
-    azimuth = np.arctan2(
-        ry.dot(distances_azimuthal).data, rx.dot(distances_azimuthal).data
-    )
+    azimuth = np.arctan2(ry.dot(distances_azimuthal), rx.dot(distances_azimuthal))
     azimuth = np.mod(azimuth, 2 * np.pi)
     azimuth[np.isnan(azimuth)] = 0
     return azimuth
@@ -207,7 +205,7 @@ def _correct_azimuth(azimuth, sector, rx):
     cross_outer = Vector3d.zero((sector.size, m - 1))
     for i in range(sector.size):
         cross_outer[i] = sector[i].cross(normals)
-    polar = np.min(cross_outer.angle_with(center).data, axis=0)
+    polar = np.min(cross_outer.angle_with(center), axis=0)
 
     if vertices.size == 3:
         angle = _calculate_azimuth(center, rx, vertices)
