@@ -19,6 +19,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from sklearn.preprocessing import OrdinalEncoder
 
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
@@ -305,6 +306,22 @@ def test_symmetry_property_wrong_number_of_values_misorientation(error_type, val
     with pytest.raises(error_type, match="Value must be a 2-tuple"):
         # less than 2 Symmetry
         o.symmetry = value
+
+
+def test_orientation_equality():
+    # symmetries must also be the same to be equal
+    o1 = Orientation.random((6, 5))
+    o2 = Orientation(o1)
+    assert o1 == o2
+    o1.symmetry = C4
+    o2.symmetry = o1.symmetry
+    assert o1 == o2
+    o2.symmetry = C3
+    assert o1 != o2
+    o3 = Orientation.random((6,))
+    assert o1 != o3
+    o3.symmetry = o1.symmetry
+    assert o1 != o3
 
 
 class TestOrientationInitialization:
