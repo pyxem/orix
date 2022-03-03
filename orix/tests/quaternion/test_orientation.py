@@ -636,14 +636,6 @@ def test_symmetry_dot_outer_unique_same_symmetry_equal(symmetry):
 
 
 # TODO: remove in 1.0
-def test_from_euler_convention_warns():
-    with pytest.warns(
-        np.VisibleDeprecationWarning, match="Argument `convention` is deprecated and"
-    ):
-        _ = Orientation.from_euler((10, 0, 30), convention="mtex")
-
-
-# TODO: remove in 1.0
 def test_from_euler_convention_mtex():
     angles = [1, 2, 3]
     o1 = Orientation.from_euler(angles, convention="mtex")
