@@ -405,6 +405,25 @@ def test_get_point_group():
         assert pg == spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
 
 
+def test_unique_symmetry_elements(all_symmetries):
+    sym = all_symmetries
+    for sg in sym.subgroups:
+        # outer of symmetry with its subgroups
+        u = sym.outer(sg).unique()
+        # assert that unique is same size as main symmetry
+        if u.size != sym.size:
+            result = False
+        else:
+            # check that there is no difference between unique
+            # and main symmetry
+            diff = (sym * ~u).angle.data
+            if np.allclose(diff, 0):
+                result = True
+            else:
+                result = False
+    assert result
+
+
 class TestFundamentalSectorFromSymmetry:
     """Test the normals, vertices and centers of the fundamental sector
     for all 32 crystallographic point groups.

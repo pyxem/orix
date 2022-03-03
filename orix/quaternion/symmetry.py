@@ -765,3 +765,15 @@ def _get_laue_group_name(name):
         return "m-3m"
     else:
         return None
+
+
+def get_unique_symmetry_elements(sym1, sym2):
+    """Returns the unique symmetry elements between two `Symmetry`."""
+    # test whether either symmetry is in the subgroup of the other
+    if sym2 in sym1.subgroups:
+        return sym1
+    elif sym1 in sym2.subgroups:
+        return sym2
+    else:
+        # otherwise compute unique elements
+        return sym1.outer(sym2).unique()
