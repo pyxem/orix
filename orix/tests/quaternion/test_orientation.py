@@ -19,7 +19,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from sklearn.preprocessing import OrdinalEncoder
 
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
