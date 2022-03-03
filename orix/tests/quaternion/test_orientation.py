@@ -307,12 +307,6 @@ def test_symmetry_property_wrong_number_of_values_misorientation(error_type, val
         o.symmetry = value
 
 
-@pytest.mark.parametrize("symmetry", [C1, C2, C4, D6, T, Oh])
-def test_equality(symmetry):
-    # test that inherited equality is properly tested
-    assert Orientation(symmetry) == symmetry
-
-
 class TestOrientationInitialization:
     def test_from_euler_symmetry(self):
         euler = np.deg2rad([90, 45, 90])

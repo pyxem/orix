@@ -719,6 +719,12 @@ class TestFundamentalSectorFromSymmetry:
         assert np.allclose(fs.center.data, normal)
 
 
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D6, T, Oh])
+def test_equality(symmetry):
+    # test that inherited equality is properly tested
+    assert Rotation(symmetry) == symmetry
+
+
 class TestLaueGroup:
     def test_crystal_system(self):
         assert Ci.system == "triclinic"
