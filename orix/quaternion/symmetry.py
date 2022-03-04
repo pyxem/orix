@@ -769,11 +769,19 @@ def _get_laue_group_name(name):
 
 def get_unique_symmetry_elements(sym1, sym2):
     """Returns the unique symmetry elements between two `Symmetry`."""
-    # test whether either symmetry is in the subgroup of the other
-    if sym2 in sym1.subgroups:
+    if sym1 == sym2:
         return sym1
-    elif sym1 in sym2.subgroups:
-        return sym2
+    # test whether either symmetry is in the subgroup of the other
+    sym2_in_sym1_sg = True if sym2 in sym1.subgroups else False
+    sym1_in_sym2_sg = True if sym1 in sym2.subgroups else False
+    # if either one of in_sym1 or in_sym2 is satisfied then return the
+    # larger parent group
+    if sym2_in_sym1_sg + sym1_in_sym2_sg == 1:
+        if sym2_in_sym1_sg:
+            return sym1
+        else:  # in sym2
+            return sym2
     else:
-        # otherwise compute unique elements
+        # either no common parent
+        # or both in_sym1 and in_sym2 are True, in which case ambiguous
         return sym1.outer(sym2).unique()

@@ -207,6 +207,33 @@ def test_same_symmetry_unique(all_symmetries):
     assert np.allclose(delta, 0)
 
 
+def test_unique_symmetry_subgroup_elements(all_symmetries):
+    sym = all_symmetries
+    for sg in sym.subgroups:
+        # outer of symmetry with its subgroups
+        u = sym.outer(sg).unique()
+        # assert that unique is same size as main symmetry
+        assert u.size == sym.size
+        # check that there is no difference between unique
+        # and main symmetry
+        diff = (sym * ~u).angle.data
+        assert np.allclose(diff, 0)
+
+
+def test_get_unique_symmetry_elements(all_symmetries):
+    sym = all_symmetries
+    assert sym in sym.subgroups
+    result_sym_first_arg = []
+    result_sym_second_arg = []
+    for sg in sym.subgroups:
+        u1 = symmetry.get_unique_symmetry_elements(sym, sg)
+        result_sym_first_arg.append(u1)
+        u2 = symmetry.get_unique_symmetry_elements(sg, sym)
+        result_sym_second_arg.append(u2)
+    assert all(np.allclose(s.data, sym.data) for s in result_sym_first_arg)
+    assert all(np.allclose(s.data, sym.data) for s in result_sym_second_arg)
+
+
 @pytest.mark.parametrize(
     "symmetry, expected",
     [(C2h, 4), (C6, 6), (D6h, 24), (T, 12), (Td, 24), (Oh, 48), (O, 24)],
