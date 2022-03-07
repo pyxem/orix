@@ -551,7 +551,7 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
 
         See also
         --------
@@ -585,7 +585,7 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
 
         See also
         --------
@@ -686,8 +686,7 @@ class Orientation(Misorientation):
 
     def dot(self, other):
         """Symmetry reduced dot product of orientations in this instance
-        to orientations in another instance, returned as
-        :class:`~orix.scalar.Scalar`.
+        to orientations in another instance, returned as numpy.ndarray.
 
         See Also
         --------
@@ -702,7 +701,7 @@ class Orientation(Misorientation):
     def dot_outer(self, other):
         """Symmetry reduced dot product of every orientation in this
         instance to every orientation in another instance, returned as
-        :class:`~orix.scalar.Scalar`.
+        numpy.ndarray.
 
         See Also
         --------

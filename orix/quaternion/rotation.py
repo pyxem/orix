@@ -205,7 +205,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
 
         See also
         --------
@@ -227,7 +227,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        Scalar
+        numpy.ndarray
 
         See also
         --------
