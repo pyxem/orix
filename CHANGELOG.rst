@@ -34,6 +34,11 @@ Deprecated
   deprecated, in favour of `direction` in the former. This parameter will be removed in
   release 1.0.
 
+Fixed
+-----
+- The results from `Orientation.dot_outer()` are now now returned as 
+  `self.shape + other.shape`, which is consistent with `Rotation.dot_outer()`.
+
 Removed
 -------
 - `orix.scalar.Scalar` class has been removed and the data held by `Scalar` is now
