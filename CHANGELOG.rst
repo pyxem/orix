@@ -10,6 +10,13 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 Unreleased
 ==========
 
+Added
+-----
+- `angle_with_outer()` has been added to both  `Rotation` and `Orientation` classes
+  which computes the misorientation angle between every `Rotation` in the two sets of 
+  `Rotations`. In the case of `Orientation.angle_with_outer()`, this is the symmetry
+  reduced misorientation.
+
 Changed
 -------
 - `from_euler()` method of `Rotation`-based classes now interprets angles in Bunge
@@ -26,6 +33,11 @@ Deprecated
 - The `convention` parameter in `from_euler()` and `to_euler()` methods has been
   deprecated, in favour of `direction` in the former. This parameter will be removed in
   release 1.0.
+
+Fixed
+-----
+- The results from `Orientation.dot_outer()` are now returned as 
+  `self.shape + other.shape`, which is consistent with `Rotation.dot_outer()`.
 
 Removed
 -------
