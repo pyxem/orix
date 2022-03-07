@@ -36,7 +36,7 @@ Deprecated
 
 Fixed
 -----
-- The results from `Orientation.dot_outer()` are now now returned as 
+- The results from `Orientation.dot_outer()` are now returned as 
   `self.shape + other.shape`, which is consistent with `Rotation.dot_outer()`.
 
 Removed
