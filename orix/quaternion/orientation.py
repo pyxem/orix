@@ -552,60 +552,99 @@ class Orientation(Misorientation):
         Returns
         -------
         numpy.ndarray
+
+        See also
+        --------
+        angle_with_outer
         """
         dot_products = self.unit.dot(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 
-    def dot(self, other):
-        """Symmetry reduced dot product of orientations in this instance
-        to orientations in another instance.
+    def angle_with_outer(self, other, lazy=False, chunk_size=20, progressbar=True):
+        r"""The symmetry reduced smallest angle of rotation transforming
+        every orientation in this instance to every orientation in
+        another instance.
+
+        This is an alternative implementation of
+        :meth:`~orix.quaternion.Misorientation.distance` for
+        a single :class:`Orientation` instance, using :mod:`dask`.
+
+        Parameters
+        ----------
+        lazy : bool, optional
+            Whether to perform the computation lazily with Dask. Default
+            is False.
+        chunk_size : int, optional
+            Number of orientations per axis to include in each iteration
+            of the computation. Default is 20. Only applies when `lazy`
+            is True.
+        progressbar : bool, optional
+            Whether to show a progressbar during computation if `lazy`
+            is True. Default is True.
 
         Returns
         -------
         numpy.ndarray
 
-        See Also
+        See also
         --------
-        dot_outer
-        """
-        # this is checking the symmetry ids
-        symmetry = get_unique_symmetry_elements(self.symmetry, other.symmetry)
-        misorientation = other * ~self
-        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
-        highest_dot_product = np.max(all_dot_products, axis=-1)
-        return highest_dot_product
+        angle_with
 
-    def dot_outer(self, other):
-        """Symmetry reduced dot product of every orientation in this
-        instance to every orientation in another instance.
+        Notes
+        -----
+        Given two orientations :math:`g_i` and :math:`g_j`, the smallest
+        angle is considered as the geodesic distance
 
-        Returns
-        -------
-        numpy.ndarray
+        .. math::
 
-        See Also
+            d(g_i, g_j) = \arccos(2(g_i \cdot g_j)^2 - 1),
+
+        where :math:`(g_i \cdot g_j)` is the highest dot product between
+        symmetrically equivalent orientations to :math:`g_{i,j}`.
+
+        Examples
         --------
-        dot
+        >>> import numpy as np
+        >>> from orix.quaternion import Orientation, symmetry
+        >>> ori1 = Orientation.random((5, 3))
+        >>> ori2 = Orientation.random((6, 2))
+        >>> dist1 = ori1.angle_with_outer(ori2)
+        >>> dist1.shape
+        (6, 2, 5, 3)
+        >>> ori1.symmetry = symmetry.Oh
+        >>> ori2.symmetry = symmetry.Oh
+        >>> dist_sym = ori1.angle_with_outer(ori2)
+        >>> np.allclose(dist1.data, dist_sym.data)
+        False
         """
-        # this is checking the symmetry ids
-        symmetry = get_unique_symmetry_elements(self.symmetry, other.symmetry)
-        misorientation = other.outer(~self)
-        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
-        highest_dot_product = np.max(all_dot_products, axis=-1)
-        return highest_dot_product
+        ori = self.unit
+        if lazy:
+            dot_products = ori._dot_outer_dask(other, chunk_size=chunk_size)
+            # Round because some dot products are slightly above 1
+            n_decimals = np.finfo(dot_products.dtype).precision
+            dot_products = da.round(dot_products, n_decimals)
 
-    @deprecated(
-        since="0.7",
-        alternative="orix.quaternion.Orientation.get_distance_matrix",
-        removal="0.8",
-    )
-    def distance(self, verbose=False, split_size=100):
-        return super().distance(verbose=verbose, split_size=split_size)
+            angles_dask = da.arccos(2 * dot_products**2 - 1)
+            angles_dask = da.nan_to_num(angles_dask)
+
+            # Create array in memory and overwrite, chunk by chunk
+            angles = np.zeros(angles_dask.shape)
+            if progressbar:
+                with ProgressBar():
+                    da.store(sources=angles_dask, targets=angles)
+            else:
+                da.store(sources=angles_dask, targets=angles)
+        else:
+            dot_products = ori.dot_outer(other)
+            angles = np.arccos(2 * dot_products**2 - 1)
+            angles = np.nan_to_num(angles)
+
+        return angles
 
     def get_distance_matrix(self, lazy=False, chunk_size=20, progressbar=True):
         r"""The symmetry reduced smallest angle of rotation transforming
-        each orientation in this instance to every other orientation.
+        every orientation in this instance to every other orientation.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance` for
@@ -640,30 +679,51 @@ class Orientation(Misorientation):
         where :math:`(g_i \cdot g_j)` is the highest dot product between
         symmetrically equivalent orientations to :math:`g_{i,j}`.
         """
-        ori = self.unit
-        if lazy:
-            dot_products = ori._dot_outer_dask(ori, chunk_size=chunk_size)
-
-            # Round because some dot products are slightly above 1
-            n_decimals = np.finfo(dot_products.dtype).precision
-            dot_products = da.round(dot_products, n_decimals)
-
-            angles_dask = da.arccos(2 * dot_products**2 - 1)
-            angles_dask = da.nan_to_num(angles_dask)
-
-            # Create array in memory and overwrite, chunk by chunk
-            angles = np.zeros(angles_dask.shape)
-            if progressbar:
-                with ProgressBar():
-                    da.store(sources=angles_dask, targets=angles)
-            else:
-                da.store(sources=angles_dask, targets=angles)
-        else:
-            dot_products = ori.dot_outer(ori)
-            angles = np.arccos(2 * dot_products**2 - 1)
-            angles = np.nan_to_num(angles)
-
+        angles = self.angle_with_outer(
+            self, lazy=lazy, chunk_size=chunk_size, progressbar=progressbar
+        )
         return angles
+
+    def dot(self, other):
+        """Symmetry reduced dot product of orientations in this instance
+        to orientations in another instance, returned as numpy.ndarray.
+
+        See Also
+        --------
+        dot_outer
+        """
+        symmetry = self.symmetry.outer(other.symmetry).unique()
+        misorientation = other * ~self
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
+        highest_dot_product = np.max(all_dot_products, axis=-1)
+        return highest_dot_product
+
+    def dot_outer(self, other):
+        """Symmetry reduced dot product of every orientation in this
+        instance to every orientation in another instance, returned as
+        numpy.ndarray.
+
+        See Also
+        --------
+        dot
+        """
+        symmetry = self.symmetry.outer(other.symmetry).unique()
+        misorientation = other.outer(~self)
+        all_dot_products = Rotation(misorientation).dot_outer(symmetry)
+        highest_dot_product = np.max(all_dot_products, axis=-1)
+        # need to return axes order so that self is first
+        order = tuple(range(self.ndim, self.ndim + other.ndim)) + tuple(
+            range(self.ndim)
+        )
+        return highest_dot_product.transpose(*order)
+
+    @deprecated(
+        since="0.7",
+        alternative="orix.quaternion.Orientation.get_distance_matrix",
+        removal="0.8",
+    )
+    def distance(self, verbose=False, split_size=100):
+        return super().distance(verbose=verbose, split_size=split_size)
 
     def plot_unit_cell(
         self,
