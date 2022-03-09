@@ -219,12 +219,44 @@ class Rotation(Quaternion):
         Returns
         -------
         numpy.ndarray
+
+        See also
+        --------
+        angle_with
         """
         other = Rotation(other)
-        dp = self.unit.dot(other.unit)
+        dot_products = self.unit.dot(other.unit)
         # Round because some dot products are slightly above 1
-        dp = np.round(dp, np.finfo(dp.dtype).precision)
-        angles = np.nan_to_num(np.arccos(2 * dp**2 - 1))
+        dot_products = np.round(dot_products, np.finfo(dot_products.dtype).precision)
+        angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
+        return angles
+
+    def angle_with_outer(self, other):
+        """The angle of rotation transforming this rotation to the other.
+
+        Parameters
+        ----------
+        other : Rotation
+
+        Returns
+        -------
+        numpy.ndarray
+
+        See also
+        --------
+        angle_with
+
+        Examples
+        --------
+        >>> from orix.quaternion import Rotation
+        >>> r1 = Rotation.random((5, 3))
+        >>> r2 = Rotation.random((6, 2))
+        >>> dist = r1.angle_with_outer(r2)
+        >>> dist.shape
+        (5, 3, 6, 2)
+        """
+        dot_products = self.unit.dot_outer(other.unit)
+        angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 
     def outer(self, other):
