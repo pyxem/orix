@@ -378,7 +378,7 @@ def test_angle_with_outer():
     r = Rotation.random(shape)
     awo_self = r.angle_with_outer(r)
     assert awo_self.shape == shape + shape
-    assert np.allclose(np.diag(awo_self), 0)
+    assert np.allclose(np.diag(awo_self), 0, atol=1e-6)
     r2 = Rotation.random((6,))
     dist = r.angle_with_outer(r2)
     assert dist.shape == r.shape + r2.shape
