@@ -151,9 +151,9 @@ class Misorientation(Rotation):
             return v1
         else:
             # check symmetries are also equivalent
-            v2 = [
-                sym_s == sym_o for sym_s, sym_o in zip(self._symmetry, other._symmetry)
-            ]
+            v2 = []
+            for sym_s, sym_o in zip(self._symmetry, other._symmetry):
+                v2.append(sym_s == sym_o)
             return all(v2)
 
     def reshape(self, *shape):
