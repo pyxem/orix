@@ -487,7 +487,7 @@ class TestOrientation:
         awo_self = o.angle_with_outer(o)
         assert awo_self.shape == shape + shape
         assert np.allclose(dist, awo_self)
-        assert np.allclose(np.diag(awo_self), 0)
+        assert np.allclose(np.diag(awo_self), 0, atol=1e-6)
 
         o2 = Orientation.random((6,))
         dist = o.angle_with_outer(o2)
