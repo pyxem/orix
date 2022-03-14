@@ -12,6 +12,8 @@ Unreleased
 
 Added
 -----
+- `Rotation` objects can now be checked for equality. Equality is determined by
+  comparing their shape, data, and whether the rotations are improper.
 - `angle_with_outer()` has been added to both  `Rotation` and `Orientation` classes
   which computes the misorientation angle between every `Rotation` in the two sets of 
   `Rotations`. In the case of `Orientation.angle_with_outer()`, this is the symmetry

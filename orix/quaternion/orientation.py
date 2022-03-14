@@ -145,6 +145,17 @@ class Misorientation(Rotation):
         m._symmetry = self._symmetry
         return m
 
+    def __eq__(self, other):
+        v1 = super().__eq__(other)
+        if not v1:
+            return v1
+        else:
+            # check symmetries are also equivalent
+            v2 = []
+            for sym_s, sym_o in zip(self._symmetry, other._symmetry):
+                v2.append(sym_s == sym_o)
+            return all(v2)
+
     def reshape(self, *shape):
         m = super().reshape(*shape)
         m._symmetry = self._symmetry
