@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
+
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
@@ -33,7 +35,7 @@ from orix.quaternion.symmetry import (
     spacegroup2pointgroup_dict, _groups,
 )
 # fmt: on
-from orix.quaternion import get_point_group, Rotation, Symmetry
+from orix.quaternion import get_point_group, Rotation, symmetry, Symmetry
 from orix.vector import Vector3d
 
 
@@ -451,6 +453,19 @@ def test_unique_symmetry_elements(all_symmetries):
     assert result
 
 
+def test_hash():
+    groups = symmetry._groups
+    h = [hash(s) for s in groups]
+    assert len(set(h)) == len(groups)
+
+
+def test_hash_persistence():
+    groups = symmetry._groups
+    h1 = [hash(s) for s in groups]
+    h2 = [hash(deepcopy(s)) for s in groups]
+    assert all(h1a == h2a for h1a, h2a in zip(h1, h2))
+
+
 class TestFundamentalSectorFromSymmetry:
     """Test the normals, vertices and centers of the fundamental sector
     for all 32 crystallographic point groups.
@@ -762,6 +777,12 @@ class TestFundamentalSectorFromSymmetry:
         assert np.allclose(fs.data, normal)
         assert np.allclose(fs.vertices.data, np.zeros((0, 3)))
         assert np.allclose(fs.center.data, normal)
+
+
+@pytest.mark.parametrize("symmetry", [C1, C2, C4, D6, T, Oh])
+def test_equality(symmetry):
+    # test that inherited equality is properly tested
+    assert Rotation(symmetry) == symmetry
 
 
 class TestLaueGroup:

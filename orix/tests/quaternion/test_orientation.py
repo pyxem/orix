@@ -311,6 +311,22 @@ def test_symmetry_property_wrong_number_of_values_misorientation(error_type, val
         o.symmetry = value
 
 
+def test_orientation_equality():
+    # symmetries must also be the same to be equal
+    o1 = Orientation.random((6, 5))
+    o2 = Orientation(o1)
+    assert o1 == o2
+    o1.symmetry = C4
+    o2.symmetry = o1.symmetry
+    assert o1 == o2
+    o2.symmetry = C3
+    assert o1 != o2
+    o3 = Orientation.random((6,))
+    assert o1 != o3
+    o3.symmetry = o1.symmetry
+    assert o1 != o3
+
+
 class TestOrientationInitialization:
     def test_from_euler_symmetry(self):
         euler = np.deg2rad([90, 45, 90])
@@ -476,7 +492,7 @@ class TestOrientation:
         awo_self = o.angle_with_outer(o)
         assert awo_self.shape == shape + shape
         assert np.allclose(dist, awo_self)
-        assert np.allclose(np.diag(awo_self), 0)
+        assert np.allclose(np.diag(awo_self), 0, atol=1e-6)
 
         o2 = Orientation.random((6,))
         dist = o.angle_with_outer(o2)

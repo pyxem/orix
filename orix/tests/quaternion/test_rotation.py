@@ -84,6 +84,25 @@ def test_unit(rotation):
     assert np.allclose(rotation.unit.norm, 1)
 
 
+def test_equality():
+    r1 = Rotation.random((5,))
+    r1_copy = Rotation(r1)
+    r2 = Rotation.random((5,))
+    assert r1 == r1
+    assert r1_copy == r1
+    # test values not equal
+    assert r1 != r2
+    # test improper not equal
+    r1_copy.improper = ~r1.improper
+    assert r1_copy != r1
+    # test shape not equal
+    r3 = Rotation.random((5, 1))
+    assert r3 != r1
+    # test not Rotation returns False
+    assert r1 != 2
+    assert r1 != "test"
+
+
 @pytest.mark.parametrize(
     "rotation, quaternion, expected",
     [
@@ -359,7 +378,7 @@ def test_angle_with_outer():
     r = Rotation.random(shape)
     awo_self = r.angle_with_outer(r)
     assert awo_self.shape == shape + shape
-    assert np.allclose(np.diag(awo_self), 0)
+    assert np.allclose(np.diag(awo_self), 0, atol=1e-6)
     r2 = Rotation.random((6,))
     dist = r.angle_with_outer(r2)
     assert dist.shape == r.shape + r2.shape
