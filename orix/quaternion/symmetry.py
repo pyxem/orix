@@ -451,6 +451,69 @@ class Symmetry(Rotation):
         sr = SphericalRegion(n.unique())
         return sr
 
+    def scatter(
+        self,
+        orientation="default",
+        **kwargs,
+    ):
+        """Stereographic projection of symmetry operations.
+
+        Vectors on the upper hemisphere are shown as crosses and vectors
+        on the lower hemisphere are reprojected onto the upper hemisphere
+        and shown as open circles.
+
+        Parameters
+        ----------
+        orientation : Orientation or `"default"`
+            The symmetry operations are applied to this orientation
+            before plotting. If `"default"` is provided then the an
+            orientation optimized to show symmetry elements is used.
+        dict, optional
+            Keyword arguments passed to
+            :func:`~orix.plot.StereographicPlot.scatter`, which passes
+            these on to :meth:`matplotlib.axes.Axes.scatter`.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The created figure, returned if `return_figure` is True.
+
+        """
+
+        if isinstance(orientation, str) and orientation.lower() == "default":
+            orientation = Rotation.from_axes_angles((-1, 8, 1), np.deg2rad(65))
+        if not isinstance(orientation, Rotation):
+            raise TypeError("Orientation must be a Rotation instance or 'default'.")
+        orientation = self.outer(orientation)
+
+        v = orientation * Vector3d.zvector()
+        # separate vectors on upper/lower hemisphere
+        v_upper = v[v.z >= 0]
+        v_lower = v[v.z < 0]
+        # reproject vectors on lower hemisphere to upper hemisphere
+        v_lower.z *= -1
+
+        if "return_figure" in kwargs:
+            return_figure = kwargs.pop("return_figure")
+        else:
+            return_figure = False
+
+        if "marker" in kwargs:
+            # markers will always be plotted as crosses on upper hemisphere
+            # and open circles on lower hemisphere
+            _ = kwargs.pop("marker")
+
+        kwargs.setdefault("s", 100)
+        kwargs.setdefault("ec", "tab:blue")
+
+        figure = v_upper.scatter(
+            marker="+", return_figure=True, axes_labels=("a", "b", None), **kwargs
+        )
+        v_lower.scatter(marker="o", fc="None", figure=figure, **kwargs)
+
+        if return_figure:
+            return figure
+
 
 # Triclinic
 C1 = Symmetry((1, 0, 0, 0))
