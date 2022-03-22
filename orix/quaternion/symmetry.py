@@ -454,13 +454,14 @@ class Symmetry(Rotation):
     def plot(
         self,
         orientation="default",
+        markers=("+", "o"),
         **kwargs,
     ):
         """Stereographic projection of symmetry operations.
 
-        Vectors on the upper hemisphere are shown as crosses and vectors
-        on the lower hemisphere are reprojected onto the upper
-        hemisphere and shown as open circles.
+        The upper hemisphere of the stereographic projection is shown.
+        Vectors on the lower hemisphere are shown after reprojection
+        onto the upper hemisphere.
 
         Parameters
         ----------
@@ -468,7 +469,11 @@ class Symmetry(Rotation):
             The symmetry operations are applied to this orientation
             before plotting. If `"default"` is provided then the an
             orientation optimized to show symmetry elements is used.
-        dict, optional
+        markers : 2-tuple
+            Markers for vectors located on the upper and lower
+            hemisphere of the unit sphere, respectively. Passed to
+            `matplotlib.Axes.scatter`.
+        dict : optional
             Keyword arguments passed to
             :func:`~orix.plot.StereographicPlot.scatter`, which passes
             these on to :meth:`matplotlib.axes.Axes.scatter`.
@@ -495,23 +500,22 @@ class Symmetry(Rotation):
         # reproject vectors on lower hemisphere to upper hemisphere
         v_lower.z *= -1
 
-        if "return_figure" in kwargs:
-            return_figure = kwargs.pop("return_figure")
-        else:
-            return_figure = False
-
-        if "marker" in kwargs:
-            # markers will always be plotted as crosses on upper
-            # hemisphere and open circles on lower hemisphere
-            _ = kwargs.pop("marker")
+        kwargs.setdefault("return_figure", False)
+        return_figure = kwargs.pop("return_figure")
 
         kwargs.setdefault("s", 100)
         kwargs.setdefault("ec", "tab:blue")
 
         figure = v_upper.scatter(
-            marker="+", return_figure=True, axes_labels=("a", "b", None), **kwargs
+            marker=markers[0],
+            return_figure=True,
+            axes_labels=("a", "b", None),
+            label="upper",
+            **kwargs,
         )
-        v_lower.scatter(marker="o", fc="None", figure=figure, **kwargs)
+        v_lower.scatter(
+            marker=markers[1], fc="None", figure=figure, label="lower", **kwargs
+        )
         # add symmetry name to figure title
         figure.suptitle(f"${self.name}$")
 

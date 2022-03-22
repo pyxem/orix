@@ -418,11 +418,13 @@ def test_symmetry_plot(symmetry):
     assert len(ax.collections) == num
     c0 = ax.collections[0]
     assert len(c0.get_sizes()) == np.count_nonzero(~symmetry.improper)
+    assert c0.get_label().lower() == "upper"
     assert np.allclose(c0.get_sizes(), 100)  # default value
     assert len(c0.get_paths()[0].vertices) == 4  # for crosses
     if num > 1:
         c1 = ax.collections[1]
         assert len(c1.get_sizes()) == np.count_nonzero(symmetry.improper)
+        assert c1.get_label().lower() == "lower"
         assert np.allclose(c1.get_sizes(), 100)  # default value
         # in my experience there are 26 points in circle marker path
         # but this may not always be true
