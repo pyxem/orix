@@ -451,7 +451,7 @@ class Symmetry(Rotation):
         sr = SphericalRegion(n.unique())
         return sr
 
-    def scatter(
+    def plot(
         self,
         orientation="default",
         **kwargs,
@@ -459,8 +459,8 @@ class Symmetry(Rotation):
         """Stereographic projection of symmetry operations.
 
         Vectors on the upper hemisphere are shown as crosses and vectors
-        on the lower hemisphere are reprojected onto the upper hemisphere
-        and shown as open circles.
+        on the lower hemisphere are reprojected onto the upper
+        hemisphere and shown as open circles.
 
         Parameters
         ----------
@@ -481,6 +481,8 @@ class Symmetry(Rotation):
         """
 
         if isinstance(orientation, str) and orientation.lower() == "default":
+            # orientation chosen to mimic stereographic projections as
+            # shown: http://xrayweb.chem.ou.edu/notes/symmetry.html
             orientation = Rotation.from_axes_angles((-1, 8, 1), np.deg2rad(65))
         if not isinstance(orientation, Rotation):
             raise TypeError("Orientation must be a Rotation instance or 'default'.")
@@ -499,8 +501,8 @@ class Symmetry(Rotation):
             return_figure = False
 
         if "marker" in kwargs:
-            # markers will always be plotted as crosses on upper hemisphere
-            # and open circles on lower hemisphere
+            # markers will always be plotted as crosses on upper
+            # hemisphere and open circles on lower hemisphere
             _ = kwargs.pop("marker")
 
         kwargs.setdefault("s", 100)
