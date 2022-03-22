@@ -512,6 +512,8 @@ class Symmetry(Rotation):
             marker="+", return_figure=True, axes_labels=("a", "b", None), **kwargs
         )
         v_lower.scatter(marker="o", fc="None", figure=figure, **kwargs)
+        # add symmetry name to figure title
+        figure.suptitle(f"${self.name}$")
 
         if return_figure:
             return figure
