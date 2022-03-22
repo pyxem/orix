@@ -435,6 +435,12 @@ def test_symmetry_plot(symmetry):
     plt.close("all")
 
 
+@pytest.mark.parametrize("symmetry", [C1, C4, Oh])
+def test_symmetry_plot_raises(symmetry):
+    with pytest.raises(TypeError, match="Orientation must be a Rotation instance or"):
+        figure = symmetry.plot(return_figure=True, orientation="test")
+
+
 class TestFundamentalSectorFromSymmetry:
     """Test the normals, vertices and centers of the fundamental sector
     for all 32 crystallographic point groups.
