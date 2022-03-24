@@ -600,6 +600,39 @@ class Rotation(Quaternion):
         return cls(Quaternion(q)).unit  # Normalized
 
     @classmethod
+    def from_Rx(cls, angle):
+        matrix = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(angle), np.sin(angle)],
+                [0, -np.sin(angle), np.cos(angle)],
+            ]
+        )
+        return cls.from_matrix(matrix)
+
+    @classmethod
+    def from_Ry(cls, angle):
+        matrix = np.array(
+            [
+                [np.cos(angle), 0, np.sin(angle)],
+                [0, 1, 0],
+                [-np.sin(angle), 0, np.cos(angle)],
+            ]
+        )
+        return cls.from_matrix(matrix)
+
+    @classmethod
+    def from_Rz(cls, angle):
+        matrix = np.array(
+            [
+                [np.cos(angle), np.sin(angle), 0],
+                [-np.sin(angle), np.cos(angle), 0],
+                [0, 0, 1],
+            ]
+        )
+        return cls.from_matrix(matrix)
+
+    @classmethod
     def identity(cls, shape=(1,)):
         """Create identity rotations.
 

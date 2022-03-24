@@ -324,6 +324,9 @@ class StereographicPlot(maxes.Axes):
         if x.size == 0:
             return
 
+        if isinstance(opening_angle, np.ndarray) and opening_angle.size == visible.size:
+            opening_angle = opening_angle[visible]
+
         # Get set of `steps` vectors delineating a circle per vector
         v = self._inverse_projection.xy2vector(x, y)
         circles = v.get_circle(opening_angle=opening_angle, steps=steps).unit

@@ -370,6 +370,7 @@ class Miller(Vector3d):
             lattice=phase.structure.lattice, min_dspacing=min_dspacing
         )
         hkl = _get_indices_from_highest(highest_indices=highest_hkl)
+        hkl = hkl.astype(float).round(0)
         return cls(hkl=hkl, phase=phase).unique()
 
     def deepcopy(self):
@@ -736,7 +737,7 @@ def _uvw2xyz(uvw, lattice):
     uvw = np.asarray(uvw)
     shape = uvw.shape
     uvw = uvw.reshape((uvw.size // 3, 3))
-    xyz = _direct_structure_matrix(lattice).dot(uvw.T).T
+    xyz = np.matmul(uvw, lattice.base.T)
     return xyz.reshape(shape)
 
 
@@ -744,7 +745,7 @@ def _xyz2uvw(xyz, lattice):
     xyz = np.asarray(xyz)
     shape = xyz.shape
     xyz = xyz.reshape((xyz.size // 3, 3))
-    uvw = xyz.dot(_reciprocal_structure_matrix(lattice))
+    uvw = np.matmul(xyz, lattice.recbase.T)
     return uvw.reshape(shape)
 
 
@@ -752,7 +753,7 @@ def _hkl2xyz(hkl, lattice):
     hkl = np.asarray(hkl)
     shape = hkl.shape
     hkl = hkl.reshape((hkl.size // 3, 3))
-    xyz = _reciprocal_structure_matrix(lattice).dot(hkl.T).T
+    xyz = np.matmul(hkl, lattice.recbase)
     return xyz.reshape(shape)
 
 
@@ -760,7 +761,7 @@ def _xyz2hkl(xyz, lattice):
     xyz = np.asarray(xyz)
     shape = xyz.shape
     xyz = xyz.reshape((xyz.size // 3, 3))
-    hkl = xyz.dot(_direct_structure_matrix(lattice))
+    hkl = np.matmul(xyz, lattice.base)
     return hkl.reshape(shape)
 
 
