@@ -484,7 +484,6 @@ class Symmetry(Rotation):
             The created figure, returned if `return_figure` is supplied
             as a keyword argument and is True.
         """
-
         if orientation is None:
             # orientation chosen to mimic stereographic projections as
             # shown: http://xrayweb.chem.ou.edu/notes/symmetry.html
