@@ -472,7 +472,7 @@ class Symmetry(Rotation):
         markers : tuple, optional
             Markers for vectors located on the upper and lower
             hemisphere of the unit sphere, respectively. Passed to
-            `matplotlib.Axes.scatter`.
+            :meth:`matplotlib.axes.Axes.scatter()`.
         kwargs
             Keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.scatter()`, which passes
