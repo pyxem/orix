@@ -430,8 +430,8 @@ def test_symmetry_plot(symmetry):
 
 @pytest.mark.parametrize("symmetry", [C1, C4, Oh])
 def test_symmetry_plot_raises(symmetry):
-    with pytest.raises(TypeError, match="Orientation must be a Rotation instance or"):
-        figure = symmetry.plot(return_figure=True, orientation="test")
+    with pytest.raises(TypeError, match="Orientation must be a Rotation instance"):
+        _ = symmetry.plot(return_figure=True, orientation="test")
 
 
 class TestFundamentalSectorFromSymmetry:
