@@ -19,7 +19,6 @@
 from copy import deepcopy
 
 from diffpy.structure.spacegroups import GetSpaceGroup
-from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 import numpy as np
 import pytest
@@ -411,24 +410,18 @@ def test_hash_persistence():
 @pytest.mark.parametrize("symmetry", [C1, C4, Oh])
 def test_symmetry_plot(symmetry):
     figure = symmetry.plot(return_figure=True)
-    assert isinstance(figure, Figure)
+    assert isinstance(figure, plt.Figure)
     assert len(figure.axes) == 1
     ax = figure.axes[0]
-    num = 2 if symmetry.improper.any() else 1
+    num = 1 if symmetry.is_proper else 2
     assert len(ax.collections) == num
     c0 = ax.collections[0]
     assert len(c0.get_sizes()) == np.count_nonzero(~symmetry.improper)
     assert c0.get_label().lower() == "upper"
-    assert np.allclose(c0.get_sizes(), 100)  # default value
-    assert len(c0.get_paths()[0].vertices) == 4  # for crosses
     if num > 1:
         c1 = ax.collections[1]
         assert len(c1.get_sizes()) == np.count_nonzero(symmetry.improper)
         assert c1.get_label().lower() == "lower"
-        assert np.allclose(c1.get_sizes(), 100)  # default value
-        # in my experience there are 26 points in circle marker path
-        # but this may not always be true
-        assert len(c1.get_paths()[0].vertices) > 10  # for circles
     assert len(ax.texts) == 2
     assert ax.texts[0].get_text() == "a"
     assert ax.texts[1].get_text() == "b"
