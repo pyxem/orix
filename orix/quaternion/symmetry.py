@@ -453,7 +453,7 @@ class Symmetry(Rotation):
 
     def plot(
         self,
-        orientation="default",
+        orientation=None,
         markers=("+", "o"),
         **kwargs,
     ):
@@ -465,32 +465,32 @@ class Symmetry(Rotation):
 
         Parameters
         ----------
-        orientation : Orientation or `"default"`
+        orientation : Orientation, optional
             The symmetry operations are applied to this orientation
-            before plotting. If `"default"` is provided then the an
-            orientation optimized to show symmetry elements is used.
-        markers : 2-tuple
+            before plotting. The default value uses an orientation
+            optimized to show symmetry elements.
+        markers : tuple, optional
             Markers for vectors located on the upper and lower
             hemisphere of the unit sphere, respectively. Passed to
             `matplotlib.Axes.scatter`.
-        dict : optional
+        kwargs
             Keyword arguments passed to
-            :func:`~orix.plot.StereographicPlot.scatter`, which passes
-            these on to :meth:`matplotlib.axes.Axes.scatter`.
+            :meth:`~orix.plot.StereographicPlot.scatter()`, which passes
+            these on to :meth:`matplotlib.axes.Axes.scatter()`.
 
         Returns
         -------
         fig : matplotlib.figure.Figure
-            The created figure, returned if `return_figure` is True.
-
+            The created figure, returned if `return_figure` is supplied
+            as a keyword argument and is True.
         """
 
-        if isinstance(orientation, str) and orientation.lower() == "default":
+        if orientation is None:
             # orientation chosen to mimic stereographic projections as
             # shown: http://xrayweb.chem.ou.edu/notes/symmetry.html
             orientation = Rotation.from_axes_angles((-1, 8, 1), np.deg2rad(65))
         if not isinstance(orientation, Rotation):
-            raise TypeError("Orientation must be a Rotation instance or 'default'.")
+            raise TypeError("Orientation must be a Rotation instance.")
         orientation = self.outer(orientation)
 
         v = orientation * Vector3d.zvector()
