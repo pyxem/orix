@@ -670,7 +670,10 @@ class Vector3d(Object3d):
         --------
         orix.plot.StereographicPlot
         """
-        both_hemispheres = True if hemisphere.lower() == "both" else False
+        if hemisphere is None or hemisphere.lower() != "both":
+            both_hemispheres = False
+        else:
+            both_hemispheres = True
         (
             fig,
             axes,
