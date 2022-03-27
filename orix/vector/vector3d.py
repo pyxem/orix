@@ -591,9 +591,11 @@ class Vector3d(Object3d):
         axes_labels=None,
         vector_labels=None,
         hemisphere=None,
+        reproject=False,
         show_hemisphere_label=None,
         grid=None,
         grid_resolution=None,
+        reproject_marker="+",
         figure_kwargs=None,
         text_kwargs=None,
         return_figure=False,
@@ -619,6 +621,10 @@ class Vector3d(Object3d):
             otherwise adds to the current figure's hemispheres. Options
             are "upper", "lower", and "both", which plots two
             projections side by side.
+        reproject : bool, optional
+            Whether to reproject vectors onto the chosen hemisphere.
+            Reprojection is achieved by reflection in the x-y plane.
+            Ignored if hemisphere is "both".
         show_hemisphere_label : bool, optional
             Whether to show hemisphere labels "upper" or "lower".
             Default is True if `hemisphere` is "both", otherwise False.
@@ -630,6 +636,9 @@ class Vector3d(Object3d):
             Azimuth and polar grid resolution in degrees, as a tuple.
             Default is whatever is default in
             :class:`~orix.plot.StereographicPlot.stereographic_grid`.
+        reproject_marker : str, optional
+            Marker used to represent reprojected vectors.
+            Default is "+".
         figure_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
@@ -661,6 +670,7 @@ class Vector3d(Object3d):
         --------
         orix.plot.StereographicPlot
         """
+        both_hemispheres = True if hemisphere.lower() == "both" else False
         (
             fig,
             axes,
@@ -681,11 +691,27 @@ class Vector3d(Object3d):
             text_kwargs=text_kwargs,
             axes_labels=axes_labels,
         )
-
+        upper_mask = self.z >= 0
+        v_upper = self[upper_mask]
+        v_lower = self[~upper_mask]
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.scatter(self, **kwargs)
+            # only reproject if both hemispheres are not shown
+            if reproject and not both_hemispheres:
+                # project z-data to other hemisphere
+                factor = (1, 1, -1)
+                # overwrite marker in kwargs
+                reproject_kwargs = {**kwargs, **dict(marker=reproject_marker)}
+                if hemisphere[i] == "upper":
+                    ax.scatter(
+                        self.__class__(v_lower.data * factor), **reproject_kwargs
+                    )
+                else:  # "lower"
+                    ax.scatter(
+                        self.__class__(v_upper.data * factor), **reproject_kwargs
+                    )
             ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
             ax._stereographic_grid = grid[i]
             ax.set_labels(*axes_labels)
