@@ -639,6 +639,8 @@ class StereographicPlot(maxes.Axes):
             Stereographic x coordinates of unit vectors.
         y : numpy.ndarray
             Stereographic y coordinates of unit vectors.
+        visible : numpy.ndarray
+            Whether these values are visible on the axes.
         """
         pole = self.pole
         if len(values) == 2:
