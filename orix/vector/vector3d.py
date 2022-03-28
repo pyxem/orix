@@ -701,16 +701,17 @@ class Vector3d(Object3d):
             text_kwargs=text_kwargs,
             axes_labels=axes_labels,
         )
-        # setup reproject scatter plotting args
-        if reproject_scatter_kwargs is None:
-            reproject_scatter_kwargs = {}
-        reproject_scatter_kwargs.setdefault("marker", "+")
-        # unless otherwise defined, copy normal scatter kwargs
-        for k, v in kwargs.items():
-            if k not in reproject_scatter_kwargs.keys():
-                reproject_scatter_kwargs[k] = v
-        # multiplicative factor to project z-data to other hemisphere
-        factor = (1, 1, -1)
+        if reproject and not both_hemispheres:
+            # setup reproject scatter plotting args
+            if reproject_scatter_kwargs is None:
+                reproject_scatter_kwargs = {}
+            reproject_scatter_kwargs.setdefault("marker", "+")
+            # unless otherwise defined, copy normal scatter kwargs
+            for k, v in kwargs.items():
+                if k not in reproject_scatter_kwargs.keys():
+                    reproject_scatter_kwargs[k] = v
+            # multiplicative factor to project z-data to other hemisphere
+            factor = (1, 1, -1)
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
