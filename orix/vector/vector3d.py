@@ -623,8 +623,9 @@ class Vector3d(Object3d):
             projections side by side.
         reproject : bool, optional
             Whether to reproject vectors onto the chosen hemisphere.
-            Reprojection is achieved by reflection in the x-y plane.
-            Ignored if hemisphere is "both".
+            Reprojection is achieved by reflection of the vectors
+            located on the opposite hemisphere in the x-y plane.
+            Ignored if `hemisphere` is "both".
         show_hemisphere_label : bool, optional
             Whether to show hemisphere labels "upper" or "lower".
             Default is True if `hemisphere` is "both", otherwise False.

@@ -562,14 +562,19 @@ class TestPlotting:
     def test_scatter_reproject(self):
         o = Orientation.from_axes_angles((-1, 8, 1), np.deg2rad(65))
         v = (symmetry.Oh * o) * Vector3d.zvector()
+        # normal scatter: half of the vectors are shown
         fig1 = v.scatter(hemisphere="upper", reproject=False, return_figure=True)
         assert (
             sum(len(c.get_offsets()) for c in fig1.axes[0].collections) == v.size // 2
         )
+        # reproject: all of the vectors are shown
         fig2 = v.scatter(hemisphere="upper", reproject=True, return_figure=True)
         assert sum(len(c.get_offsets()) for c in fig2.axes[0].collections) == v.size
+        # reproject: all of the vectors are shown
         fig3 = v.scatter(hemisphere="lower", reproject=True, return_figure=True)
         assert sum(len(c.get_offsets()) for c in fig3.axes[0].collections) == v.size
+        # reproject hemisphere="both": reprojection is ignored so
+        # half of the vectors are shown on each axes as normal
         fig4 = v.scatter(hemisphere="both", reproject=True, return_figure=True)
         for ax in fig4.axes:
             assert sum(len(c.get_offsets()) for c in ax.collections) == v.size // 2
