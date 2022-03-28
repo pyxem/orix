@@ -637,27 +637,24 @@ class Vector3d(Object3d):
             Azimuth and polar grid resolution in degrees, as a tuple.
             Default is whatever is default in
             :class:`~orix.plot.StereographicPlot.stereographic_grid`.
-        reproject_marker : str, optional
-            Marker used to represent reprojected vectors.
-            Default is "+".
         figure_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
         reproject_scatter_kwargs: dict, optional
             Dictionary of keyword arguments for the reprojected scatter
             points which is passed to
-            func:`~orix.plot.StereographicPlot.scatter`, which passes
+            :meth:`~orix.plot.StereographicPlot.scatter`, which passes
             these on to :meth:`matplotlib.axes.Axes.scatter`. The
             default marker style for reprojected vectors is "+".
         text_kwargs : dict, optional
             Dictionary of keyword arguments passed to
-            :func:`~orix.plot.StereographicPlot.text`, which passes
+            :meth:`~orix.plot.StereographicPlot.text`, which passes
             these on to :meth:`matplotlib.axes.Axes.text`.
         return_figure : bool, optional
             Whether to return the figure (default is False).
         kwargs : dict, optional
             Keyword arguments passed to
-            :func:`~orix.plot.StereographicPlot.scatter`, which passes
+            :meth:`~orix.plot.StereographicPlot.scatter`, which passes
             these on to :meth:`matplotlib.axes.Axes.scatter`.
 
         Returns
@@ -704,22 +701,22 @@ class Vector3d(Object3d):
             text_kwargs=text_kwargs,
             axes_labels=axes_labels,
         )
+        # setup reproject scatter plotting args
+        if reproject_scatter_kwargs is None:
+            reproject_scatter_kwargs = {}
+        reproject_scatter_kwargs.setdefault("marker", "+")
+        # unless otherwise defined, copy normal scatter kwargs
+        for k, v in kwargs.items():
+            if k not in reproject_scatter_kwargs.keys():
+                reproject_scatter_kwargs[k] = v
+        # multiplicative factor to project z-data to other hemisphere
+        factor = (1, 1, -1)
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.scatter(self, **kwargs)
             # only reproject if both hemispheres are not shown
             if reproject and not both_hemispheres:
-                # setup reproject scatter plotting args
-                if reproject_scatter_kwargs is None:
-                    reproject_scatter_kwargs = {}
-                reproject_scatter_kwargs.setdefault("marker", "+")
-                # unless otherwise defined, copy normal scatter kwargs
-                for k, v in kwargs.items():
-                    if k not in reproject_scatter_kwargs.keys():
-                        reproject_scatter_kwargs[k] = v
-                # project z-data to other hemisphere
-                factor = (1, 1, -1)
                 visible = _is_visible(self.polar, ax.pole)
                 ax.scatter(
                     self.__class__(self[~visible].data * factor),
