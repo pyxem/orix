@@ -642,7 +642,7 @@ class TestPlotting:
             reproject=True,
             return_figure=True,
             color=["r", "g"],
-            reproject_linestyle="-.",
+            reproject_plot_kwargs=dict(linestyle="-."),
         )
         circles3 = fig3.axes[0].lines
         assert len(circles3) == 4

@@ -744,7 +744,6 @@ class Vector3d(Object3d):
         opening_angle=np.pi / 2,
         steps=100,
         reproject=False,
-        reproject_linestyle="--",
         axes_labels=None,
         hemisphere=None,
         show_hemisphere_label=None,
@@ -779,9 +778,6 @@ class Vector3d(Object3d):
             Whether to also draw the circle(s) visible on this
             hemisphere of the antipodal vector(s), `-self` (default is
             False). Ignored if `hemisphere` is "both".
-        reproject_linestyle : str, optional
-            Linestyle for circle(s) visible on this hemisphere of the
-            antipodal vector(s). Default is "--".
         axes_labels : list of str, optional
             Reference frame axes labels, defaults to [None, None, None].
         hemisphere : str, optional
@@ -808,8 +804,9 @@ class Vector3d(Object3d):
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the appearance of
             the circle(s) visible on this hemisphere of the antipodal
-            vector(s), `-self`. Values used circle(s) on the visible
-            hemisphere are used unless another value is passed.
+            vector(s), `-self`. The linestyle for these circles is "--"
+            by default. Values used for circle(s) on the visible
+            hemisphere are used unless another value is passed here.
         return_figure : bool, optional
             Whether to return the figure (default is False).
         kwargs
@@ -863,7 +860,7 @@ class Vector3d(Object3d):
         if reproject and not both_hemispheres:
             if reproject_plot_kwargs is None:
                 reproject_plot_kwargs = {}
-            reproject_plot_kwargs.setdefault("linestyle", reproject_linestyle)
+            reproject_plot_kwargs.setdefault("linestyle", "--")
             for k, v in kwargs.items():
                 if k not in reproject_plot_kwargs.keys():
                     reproject_plot_kwargs[k] = v
