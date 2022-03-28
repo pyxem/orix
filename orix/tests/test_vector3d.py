@@ -568,8 +568,13 @@ class TestPlotting:
             sum(len(c.get_offsets()) for c in fig1.axes[0].collections) == v.size // 2
         )
         # reproject: all of the vectors are shown
-        fig2 = v.scatter(hemisphere="upper", reproject=True, return_figure=True)
+        fig2 = v.scatter(hemisphere="upper", reproject=True, return_figure=True, c="r")
         assert sum(len(c.get_offsets()) for c in fig2.axes[0].collections) == v.size
+        # (1, 0, 0, 1) is red in RGBA
+        assert all(
+            np.allclose(c.get_edgecolor(), (1, 0, 0, 1))
+            for c in fig2.axes[0].collections
+        )
         # reproject: all of the vectors are shown
         fig3 = v.scatter(hemisphere="lower", reproject=True, return_figure=True)
         assert sum(len(c.get_offsets()) for c in fig3.axes[0].collections) == v.size
