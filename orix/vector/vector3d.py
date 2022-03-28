@@ -645,7 +645,9 @@ class Vector3d(Object3d):
             points which is passed to
             :meth:`~orix.plot.StereographicPlot.scatter`, which passes
             these on to :meth:`matplotlib.axes.Axes.scatter`. The
-            default marker style for reprojected vectors is "+".
+            default marker style for reprojected vectors is "+". Values
+            used for vector(s) on the visible hemisphere are used unless
+            another value is passed here.
         text_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.text`, which passes
