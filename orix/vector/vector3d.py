@@ -743,12 +743,15 @@ class Vector3d(Object3d):
         figure=None,
         opening_angle=np.pi / 2,
         steps=100,
+        reproject=False,
+        reproject_linestyle="--",
         axes_labels=None,
         hemisphere=None,
         show_hemisphere_label=None,
         grid=None,
         grid_resolution=None,
         figure_kwargs=None,
+        reproject_plot_kwargs=None,
         return_figure=False,
         **kwargs,
     ):
@@ -772,6 +775,13 @@ class Vector3d(Object3d):
             its size must be equal to the number of vectors.
         steps : int, optional
             Number of vectors to describe each circle, default is 100.
+        reproject : bool, optional
+            Whether to also draw the circle(s) visible on this
+            hemisphere of the antipodal vector(s), `-self` (default is
+            False). Ignored if `hemisphere` is "both".
+        reproject_linestyle : str, optional
+            Linestyle for circle(s) visible on this hemisphere of the
+            antipodal vector(s). Default is "--".
         axes_labels : list of str, optional
             Reference frame axes labels, defaults to [None, None, None].
         hemisphere : str, optional
@@ -794,6 +804,12 @@ class Vector3d(Object3d):
         figure_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
+        reproject_plot_kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot` to alter the appearance of
+            the circle(s) visible on this hemisphere of the antipodal
+            vector(s), `-self`. Values used circle(s) on the visible
+            hemisphere are used unless another value is passed.
         return_figure : bool, optional
             Whether to return the figure (default is False).
         kwargs
@@ -819,6 +835,11 @@ class Vector3d(Object3d):
         orix.plot.StereographicPlot
         orix.vector.Vector3d.get_circle
         """
+        if hemisphere is None or hemisphere.lower() != "both":
+            both_hemispheres = False
+        else:
+            both_hemispheres = True
+
         (
             fig,
             axes,
@@ -839,10 +860,29 @@ class Vector3d(Object3d):
             axes_labels=axes_labels,
         )
 
+        if reproject and not both_hemispheres:
+            if reproject_plot_kwargs is None:
+                reproject_plot_kwargs = {}
+            reproject_plot_kwargs.setdefault("linestyle", reproject_linestyle)
+            for k, v in kwargs.items():
+                if k not in reproject_plot_kwargs.keys():
+                    reproject_plot_kwargs[k] = v
+            other_hemisphere = {"upper": "lower", "lower": "upper"}
+
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.draw_circle(self, opening_angle=opening_angle, steps=steps, **kwargs)
+            # only reproject if both hemispheres are not shown
+            if reproject and not both_hemispheres:
+                ax.hemisphere = other_hemisphere[ax.hemisphere]
+                ax.draw_circle(
+                    -self,
+                    opening_angle=opening_angle,
+                    steps=steps,
+                    **reproject_plot_kwargs,
+                )
+                ax.hemisphere = other_hemisphere[ax.hemisphere]
             ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
             ax._stereographic_grid = grid[i]
             ax.set_labels(*axes_labels)
