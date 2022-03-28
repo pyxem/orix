@@ -1,3 +1,12 @@
+.. raw:: html
+
+    <p>
+      <h1>
+        <a href="https://orix.readthedocs.io/en/stable/"><img src="doc/_static/img/orix_logo.png" height="100" height="100" alt="orix logo"/></a>
+        orix
+      </h1>
+    </p>
+
 |binder|_ |build_status|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
