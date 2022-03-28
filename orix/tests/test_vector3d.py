@@ -622,6 +622,36 @@ class TestPlotting:
 
         plt.close("all")
 
+    def test_draw_circle_reproject(self):
+        """Ensure that circles of antipodal vectors (`-self`) are added
+        with correct appearance to `StereographicPlot.lines`.
+        """
+        v = Vector3d([(1, 1, 1), (-1, 1, 1)])
+
+        fig1 = v.draw_circle(return_figure=True)
+        assert len(fig1.axes[0].lines) == 2
+
+        fig2 = v.draw_circle(reproject=True, return_figure=True)
+        circles2 = fig2.axes[0].lines
+        assert len(circles2) == 4
+        for c, style in zip(circles2, ["-", "-", "--", "--"]):
+            assert c.get_linestyle() == style
+            assert c.get_color() == "C0"
+
+        fig3 = v.draw_circle(
+            reproject=True,
+            return_figure=True,
+            color=["r", "g"],
+            reproject_linestyle="-.",
+        )
+        circles3 = fig3.axes[0].lines
+        assert len(circles3) == 4
+        for c, style, color in zip(
+            circles3, ["-", "-", "-.", "-."], ["r", "g", "r", "g"]
+        ):
+            assert c.get_linestyle() == style
+            assert c.get_color() == color
+
 
 class TestProjectingToFundamentalSector:
     def test_in_fundamental_sector_oh(self):
