@@ -409,7 +409,7 @@ def test_hash_persistence():
 
 @pytest.mark.parametrize("symmetry", [C1, C4, Oh])
 def test_symmetry_plot(symmetry):
-    figure = symmetry.plot(return_figure=True, reproject_scatter_kwargs=dict(c="r"))
+    figure = symmetry.plot(return_figure=True)
     assert isinstance(figure, plt.Figure)
     assert len(figure.axes) == 1
     ax = figure.axes[0]
@@ -422,8 +422,6 @@ def test_symmetry_plot(symmetry):
         c1 = ax.collections[1]
         assert len(c1.get_offsets()) == np.count_nonzero(symmetry.improper)
         assert c1.get_label().lower() == "lower"
-        # (1, 0, 0, 1) is "r" in RGBA
-        assert np.allclose(c1.get_edgecolor(), (1, 0, 0, 1))
     assert len(ax.texts) == 2
     assert ax.texts[0].get_text() == "a"
     assert ax.texts[1].get_text() == "b"
