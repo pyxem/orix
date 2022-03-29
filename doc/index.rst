@@ -1,7 +1,3 @@
-====
-orix
-====
-
 .. include:: ../README.rst
 
 Work using orix
