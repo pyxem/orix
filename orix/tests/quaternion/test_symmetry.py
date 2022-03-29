@@ -434,23 +434,44 @@ def test_get_point_group():
         assert pg == spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
 
 
-def test_unique_symmetry_elements(all_symmetries):
+def test_unique_symmetry_elements_subgroups(all_symmetries):
+    # test that the unique symmetry elements between a symmetry and its
+    # subgroups are the original symmetry
     sym = all_symmetries
     for sg in sym.subgroups:
         # outer of symmetry with its subgroups
         u = sym.outer(sg).unique()
         # assert that unique is same size as main symmetry
-        if u.size != sym.size:
-            result = False
-        else:
-            # check that there is no difference between unique
-            # and main symmetry
-            diff = (sym * ~u).angle.data
-            if np.allclose(diff, 0):
-                result = True
-            else:
-                result = False
-    assert result
+        assert u.size == sym.size
+        # check that there is no difference between unique
+        # and main symmetry
+        assert np.allclose((sym * ~u).angle, 0)
+
+
+def test_two_symmetries_are_not_in_each_others_subgroup(all_symmetries):
+    # if given two symmetries, test that both do not exist in the
+    # subgroup of the other
+    sym1 = all_symmetries
+    # identify place in list by name, cannot test symmetry directy as D3
+    # and D3x are the same and causes an index issue
+    i = [s.name for s in symmetry._groups].index(sym1.name)
+    if i + 1 == len(symmetry._groups):
+        # only can test with last symmetry, ie. self
+        val = True
+    else:
+        values = []
+        for sym2 in symmetry._groups[i + 1 :]:
+            if {sym1.name, sym2.name} == {"32", "321"}:
+                # D3 and D3x are defined to be the same, so do not test
+                continue
+            sym2_in_sym1_sg = True if sym2 in sym1.subgroups else False
+            sym1_in_sym2_sg = True if sym1 in sym2.subgroups else False
+            values.append(sym2_in_sym1_sg + sym1_in_sym2_sg)
+        # value==0 is okay, ie. unrelated symmetries
+        # value==1 is okay, ie. only one is subgroup of other
+        # if value==2 then both symmetries exist in subgroup of other
+        val = not any(v == 2 for v in values)
+    assert val
 
 
 def test_hash():
