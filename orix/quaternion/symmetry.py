@@ -841,7 +841,30 @@ def _get_laue_group_name(name):
 
 
 def _get_unique_symmetry_elements(sym1, sym2):
-    """Returns the unique symmetry elements between two `Symmetry`."""
+    """Compute the unique symmetry elements between two `Symmetry`
+    instances.
+
+    To improve computation speed some checks are performed prior to
+    explicit computation of the unique elements. If `sym1 == sym2`
+    then the unique elements are just the symmetries themselves, and so
+    are returned. If either symmetry exists within the `subgroup` of the
+    other then the unique symmetry elements are the elements defined by
+    the parent symmetry, which is returned.
+
+    If no relationship can is determined between the symmetries then the
+    unique symmetry elements are explicitly computed. In this case the
+    order of the computation matters and is `sym1.outer(sym2).unique()`
+    here.
+
+    Parameters
+    ----------
+    sym1, sym2 : Symmetry
+
+    Returns
+    -------
+    unique : Symmetry
+        The unique symmetry elements.
+    """
     if sym1 == sym2:
         return sym1
     # test whether either symmetry is in the subgroup of the other
