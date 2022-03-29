@@ -528,7 +528,8 @@ C4 = Symmetry(C4z)
 C4.name = "4"
 
 # Tetragonal
-S4 = Symmetry.from_generators(C2, Ci)
+S4 = Symmetry(C4)
+S4.improper = [0, 1, 0, 1]
 S4.name = "-4"
 C4h = Symmetry.from_generators(C4, Cs)
 C4h.name = "4/m"
