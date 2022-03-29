@@ -668,37 +668,6 @@ def test_set_symmetry_deprecation_warning_misorientation():
         _ = o.set_symmetry(C2, C2)
 
 
-@pytest.mark.parametrize("symmetry", [Oh, D6h, D3d, D4, D2h, C2, C1])
-def test_symmetry_dot_unique_same_symmetry_equal(symmetry):
-    o1 = Orientation.random()
-    o2 = Orientation.random()
-    o1.symmetry = symmetry
-    o2.symmetry = symmetry
-    assert o1.symmetry == o2.symmetry
-    dp1 = o1.dot(o2)
-    o2.symmetry = deepcopy(o2.symmetry)
-    assert o1.symmetry != o2.symmetry
-    assert np.allclose(o1.symmetry.data, o2.symmetry.data)
-    dp2 = o1.dot(o2)
-    assert np.allclose(dp1.data, dp2.data)
-
-
-@pytest.mark.parametrize("symmetry", [Oh, D6h, D3d, D4, D2h, C2, C1])
-def test_symmetry_dot_outer_unique_same_symmetry_equal(symmetry):
-    o1 = Orientation.random((5, 3))
-    o2 = Orientation.random((6, 2))
-    o1.symmetry = symmetry
-    o2.symmetry = symmetry
-    assert o1.symmetry == o2.symmetry
-    dp1 = o1.dot_outer(o2)
-    assert dp1.shape == o2.shape + o1.shape
-    o2.symmetry = deepcopy(o2.symmetry)
-    assert o1.symmetry != o2.symmetry
-    assert np.allclose(o1.symmetry.data, o2.symmetry.data)
-    dp2 = o1.dot_outer(o2)
-    assert np.allclose(dp1.data, dp2.data)
-
-
 # TODO: remove in 1.0
 def test_from_euler_convention_mtex():
     angles = [1, 2, 3]
