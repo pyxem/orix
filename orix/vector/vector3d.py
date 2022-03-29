@@ -781,7 +781,7 @@ class Vector3d(Object3d):
             are "upper", "lower", and "both", which plots two
             projections side by side.
         show_hemisphere_label : bool, optional
-            Whether to show hemisphere labels "upper" or "lower`Vector3d.z`, since ".
+            Whether to show hemisphere labels "upper" or "lower`.
             Default is True if `hemisphere` is "both", otherwise False.
         grid : bool, optional
             Whether to show the azimuth and polar grid. Default is
@@ -798,9 +798,9 @@ class Vector3d(Object3d):
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the appearance of
             parts of the circle(s) visible on the other hemisphere if
-            `reproject` is True. The linestyle for these parts is "--"
-            by default. Values used for circle(s) on the current
-            hemisphere are used unless values are passed here.
+            `reproject` is True. These lines are dashed by default.
+            Values used for circle(s) on the current hemisphere are used
+            unless values are passed here.
         return_figure : bool, optional
             Whether to return the figure (default is False).
         kwargs

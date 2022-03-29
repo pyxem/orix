@@ -307,9 +307,9 @@ class StereographicPlot(maxes.Axes):
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the appearance of
             parts of the circle(s) visible on the other hemisphere if
-            `reproject` is True. The linestyle for these parts is "--"
-            by default. Values used for circle(s) on the current
-            hemisphere are used unless values are passed here.
+            `reproject` is True. These lines are dashed by default.
+            Values used for circle(s) on the current hemisphere are used
+            unless values are passed here.
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the circles'
