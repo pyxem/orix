@@ -32,7 +32,7 @@ from orix.quaternion.symmetry import (
     C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
     T, Th, O, Td, Oh,  # cubic
-    get_unique_symmetry_elements, spacegroup2pointgroup_dict, _groups,
+    spacegroup2pointgroup_dict, _groups, _get_unique_symmetry_elements
 )
 # fmt: on
 from orix.quaternion import get_point_group, Rotation, Symmetry
@@ -228,9 +228,9 @@ def test_get_unique_symmetry_elements(all_symmetries):
     result_sym_first_arg = []
     result_sym_second_arg = []
     for sg in sym.subgroups:
-        u1 = get_unique_symmetry_elements(sym, sg)
+        u1 = _get_unique_symmetry_elements(sym, sg)
         result_sym_first_arg.append(u1)
-        u2 = get_unique_symmetry_elements(sg, sym)
+        u2 = _get_unique_symmetry_elements(sg, sym)
         result_sym_second_arg.append(u2)
     assert all(np.allclose(s.data, sym.data) for s in result_sym_first_arg)
     assert all(np.allclose(s.data, sym.data) for s in result_sym_second_arg)
@@ -480,8 +480,8 @@ def test_unique_unrelated_symmetries():
     assert sym1 not in sym2.subgroups
     assert sym2 not in sym1.subgroups
     # unique will be computed manually
-    sym12 = get_unique_symmetry_elements(sym1, sym2)
-    sym21 = get_unique_symmetry_elements(sym2, sym1)
+    sym12 = _get_unique_symmetry_elements(sym1, sym2)
+    sym21 = _get_unique_symmetry_elements(sym2, sym1)
     sym12 = sym12[np.lexsort(sym12.data.T)]
     sym21 = sym21[np.lexsort(sym21.data.T)]
     assert sym12.size == sym21.size
