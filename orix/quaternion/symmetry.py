@@ -454,7 +454,7 @@ class Symmetry(Rotation):
     def plot(
         self,
         orientation=None,
-        markers=("+", "o"),
+        reproject_scatter_kwargs=None,
         **kwargs,
     ):
         """Stereographic projection of symmetry operations.
@@ -469,14 +469,18 @@ class Symmetry(Rotation):
             The symmetry operations are applied to this orientation
             before plotting. The default value uses an orientation
             optimized to show symmetry elements.
-        markers : tuple, optional
-            Markers for vectors located on the upper and lower
-            hemisphere of the unit sphere, respectively. Passed to
-            :meth:`matplotlib.axes.Axes.scatter()`.
-        kwargs
+        reproject_scatter_kwargs: dict, optional
+            Dictionary of keyword arguments for the reprojected scatter
+            points which is passed to
+            :meth:`~orix.plot.StereographicPlot.scatter`, which passes
+            these on to :meth:`matplotlib.axes.Axes.scatter`. The
+            default marker style for reprojected vectors is "+". Values
+            used for vector(s) on the visible hemisphere are used unless
+            another value is passed here.
+        kwargs : dict, optional
             Keyword arguments passed to
-            :meth:`~orix.plot.StereographicPlot.scatter()`, which passes
-            these on to :meth:`matplotlib.axes.Axes.scatter()`.
+            :meth:`~orix.plot.StereographicPlot.scatter`, which passes
+            these on to :meth:`matplotlib.axes.Axes.scatter`.
 
         Returns
         -------
@@ -492,28 +496,23 @@ class Symmetry(Rotation):
             raise TypeError("Orientation must be a Rotation instance.")
         orientation = self.outer(orientation)
 
-        v = orientation * Vector3d.zvector()
-        # separate vectors on upper/lower hemisphere
-        v_upper = v[v.z >= 0]
-        v_lower = v[v.z < 0]
-        # reproject vectors on lower hemisphere to upper hemisphere
-        v_lower.z *= -1
-
         kwargs.setdefault("return_figure", False)
         return_figure = kwargs.pop("return_figure")
 
-        kwargs.setdefault("s", 100)
-        kwargs.setdefault("ec", "tab:blue")
+        if reproject_scatter_kwargs is None:
+            reproject_scatter_kwargs = {}
+        reproject_scatter_kwargs.setdefault("marker", "+")
+        reproject_scatter_kwargs.setdefault("label", "lower")
 
-        figure = v_upper.scatter(
-            marker=markers[0],
+        v = orientation * Vector3d.zvector()
+
+        figure = v.scatter(
             return_figure=True,
             axes_labels=("a", "b", None),
             label="upper",
+            reproject=True,
+            reproject_scatter_kwargs=reproject_scatter_kwargs,
             **kwargs,
-        )
-        v_lower.scatter(
-            marker=markers[1], fc="None", figure=figure, label="lower", **kwargs
         )
         # add symmetry name to figure title
         figure.suptitle(f"${self.name}$")
