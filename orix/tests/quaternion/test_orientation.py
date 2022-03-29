@@ -661,31 +661,3 @@ def test_set_symmetry_deprecation_warning_misorientation():
     o = Misorientation.random((3, 2))
     with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
         _ = o.set_symmetry(C2, C2)
-
-
-# TODO: remove in 1.0
-def test_from_euler_convention_mtex():
-    angles = [1, 2, 3]
-    o1 = Orientation.from_euler(angles, convention="mtex")
-    o2 = Orientation.from_euler(angles, direction="crystal2lab")
-    o3 = Orientation.from_euler(angles, direction="lab2crystal")
-    assert np.allclose(o2.data, o1.data)
-    assert np.allclose((o1 * ~o2).angle.data, 0)
-
-
-def test_get_identity():
-    """Get the identity orientation via two alternative routes."""
-    o1 = Orientation([0.4884, 0.1728, 0.2661, 0.8129])
-    o2 = Orientation([0.8171, -0.2734, 0.161, -0.4813])
-
-    # Route 1 from a Misorientation instance
-    m12_1 = o2 - o1
-    o3_1 = (m12_1 * o1) * ~o2
-
-    # Route 2 from a third Orientation instance
-    m12_2 = o2 * ~o1
-    o3_2 = (m12_2 * o1) * ~o2
-
-    assert np.allclose(m12_1.data, m12_2.data)
-    assert np.allclose(o3_1.data, o3_2.data)
-    assert np.allclose(o3_1.data, [1, 0, 0, 0])
