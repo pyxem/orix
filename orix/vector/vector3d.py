@@ -678,7 +678,7 @@ class Vector3d(Object3d):
         """
         if hemisphere is not None and hemisphere.lower() == "both":
             reproject = False
-        else:
+        if reproject:
             # setup reproject scatter plotting args
             if reproject_scatter_kwargs is None:
                 reproject_scatter_kwargs = {}
