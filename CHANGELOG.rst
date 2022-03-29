@@ -12,6 +12,8 @@ Unreleased
 
 Added
 -----
+- Add `reproject` argument to `Vector3d.scatter()` which reprojects vectors located on
+  the hidden hemisphere to the visible hemisphere.
 - `Rotation` objects can now be checked for equality. Equality is determined by
   comparing their shape, data, and whether the rotations are improper.
 - `angle_with_outer()` has been added to both  `Rotation` and `Orientation` classes

@@ -607,6 +607,9 @@ class StereographicPlot(maxes.Axes):
         new_kwargs : dict
             Any default keyword arguments to be passed to the inherited
             method.
+        sort : bool, optional
+            Whether to sort vectors before passing them to Matplotlib.
+            Default is False.
 
         Returns
         -------
@@ -632,6 +635,9 @@ class StereographicPlot(maxes.Axes):
             spherical coordinates are given, they are assumed to
             describe unit vectors. Vectors will be made into unit
             vectors if they aren't already.
+        sort : bool, optional
+            Whether to sort vectors before passing them to Matplotlib.
+            Default is False.
 
         Returns
         -------
@@ -639,6 +645,8 @@ class StereographicPlot(maxes.Axes):
             Stereographic x coordinates of unit vectors.
         y : numpy.ndarray
             Stereographic y coordinates of unit vectors.
+        visible : numpy.ndarray
+            Whether these values are visible on the axes.
         """
         pole = self.pole
         if len(values) == 2:
