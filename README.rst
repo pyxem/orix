@@ -1,3 +1,10 @@
+===========
+|logo| orix
+===========
+
+.. |logo| image:: https://raw.githubusercontent.com/pyxem/orix/master/doc/_static/img/orix_logo.png
+   :width: 100
+
 |binder|_ |build_status|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg

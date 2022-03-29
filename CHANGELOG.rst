@@ -12,6 +12,11 @@ Unreleased
 
 Added
 -----
+- Point group `Symmetry` elements can now be viewed under the stereographic projection
+  using `Symmetry.plot()`. The notebook point_groups.ipynb has been added to the
+  documentation.
+- Add `reproject` argument to `Vector3d.scatter()` which reprojects vectors located on
+  the hidden hemisphere to the visible hemisphere.
 - `Rotation` objects can now be checked for equality. Equality is determined by
   comparing their shape, data, and whether the rotations are improper.
 - `angle_with_outer()` has been added to both  `Rotation` and `Orientation` classes

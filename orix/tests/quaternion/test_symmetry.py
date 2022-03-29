@@ -19,6 +19,7 @@
 from copy import deepcopy
 
 from diffpy.structure.spacegroups import GetSpaceGroup
+from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
@@ -498,6 +499,33 @@ def test_hash_persistence():
     h1 = [hash(s) for s in _groups]
     h2 = [hash(deepcopy(s)) for s in _groups]
     assert all(h1a == h2a for h1a, h2a in zip(h1, h2))
+
+
+@pytest.mark.parametrize("symmetry", [C1, C4, Oh])
+def test_symmetry_plot(symmetry):
+    figure = symmetry.plot(return_figure=True)
+    assert isinstance(figure, plt.Figure)
+    assert len(figure.axes) == 1
+    ax = figure.axes[0]
+    num = 1 if symmetry.is_proper else 2
+    assert len(ax.collections) == num
+    c0 = ax.collections[0]
+    assert len(c0.get_offsets()) == np.count_nonzero(~symmetry.improper)
+    assert c0.get_label().lower() == "upper"
+    if num > 1:
+        c1 = ax.collections[1]
+        assert len(c1.get_offsets()) == np.count_nonzero(symmetry.improper)
+        assert c1.get_label().lower() == "lower"
+    assert len(ax.texts) == 2
+    assert ax.texts[0].get_text() == "a"
+    assert ax.texts[1].get_text() == "b"
+    plt.close("all")
+
+
+@pytest.mark.parametrize("symmetry", [C1, C4, Oh])
+def test_symmetry_plot_raises(symmetry):
+    with pytest.raises(TypeError, match="Orientation must be a Rotation instance"):
+        _ = symmetry.plot(return_figure=True, orientation="test")
 
 
 class TestFundamentalSectorFromSymmetry:
