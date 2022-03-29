@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -30,13 +29,9 @@ from orix.quaternion.symmetry import (
     C4,
     D2,
     D3,
-    D4,
     D6,
     T,
     O,
-    D2h,
-    D3d,
-    D6h,
     Oh,
     _proper_groups,
 )

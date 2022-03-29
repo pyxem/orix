@@ -21,7 +21,6 @@ from copy import deepcopy
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
-from orix.quaternion import symmetry
 
 # fmt: off
 from orix.quaternion.symmetry import (
@@ -31,11 +30,11 @@ from orix.quaternion.symmetry import (
     C4, S4, C4h, D4, C4v, D2d, D4h,  # tetragonal
     C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
-    T, Th, O, Td, Oh,  # cubic
+    T, Th, O, Td, Oh, get_unique_symmetry_elements,  # cubic
     spacegroup2pointgroup_dict, _groups,
 )
 # fmt: on
-from orix.quaternion import get_point_group, Rotation, symmetry, Symmetry
+from orix.quaternion import get_point_group, Rotation, Symmetry
 from orix.vector import Vector3d
 
 
@@ -44,7 +43,7 @@ def vector(request):
     return Vector3d(request.param)
 
 
-@pytest.fixture(params=symmetry._groups)
+@pytest.fixture(params=_groups)
 def all_symmetries(request):
     return request.param
 
@@ -228,9 +227,9 @@ def test_get_unique_symmetry_elements(all_symmetries):
     result_sym_first_arg = []
     result_sym_second_arg = []
     for sg in sym.subgroups:
-        u1 = symmetry.get_unique_symmetry_elements(sym, sg)
+        u1 = get_unique_symmetry_elements(sym, sg)
         result_sym_first_arg.append(u1)
-        u2 = symmetry.get_unique_symmetry_elements(sg, sym)
+        u2 = get_unique_symmetry_elements(sg, sym)
         result_sym_second_arg.append(u2)
     assert all(np.allclose(s.data, sym.data) for s in result_sym_first_arg)
     assert all(np.allclose(s.data, sym.data) for s in result_sym_second_arg)
@@ -454,13 +453,13 @@ def test_two_symmetries_are_not_in_each_others_subgroup(all_symmetries):
     sym1 = all_symmetries
     # identify place in list by name, cannot test symmetry directy as D3
     # and D3x are the same and causes an index issue
-    i = [s.name for s in symmetry._groups].index(sym1.name)
-    if i + 1 == len(symmetry._groups):
+    i = [s.name for s in _groups].index(sym1.name)
+    if i + 1 == len(_groups):
         # only can test with last symmetry, ie. self
         val = True
     else:
         values = []
-        for sym2 in symmetry._groups[i + 1 :]:
+        for sym2 in _groups[i + 1 :]:
             if {sym1.name, sym2.name} == {"32", "321"}:
                 # D3 and D3x are defined to be the same, so do not test
                 continue
@@ -474,16 +473,30 @@ def test_two_symmetries_are_not_in_each_others_subgroup(all_symmetries):
     assert val
 
 
+def test_unique_unrelated_symmetries():
+    sym1 = D6
+    sym2 = C4
+    assert sym1 not in sym2.subgroups
+    assert sym2 not in sym1.subgroups
+    # unique will be computed manually
+    sym12 = get_unique_symmetry_elements(sym1, sym2)
+    sym21 = get_unique_symmetry_elements(sym2, sym1)
+    sym12 = sym12[np.lexsort(sym12.data.T)]
+    sym21 = sym21[np.lexsort(sym21.data.T)]
+    assert sym12.size == sym21.size
+    # symmetry order matters, as discussed in
+    # DOI: http://dx.doi.org/10.1098/rspa.2017.0274
+    assert not np.allclose(sym12.data, sym21.data)
+
+
 def test_hash():
-    groups = symmetry._groups
-    h = [hash(s) for s in groups]
-    assert len(set(h)) == len(groups)
+    h = [hash(s) for s in _groups]
+    assert len(set(h)) == len(_groups)
 
 
 def test_hash_persistence():
-    groups = symmetry._groups
-    h1 = [hash(s) for s in groups]
-    h2 = [hash(deepcopy(s)) for s in groups]
+    h1 = [hash(s) for s in _groups]
+    h2 = [hash(deepcopy(s)) for s in _groups]
     assert all(h1a == h2a for h1a, h2a in zip(h1, h2))
 
 
