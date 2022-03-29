@@ -676,13 +676,20 @@ class Vector3d(Object3d):
         --------
         orix.plot.StereographicPlot
         """
-
-        from orix.plot.stereographic_plot import _is_visible
-
-        if hemisphere is None or hemisphere.lower() != "both":
-            both_hemispheres = False
+        if hemisphere is not None and hemisphere.lower() == "both":
+            reproject = False
         else:
-            both_hemispheres = True
+            # setup reproject scatter plotting args
+            if reproject_scatter_kwargs is None:
+                reproject_scatter_kwargs = {}
+            reproject_scatter_kwargs.setdefault("marker", "+")
+            # unless otherwise defined, copy normal scatter kwargs
+            for k, v in kwargs.items():
+                if k not in reproject_scatter_kwargs.keys():
+                    reproject_scatter_kwargs[k] = v
+            v_reprojected = deepcopy(self)
+            v_reprojected.z = -v_reprojected.z
+
         (
             fig,
             axes,
@@ -703,28 +710,13 @@ class Vector3d(Object3d):
             text_kwargs=text_kwargs,
             axes_labels=axes_labels,
         )
-        if reproject and not both_hemispheres:
-            # setup reproject scatter plotting args
-            if reproject_scatter_kwargs is None:
-                reproject_scatter_kwargs = {}
-            reproject_scatter_kwargs.setdefault("marker", "+")
-            # unless otherwise defined, copy normal scatter kwargs
-            for k, v in kwargs.items():
-                if k not in reproject_scatter_kwargs.keys():
-                    reproject_scatter_kwargs[k] = v
-            # multiplicative factor to project z-data to other hemisphere
-            factor = (1, 1, -1)
+
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.scatter(self, **kwargs)
-            # only reproject if both hemispheres are not shown
-            if reproject and not both_hemispheres:
-                visible = _is_visible(self.polar, ax.pole)
-                ax.scatter(
-                    self.__class__(self[~visible].data * factor),
-                    **reproject_scatter_kwargs,
-                )
+            if reproject:
+                ax.scatter(v_reprojected, **reproject_scatter_kwargs)
             ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
             ax._stereographic_grid = grid[i]
             ax.set_labels(*axes_labels)
@@ -789,7 +781,7 @@ class Vector3d(Object3d):
             are "upper", "lower", and "both", which plots two
             projections side by side.
         show_hemisphere_label : bool, optional
-            Whether to show hemisphere labels "upper" or "lower".
+            Whether to show hemisphere labels "upper" or "lower`Vector3d.z`, since ".
             Default is True if `hemisphere` is "both", otherwise False.
         grid : bool, optional
             Whether to show the azimuth and polar grid. Default is
