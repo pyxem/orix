@@ -31,8 +31,8 @@ from orix.quaternion.symmetry import (
     C4, S4, C4h, D4, C4v, D2d, D4h,  # tetragonal
     C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
-    T, Th, O, Td, Oh, get_unique_symmetry_elements,  # cubic
-    spacegroup2pointgroup_dict, _groups,
+    T, Th, O, Td, Oh,  # cubic
+    get_unique_symmetry_elements, spacegroup2pointgroup_dict, _groups,
 )
 # fmt: on
 from orix.quaternion import get_point_group, Rotation, Symmetry

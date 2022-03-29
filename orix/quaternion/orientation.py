@@ -49,7 +49,7 @@ from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, get_unique_symmetry_elements, Symmetry
+from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
 from orix.vector import AxAngle
 from orix._util import deprecated
 
@@ -703,7 +703,7 @@ class Orientation(Misorientation):
         --------
         dot_outer
         """
-        symmetry = self.symmetry.outer(other.symmetry).unique()
+        symmetry = _get_unique_symmetry_elements(self.symmetry, other.symmetry)
         misorientation = other * ~self
         all_dot_products = Rotation(misorientation).dot_outer(symmetry)
         highest_dot_product = np.max(all_dot_products, axis=-1)
@@ -718,7 +718,7 @@ class Orientation(Misorientation):
         --------
         dot
         """
-        symmetry = self.symmetry.outer(other.symmetry).unique()
+        symmetry = _get_unique_symmetry_elements(self.symmetry, other.symmetry)
         misorientation = other.outer(~self)
         all_dot_products = Rotation(misorientation).dot_outer(symmetry)
         highest_dot_product = np.max(all_dot_products, axis=-1)
@@ -996,7 +996,7 @@ class Orientation(Misorientation):
         To read the dot products array `dparr` into memory, do
         `dp = dparr.compute()`.
         """
-        symmetry = get_unique_symmetry_elements(self.symmetry, other.symmetry)
+        symmetry = _get_unique_symmetry_elements(self.symmetry, other.symmetry)
         misorientation = other._outer_dask(~self, chunk_size=chunk_size)
 
         # Summation subscripts

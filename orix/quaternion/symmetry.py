@@ -840,7 +840,7 @@ def _get_laue_group_name(name):
         return None
 
 
-def get_unique_symmetry_elements(sym1, sym2):
+def _get_unique_symmetry_elements(sym1, sym2):
     """Returns the unique symmetry elements between two `Symmetry`."""
     if sym1 == sym2:
         return sym1
