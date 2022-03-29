@@ -451,6 +451,75 @@ class Symmetry(Rotation):
         sr = SphericalRegion(n.unique())
         return sr
 
+    def plot(
+        self,
+        orientation=None,
+        reproject_scatter_kwargs=None,
+        **kwargs,
+    ):
+        """Stereographic projection of symmetry operations.
+
+        The upper hemisphere of the stereographic projection is shown.
+        Vectors on the lower hemisphere are shown after reprojection
+        onto the upper hemisphere.
+
+        Parameters
+        ----------
+        orientation : Orientation, optional
+            The symmetry operations are applied to this orientation
+            before plotting. The default value uses an orientation
+            optimized to show symmetry elements.
+        reproject_scatter_kwargs: dict, optional
+            Dictionary of keyword arguments for the reprojected scatter
+            points which is passed to
+            :meth:`~orix.plot.StereographicPlot.scatter`, which passes
+            these on to :meth:`matplotlib.axes.Axes.scatter`. The
+            default marker style for reprojected vectors is "+". Values
+            used for vector(s) on the visible hemisphere are used unless
+            another value is passed here.
+        kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`~orix.plot.StereographicPlot.scatter`, which passes
+            these on to :meth:`matplotlib.axes.Axes.scatter`.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The created figure, returned if `return_figure` is supplied
+            as a keyword argument and is True.
+        """
+        if orientation is None:
+            # orientation chosen to mimic stereographic projections as
+            # shown: http://xrayweb.chem.ou.edu/notes/symmetry.html
+            orientation = Rotation.from_axes_angles((-1, 8, 1), np.deg2rad(65))
+        if not isinstance(orientation, Rotation):
+            raise TypeError("Orientation must be a Rotation instance.")
+        orientation = self.outer(orientation)
+
+        kwargs.setdefault("return_figure", False)
+        return_figure = kwargs.pop("return_figure")
+
+        if reproject_scatter_kwargs is None:
+            reproject_scatter_kwargs = {}
+        reproject_scatter_kwargs.setdefault("marker", "+")
+        reproject_scatter_kwargs.setdefault("label", "lower")
+
+        v = orientation * Vector3d.zvector()
+
+        figure = v.scatter(
+            return_figure=True,
+            axes_labels=("a", "b", None),
+            label="upper",
+            reproject=True,
+            reproject_scatter_kwargs=reproject_scatter_kwargs,
+            **kwargs,
+        )
+        # add symmetry name to figure title
+        figure.suptitle(f"${self.name}$")
+
+        if return_figure:
+            return figure
+
 
 # Triclinic
 C1 = Symmetry((1, 0, 0, 0))

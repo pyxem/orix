@@ -44,11 +44,11 @@ extensions = [
 intersphinx_mapping = {
     "dask": ("https://docs.dask.org/en/latest", None),
     "diffpy.structure": ("https://www.diffpy.org/diffpy.structure", None),
-    "h5py": ("http://docs.h5py.org/en/stable/", None),
-    "matplotlib": ("https://matplotlib.org", None),
-    "numpy": ("https://docs.scipy.org/doc/numpy", None),
+    "h5py": ("https://docs.h5py.org/en/stable", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
     "python": ("https://docs.python.org/3", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.

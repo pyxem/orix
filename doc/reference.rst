@@ -417,6 +417,7 @@ Symmetry
 .. currentmodule:: orix.quaternion.Symmetry
 .. autosummary::
     from_generators
+    plot
 .. autoclass:: orix.quaternion.Symmetry
     :show-inheritance:
     :members:

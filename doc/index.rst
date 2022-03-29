@@ -23,6 +23,7 @@ Work using orix
     clustering_across_fundamental_region_boundaries.ipynb
     clustering_orientations.ipynb
     uniform_sampling_of_orientation_space.ipynb
+    point_groups.ipynb
 
 .. toctree::
     :hidden:
