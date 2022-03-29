@@ -269,7 +269,15 @@ class StereographicPlot(maxes.Axes):
     def _inverse_projection(self):
         return InverseStereographicProjection(self.pole)
 
-    def draw_circle(self, *args, opening_angle=np.pi / 2, steps=100, **kwargs):
+    def draw_circle(
+        self,
+        *args,
+        opening_angle=np.pi / 2,
+        steps=100,
+        reproject=False,
+        reproject_plot_kwargs=None,
+        **kwargs,
+    ):
         r"""Draw great or small circles with a given `opening_angle` to
         one or multiple vectors.
 
@@ -289,6 +297,19 @@ class StereographicPlot(maxes.Axes):
             its size must be equal to the number of circles to draw.
         steps : int, optional
             Number of vectors to describe each circle, default is 100.
+        reproject : bool, optional
+            Whether to reproject parts of the circle(s) visible on the
+            other hemisphere. Reprojection is achieved by reflection of
+            the circle(s) parts located on the other hemisphere in the
+            projection plane. Ignored if hemisphere is “both”. Default
+            is False.
+        reproject_plot_kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot` to alter the appearance of
+            parts of the circle(s) visible on the other hemisphere if
+            `reproject` is True. The linestyle for these parts is "--"
+            by default. Values used for circle(s) on the current
+            hemisphere are used unless values are passed here.
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the circles'
@@ -311,13 +332,25 @@ class StereographicPlot(maxes.Axes):
         color = kwargs.pop("color", "C0")
         color2 = _get_array_of_values(value=color, visible=visible)
 
-        # Set above which elements circles will appear (zorder)
+        # Set above which plotting elements circles will appear (zorder)
         new_kwargs = dict(zorder=ZORDER["draw_circle"], clip_on=True)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
 
         for i, c in enumerate(circles):
             self.plot(c.azimuth, c.polar, color=color2[i], **kwargs)
+
+        if reproject:
+            if reproject_plot_kwargs is None:
+                reproject_plot_kwargs = {}
+            reproject_plot_kwargs.setdefault("linestyle", "--")
+            # Simulate reflection about the projection plane by
+            # temporarily setting the hemisphere to the other one
+            other_hemisphere = {"upper": "lower", "lower": "upper"}
+            self._hemisphere = other_hemisphere[self._hemisphere]
+            for i, c in enumerate(circles):
+                self.plot(c.azimuth, c.polar, color=color2[i], **reproject_plot_kwargs)
+            self._hemisphere = other_hemisphere[self._hemisphere]
 
     def restrict_to_sector(self, sector):
         """Restrict the stereographic axis to a

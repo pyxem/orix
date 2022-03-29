@@ -623,20 +623,21 @@ class TestPlotting:
         plt.close("all")
 
     def test_draw_circle_reproject(self):
-        """Ensure that circles of antipodal vectors (`-self`) are added
-        with correct appearance to `StereographicPlot.lines`.
+        """Ensure that parts of circles on the other hemisphere are
+        added with correct appearance to `StereographicPlot.lines`.
         """
         v = Vector3d([(1, 1, 1), (-1, 1, 1)])
 
         fig1 = v.draw_circle(return_figure=True)
         assert len(fig1.axes[0].lines) == 2
 
-        fig2 = v.draw_circle(reproject=True, return_figure=True)
+        fig2 = v.draw_circle(reproject=True, return_figure=True, linewidth=2)
         circles2 = fig2.axes[0].lines
         assert len(circles2) == 4
         for c, style in zip(circles2, ["-", "-", "--", "--"]):
             assert c.get_linestyle() == style
             assert c.get_color() == "C0"
+            assert c.get_linewidth() == 2
 
         fig3 = v.draw_circle(
             reproject=True,
@@ -651,6 +652,14 @@ class TestPlotting:
         ):
             assert c.get_linestyle() == style
             assert c.get_color() == color
+
+        # Cover line where `reproject_plot_kwargs` is not passed
+        # directly to `StereographicPlot.draw_circle()`
+        fig4, ax4 = plt.subplots(subplot_kw=dict(projection="stereographic"))
+        ax4.draw_circle(v, reproject=True)
+        circles4 = ax4.lines
+        assert len(circles4) == 4
+        assert all([c.get_color() == "C0" for c in circles4])
 
 
 class TestProjectingToFundamentalSector:
