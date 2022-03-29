@@ -944,19 +944,19 @@ class TestMillerPointGroupsTetragonal(TestMillerPointGroups):
             m.symmetrise(unique=False).hkl,
             [
                 [ 0,  0,  1],
+                [ 0,  0, -1],
                 [ 0,  0,  1],
                 [ 0,  0, -1],
-                [ 0,  0, -1],
-
+                
                 [ 0,  1,  1],
+                [ 1,  0, -1],
                 [ 0, -1,  1],
-                [ 0, -1, -1],
-                [ 0,  1, -1],
-
+                [-1,  0, -1],
+                
                 [ 1,  1,  1],
+                [ 1, -1, -1],
                 [-1, -1,  1],
-                [-1, -1, -1],
-                [ 1,  1, -1],
+                [-1,  1, -1],
             ],
         )
         m_unique = m.symmetrise(unique=True)
@@ -967,14 +967,14 @@ class TestMillerPointGroupsTetragonal(TestMillerPointGroups):
                 [ 0,  0, -1],
 
                 [ 0,  1,  1],
+                [ 1,  0, -1],
                 [ 0, -1,  1],
-                [ 0, -1, -1],
-                [ 0,  1, -1],
-
+                [-1,  0, -1],
+                
                 [ 1,  1,  1],
+                [ 1, -1, -1],
                 [-1, -1,  1],
-                [-1, -1, -1],
-                [ 1,  1, -1],
+                [-1,  1, -1],
             ],
         )
         # fmt: on
