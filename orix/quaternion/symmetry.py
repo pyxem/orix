@@ -840,7 +840,7 @@ def _get_laue_group_name(name):
         return None
 
 
-def _get_unique_symmetry_elements(sym1, sym2):
+def _get_unique_symmetry_elements(sym1, sym2, check_subgroups=False):
     """Compute the unique symmetry elements between two `Symmetry`
     instances.
 
@@ -849,7 +849,8 @@ def _get_unique_symmetry_elements(sym1, sym2):
     then the unique elements are just the symmetries themselves, and so
     are returned. If either symmetry exists within the `subgroup` of the
     other then the unique symmetry elements are the elements defined by
-    the parent symmetry, which is returned.
+    the parent symmetry, which is returned. The latter_check is made if
+    `check_subgroups` is True.
 
     If no relationship can is determined between the symmetries then the
     unique symmetry elements are explicitly computed. In this case the
@@ -859,6 +860,9 @@ def _get_unique_symmetry_elements(sym1, sym2):
     Parameters
     ----------
     sym1, sym2 : Symmetry
+    check_subgroups : bool
+        Whether to check if either symmetry exists in the subgroup of
+        the other.
 
     Returns
     -------
@@ -867,17 +871,16 @@ def _get_unique_symmetry_elements(sym1, sym2):
     """
     if sym1 == sym2:
         return sym1
-    # test whether either symmetry is in the subgroup of the other
-    sym2_in_sym1_sg = True if sym2 in sym1.subgroups else False
-    sym1_in_sym2_sg = True if sym1 in sym2.subgroups else False
-    # if either one of in_sym1 or in_sym2 is satisfied then return the
-    # larger parent group
-    if sym2_in_sym1_sg + sym1_in_sym2_sg == 1:
-        if sym2_in_sym1_sg:
-            return sym1
-        else:  # in sym2
-            return sym2
-    else:
-        # either no common parent
-        # or both in_sym1 and in_sym2 are True, in which case ambiguous
-        return sym1.outer(sym2).unique()
+    if check_subgroups:
+        # test whether either symmetry is in the subgroup of the other
+        sym2_in_sym1_sg = True if sym2 in sym1.subgroups else False
+        sym1_in_sym2_sg = True if sym1 in sym2.subgroups else False
+        # if either one of in_sym1 or in_sym2 is satisfied then return
+        # the larger parent group
+        if sym2_in_sym1_sg + sym1_in_sym2_sg == 1:
+            if sym2_in_sym1_sg:
+                return sym1
+            else:  # in sym2
+                return sym2
+    # default to explicit computation of the unique symmetry elements
+    return sym1.outer(sym2).unique()

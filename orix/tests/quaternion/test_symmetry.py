@@ -236,6 +236,17 @@ def test_get_unique_symmetry_elements(all_symmetries):
     assert all(np.allclose(s.data, sym.data) for s in result_sym_second_arg)
 
 
+def test_get_unique_symmetry_elements_check_subgroups(all_symmetries):
+    sym = all_symmetries
+    assert sym in sym.subgroups
+    result = []
+    for sg in sym.subgroups:
+        u1 = _get_unique_symmetry_elements(sym, sg, check_subgroups=False)
+        u2 = _get_unique_symmetry_elements(sym, sg, check_subgroups=True)
+        result.append(u1 == u2)
+    assert all(result)
+
+
 @pytest.mark.parametrize(
     "symmetry, expected",
     [(C2h, 4), (C6, 6), (D6h, 24), (T, 12), (Td, 24), (Oh, 48), (O, 24)],
