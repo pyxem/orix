@@ -861,8 +861,8 @@ def _get_unique_symmetry_elements(sym1, sym2, check_subgroups=False):
     ----------
     sym1, sym2 : Symmetry
     check_subgroups : bool
-        Whether to check if either symmetry exists in the subgroup of
-        the other. Default value is False.
+        Whether to check if `sym2` is a subgroup of `sym1`. Default
+        value is False.
 
     Returns
     -------
