@@ -676,13 +676,20 @@ class Vector3d(Object3d):
         --------
         orix.plot.StereographicPlot
         """
+        if hemisphere is not None and hemisphere.lower() == "both":
+            reproject = False
+        if reproject:
+            # setup reproject scatter plotting args
+            if reproject_scatter_kwargs is None:
+                reproject_scatter_kwargs = {}
+            reproject_scatter_kwargs.setdefault("marker", "+")
+            # unless otherwise defined, copy normal scatter kwargs
+            for k, v in kwargs.items():
+                if k not in reproject_scatter_kwargs.keys():
+                    reproject_scatter_kwargs[k] = v
+            v_reprojected = deepcopy(self)
+            v_reprojected.z = -v_reprojected.z
 
-        from orix.plot.stereographic_plot import _is_visible
-
-        if hemisphere is None or hemisphere.lower() != "both":
-            both_hemispheres = False
-        else:
-            both_hemispheres = True
         (
             fig,
             axes,
@@ -703,28 +710,13 @@ class Vector3d(Object3d):
             text_kwargs=text_kwargs,
             axes_labels=axes_labels,
         )
-        if reproject and not both_hemispheres:
-            # setup reproject scatter plotting args
-            if reproject_scatter_kwargs is None:
-                reproject_scatter_kwargs = {}
-            reproject_scatter_kwargs.setdefault("marker", "+")
-            # unless otherwise defined, copy normal scatter kwargs
-            for k, v in kwargs.items():
-                if k not in reproject_scatter_kwargs.keys():
-                    reproject_scatter_kwargs[k] = v
-            # multiplicative factor to project z-data to other hemisphere
-            factor = (1, 1, -1)
+
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
             ax.scatter(self, **kwargs)
-            # only reproject if both hemispheres are not shown
-            if reproject and not both_hemispheres:
-                visible = _is_visible(self.polar, ax.pole)
-                ax.scatter(
-                    self.__class__(self[~visible].data * factor),
-                    **reproject_scatter_kwargs,
-                )
+            if reproject:
+                ax.scatter(v_reprojected, **reproject_scatter_kwargs)
             ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
             ax._stereographic_grid = grid[i]
             ax.set_labels(*axes_labels)
@@ -743,12 +735,14 @@ class Vector3d(Object3d):
         figure=None,
         opening_angle=np.pi / 2,
         steps=100,
+        reproject=False,
         axes_labels=None,
         hemisphere=None,
         show_hemisphere_label=None,
         grid=None,
         grid_resolution=None,
         figure_kwargs=None,
+        reproject_plot_kwargs=None,
         return_figure=False,
         **kwargs,
     ):
@@ -772,6 +766,12 @@ class Vector3d(Object3d):
             its size must be equal to the number of vectors.
         steps : int, optional
             Number of vectors to describe each circle, default is 100.
+        reproject : bool, optional
+            Whether to reproject parts of the circle(s) visible on the
+            other hemisphere. Reprojection is achieved by reflection of
+            the circle(s) parts located on the other hemisphere in the
+            projection plane. Ignored if hemisphere is “both”. Default
+            is False.
         axes_labels : list of str, optional
             Reference frame axes labels, defaults to [None, None, None].
         hemisphere : str, optional
@@ -781,7 +781,7 @@ class Vector3d(Object3d):
             are "upper", "lower", and "both", which plots two
             projections side by side.
         show_hemisphere_label : bool, optional
-            Whether to show hemisphere labels "upper" or "lower".
+            Whether to show hemisphere labels "upper" or "lower`.
             Default is True if `hemisphere` is "both", otherwise False.
         grid : bool, optional
             Whether to show the azimuth and polar grid. Default is
@@ -794,6 +794,13 @@ class Vector3d(Object3d):
         figure_kwargs : dict, optional
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
+        reproject_plot_kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.plot` to alter the appearance of
+            parts of the circle(s) visible on the other hemisphere if
+            `reproject` is True. These lines are dashed by default.
+            Values used for circle(s) on the current hemisphere are used
+            unless values are passed here.
         return_figure : bool, optional
             Whether to return the figure (default is False).
         kwargs
@@ -819,6 +826,16 @@ class Vector3d(Object3d):
         orix.plot.StereographicPlot
         orix.vector.Vector3d.get_circle
         """
+        if hemisphere is not None and hemisphere.lower() == "both":
+            reproject = False
+        if reproject:
+            if reproject_plot_kwargs is None:
+                reproject_plot_kwargs = {}
+            reproject_plot_kwargs.setdefault("linestyle", "--")
+            for k, v in kwargs.items():
+                if k not in reproject_plot_kwargs.keys() and k != "color":
+                    reproject_plot_kwargs[k] = v
+
         (
             fig,
             axes,
@@ -842,7 +859,14 @@ class Vector3d(Object3d):
         # Use methods of the StereographicPlot class
         for i, ax in enumerate(axes):  # Assumes a maximum of two axes
             ax.hemisphere = hemisphere[i]
-            ax.draw_circle(self, opening_angle=opening_angle, steps=steps, **kwargs)
+            ax.draw_circle(
+                self,
+                opening_angle=opening_angle,
+                steps=steps,
+                reproject=reproject,
+                reproject_plot_kwargs=reproject_plot_kwargs,
+                **kwargs,
+            )
             ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
             ax._stereographic_grid = grid[i]
             ax.set_labels(*axes_labels)

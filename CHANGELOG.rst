@@ -23,6 +23,8 @@ Added
   which computes the misorientation angle between every `Rotation` in the two sets of 
   `Rotations`. In the case of `Orientation.angle_with_outer()`, this is the symmetry
   reduced misorientation.
+- `reproject` argument to `Vector3d.draw_circle()` which reprojects parts of circle(s)
+  on the other hemisphere to the current hemisphere.
 
 Changed
 -------
