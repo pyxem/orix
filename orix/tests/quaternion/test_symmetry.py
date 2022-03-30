@@ -202,45 +202,47 @@ def test_symmetry(symmetry, vector, expected):
 
 
 def test_same_symmetry_unique(all_symmetries):
+    # test unique symmetry elements between two identical symmetries
+    # are the symmetry itself
     symmetry = all_symmetries
     u = symmetry.outer(symmetry).unique()
     assert u.size == symmetry.size
     delta = (symmetry * ~u).angle
     assert np.allclose(delta, 0)
+    assert np.allclose(u.data, symmetry.data)
 
 
-def test_unique_symmetry_subgroup_elements(all_symmetries):
-    sym = all_symmetries
-    for sg in sym.subgroups:
-        # outer of symmetry with its subgroups
-        u = sym.outer(sg).unique()
-        # assert that unique is same size as main symmetry
-        assert u.size == sym.size
-        # check that there is no difference between unique
-        # and main symmetry
-        diff = (sym * ~u).angle
-        assert np.allclose(diff, 0)
-
-
-def test_get_unique_symmetry_elements(all_symmetries):
+def test_get_unique_symmetry_elements_symmetry_first_arg(all_symmetries):
     sym = all_symmetries
     assert sym in sym.subgroups
-    result = []
+    result1 = []
+    result2 = []
     for sg in sym.subgroups:
-        u = _get_unique_symmetry_elements(sym, sg)
-        result.append(u)
-    assert all(s == sym for s in result)
+        # if 2nd arg is a subgroup of 1st arg then unique will be same
+        # as symmetry
+        u1 = _get_unique_symmetry_elements(sym, sg, check_subgroups=True)
+        result1.append(u1)
+        # explicit computation of sym1.outer(sym2).unique()
+        u2 = _get_unique_symmetry_elements(sym, sg, check_subgroups=False)
+        result2.append(u2)
+    # in this case sym is explicitly returned by function
+    assert all(s == sym for s in result1)
+    # in this case sym is explicitly calculated by function
+    assert all(s == sym for s in result2)
 
 
-def test_get_unique_symmetry_elements_check_subgroups(all_symmetries):
-    sym = all_symmetries
-    assert sym in sym.subgroups
+@pytest.mark.parametrize("symmetry", [C4, C4h, S4, D6, Th, O, Oh])
+def test_get_unique_symmetry_elements_subgroup_first_arg(symmetry):
+    sizes = []
     result = []
-    for sg in sym.subgroups:
-        u1 = _get_unique_symmetry_elements(sym, sg, check_subgroups=False)
-        u2 = _get_unique_symmetry_elements(sym, sg, check_subgroups=True)
-        result.append(u1 == u2)
-    assert all(result)
+    for sg in symmetry.subgroups:
+        u = _get_unique_symmetry_elements(sg, symmetry, check_subgroups=False)
+        sizes.append(u.size == symmetry.size)
+        result.append(u == symmetry)
+    # sizes are the same
+    assert all(sizes)
+    # data is not the same as symmetry for all subgroups, order matters
+    assert not all(result)
 
 
 @pytest.mark.parametrize(
