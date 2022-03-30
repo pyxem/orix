@@ -205,7 +205,7 @@ def test_same_symmetry_unique(all_symmetries):
     symmetry = all_symmetries
     u = symmetry.outer(symmetry).unique()
     assert u.size == symmetry.size
-    delta = (symmetry * ~u).angle.data
+    delta = (symmetry * ~u).angle
     assert np.allclose(delta, 0)
 
 
@@ -218,22 +218,18 @@ def test_unique_symmetry_subgroup_elements(all_symmetries):
         assert u.size == sym.size
         # check that there is no difference between unique
         # and main symmetry
-        diff = (sym * ~u).angle.data
+        diff = (sym * ~u).angle
         assert np.allclose(diff, 0)
 
 
 def test_get_unique_symmetry_elements(all_symmetries):
     sym = all_symmetries
     assert sym in sym.subgroups
-    result_sym_first_arg = []
-    result_sym_second_arg = []
+    result = []
     for sg in sym.subgroups:
-        u1 = _get_unique_symmetry_elements(sym, sg)
-        result_sym_first_arg.append(u1)
-        u2 = _get_unique_symmetry_elements(sg, sym)
-        result_sym_second_arg.append(u2)
-    assert all(np.allclose(s.data, sym.data) for s in result_sym_first_arg)
-    assert all(np.allclose(s.data, sym.data) for s in result_sym_second_arg)
+        u = _get_unique_symmetry_elements(sym, sg)
+        result.append(u)
+    assert all(s == sym for s in result)
 
 
 def test_get_unique_symmetry_elements_check_subgroups(all_symmetries):
