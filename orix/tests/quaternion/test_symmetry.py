@@ -478,10 +478,6 @@ def test_two_symmetries_are_not_in_each_others_subgroup(all_symmetries):
         # value==1 is okay, ie. only one is subgroup of other
         # if value==2 then both symmetries exist in subgroup of other
         assert not any(v == 2 for v in values)
-    else:
-        # if i + 1 == len(_groups) then all symmetry pairs have already
-        # been tested. symmetry-symmetry unique is tested elsewhere
-        assert True
 
 
 def test_unique_unrelated_symmetries():
