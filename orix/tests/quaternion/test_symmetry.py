@@ -464,10 +464,9 @@ def test_two_symmetries_are_not_in_each_others_subgroup(all_symmetries):
     # identify place in list by name, cannot test symmetry directy as D3
     # and D3x are the same and causes an index issue
     i = [s.name for s in _groups].index(sym1.name)
-    if i + 1 != len(_groups):
-        # if i + 1 == len(_groups) then all symmetry pairs have already
-        # been tested
+    if i + 1 < len(_groups):
         values = []
+        # only test successive symmetries in _groups to avoid repetition
         for sym2 in _groups[i + 1 :]:
             if {sym1.name, sym2.name} == {"32", "321"}:
                 # D3 and D3x are defined to be the same, so do not test
@@ -478,8 +477,11 @@ def test_two_symmetries_are_not_in_each_others_subgroup(all_symmetries):
         # value==0 is okay, ie. unrelated symmetries
         # value==1 is okay, ie. only one is subgroup of other
         # if value==2 then both symmetries exist in subgroup of other
-        val = not any(v == 2 for v in values)
-    assert val
+        assert not any(v == 2 for v in values)
+    else:
+        # if i + 1 == len(_groups) then all symmetry pairs have already
+        # been tested. symmetry-symmetry unique is tested elsewhere
+        assert True
 
 
 def test_unique_unrelated_symmetries():
