@@ -665,6 +665,9 @@ class TestAngWriter:
         save(fname, xmap, index=index, extra_prop=[extra_prop, "iq"])
 
         xmap_reload = load(fname)
+        assert np.allclose(
+            xmap_reload.rotations.to_euler(), xmap.rotations[:, index].to_euler()
+        )
         assert np.allclose(xmap_reload.iq, xmap.iq)
         assert np.allclose(xmap_reload.ci, xmap.ci[:, index])
         assert np.allclose(xmap_reload.iq_times_ci, xmap.iq_times_ci[:, index])
