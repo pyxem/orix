@@ -464,10 +464,9 @@ def test_two_symmetries_are_not_in_each_others_subgroup(all_symmetries):
     # identify place in list by name, cannot test symmetry directy as D3
     # and D3x are the same and causes an index issue
     i = [s.name for s in _groups].index(sym1.name)
-    if i + 1 == len(_groups):
-        # only can test with last symmetry, ie. self
-        val = True
-    else:
+    if i + 1 != len(_groups):
+        # if i + 1 == len(_groups) then all symmetry pairs have already
+        # been tested
         values = []
         for sym2 in _groups[i + 1 :]:
             if {sym1.name, sym2.name} == {"32", "321"}:
