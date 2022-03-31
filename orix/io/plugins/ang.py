@@ -656,7 +656,6 @@ def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, deci
     for i, (name, names) in enumerate(zip(desired_prop_names, all_expected_prop_names)):
         prop = _get_prop_array(
             xmap=xmap,
-            map_size=map_size,
             prop_name=name,
             expected_prop_names=names,
             prop_names=prop_names,
@@ -672,7 +671,6 @@ def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, deci
 
 def _get_prop_array(
     xmap,
-    map_size,
     prop_name,
     expected_prop_names,
     prop_names,
@@ -691,7 +689,6 @@ def _get_prop_array(
     Parameters
     ----------
     xmap : CrystalMap
-    map_size : int
     prop_name : str
     expected_prop_names : list of str
     prop_names : list of str
@@ -718,14 +715,10 @@ def _get_prop_array(
             else:  # If no suitable property was found
                 return
         # There is a property
-        try:
-            prop_array_size = xmap.prop[prop_name].size
-            if prop_array_size == map_size:
-                # Return the single array even if `index` is given
-                return xmap.get_map_data(prop_name, **kwargs)
-            else:
-                if index is None:
-                    index = 0
-                return xmap.get_map_data(xmap.prop[prop_name][:, index], **kwargs)
-        except IndexError:
-            return
+        if len(xmap.prop[prop_name].shape) == 1:
+            # Return the single array even if `index` is given
+            return xmap.get_map_data(prop_name, **kwargs)
+        else:
+            if index is None:
+                index = 0
+            return xmap.get_map_data(xmap.prop[prop_name][:, index], **kwargs)
