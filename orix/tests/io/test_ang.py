@@ -656,11 +656,8 @@ class TestAngWriter:
     )
     def test_write_data_index(self, crystal_map_input, tmp_path, index):
         xmap = CrystalMap(**crystal_map_input)
-        xmap.prop["ci"] = (
-            np.arange(xmap.size * xmap.rotations_per_point)
-            .reshape((xmap.size, xmap.rotations_per_point))
-            .squeeze()
-        )
+        ci = np.arange(xmap.size * xmap.rotations_per_point).reshape((xmap.size, -1))
+        xmap.prop["ci"] = ci
         xmap.prop["iq"] = np.arange(xmap.size)
         extra_prop = "iq_times_ci"
         xmap.prop[extra_prop] = xmap.ci * xmap.iq[:, np.newaxis]
