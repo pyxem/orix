@@ -853,7 +853,7 @@ def _get_unique_symmetry_elements(sym1, sym2, check_subgroups=False):
     symmetry order matters, this may not be the case if `sym1` is a
     subgroup of `sym2`, so this is not checked here.
 
-    If no relationship can is determined between the symmetries then the
+    If no relationship is determined between the symmetries then the
     unique symmetry elements are explicitly computed, as described
     above.
 
