@@ -47,6 +47,7 @@ Fixed
 -----
 - The results from `Orientation.dot_outer()` are now returned as 
   `self.shape + other.shape`, which is consistent with `Rotation.dot_outer()`.
+- Writing of property arrays in .ang writer from masked CrystalMap.
 
 Removed
 -------

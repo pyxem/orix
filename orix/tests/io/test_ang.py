@@ -656,9 +656,8 @@ class TestAngWriter:
     )
     def test_write_data_index(self, crystal_map_input, tmp_path, index):
         xmap = CrystalMap(**crystal_map_input)
-        xmap.prop["ci"] = np.arange(xmap.size * xmap.rotations_per_point).reshape(
-            (xmap.size, xmap.rotations_per_point)
-        )
+        ci = np.arange(xmap.size * xmap.rotations_per_point).reshape((xmap.size, -1))
+        xmap.prop["ci"] = ci
         xmap.prop["iq"] = np.arange(xmap.size)
         extra_prop = "iq_times_ci"
         xmap.prop[extra_prop] = xmap.ci * xmap.iq[:, np.newaxis]
@@ -666,10 +665,39 @@ class TestAngWriter:
         save(fname, xmap, index=index, extra_prop=[extra_prop, "iq"])
 
         xmap_reload = load(fname)
-
         assert np.allclose(
-            xmap.rotations[:, index].to_euler(), xmap_reload.rotations.to_euler()
+            xmap_reload.rotations.to_euler(), xmap.rotations[:, index].to_euler()
         )
         assert np.allclose(xmap_reload.iq, xmap.iq)
         assert np.allclose(xmap_reload.ci, xmap.ci[:, index])
         assert np.allclose(xmap_reload.iq_times_ci, xmap.iq_times_ci[:, index])
+
+    @pytest.mark.parametrize(
+        "crystal_map_input",
+        [((1, 4, 3), (1, 2, 2), 2, [0])],
+        indirect=["crystal_map_input"],
+    )
+    def test_write_data_index_none(self, crystal_map_input, tmp_path):
+        """In a CrystalMap with more properties per point, check that
+        the first property value is written to file when `index` is
+        None.
+
+        Also check that passing `index` greater than the number of
+        rotations per point raises an error before reaching writing of
+        property arrays.
+        """
+        xmap = CrystalMap(**crystal_map_input)
+        xmap.prop["ci"] = np.arange(xmap.size * xmap.rotations_per_point).reshape(
+            (xmap.size, xmap.rotations_per_point)
+        )
+        fname = tmp_path / "test_write_data_index_none.ang"
+        save(fname, xmap, extra_prop=["ci"])
+
+        # First property values were written to file
+        xmap_reload = load(fname)
+        assert np.allclose(xmap_reload.ci, xmap.ci[:, 0])
+
+        # IndexError raised when indexing into `xmap.rotations`
+        fname2 = tmp_path / "test_write_data_index_none2.ang"
+        with pytest.raises(IndexError):
+            save(fname2, xmap, index=2, extra_prop=["ci"])
