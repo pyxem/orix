@@ -36,6 +36,7 @@ Changed
   (now default) and `"crystal2lab"`, now also accepts a convenience argument `"mtex"
   which is consistent with the default `"crystal2lab"` direction in
   `MTEX <https://mtex-toolbox.github.io/MTEXvsBungeConvention.html>`_.
+- `S4` (-4) `Symmetry` has been corrected.
 
 Deprecated
 ----------

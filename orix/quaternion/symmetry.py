@@ -597,7 +597,8 @@ C4 = Symmetry(C4z)
 C4.name = "4"
 
 # Tetragonal
-S4 = Symmetry.from_generators(C2, Ci)
+S4 = Symmetry(C4)
+S4.improper = [0, 1, 0, 1]
 S4.name = "-4"
 C4h = Symmetry.from_generators(C4, Cs)
 C4h.name = "4/m"
@@ -837,3 +838,43 @@ def _get_laue_group_name(name):
         return "m-3m"
     else:
         return None
+
+
+def _get_unique_symmetry_elements(sym1, sym2, check_subgroups=False):
+    """Compute the unique symmetry elements between two `Symmetry`
+    instances, defined as `sym1.outer(sym2).unique()`.
+
+    To improve computation speed some checks are performed prior to
+    explicit computation of the unique elements. If `sym1 == sym2`
+    then the unique elements are just the symmetries themselves, and so
+    are returned. If `sym2` is a `subgroup` of `sym1` then the unique
+    symmetry elements will be identical to `sym1`, in this case `sym1`
+    is returned. This check is made if `check_subgroups` is True. As the
+    symmetry order matters, this may not be the case if `sym1` is a
+    subgroup of `sym2`, so this is not checked here.
+
+    If no relationship is determined between the symmetries then the
+    unique symmetry elements are explicitly computed, as described
+    above.
+
+    Parameters
+    ----------
+    sym1, sym2 : Symmetry
+    check_subgroups : bool
+        Whether to check if `sym2` is a subgroup of `sym1`. Default
+        value is False.
+
+    Returns
+    -------
+    unique : Symmetry
+        The unique symmetry elements.
+    """
+    if sym1 == sym2:
+        return sym1
+    if check_subgroups:
+        # test whether sym2 is a subgroup of sym1
+        sym2_is_sg_sym1 = True if sym2 in sym1.subgroups else False
+        if sym2_is_sg_sym1:
+            return sym1
+    # default to explicit computation of the unique symmetry elements
+    return sym1.outer(sym2).unique()
