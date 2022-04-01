@@ -54,7 +54,7 @@ Removed
 -------
 - `orix.scalar.Scalar` class has been removed and the data held by `Scalar` is now
   returned directly as a `numpy.ndarray`.
-- Functions: `(Mis)Orientation.set_symmetry` and `Orientation.distance`  and property:
+- Functions: `(Mis)Orientation.set_symmetry` and `Orientation.distance` and property:
  `Object3d.data_dim` were previously deprecated and have now been removed. 
 
 2022-02-21 - version 0.8.2
