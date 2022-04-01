@@ -197,40 +197,6 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
-    @deprecated(
-        since="0.8",
-        alternative="orix.quaternion.Misorientation.map_into_symmetry_reduced_zone",
-        removal="0.9",
-    )
-    def set_symmetry(self, Gl, Gr, verbose=False):
-        """Assign symmetries to this misorientation.
-
-        Computes equivalent transformations which have the smallest
-        angle of rotation and assigns these in-place.
-
-        Parameters
-        ----------
-        Gl, Gr : Symmetry
-
-        Returns
-        -------
-        Misorientation
-            A new misorientation object with the assigned symmetry.
-
-        Examples
-        --------
-        >>> from orix.quaternion.symmetry import C4, C2
-        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> m = Misorientation(data).set_symmetry(C4, C2)
-        >>> m
-        Misorientation (2,) 4, 2
-        [[-0.7071  0.7071  0.      0.    ]
-        [ 0.      1.      0.      0.    ]]
-        """
-        misori = self.__class__(self.data)
-        misori.symmetry = (Gl, Gr)
-        return misori.map_into_symmetry_reduced_zone()
-
     def map_into_symmetry_reduced_zone(self, verbose=False):
         """Computes equivalent transformations which have the smallest
         angle of rotation and return these as a new Misorientation object.
@@ -728,14 +694,6 @@ class Orientation(Misorientation):
         )
         return highest_dot_product.transpose(*order)
 
-    @deprecated(
-        since="0.7",
-        alternative="orix.quaternion.Orientation.get_distance_matrix",
-        removal="0.8",
-    )
-    def distance(self, verbose=False, split_size=100):
-        return super().distance(verbose=verbose, split_size=split_size)
-
     def plot_unit_cell(
         self,
         c="tab:blue",
@@ -793,40 +751,6 @@ class Orientation(Misorientation):
 
         if return_figure:
             return fig
-
-    @deprecated(
-        since="0.8",
-        alternative="orix.quaternion.Orientation.map_into_symmetry_reduced_zone",
-        removal="0.9",
-    )
-    def set_symmetry(self, symmetry):
-        """Assign a symmetry to this orientation.
-
-        Computes equivalent transformations which have the smallest
-        angle of rotation and assigns these in-place.
-
-        Parameters
-        ----------
-        symmetry : Symmetry
-
-        Returns
-        -------
-        Orientation
-            The instance itself, with equivalent values.
-
-        Examples
-        --------
-        >>> from orix.quaternion.symmetry import C4
-        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> o = Orientation(data).set_symmetry(C4)
-        >>> o
-        Orientation (2,) 4
-        [[-0.7071  0.     -0.7071  0.    ]
-        [ 0.      1.      0.      0.    ]]
-        """
-        o = self.__class__(self.data)
-        o.symmetry = symmetry
-        return o.map_into_symmetry_reduced_zone()
 
     def in_euler_fundamental_region(self):
         """Euler angles in the fundamental Euler region of the proper
