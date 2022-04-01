@@ -334,7 +334,6 @@ Orientation
 .. autosummary::
     angle_with
     angle_with_outer
-    distance
     dot
     dot_outer
     from_axes_angles
@@ -355,7 +354,6 @@ Misorientation
 ~~~~~~~~~~~~~~
 .. currentmodule:: orix.quaternion.Misorientation
 .. autosummary::
-    distance
     equivalent
     transpose
 .. autoclass:: orix.quaternion.Misorientation

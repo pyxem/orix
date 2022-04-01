@@ -186,6 +186,14 @@ def test_transpose_2d():
     assert o1.shape == o2.shape[::-1]
 
 
+def test_map_into_reduced_symmetry_zone_verbose():
+    o = Orientation.random()
+    o.symmetry = Oh
+    o1 = o.map_into_symmetry_reduced_zone()
+    o2 = o.map_into_symmetry_reduced_zone(verbose=True)
+    assert np.allclose(o1.data, o2.data)
+
+
 @pytest.mark.parametrize(
     "shape, expected_shape, axes",
     [((11, 3, 5), (11, 5, 3), (0, 2, 1)), ((11, 3, 5), (3, 5, 11), (1, 2, 0))],
