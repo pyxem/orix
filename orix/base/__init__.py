@@ -23,8 +23,6 @@ Note that this class is not meant to be used directly.
 
 import numpy as np
 
-from orix._util import deprecated
-
 
 # Lists what will be imported when calling "from orix.base import *"
 __all__ = [
@@ -120,7 +118,7 @@ class Object3d:
     def ndim(self):
         """int : The number of navigation dimensions of the instance.
 
-        For example, if `data` has shape (4, 5, 6), `data_dim` is 3.
+        For example, if `data` has shape (4, 5, 6), `ndim` is 3.
 
         """
         return len(self.shape)
