@@ -657,15 +657,3 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
-
-
-def test_set_symmetry_deprecation_warning_orientation():
-    o = Orientation.random((3, 2))
-    with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
-        _ = o.set_symmetry(C2)
-
-
-def test_set_symmetry_deprecation_warning_misorientation():
-    o = Misorientation.random((3, 2))
-    with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
-        _ = o.set_symmetry(C2, C2)
