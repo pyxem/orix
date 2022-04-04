@@ -22,6 +22,7 @@ Work using orix
     crystal_map.ipynb
     clustering_across_fundamental_region_boundaries.ipynb
     clustering_orientations.ipynb
+    clustering_misorientations.ipynb
     uniform_sampling_of_orientation_space.ipynb
     point_groups.ipynb
 
