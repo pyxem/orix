@@ -830,7 +830,7 @@ def _get_laue_group_name(name):
         return "-3m"
     elif name in ["6", "-6", "6/m"]:
         return "6/m"
-    elif name in ["6mm", "-6m2", "6/mmm"]:
+    elif name in ["6mm", "-6m2", "6/mmm", "622"]:
         return "6/mmm"
     elif name in ["23", "m-3"]:
         return "m-3"
