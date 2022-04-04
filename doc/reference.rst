@@ -343,6 +343,7 @@ Orientation
     get_distance_matrix
     in_euler_fundamental_region
     scatter
+    set_symmetry
     to_euler
     transpose
 .. autoclass:: orix.quaternion.Orientation
@@ -355,6 +356,7 @@ Misorientation
 .. currentmodule:: orix.quaternion.Misorientation
 .. autosummary::
     equivalent
+    set_symmetry
     transpose
 .. autoclass:: orix.quaternion.Misorientation
     :show-inheritance:

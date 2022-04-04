@@ -49,6 +49,31 @@ def orientation(request):
 
 
 @pytest.mark.parametrize(
+    "orientation, symmetry, expected",
+    [
+        ([(1, 0, 0, 0)], C1, [(1, 0, 0, 0)]),
+        ([(1, 0, 0, 0)], C4, [(1, 0, 0, 0)]),
+        ([(1, 0, 0, 0)], D3, [(1, 0, 0, 0)]),
+        ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
+        ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
+        # 7pi/12 -C2-> # 7pi/12
+        ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
+        # 7pi/12 -C3-> # 7pi/12
+        ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
+        # 7pi/12 -C4-> # pi/12
+        ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
+        # 7pi/12 -O-> # pi/12
+        ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
+    ],
+    indirect=["orientation"],
+)
+def test_set_symmetry(orientation, symmetry, expected):
+    o = Orientation(orientation.data, symmetry=symmetry)
+    o = o.map_into_symmetry_reduced_zone()
+    assert np.allclose(o.data, expected, atol=1e-3)
+
+
+@pytest.mark.parametrize(
     "symmetry, vector",
     [(C1, (1, 2, 3)), (C2, (1, -1, 3)), (C3, (1, 1, 1)), (O, (0, 1, 0))],
     indirect=["vector"],
@@ -63,6 +88,34 @@ def test_orientation_persistence(symmetry, vector):
     v2 = oc * v
     v2 = Vector3d(v2.data.round(4))
     assert v1._tuples == v2._tuples
+
+
+@pytest.mark.parametrize(
+    "orientation, symmetry, expected",
+    [
+        ((1, 0, 0, 0), C1, [0]),
+        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
+        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
+        ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
+        (
+            [
+                [(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)],
+                [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
+            ],
+            C4,
+            [
+                [[[0, 0], [0, np.pi / 4]], [[0, 0], [0, np.pi / 4]]],
+                [[[0, 0], [0, np.pi / 4]], [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]],
+            ],
+        ),
+    ],
+    indirect=["orientation"],
+)
+def test_distance(orientation, symmetry, expected):
+    orientation.symmetry = symmetry
+    orientation = orientation.map_into_symmetry_reduced_zone(verbose=True)
+    distance = orientation.distance(verbose=True)
+    assert np.allclose(distance, expected, atol=1e-3)
 
 
 @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
@@ -604,3 +657,15 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+
+
+def test_set_symmetry_deprecation_warning_orientation():
+    o = Orientation.random((3, 2))
+    with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
+        _ = o.set_symmetry(C2)
+
+
+def test_set_symmetry_deprecation_warning_misorientation():
+    o = Misorientation.random((3, 2))
+    with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
+        _ = o.set_symmetry(C2, C2)
