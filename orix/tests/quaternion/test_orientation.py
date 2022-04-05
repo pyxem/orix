@@ -239,6 +239,14 @@ def test_transpose_2d():
     assert o1.shape == o2.shape[::-1]
 
 
+def test_map_into_reduced_symmetry_zone_verbose():
+    o = Orientation.random()
+    o.symmetry = Oh
+    o1 = o.map_into_symmetry_reduced_zone()
+    o2 = o.map_into_symmetry_reduced_zone(verbose=True)
+    assert np.allclose(o1.data, o2.data)
+
+
 @pytest.mark.parametrize(
     "shape, expected_shape, axes",
     [((11, 3, 5), (11, 5, 3), (0, 2, 1)), ((11, 3, 5), (3, 5, 11), (1, 2, 0))],
@@ -649,15 +657,3 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
-
-
-def test_set_symmetry_deprecation_warning_orientation():
-    o = Orientation.random((3, 2))
-    with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
-        _ = o.set_symmetry(C2)
-
-
-def test_set_symmetry_deprecation_warning_misorientation():
-    o = Misorientation.random((3, 2))
-    with pytest.warns(np.VisibleDeprecationWarning, match="Function `set_symmetry()"):
-        _ = o.set_symmetry(C2, C2)
