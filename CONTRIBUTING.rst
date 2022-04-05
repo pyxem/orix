@@ -183,6 +183,16 @@ files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
   a limit of 15 minutes and 3 GB of memory per `build
   <https://docs.readthedocs.io/en/stable/builds.html>`_.
 
+In general, we run all notebooks every time the documentation is built with Sphinx, to
+ensure that all notebooks are compatible with the current API at all times. This is
+important! For computationally expensive notebooks however, we store the cell outputs so
+the documentation doesn't take too long to build, either by us locally or the Read The
+Docs GitHub action. To check that the notebooks with cell outputs stored are compatible
+with the current API as well, we run a scheduled GitHub Action every Monday morning
+which checks that the notebooks run OK and that they produce the same output now as when
+they were last executed. We use `nbval <https://nbval.readthedocs.io/en/latest/>`_ for
+this.
+
 Deprecations
 ============
 
