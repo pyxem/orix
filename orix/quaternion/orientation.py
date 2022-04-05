@@ -694,6 +694,14 @@ class Orientation(Misorientation):
         )
         return highest_dot_product.transpose(*order)
 
+    @deprecated(
+        since="0.7",
+        alternative="orix.quaternion.Orientation.get_distance_matrix",
+        removal="0.8",
+    )
+    def distance(self, verbose=False, split_size=100):
+        return super().distance(verbose=verbose, split_size=split_size)
+
     def plot_unit_cell(
         self,
         c="tab:blue",
