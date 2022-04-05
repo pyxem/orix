@@ -2,7 +2,7 @@
 
     <p>
       <h1>
-        <a href="https://orix.readthedocs.io"><img valign="middle" src="https://raw.githubusercontent.com/pyxem/orix/master/doc/_static/img/orix_logo.png" height="50" height="50" alt="orix logo"/></a>
+        <a href="https://orix.readthedocs.io"><img valign="middle" src="https://raw.githubusercontent.com/pyxem/orix/master/doc/_static/img/orix_logo.png" width="50" alt="orix logo"/></a>
         orix
       </h1>
     </p>

@@ -6,8 +6,8 @@ Work using orix
 * D. N. Johnstone, B. H. Martineau, P. Crout, P. A. Midgley, A. S. Eggeman:
   Density-based clustering of crystal (mis)orientations and the orix Python library,
   Journal of Applied Crystallography 53(5) (2020), (`journal
-  <https://doi.org/10.1107/S1600576720011103>`_, `arXiv
-  <https://arxiv.org/abs/2001.02716>`_).
+  <https://doi.org/10.1107/S1600576720011103>`__, `arXiv
+  <https://arxiv.org/abs/2001.02716>`__).
 
 .. toctree::
     :hidden:
