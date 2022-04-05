@@ -2,7 +2,7 @@
 
     <p>
       <h1>
-        <a href="https://orix.readthedocs.io"><img valign="middle" src="https://raw.githubusercontent.com/pyxem/orix/master/doc/_static/img/orix_logo.png" height="100" height="100" alt="orix logo"/></a>
+        <a href="https://orix.readthedocs.io"><img valign="middle" src="https://raw.githubusercontent.com/pyxem/orix/master/doc/_static/img/orix_logo.png" height="50" height="50" alt="orix logo"/></a>
         orix
       </h1>
     </p>
@@ -48,9 +48,9 @@ If analysis using orix forms a part of published work please cite the paper (`jo
 `Documentation <https://orix.readthedocs.io>`_ is hosted on Read the Docs with a
 complete reference for functions and classes, as well as a user guide in the form of
 Jupyter notebooks. These notebooks can be inspected statically on the web page or via
-`nbviewer <https://nbviewer.jupyter.org/github/orix/doc>`_, interactively in the browser
-by clicking the Binder link above and navigating to the ``doc/`` directory, or on your
-own computer by downloading them and the corresponding data. We hope you find them
-useful!
+`nbviewer <https://nbviewer.org/github/pyxem/orix/tree/master/doc>`_,
+interactively in the browser by clicking the Binder link above and navigating to the
+``doc/`` directory, or on your own computer by downloading them and the corresponding
+data. We hope you find them useful!
 
 orix is released under the GPL v3 license.
