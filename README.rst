@@ -1,9 +1,11 @@
-===========
-|logo| orix
-===========
+.. raw:: html
 
-.. |logo| image:: https://raw.githubusercontent.com/pyxem/orix/master/doc/_static/img/orix_logo.png
-   :width: 100
+    <p>
+      <h1>
+        <a href="https://orix.readthedocs.io"><img valign="middle" src="https://raw.githubusercontent.com/pyxem/orix/master/doc/_static/img/orix_logo.png" height="100" height="100" alt="orix logo"/></a>
+        orix
+      </h1>
+    </p>
 
 |binder|_ |build_status|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
 
@@ -35,17 +37,20 @@ orix is an open-source python library for analysing orientations and crystal sym
 
 The package defines objects and functions for the analysis of orientations represented
 as quaternions or 3D rotation vectors accounting for crystal symmetry. Functionality
-builds primarily on top of `numpy <http://www.numpy.org/>`_ and
-`matplotlib <https://matplotlib.org/>`_ and is heavily inspired by the
-MATLAB package `MTEX <http://mtex-toolbox.github.io/>`_.
+builds primarily on `numpy <http://www.numpy.org/>`_ and `matplotlib
+<https://matplotlib.org/>`_ and is heavily inspired by the MATLAB package `MTEX
+<http://mtex-toolbox.github.io/>`_.
 
-If analysis using orix forms a part of published work please cite the manuscript
-at the following
-`link <https://onlinelibrary.wiley.com/iucr/doi/10.1107/S1600576720011103>`_.
-You can also find demos in the
-`orix-demos <https://github.com/pyxem/orix-demos>`_ repo, visit the `user guide
-<https://orix.readthedocs.io>`_, or try out the user guide notebooks
-interactively in the browser by clicking the Binder link above and navigating
-to the ``doc/`` directory.
+If analysis using orix forms a part of published work please cite the paper (`journal
+<https://doi.org/10.1107/S1600576720011103>`_, `arXiv
+<https://arxiv.org/abs/2001.02716>`_).
+
+`Documentation <https://orix.readthedocs.io>`_ is hosted on Read the Docs with a
+complete reference for functions and classes, as well as a user guide in the form of
+Jupyter notebooks. These notebooks can be inspected statically on the web page or via
+`nbviewer <https://nbviewer.jupyter.org/github/orix/doc>`_, interactively in the browser
+by clicking the Binder link above and navigating to the ``doc/`` directory, or on your
+own computer by downloading them and the corresponding data. We hope you find them
+useful!
 
 orix is released under the GPL v3 license.
