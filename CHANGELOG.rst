@@ -25,6 +25,8 @@ Added
   reduced misorientation.
 - `reproject` argument to `Vector3d.draw_circle()` which reprojects parts of circle(s)
   on the other hemisphere to the current hemisphere.
+- Notebook on clustering of misorientations across fundamental region boundaries added
+  to the user guide from the orix-demos repository.
 
 Changed
 -------
