@@ -18,10 +18,12 @@
 
 from collections import OrderedDict
 import copy
+import os
 from itertools import islice
 import warnings
 
 from diffpy.structure import Structure
+from diffpy.structure.parsers import p_cif
 from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
 import matplotlib.colors as mcolors
 import numpy as np
@@ -222,8 +224,31 @@ class Phase:
             f"proper point group: {ppg_name}. color: {self.color}>"
         )
 
+    @classmethod
+    def from_cif(cls, filename):
+        """Return a `Phase` instance from a CIF file using
+        :mod:`diffpy.structure`'s CIF file parser.
+
+        Parameters
+        ----------
+        filename : str
+            Complete path to CIF file with ".cif" file ending. The phase
+            name is obtained from the file name.
+
+        Returns
+        -------
+        Phase
+        """
+        parser = p_cif.P_cif()
+        name = os.path.splitext(os.path.split(filename)[1])[0]
+        structure = parser.parseFile(filename)
+        space_group = parser.spacegroup.number
+        return cls(name, space_group, structure=structure)
+
     def deepcopy(self):
-        """Return a deep copy using :py:func:`~copy.deepcopy` function."""
+        """Return a deep copy using :py:func:`~copy.deepcopy`
+        function.
+        """
         return copy.deepcopy(self)
 
 
