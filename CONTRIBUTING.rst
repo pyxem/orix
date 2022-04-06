@@ -206,23 +206,42 @@ framework. The tests reside in a ``test`` directory within each module. Tests ar
 methods that call functions in orix and compare resulting output values with known
 answers. Install necessary dependencies to run the tests::
 
-   $ pip install --editable .[tests]
+   pip install --editable .[tests]
 
 Some useful `fixtures <https://docs.pytest.org/en/latest/fixture.html>`_ are available
 in the ``conftest.py`` file.
 
 To run the tests::
 
-   $ pytest --cov --pyargs orix
+   pytest --cov --pyargs orix
 
 The ``--cov`` flag makes `coverage.py <https://coverage.readthedocs.io/en/latest/>`_
 print a nice report in the terminal. For an even nicer presentation, you can use
 ``coverage.py`` directly::
 
-   $ coverage html
+   coverage html
 
 Then, you can open the created ``htmlcov/index.html`` in the browser and inspect the
 coverage in more detail.
+
+Adding data to the data module
+==============================
+
+Test data for user guides and tests are included in the :mod:`orix.data` module via the
+`pooch <https://www.fatiando.org/pooch/latest>`_ Python library. These are listed in a
+file registry (`orix.data._registry.py`) with their file verification string (hash,
+SHA256, obtained with e.g. `sha256sum <file>`) and location, the latter potentially not
+within the package but from the `orix-data <https://github.com/pyxem/orix-data>`_
+repository, since some files are considered too large to include in the package.
+
+If a required dataset isn't in the package, but is in the registry, it can be downloaded
+from the repository when the user passes `allow_download=True` to e.g.
+`sdss_austenite()`. The dataset is then downloaded to a local cache, e.g.
+`/home/user/.cache/orix/`. The data cache directory can be set with a global
+`ORIX_DATA_DIR` variable locally, e.g. by setting export `ORIX_DATA_DIR=~/orix_data` in
+`~/.bashrc`. Pooch handles downloading, caching, version control, file verification
+(against hash) etc. If we have updated the file hash, pooch will re-download it. If the
+file is available in the cache, it can be loaded as the other files in the data module.
 
 Continuous integration (CI)
 ===========================
