@@ -17,6 +17,7 @@ The list of top modules:
 
 .. autosummary::
     base
+    data
     crystal_map
     io
     plot
@@ -31,6 +32,22 @@ base
 ====
 .. automodule:: orix.base
     :members:
+
+....
+
+data
+====
+
+.. currentmodule:: orix.data
+
+.. autosummary::
+    sdss_austenite
+    sdss_ferrite_austenite
+..    ti_orientations
+
+.. automodule:: orix.data
+    :members:
+    :undoc-members:
 
 ....
 
