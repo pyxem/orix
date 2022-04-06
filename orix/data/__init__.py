@@ -25,7 +25,7 @@ import os
 from pathlib import Path
 
 # import numpy as np
-import pooch as ppooch
+import pooch
 
 from orix import __version__, io
 from orix.data._registry import registry, registry_urls
@@ -40,8 +40,8 @@ __all__ = [
 ]
 
 
-fetcher = ppooch.create(
-    path=ppooch.os_cache("orix"),
+fetcher = pooch.create(
+    path=pooch.os_cache("orix"),
     base_url="",
     version=__version__.replace(".dev", "+"),
     env="ORIX_DATA_DIR",
@@ -57,15 +57,15 @@ def _has_hash(path, expected_hash):
     if not os.path.exists(path):
         return False
     else:
-        return ppooch.file_hash(path) == expected_hash  # pragma: no cover
+        return pooch.file_hash(path) == expected_hash  # pragma: no cover
 
 
-def _cautious_downloader(url, output_file, pooch):
-    if pooch.allow_download:
-        delattr(pooch, "allow_download")
+def _cautious_downloader(url, output_file, this_dog):
+    if this_dog.allow_download:
+        delattr(this_dog, "allow_download")
         # HTTPDownloader() requires tqdm
-        download = ppooch.HTTPDownloader(progressbar=True)
-        download(url, output_file, pooch)
+        download = pooch.HTTPDownloader(progressbar=True)
+        download(url, output_file, this_dog)
     else:
         raise ValueError(
             "The dataset must be (re)downloaded from the orix-data repository on GitHub"

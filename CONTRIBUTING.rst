@@ -215,7 +215,8 @@ in the ``conftest.py`` file.
 
     Some :mod:`orix.data` module tests check that data not part of the package
     distribution can be downloaded from the web, thus downloading some datasets of total
-    size ~11 MB to your local cache (by default to `/home/<user>/.cache/orix`).
+    size ~11 MB to your local cache (in the location returned from
+    `pooch.os_cache("orix")`.
 
 To run the tests::
 
@@ -242,8 +243,8 @@ repository, since some files are considered too large to include in the package.
 
 If a required dataset isn't in the package, but is in the registry, it can be downloaded
 from the repository when the user passes `allow_download=True` to e.g.
-`sdss_austenite()`. The dataset is then downloaded to a local cache, e.g.
-`/home/user/.cache/orix/`. The data cache directory can be set with a global
+`sdss_austenite()`. The dataset is then downloaded to a local cache, in the location
+returned from `pooch.os_cache("orix")`. The location can be overwritten with a global
 `ORIX_DATA_DIR` variable locally, e.g. by setting export `ORIX_DATA_DIR=~/orix_data` in
 `~/.bashrc`. Pooch handles downloading, caching, version control, file verification
 (against hash) etc. If we have updated the file hash, pooch will re-download it. If the
