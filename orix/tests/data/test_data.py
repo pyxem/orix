@@ -44,8 +44,8 @@ class TestData:
 
     def test_load_raises(self):
         """Raises desired error message."""
-        name = "sdss_ferrite_austenite.ang"
-        file = data.cache_data_path.joinpath("sdss/" + name)
+        name = "sdss/sdss_ferrite_austenite.ang"
+        file = data._fetcher.path / name
 
         # Remove file (dangerous!)
         removed = False
@@ -53,7 +53,7 @@ class TestData:
             os.remove(file)
             removed = True
 
-        with pytest.raises(ValueError, match="The dataset must be"):
+        with pytest.raises(ValueError, match=f"Dataset {name} must be"):
             _ = data.sdss_ferrite_austenite(allow_download=False)
 
         # Re-download file if removed

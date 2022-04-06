@@ -29,14 +29,11 @@ not deleted automatically, and should then be deleted manually if
 desired.
 """
 
-import os
-from pathlib import Path
-
 # import numpy as np
 import pooch
 
 from orix import __version__, io
-from orix.data._registry import registry, registry_urls
+from orix.data._registry import registry_hashes, registry_urls
 
 # from orix.quaternion import Orientation, symmetry
 
@@ -48,49 +45,34 @@ __all__ = [
 ]
 
 
-fetcher = pooch.create(
+_fetcher = pooch.create(
     path=pooch.os_cache("orix"),
     base_url="",
     version=__version__.replace(".dev", "+"),
+    version_dev="master",
     env="ORIX_DATA_DIR",
-    registry=registry,
+    registry=registry_hashes,
     urls=registry_urls,
 )
-cache_data_path = fetcher.path.joinpath("data")
-package_data_path = Path(os.path.abspath(os.path.dirname(__file__)))
-
-
-def _has_hash(path, expected_hash):
-    """Check if the provided path has the expected hash."""
-    if not os.path.exists(path):
-        return False
-    else:
-        return pooch.file_hash(path) == expected_hash  # pragma: no cover
-
-
-def _cautious_downloader(url, output_file, this_dog):
-    if this_dog.allow_download:
-        delattr(this_dog, "allow_download")
-        # HTTPDownloader() requires tqdm
-        download = pooch.HTTPDownloader(progressbar=True)
-        download(url, output_file, this_dog)
-    else:
-        raise ValueError(
-            "The dataset must be (re)downloaded from the orix-data repository on GitHub"
-            " (https://github.com/pyxem/orix-data) to your local cache with the pooch "
-            "Python package. Pass `allow_download=True` to allow this download."
-        )
 
 
 def _fetch(filename, allow_download):
-    resolved_path = os.path.join(package_data_path, "..", filename)
-    expected_hash = registry[filename]
-    if _has_hash(resolved_path, expected_hash):  # File already in data module
-        return resolved_path  # pragma: no cover
-    else:  # Pooch must download the data to the local cache
-        fetcher.allow_download = allow_download  # Extremely ugly
-        resolved_path = fetcher.fetch(filename, downloader=_cautious_downloader)
-    return resolved_path
+    file_path_in_cache = _fetcher.path / filename
+    if (
+        not file_path_in_cache.exists()
+        or not pooch.file_hash(file_path_in_cache) == registry_hashes[filename]
+    ):
+        if allow_download:
+            download = pooch.HTTPDownloader(progressbar=True)
+            file_path_in_cache = _fetcher.fetch(filename, downloader=download)
+        else:
+            raise ValueError(
+                f"Dataset {filename} must be (re)downloaded from the orix-data "
+                "repository on GitHub (https://github.com/pyxem/orix-data) to your "
+                "local cache with the pooch Python package. Pass `allow_download=True`"
+                " to allow this download."
+            )
+    return file_path_in_cache
 
 
 def sdss_austenite(allow_download=False, **kwargs):
@@ -112,7 +94,7 @@ def sdss_austenite(allow_download=False, **kwargs):
     -------
     CrystalMap
     """
-    fname = _fetch("data/sdss/sdss_austenite_dp.h5", allow_download)
+    fname = _fetch("sdss/sdss_austenite_dp.h5", allow_download)
     return io.load(fname, **kwargs)
 
 
@@ -135,7 +117,7 @@ def sdss_ferrite_austenite(allow_download=False, **kwargs):
     -------
     CrystalMap
     """
-    fname = _fetch("data/sdss/sdss_ferrite_austenite.ang", allow_download)
+    fname = _fetch("sdss/sdss_ferrite_austenite.ang", allow_download)
     xmap = io.load(fname, **kwargs)
     xmap.phases["austenite/austenite"].name = "austenite"
     xmap.phases["ferrite/ferrite"].name = "ferrite"
@@ -158,6 +140,6 @@ def sdss_ferrite_austenite(allow_download=False, **kwargs):
 #    -------
 #    Orientations
 #    """
-#    fname = _fetch("data/ti_orientations/ti_orientations.ctf", allow_download)
+#    fname = _fetch("ti_orientations/ti_orientations.ctf", allow_download)
 #    euler = np.loadtxt(fname, skiprows=1, usecols=(0, 1, 2))
 #    return Orientation.from_euler(np.deg2rad(euler), symmetry.D6)
