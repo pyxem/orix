@@ -373,6 +373,7 @@ Misorientation
 .. autosummary::
     distance
     equivalent
+    get_distance_matrix
     transpose
 .. autoclass:: orix.quaternion.Misorientation
     :show-inheritance:

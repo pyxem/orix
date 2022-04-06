@@ -378,21 +378,20 @@ class Misorientation(Rotation):
     def get_distance_matrix(self, chunk_size=20, progressbar=True):
         r"""The symmetry reduced smallest angle of rotation transforming
         every misorientation in this instance to every other
-        misorientation.
+        misorientation :cite:`johnstone2020density`.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance` for
-        a single :class:`Orientation` instance, using :mod:`dask`.
+        a single :class:`Misorientation` instance, using :mod:`dask`.
 
         Parameters
         ----------
         chunk_size : int, optional
             Number of misorientations per axis to include in each
-            iteration of the computation. Default is 20. Only applies
-            when `lazy` is True.
+            iteration of the computation. Default is 20.
         progressbar : bool, optional
-            Whether to show a progressbar during computation if `lazy`
-            is True. Default is True.
+            Whether to show a progressbar during computation. Default is
+            True.
 
         Returns
         -------
@@ -414,10 +413,21 @@ class Misorientation(Rotation):
 
         .. math::
 
-            \rho = max s_k m_i s_l s_k m_j^-1 s_l,
+            \max_{s_k \in S_k} s_k m_i s_l s_k m_j^{-1} s_l,
 
         where :math:`s_k \in S_k` and :math:`s_l \in S_l`, with
         :math:`S_k` and :math:`S_l` being the two symmetry groups.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from orix.quaternion import Misorientation, symmetry
+        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, np.pi/2])
+        >>> m.symmetry = (symmetry.D6, symmetry.D6)
+        >>> d = m.get_distance_matrix()  # doctest: +SKIP
+        >>> d
+        [[0.         1.57079633]
+         [1.57079633 0.        ]]
         """
         # Reduce symmetry operations to the unique ones
         symmetry = _get_unique_symmetry_elements(*self.symmetry)
@@ -699,7 +709,8 @@ class Orientation(Misorientation):
 
     def get_distance_matrix(self, lazy=False, chunk_size=20, progressbar=True):
         r"""The symmetry reduced smallest angle of rotation transforming
-        every orientation in this instance to every other orientation.
+        every orientation in this instance to every other orientation
+        :cite:`johnstone2020density`.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance` for
