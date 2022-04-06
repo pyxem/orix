@@ -66,6 +66,7 @@ Phase
 .. currentmodule:: orix.crystal_map.Phase
 .. autosummary::
     deepcopy
+    from_cif
 .. autoclass:: orix.crystal_map.Phase
     :members:
     :undoc-members:
