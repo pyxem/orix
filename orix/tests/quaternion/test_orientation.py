@@ -314,6 +314,50 @@ def test_symmetry_property_wrong_number_of_values_misorientation(error_type, val
         o.symmetry = value
 
 
+class TestMisorientation:
+    def test_get_distance_matrix(self):
+        """Compute distance between every misorientation in an instance
+        with every other misorientation in the same instance.
+
+        Misorientations are taken from the misorientation clustering
+        user guide.
+        """
+        m1 = Misorientation(
+            [
+                [-0.8541, -0.5201, -0.0053, -0.0002],
+                [-0.8486, -0.5291, -0.0019, -0.0018],
+                [-0.7851, -0.6194, -0.0043, -0.0004],
+                [-0.7802, -0.3136, -0.5413, -0.0029],
+                [-0.8518, -0.5237, -0.0004, -0.0102],
+            ],
+            symmetry=(D6, D6),
+        )
+        distance1 = m1.get_distance_matrix()
+        assert np.allclose(np.diag(distance1), 0)
+        expected = np.array(
+            [
+                [0, 0.0224, 0.2420, 0.2580, 0.0239],
+                [0.0224, 0, 0.2210, 0.2367, 0.0212],
+                [0.2419, 0.2209, 0, 0.0184, 0.2343],
+                [0.2579, 0.2367, 0.0184, 0, 0.2496],
+                [0.0239, 0.0212, 0.2343, 0.2497, 0],
+            ]
+        )
+        assert np.allclose(distance1, expected, atol=1e-4)
+
+    def test_get_distance_matrix_shape(self):
+        shape = (3, 4)
+        m2 = Misorientation.random(shape)
+        distance2 = m2.get_distance_matrix()
+        assert distance2.shape == 2 * shape
+
+    def test_get_distance_matrix_progressbar_chunksize(self):
+        m = Misorientation.random((5, 15, 4))
+        angle1 = m.get_distance_matrix(chunk_size=5, progressbar=True)
+        angle2 = m.get_distance_matrix(chunk_size=10, progressbar=False)
+        assert np.allclose(angle1, angle2)
+
+
 def test_orientation_equality():
     # symmetries must also be the same to be equal
     o1 = Orientation.random((6, 5))
