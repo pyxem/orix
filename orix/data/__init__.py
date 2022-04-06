@@ -18,7 +18,15 @@
 
 """Test data.
 
-Some datasets must be downloaded from the web.
+Some datasets must be downloaded from the web. Datasets are placed in a
+local cache, in the location returned from `pooch.os_cache("orix")` by
+default. The location can be overwritten with a global `ORIX_DATA_DIR`
+environment variable.
+
+With every new version of orix, a new directory of data sets with the
+version name is added to the cache directory. Any old directories are
+not deleted automatically, and should then be deleted manually if
+desired.
 """
 
 import os

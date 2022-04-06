@@ -250,6 +250,10 @@ returned from `pooch.os_cache("orix")`. The location can be overwritten with a g
 (against hash) etc. If we have updated the file hash, pooch will re-download it. If the
 file is available in the cache, it can be loaded as the other files in the data module.
 
+With every new version of orix, a new directory of data sets with the version name is
+added to the cache directory. Any old directories are not deleted automatically, and
+should then be deleted manually if desired.
+
 Continuous integration (CI)
 ===========================
 
