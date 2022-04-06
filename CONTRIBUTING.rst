@@ -211,6 +211,12 @@ answers. Install necessary dependencies to run the tests::
 Some useful `fixtures <https://docs.pytest.org/en/latest/fixture.html>`_ are available
 in the ``conftest.py`` file.
 
+.. note::
+
+    Some :mod:`orix.data` module tests check that data not part of the package
+    distribution can be downloaded from the web, thus downloading some datasets of total
+    size ~11 MB to your local cache (by default to `/home/<user>/.cache/orix`).
+
 To run the tests::
 
    pytest --cov --pyargs orix
