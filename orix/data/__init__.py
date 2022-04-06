@@ -18,8 +18,7 @@
 
 """Test data.
 
-Some datasets must be downloaded from the web. For more test datasets,
-see :doc:`open datasets <open_datasets>`.
+Some datasets must be downloaded from the web.
 """
 
 import os
