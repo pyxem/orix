@@ -22,8 +22,7 @@ import pytest
 
 from orix import data
 from orix.crystal_map import CrystalMap
-
-# from orix.quaternion import Orientation, symmetry
+from orix.quaternion import Orientation, symmetry
 
 
 class TestData:
@@ -35,7 +34,7 @@ class TestData:
         assert xmap.shape == (100, 117)
 
     def test_load_sdss_austenite_kwargs(self):
-        """Keyword arguments are passed."""
+        """Keyword arguments are passed to EMsoft HDF5 reader."""
         xmap_di = data.sdss_austenite(allow_download=True)
         xmap_ref = data.sdss_austenite(refined=True)
 
@@ -60,9 +59,8 @@ class TestData:
         if removed:  # pragma: no cover
             _ = data.sdss_ferrite_austenite(allow_download=True)
 
-
-#    def test_load_ti_orientations(self):
-#        """The file can be read."""
-#        g = data.ti_orientations()
-#        assert isinstance(g, Orientation)
-#        assert g.symmetry == symmetry.D6
+    def test_load_ti_orientations(self):
+        """The file can be read."""
+        g = data.ti_orientations(allow_download=True)
+        assert isinstance(g, Orientation)
+        assert g.symmetry == symmetry.D6

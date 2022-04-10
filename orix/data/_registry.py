@@ -18,13 +18,13 @@
 
 # fmt: off
 registry_hashes = {
-    "sdss/sdss_austenite_dp.h5": "a650c4b49cafd7019644952dbc8cbb85741119e0d69edbf8b030d50ad0fa855c",
+    "sdss/sdss_austenite.h5": "a650c4b49cafd7019644952dbc8cbb85741119e0d69edbf8b030d50ad0fa855c",
     "sdss/sdss_ferrite_austenite.ang": "ac2fc2fc2b8c9c598703c96f9888677bccc9cd88cddd5e78735653fd5504e371",
-#    "ti_orientations/ti_orientations.ctf": "ba1935a4d3cf03f4a81dad0bf3d1190eafb973715069310423a3eaa18fb8171b",
+    "ti_orientations/ti_orientations.ctf": "d8228c58af45ed70f3617b8865c13878bb1fc40b3d60163042be4b761105dcde",
 }
 registry_urls = {
-    "sdss/sdss_austenite_dp.h5": "https://folk.ntnu.no/hakonwii/files/orix-demos/sdss_austenite_dp.h5",
-    "sdss/sdss_ferrite_austenite.ang": "https://folk.ntnu.no/hakonwii/files/orix-demos/sdss_ferrite_austenite.ang",
-#    "ti_orientations/ti_orientations.ctf": "https://drive.google.com/file/d/1GeQIN1FmxYij4HXaf6MH4b5Q9kT2CSn-/view?usp=sharing/Ti_orientations.ctf",
+    "sdss/sdss_austenite.h5": "https://github.com/pyxem/orix-data/raw/main/sdss_austenite/sdss_austenite.h5",
+    "sdss/sdss_ferrite_austenite.ang": "https://github.com/pyxem/orix-data/raw/main/sdss_ferrite_austenite/sdss_ferrite_austenite.ang",
+    "ti_orientations/ti_orientations.ctf": "https://github.com/pyxem/orix-data/raw/main/ti_orientations/Ti_orientations.ctf",
 }
 # fmt: on
