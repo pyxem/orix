@@ -239,7 +239,8 @@ Test data for user guides and tests are included in the :mod:`orix.data` module 
 file registry (`orix.data._registry.py`) with their file verification string (hash,
 SHA256, obtained with e.g. `sha256sum <file>`) and location, the latter potentially not
 within the package but from the `orix-data <https://github.com/pyxem/orix-data>`_
-repository, since some files are considered too large to include in the package.
+repository or elsewhere, since some files are considered too large to include in the
+package.
 
 If a required dataset isn't in the package, but is in the registry, it can be downloaded
 from the repository when the user passes `allow_download=True` to e.g.
