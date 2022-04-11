@@ -131,6 +131,12 @@ Install necessary dependencies to build the documentation::
 
     pip install --editable .[doc]
 
+.. note::
+
+    The user guide notebooks require some small datasets to be downloaded via the
+    :mod:`orix.data` module upon building the documentation. See the section on the
+    :ref:`data module <adding-data-to-data-module>` for more details.
+
 Then, build the documentation from the ``doc`` directory::
 
     cd doc
@@ -214,9 +220,9 @@ in the ``conftest.py`` file.
 .. note::
 
     Some :mod:`orix.data` module tests check that data not part of the package
-    distribution can be downloaded from the web, thus downloading some datasets of total
-    size ~11 MB to your local cache (in the location returned from
-    `pooch.os_cache("orix")`.
+    distribution can be downloaded from the web, thus downloading some small datasets to
+    your local cache. See the section on the
+    :ref:`data module <adding-data-to-data-module>` for more details.
 
 To run the tests::
 
@@ -230,6 +236,8 @@ print a nice report in the terminal. For an even nicer presentation, you can use
 
 Then, you can open the created ``htmlcov/index.html`` in the browser and inspect the
 coverage in more detail.
+
+.. _adding-data-to-data-module:
 
 Adding data to the data module
 ==============================
