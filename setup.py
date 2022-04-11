@@ -58,6 +58,7 @@ setup(
         "numba",
         "numpy",
         "numpy-quaternion",
+        "pooch                  >= 0.13",
         "scipy",
         "tqdm",
     ],

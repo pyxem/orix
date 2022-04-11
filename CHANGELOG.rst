@@ -27,6 +27,7 @@ Added
   on the other hemisphere to the current hemisphere.
 - Notebook on clustering of misorientations across fundamental region boundaries added
   to the user guide from the orix-demos repository.
+- `orix.data` module with test data used in the user guide and tests.
 
 Changed
 -------
