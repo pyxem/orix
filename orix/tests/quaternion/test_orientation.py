@@ -33,6 +33,7 @@ from orix.quaternion.symmetry import (
     T,
     O,
     Oh,
+    _groups,
     _proper_groups,
 )
 from orix.vector import AxAngle, Vector3d
@@ -356,6 +357,39 @@ class TestMisorientation:
         angle1 = m.get_distance_matrix(chunk_size=5, progressbar=True)
         angle2 = m.get_distance_matrix(chunk_size=10, progressbar=False)
         assert np.allclose(angle1, angle2)
+
+    @pytest.mark.parametrize("symmetry", _groups[:-1])
+    def test_get_distance_matrix_equal_explicit_calculation(self, symmetry):
+        # do not test Oh, as this takes ~4 GB
+        m = Misorientation.random((5,))
+        m.symmetry = (symmetry, symmetry)
+        angle1 = m.get_distance_matrix()
+        s1, s2 = m.symmetry
+        # computation of mismisorientation
+        # eq 6 in Johnstone et al. 2020
+        p1 = s1.outer(m).outer(s2)
+        p2 = s1.outer(~m).outer(s2)
+        # for identical symmetries this is equivalent to the old
+        # distance function:
+        # d = s2.outer(~m).outer(s1.outer(s1)).outer(m).outer(s2)
+        p12 = p1.outer(p2)
+        angle2 = p12.angle.min(axis=(0, 2, 3, 5))
+        assert np.allclose(angle1, angle2)
+
+    # TODO: remove when distance() is removed
+    @pytest.mark.parametrize("symmetry", _groups[:-1])
+    def test_get_distance_matrix_equal_distance(self, symmetry):
+        # do not test Oh, as this takes ~4 GB
+        shape = (3, 2)
+        n = np.prod(shape)
+        m = Misorientation.random(shape)
+        m.symmetry = (symmetry, symmetry)
+        angle1 = m.get_distance_matrix().reshape(n, n, order="F")
+        m1 = m.flatten()
+        angle2 = m1.get_distance_matrix()
+        assert np.allclose(angle1, angle2)
+        angle3 = m1.distance()
+        assert np.allclose(angle1, angle3)
 
 
 def test_orientation_equality():
