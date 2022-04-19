@@ -34,6 +34,8 @@ from orix.quaternion.symmetry import (
     Symmetry,
     point_group_aliases,
 )
+from orix.vector import Miller, Vector3d
+
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
@@ -718,3 +720,50 @@ class PhaseList:
 
             # Finally, add the phase to the list
             self._dict[new_phase_id] = phase
+
+
+def _new_structure_matrix_from_alignment(old_matrix, x=None, y=None, z=None):
+    """Get a new structure matrix given the old structure matrix and at
+    least two aligned axes x, y, or z.
+
+    The structure matrix defines the alignment of direct and reciprocal
+    lattice base vectors with the cartesian crystal reference frame.
+
+    Parameters
+    ----------
+    old_matrix : numpy.ndarray
+        Old structure matrix.
+    x, y, z : str, optional
+        Which of the six axes "a", "b", "c", "a*", "b*", or "z*" are
+        aligned with the base vectors of the cartesian crystal reference
+        frame. At least two must be specified.
+
+    Returns
+    -------
+    new_matrix : numpy.ndarray
+        New structure matrix according to the alignment.
+    """
+    # Old direct lattice base vectors in cartesian coordinates
+    old_matrix = Vector3d(old_matrix)
+    ad, bd, cd = old_matrix.unit
+
+    # Old reciprocal lattice base vectors in cartesian coordinates
+    ar = (bd.cross(cd)).unit
+    br = (ad.cross(cd)).unit
+    cr = (ad.cross(bd)).unit
+
+    # New unit crystal base
+    new_matrix = Vector3d.zero((3,))
+    axes_mapping = {"a": ad, "b": bd, "c": cd, "a*": ar, "b*": br, "c*": cr}
+    for i, al in enumerate([x, y, z]):
+        if al in axes_mapping.keys():
+            new_matrix[i] = axes_mapping[al]
+    other_idx = {0: (1, 2), 1: (2, 0), 2: (0, 1)}
+    for i in range(3):
+        if np.isclose(new_matrix[i].norm, 0):
+            new_matrix[i] = new_matrix[other_idx[i][0]].cross(
+                new_matrix[other_idx[i][1]]
+            )
+    new_matrix = new_matrix.dot(old_matrix.unit.reshape(3, 1)).T * old_matrix.norm
+
+    return new_matrix.round(12).T
