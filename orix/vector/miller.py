@@ -88,21 +88,22 @@ class Miller(Vector3d):
             xyz = np.asarray(xyz)
             self.coordinate_format = "xyz"
         elif uvw is not None:
-            xyz = _uvw2xyz(uvw=uvw, lattice=phase.structure.lattice)
+            xyz = _transform_space(uvw, "d", "c", phase.structure.lattice)
             self.coordinate_format = "uvw"
         elif UVTW is not None:
+            UVTW = np.asarray(UVTW)
             _check_UVTW(UVTW)
             uvw = _UVTW2uvw(UVTW=UVTW)
-            xyz = _uvw2xyz(uvw=uvw, lattice=phase.structure.lattice)
+            xyz = _transform_space(uvw, "d", "c", phase.structure.lattice)
             self.coordinate_format = "UVTW"
         elif hkl is not None:
-            xyz = _hkl2xyz(hkl=hkl, lattice=phase.structure.lattice)
+            xyz = _transform_space(hkl, "r", "c", phase.structure.lattice)
             self.coordinate_format = "hkl"
         elif hkil is not None:
             hkil = np.asarray(hkil)
             _check_hkil(hkil)
             hkl = _hkil2hkl(hkil)
-            xyz = _hkl2xyz(hkl=hkl, lattice=phase.structure.lattice)
+            xyz = _transform_space(hkl, "r", "c", phase.structure.lattice)
             self.coordinate_format = "hkil"
         super().__init__(xyz)
 
@@ -154,12 +155,12 @@ class Miller(Vector3d):
     @property
     def hkl(self):
         """Reciprocal lattice vectors."""
-        return _xyz2hkl(xyz=self.data, lattice=self.phase.structure.lattice)
+        return _transform_space(self.data, "c", "r", self.phase.structure.lattice)
 
     @hkl.setter
     def hkl(self, value):
         """Set the reciprocal lattice vectors."""
-        self.data = _hkl2xyz(hkl=value, lattice=self.phase.structure.lattice)
+        self.data = _transform_space(value, "r", "c", self.phase.structure.lattice)
 
     @property
     def hkil(self):
@@ -203,12 +204,12 @@ class Miller(Vector3d):
     @property
     def uvw(self):
         """Direct lattice vectors."""
-        return _xyz2uvw(xyz=self.data, lattice=self.phase.structure.lattice)
+        return _transform_space(self.data, "c", "d", self.phase.structure.lattice)
 
     @uvw.setter
     def uvw(self, value):
         """Set the direct lattice vectors."""
-        self.data = _uvw2xyz(uvw=value, lattice=self.phase.structure.lattice)
+        self.data = _transform_space(value, "d", "c", self.phase.structure.lattice)
 
     @property
     def UVTW(self):
@@ -298,13 +299,10 @@ class Miller(Vector3d):
     @property
     def space(self):
         """Whether the vector is in "direct" or "reciprocal" space."""
-        return dict(
-            xyz="direct",
-            uvw="direct",
-            UVTW="direct",
-            hkl="reciprocal",
-            hkil="reciprocal",
-        )[self.coordinate_format]
+        if self.coordinate_format in ["xyz", "uvw", "UVTW"]:
+            return "d"
+        else:
+            return "r"
 
     @property
     def is_hexagonal(self):
@@ -381,7 +379,7 @@ class Miller(Vector3d):
         """Round a set of index triplet (Miller) or quartet
         (Miller-Bravais/Weber) to the *closest* smallest integers.
 
-        Adopted from MTEX's Miller.round function.
+        Adopted from MTEX' Miller.round function.
 
         Parameters
         ----------
@@ -625,7 +623,7 @@ class Miller(Vector3d):
         m.coordinate_format = self.coordinate_format
         return m
 
-    def get_nearest(self):
+    def get_nearest(self, *args):
         """NotImplemented."""
         return NotImplemented
 
@@ -733,36 +731,45 @@ class Miller(Vector3d):
         return m
 
 
-def _uvw2xyz(uvw, lattice):
-    uvw = np.asarray(uvw)
-    shape = uvw.shape
-    uvw = uvw.reshape((uvw.size // 3, 3))
-    xyz = np.matmul(uvw, lattice.base.T)
-    return xyz.reshape(shape)
+def _transform_space(v_in, space_in, space_out, lattice):
+    """Convert vectors in a unit cell from one space to another.
 
+    Parameters
+    ----------
+    v_in : numpy.ndarray, tuple or list
+        Input vectors.
+    space_in, space_out : str
+        "d" for direct (uvw), "r" for reciprocal (hkl), or "c" for
+        cartesian (xyz).
 
-def _xyz2uvw(xyz, lattice):
-    xyz = np.asarray(xyz)
-    shape = xyz.shape
-    xyz = xyz.reshape((xyz.size // 3, 3))
-    uvw = np.matmul(xyz, lattice.recbase.T)
-    return uvw.reshape(shape)
+    Returns
+    -------
+    v_out : numpy.ndarray
+        Output vectors.
+    """
+    spaces = ["d", "r", "c"]
+    if space_in not in spaces or space_out not in spaces:
+        raise ValueError(f"`space_in` and `space_out` must be one of {spaces}")
 
+    if space_in == space_out:
+        v_out = np.copy(v_in)
+    elif space_in == "d":
+        if space_out == "c":  # uvw -> xyz
+            v_out = np.matmul(v_in, lattice.base)
+        else:  # uvw -> hkl
+            v_out = np.matmul(lattice.metrics, v_in.T)
+    elif space_in == "r":
+        if space_out == "c":  # hkl -> xyz
+            v_out = np.matmul(v_in, lattice.recbase.T)
+        else:  # hkl -> uvw
+            v_out = np.matmul(lattice.reciprocal().metrics, v_in.T)
+    else:
+        if space_out == "d":  # xyz -> uvw
+            v_out = np.matmul(v_in, lattice.recbase)
+        else:  # xyz -> hkl
+            v_out = np.matmul(v_in, lattice.base.T)
 
-def _hkl2xyz(hkl, lattice):
-    hkl = np.asarray(hkl)
-    shape = hkl.shape
-    hkl = hkl.reshape((hkl.size // 3, 3))
-    xyz = np.matmul(hkl, lattice.recbase)
-    return xyz.reshape(shape)
-
-
-def _xyz2hkl(xyz, lattice):
-    xyz = np.asarray(xyz)
-    shape = xyz.shape
-    xyz = xyz.reshape((xyz.size // 3, 3))
-    hkl = np.matmul(xyz, lattice.base)
-    return hkl.reshape(shape)
+    return v_out
 
 
 def _hkl2hkil(hkl):
@@ -884,25 +891,6 @@ def _get_highest_hkl(lattice, min_dspacing=0.05):
             d = 1 / lattice.rnorm(hkl)
         highest_hkl[i] = hkl[i] - 1
     return highest_hkl
-
-
-# TODO: Implement in diffpy.structure.Lattice
-def _direct_structure_matrix(lattice):
-    a, b, c = lattice.abcABG()[:3]
-    ca, cb, cg = lattice.ca, lattice.cb, lattice.cg
-    sg = lattice.sg
-    return np.array(
-        [
-            [a, b * cg, c * cb],
-            [0, b * sg, -c * (cb * cg - ca) / sg],
-            [0, 0, lattice.volume / (a * b * sg)],
-        ]
-    )
-
-
-# TODO: Implement in diffpy.structure.Lattice
-def _reciprocal_structure_matrix(lattice):
-    return np.linalg.inv(_direct_structure_matrix(lattice)).T
 
 
 def _round_indices(indices, max_index=12):

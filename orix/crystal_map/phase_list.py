@@ -253,6 +253,38 @@ class Phase:
         """
         return copy.deepcopy(self)
 
+    def plot_unit_cell_axes(self, figure=None, return_figure=False):
+        """Plot direct and reciprocal lattice base vectors (a, b, c) and
+        (a*, b*, c*) in the stereographic projection.
+
+        Parameters
+        ----------
+        figure : matplotlib.figure.Figure, optional
+            If given, the axes are added to this figure, otherwise a new
+            figure is created.
+        return_figure : bool, optional
+            If True (default is False), return the figure.
+
+        Returns
+        -------
+        figure : matplotlib.figure.Figure or None
+            Figure with the vectors added. None if `return_figure` is
+            False.
+        """
+        axes = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+        uvw = Miller(uvw=axes, phase=self)
+        hkl = Miller(hkl=axes, phase=self)
+
+        color = ["r", "g", "b"]
+        if figure is None:
+            figure = uvw.scatter(c=color, ec="k", s=50, return_figure=True)
+        else:
+            uvw.scatter(c=color, ec="k", s=50, figure=figure)
+        hkl.scatter(c=color, marker="x", s=200, figure=figure)
+
+        if return_figure:
+            return figure
+
 
 class PhaseList:
     """A list of phases in a crystallographic map.
