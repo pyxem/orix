@@ -106,13 +106,30 @@ class Phase:
 
     @property
     def structure(self):
-        """Phase unit cell."""
+        r"""Crystal structure (:ref:`~diffpy.structure.Structure`)
+        containing a lattice (:ref:`~diffpy.structure.Lattice`) and
+        possibly many atoms (:ref:`~diffpy.structure.Atom`).
+
+        The cartesian reference frame of the crystal lattice is assumed
+        to align :math;`a` with :math:`e_1` and :math:`c*` with
+        :math:`e_3`. This alignment is assumed when transforming direct,
+        reciprocal and cartesian vectors between these spaces.
+        """
         return self._structure
 
     @structure.setter
     def structure(self, value):
-        """Set phase structure."""
+        """Set crystal structure :ref:`~diffpy.structure.Structure`.
+
+        The cartesian reference frame of the crystal lattice will be
+        made to align :math:`e_1||a` and :math:`e_3||c*`.
+        """
         if isinstance(value, Structure):
+            # Ensure correct alignment
+            old_matrix = value.lattice.base
+            new_matrix = _new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
+            value = copy.deepcopy(value)
+            value.lattice.setLatBase(new_matrix)
             if value.title == "" and hasattr(self, "_structure"):
                 value.title = self.name
             self._structure = value
@@ -207,8 +224,55 @@ class Phase:
 
     @property
     def is_hexagonal(self):
-        """Whether the crystal structure is hexagonal/trigonal or not."""
+        """Whether the crystal structure is hexagonal/trigonal or
+        not.
+        """
         return np.allclose(self.structure.lattice.abcABG()[3:], [90, 90, 120])
+
+    @property
+    def a_axis(self):
+        """Coordinates of the direct lattice vector :math:`a` in the
+        cartesian reference frame of the crystal lattice :math:`e_i`.
+        """
+        return Miller(uvw=(1, 0, 0), phase=self)
+
+    @property
+    def b_axis(self):
+        """Coordinates of the direct lattice vector :math:`b` in the
+        cartesian reference frame of the crystal lattice :math:`e_i`.
+        """
+        return Miller(uvw=(0, 1, 0), phase=self)
+
+    @property
+    def c_axis(self):
+        """Coordinates of the direct lattice vector :math:`c` in the
+        cartesian reference frame of the crystal lattice :math:`e_i`.
+        """
+        return Miller(uvw=(0, 0, 1), phase=self)
+
+    @property
+    def ar_axis(self):
+        """Coordinates of the reciprocal lattice vector :math:`a^{*}` in
+        the cartesian reference frame of the crystal lattice
+        :math:`e_i`.
+        """
+        return Miller(hkl=(1, 0, 0), phase=self)
+
+    @property
+    def br_axis(self):
+        """Coordinates of the reciprocal lattice vector :math:`b^{*}` in
+        the cartesian reference frame of the crystal lattice
+        :math:`e_i`.
+        """
+        return Miller(hkl=(0, 1, 0), phase=self)
+
+    @property
+    def cr_axis(self):
+        """Coordinates of the reciprocal lattice vector :math:`c^{*}` in
+        the cartesian reference frame of the crystal lattice
+        :math:`e_i`.
+        """
+        return Miller(hkl=(0, 0, 1), phase=self)
 
     def __repr__(self):
         if self.point_group is not None:
@@ -244,6 +308,9 @@ class Phase:
         parser = p_cif.P_cif()
         name = os.path.splitext(os.path.split(filename)[1])[0]
         structure = parser.parseFile(filename)
+        lattice = structure.lattice
+        new_base = _new_structure_matrix_from_alignment(lattice.base, x="a", z="c*")
+        lattice.setLatBase(new_base)
         space_group = parser.spacegroup.number
         return cls(name, space_group, structure=structure)
 
@@ -252,38 +319,6 @@ class Phase:
         function.
         """
         return copy.deepcopy(self)
-
-    def plot_unit_cell_axes(self, figure=None, return_figure=False):
-        """Plot direct and reciprocal lattice base vectors (a, b, c) and
-        (a*, b*, c*) in the stereographic projection.
-
-        Parameters
-        ----------
-        figure : matplotlib.figure.Figure, optional
-            If given, the axes are added to this figure, otherwise a new
-            figure is created.
-        return_figure : bool, optional
-            If True (default is False), return the figure.
-
-        Returns
-        -------
-        figure : matplotlib.figure.Figure or None
-            Figure with the vectors added. None if `return_figure` is
-            False.
-        """
-        axes = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
-        uvw = Miller(uvw=axes, phase=self)
-        hkl = Miller(hkl=axes, phase=self)
-
-        color = ["r", "g", "b"]
-        if figure is None:
-            figure = uvw.scatter(c=color, ec="k", s=50, return_figure=True)
-        else:
-            uvw.scatter(c=color, ec="k", s=50, figure=figure)
-        hkl.scatter(c=color, marker="x", s=200, figure=figure)
-
-        if return_figure:
-            return figure
 
 
 class PhaseList:
@@ -759,7 +794,9 @@ def _new_structure_matrix_from_alignment(old_matrix, x=None, y=None, z=None):
     least two aligned axes x, y, or z.
 
     The structure matrix defines the alignment of direct and reciprocal
-    lattice base vectors with the cartesian crystal reference frame.
+    lattice base vectors with the cartesian reference frame of the
+    crystal lattice defined by x, y, and z. x, y, and z are often termed
+    :math:`e_i`.
 
     Parameters
     ----------
