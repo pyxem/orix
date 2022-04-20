@@ -299,7 +299,7 @@ class StereographicPlot(maxes.Axes):
             Number of vectors to describe each circle, default is 100.
         reproject : bool, optional
             Whether to reproject parts of the circle(s) visible on the
-            other hemisphere. Reprojection is achieved by reflection of
+            other hemisphere. Re-projection is achieved by reflection of
             the circle(s) parts located on the other hemisphere in the
             projection plane. Ignored if hemisphere is “both”. Default
             is False.
