@@ -23,7 +23,7 @@ import pytest
 from orix.crystal_map import Phase
 from orix.quaternion import Orientation, symmetry
 from orix.vector import Miller
-from orix.vector.miller import _round_indices, _uvw2UVTW, _UVTW2uvw
+from orix.vector.miller import _round_indices, _uvw2UVTW, _UVTW2uvw, _transform_space
 
 
 TRIGONAL_PHASE = Phase(
@@ -355,6 +355,26 @@ class TestMiller:
         h4 = h.in_fundamental_sector(symmetry.D6h)
         assert np.allclose(h4.phase.point_group.data, h.phase.point_group.data)
         assert np.allclose(h4.data, (1.366, 0.366, 0), atol=1e-3)
+
+    def test_transform_space(self):
+        """Cover all lines in private function."""
+        lattice = TETRAGONAL_LATTICE
+
+        # Don't share memory
+        v1 = np.array([1, 1, 1])
+        v2 = _transform_space(v1, "d", "d", lattice)
+        assert not np.may_share_memory(v1, v2)
+
+        # Incorrect space
+        with pytest.raises(ValueError, match="`space_in` and `space_out` must be one "):
+            _transform_space(v1, "direct", "cartesian", lattice)
+
+        # uvw -> hkl -> uvw
+        v3 = np.array([1, 0, 1])
+        v4 = _transform_space(v3, "d", "r", lattice)
+        v5 = _transform_space(v4, "r", "d", lattice)
+        assert np.allclose(v4, [0.25, 0, 1])
+        assert np.allclose(v5, v3)
 
 
 class TestMillerBravais:

@@ -736,7 +736,7 @@ def _transform_space(v_in, space_in, space_out, lattice):
 
     Parameters
     ----------
-    v_in : numpy.ndarray, tuple or list
+    v_in : numpy.ndarray
         Input vectors.
     space_in, space_out : str
         "d" for direct (uvw), "r" for reciprocal (hkl), or "c" for
@@ -897,7 +897,7 @@ def _round_indices(indices, max_index=12):
     """Round a set of index triplet (Miller) or quartet (Miller-Bravais)
     to the *closest* smallest integers.
 
-    Adopted from MTEX's Miller.round function.
+    Adopted from MTEX' :code:`Miller.round` function.
 
     Parameters
     ----------
