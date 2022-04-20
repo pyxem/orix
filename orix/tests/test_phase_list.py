@@ -243,6 +243,60 @@ class TestPhase:
         assert p1.is_hexagonal
         assert not p2.is_hexagonal
 
+    def test_structure_matrix(self):
+        """Structure matrix is updated assuming e1 || a, e3 || c*."""
+        trigonal_lattice = Lattice(1.7, 1.7, 1.4, 90, 90, 120)
+        phase = Phase(point_group="321", structure=Structure(lattice=trigonal_lattice))
+        lattice = phase.structure.lattice
+
+        # Lattice parameters are unchanged
+        assert np.allclose(lattice.abcABG(), [1.7, 1.7, 1.4, 90, 90, 120])
+
+        # Structure matrix has changed internally, but not the input
+        # `Lattice` instance
+        assert not np.allclose(lattice.base, trigonal_lattice.base)
+
+        # The expected structure matrix
+        assert np.allclose(
+            lattice.base, [[1.7, 0, 0], [-0.85, 1.472, 0], [0, 0, 1.4]], atol=1e-3
+        )
+
+        # Setting the structure also updates the lattice
+        phase2 = phase.deepcopy()
+        phase2.structure = Structure(lattice=trigonal_lattice)
+        assert np.allclose(phase2.structure.lattice.base, lattice.base)
+
+    def test_lattice_vectors(self):
+        """Correct direct and reciprocal lattice vectors."""
+        trigonal_lattice = Lattice(1.7, 1.7, 1.4, 90, 90, 120)
+        phase = Phase(point_group="321", structure=Structure(lattice=trigonal_lattice))
+
+        a, b, c = phase.a_axis, phase.b_axis, phase.c_axis
+        ar, br, cr = phase.ar_axis, phase.br_axis, phase.cr_axis
+        # Coordinates in direct and reciprocal crystal reference frames
+        assert np.allclose([a.coordinates, ar.coordinates], [1, 0, 0])
+        assert np.allclose([b.coordinates, br.coordinates], [0, 1, 0])
+        assert np.allclose([c.coordinates, cr.coordinates], [0, 0, 1])
+        # Coordinates in cartesian crystal reference frame
+        assert np.allclose(a.data, [1.7, 0, 0])
+        assert np.allclose(b.data, [-0.85, 1.472, 0], atol=1e-3)
+        assert np.allclose(c.data, [0, 0, 1.4])
+        assert np.allclose(ar.data, [0.588, 0.340, 0], atol=1e-3)
+        assert np.allclose(br.data, [0, 0.679, 0], atol=1e-3)
+        assert np.allclose(cr.data, [0, 0, 0.714], atol=1e-3)
+
+    def test_from_cif(self, cif_file):
+        """CIF files parsed correctly with space group and all."""
+        phase = Phase.from_cif(cif_file)
+        assert phase.space_group.number == 12
+        assert phase.point_group.name == "2/m"
+        assert len(phase.structure) == 22  # Number of atoms
+        lattice = phase.structure.lattice
+        assert np.allclose(lattice.abcABG(), [15.5, 4.05, 6.74, 90, 105.3, 90])
+        assert np.allclose(
+            lattice.base, [[15.5, 0, 0], [0, 4.05, 0], [-1.779, 0, 6.501]], atol=1e-3
+        )
+
 
 class TestPhaseList:
     @pytest.mark.parametrize("empty_input", [(), [], {}])
