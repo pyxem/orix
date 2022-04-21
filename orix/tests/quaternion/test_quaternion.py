@@ -223,3 +223,35 @@ class TestQuaternion:
         assert outer2.chunks == ((5,), (cs2, 2), (5,), (cs2, 2), (4,))
 
         assert np.allclose(outer1.compute(), outer2.compute())
+
+    @pytest.mark.parametrize("shape", [(2, 3), (4, 5, 6), (1, 5), (11,)])
+    def test_outer_vector_lazy(self, shape):
+        rng = np.random.default_rng()
+        new_shape = shape + (4,)
+        abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
+        q = Quaternion(abcd).unit
+
+        v = Vector3d(np.random.rand(7, 4, 3)).unit
+
+        qvo_numpy = q.outer(v)
+        assert isinstance(qvo_numpy, Vector3d)
+        assert qvo_numpy.shape == q.shape + v.shape
+
+        # Returns dask array, not Vector3d
+        qvo_dask = q._outer_dask(v)
+        assert isinstance(qvo_dask, da.Array)
+        qvo_numpy2 = Vector3d(qvo_dask.compute())
+        assert qvo_numpy2.shape == qvo_numpy.shape
+
+        assert np.allclose(qvo_numpy.data, qvo_numpy2.data)
+
+    def test_outer_dask_wrong_type_raises(self):
+        shape = (5,)
+        rng = np.random.default_rng()
+        new_shape = shape + (4,)
+        abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
+        q = Quaternion(abcd)
+        # not Quaternion or Vector3d
+        other = np.random.rand(7, 3)
+        with pytest.raises(TypeError, match="Other must be Quaternion or Vector3d"):
+            q._outer_dask(other)
