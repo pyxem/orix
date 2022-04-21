@@ -55,7 +55,7 @@ class Phase:
         ----------
         name : str, optional
             Phase name. Overwrites the name in the `structure` object.
-        space_group : int or diffpy.structure.spacegroups.SpaceGroup,\
+        space_group : int or diffpy.structure.spacegroupmod.SpaceGroup,\
                 optional
             Space group describing the symmetry operations resulting from
             associating the point group with a Bravais lattice, according
@@ -69,10 +69,11 @@ class Phase:
             is not None, it is derived from the space group. If both
             `point_group` and `space_group` is not None, the space group
             needs to be derived from the point group.
-        structure : diffpy.structure.Structure, optional
+        structure : diffpy.structure.structure.Structure, optional
             Unit cell with atoms and a lattice. If None is passed
-            (default), a default :class:`diffpy.structure.Structure`
-            object is created.
+            (default), a default
+            :class:`~diffpy.structure.structure.Structure` object is
+            created.
         color : str, optional
             Phase color. If None is passed (default), it is set to
             'tab:blue' (first among the default Matplotlib colors).
@@ -106,12 +107,13 @@ class Phase:
 
     @property
     def structure(self):
-        r"""Crystal structure (:ref:`~diffpy.structure.Structure`)
-        containing a lattice (:ref:`~diffpy.structure.Lattice`) and
-        possibly many atoms (:ref:`~diffpy.structure.Atom`).
+        r"""Crystal structure
+        (:class:`~diffpy.structure.structure.Structure`) containing a
+        lattice (:class:`~diffpy.structure.lattice.Lattice`) and
+        possibly many atoms (:class:`~diffpy.structure.atom.Atom`).
 
         The cartesian reference frame of the crystal lattice is assumed
-        to align :math;`a` with :math:`e_1` and :math:`c*` with
+        to align :math:`a` with :math:`e_1` and :math:`c*` with
         :math:`e_3`. This alignment is assumed when transforming direct,
         reciprocal and cartesian vectors between these spaces.
         """
