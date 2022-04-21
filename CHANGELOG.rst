@@ -12,6 +12,7 @@ Unreleased
 
 Added
 -----
+- Dask implementation of the `Quaternion` - `Vector3d` outer product.
 - Point group `Symmetry` elements can now be viewed under the stereographic projection
   using `Symmetry.plot()`. The notebook point_groups.ipynb has been added to the
   documentation.
