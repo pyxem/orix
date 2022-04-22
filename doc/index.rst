@@ -15,22 +15,55 @@ Work using orix
 
     installation.rst
 
+
+.. _user-guide:
+
 User guide
 ----------
 
-.. _user-guide:
+Crystal geometry
+~~~~~~~~~~~~~~~~
+
+Conventions for the unit cell, symmetry operations and relevant reference frames, and
+how to operate with vectors in the crystal and sample reference frames.
+
 .. nbgallery::
     :caption: User guide
 
-    crystal_geometry.ipynb
-    stereographic_projection.ipynb
+    crystal_reference_frame.ipynb
+    crystal_directions.ipynb
+    point_groups.ipynb
     inverse_pole_figures.ipynb
-    crystal_map.ipynb
+
+Orientations
+~~~~~~~~~~~~
+
+.. nbgallery::
+
+    uniform_sampling_of_orientation_space.ipynb
+
+Vectors
+~~~~~~~
+
+.. nbgallery::
+
+    stereographic_projection.ipynb
+
+Clustering of (mis)orientations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. nbgallery::
+
     clustering_across_fundamental_region_boundaries.ipynb
     clustering_orientations.ipynb
     clustering_misorientations.ipynb
-    uniform_sampling_of_orientation_space.ipynb
-    point_groups.ipynb
+
+Crystallographic maps
+~~~~~~~~~~~~~~~~~~~~~
+
+.. nbgallery::
+
+    crystal_map.ipynb
 
 .. toctree::
     :hidden:
