@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 from diffpy.structure import Lattice, Structure
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
@@ -285,6 +287,11 @@ class TestPhase:
         assert np.allclose(br.data, [0, 0.679, 0], atol=1e-3)
         assert np.allclose(cr.data, [0, 0, 0.714], atol=1e-3)
 
+    @pytest.mark.xfail(
+        sys.platform == "win32",
+        reason="Importing modules from CifFile fails on GitHub's windows server",
+        strict=True,
+    )
     def test_from_cif(self, cif_file):
         """CIF files parsed correctly with space group and all."""
         phase = Phase.from_cif(cif_file)
