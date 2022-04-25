@@ -50,7 +50,7 @@ Deprecated
 
 Fixed
 -----
-- Fixed bug in `sample_S2_uv_outer()` and removed duplicate vectors at poles.
+- Fixed bug in `sample_S2_uv_mesh()` and remove duplicate vectors at poles.
 - The results from `Orientation.dot_outer()` are now returned as 
   `self.shape + other.shape`, which is consistent with `Rotation.dot_outer()`.
 - Writing of property arrays in .ang writer from masked CrystalMap.
