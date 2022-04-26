@@ -820,7 +820,7 @@ def _new_structure_matrix_from_alignment(old_matrix, x=None, y=None, z=None):
 
     # Old reciprocal lattice base vectors in cartesian coordinates
     ar = (bd.cross(cd)).unit
-    br = (ad.cross(cd)).unit
+    br = (cd.cross(ad)).unit
     cr = (ad.cross(bd)).unit
 
     # New unit crystal base
