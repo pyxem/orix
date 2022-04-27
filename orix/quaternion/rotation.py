@@ -259,22 +259,33 @@ class Rotation(Quaternion):
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 
-    def outer(self, other):
+    def outer(self, other, lazy=False, chunk_size=20):
         """Compute the outer product of this rotation and the other
         rotation or vector.
 
         Parameters
         ----------
         other : Rotation or Vector3d
+        lazy : bool
+            Whether to computer this computation using Dask. Default is
+            False.
+        chunk_size : int, optional
+            Number of objects per axis for each input to include in each
+            iteration of the computation. Default is 20.
 
         Returns
         -------
         Rotation or Vector3d
         """
-        r = super().outer(other)
+        if lazy:
+            arr = self._outer_dask(other, chunk_size=chunk_size).compute()
+            r = other.__class__(arr)
+        else:
+            r = super().outer(other)
+
         if isinstance(r, Rotation):
             r.improper = np.logical_xor.outer(self.improper, other.improper)
-        if isinstance(r, Vector3d):
+        elif isinstance(r, Vector3d):
             r[self.improper] = -r[self.improper]
         return r
 
@@ -657,29 +668,6 @@ class Rotation(Quaternion):
         """Rotation : this and antipodally equivalent rotations."""
         r = self.__class__(np.stack([self.data, -self.data], axis=0))
         r.improper = self.improper
-        return r
-
-    def _outer_dask(self, other, chunk_size=20):
-        """Compute the product of every rotation in this instance to
-        every rotation in another instance, returned as a Dask array.
-
-        Parameters
-        ----------
-        other : orix.quaternion.Rotation
-        chunk_size : int, optional
-            Number of rotations per axis in each rotation instance to
-            include in each iteration of the computation. Default is 20.
-
-        Returns
-        -------
-        dask.array.Array
-
-        Notes
-        -----
-        To get a new rotation from the returned array `rarr`, do
-        `r = Rotation(rarr.compute())`.
-        """
-        r = super()._outer_dask(other, chunk_size=chunk_size)
         return r
 
 

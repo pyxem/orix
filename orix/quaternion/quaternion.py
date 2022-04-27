@@ -222,13 +222,19 @@ class Quaternion(Object3d):
         w_max = np.argmax(w)
         return self.__class__(v[:, w_max])
 
-    def outer(self, other):
+    def outer(self, other, lazy=False, chunk_size=20):
         """Compute the outer product of this quaternion and the other
         quaternion or vector.
 
         Parameters
         ----------
         other : orix.quaternion.Quaternion or orix.vector.Vector3d
+        lazy : bool
+            Whether to computer this computation using Dask. Default is
+            False.
+        chunk_size : int, optional
+            Number of objects per axis for each input to include in each
+            iteration of the computation. Default is 20.
 
         Returns
         -------
@@ -236,20 +242,27 @@ class Quaternion(Object3d):
         """
 
         if isinstance(other, Quaternion):
-            q1 = quaternion.from_float_array(self.data)
-            q2 = quaternion.from_float_array(other.data)
-            # np.outer works with flattened array
-            q = np.outer(q1, q2).reshape(q1.shape + q2.shape)
-            return other.__class__(quaternion.as_float_array(q))
+            if lazy:
+                arr = self._outer_dask(other, chunk_size=chunk_size).compute()
+            else:
+                q1 = quaternion.from_float_array(self.data)
+                q2 = quaternion.from_float_array(other.data)
+                # np.outer works with flattened array
+                q = np.outer(q1, q2).reshape(q1.shape + q2.shape)
+                arr = quaternion.as_float_array(q)
+            return other.__class__(arr)
         elif isinstance(other, Vector3d):
-            q = quaternion.from_float_array(self.data)
-            v = quaternion.rotate_vectors(q, other.data)
+            if lazy:
+                arr = self._outer_dask(other, chunk_size=chunk_size).compute()
+            else:
+                q = quaternion.from_float_array(self.data)
+                arr = quaternion.rotate_vectors(q, other.data)
             if isinstance(other, Miller):
-                m = other.__class__(xyz=v, phase=other.phase)
+                m = other.__class__(xyz=arr, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
                 return m
             else:
-                return other.__class__(v)
+                return other.__class__(arr)
         else:
             raise NotImplementedError(
                 "This operation is currently not avaliable in orix, please use outer "

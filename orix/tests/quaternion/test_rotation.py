@@ -525,6 +525,37 @@ def test_dot_outer_quat(rotation, improper, quaternion, expected):
     assert np.allclose(cosines.data, expected, atol=1e-4)
 
 
+def test_outer_lazy_rot():
+    r1 = Rotation.random((5, 3))
+    r2 = Rotation.random((11, 4))
+    r12 = r1.outer(r2)
+    r12_lazy = r1.outer(r2, lazy=True, chunk_size=20)
+    assert r12.shape == r12_lazy.shape
+    assert np.allclose(r12.data, r12_lazy.data)
+    assert np.allclose(r12.improper, r12_lazy.improper)
+    # different chunk size
+    r12_lazy2 = r1.outer(r2, lazy=True, chunk_size=3)
+    assert r12.shape == r12_lazy2.shape
+    assert np.allclose(r12.data, r12_lazy2.data)
+    assert np.allclose(r12.improper, r12_lazy2.improper)
+
+
+def test_outer_lazy_vec():
+    r = Rotation.random((5, 3))
+    v = Vector3d(np.random.rand(6, 4, 3)).unit
+    v2 = r.outer(v)
+    v2_lazy = r.outer(v, lazy=True, chunk_size=20)
+    assert isinstance(v2, Vector3d)
+    assert isinstance(v2_lazy, Vector3d)
+    assert v2.shape == v2_lazy.shape
+    assert np.allclose(v2.data, v2_lazy.data)
+    # different chunk size
+    v2_lazy2 = r.outer(v, lazy=True, chunk_size=3)
+    assert isinstance(v2_lazy2, Vector3d)
+    assert v2.shape == v2_lazy.shape
+    assert np.allclose(v2.data, v2_lazy2.data)
+
+
 @pytest.mark.parametrize(
     "rotation, expected",
     [
