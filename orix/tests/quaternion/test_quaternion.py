@@ -205,8 +205,13 @@ class TestQuaternion:
         assert isinstance(qo_dask, da.Array)
         qo_numpy2 = Quaternion(qo_dask.compute())
         assert qo_numpy2.shape == 2 * shape
-
         assert np.allclose(qo_numpy.data, qo_numpy2.data)
+
+        # public function .outer()
+        qo_dask2 = q.outer(q)
+        assert isinstance(qo_dask2, Quaternion)
+        assert qo_dask2.shape == 2 * shape
+        assert np.allclose(qo_numpy.data, qo_dask2.data)
 
     def test_outer_lazy_chunk_size(self):
         shape = (5, 15, 4)
@@ -242,8 +247,13 @@ class TestQuaternion:
         assert isinstance(qvo_dask, da.Array)
         qvo_numpy2 = Vector3d(qvo_dask.compute())
         assert qvo_numpy2.shape == qvo_numpy.shape
-
         assert np.allclose(qvo_numpy.data, qvo_numpy2.data)
+
+        # public function .outer()
+        qvo_dask2 = q.outer(v)
+        assert isinstance(qvo_dask2, Vector3d)
+        assert qvo_dask2.shape == qvo_numpy.shape
+        assert np.allclose(qvo_numpy.data, qvo_dask2.data)
 
     def test_outer_dask_wrong_type_raises(self):
         shape = (5,)
