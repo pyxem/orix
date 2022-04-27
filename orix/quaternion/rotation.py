@@ -267,10 +267,12 @@ class Rotation(Quaternion):
         ----------
         other : Rotation or Vector3d
         lazy : bool
-            Whether to computer this computation using Dask. Default is
-            False.
+            Whether to computer this computation using Dask. This is
+            option can be used to reduce memory usage when working with
+            large arrays. Default is False.
         chunk_size : int, optional
-            Number of objects per axis for each input to include in each
+            When using `lazy` computation, `chunk_size` represents the
+            number of objects per axis for each input to include in each
             iteration of the computation. Default is 20.
 
         Returns
