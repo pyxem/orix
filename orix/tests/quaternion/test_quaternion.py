@@ -207,8 +207,8 @@ class TestQuaternion:
         assert qo_numpy2.shape == 2 * shape
         assert np.allclose(qo_numpy.data, qo_numpy2.data)
 
-        # public function .outer()
-        qo_dask2 = q.outer(q)
+        # public function .outer() with Dask
+        qo_dask2 = q.outer(q, lazy=True)
         assert isinstance(qo_dask2, Quaternion)
         assert qo_dask2.shape == 2 * shape
         assert np.allclose(qo_numpy.data, qo_dask2.data)
@@ -249,8 +249,8 @@ class TestQuaternion:
         assert qvo_numpy2.shape == qvo_numpy.shape
         assert np.allclose(qvo_numpy.data, qvo_numpy2.data)
 
-        # public function .outer()
-        qvo_dask2 = q.outer(v)
+        # public function .outer() with Dask
+        qvo_dask2 = q.outer(v, lazy=True)
         assert isinstance(qvo_dask2, Vector3d)
         assert qvo_dask2.shape == qvo_numpy.shape
         assert np.allclose(qvo_numpy.data, qvo_dask2.data)
