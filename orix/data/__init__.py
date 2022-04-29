@@ -29,6 +29,8 @@ not deleted automatically, and should then be deleted manually if
 desired.
 """
 
+from pathlib import Path
+
 import numpy as np
 import pooch
 
@@ -56,7 +58,7 @@ _fetcher = pooch.create(
 
 
 def _fetch(filename, allow_download):
-    file_path_in_cache = _fetcher.path / filename
+    file_path_in_cache = Path(_fetcher.path) / filename
     if (
         not file_path_in_cache.exists()
         or not pooch.file_hash(file_path_in_cache) == registry_hashes[filename]

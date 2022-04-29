@@ -11,6 +11,7 @@ extra_feature_requirements = {
         "ipykernel",  # https://github.com/spatialaudio/nbsphinx/issues/121
         "nbsphinx >= 0.7",
         "sphinx >= 3.0.2",
+        "sphinx-copybutton >= 0.2.5",
         "sphinx-gallery >= 0.6",
         "sphinxcontrib-bibtex >= 1.0",
         "scikit-image",

@@ -29,6 +29,8 @@ Added
 - Notebook on clustering of misorientations across fundamental region boundaries added
   to the user guide from the orix-demos repository.
 - `orix.data` module with test data used in the user guide and tests.
+- `Misorientation.get_distance_matrix()` for memory-efficient calculation of a
+  misorientation angle (geodesic distance) matrix between misorientations using Dask.
 
 Changed
 -------
