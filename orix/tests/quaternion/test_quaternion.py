@@ -255,6 +255,21 @@ class TestQuaternion:
         assert qvo_dask2.shape == qvo_numpy.shape
         assert np.allclose(qvo_numpy.data, qvo_dask2.data)
 
+    def test_outer_lazy_progressbar_stdout(self, capsys):
+        rng = np.random.default_rng()
+        shape = (5, 3)
+        new_shape = shape + (4,)
+        abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
+        q = Quaternion(abcd).unit
+
+        _ = q.outer(q, lazy=True, progressbar=True)
+        out, _ = capsys.readouterr()
+        assert "Completed" in out
+
+        _ = q.outer(q, lazy=True, progressbar=False)
+        out, _ = capsys.readouterr()
+        assert not out
+
     def test_outer_dask_wrong_type_raises(self):
         shape = (5,)
         rng = np.random.default_rng()

@@ -556,6 +556,19 @@ def test_outer_lazy_vec():
     assert np.allclose(v2.data, v2_lazy2.data)
 
 
+def test_outer_lazy_progressbar_stdout(capsys):
+    r1 = Rotation.random((5, 3))
+    r2 = Rotation.random((6, 4))
+
+    _ = r1.outer(r2, lazy=True, progressbar=True)
+    out, _ = capsys.readouterr()
+    assert "Completed" in out
+
+    _ = r1.outer(r2, lazy=True, progressbar=False)
+    out, _ = capsys.readouterr()
+    assert not out
+
+
 @pytest.mark.parametrize(
     "rotation, expected",
     [
