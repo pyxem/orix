@@ -229,7 +229,7 @@ class Quaternion(Object3d):
         Parameters
         ----------
         other : orix.quaternion.Quaternion or orix.vector.Vector3d
-        lazy : bool
+        lazy : bool, optional
             Whether to computer this computation using Dask. This option
             can be used to reduce memory usage when working with large
             arrays. Default is False.
