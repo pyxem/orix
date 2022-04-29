@@ -42,6 +42,8 @@ rotation of 180° about the z-axis, illustrated in the figure below.
 
 import warnings
 
+import dask.array as da
+from dask.diagnostics import ProgressBar
 import numpy as np
 from scipy.special import hyp0f1
 
@@ -259,14 +261,14 @@ class Rotation(Quaternion):
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 
-    def outer(self, other, lazy=False, chunk_size=20):
+    def outer(self, other, lazy=False, chunk_size=20, progressbar=True):
         """Compute the outer product of this rotation and the other
         rotation or vector.
 
         Parameters
         ----------
         other : Rotation or Vector3d
-        lazy : bool
+        lazy : bool, optional
             Whether to computer this computation using Dask. This option
             can be used to reduce memory usage when working with large
             arrays. Default is False.
@@ -274,13 +276,22 @@ class Rotation(Quaternion):
             When using `lazy` computation, `chunk_size` represents the
             number of objects per axis for each input to include in each
             iteration of the computation. Default is 20.
+        progressbar : bool, optional
+            Whether to show a progressbar during computation if `lazy`
+            is True. Default is True.
 
         Returns
         -------
         Rotation or Vector3d
         """
         if lazy:
-            arr = self._outer_dask(other, chunk_size=chunk_size).compute()
+            darr = self._outer_dask(other, chunk_size=chunk_size)
+            arr = np.empty(darr.shape)
+            if progressbar:
+                with ProgressBar():
+                    da.store(darr, arr)
+            else:
+                da.store(darr, arr)
             r = other.__class__(arr)
         else:
             r = super().outer(other)

@@ -19,6 +19,7 @@
 import warnings
 
 import dask.array as da
+from dask.diagnostics import ProgressBar
 import numpy as np
 import quaternion
 
@@ -222,7 +223,7 @@ class Quaternion(Object3d):
         w_max = np.argmax(w)
         return self.__class__(v[:, w_max])
 
-    def outer(self, other, lazy=False, chunk_size=20):
+    def outer(self, other, lazy=False, chunk_size=20, progressbar=True):
         """Compute the outer product of this quaternion and the other
         quaternion or vector.
 
@@ -237,6 +238,9 @@ class Quaternion(Object3d):
             When using `lazy` computation, `chunk_size` represents the
             number of objects per axis for each input to include in each
             iteration of the computation. Default is 20.
+        progressbar : bool, optional
+            Whether to show a progressbar during computation if `lazy`
+            is True. Default is True.
 
         Returns
         -------
@@ -245,7 +249,13 @@ class Quaternion(Object3d):
 
         if isinstance(other, Quaternion):
             if lazy:
-                arr = self._outer_dask(other, chunk_size=chunk_size).compute()
+                darr = self._outer_dask(other, chunk_size=chunk_size)
+                arr = np.empty(darr.shape)
+                if progressbar:
+                    with ProgressBar():
+                        da.store(darr, arr)
+                else:
+                    da.store(darr, arr)
             else:
                 q1 = quaternion.from_float_array(self.data)
                 q2 = quaternion.from_float_array(other.data)
@@ -255,7 +265,13 @@ class Quaternion(Object3d):
             return other.__class__(arr)
         elif isinstance(other, Vector3d):
             if lazy:
-                arr = self._outer_dask(other, chunk_size=chunk_size).compute()
+                darr = self._outer_dask(other, chunk_size=chunk_size)
+                arr = np.empty(darr.shape)
+                if progressbar:
+                    with ProgressBar():
+                        da.store(darr, arr)
+                else:
+                    da.store(darr, arr)
             else:
                 q = quaternion.from_float_array(self.data)
                 arr = quaternion.rotate_vectors(q, other.data)
