@@ -262,11 +262,22 @@ class TestQuaternion:
         abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
         q = Quaternion(abcd).unit
 
+        # test other is Quaternion
         _ = q.outer(q, lazy=True, progressbar=True)
         out, _ = capsys.readouterr()
         assert "Completed" in out
 
         _ = q.outer(q, lazy=True, progressbar=False)
+        out, _ = capsys.readouterr()
+        assert not out
+
+        # test other is Vector3d
+        v = Vector3d(np.random.rand(2, 3, 3)).unit
+        _ = q.outer(v, lazy=True, progressbar=True)
+        out, _ = capsys.readouterr()
+        assert "Completed" in out
+
+        _ = q.outer(v, lazy=True, progressbar=False)
         out, _ = capsys.readouterr()
         assert not out
 
