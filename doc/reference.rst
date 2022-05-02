@@ -4,7 +4,7 @@ API reference
 
 This reference manual details the public modules, classes, and functions in orix, as
 generated from their docstrings. Many of the docstrings contain examples, however, see
-the :ref:`user guide <user-guide>` for how to use orix.
+the user guide for how to use orix.
 
 .. caution::
 
