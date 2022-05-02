@@ -195,17 +195,17 @@ class TestMiller:
 
         # Test from MTEX' v5.6.0 documentation
         m = Miller(UVTW=[1, -2, 1, 3], phase=TRIGONAL_PHASE)
-        _, l = m.symmetrise(return_multiplicity=True, unique=True)
-        assert l == 6
+        _, mult = m.symmetrise(return_multiplicity=True, unique=True)
+        assert mult == 6
 
         m2 = Miller(uvw=[[1, 0, 0], [1, 1, 0], [1, 1, 1]], phase=CUBIC_PHASE)
         _, idx = m2.symmetrise(unique=True, return_index=True)
         assert np.allclose(idx, np.array([0] * 6 + [1] * 12 + [2] * 8))
 
-        _, l3, _ = m2.symmetrise(
+        _, mult2, _ = m2.symmetrise(
             unique=True, return_multiplicity=True, return_index=True
         )
-        assert np.allclose(l3, [6, 12, 8])
+        assert np.allclose(mult2, [6, 12, 8])
 
     def test_unique(self):
         # From the "Crystal geometry" notebook
