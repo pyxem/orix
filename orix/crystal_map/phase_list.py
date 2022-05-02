@@ -803,7 +803,8 @@ def _new_structure_matrix_from_alignment(old_matrix, x=None, y=None, z=None):
     Parameters
     ----------
     old_matrix : numpy.ndarray
-        Old structure matrix.
+        Old structure matrix, i.e. the 3x3 matrix of row base vectors
+        expressed in Cartesian coordinates.
     x, y, z : str, optional
         Which of the six axes "a", "b", "c", "a*", "b*", or "z*" are
         aligned with the base vectors of the cartesian crystal reference
@@ -814,27 +815,31 @@ def _new_structure_matrix_from_alignment(old_matrix, x=None, y=None, z=None):
     new_matrix : numpy.ndarray
         New structure matrix according to the alignment.
     """
-    # Old direct lattice base vectors in cartesian coordinates
+    if sum([i is None for i in [x, y, z]]) > 1:
+        raise ValueError("At least two of x, y, z must be set.")
+
+    # Old direct lattice base (row) vectors in Cartesian coordinates
     old_matrix = Vector3d(old_matrix)
     ad, bd, cd = old_matrix.unit
 
     # Old reciprocal lattice base vectors in cartesian coordinates
-    ar = (bd.cross(cd)).unit
-    br = (cd.cross(ad)).unit
-    cr = (ad.cross(bd)).unit
+    ar = bd.cross(cd).unit
+    br = cd.cross(ad).unit
+    cr = ad.cross(bd).unit
 
     # New unit crystal base
-    new_matrix = Vector3d.zero((3,))
+    new_vectors = Vector3d.zero((3,))
     axes_mapping = {"a": ad, "b": bd, "c": cd, "a*": ar, "b*": br, "c*": cr}
     for i, al in enumerate([x, y, z]):
         if al in axes_mapping.keys():
-            new_matrix[i] = axes_mapping[al]
+            new_vectors[i] = axes_mapping[al]
     other_idx = {0: (1, 2), 1: (2, 0), 2: (0, 1)}
     for i in range(3):
-        if np.isclose(new_matrix[i].norm, 0):
-            new_matrix[i] = new_matrix[other_idx[i][0]].cross(
-                new_matrix[other_idx[i][1]]
-            )
-    new_matrix = new_matrix.dot(old_matrix.unit.reshape(3, 1)).T * old_matrix.norm
+        if np.isclose(new_vectors[i].norm, 0):
+            other0, other1 = other_idx[i]
+            new_vectors[i] = new_vectors[other0].cross(new_vectors[other1])
 
-    return new_matrix.round(12).T
+    # New crystal base
+    new_matrix = new_vectors.dot(old_matrix.reshape(3, 1)).round(12)
+
+    return new_matrix
