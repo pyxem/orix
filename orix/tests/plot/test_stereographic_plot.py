@@ -32,7 +32,6 @@ from orix import plot, vector
 from orix.quaternion.symmetry import C1, C6, Oh
 
 
-plt.rcParams["backend"] = "TkAgg"
 plt.rcParams["axes.grid"] = True
 PROJ_NAME = "stereographic"
 
