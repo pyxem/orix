@@ -1,4 +1,4 @@
-# This workflows runs when a tagged release is created or it is triggered manually.
+# This workflow runs when a tagged release is created or it is triggered manually.
 # For more information see:
 # - Python docs: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 # - GitHub action: https://github.com/marketplace/actions/pypi-publish
