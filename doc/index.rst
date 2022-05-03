@@ -11,26 +11,18 @@ Work using orix
 
 .. toctree::
     :hidden:
-    :caption: Getting started
 
     installation.rst
 
-User guide
-----------
-
-.. _user-guide:
-.. nbgallery::
+.. toctree::
+    :hidden:
     :caption: User guide
 
-    crystal_geometry.ipynb
-    stereographic_projection.ipynb
-    inverse_pole_figures.ipynb
-    crystal_map.ipynb
-    clustering_across_fundamental_region_boundaries.ipynb
-    clustering_orientations.ipynb
-    clustering_misorientations.ipynb
-    uniform_sampling_of_orientation_space.ipynb
-    point_groups.ipynb
+    crystal_geometry.rst
+    orientations.rst
+    vectors.rst
+    clustering_of_orientations.rst
+    crystallographic_maps.rst
 
 .. toctree::
     :hidden:
