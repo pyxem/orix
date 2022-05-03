@@ -34,6 +34,8 @@ Added
 - `orix.data` module with test data used in the user guide and tests.
 - `Misorientation.get_distance_matrix()` for memory-efficient calculation of a
   misorientation angle (geodesic distance) matrix between misorientations using Dask.
+- Clarification of crystal axes alignment in documentation.
+- Creation of a `Phase` instance from a CIF file.
 
 Changed
 -------
@@ -46,6 +48,7 @@ Changed
   which is consistent with the default `"crystal2lab"` direction in
   `MTEX <https://mtex-toolbox.github.io/MTEXvsBungeConvention.html>`_.
 - `S4` (-4) `Symmetry` has been corrected.
+- Organized user guide documentation into topics.
 
 Deprecated
 ----------

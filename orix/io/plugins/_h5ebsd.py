@@ -74,6 +74,7 @@ class H5ebsdFile:
     """
 
     file = None
+    scan_groups = None
     data_dict = dict()
     header_dict = dict()
     sem_dict = dict()

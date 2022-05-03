@@ -18,10 +18,12 @@
 
 from collections import OrderedDict
 import copy
+import os
 from itertools import islice
 import warnings
 
 from diffpy.structure import Structure
+from diffpy.structure.parsers import p_cif
 from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
 import matplotlib.colors as mcolors
 import numpy as np
@@ -32,6 +34,8 @@ from orix.quaternion.symmetry import (
     Symmetry,
     point_group_aliases,
 )
+from orix.vector import Miller, Vector3d
+
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
@@ -51,7 +55,7 @@ class Phase:
         ----------
         name : str, optional
             Phase name. Overwrites the name in the `structure` object.
-        space_group : int or diffpy.structure.spacegroups.SpaceGroup,\
+        space_group : int or diffpy.structure.spacegroupmod.SpaceGroup,\
                 optional
             Space group describing the symmetry operations resulting from
             associating the point group with a Bravais lattice, according
@@ -65,10 +69,11 @@ class Phase:
             is not None, it is derived from the space group. If both
             `point_group` and `space_group` is not None, the space group
             needs to be derived from the point group.
-        structure : diffpy.structure.Structure, optional
+        structure : diffpy.structure.structure.Structure, optional
             Unit cell with atoms and a lattice. If None is passed
-            (default), a default :class:`diffpy.structure.Structure`
-            object is created.
+            (default), a default
+            :class:`~diffpy.structure.structure.Structure` object is
+            created.
         color : str, optional
             Phase color. If None is passed (default), it is set to
             'tab:blue' (first among the default Matplotlib colors).
@@ -102,13 +107,31 @@ class Phase:
 
     @property
     def structure(self):
-        """Phase unit cell."""
+        r"""Crystal structure
+        (:class:`~diffpy.structure.structure.Structure`) containing a
+        lattice (:class:`~diffpy.structure.lattice.Lattice`) and
+        possibly many atoms (:class:`~diffpy.structure.atom.Atom`).
+
+        The cartesian reference frame of the crystal lattice is assumed
+        to align :math:`a` with :math:`e_1` and :math:`c*` with
+        :math:`e_3`. This alignment is assumed when transforming direct,
+        reciprocal and cartesian vectors between these spaces.
+        """
         return self._structure
 
     @structure.setter
     def structure(self, value):
-        """Set phase structure."""
+        """Set crystal structure :ref:`~diffpy.structure.Structure`.
+
+        The cartesian reference frame of the crystal lattice will be
+        made to align :math:`e_1||a` and :math:`e_3||c*`.
+        """
         if isinstance(value, Structure):
+            # Ensure correct alignment
+            old_matrix = value.lattice.base
+            new_matrix = _new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
+            value = copy.deepcopy(value)
+            value.lattice.setLatBase(new_matrix)
             if value.title == "" and hasattr(self, "_structure"):
                 value.title = self.name
             self._structure = value
@@ -203,8 +226,55 @@ class Phase:
 
     @property
     def is_hexagonal(self):
-        """Whether the crystal structure is hexagonal/trigonal or not."""
+        """Whether the crystal structure is hexagonal/trigonal or
+        not.
+        """
         return np.allclose(self.structure.lattice.abcABG()[3:], [90, 90, 120])
+
+    @property
+    def a_axis(self):
+        """Coordinates of the direct lattice vector :math:`a` in the
+        cartesian reference frame of the crystal lattice :math:`e_i`.
+        """
+        return Miller(uvw=(1, 0, 0), phase=self)
+
+    @property
+    def b_axis(self):
+        """Coordinates of the direct lattice vector :math:`b` in the
+        cartesian reference frame of the crystal lattice :math:`e_i`.
+        """
+        return Miller(uvw=(0, 1, 0), phase=self)
+
+    @property
+    def c_axis(self):
+        """Coordinates of the direct lattice vector :math:`c` in the
+        cartesian reference frame of the crystal lattice :math:`e_i`.
+        """
+        return Miller(uvw=(0, 0, 1), phase=self)
+
+    @property
+    def ar_axis(self):
+        """Coordinates of the reciprocal lattice vector :math:`a^{*}` in
+        the cartesian reference frame of the crystal lattice
+        :math:`e_i`.
+        """
+        return Miller(hkl=(1, 0, 0), phase=self)
+
+    @property
+    def br_axis(self):
+        """Coordinates of the reciprocal lattice vector :math:`b^{*}` in
+        the cartesian reference frame of the crystal lattice
+        :math:`e_i`.
+        """
+        return Miller(hkl=(0, 1, 0), phase=self)
+
+    @property
+    def cr_axis(self):
+        """Coordinates of the reciprocal lattice vector :math:`c^{*}` in
+        the cartesian reference frame of the crystal lattice
+        :math:`e_i`.
+        """
+        return Miller(hkl=(0, 0, 1), phase=self)
 
     def __repr__(self):
         if self.point_group is not None:
@@ -222,8 +292,34 @@ class Phase:
             f"proper point group: {ppg_name}. color: {self.color}>"
         )
 
+    @classmethod
+    def from_cif(cls, filename):
+        """Return a `Phase` instance from a CIF file using
+        :mod:`diffpy.structure`'s CIF file parser.
+
+        Parameters
+        ----------
+        filename : str
+            Complete path to CIF file with ".cif" file ending. The phase
+            name is obtained from the file name.
+
+        Returns
+        -------
+        Phase
+        """
+        parser = p_cif.P_cif()
+        name = os.path.splitext(os.path.split(filename)[1])[0]
+        structure = parser.parseFile(filename)
+        lattice = structure.lattice
+        new_base = _new_structure_matrix_from_alignment(lattice.base, x="a", z="c*")
+        lattice.setLatBase(new_base)
+        space_group = parser.spacegroup.number
+        return cls(name, space_group, structure=structure)
+
     def deepcopy(self):
-        """Return a deep copy using :py:func:`~copy.deepcopy` function."""
+        """Return a deep copy using :py:func:`~copy.deepcopy`
+        function.
+        """
         return copy.deepcopy(self)
 
 
@@ -693,3 +789,57 @@ class PhaseList:
 
             # Finally, add the phase to the list
             self._dict[new_phase_id] = phase
+
+
+def _new_structure_matrix_from_alignment(old_matrix, x=None, y=None, z=None):
+    """Get a new structure matrix given the old structure matrix and at
+    least two aligned axes x, y, or z.
+
+    The structure matrix defines the alignment of direct and reciprocal
+    lattice base vectors with the cartesian reference frame of the
+    crystal lattice defined by x, y, and z. x, y, and z are often termed
+    :math:`e_i`.
+
+    Parameters
+    ----------
+    old_matrix : numpy.ndarray
+        Old structure matrix, i.e. the 3x3 matrix of row base vectors
+        expressed in Cartesian coordinates.
+    x, y, z : str, optional
+        Which of the six axes "a", "b", "c", "a*", "b*", or "z*" are
+        aligned with the base vectors of the cartesian crystal reference
+        frame. At least two must be specified.
+
+    Returns
+    -------
+    new_matrix : numpy.ndarray
+        New structure matrix according to the alignment.
+    """
+    if sum([i is None for i in [x, y, z]]) > 1:
+        raise ValueError("At least two of x, y, z must be set.")
+
+    # Old direct lattice base (row) vectors in Cartesian coordinates
+    old_matrix = Vector3d(old_matrix)
+    ad, bd, cd = old_matrix.unit
+
+    # Old reciprocal lattice base vectors in cartesian coordinates
+    ar = bd.cross(cd).unit
+    br = cd.cross(ad).unit
+    cr = ad.cross(bd).unit
+
+    # New unit crystal base
+    new_vectors = Vector3d.zero((3,))
+    axes_mapping = {"a": ad, "b": bd, "c": cd, "a*": ar, "b*": br, "c*": cr}
+    for i, al in enumerate([x, y, z]):
+        if al in axes_mapping.keys():
+            new_vectors[i] = axes_mapping[al]
+    other_idx = {0: (1, 2), 1: (2, 0), 2: (0, 1)}
+    for i in range(3):
+        if np.isclose(new_vectors[i].norm, 0):
+            other0, other1 = other_idx[i]
+            new_vectors[i] = new_vectors[other0].cross(new_vectors[other1])
+
+    # New crystal base
+    new_matrix = new_vectors.dot(old_matrix.reshape(3, 1)).round(12)
+
+    return new_matrix
