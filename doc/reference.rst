@@ -4,8 +4,7 @@ API reference
 
 This reference manual details the public modules, classes, and functions in orix, as
 generated from their docstrings. Many of the docstrings contain examples, however, see
-the :ref:`user guide <user-guide>` and the
-`demos <https://github.com/pyxem/orix-demos>`_ for how to use orix.
+the :ref:`user guide <user-guide>` for how to use orix.
 
 .. caution::
 
@@ -17,6 +16,7 @@ The list of top modules:
 
 .. autosummary::
     base
+    data
     crystal_map
     io
     plot
@@ -31,6 +31,22 @@ base
 ====
 .. automodule:: orix.base
     :members:
+
+....
+
+data
+====
+
+.. currentmodule:: orix.data
+
+.. autosummary::
+    sdss_austenite
+    sdss_ferrite_austenite
+    ti_orientations
+
+.. automodule:: orix.data
+    :members:
+    :undoc-members:
 
 ....
 
@@ -357,6 +373,7 @@ Misorientation
 .. autosummary::
     distance
     equivalent
+    get_distance_matrix
     transpose
 .. autoclass:: orix.quaternion.Misorientation
     :show-inheritance:

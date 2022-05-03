@@ -12,6 +12,10 @@ Unreleased
 
 Added
 -----
+- Dask computation of `Quaternion` and `Rotation` `outer()` methods through addition of
+  a `lazy` parameter. This is useful to reduce memory usage when working with large 
+  arrays.
+- Dask implementation of the `Quaternion` - `Vector3d` outer product.
 - Point group `Symmetry` elements can now be viewed under the stereographic projection
   using `Symmetry.plot()`. The notebook point_groups.ipynb has been added to the
   documentation.
@@ -27,6 +31,9 @@ Added
   on the other hemisphere to the current hemisphere.
 - Notebook on clustering of misorientations across fundamental region boundaries added
   to the user guide from the orix-demos repository.
+- `orix.data` module with test data used in the user guide and tests.
+- `Misorientation.get_distance_matrix()` for memory-efficient calculation of a
+  misorientation angle (geodesic distance) matrix between misorientations using Dask.
 
 Changed
 -------
@@ -48,6 +55,7 @@ Deprecated
 
 Fixed
 -----
+- Fixed bug in `sample_S2_uv_mesh()` and remove duplicate vectors at poles.
 - The results from `Orientation.dot_outer()` are now returned as 
   `self.shape + other.shape`, which is consistent with `Rotation.dot_outer()`.
 - Writing of property arrays in .ang writer from masked CrystalMap.

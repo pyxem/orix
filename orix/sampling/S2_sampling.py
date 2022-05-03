@@ -48,11 +48,21 @@ def sample_S2_uv_mesh(resolution):
     """
     steps_azimuth = int(np.ceil(360 / resolution))
     steps_polar = int(np.ceil(180 / resolution)) + 1
-    azimuth = np.linspace(0, np.pi, num=steps_azimuth, endpoint=True)
-    polar = np.linspace(0, 2 * np.pi, num=steps_polar, endpoint=False)
+    azimuth = np.linspace(0, 2 * np.pi, num=steps_azimuth, endpoint=False)
+    polar = np.linspace(0, np.pi, num=steps_polar, endpoint=True)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
     azimuth_prod = azimuth_prod.ravel()
     polar_prod = polar_prod.ravel()
+    # remove duplicated vectors at north (polar == 0) and
+    # south (polar == np.pi) poles. Keep the azimuth == 0 vector in each
+    # case. Masks here are vectors to remove
+    mask_azimuth = azimuth_prod > 0
+    mask_polar_0 = np.isclose(polar_prod, 0) * mask_azimuth
+    mask_polar_pi = np.isclose(polar_prod, np.pi) * mask_azimuth
+    # create mask of vectors to keep
+    mask = ~np.logical_or(mask_polar_0, mask_polar_pi)
+    azimuth_prod = azimuth_prod[mask]
+    polar_prod = polar_prod[mask]
     return Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
 
 

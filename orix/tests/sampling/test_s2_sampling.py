@@ -23,12 +23,23 @@ from orix import sampling
 
 
 class TestS2Sampling:
-    @pytest.mark.parametrize("resolution, size", [(3, 7320), (4, 4140)])
+    @pytest.mark.parametrize("resolution, size", [(3, 7082), (4, 3962)])
     def test_uv_mesh(self, resolution, size):
         v1 = sampling.sample_S2_uv_mesh(resolution)
         assert v1.size == size
         assert np.allclose(v1.mean().data, [0, 0, 0])
-        assert v1.unique().size < size
+        # test correct number of polar levels (z)
+        expected_num_polar_z = int(np.ceil(180 / resolution)) + 1
+        z_rounded = v1.z.round(6)
+        assert np.unique(z_rounded).size == expected_num_polar_z
+        # test no duplicate azimuthal values, get a central elevation
+        z_unique = np.unique(z_rounded)
+        expected_num_azimuth = int(np.ceil(360 / resolution))
+        v1_elev = v1[np.isclose(z_rounded, z_unique[z_unique.size // 2])]
+        assert np.unique(np.arctan2(v1_elev.y, v1_elev.x)).size == expected_num_azimuth
+        # check only one pole at north and south pole
+        assert np.isclose(v1.z, 1).sum() == 1
+        assert np.isclose(v1.z, -1).sum() == 1
 
     @pytest.mark.parametrize(
         "grid_type, resolution, size",

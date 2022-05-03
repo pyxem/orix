@@ -131,6 +131,12 @@ Install necessary dependencies to build the documentation::
 
     pip install --editable .[doc]
 
+.. note::
+
+    The user guide notebooks require some small datasets to be downloaded via the
+    :mod:`orix.data` module upon building the documentation. See the section on the
+    :ref:`data module <adding-data-to-data-module>` for more details.
+
 Then, build the documentation from the ``doc`` directory::
 
     cd doc
@@ -216,23 +222,56 @@ framework. The tests reside in a ``test`` directory within each module. Tests ar
 methods that call functions in orix and compare resulting output values with known
 answers. Install necessary dependencies to run the tests::
 
-   $ pip install --editable .[tests]
+   pip install --editable .[tests]
 
 Some useful `fixtures <https://docs.pytest.org/en/latest/fixture.html>`_ are available
 in the ``conftest.py`` file.
 
+.. note::
+
+    Some :mod:`orix.data` module tests check that data not part of the package
+    distribution can be downloaded from the web, thus downloading some small datasets to
+    your local cache. See the section on the
+    :ref:`data module <adding-data-to-data-module>` for more details.
+
 To run the tests::
 
-   $ pytest --cov --pyargs orix
+   pytest --cov --pyargs orix
 
 The ``--cov`` flag makes `coverage.py <https://coverage.readthedocs.io/en/latest/>`_
 print a nice report in the terminal. For an even nicer presentation, you can use
 ``coverage.py`` directly::
 
-   $ coverage html
+   coverage html
 
 Then, you can open the created ``htmlcov/index.html`` in the browser and inspect the
 coverage in more detail.
+
+.. _adding-data-to-data-module:
+
+Adding data to the data module
+==============================
+
+Test data for user guides and tests are included in the :mod:`orix.data` module via the
+`pooch <https://www.fatiando.org/pooch/latest>`_ Python library. These are listed in a
+file registry (`orix.data._registry.py`) with their file verification string (hash,
+SHA256, obtained with e.g. `sha256sum <file>`) and location, the latter potentially not
+within the package but from the `orix-data <https://github.com/pyxem/orix-data>`_
+repository or elsewhere, since some files are considered too large to include in the
+package.
+
+If a required dataset isn't in the package, but is in the registry, it can be downloaded
+from the repository when the user passes `allow_download=True` to e.g.
+`sdss_austenite()`. The dataset is then downloaded to a local cache, in the location
+returned from `pooch.os_cache("orix")`. The location can be overwritten with a global
+`ORIX_DATA_DIR` variable locally, e.g. by setting export `ORIX_DATA_DIR=~/orix_data` in
+`~/.bashrc`. Pooch handles downloading, caching, version control, file verification
+(against hash) etc. If we have updated the file hash, pooch will re-download it. If the
+file is available in the cache, it can be loaded as the other files in the data module.
+
+With every new version of orix, a new directory of data sets with the version name is
+added to the cache directory. Any old directories are not deleted automatically, and
+should then be deleted manually if desired.
 
 Continuous integration (CI)
 ===========================
