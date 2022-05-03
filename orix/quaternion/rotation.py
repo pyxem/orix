@@ -477,7 +477,7 @@ class Rotation(Quaternion):
             )
 
         euler = np.asarray(euler)
-        if np.any(np.abs(euler) > 9):
+        if np.any(np.abs(euler) > 4 * np.pi):
             warnings.warn(
                 "Angles are assumed to be in radians, but degrees might have been "
                 "passed."
