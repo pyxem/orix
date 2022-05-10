@@ -69,13 +69,13 @@ def _sample_length_equiangular(
 
 
 def _edge_grid_normalized_cube(resolution: float):
-    center_of_face_to_edge = 1.
+    center_of_face_to_edge = 1.0
     number_of_steps = _number_of_equidistant_steps(resolution, center_of_face_to_edge)
     return _sample_length_equidistant(number_of_steps, center_of_face_to_edge)
 
 
 def _edge_grid_spherified_edge_cube(resolution: float):
-    center_of_face_to_edge = 1.
+    center_of_face_to_edge = 1.0
     number_of_steps = _number_of_equiangular_steps(resolution, center_of_face_to_edge)
     return _sample_length_equiangular(number_of_steps, center_of_face_to_edge)
 
@@ -83,7 +83,9 @@ def _edge_grid_spherified_edge_cube(resolution: float):
 def _edge_grid_spherified_corner_cube(resolution: float):
     center_of_face_to_corner = np.sqrt(2)
     number_of_steps = _number_of_equiangular_steps(resolution, center_of_face_to_corner)
-    grid_on_diagonal = _sample_length_equiangular(number_of_steps, center_of_face_to_corner)
+    grid_on_diagonal = _sample_length_equiangular(
+        number_of_steps, center_of_face_to_corner
+    )
     return grid_on_diagonal / center_of_face_to_corner
 
 

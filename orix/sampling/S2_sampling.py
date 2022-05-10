@@ -113,7 +113,8 @@ def sample_S2_cube_mesh(resolution, grid_type="spherified_edge"):
         grid_on_edge = grid_mapping[grid_type](resolution)
     except KeyError:
         raise ValueError(
-            f"{grid_type} is not among the valid options {list(grid_mapping.keys())}"
+            f"The `grid_type` {grid_type} is not among the valid "
+            f"options {list(grid_mapping.keys())}"
         )
 
     x, y = np.meshgrid(grid_on_edge, grid_on_edge)
@@ -136,6 +137,17 @@ def sample_S2_cube_mesh(resolution, grid_type="spherified_edge"):
 
 
 def sample_S2_hexagonal_mesh(resolution):
+    """Vectors of a hexagonal tetragonal mesh projected on a unit sphere *S2*.
+
+    Parameters
+    ----------
+    resolution : float
+        Maximum angle between neighbour grid points, in degrees.
+
+    Returns
+    -------
+    Vector3d
+    """
     number_of_steps = int(np.ceil(2 / np.tan(np.radians(resolution))))
     if number_of_steps % 2 == 1:
         # an even number of steps is required to get a point in the middle
@@ -143,7 +155,7 @@ def sample_S2_hexagonal_mesh(resolution):
         number_of_steps += 1
     grid_1D = _sample_length_equidistant(
         number_of_steps,
-        length=1.,
+        length=1.0,
         include_start=True,
         include_end=True,
         positive_and_negative=False,
@@ -158,26 +170,27 @@ def sample_S2_hexagonal_mesh(resolution):
 
     # from square to hex lattice
     hexagon_edge_length = 2 / np.sqrt(3)
-    transform = np.array([[hexagon_edge_length, hexagon_edge_length/2], [0, 1]])
+    transform = np.array([[hexagon_edge_length, hexagon_edge_length / 2], [0, 1]])
     uv = np.stack([u, v])
     xy = np.dot(transform, uv)
     x, y = xy
 
     # raise to pyramidal plane
-    z = -1/hexagon_edge_length * x - 1/2 * y + 1
+    z = -1 / hexagon_edge_length * x - 1 / 2 * y + 1
     tolerance = -1e-7
     include_points = z > tolerance
     points_one_face = np.stack([coordinate[include_points] for coordinate in [x, y, z]])
 
     # repeat 6 times by rotating 60 degrees
     def rotation(r):
-        return np.array([
-            [np.cos(r), -np.sin(r), 0],
-            [np.sin(r), np.cos(r), 0],
-            [0, 0, 1]]
+        return np.array(
+            [[np.cos(r), -np.sin(r), 0], [np.sin(r), np.cos(r), 0], [0, 0, 1]]
         )
+
     angle = np.radians(60)
-    top_faces = np.hstack([np.dot(rotation(i*angle), points_one_face) for i in range(6)])
+    top_faces = np.hstack(
+        [np.dot(rotation(i * angle), points_one_face) for i in range(6)]
+    )
     bottom_faces = top_faces.copy()
     bottom_faces[2] *= -1
     exclude_rim = bottom_faces[2] < tolerance

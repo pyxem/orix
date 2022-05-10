@@ -24,6 +24,11 @@ from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C6, D6, get_point_group
 from orix.sampling.SO3_sampling import uniform_SO3_sample, _resolution_to_num_steps
 from orix.sampling import get_sample_fundamental, get_sample_local
+from orix.sampling._polyhedral_sampling import (
+    _get_angles_between_nn_gridpoints,
+    _get_first_nearest_neighbors,
+    _get_max_grid_angle,
+)
 
 
 @pytest.fixture(scope="session")
@@ -35,6 +40,32 @@ def sample():
 def fixed_rotation():
     """A fixed rotation."""
     return Rotation([0.5, 0.5, 0, 0])
+
+
+class TestPolyhedralSamplingUtils:
+    def test_first_nearest_neighbors(self):
+        grid = np.array(
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 1, 1],
+                [1, 0, 1],
+            ]
+        )
+        fnn = np.array(
+            [
+                [1, 0, 1],
+                [0, 1, 1],
+                [0, 1, 0],
+                [1, 0, 0],
+            ]
+        )
+        angles = np.array([45, 45, 45, 45])
+        fnn_test = _get_first_nearest_neighbors(grid)
+        angles_test = _get_angles_between_nn_gridpoints(grid)
+        assert np.allclose(fnn, fnn_test)
+        assert np.allclose(angles, angles_test)
+        assert _get_max_grid_angle(grid) == 45.0
 
 
 class TestSamplingUtils:
