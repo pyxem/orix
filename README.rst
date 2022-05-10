@@ -7,6 +7,10 @@
       </h1>
     </p>
 
+.. Content above here until EXCLUDE plus one line is excluded from the long description
+.. in the source distributions uploaded to PyPI
+.. EXCLUDE
+
 |binder|_ |build_status|_ |Coveralls|_ |docs|_ |pypi_version|_  |downloads|_ |black|_ |doi|_
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
