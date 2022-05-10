@@ -8,6 +8,8 @@ name: Test documentation notebooks
 on:
   schedule:
     - cron: '15 6 * * 1' # Run every Monday morning
+  workflow_dispatch:
+    workflow: "*"
 
 jobs:
   test-documentation-notebooks:
@@ -26,7 +28,7 @@ jobs:
       - name: Install dependencies and package
         shell: bash
         run: |
-          pip install -U -e .'[tests]'
+          pip install -U -e .'[tests, doc]'
           pip install nbval
       - name: Test documentation notebooks
         run: |
