@@ -65,7 +65,7 @@ class TestPolyhedralSamplingUtils:
         angles_test = _get_angles_between_nn_gridpoints(grid)
         assert np.allclose(fnn, fnn_test)
         assert np.allclose(angles, angles_test)
-        assert _get_max_grid_angle(grid) == 45.0
+        assert abs(_get_max_grid_angle(grid) - 45.0) < 1e-7
 
 
 class TestSamplingUtils:

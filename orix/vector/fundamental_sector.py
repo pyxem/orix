@@ -79,7 +79,7 @@ class FundamentalSector(SphericalRegion):
             # Avoid circular import
             from orix.sampling import sample_S2_cube_mesh
 
-            v_all = sample_S2_cube_mesh(resolution=1)
+            v_all = sample_S2_cube_mesh(resolution=1, grid_type="spherified_corner")
             v = v_all[v_all < self]
             center = v.mean()
 
