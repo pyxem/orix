@@ -28,11 +28,11 @@ from orix.plot.stereographic_plot import (
     FourFoldMarker,
     SixFoldMarker,
 )
-from orix import plot, vector
+from orix import plot
 from orix.quaternion.symmetry import C1, C6, Oh
+from orix.vector import Vector3d
 
 
-plt.rcParams["backend"] = "TkAgg"
 plt.rcParams["axes.grid"] = True
 PROJ_NAME = "stereographic"
 
@@ -47,7 +47,7 @@ class TestStereographicPlot:
         assert ax.can_pan()
         assert ax.can_zoom()
 
-        v = vector.Vector3d([[0, 0, 1], [2, 0, 2]])
+        v = Vector3d([[0, 0, 1], [2, 0, 2]])
         ax.scatter(v[0])
         ax.scatter(v[1].azimuth, v[1].polar)
 
@@ -58,7 +58,7 @@ class TestStereographicPlot:
 
     def test_annotate(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        v = vector.Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
+        v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
         ax.scatter(v)
         format_vector = lambda v: str(v.data[0]).replace(" ", "")
         for vi in v:
@@ -134,7 +134,7 @@ class TestStereographicPlot:
 
         label_xy = [-0.71, 0.71]
 
-        ax[0].scatter(vector.Vector3d([0, 0, 1]))
+        ax[0].scatter(Vector3d([0, 0, 1]))
         ax[0].show_hemisphere_label()
         label_up = ax[0].texts[0]
         assert label_up.get_text() == "upper"
@@ -142,7 +142,7 @@ class TestStereographicPlot:
         assert np.allclose([label_up._x, label_up._y], label_xy)
 
         ax[1].hemisphere = "lower"
-        ax[1].scatter(vector.Vector3d([0, 0, -1]))
+        ax[1].scatter(Vector3d([0, 0, -1]))
         ax[1].show_hemisphere_label(color="r")
         label_low = ax[1].texts[0]
         assert label_low.get_text() == "lower"
@@ -189,7 +189,7 @@ class TestStereographicPlot:
         plt.close("all")
 
     def test_empty_scatter(self):
-        v = vector.Vector3d([0, 0, 1])
+        v = Vector3d([0, 0, 1])
 
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax.hemisphere = "lower"
@@ -204,14 +204,14 @@ class TestStereographicPlot:
     @pytest.mark.parametrize("shape", [(5, 10), (2, 3)])
     def test_multidimensional_vector(self, shape):
         n = np.prod(shape)
-        v = vector.Vector3d(np.random.normal(size=3 * n).reshape(shape + (3,)))
+        v = Vector3d(np.random.normal(size=3 * n).reshape(shape + (3,)))
         v.scatter()
         v.draw_circle()
 
         plt.close("all")
 
     def test_order_in_hemisphere(self):
-        v = vector.Vector3d.from_polar(
+        v = Vector3d.from_polar(
             azimuth=np.radians([45, 90, 135, 180]),
             polar=np.radians([50, 45, 140, 135]),
         )
@@ -243,7 +243,7 @@ class TestStereographicPlot:
 
 class TestSymmetryMarker:
     def test_properties(self):
-        v2fold = vector.Vector3d([[1, 0, 1], [0, 1, 1]])
+        v2fold = Vector3d([[1, 0, 1], [0, 1, 1]])
         marker2fold = TwoFoldMarker(v2fold)
         assert np.allclose(v2fold.data, marker2fold._vector.data)
         assert marker2fold.fold == 2
@@ -251,7 +251,7 @@ class TestSymmetryMarker:
         assert np.allclose(marker2fold.size, [1.55, 1.55], atol=1e-2)
         assert isinstance(marker2fold._marker[0], mpath.Path)
 
-        v3fold = vector.Vector3d([1, 1, 1])
+        v3fold = Vector3d([1, 1, 1])
         marker3fold = ThreeFoldMarker(v3fold, size=5)
         assert np.allclose(v3fold.data, marker3fold._vector.data)
         assert marker3fold.fold == 3
@@ -264,7 +264,7 @@ class TestSymmetryMarker:
             assert np.allclose(mark, (3, 0, 45 + 90))
             assert size == 5
 
-        v4fold = vector.Vector3d([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
+        v4fold = Vector3d([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
         marker4fold = FourFoldMarker(v4fold, size=11)
         assert np.allclose(v4fold.data, marker4fold._vector.data)
         assert marker4fold.fold == 4
@@ -273,7 +273,7 @@ class TestSymmetryMarker:
         assert marker4fold._marker == ["D"] * 3
 
         marker6fold = SixFoldMarker([0, 0, 1], size=15)
-        assert isinstance(marker6fold._vector, vector.Vector3d)
+        assert isinstance(marker6fold._vector, Vector3d)
         assert np.allclose(marker6fold._vector.data, [0, 0, 1])
         assert marker6fold.fold == 6
         assert marker6fold.n == 1
@@ -287,15 +287,13 @@ class TestSymmetryMarker:
         ax.stereographic_grid(False)
         marker_size = 500
 
-        v4fold = vector.Vector3d(
-            [[0, 0, 1], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]]
-        )
+        v4fold = Vector3d([[0, 0, 1], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
         ax.symmetry_marker(v4fold, fold=4, c="C4", s=marker_size)
 
-        v3fold = vector.Vector3d([[1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1]])
+        v3fold = Vector3d([[1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1]])
         ax.symmetry_marker(v3fold, fold=3, c="C3", s=marker_size)
 
-        v2fold = vector.Vector3d(
+        v2fold = Vector3d(
             [
                 [1, 0, 1],
                 [0, 1, 1],
@@ -361,8 +359,8 @@ class TestDrawCircle:
         )
 
     def test_draw_circle(self):
-        v1 = vector.Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
-        v2 = vector.Vector3d(np.append(v1.data, -v1.data, axis=0))
+        v1 = Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
+        v2 = Vector3d(np.append(v1.data, -v1.data, axis=0))
 
         upper_steps = 100
         lower_steps = 150
@@ -383,12 +381,31 @@ class TestDrawCircle:
         assert ax[1].lines[1]._path._vertices.shape == (lower_steps // 2 + 1, 2)
         assert ax[1].lines[1]._path._vertices.shape == (lower_steps // 2 + 1, 2)
 
+        plt.close("all")
+
     def test_draw_circle_empty(self):
-        v1 = vector.Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
+        v1 = Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax.hemisphere = "lower"
         ax.draw_circle(v1)
         assert len(ax.lines) == 0
+
+        plt.close("all")
+
+    def test_draw_circle_opening_angle_array(self):
+        """Passing an opening angle per vector as an array works."""
+        v = Vector3d([(0, 0, 1), (0, 0, -1), (1, 0, 1)])
+        fig = v.draw_circle(
+            opening_angle=np.array([np.pi / 2, np.pi / 4, np.pi / 2]),
+            return_figure=True,
+            hemisphere="both",
+        )
+        ax0, ax1 = fig.axes
+
+        assert len(ax0.lines) == 2
+        assert len(ax1.lines) == 1
+
+        plt.close("all")
 
 
 class TestRestrictToFundamentalSector:

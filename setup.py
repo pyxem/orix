@@ -11,6 +11,7 @@ extra_feature_requirements = {
         "ipykernel",  # https://github.com/spatialaudio/nbsphinx/issues/121
         "nbsphinx >= 0.7",
         "sphinx >= 3.0.2",
+        "sphinx-copybutton >= 0.2.5",
         "sphinx-gallery >= 0.6",
         "sphinxcontrib-bibtex >= 1.0",
         "scikit-image",
@@ -22,6 +23,15 @@ extra_feature_requirements["dev"] = ["black", "manifix", "pre-commit >= 1.16"] +
     chain(*list(extra_feature_requirements.values()))
 )
 
+# Remove the "raw" ReStructuredText directive from the README so we can
+# use it as the long_description on PyPI
+readme = open("README.rst").read()
+readme_split = readme.split("\n")
+for i, line in enumerate(readme_split):
+    if line == ".. EXCLUDE":
+        break
+long_description = "\n".join(readme_split[i + 2 :])
+
 setup(
     name=__name__,
     version=str(__version__),
@@ -30,7 +40,8 @@ setup(
     author=__author__,
     author_email=__author_email__,
     description=__description__,
-    long_description=open("README.rst").read(),
+    long_description=long_description,
+    long_description_content_type="text/x-rst",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",

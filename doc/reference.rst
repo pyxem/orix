@@ -4,7 +4,7 @@ API reference
 
 This reference manual details the public modules, classes, and functions in orix, as
 generated from their docstrings. Many of the docstrings contain examples, however, see
-the :ref:`user guide <user-guide>` for how to use orix.
+the user guide for how to use orix.
 
 .. caution::
 
@@ -66,6 +66,7 @@ Phase
 .. currentmodule:: orix.crystal_map.Phase
 .. autosummary::
     deepcopy
+    from_cif
 .. autoclass:: orix.crystal_map.Phase
     :members:
     :undoc-members:
@@ -373,6 +374,7 @@ Misorientation
 .. autosummary::
     distance
     equivalent
+    get_distance_matrix
     transpose
 .. autoclass:: orix.quaternion.Misorientation
     :show-inheritance:

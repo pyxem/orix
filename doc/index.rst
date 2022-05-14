@@ -3,34 +3,37 @@
 Work using orix
 ---------------
 
+* P. Harrison, X. Zhou, S. M. Das, P. Lhuissier, C. H. Liebscher, M. Herbig, W. Ludwig,
+  E. F. Rauch: Reconstructing Dual-Phase Nanometer Scale Grains within a Pearlitic Steel
+  Tip in 3D through 4D-Scanning Precession Electron Diffraction Tomography and Automated
+  Crystal Orientation Mapping, *Ultramicroscopy* 113536 (2022) (`journal
+  <https://doi.org/10.1016/j.ultramic.2022.113536>`__).
+* N. Cautaerts, P. Crout, H. W. Ånes, E. Prestat, J. Jeong, G. Dehm, C. H. Liebscher:
+  Free, flexible and fast: Orientation mapping using the multi-core and GPU-accelerated
+  template matching capabilities in the python-based open source 4D-STEM analysis
+  toolbox Pyxem, *Ultramicroscopy* 113517 (2022) (`journal
+  <https://doi.org/10.1016/j.ultramic.2022.113517>`__, `arXiv
+  <https://arxiv.org/abs/2111.07347>`__).
 * D. N. Johnstone, B. H. Martineau, P. Crout, P. A. Midgley, A. S. Eggeman:
   Density-based clustering of crystal (mis)orientations and the orix Python library,
-  Journal of Applied Crystallography 53(5) (2020), (`journal
-  <https://doi.org/10.1107/S1600576720011103>`_, `arXiv
-  <https://arxiv.org/abs/2001.02716>`_).
+  *Journal of Applied Crystallography* 53(5) (2020) (`journal
+  <https://doi.org/10.1107/S1600576720011103>`__, `arXiv
+  <https://arxiv.org/abs/2001.02716>`__).
 
 .. toctree::
     :hidden:
-    :caption: Getting started
 
     installation.rst
 
-User guide
-----------
-
-.. _user-guide:
-.. nbgallery::
+.. toctree::
+    :hidden:
     :caption: User guide
 
-    crystal_geometry.ipynb
-    stereographic_projection.ipynb
-    inverse_pole_figures.ipynb
-    crystal_map.ipynb
-    clustering_across_fundamental_region_boundaries.ipynb
-    clustering_orientations.ipynb
-    clustering_misorientations.ipynb
-    uniform_sampling_of_orientation_space.ipynb
-    point_groups.ipynb
+    crystal_geometry.rst
+    orientations.rst
+    vectors.rst
+    clustering_of_orientations.rst
+    crystallographic_maps.rst
 
 .. toctree::
     :hidden:

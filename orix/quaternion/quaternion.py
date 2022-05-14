@@ -19,6 +19,7 @@
 import warnings
 
 import dask.array as da
+from dask.diagnostics import ProgressBar
 import numpy as np
 import quaternion
 
@@ -222,13 +223,24 @@ class Quaternion(Object3d):
         w_max = np.argmax(w)
         return self.__class__(v[:, w_max])
 
-    def outer(self, other):
+    def outer(self, other, lazy=False, chunk_size=20, progressbar=True):
         """Compute the outer product of this quaternion and the other
         quaternion or vector.
 
         Parameters
         ----------
         other : orix.quaternion.Quaternion or orix.vector.Vector3d
+        lazy : bool, optional
+            Whether to computer this computation using Dask. This option
+            can be used to reduce memory usage when working with large
+            arrays. Default is False.
+        chunk_size : int, optional
+            When using `lazy` computation, `chunk_size` represents the
+            number of objects per axis for each input to include in each
+            iteration of the computation. Default is 20.
+        progressbar : bool, optional
+            Whether to show a progressbar during computation if `lazy`
+            is True. Default is True.
 
         Returns
         -------
@@ -236,20 +248,39 @@ class Quaternion(Object3d):
         """
 
         if isinstance(other, Quaternion):
-            q1 = quaternion.from_float_array(self.data)
-            q2 = quaternion.from_float_array(other.data)
-            # np.outer works with flattened array
-            q = np.outer(q1, q2).reshape(q1.shape + q2.shape)
-            return other.__class__(quaternion.as_float_array(q))
+            if lazy:
+                darr = self._outer_dask(other, chunk_size=chunk_size)
+                arr = np.empty(darr.shape)
+                if progressbar:
+                    with ProgressBar():
+                        da.store(darr, arr)
+                else:
+                    da.store(darr, arr)
+            else:
+                q1 = quaternion.from_float_array(self.data)
+                q2 = quaternion.from_float_array(other.data)
+                # np.outer works with flattened array
+                q = np.outer(q1, q2).reshape(q1.shape + q2.shape)
+                arr = quaternion.as_float_array(q)
+            return other.__class__(arr)
         elif isinstance(other, Vector3d):
-            q = quaternion.from_float_array(self.data)
-            v = quaternion.rotate_vectors(q, other.data)
+            if lazy:
+                darr = self._outer_dask(other, chunk_size=chunk_size)
+                arr = np.empty(darr.shape)
+                if progressbar:
+                    with ProgressBar():
+                        da.store(darr, arr)
+                else:
+                    da.store(darr, arr)
+            else:
+                q = quaternion.from_float_array(self.data)
+                arr = quaternion.rotate_vectors(q, other.data)
             if isinstance(other, Miller):
-                m = other.__class__(xyz=v, phase=other.phase)
+                m = other.__class__(xyz=arr, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
                 return m
             else:
-                return other.__class__(v)
+                return other.__class__(arr)
         else:
             raise NotImplementedError(
                 "This operation is currently not avaliable in orix, please use outer "

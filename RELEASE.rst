@@ -5,8 +5,11 @@ Create a PR to the ``master`` branch and go through the following steps.
 
 Preparation
 -----------
+- Run all user guide notebooks locally and confirm that they produce the expected
+  results.
 - Review the contributor list ``__credits__`` in ``orix/__init__.py`` to ensure all
-  contributors are included and sorted correctly.
+  contributors are included and sorted correctly. Use the same ordering in the
+  ``.zenodo.json`` file.
 - Bump ``__version__`` in ``orix/__init__.py``, for example to "0.8.2".
 - Update the changelog ``CHANGELOG.rst``.
 - Let the PR collect comments for a day to ensure that other maintainers are
