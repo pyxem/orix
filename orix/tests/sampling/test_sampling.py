@@ -28,6 +28,7 @@ from orix.sampling._polyhedral_sampling import (
     _get_angles_between_nn_gridpoints,
     _get_first_nearest_neighbors,
     _get_max_grid_angle,
+    _get_start_and_end_index,
 )
 
 
@@ -43,6 +44,33 @@ def fixed_rotation():
 
 
 class TestPolyhedralSamplingUtils:
+    @pytest.mark.parametrize(
+        "number_of_steps, include_start, include_end, positive_and_negative, expected",
+        [
+            (5, False, False, False, (1, 5)),
+            (5, True, False, False, (0, 5)),
+            (6, False, True, False, (1, 7)),
+            (7, True, True, True, (-7, 8)),
+        ],
+    )
+    def test_get_start_and_end_index(
+        self,
+        number_of_steps,
+        include_start,
+        include_end,
+        positive_and_negative,
+        expected,
+    ):
+        assert (
+            _get_start_and_end_index(
+                number_of_steps=number_of_steps,
+                include_start=include_start,
+                include_end=include_end,
+                positive_and_negative=positive_and_negative,
+            )
+            == expected
+        )
+
     def test_first_nearest_neighbors(self):
         grid = np.array(
             [

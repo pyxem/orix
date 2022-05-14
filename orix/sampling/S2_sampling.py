@@ -18,20 +18,20 @@
 
 """Generation of spherical grids in *S2*."""
 
+from typing import Optional
 import numpy as np
 
 from orix.vector import Vector3d
-from ._polyhedral_sampling import (
+from orix.sampling._polyhedral_sampling import (
     _sample_length_equidistant,
     _edge_grid_normalized_cube,
     _edge_grid_spherified_edge_cube,
     _edge_grid_spherified_corner_cube,
-    _get_max_grid_angle,
     _compose_from_faces,
 )
 
 
-def sample_S2_uv_mesh(resolution):
+def sample_S2_uv_mesh(resolution: float) -> Vector3d:
     r"""Vectors of a UV mesh on a unit sphere *S2*.
 
     The mesh vertices are defined by the parametrization
@@ -53,6 +53,10 @@ def sample_S2_uv_mesh(resolution):
     Returns
     -------
     Vector3d
+
+    References
+    ----------
+    :cite:`cajaravelli2015four`
     """
     steps_azimuth = int(np.ceil(360 / resolution))
     steps_polar = int(np.ceil(180 / resolution)) + 1
@@ -74,7 +78,10 @@ def sample_S2_uv_mesh(resolution):
     return Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
 
 
-def sample_S2_cube_mesh(resolution, grid_type="spherified_edge"):
+def sample_S2_cube_mesh(
+    resolution: float,
+    grid_type: str = "spherified_edge",
+) -> Vector3d:
     """Vectors of a cube mesh projected on a unit sphere *S2*.
 
     Parameters
@@ -100,8 +107,7 @@ def sample_S2_cube_mesh(resolution, grid_type="spherified_edge"):
 
     References
     ----------
-    .. [Cajaravelli2015] O. S. Cajaravelli, "Four Ways to Create a Mesh for a Sphere,"
-        https://medium.com/game-dev-daily/four-ways-to-create-a-mesh-for-a-sphere-d7956b825db4.
+    :cite:`cajaravelli2015four`
     """
     grid_type = grid_type.lower()
     grid_mapping = {
@@ -136,7 +142,9 @@ def sample_S2_cube_mesh(resolution, grid_type="spherified_edge"):
     return Vector3d(np.vstack((bottom, top, east, west, south, north, m_c))).unit
 
 
-def sample_S2_hexagonal_mesh(resolution):
+def sample_S2_hexagonal_mesh(
+    resolution: float,
+) -> Vector3d:
     """Vectors of a hexagonal tetragonal mesh projected on a unit sphere *S2*.
 
     Parameters
@@ -148,7 +156,7 @@ def sample_S2_hexagonal_mesh(resolution):
     -------
     Vector3d
     """
-    number_of_steps = int(np.ceil(2 / np.tan(np.radians(resolution))))
+    number_of_steps = int(np.ceil(2 / np.tan(np.deg2rad(resolution))))
     if number_of_steps % 2 == 1:
         # an even number of steps is required to get a point in the middle
         # of the hexagon edge
@@ -198,10 +206,14 @@ def sample_S2_hexagonal_mesh(resolution):
     north_pole = np.array([[0, 0, 1]]).T
     south_pole = np.array([[0, 0, -1]]).T
     all_points = np.hstack([top_faces, north_pole, bottom_faces, south_pole])
+
     return Vector3d(all_points.T).unit
 
 
-def sample_S2_random_mesh(resolution, seed=None):
+def sample_S2_random_mesh(
+    resolution: float,
+    seed: Optional[int] = None,
+) -> Vector3d:
     """Vectors of a random mesh on *S2*
 
     Parameters
@@ -210,8 +222,8 @@ def sample_S2_random_mesh(resolution, seed=None):
         The expected mean angle between nearest neighbor
         grid points in degrees.
     seed : int, optional
-        passed to np.random.default_rng(), defaults to None which
-        will give a "new" random result each time
+        Passed to :func:`np.random.default_rng`, defaults to None which
+        will give a "new" random result each time.
 
     Returns
     -------
@@ -228,7 +240,9 @@ def sample_S2_random_mesh(resolution, seed=None):
     return Vector3d(xyz).unit
 
 
-def sample_S2_icosahedral_mesh(resolution):
+def sample_S2_icosahedral_mesh(
+    resolution: float,
+) -> Vector3d:
     """Vectors of an icosahedral mesh on *S2*
 
     Parameters
@@ -242,8 +256,7 @@ def sample_S2_icosahedral_mesh(resolution):
 
     References
     ----------
-    .. [Meshzoo] The `meshzoo.sphere` module,
-        https://github.com/nschloe/meshzoo/blob/master/meshzoo/sphere.py.
+    :cite:`meshzoo`
     """
     t = (1.0 + np.sqrt(5.0)) / 2.0
     corners = np.array(
@@ -286,14 +299,10 @@ def sample_S2_icosahedral_mesh(resolution):
         (8, 6, 7),
         (9, 8, 1),
     ]
-    n = 1
-    angle = _get_max_grid_angle(corners)
-    # maybe not the most efficient approach, but the least work
-    while angle > resolution:
-        vertices = _compose_from_faces(corners, faces, n)
-        angle = _get_max_grid_angle(vertices)
-        n = n + 1
-    # push all nodes to the sphere
-    norms = np.sqrt(np.einsum("ij,ij->i", vertices, vertices))
-    vertices = (vertices.T / norms.T).T
+    # icosahedron edge length
+    a = np.linalg.norm(corners[0]) / np.sin(2 * np.pi / 5)
+    # icosahedron inscribed sphere radius
+    r_i = np.sqrt(3) / 12 * (3 + np.sqrt(5)) * a
+    n = int(np.ceil(a / (r_i * np.tan(np.deg2rad(resolution)))))
+    vertices = _compose_from_faces(corners, faces, n)
     return Vector3d(vertices).unit
