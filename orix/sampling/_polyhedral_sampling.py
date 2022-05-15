@@ -17,6 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Tuple, List
+
 import numpy as np
 from scipy.spatial import cKDTree
 
@@ -113,24 +114,23 @@ def _compose_from_faces(
     faces: List[Tuple[int, int, int]],
     n: int,
 ) -> np.ndarray:
-    """
-    Helper function to refine a grid starting from a platonic solid,
-    adapted from meshzoo
+    """Refine a grid starting from a platonic solid; adapted from meshzoo.
 
     Parameters
     ----------
-    corners : numpy.ndarray (N, 3)
-        Coordinates of vertices for starting shape.
-    faces : list of 3-tuples of int elements
+    corners
+        Coordinates of vertices for starting shape. Shape of the array should
+        be (N, 3).
+    faces
         Each tuple in the list corresponds to the vertex indices making
-        up the face of the mesh.
-    n : int
+        up a triangular face of the mesh.
+    n
         Number of times the mesh is refined.
 
     Returns
     -------
-    vertices: numpy.ndarray (N, 3)
-        The coordinates of the refined mesh vertices.
+    vertices
+        The coordinates of the refined mesh vertices, an array of shape (N, 3).
 
     References
     ----------
@@ -148,12 +148,10 @@ def _compose_from_faces(
 
     # create edge nodes:
     t = np.linspace(1 / n, 1.0, n - 1, endpoint=False)
-    k = corners.shape[0]
     for edge in edges:
         i0, i1 = edge
         new_vertices = np.outer(1 - t, corners[i0]) + np.outer(t, corners[i1])
         vertices.append(new_vertices)
-        k += len(t)
 
     for face in faces:
         face_corner_indices = face
@@ -177,9 +175,7 @@ def _get_first_nearest_neighbors(
     points: np.ndarray,
     leaf_size: int = 50,
 ) -> np.ndarray:
-    """
-    Helper function to get an array of first nearest neighbor points
-    for all points in a point cloud
+    """Get array of first nearest neighbor points for all points in a point cloud
 
     Parameters
     ----------
@@ -192,9 +188,10 @@ def _get_first_nearest_neighbors(
 
     Returns
     -------
-    nn1_vec : numpy.ndarray (N,D)
-        Point cloud with N points in D dimensions, representing the nearest
-        neighbor point of each point in "points"
+    nn1_vec
+        Point cloud represented by an array of shape (N, D) with N points in
+        D dimensions, representing the nearest neighbor point of each point
+        in "points"
     """
     tree = cKDTree(points, leaf_size)
     # get the indexes of the first nearest neighbor of each vertex
@@ -207,10 +204,7 @@ def _get_angles_between_nn_gridpoints(
     vertices: np.ndarray,
     leaf_size: int = 50,
 ) -> np.ndarray:
-    """
-    Helper function to get the angles between all nearest neighbor grid
-    points on a grid of a sphere.
-    """
+    """Return angles between all nearest neighbor grid points on unit sphere."""
     # normalize the vertex vectors
     vertices = (vertices.T / np.linalg.norm(vertices, axis=1)).T
     nn1_vec = _get_first_nearest_neighbors(vertices, leaf_size)
@@ -225,8 +219,5 @@ def _get_max_grid_angle(
     vertices: np.ndarray,
     leaf_size: int = 50,
 ) -> np.ndarray:
-    """
-    Helper function to get the maximum angle between nearest neighbor grid
-    points on a grid.
-    """
+    """Get the maximum angle between nearest neighbor grid points on a unit sphere."""
     return np.max(_get_angles_between_nn_gridpoints(vertices, leaf_size))

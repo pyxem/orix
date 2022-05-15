@@ -45,14 +45,15 @@ def sample_S2_uv_mesh(resolution: float) -> Vector3d:
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Maximum angle between nearest neighbour grid points, in degrees.
         The resolution of :math:`u` and :math:`v` are rounded up to get
         an integer number of equispaced polar and azimuthal grid lines.
 
     Returns
     -------
-    Vector3d
+    vectors
+        Vectors that sample the unit sphere.
 
     References
     ----------
@@ -86,18 +87,19 @@ def sample_S2_cube_mesh(
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Maximum angle between neighbour grid points, in degrees.
-    grid_type : str
+    grid_type
         Type of cube grid: "normalized", "spherified_edge" (default) or
         "spherified_corner".
 
     Returns
     -------
-    Vector3d
+    vectors
+        Vectors that sample the unit sphere.
 
     Notes
-    ----
+    -----
     Vectors are sampled by projecting a grid on a cube onto the unit sphere.
     The mesh on the cube can be generated in a number of ways. A regular square
     grid with equidistant points corresponds to the normalized option.
@@ -149,12 +151,13 @@ def sample_S2_hexagonal_mesh(
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Maximum angle between neighbour grid points, in degrees.
 
     Returns
     -------
-    Vector3d
+    vectors
+        Vectors that sample the unit sphere.
     """
     number_of_steps = int(np.ceil(2 / np.tan(np.deg2rad(resolution))))
     if number_of_steps % 2 == 1:
@@ -218,16 +221,17 @@ def sample_S2_random_mesh(
 
     Parameters
     ----------
-    resolution : float
+    resolution
         The expected mean angle between nearest neighbor
         grid points in degrees.
-    seed : int, optional
-        Passed to :func:`np.random.default_rng`, defaults to None which
+    seed
+        Passed to :func:`numpy.random.default_rng`, defaults to None which
         will give a "new" random result each time.
 
     Returns
     -------
-    Vector3d
+    vectors
+        Vectors that sample the unit sphere.
 
     References
     ----------
@@ -247,12 +251,13 @@ def sample_S2_icosahedral_mesh(
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Maximum angle between neighbour grid points, in degrees.
 
     Returns
     -------
-    Vector3d
+    vectors
+        Vectors that sample the unit sphere.
 
     References
     ----------
