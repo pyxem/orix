@@ -2,6 +2,7 @@ name: doc-dependencies-for-binder
 channels:
   - conda-forge
 dependencies:
+  # Core dependencies
   - dask
   - diffpy.structure>=3
   - h5py
@@ -12,6 +13,13 @@ dependencies:
   - pooch>=0.13
   - quaternion
   - scipy
+  - tqdm
+
+  # Documentation dependencies
   - scikit-image
   - scikit-learn
-  - tqdm
+
+  # Package
+  - pip
+  - pip:
+      - --editable .
