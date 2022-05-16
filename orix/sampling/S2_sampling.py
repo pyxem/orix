@@ -18,7 +18,9 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Optional
+from typing import Optional, Callable, Mapping, Any
+from functools import partial
+
 import numpy as np
 
 from orix.vector import Vector3d
@@ -102,10 +104,10 @@ def sample_S2_cube_mesh(
     -----
     Vectors are sampled by projecting a grid on a cube onto the unit sphere.
     The mesh on the cube can be generated in a number of ways. A regular square
-    grid with equidistant points corresponds to the normalized option.
-    spherified_edge corresponds to points such that the row of vectors from
-    the 001 to 011 is equiangular. spherified_corner corresponds to the case
-    where the row of vectors from 001 to 111 is equiangular.
+    grid with equidistant points corresponds to the 'normalized' option.
+    'spherified_edge' corresponds to points such that the row of vectors from
+    the [001] to [011] is equiangular. 'spherified_corner' corresponds to the case
+    where the row of vectors from [001] to [111] is equiangular.
 
     References
     ----------
@@ -147,7 +149,7 @@ def sample_S2_cube_mesh(
 def sample_S2_hexagonal_mesh(
     resolution: float,
 ) -> Vector3d:
-    """Vectors of a hexagonal tetragonal mesh projected on a unit sphere *S2*.
+    """Vectors of a hexagonal bipyramid mesh projected on a unit sphere *S2*.
 
     Parameters
     ----------
@@ -198,7 +200,7 @@ def sample_S2_hexagonal_mesh(
             [[np.cos(r), -np.sin(r), 0], [np.sin(r), np.cos(r), 0], [0, 0, 1]]
         )
 
-    angle = np.radians(60)
+    angle = np.deg2rad(60)
     top_faces = np.hstack(
         [np.dot(rotation(i * angle), points_one_face) for i in range(6)]
     )
@@ -311,3 +313,16 @@ def sample_S2_icosahedral_mesh(
     n = int(np.ceil(a / (r_i * np.tan(np.deg2rad(resolution)))))
     vertices = _compose_from_faces(corners, faces, n)
     return Vector3d(vertices).unit
+
+
+SAMPLING_METHODS: Mapping[str, Callable] = {
+    "uv": sample_S2_uv_mesh,
+    "normalized_cube": partial(sample_S2_cube_mesh, grid_type="normalized"),
+    "spherified_cube_edge": partial(sample_S2_cube_mesh, grid_type="spherified_edge"),
+    "spherified_cube_corner": partial(
+        sample_S2_cube_mesh, grid_type="spherified_corner"
+    ),
+    "icosahedral": sample_S2_icosahedral_mesh,
+    "hexagonal": sample_S2_hexagonal_mesh,
+    "random": sample_S2_random_mesh,
+}

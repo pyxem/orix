@@ -41,7 +41,7 @@ def _get_start_and_end_index(
 
 
 def _number_of_equidistant_steps(resolution: float, length: float) -> int:
-    maximum_grid_spacing = np.tan(np.radians(resolution))
+    maximum_grid_spacing = np.tan(np.deg2rad(resolution))
     return int(np.ceil(length / maximum_grid_spacing))
 
 
@@ -65,7 +65,7 @@ def _sample_length_equidistant(
 
 def _number_of_equiangular_steps(resolution: float, length: float) -> int:
     total_angle = np.arctan(length)
-    return int(np.ceil(total_angle / np.radians(resolution)))
+    return int(np.ceil(total_angle / np.deg2rad(resolution)))
 
 
 def _sample_length_equiangular(
