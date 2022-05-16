@@ -24,8 +24,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib_scalebar import dimension, scalebar
 import numpy as np
 
-from orix.vector import Vector3d
-
 
 class CrystalMapPlot(Axes):
     """2D plotting of :class:`~orix.crystal_map.crystal_map.CrystalMap`

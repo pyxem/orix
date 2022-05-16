@@ -205,8 +205,13 @@ class TestQuaternion:
         assert isinstance(qo_dask, da.Array)
         qo_numpy2 = Quaternion(qo_dask.compute())
         assert qo_numpy2.shape == 2 * shape
-
         assert np.allclose(qo_numpy.data, qo_numpy2.data)
+
+        # public function .outer() with Dask
+        qo_dask2 = q.outer(q, lazy=True)
+        assert isinstance(qo_dask2, Quaternion)
+        assert qo_dask2.shape == 2 * shape
+        assert np.allclose(qo_numpy.data, qo_dask2.data)
 
     def test_outer_lazy_chunk_size(self):
         shape = (5, 15, 4)
@@ -242,8 +247,35 @@ class TestQuaternion:
         assert isinstance(qvo_dask, da.Array)
         qvo_numpy2 = Vector3d(qvo_dask.compute())
         assert qvo_numpy2.shape == qvo_numpy.shape
-
         assert np.allclose(qvo_numpy.data, qvo_numpy2.data)
+
+        # public function .outer() with Dask
+        qvo_dask2 = q.outer(v, lazy=True)
+        assert isinstance(qvo_dask2, Vector3d)
+        assert qvo_dask2.shape == qvo_numpy.shape
+        assert np.allclose(qvo_numpy.data, qvo_dask2.data)
+
+    def test_outer_lazy_progressbar_stdout(self, capsys):
+        rng = np.random.default_rng()
+        shape = (5, 3)
+        new_shape = shape + (4,)
+        abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
+        q = Quaternion(abcd).unit
+        # other is Quaternion
+        _ = q.outer(q, lazy=True, progressbar=True)
+        out, _ = capsys.readouterr()
+        assert "Completed" in out
+        _ = q.outer(q, lazy=True, progressbar=False)
+        out, _ = capsys.readouterr()
+        assert not out
+        # test other is Vector3d
+        v = Vector3d(np.random.rand(2, 3, 3)).unit
+        _ = q.outer(v, lazy=True, progressbar=True)
+        out, _ = capsys.readouterr()
+        assert "Completed" in out
+        _ = q.outer(v, lazy=True, progressbar=False)
+        out, _ = capsys.readouterr()
+        assert not out
 
     def test_outer_dask_wrong_type_raises(self):
         shape = (5,)

@@ -234,6 +234,11 @@ class Misorientation(Rotation):
         o_inside._symmetry = (Gl, Gr)
         return o_inside
 
+    @deprecated(
+        since="0.9",
+        alternative="orix.quaternion.Misorientation.get_distance_matrix",
+        removal="0.10",
+    )
     def distance(self, verbose=False, split_size=100):
         """Symmetry reduced distance.
 
@@ -374,6 +379,94 @@ class Misorientation(Rotation):
 
         if return_figure:
             return figure
+
+    def get_distance_matrix(self, chunk_size=20, progressbar=True):
+        r"""The symmetry reduced smallest angle of rotation transforming
+        every misorientation in this instance to every other
+        misorientation :cite:`johnstone2020density`.
+
+        This is an alternative implementation of
+        :meth:`~orix.quaternion.Misorientation.distance` for
+        a single :class:`Misorientation` instance, using :mod:`dask`.
+
+        Parameters
+        ----------
+        chunk_size : int, optional
+            Number of misorientations per axis to include in each
+            iteration of the computation. Default is 20.
+        progressbar : bool, optional
+            Whether to show a progressbar during computation. Default is
+            True.
+
+        Returns
+        -------
+        numpy.ndarray
+
+        Notes
+        -----
+        Given two misorientations :math:`m_i` and :math:`m_j` with the
+        same two symmetry groups, the smallest angle is considered as
+        the geodesic distance
+
+        .. math::
+
+            d(m_i, m_j) = \arccos(2(m_i \cdot m_j)^2 - 1),
+
+        where :math:`(m_i \cdot m_j)` is the highest dot product
+        between symmetrically equivalent misorientations to
+        :math:`m_{i,j}`, given by
+
+        .. math::
+
+            \max_{s_k \in S_k} s_k m_i s_l s_k m_j^{-1} s_l,
+
+        where :math:`s_k \in S_k` and :math:`s_l \in S_l`, with
+        :math:`S_k` and :math:`S_l` being the two symmetry groups.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from orix.quaternion import Misorientation, symmetry
+        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, np.pi/2])
+        >>> m.symmetry = (symmetry.D6, symmetry.D6)
+        >>> d = m.get_distance_matrix()  # doctest: +SKIP
+        >>> d
+        [[0.         1.57079633]
+         [1.57079633 0.        ]]
+        """
+        # Reduce symmetry operations to the unique ones
+        symmetry = _get_unique_symmetry_elements(*self.symmetry)
+
+        # Perform "s_k m_i s_l s_k m_j" (see Notes)
+        misorientation1 = symmetry.outer(self).outer(symmetry)
+        misorientation2 = misorientation1._outer_dask(~self, chunk_size=chunk_size)
+
+        # Perform last outer product and reduce to all dot products at
+        # the same time
+        warnings.filterwarnings("ignore", category=da.PerformanceWarning)
+        str1 = "abcdefghijklmnopqrstuvwxy"[: misorientation2.ndim]
+        str2 = "z" + str1[-1]  # Last axis has shape (4,)
+        sum_over = f"{str1},{str2}->{str1[:-1] + str2[0]}"
+        all_dot_products = da.einsum(sum_over, misorientation2, symmetry.data)
+
+        # Get highest dot product
+        axes = (0, self.ndim + 1, 2 * self.ndim + 2)
+        dot_products = da.max(abs(all_dot_products), axis=axes)
+
+        # Round because some dot products are slightly above 1
+        dot_products = da.round(dot_products, 12)
+
+        # Calculate disorientation angles
+        angles_dask = da.arccos(2 * dot_products**2 - 1)
+        angles_dask = da.nan_to_num(angles_dask)
+        angles = np.zeros(angles_dask.shape)
+        if progressbar:
+            with ProgressBar():
+                da.store(sources=angles_dask, targets=angles)
+        else:
+            da.store(sources=angles_dask, targets=angles)
+
+        return angles
 
 
 class Orientation(Misorientation):
@@ -621,7 +714,8 @@ class Orientation(Misorientation):
 
     def get_distance_matrix(self, lazy=False, chunk_size=20, progressbar=True):
         r"""The symmetry reduced smallest angle of rotation transforming
-        every orientation in this instance to every other orientation.
+        every orientation in this instance to every other orientation
+        :cite:`johnstone2020density`.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance` for

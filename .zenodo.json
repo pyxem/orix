@@ -1,0 +1,30 @@
+[
+    {
+        "name":"Håkon Wiik Ånes",
+        "orcid": "0000-0002-1213-2911",
+        "affiliation": "Norwegian University of Science and Technology"
+    },
+    {
+        "name":"Ben Martineau"
+    },
+    {
+        "name":"Phillip Crout",
+        "orcid": "0000-0001-5754-0938"
+    },
+    {
+        "name":"Paddy Harrison",
+        "orcid": "0000-0001-9798-8710",
+        "affiliation": "SIMaP, Grenoble INP"
+    },
+    {
+        "name":"Duncan Johnstone",
+        "orcid": "0000-0003-3663-3793"
+    },
+    {
+        "name":"Niels Cautaerts",
+        "orcid": "0000-0002-6402-9879"
+    },
+    {
+        "name":"Simon Høgås"
+    }
+]

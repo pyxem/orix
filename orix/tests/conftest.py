@@ -655,3 +655,62 @@ def crystal_map_input(request, rotations):
 @pytest.fixture
 def crystal_map(crystal_map_input):
     return CrystalMap(**crystal_map_input)
+
+
+@pytest.fixture
+def cif_file(tmpdir):
+    """Actual CIF file of beta double prime phase often seen in Al-Mg-Si
+    alloys.
+    """
+    file_contents = """
+#======================================================================
+
+# CRYSTAL DATA
+
+#----------------------------------------------------------------------
+
+data_VESTA_phase_1
+
+
+_chemical_name_common                  ''
+_cell_length_a                         15.50000
+_cell_length_b                         4.05000
+_cell_length_c                         6.74000
+_cell_angle_alpha                      90
+_cell_angle_beta                       105.30000
+_cell_angle_gamma                      90
+_space_group_name_H-M_alt              'C 2/m'
+_space_group_IT_number                 12
+
+loop_
+_space_group_symop_operation_xyz
+   'x, y, z'
+   '-x, -y, -z'
+   '-x, y, -z'
+   'x, -y, z'
+   'x+1/2, y+1/2, z'
+   '-x+1/2, -y+1/2, -z'
+   '-x+1/2, y+1/2, -z'
+   'x+1/2, -y+1/2, z'
+
+loop_
+   _atom_site_label
+   _atom_site_occupancy
+   _atom_site_fract_x
+   _atom_site_fract_y
+   _atom_site_fract_z
+   _atom_site_adp_type
+   _atom_site_B_iso_or_equiv
+   _atom_site_type_symbol
+   Mg(1)      1.0     0.000000      0.000000      0.000000     Biso  1.000000 Mg
+   Mg(2)      1.0     0.347000      0.000000      0.089000     Biso  1.000000 Mg
+   Mg(3)      1.0     0.423000      0.000000      0.652000     Biso  1.000000 Mg
+   Si(1)      1.0     0.054000      0.000000      0.649000     Biso  1.000000 Si
+   Si(2)      1.0     0.190000      0.000000      0.224000     Biso  1.000000 Si
+   Al         1.0     0.211000      0.000000      0.626000     Biso  1.000000 Al"
+"""
+    f = open(tmpdir.join("betapp.cif"), mode="w")
+    f.write(file_contents)
+    f.close()
+    yield f.name
+    gc.collect()

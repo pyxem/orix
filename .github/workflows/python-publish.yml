@@ -1,4 +1,4 @@
-# This workflows runs when a tagged release is created or it is triggered manually.
+# This workflow runs when a tagged release is created or it is triggered manually.
 # For more information see:
 # - Python docs: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 # - GitHub action: https://github.com/marketplace/actions/pypi-publish
@@ -40,7 +40,6 @@ jobs:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
     - name: Publish package to PyPI
-      if: startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:
         user: __token__

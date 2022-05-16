@@ -27,8 +27,6 @@ import pytest
 from orix.plot import CrystalMapPlot
 from orix.crystal_map import CrystalMap, PhaseList
 
-plt.rcParams["backend"] = "Agg"
-
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"
 

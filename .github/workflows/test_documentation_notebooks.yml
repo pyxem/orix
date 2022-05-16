@@ -1,0 +1,35 @@
+# This workflow checks that user guide notebooks stored with cell outputs are compatible
+# with the current API. It does this by running the notebooks and comparing the produced
+# cell output with the stored cell output using nbval
+# (https://nbval.readthedocs.io/en/latest)
+
+name: Test documentation notebooks
+
+on:
+  schedule:
+    - cron: '15 6 * * 1' # Run every Monday morning
+  workflow_dispatch:
+    workflow: "*"
+
+jobs:
+  test-documentation-notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MPLBACKEND: agg
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Display versions
+        run: python -V; pip -V
+      - name: Install dependencies and package
+        shell: bash
+        run: |
+          pip install -U -e .'[tests, doc]'
+          pip install nbval
+      - name: Test documentation notebooks
+        run: |
+          pytest -v --nbval doc
