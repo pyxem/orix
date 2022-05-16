@@ -55,6 +55,7 @@ Deprecated
 - The ``convention`` parameter in ``from_euler()`` and ``to_euler()`` methods has been
   deprecated, in favour of ``direction`` in the former. This parameter will be removed
   in release 1.0.
+- ``Misorientation.distance()`` in favour of ``Misorientation.get_distance_matrix()``.
 
 Fixed
 -----
