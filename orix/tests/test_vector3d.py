@@ -436,6 +436,44 @@ class TestSpareNotImplemented:
         "cantmul" * vector
 
 
+def test_pdf():
+    v = Vector3d(np.random.randn(10_000, 3)).unit
+    fig1 = v.pdf(return_figure=True, colorbar=True, sigma=5, log=True)
+    assert len(fig1.axes) == 2
+    assert len(fig1.axes[0].collections) == 1
+    qmesh1 = fig1.axes[0].collections[0].get_array()
+    fig2 = v.pdf(return_figure=True, colorbar=False, sigma=2, log=True)
+    assert len(fig2.axes) == 1
+    assert len(fig2.axes[0].collections) == 1
+    qmesh2 = fig2.axes[0].collections[0].get_array()
+    assert not np.allclose(qmesh1, qmesh2)
+    fig3 = v.pdf(return_figure=True, colorbar=False, sigma=2, log=False)
+    qmesh3 = fig3.axes[0].collections[0].get_array()
+    assert not np.allclose(qmesh2, qmesh3)
+    fig4 = v.pdf(
+        return_figure=True, hemisphere="lower", colorbar=True, sigma=5, log=True
+    )
+    assert len(fig4.axes) == 2
+    assert len(fig4.axes[0].collections) == 1
+    qmesh4 = fig4.axes[0].collections[0].get_array()
+    assert not np.allclose(qmesh1, qmesh4)
+    fig5 = v.pdf(
+        return_figure=True, hemisphere="both", colorbar=True, sigma=5, log=True
+    )
+    assert len(fig5.axes) == 4
+    assert len(fig5.axes[0].collections) == 1
+    assert len(fig5.axes[1].collections) == 1
+    qmesh5_1 = fig5.axes[0].collections[0].get_array()
+    qmesh5_2 = fig5.axes[1].collections[0].get_array()
+    assert not np.allclose(qmesh5_1, qmesh5_2)
+
+
+def test_pdf_hemisphere_raises():
+    v = Vector3d(np.random.randn(100, 3)).unit
+    with pytest.raises(ValueError, match=r"Hemisphere must be either "):
+        fig1 = v.pdf(return_figure=True, hemisphere="test")
+
+
 class TestSphericalCoordinates:
     @pytest.mark.parametrize(
         "v, polar_desired, azimuth_desired, radial_desired",

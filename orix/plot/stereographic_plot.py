@@ -248,7 +248,7 @@ class StereographicPlot(maxes.Axes):
         if value in ["upper", "lower"]:
             self._hemisphere = value
         else:
-            raise ValueError(f"Hemisphere must be 'upper' or 'lower', not {value}")
+            raise ValueError(f"Hemisphere must be 'upper' or 'lower', not {value}.")
 
     @property
     def pole(self):
