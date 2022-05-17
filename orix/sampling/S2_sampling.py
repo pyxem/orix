@@ -31,11 +31,11 @@ def _remove_pole_duplicates(azimuth: NDArray, polar: NDArray) -> Tuple[NDArray]:
 
     Parameters
     ----------
-    azimuth, polar : np.ndarray
+    azimuth, polar : numpy.ndarray
 
     Returns
     -------
-    azimuth, polar : np.ndarray
+    azimuth, polar : numpy.ndarray
     """
     # remove duplicated vectors at north (polar == 0) and
     # south (polar == np.pi) poles. Keep the azimuth == 0 vector in
@@ -71,13 +71,13 @@ def _sample_S2_uv_mesh_arrays(
         Maximum angle between nearest neighbour grid points, in degrees.
         The resolution of :math:`u` and :math:`v` are rounded up to get
         an integer number of equispaced polar and azimuthal grid lines.
-    hemisphere : str
+    hemisphere : str, optional
         Generate mesh points on either the "upper", "lower" or "both"
         hemispheres. Default is "both".
-    offset : float
+    offset : float, optional
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
-    azimuthal_endpoint : bool
+    azimuthal_endpoint : bool, optional
         If True then endpoint of the azimuthal array is included in the
         calculation. Default is False.
     
@@ -154,13 +154,13 @@ def sample_S2_uv_mesh(
         Maximum angle between nearest neighbour grid points, in degrees.
         The resolution of :math:`u` and :math:`v` are rounded up to get
         an integer number of equispaced polar and azimuthal grid lines.
-    hemisphere : str
+    hemisphere : str, optional
         Generate mesh points on either the "upper", "lower" or "both"
         hemispheres. Default is "both".
-    offset : float
+    offset : float, optional
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
-    remove_pole_duplicates : bool
+    remove_pole_duplicates : bool, optional
         If True the duplicate mesh grid points at the North and South
         pole of the unit sphere are removed. Default is True.
 
@@ -187,7 +187,10 @@ def _sample_S2_equal_area_arrays(
     ----------
     resolution : float
         The angular resolution in degrees of the azimuthal vectors.
-    azimuthal_endpoint : bool
+    hemisphere : str, optional
+        Generate mesh points on either the "upper", "lower" or "both"
+        hemispheres. Default is "both".
+    azimuthal_endpoint : bool, optional
         If True then endpoint of the azimuthal array is included in the
         calculation. Default is False.
 
@@ -234,10 +237,10 @@ def sample_S2_equal_area_mesh(
     ----------
     resolution : float
         The angular resolution in degrees of the azimuthal vectors.
-    hemisphere : str
+    hemisphere : str, optional
         Generate mesh points on either the "upper", "lower" or "both"
         hemispheres. Default is "both".
-    remove_pole_duplicates : bool
+    remove_pole_duplicates : bool, optional
         If True the duplicate mesh grid points at the North and South
         pole of the unit sphere are removed. If True then the returned
         vector has `ndim` = 1, whereas `ndim` = 2 (grid) if False.

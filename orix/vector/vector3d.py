@@ -24,6 +24,7 @@ import dask.array as da
 from dask.diagnostics import ProgressBar
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 from scipy import ndimage
 
 from orix.base import check, Object3d
@@ -295,12 +296,26 @@ class Vector3d(Object3d):
         other: Vector3d,
         lazy: bool = False,
         chunk_size: int = 20,
-        progressbar=False,
-    ) -> np.ndarray:
+        progressbar: bool = False,
+    ) -> NDArray:
         """The outer dot product of a vector with another vector.
 
         The dot product for every combination of vectors in `self` and
         `other` is computed.
+
+        Parameters
+        ----------
+        other : Vector3d
+        lazy : bool, optional
+            Whether to perform the computation lazily with Dask. Default
+            is False.
+        chunk_size : int, optional
+            Number of orientations per axis to include in each iteration
+            of the computation. Default is 20. Only applies when `lazy`
+            is True.
+        progressbar : bool, optional
+            Whether to show a progressbar during computation if `lazy`
+            is True. Default is True.
 
         Returns
         -------
