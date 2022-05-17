@@ -357,7 +357,7 @@ class Vector3d(Object3d):
         v1 = da.from_array(self.data, chunks=chunks1)
         v2 = da.from_array(other.data, chunks=chunks2)
 
-        return da.tensordot(v1, v2, axes=(-1, -1))
+        return da.tensordot(v1, v2, axes=(v1.ndim - 1, v2.ndim - 1))
 
     def cross(self, other):
         """The cross product of a vector with another vector.
