@@ -48,7 +48,7 @@ def _remove_pole_duplicates(azimuth: NDArray, polar: NDArray) -> Tuple[NDArray]:
     return azimuth[mask], polar[mask]
 
 
-def _get_azimuth_polar_arrays_uv_mesh(
+def _sample_S2_uv_mesh_arrays(
     resolution: float,
     hemisphere: str = "both",
     offset: float = 0,
@@ -93,25 +93,24 @@ def _get_azimuth_polar_arrays_uv_mesh(
             "Offset is a fractional value of the angular step size "
             + "and must be in the range [0..1]."
         )
-    # calculate steps in degrees to avoid rounding errors
-    steps_azimuth = int(np.ceil(2 * np.pi / resolution))
-    steps_polar = int(np.ceil(polar_range / resolution)) + 1
-    resolution = np.deg2rad(resolution)
 
     if hemisphere == "both":
         polar_min = 0
-        polar_max = np.pi
+        polar_max = 180
     elif hemisphere == "upper":
         polar_min = 0
-        polar_max = np.pi / 2
+        polar_max = 90
     elif hemisphere == "lower":
-        polar_min = np.pi / 2
-        polar_max = np.pi
+        polar_min = 90
+        polar_max = 180
     polar_range = polar_max - polar_min
-
+    # calculate steps in degrees to avoid rounding errors
+    steps_azimuth = int(np.ceil(360 / resolution))
+    steps_polar = int(np.ceil(polar_range / resolution)) + 1
+    resolution = np.deg2rad(resolution)
     # calculate number of steps and step size angular spacing
     step_size_azimuth = (2 * np.pi) / steps_azimuth
-    step_size_polar = polar_range / (steps_polar - 1)
+    step_size_polar = np.deg2rad(polar_range) / (steps_polar - 1)
 
     azimuth = np.linspace(
         offset * step_size_azimuth,
@@ -119,6 +118,8 @@ def _get_azimuth_polar_arrays_uv_mesh(
         num=steps_azimuth,
         endpoint=azimuthal_endpoint,
     )
+    # convert to radians
+    polar_min, polar_max = np.deg2rad(polar_min), np.deg2rad(polar_max)
     polar = np.linspace(
         polar_min + offset * step_size_polar,
         polar_max + offset * step_size_polar,
@@ -167,7 +168,7 @@ def sample_S2_uv_mesh(
     -------
     Vector3d
     """
-    azimuth, polar = _get_azimuth_polar_arrays_uv_mesh(resolution, hemisphere, offset)
+    azimuth, polar = _sample_S2_uv_mesh_arrays(resolution, hemisphere, offset)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
 
     if remove_pole_duplicates:
