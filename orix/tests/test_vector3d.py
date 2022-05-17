@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from click import progressbar
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -195,6 +196,13 @@ def test_dot_outer(vector, something):
     for i in np.ndindex(vector.shape):
         for j in np.ndindex(something.shape):
             assert np.allclose(d[i + j], vector[i].dot(something[j]))
+    d_lazy = vector.dot_outer(something, lazy=True)
+    assert isinstance(d_lazy, np.ndarray)
+    assert np.allclose(d, d_lazy)
+    d_lazy_no_pb = vector.dot_outer(
+        something, lazy=True, progressbar=False, chunk_size=25
+    )
+    assert np.allclose(d_lazy, d_lazy_no_pb)
 
 
 def test_cross(vector, something):
