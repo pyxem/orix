@@ -448,18 +448,22 @@ def test_pdf():
     fig1 = v.pdf(return_figure=True, colorbar=True, sigma=5, log=True)
     assert len(fig1.axes) == 2
     qmesh1 = fig1.axes[0].collections[0].get_array()
+    plt.close(fig1)
     fig2 = v.pdf(return_figure=True, colorbar=False, sigma=2, log=True)
     assert len(fig2.axes) == 1
     qmesh2 = fig2.axes[0].collections[0].get_array()
+    plt.close(fig2)
     assert not np.allclose(qmesh1, qmesh2)
     fig3 = v.pdf(return_figure=True, colorbar=False, sigma=2, log=False)
     qmesh3 = fig3.axes[0].collections[0].get_array()
+    plt.close(fig3)
     assert not np.allclose(qmesh2, qmesh3)
     fig4 = v.pdf(
         return_figure=True, hemisphere="lower", colorbar=True, sigma=5, log=True
     )
     assert len(fig4.axes) == 2
     qmesh4 = fig4.axes[0].collections[0].get_array()
+    plt.close(fig4)
     assert not np.allclose(qmesh1, qmesh4)
     fig5 = v.pdf(
         return_figure=True, hemisphere="both", colorbar=True, sigma=5, log=True
@@ -467,6 +471,7 @@ def test_pdf():
     assert len(fig5.axes) == 4
     qmesh5_1 = fig5.axes[0].collections[0].get_array()
     qmesh5_2 = fig5.axes[1].collections[0].get_array()
+    plt.close(fig5)
     assert not np.allclose(qmesh5_1, qmesh5_2)
 
 

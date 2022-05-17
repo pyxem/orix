@@ -781,6 +781,7 @@ class Vector3d(Object3d):
                 mode=("wrap", "reflect"),  # wrap along azimuthal axis
             )
             if log:
+                # +1 to avoid taking the log of 0
                 hist = np.log(hist + 1)
             # get mesh vertices in stereographic plane
             v_mesh = Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
