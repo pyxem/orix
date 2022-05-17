@@ -16,10 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from copy import deepcopy
 
+import dask.array as da
+from dask.diagnostics import ProgressBar
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import ndimage
 
 from orix.base import check, Object3d
 
@@ -285,7 +290,13 @@ class Vector3d(Object3d):
             raise ValueError("{} is not a vector!".format(other))
         return np.sum(self.data * other.data, axis=-1)
 
-    def dot_outer(self, other):
+    def dot_outer(
+        self,
+        other: Vector3d,
+        lazy: bool = False,
+        chunk_size: int = 20,
+        progressbar=False,
+    ) -> np.ndarray:
         """The outer dot product of a vector with another vector.
 
         The dot product for every combination of vectors in `self` and
@@ -307,8 +318,31 @@ class Vector3d(Object3d):
                [  0.,  0.4]
                [ 0.5,  0.5]])
         """
-        dots = np.tensordot(self.data, other.data, axes=(-1, -1))
+        if lazy:
+            dots = np.empty(self.shape + other.shape)
+            dp = self._dot_outer_dask(other, chunk_size)
+            if progressbar:
+                with ProgressBar():
+                    da.store(sources=dp, targets=dots)
+            else:
+                da.store(sources=dp, targets=dots)
+        else:
+            dots = np.tensordot(self.data, other.data, axes=(-1, -1))
         return dots
+
+    def _dot_outer_dask(self, other: Vector3d, chunk_size: int = 20) -> da.Array:
+        """Compute the lazy dot product between this vector and another."""
+        ndim1 = self.ndim
+        ndim2 = other.ndim
+
+        # Set chunk sizes
+        chunks1 = (chunk_size,) * ndim1 + (-1,)
+        chunks2 = (chunk_size,) * ndim2 + (-1,)
+
+        v1 = da.from_array(self.data, chunks=chunks1)
+        v2 = da.from_array(other.data, chunks=chunks2)
+
+        return da.tensordot(v1, v2, axes=(-1, -1))
 
     def cross(self, other):
         """The cross product of a vector with another vector.
@@ -583,6 +617,170 @@ class Vector3d(Object3d):
         for i, (v, oa) in enumerate(zip(self.flatten(), opening_angles)):
             circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)
         return circles
+
+    def pdf(
+        self,
+        resolution=1,
+        sigma=5,
+        log=True,
+        colorbar=True,
+        projection="stereographic",
+        figure=None,
+        axes_labels=None,
+        hemisphere=None,
+        show_hemisphere_label=None,
+        grid=None,
+        grid_resolution=None,
+        figure_kwargs=None,
+        text_kwargs=None,
+        return_figure=False,
+        **kwargs,
+    ):
+        """Plot the Pole Density Function (PDF) on a given hemisphere
+        in the stereographic projection.
+
+        Parameters
+        ----------
+        resolution : float
+            The angular resolution of the sampling grid in degrees.
+        sigma : float
+            The angular resolution of the applied broadening in degrees.
+        log : bool
+            If True the log(PDF) is calculated. Default is True.
+        colorbar : bool
+            If True a colorabar is shown alongside the PDF plot.
+            Default is True.
+        projection : str, optional
+            Which projection to use. The default is "stereographic", the
+            only current option.
+        figure : matplotlib.figure.Figure, optional
+            Which figure to plot onto. Default is None, which creates a
+            new figure.
+        axes_labels : list of str, optional
+            Reference frame axes labels, defaults to [None, None, None].
+        hemisphere : str, optional
+            Which hemisphere(s) to plot the vectors in, defaults to
+            "None", which means "upper" if a new figure is created,
+            otherwise adds to the current figure's hemispheres. Options
+            are "upper" and "lower".
+        show_hemisphere_label : bool, optional
+            Whether to show hemisphere labels "upper" or "lower".
+            Default is True if `hemisphere` is "both", otherwise False.
+        grid : bool, optional
+            Whether to show the azimuth and polar grid. Default is
+            whatever `axes.grid` is set to in
+            :obj:`matplotlib.rcParams`.
+        grid_resolution : tuple, optional
+            Azimuth and polar grid resolution in degrees, as a tuple.
+            Default is whatever is default in
+            :class:`~orix.plot.StereographicPlot.stereographic_grid`.
+        figure_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
+        text_kwargs : dict, optional
+            Dictionary of keyword arguments passed to
+            :meth:`~orix.plot.StereographicPlot.text`, which passes
+            these on to :meth:`matplotlib.axes.Axes.text`.
+        return_figure : bool, optional
+            Whether to return the figure (default is False).
+        kwargs : dict, optional
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The created figure, returned if `return_figure` is True.
+
+        Notes
+        -----
+        The PDF is calculated in terms of Multiples of Random
+        Distribution (MRD), ie. multiples of the expected density if the
+        pole distribution was completely random, see reference [1].
+
+        References
+        ----------
+        [1]: The Distribution of Internal Interfaces in Polycrystals,
+        Saylor et al. Zeitschrift für Metallkunde (2004), DOI: 10.3139/146.017934
+        """
+        from orix.sampling.S2_sampling import _sample_S2_equal_area_arrays
+
+        if hemisphere is None:
+            hemisphere = "upper"
+        if hemisphere not in ("upper", "lower", "both"):
+            raise ValueError('Hemisphere must be either "upper", "lower", or "both".')
+
+        # computation done in polar cooridnates
+        azimuth, polar, _ = self.to_polar()
+
+        (
+            fig,
+            axes,
+            hemisphere,
+            show_hemisphere_label,
+            grid,
+            grid_resolution,
+            text_kwargs,
+            axes_labels,
+        ) = self._setup_plot(
+            projection=projection,
+            figure=figure,
+            hemisphere=hemisphere,
+            show_hemisphere_label=show_hemisphere_label,
+            grid=grid,
+            grid_resolution=grid_resolution,
+            figure_kwargs=figure_kwargs,
+            text_kwargs=text_kwargs,
+            axes_labels=axes_labels,
+        )
+        for i, ax in enumerate(axes):
+            # setup plot
+            ax.hemisphere = hemisphere[i]
+            ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
+            ax._stereographic_grid = grid[i]
+            ax.set_labels(*axes_labels)
+            if show_hemisphere_label:
+                ax.show_hemisphere_label()
+            # generate angular mesh on S2
+            azimuth_arr, polar_arr = _sample_S2_equal_area_arrays(
+                resolution, hemisphere=hemisphere[i], azimuthal_endpoint=True
+            )
+            azimuth_prod, polar_prod = np.meshgrid(
+                azimuth_arr, polar_arr, indexing="ij"
+            )
+            # generate histogram in angular space
+            hist, *_ = np.histogram2d(
+                azimuth, polar, bins=(azimuth_arr, polar_arr), density=False
+            )
+            # normalize by averge number of counts per cell on the unit
+            # sphere to calculate in terms of Multiples of Random
+            # Distribution (MRD)
+            # see: The Distribution of Internal Interfaces in Polycrystals
+            # Saylor et al. Zeitschrift für Metallkunde (2004)
+            # DOI: 10.3139/146.017934
+            hist = hist / hist.mean()
+            # apply gaussian filtering to plot
+            hist = ndimage.gaussian_filter(
+                hist,
+                sigma / resolution,
+                mode=("wrap", "reflect"),  # wrap along azimuthal axis
+            )
+            if log:
+                hist = np.log(hist + 1)
+            # get mesh vertices in stereographic plane
+            v_mesh = Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
+            x, y = ax._projection.vector2xy(v_mesh)
+            x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
+            # plot mesh
+            kwargs.setdefault("cmap", "magma")
+            pc = ax.pcolormesh(x, y, hist, **kwargs)
+            if colorbar:
+                label = "MRD"
+                if log:
+                    label = f"log({label})"
+                plt.colorbar(pc, label=label, ax=ax)
+        if return_figure:
+            return fig
 
     def scatter(
         self,
