@@ -305,15 +305,16 @@ class Vector3d(Object3d):
 
         Parameters
         ----------
-        other : Vector3d
-        lazy : bool, optional
+        other
+            Compute the outer dot product with these vectors.
+        lazy
             Whether to perform the computation lazily with Dask. Default
             is False.
-        chunk_size : int, optional
+        chunk_size
             Number of orientations per axis to include in each iteration
             of the computation. Default is 20. Only applies when `lazy`
             is True.
-        progressbar : bool, optional
+        progressbar
             Whether to show a progressbar during computation if `lazy`
             is True. Default is True.
 

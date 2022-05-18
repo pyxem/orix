@@ -18,7 +18,7 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 
@@ -34,11 +34,11 @@ def _remove_pole_duplicates(
 
     Parameters
     ----------
-    azimuth, polar : numpy.ndarray
+    azimuth, polar
 
     Returns
     -------
-    azimuth, polar : numpy.ndarray
+    azimuth, polar
     """
     mask_azimuth = azimuth > 0
     mask_polar_0 = np.isclose(polar, 0) * mask_azimuth
@@ -77,11 +77,8 @@ def _sample_S2_uv_mesh_arrays(
 
     Returns
     -------
-    azimuth, polar : numpy.ndarray
+    azimuth, polar
     """
-    if hemisphere is None:
-        hemisphere = "both"
-
     hemisphere = hemisphere.lower()
     if hemisphere not in ("upper", "lower", "both"):
         raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
@@ -132,7 +129,7 @@ def _sample_S2_uv_mesh_arrays(
 
 def sample_S2_uv_mesh(
     resolution: float,
-    hemisphere: Optional[str] = None,
+    hemisphere: str = "both",
     offset: float = 0,
     remove_pole_duplicates: bool = True,
 ) -> Vector3d:
@@ -155,8 +152,7 @@ def sample_S2_uv_mesh(
         an integer number of equispaced polar and azimuthal grid lines.
     hemisphere
         Generate mesh points on the "upper", "lower" or "both"
-        hemispheres. Default is `None` in which case directions are
-        generated on "both" hemispheres.
+        hemispheres. Default is "both".
     offset
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
@@ -179,7 +175,7 @@ def sample_S2_uv_mesh(
 
 def _sample_S2_equal_area_arrays(
     resolution: float,
-    hemisphere: Optional[str] = None,
+    hemisphere: str = "both",
     azimuthal_endpoint: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Get spherical coordinates for equal area mesh points on unit
@@ -194,19 +190,15 @@ def _sample_S2_equal_area_arrays(
         The angular resolution in degrees of the azimuthal vectors.
     hemisphere
         Generate mesh points on the "upper", "lower" or "both"
-        hemispheres. Default is `None`, in which directions are
-        generated on "both" hemispheres.
+        hemispheres. Default is "both".
     azimuthal_endpoint
         If True then endpoint of the azimuthal array is included in the
         calculation. Default is False.
 
     Returns
     -------
-    azimuth, polar : numpy.ndarray
+    azimuth, polar
     """
-    if hemisphere is None:
-        hemisphere = "both"
-
     hemisphere = hemisphere.lower()
     if hemisphere not in ("upper", "lower", "both"):
         raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
@@ -240,7 +232,7 @@ def _sample_S2_equal_area_arrays(
 
 def sample_S2_equal_area_mesh(
     resolution: float,
-    hemisphere: Optional[str] = None,
+    hemisphere: str = "both",
     remove_pole_duplicates: bool = True,
 ) -> Vector3d:
     """Vectors of a cube mesh on a unit sphere *S2* according to equal
@@ -252,8 +244,7 @@ def sample_S2_equal_area_mesh(
         The angular resolution in degrees of the azimuthal vectors.
     hemisphere
         Generate mesh points on the "upper", "lower" or "both"
-        hemispheres. Default is `None` in which case directions are
-        generated on "both" hemispheres.
+        hemispheres. Default is "both".
     remove_pole_duplicates
         If True the duplicate mesh grid points at the North and South
         pole of the unit sphere are removed. If True then the returned
