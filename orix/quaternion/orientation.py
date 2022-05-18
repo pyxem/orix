@@ -40,17 +40,19 @@ indistinguishable in both cases, and hence has the same orientation.
 
 from itertools import product as iproduct
 from itertools import combinations_with_replacement as icombinations
+from typing import Dict, List, Optional, Tuple
 import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
+from matplotlib.figure import Figure
 import numpy as np
 from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import AxAngle
+from orix.vector import AxAngle, Vector3d
 from orix._util import deprecated
 
 
@@ -795,6 +797,141 @@ class Orientation(Misorientation):
     )
     def distance(self, verbose=False, split_size=100):
         return super().distance(verbose=verbose, split_size=split_size)
+
+    def plot(
+        self,
+        projection: str = "pdf",
+        vectors: Optional[Vector3d] = None,
+        resolution: float = 1,
+        sigma: float = 5,
+        log: bool = True,
+        colorbar: bool = True,
+        figure: Optional[Figure] = None,
+        axes_labels: Optional[List[str]] = None,
+        hemisphere: Optional[str] = None,
+        show_hemisphere_label: Optional[bool] = None,
+        grid: Optional[bool] = None,
+        grid_resolution: Optional[Tuple[float, float]] = None,
+        figure_kwargs: Optional[Dict] = None,
+        text_kwargs: Optional[Dict] = None,
+        return_figure: bool = False,
+        lazy: bool = True,
+        chunk_size: int = 20,
+        progressbar: bool = True,
+        **kwargs: Dict,
+    ):
+        """Plot crystal orientations in a given `projection`.
+        Currently the only supported `projection` is "pdf". See
+        :meth:`orix.vector.Vector3d.pole_density_function` for more
+        information.
+
+        Parameters
+        ----------
+        projection
+            Plot the orientations under this projection. Default is
+            "pdf" (Pole Density Function).
+        vectors
+            Vectors necessary to compute the plot. Must be defined if
+            `projection` is "pdf".
+        resolution
+            The angular resolution of the sampling grid in degrees.
+            Default value is 1.
+        sigma
+            The angular resolution of the applied broadening in degrees.
+            Default value is 5.
+        log
+            If True the log(PDF) is calculated. Default is True.
+        colorbar
+            If True a colorabar is shown alongside the PDF plot.
+            Default is True.
+        projection
+            Which projection to use. The default is "stereographic", the
+            only current option.
+        figure
+            Which figure to plot onto. Default is None, which creates a
+            new figure.
+        axes_labels : list of str, optional
+            Reference frame axes labels, defaults to [None, None, None].
+        hemisphere
+            Which hemisphere(s) to plot the vectors in, defaults to
+            "None", which means "upper" if a new figure is created,
+            otherwise adds to the current figure's hemispheres. Options
+            are "upper" and "lower".
+        show_hemisphere_label
+            Whether to show hemisphere labels "upper" or "lower".
+            Default is True if `hemisphere` is "both", otherwise False.
+        grid
+            Whether to show the azimuth and polar grid. Default is
+            whatever `axes.grid` is set to in
+            :obj:`matplotlib.rcParams`.
+        grid_resolution
+            Azimuth and polar grid resolution in degrees, as a tuple.
+            Default is whatever is default in
+            :class:`~orix.plot.StereographicPlot.stereographic_grid`.
+        figure_kwargs
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
+        text_kwargs
+            Dictionary of keyword arguments passed to
+            :meth:`~orix.plot.StereographicPlot.text`, which passes
+            these on to :meth:`matplotlib.axes.Axes.text`.
+        return_figure : bool, optional
+            Whether to return the figure (default is False).
+        lazy
+            Whether to perform the computation lazily with Dask. Default
+            is False.
+        chunk_size
+            Number of orientations per axis to include in each iteration
+            of the computation. Default is 20. Only applies when `lazy`
+            is True.
+        progressbar
+            Whether to show a progressbar during computation if `lazy`
+            is True. Default is True.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        Returns
+        -------
+        fig
+            The created figure, returned if `return_figure` is True.
+        """
+        projection = projection.lower()
+        if projection != "pdf":
+            raise ValueError(
+                'Only "pdf" (Pole Density Function) is currently supported as a '
+                + "`projection`."
+            )
+        else:
+            if not isinstance(vectors, Vector3d):
+                raise TypeError(
+                    "Vectors must be an instance of `orix.vector.Vector3d`."
+                )
+        # compute pole direction in sample reference frame
+        v = (~self).outer(
+            vectors, lazy=lazy, chunk_size=chunk_size, progressbar=progressbar
+        )
+
+        fig = v.pole_density_function(
+            resolution=resolution,
+            sigma=sigma,
+            log=log,
+            colorbar=colorbar,
+            projection="stereographic",
+            figure=figure,
+            axes_labels=axes_labels,
+            hemisphere=hemisphere,
+            show_hemisphere_label=show_hemisphere_label,
+            grid=grid,
+            grid_resolution=grid_resolution,
+            figure_kwargs=figure_kwargs,
+            text_kwargs=text_kwargs,
+            return_figure=True,
+            **kwargs,
+        )
+
+        if return_figure:
+            return fig
 
     def plot_unit_cell(
         self,
