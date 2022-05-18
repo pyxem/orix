@@ -721,7 +721,7 @@ class Vector3d(Object3d):
         if hemisphere not in ("upper", "lower", "both"):
             raise ValueError('Hemisphere must be either "upper", "lower", or "both".')
 
-        # computation done in polar cooridnates
+        # computation done in spherical cooridnates
         azimuth, polar, _ = self.to_polar()
 
         (

@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from matplotlib.collections import QuadMesh
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -448,6 +449,8 @@ class TestPoleDensityFunction:
         v = Vector3d(np.random.randn(10_000, 3)).unit
         fig1 = v.pole_density_function(return_figure=True, colorbar=True)
         assert len(fig1.axes) == 2  # plot and colorbar
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
         plt.close(fig1)
 
         fig2 = v.pole_density_function(return_figure=True, colorbar=False)
@@ -470,19 +473,30 @@ class TestPoleDensityFunction:
 
     def test_pdf_plot_hemisphere(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
-        fig1 = v.pole_density_function(return_figure=True, hemisphere="lower")
-        qmesh1 = fig1.axes[0].collections[0].get_array()
+        fig1 = v.pole_density_function(return_figure=True, hemisphere="upper")
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
+        qmesh1 = fig1.axes[0].collections[qm1.index(True)].get_array().data
         plt.close(fig1)
 
-        fig2 = v.pole_density_function(return_figure=True, hemisphere="upper")
-        qmesh2 = fig2.axes[0].collections[0].get_array()
+        fig2 = v.pole_density_function(return_figure=True, hemisphere="lower")
+        qm2 = [isinstance(c, QuadMesh) for c in fig2.axes[0].collections]
+        assert any(qm2)
+        qmesh2 = fig2.axes[0].collections[qm2.index(True)].get_array().data
         plt.close(fig2)
+
         # test mesh not the same, sigma is different
         assert not np.allclose(qmesh1, qmesh2)
 
-        fig3 = v.pole_density_function(return_figure=True, hemisphere="both")
-        qmesh3_1 = np.array(fig3.axes[0].collections[0].get_array())
-        qmesh3_2 = np.array(fig3.axes[1].collections[0].get_array())
+        fig3 = v.pole_density_function(
+            return_figure=True, colorbar=False, hemisphere="both"
+        )
+        qm3_1 = [isinstance(c, QuadMesh) for c in fig3.axes[0].collections]
+        assert any(qm3_1)
+        qmesh3_1 = fig3.axes[0].collections[qm3_1.index(True)].get_array().data
+        qm3_2 = [isinstance(c, QuadMesh) for c in fig3.axes[1].collections]
+        assert any(qm3_2)
+        qmesh3_2 = fig3.axes[1].collections[qm3_2.index(True)].get_array().data
         plt.close(fig3)
 
         # test mesh the same as single plots
@@ -492,11 +506,15 @@ class TestPoleDensityFunction:
     def test_pdf_plot_sigma(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
         fig1 = v.pole_density_function(return_figure=True, sigma=5)
-        qmesh1 = np.array(fig1.axes[0].collections[0].get_array())
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
+        qmesh1 = fig1.axes[0].collections[qm1.index(True)].get_array().data
         plt.close(fig1)
 
         fig2 = v.pole_density_function(return_figure=True, sigma=2)
-        qmesh2 = np.array(fig2.axes[0].collections[0].get_array())
+        qm2 = [isinstance(c, QuadMesh) for c in fig2.axes[0].collections]
+        assert any(qm2)
+        qmesh2 = fig2.axes[0].collections[qm2.index(True)].get_array().data
         plt.close(fig2)
 
         # test mesh not the same, sigma is different
@@ -505,12 +523,15 @@ class TestPoleDensityFunction:
     def test_pdf_plot_log(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
         fig1 = v.pole_density_function(return_figure=True, log=False)
-        qmesh1 = np.array(fig1.axes[0].collections[0].get_array())
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
+        qmesh1 = fig1.axes[0].collections[qm1.index(True)].get_array().data
         plt.close(fig1)
 
         fig2 = v.pole_density_function(return_figure=True, log=True)
-        assert len(fig2.axes) == 2
-        qmesh2 = np.array(fig2.axes[0].collections[0].get_array())
+        qm2 = [isinstance(c, QuadMesh) for c in fig2.axes[0].collections]
+        assert any(qm2)
+        qmesh2 = fig2.axes[0].collections[qm2.index(True)].get_array().data
         plt.close(fig2)
 
         # test mesh not the same, log is different
