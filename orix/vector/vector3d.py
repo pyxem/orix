@@ -111,7 +111,7 @@ class Vector3d(Object3d):
 
     @property
     def xyz(self):
-        """tuple of ndarray : This vector's components, useful for plotting."""
+        """tuple of numpy.ndarray : This vector's components, useful for plotting."""
         return self.x, self.y, self.z
 
     @property
@@ -710,12 +710,7 @@ class Vector3d(Object3d):
         -----
         The PDF is calculated in terms of Multiples of Random
         Distribution (MRD), ie. multiples of the expected density if the
-        pole distribution was completely random, see reference [1].
-
-        References
-        ----------
-        [1]: The Distribution of Internal Interfaces in Polycrystals,
-        Saylor et al. Zeitschrift für Metallkunde (2004), DOI: 10.3139/146.017934
+        pole distribution was completely random, see :cite:`rohrer2004distribution`.
         """
         from orix.sampling.S2_sampling import _sample_S2_equal_area_arrays
 

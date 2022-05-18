@@ -84,7 +84,7 @@ def _sample_S2_uv_mesh_arrays(
     
     Returns
     -------
-    azimuth, polar : ndarray
+    azimuth, polar : numpy.ndarray
     """
     hemisphere = hemisphere.lower()
     if hemisphere not in ("upper", "lower", "both"):
@@ -197,7 +197,7 @@ def _sample_S2_equal_area_arrays(
 
     Returns
     -------
-    azimuth, polar : ndarray
+    azimuth, polar : numpy.ndarray
     """
     hemisphere = hemisphere.lower()
     if hemisphere not in ("upper", "lower", "both"):
@@ -232,7 +232,7 @@ def sample_S2_equal_area_mesh(
     resolution: float, hemisphere: str = "both", remove_pole_duplicates: bool = True
 ) -> Vector3d:
     """Vectors of a cube mesh on a unit sphere *S2* according to equal
-    area spacing. Parameterization taken from :cite:`rohrer2004interfaces`.
+    area spacing. Parameterization taken from :cite:`rohrer2004distribution`.
 
     Parameters
     ----------
