@@ -446,39 +446,43 @@ class TestSpareNotImplemented:
 class TestPoleDensityFunction:
     def test_pdf_plot_colorbar(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
-        fig1 = v.pdf(return_figure=True, colorbar=True)
+        fig1 = v.pole_density_function(return_figure=True, colorbar=True)
         assert len(fig1.axes) == 2  # plot and colorbar
         plt.close(fig1)
 
-        fig2 = v.pdf(return_figure=True, colorbar=False)
+        fig2 = v.pole_density_function(return_figure=True, colorbar=False)
         assert len(fig2.axes) == 1  # just plot
         plt.close(fig2)
 
-        fig3 = v.pdf(return_figure=True, hemisphere="both", colorbar=False)
+        fig3 = v.pole_density_function(
+            return_figure=True, hemisphere="both", colorbar=False
+        )
         assert len(fig3.axes) == 2
         assert fig3.axes[0].hemisphere == "upper"
         assert fig3.axes[1].hemisphere == "lower"
         plt.close(fig3)
 
-        fig4 = v.pdf(return_figure=True, hemisphere="both", colorbar=True)
+        fig4 = v.pole_density_function(
+            return_figure=True, hemisphere="both", colorbar=True
+        )
         assert len(fig4.axes) == 4
         plt.close(fig4)
 
     def test_pdf_plot_hemisphere(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
-        fig1 = v.pdf(return_figure=True, hemisphere="lower")
+        fig1 = v.pole_density_function(return_figure=True, hemisphere="lower")
         qmesh1 = fig1.axes[0].collections[0].get_array()
         plt.close(fig1)
 
-        fig2 = v.pdf(return_figure=True, hemisphere="upper")
+        fig2 = v.pole_density_function(return_figure=True, hemisphere="upper")
         qmesh2 = fig2.axes[0].collections[0].get_array()
         plt.close(fig2)
         # test mesh not the same, sigma is different
         assert not np.allclose(qmesh1, qmesh2)
 
-        fig3 = v.pdf(return_figure=True, hemisphere="both")
-        qmesh3_1 = fig3.axes[0].collections[0].get_array()
-        qmesh3_2 = fig3.axes[1].collections[0].get_array()
+        fig3 = v.pole_density_function(return_figure=True, hemisphere="both")
+        qmesh3_1 = np.array(fig3.axes[0].collections[0].get_array())
+        qmesh3_2 = np.array(fig3.axes[1].collections[0].get_array())
         plt.close(fig3)
 
         # test mesh the same as single plots
@@ -487,12 +491,12 @@ class TestPoleDensityFunction:
 
     def test_pdf_plot_sigma(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
-        fig1 = v.pdf(return_figure=True, sigma=5)
-        qmesh1 = fig1.axes[0].collections[0].get_array()
+        fig1 = v.pole_density_function(return_figure=True, sigma=5)
+        qmesh1 = np.array(fig1.axes[0].collections[0].get_array())
         plt.close(fig1)
 
-        fig2 = v.pdf(return_figure=True, sigma=2)
-        qmesh2 = fig2.axes[0].collections[0].get_array()
+        fig2 = v.pole_density_function(return_figure=True, sigma=2)
+        qmesh2 = np.array(fig2.axes[0].collections[0].get_array())
         plt.close(fig2)
 
         # test mesh not the same, sigma is different
@@ -500,13 +504,13 @@ class TestPoleDensityFunction:
 
     def test_pdf_plot_log(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
-        fig1 = v.pdf(return_figure=True, log=False)
-        qmesh1 = fig1.axes[0].collections[0].get_array()
+        fig1 = v.pole_density_function(return_figure=True, log=False)
+        qmesh1 = np.array(fig1.axes[0].collections[0].get_array())
         plt.close(fig1)
 
-        fig2 = v.pdf(return_figure=True, log=True)
+        fig2 = v.pole_density_function(return_figure=True, log=True)
         assert len(fig2.axes) == 2
-        qmesh2 = fig2.axes[0].collections[0].get_array()
+        qmesh2 = np.array(fig2.axes[0].collections[0].get_array())
         plt.close(fig2)
 
         # test mesh not the same, log is different
@@ -515,7 +519,7 @@ class TestPoleDensityFunction:
     def test_pdf_hemisphere_raises(self):
         v = Vector3d(np.random.randn(100, 3)).unit
         with pytest.raises(ValueError, match=r"Hemisphere must be either "):
-            fig1 = v.pdf(return_figure=True, hemisphere="test")
+            fig1 = v.pole_density_function(return_figure=True, hemisphere="test")
 
 
 class TestSphericalCoordinates:
