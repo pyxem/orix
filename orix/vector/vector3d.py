@@ -17,7 +17,6 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-
 from copy import deepcopy
 from typing import Dict, List, Optional, Tuple
 
@@ -634,7 +633,7 @@ class Vector3d(Object3d):
             circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)
         return circles
 
-    def pdf(
+    def pole_density_function(
         self,
         resolution: float = 1,
         sigma: float = 5,
@@ -655,65 +654,65 @@ class Vector3d(Object3d):
         """Plot the Pole Density Function (PDF) on a given hemisphere
         in the stereographic projection.
 
+        The PDF is calculated in terms of Multiples of Random
+        Distribution (MRD), ie. multiples of the expected density if the
+        pole distribution was completely random, see
+        :cite:`rohrer2004distribution`.
+
         Parameters
         ----------
-        resolution : float
+        resolution
             The angular resolution of the sampling grid in degrees.
-        sigma : float
+            Default value is 1.
+        sigma
             The angular resolution of the applied broadening in degrees.
-        log : bool
+            Default value is 5.
+        log
             If True the log(PDF) is calculated. Default is True.
-        colorbar : bool
+        colorbar
             If True a colorabar is shown alongside the PDF plot.
             Default is True.
-        projection : str, optional
+        projection
             Which projection to use. The default is "stereographic", the
             only current option.
-        figure : matplotlib.figure.Figure, optional
+        figure
             Which figure to plot onto. Default is None, which creates a
             new figure.
         axes_labels : list of str, optional
             Reference frame axes labels, defaults to [None, None, None].
-        hemisphere : str, optional
+        hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
             "None", which means "upper" if a new figure is created,
             otherwise adds to the current figure's hemispheres. Options
             are "upper" and "lower".
-        show_hemisphere_label : bool, optional
+        show_hemisphere_label
             Whether to show hemisphere labels "upper" or "lower".
             Default is True if `hemisphere` is "both", otherwise False.
-        grid : bool, optional
+        grid
             Whether to show the azimuth and polar grid. Default is
             whatever `axes.grid` is set to in
             :obj:`matplotlib.rcParams`.
-        grid_resolution : tuple, optional
+        grid_resolution
             Azimuth and polar grid resolution in degrees, as a tuple.
             Default is whatever is default in
             :class:`~orix.plot.StereographicPlot.stereographic_grid`.
-        figure_kwargs : dict, optional
+        figure_kwargs
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
-        text_kwargs : dict, optional
+        text_kwargs
             Dictionary of keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.text`, which passes
             these on to :meth:`matplotlib.axes.Axes.text`.
         return_figure : bool, optional
             Whether to return the figure (default is False).
-        kwargs : dict, optional
+        kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
+        fig
             The created figure, returned if `return_figure` is True.
-
-        Notes
-        -----
-        The PDF is calculated in terms of Multiples of Random
-        Distribution (MRD), ie. multiples of the expected density if the
-        pole distribution was completely random, see
-        :cite:`rohrer2004distribution`.
         """
         from orix.sampling.S2_sampling import _sample_S2_equal_area_arrays
 
@@ -745,6 +744,7 @@ class Vector3d(Object3d):
             text_kwargs=text_kwargs,
             axes_labels=axes_labels,
         )
+
         for i, ax in enumerate(axes):
             # setup plot
             ax.hemisphere = hemisphere[i]
@@ -753,6 +753,7 @@ class Vector3d(Object3d):
             ax.set_labels(*axes_labels)
             if show_hemisphere_label:
                 ax.show_hemisphere_label()
+
             # generate angular mesh on S2
             azimuth_arr, polar_arr = _sample_S2_equal_area_arrays(
                 resolution, hemisphere=hemisphere[i], azimuthal_endpoint=True
@@ -764,34 +765,37 @@ class Vector3d(Object3d):
             hist, *_ = np.histogram2d(
                 azimuth, polar, bins=(azimuth_arr, polar_arr), density=False
             )
-            # normalize by averge number of counts per cell on the unit
-            # sphere to calculate in terms of Multiples of Random
-            # Distribution (MRD)
-            # see: The Distribution of Internal Interfaces in Polycrystals
-            # Saylor et al. Zeitschrift für Metallkunde (2004)
-            # DOI: 10.3139/146.017934
+            # Normalize by the average number of counts per cell on the
+            # unit sphere to calculate in terms of Multiples of Random
+            # Distribution (MRD). See :cite:`rohrer2004distribution`.
             hist = hist / hist.mean()
+
             # apply gaussian filtering to plot
             hist = ndimage.gaussian_filter(
                 hist,
                 sigma / resolution,
                 mode=("wrap", "reflect"),  # wrap along azimuthal axis
             )
+
             if log:
                 # +1 to avoid taking the log of 0
                 hist = np.log(hist + 1)
+
             # get mesh vertices in stereographic plane
             v_mesh = Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
             x, y = ax._projection.vector2xy(v_mesh)
             x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
+
             # plot mesh
             kwargs.setdefault("cmap", "magma")
             pc = ax.pcolormesh(x, y, hist, **kwargs)
+
             if colorbar:
                 label = "MRD"
                 if log:
                     label = f"log({label})"
                 plt.colorbar(pc, label=label, ax=ax)
+
         if return_figure:
             return fig
 

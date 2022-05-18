@@ -18,7 +18,7 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -28,7 +28,9 @@ from orix.vector import Vector3d
 def _remove_pole_duplicates(
     azimuth: np.ndarray, polar: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Remove duplicate vectors from grid on S2 unit sphere.
+    """Remove duplicate directions at the North (polar = 0) and South
+    (polar = pi) poles from the grid on S2. In each case the direction
+    with azimuth = 0 is kept.
 
     Parameters
     ----------
@@ -38,9 +40,6 @@ def _remove_pole_duplicates(
     -------
     azimuth, polar : numpy.ndarray
     """
-    # remove duplicated vectors at north (polar == 0) and
-    # south (polar == np.pi) poles. Keep the azimuth == 0 vector in
-    # each case. Masks here are vectors to remove
     mask_azimuth = azimuth > 0
     mask_polar_0 = np.isclose(polar, 0) * mask_azimuth
     mask_polar_pi = np.isclose(polar, np.pi) * mask_azimuth
@@ -55,41 +54,39 @@ def _sample_S2_uv_mesh_arrays(
     offset: float = 0,
     azimuthal_endpoint: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Get angular coordinates for UV mesh points on a unit sphere *S2*.
+    """Get spherical coordinates for UV mesh points on unit sphere *S2*.
 
-    The mesh vertices are defined by the parametrization
-
-    .. math::
-        x &= \sin(u)\cos(v), \\
-        y &= \sin(u)\sin(v), \\
-        z &= \cos(u).
-
-    Taken from diffsims.
+    For more information see the docstring for
+    :meth:`orix.sampling.S2_sampling.sample_S2_uv_mesh`.
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Maximum angle between nearest neighbour grid points, in degrees.
         The resolution of :math:`u` and :math:`v` are rounded up to get
         an integer number of equispaced polar and azimuthal grid lines.
-    hemisphere : str, optional
+    hemisphere
         Generate mesh points on either the "upper", "lower" or "both"
         hemispheres. Default is "both".
-    offset : float, optional
+    offset
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
-    azimuthal_endpoint : bool, optional
+    azimuthal_endpoint
         If True then endpoint of the azimuthal array is included in the
         calculation. Default is False.
-    
+
     Returns
     -------
     azimuth, polar : numpy.ndarray
     """
+    if hemisphere is None:
+        hemisphere = "both"
+
     hemisphere = hemisphere.lower()
     if hemisphere not in ("upper", "lower", "both"):
         raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
-    if offset < 0 or offset > 1:
+
+    if not 0 <= offset < 1:
         raise ValueError(
             "Offset is a fractional value of the angular step size "
             + "and must be in the range [0..1]."
@@ -129,12 +126,13 @@ def _sample_S2_uv_mesh_arrays(
     )
     # polar coordinate cannot exceed polar_max
     polar = polar[polar <= polar_max]
+
     return azimuth, polar
 
 
 def sample_S2_uv_mesh(
     resolution: float,
-    hemisphere: str = "both",
+    hemisphere: Optional[str] = None,
     offset: float = 0,
     remove_pole_duplicates: bool = True,
 ) -> Vector3d:
@@ -151,17 +149,18 @@ def sample_S2_uv_mesh(
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Maximum angle between nearest neighbour grid points, in degrees.
         The resolution of :math:`u` and :math:`v` are rounded up to get
         an integer number of equispaced polar and azimuthal grid lines.
-    hemisphere : str, optional
-        Generate mesh points on either the "upper", "lower" or "both"
-        hemispheres. Default is "both".
-    offset : float, optional
+    hemisphere
+        Generate mesh points on the "upper", "lower" or "both"
+        hemispheres. Default is `None` in which case directions are
+        generated on "both" hemispheres.
+    offset
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
-    remove_pole_duplicates : bool, optional
+    remove_pole_duplicates
         If True the duplicate mesh grid points at the North and South
         pole of the unit sphere are removed. Default is True.
 
@@ -179,19 +178,25 @@ def sample_S2_uv_mesh(
 
 
 def _sample_S2_equal_area_arrays(
-    resolution: float, hemisphere: str = "upper", azimuthal_endpoint: bool = False
+    resolution: float,
+    hemisphere: Optional[str] = None,
+    azimuthal_endpoint: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Vectors of a cube mesh on a unit sphere *S2* according to equal
-    area spacing.
+    """Get spherical coordinates for equal area mesh points on unit
+    sphere *S2*.
+
+    For more information see the docstring for
+    :meth:`orix.sampling.S2_sampling.sample_S2_equal_area_mesh`.
 
     Parameters
     ----------
-    resolution : float
+    resolution
         The angular resolution in degrees of the azimuthal vectors.
-    hemisphere : str, optional
-        Generate mesh points on either the "upper", "lower" or "both"
-        hemispheres. Default is "both".
-    azimuthal_endpoint : bool, optional
+    hemisphere
+        Generate mesh points on the "upper", "lower" or "both"
+        hemispheres. Default is `None`, in which directions are
+        generated on "both" hemispheres.
+    azimuthal_endpoint
         If True then endpoint of the azimuthal array is included in the
         calculation. Default is False.
 
@@ -199,10 +204,15 @@ def _sample_S2_equal_area_arrays(
     -------
     azimuth, polar : numpy.ndarray
     """
+    if hemisphere is None:
+        hemisphere = "both"
+
     hemisphere = hemisphere.lower()
     if hemisphere not in ("upper", "lower", "both"):
         raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
-    # calculate number of steps and step size angular spacing, = D [1]
+
+    # calculate number of steps and step size angular spacing
+    # this parameter D in :cite:`rohrer2004distribution`.
     steps = int(np.ceil(90 / resolution))
     azimuth = np.linspace(0, 2 * np.pi, num=4 * steps, endpoint=azimuthal_endpoint)
     # polar coordinate is parameterized in terms of cos(theta)
@@ -229,19 +239,22 @@ def _sample_S2_equal_area_arrays(
 
 
 def sample_S2_equal_area_mesh(
-    resolution: float, hemisphere: str = "both", remove_pole_duplicates: bool = True
+    resolution: float,
+    hemisphere: Optional[str] = None,
+    remove_pole_duplicates: bool = True,
 ) -> Vector3d:
     """Vectors of a cube mesh on a unit sphere *S2* according to equal
-    area spacing. Parameterization taken from :cite:`rohrer2004distribution`.
+    area spacing :cite:`rohrer2004distribution`.
 
     Parameters
     ----------
-    resolution : float
+    resolution
         The angular resolution in degrees of the azimuthal vectors.
-    hemisphere : str, optional
-        Generate mesh points on either the "upper", "lower" or "both"
-        hemispheres. Default is "both".
-    remove_pole_duplicates : bool, optional
+    hemisphere
+        Generate mesh points on the "upper", "lower" or "both"
+        hemispheres. Default is `None` in which case directions are
+        generated on "both" hemispheres.
+    remove_pole_duplicates
         If True the duplicate mesh grid points at the North and South
         pole of the unit sphere are removed. If True then the returned
         vector has `ndim` = 1, whereas `ndim` = 2 (grid) if False.
@@ -260,16 +273,18 @@ def sample_S2_equal_area_mesh(
     return Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
 
 
-def sample_S2_cube_mesh(resolution, grid_type="spherified_corner"):
+def sample_S2_cube_mesh(
+    resolution: float, grid_type: str = "spherified_corner"
+) -> Vector3d:
     """Vectors of a cube mesh on a unit sphere *S2*.
 
     Taken from diffsims.
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Maximum angle between neighbour grid points, in degrees.
-    grid_type : str
+    grid_type
         Type of cube grid: "normalized", "spherified_edge" or
         "spherified_corner" (default).
 
