@@ -24,7 +24,6 @@ import dask.array as da
 from dask.diagnostics import ProgressBar
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
 from scipy import ndimage
 
 from orix.base import check, Object3d
@@ -297,7 +296,7 @@ class Vector3d(Object3d):
         lazy: bool = False,
         chunk_size: int = 20,
         progressbar: bool = False,
-    ) -> NDArray:
+    ) -> np.ndarray:
         """The outer dot product of a vector with another vector.
 
         The dot product for every combination of vectors in `self` and

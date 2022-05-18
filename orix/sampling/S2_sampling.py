@@ -21,12 +21,13 @@
 from typing import Tuple
 
 import numpy as np
-from numpy.typing import NDArray
 
 from orix.vector import Vector3d
 
 
-def _remove_pole_duplicates(azimuth: NDArray, polar: NDArray) -> Tuple[NDArray]:
+def _remove_pole_duplicates(
+    azimuth: np.ndarray, polar: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """Remove duplicate vectors from grid on S2 unit sphere.
 
     Parameters
@@ -53,7 +54,7 @@ def _sample_S2_uv_mesh_arrays(
     hemisphere: str = "both",
     offset: float = 0,
     azimuthal_endpoint: bool = False,
-) -> Tuple[NDArray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Get angular coordinates for UV mesh points on a unit sphere *S2*.
 
     The mesh vertices are defined by the parametrization
@@ -179,7 +180,7 @@ def sample_S2_uv_mesh(
 
 def _sample_S2_equal_area_arrays(
     resolution: float, hemisphere: str = "upper", azimuthal_endpoint: bool = False
-) -> Tuple[NDArray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Vectors of a cube mesh on a unit sphere *S2* according to equal
     area spacing.
 
