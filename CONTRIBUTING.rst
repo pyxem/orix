@@ -85,9 +85,7 @@ As of ``orix`` version 0.9, the code base is being transitioned to use type hint
 changes should be implemented using type hints in the function definition and without 
 type duplication in the function docstring, for example::
 
-    def my_new_function(
-            arg1: int, arg2: Optional[bool] = None
-        ) -> Tuple[float, np.ndarray]:
+    def my_function(arg1: int, arg2: Optional[bool] = None) -> Tuple[float, np.ndarray]:
         """This is a new function.
 
         Parameters
