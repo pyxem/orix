@@ -65,7 +65,7 @@ class TestS2Sampling:
         "hemisphere, min_polar, max_polar",
         [("upper", 0, np.pi / 2), ("lower", np.pi / 2, np.pi), ("both", 0, np.pi)],
     )
-    def test_equal_area_angle_coordinate_arrays(self, hemisphere, min_polar, max_polar):
+    def test_equal_area_coordinate_arrays(self, hemisphere, min_polar, max_polar):
         azi, polar = S2_sampling._sample_S2_equal_area_arrays(
             10, hemisphere=hemisphere, azimuthal_endpoint=False
         )
@@ -73,17 +73,17 @@ class TestS2Sampling:
         assert isinstance(polar, np.ndarray)
         assert azi.ndim == 1
         assert polar.ndim == 1
-        assert np.allclose(polar.min(), min_polar)
-        assert np.allclose(polar.max(), max_polar)
-        assert np.allclose(azi.min(), 0)
+        assert polar.min() == min_polar
+        assert polar.max() == max_polar
+        assert azi.min() == 0
         assert azi.max() < 2 * np.pi
         assert azi.size == 36
         azi2, _ = S2_sampling._sample_S2_equal_area_arrays(
             10, hemisphere=hemisphere, azimuthal_endpoint=True
         )
-        assert np.allclose(azi2.max(), 2 * np.pi)
+        assert azi2.max() == 2 * np.pi
 
-    def test_equal_area_angle_sampling(self):
+    def test_equal_area_sampling(self):
         v = sampling.sample_S2_equal_area_mesh(
             10, hemisphere="both", remove_pole_duplicates=True
         )
@@ -91,13 +91,13 @@ class TestS2Sampling:
         azi, polar, _ = v.to_polar()
         assert polar.ndim == 1
         assert azi.shape == polar.shape
-        assert np.count_nonzero(np.isclose(polar, 0)) == 1
-        assert np.count_nonzero(np.isclose(polar, np.pi)) == 1
+        assert np.count_nonzero(polar == 0) == 1
+        assert np.count_nonzero(polar == np.pi) == 1
         v2 = sampling.sample_S2_equal_area_mesh(
             10, hemisphere="both", remove_pole_duplicates=False
         )
         azi2, polar2, _ = v2.to_polar()
         assert polar2.ndim == 2
         assert azi2.shape == polar2.shape
-        assert np.count_nonzero(np.isclose(polar2, 0)) > 1
-        assert np.count_nonzero(np.isclose(polar2, np.pi)) > 1
+        assert np.count_nonzero(polar2 == 0) > 1
+        assert np.count_nonzero(polar2 == np.pi) > 1
