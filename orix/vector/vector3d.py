@@ -19,9 +19,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Dict, List, Optional, Tuple
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
@@ -634,21 +636,21 @@ class Vector3d(Object3d):
 
     def pdf(
         self,
-        resolution=1,
-        sigma=5,
-        log=True,
-        colorbar=True,
-        projection="stereographic",
-        figure=None,
-        axes_labels=None,
-        hemisphere=None,
-        show_hemisphere_label=None,
-        grid=None,
-        grid_resolution=None,
-        figure_kwargs=None,
-        text_kwargs=None,
-        return_figure=False,
-        **kwargs,
+        resolution: float = 1,
+        sigma: float = 5,
+        log: bool = True,
+        colorbar: bool = True,
+        projection: str = "stereographic",
+        figure: Optional[Figure] = None,
+        axes_labels: Optional[List[str]] = None,
+        hemisphere: Optional[str] = None,
+        show_hemisphere_label: Optional[bool] = None,
+        grid: Optional[bool] = None,
+        grid_resolution: Optional[Tuple[float, float]] = None,
+        figure_kwargs: Optional[Dict] = None,
+        text_kwargs: Optional[Dict] = None,
+        return_figure: bool = False,
+        **kwargs: Dict,
     ):
         """Plot the Pole Density Function (PDF) on a given hemisphere
         in the stereographic projection.
@@ -710,7 +712,8 @@ class Vector3d(Object3d):
         -----
         The PDF is calculated in terms of Multiples of Random
         Distribution (MRD), ie. multiples of the expected density if the
-        pole distribution was completely random, see :cite:`rohrer2004distribution`.
+        pole distribution was completely random, see
+        :cite:`rohrer2004distribution`.
         """
         from orix.sampling.S2_sampling import _sample_S2_equal_area_arrays
 
