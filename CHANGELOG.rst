@@ -15,10 +15,10 @@ Added
 - Support for type hints has been introduced and a section on this topic has been added
   to the contributing guide.
 
-Deprecated
-----------
-- Python 3.6 has been deprecated and the minimum supported version in ``orix`` is now
-  Python 3.7.
+Removed
+-------
+- Support for Python 3.6 has been removed. The minimum supported version in ``orix`` is
+  now Python 3.7.
 
 2022-05-16 - version 0.9.0
 ==========================
