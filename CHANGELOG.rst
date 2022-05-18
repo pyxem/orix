@@ -7,6 +7,19 @@ All notable changes to the ``orix`` project are documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+Unreleased
+==========
+
+Added
+-----
+- Support for type hints has been introduced and a section on this topic has been added
+  to the contributing guide.
+
+Deprecated
+----------
+- Python 3.6 has been deprecated and the minimum supported version in ``orix`` is now
+  Python 3.7.
+
 2022-05-16 - version 0.9.0
 ==========================
 
