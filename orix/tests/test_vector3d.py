@@ -443,42 +443,79 @@ class TestSpareNotImplemented:
         "cantmul" * vector
 
 
-def test_pdf():
-    v = Vector3d(np.random.randn(10_000, 3)).unit
-    fig1 = v.pdf(return_figure=True, colorbar=True, sigma=5, log=True)
-    assert len(fig1.axes) == 2
-    qmesh1 = fig1.axes[0].collections[0].get_array()
-    plt.close(fig1)
-    fig2 = v.pdf(return_figure=True, colorbar=False, sigma=2, log=True)
-    assert len(fig2.axes) == 1
-    qmesh2 = fig2.axes[0].collections[0].get_array()
-    plt.close(fig2)
-    assert not np.allclose(qmesh1, qmesh2)
-    fig3 = v.pdf(return_figure=True, colorbar=False, sigma=2, log=False)
-    qmesh3 = fig3.axes[0].collections[0].get_array()
-    plt.close(fig3)
-    assert not np.allclose(qmesh2, qmesh3)
-    fig4 = v.pdf(
-        return_figure=True, hemisphere="lower", colorbar=True, sigma=5, log=True
-    )
-    assert len(fig4.axes) == 2
-    qmesh4 = fig4.axes[0].collections[0].get_array()
-    plt.close(fig4)
-    assert not np.allclose(qmesh1, qmesh4)
-    fig5 = v.pdf(
-        return_figure=True, hemisphere="both", colorbar=True, sigma=5, log=True
-    )
-    assert len(fig5.axes) == 4
-    qmesh5_1 = fig5.axes[0].collections[0].get_array()
-    qmesh5_2 = fig5.axes[1].collections[0].get_array()
-    plt.close(fig5)
-    assert not np.allclose(qmesh5_1, qmesh5_2)
+class TestPoleDensityFunction:
+    def test_pdf_plot_colorbar(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.pdf(return_figure=True, colorbar=True)
+        assert len(fig1.axes) == 2  # plot and colorbar
+        plt.close(fig1)
 
+        fig2 = v.pdf(return_figure=True, colorbar=False)
+        assert len(fig2.axes) == 1  # just plot
+        plt.close(fig2)
 
-def test_pdf_hemisphere_raises():
-    v = Vector3d(np.random.randn(100, 3)).unit
-    with pytest.raises(ValueError, match=r"Hemisphere must be either "):
-        fig1 = v.pdf(return_figure=True, hemisphere="test")
+        fig3 = v.pdf(return_figure=True, hemisphere="both", colorbar=False)
+        assert len(fig3.axes) == 2
+        assert fig3.axes[0].hemisphere == "upper"
+        assert fig3.axes[1].hemisphere == "lower"
+        plt.close(fig3)
+
+        fig4 = v.pdf(return_figure=True, hemisphere="both", colorbar=True)
+        assert len(fig4.axes) == 4
+        plt.close(fig4)
+
+    def test_pdf_plot_hemisphere(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.pdf(return_figure=True, hemisphere="lower")
+        qmesh1 = fig1.axes[0].collections[0].get_array()
+        plt.close(fig1)
+
+        fig2 = v.pdf(return_figure=True, hemisphere="upper")
+        qmesh2 = fig2.axes[0].collections[0].get_array()
+        plt.close(fig2)
+        # test mesh not the same, sigma is different
+        assert not np.allclose(qmesh1, qmesh2)
+
+        fig3 = v.pdf(return_figure=True, hemisphere="both")
+        qmesh3_1 = fig3.axes[0].collections[0].get_array()
+        qmesh3_2 = fig3.axes[1].collections[0].get_array()
+        plt.close(fig3)
+
+        # test mesh the same as single plots
+        assert np.allclose(qmesh1, qmesh3_1)  # upper
+        assert np.allclose(qmesh2, qmesh3_2)  # lower
+
+    def test_pdf_plot_sigma(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.pdf(return_figure=True, sigma=5)
+        qmesh1 = fig1.axes[0].collections[0].get_array()
+        plt.close(fig1)
+
+        fig2 = v.pdf(return_figure=True, sigma=2)
+        qmesh2 = fig2.axes[0].collections[0].get_array()
+        plt.close(fig2)
+
+        # test mesh not the same, sigma is different
+        assert not np.allclose(qmesh1, qmesh2)
+
+    def test_pdf_plot_log(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.pdf(return_figure=True, log=False)
+        qmesh1 = fig1.axes[0].collections[0].get_array()
+        plt.close(fig1)
+
+        fig2 = v.pdf(return_figure=True, log=True)
+        assert len(fig2.axes) == 2
+        qmesh2 = fig2.axes[0].collections[0].get_array()
+        plt.close(fig2)
+
+        # test mesh not the same, log is different
+        assert not np.allclose(qmesh1, qmesh2)
+
+    def test_pdf_hemisphere_raises(self):
+        v = Vector3d(np.random.randn(100, 3)).unit
+        with pytest.raises(ValueError, match=r"Hemisphere must be either "):
+            fig1 = v.pdf(return_figure=True, hemisphere="test")
 
 
 class TestSphericalCoordinates:
