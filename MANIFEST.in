@@ -1,6 +1,7 @@
 include CHANGELOG.rst
 include CONTRIBUTING.rst
 include getting_started.rst
+include environment.yml
 include LICENSE
 include MANIFEST.in
 include README.rst
