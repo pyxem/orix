@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from click import progressbar
 from matplotlib.collections import QuadMesh
 import matplotlib.pyplot as plt
 import numpy as np
@@ -203,6 +204,13 @@ def test_dot_outer(vector, something):
         something, lazy=True, progressbar=False, chunk_size=25
     )
     assert np.allclose(d_lazy, d_lazy_no_pb)
+
+
+def test_dot_outer_progressbar(vector, something, capsys):
+    d = vector.dot_outer(something, lazy=True, progressbar=True)
+    out, _ = capsys.readouterr()
+    assert "Completed" in out
+    assert d.shape == vector.shape + something.shape
 
 
 def test_cross(vector, something):
@@ -536,6 +544,12 @@ class TestPoleDensityFunction:
 
         # test mesh not the same, log is different
         assert not np.allclose(qmesh1, qmesh2)
+
+    def test_pdf_empty_vector(self):
+        v = Vector3d(np.empty((0, 3)))
+        assert not v.size
+        fig = v.pole_density_function(return_figure=True)
+        assert not len(fig.axes[0].collections)
 
     def test_pdf_hemisphere_raises(self):
         v = Vector3d(np.random.randn(100, 3)).unit

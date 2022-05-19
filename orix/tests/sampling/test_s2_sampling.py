@@ -44,6 +44,39 @@ class TestS2Sampling:
         assert np.isclose(v1.z, -1).sum() == 1
 
     @pytest.mark.parametrize(
+        "hemisphere, min_polar, max_polar",
+        [("upper", 0, np.pi / 2), ("lower", np.pi / 2, np.pi), ("both", 0, np.pi)],
+    )
+    def test_uv_mesh_coordinate_arrays_hemisphere(
+        self, hemisphere, min_polar, max_polar
+    ):
+        azi, polar = S2_sampling._sample_S2_uv_mesh_arrays(
+            10, hemisphere=hemisphere, azimuthal_endpoint=False
+        )
+        assert isinstance(azi, np.ndarray)
+        assert isinstance(polar, np.ndarray)
+        assert azi.ndim == 1
+        assert polar.ndim == 1
+        assert polar.min() == min_polar
+        assert polar.max() == max_polar
+        assert azi.min() == 0
+        assert azi.max() < 2 * np.pi
+        assert azi.size == 36
+        azi2, _ = S2_sampling._sample_S2_equal_area_arrays(
+            10, hemisphere=hemisphere, azimuthal_endpoint=True
+        )
+        assert azi2.max() == 2 * np.pi
+
+    def test_uv_mesh_raises(self):
+        with pytest.raises(ValueError, match="Hemisphere must be one of "):
+            sampling.sample_S2_uv_mesh(10, hemisphere="test")
+
+        with pytest.raises(
+            ValueError, match="Offset is a fractional value of the angular step size "
+        ):
+            sampling.sample_S2_uv_mesh(10, hemisphere="upper", offset=100)
+
+    @pytest.mark.parametrize(
         "grid_type, resolution, size",
         [
             ("spherified_corner", 3, 8666),
@@ -83,7 +116,7 @@ class TestS2Sampling:
         )
         assert azi2.max() == 2 * np.pi
 
-    def test_equal_area_sampling(self):
+    def test_equal_area_mesh(self):
         v = sampling.sample_S2_equal_area_mesh(
             10, hemisphere="both", remove_pole_duplicates=True
         )
