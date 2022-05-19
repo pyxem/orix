@@ -84,9 +84,12 @@ Package imports should be structured into three blocks with blank lines between 
 Make changes
 ============
 
-Create a new feature branch::
+If you want to add a new feature, branch from the ``develop`` branch, and when you want
+to fix a bug, branch from ``main`` instead.
 
-    git checkout master -b your-awesome-feature-name
+To create a new feature branch that tracks the upstream development branch::
+
+    git checkout develop -b your-awesome-feature-name upstream/develop
 
 When you've made some changes you can view them with::
 
@@ -105,18 +108,21 @@ The ``-s`` flag makes sure that you sign your commit with your `GitHub-registere
 Keep your branch up-to-date
 ===========================
 
-Switch to the ``master`` branch::
+If you are adding a new feature, make sure to merge ``develop`` into your feature
+branch. If you are fixing a bug, merge ``main`` into your bug fix branch instead.
 
-    git checkout master
+To update a feature branch, switch to the ``develop`` branch::
 
-Fetch changes and update ``master``::
+    git checkout develop
 
-    git pull upstream master --tags
+Fetch changes from the upstream branch and update ``develop``::
+
+    git pull upstream develop --tags
 
 Update your feature branch::
 
     git checkout your-awesome-feature-name
-    git merge master
+    git merge develop
 
 Share your changes
 ==================
@@ -127,7 +133,7 @@ Update your remote branch::
 
 You can then make a `pull request
 <https://guides.github.com/activities/forking/#making-a-pull-request>`_ to orix's
-``master`` branch. Good job!
+``develop`` branch for new features and ``main`` branch for bug fixes. Good job!
 
 Build and write documentation
 =============================
@@ -291,4 +297,4 @@ We use `GitHub Actions <https://github.com/pyxem/orix/actions>`_ to ensure that
 orix can be installed on Windows, macOS and Linux (Ubuntu). After a successful
 installation, the CI server runs the tests. After the tests return no errors, code
 coverage is reported to `Coveralls
-<https://coveralls.io/github/pyxem/orix?branch=master>`_.
+<https://coveralls.io/github/pyxem/orix?branch=develop>`_.
