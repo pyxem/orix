@@ -1,5 +1,6 @@
 from itertools import chain
 from setuptools import setup, find_packages
+
 from orix import __name__, __version__, __author__, __author_email__, __description__
 
 # Projects with optional features for building the documentation and running
@@ -19,9 +20,12 @@ extra_feature_requirements = {
     ],
     "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
 }
-extra_feature_requirements["dev"] = ["black", "manifix", "pre-commit >= 1.16"] + list(
-    chain(*list(extra_feature_requirements.values()))
-)
+extra_feature_requirements["dev"] = [
+    "black",
+    "manifix",
+    "outdated",
+    "pre-commit >= 1.16",
+] + list(chain(*list(extra_feature_requirements.values())))
 
 # Remove the "raw" ReStructuredText directive from the README so we can
 # use it as the long_description on PyPI
@@ -74,5 +78,5 @@ setup(
         "tqdm",
     ],
     # fmt: on
-    package_data={"": ["LICENSE", "README.rst", "readthedocs.yml"], "orix": ["*.py"]},
+    package_data={"": ["LICENSE", "README.rst", "readthedocs.yaml"], "orix": ["*.py"]},
 )
