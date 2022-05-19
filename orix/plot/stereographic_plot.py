@@ -21,6 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
+from typing import Tuple
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -28,6 +29,7 @@ import matplotlib.collections as mcollections
 import matplotlib.patches as mpatches
 import matplotlib.path as mpath
 import matplotlib.projections as mprojections
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.plot._symmetry_marker import (
@@ -41,7 +43,7 @@ from orix.vector import Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
 
 
-ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
+ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3, mesh=2)
 
 
 class StereographicPlot(maxes.Axes):
@@ -166,6 +168,80 @@ class StereographicPlot(maxes.Axes):
             return
 
         super().plot(x, y, **updated_kwargs)
+
+    def pole_density_function(
+        self,
+        *args: Tuple[np.ndarray],
+        resolution: float = 1,
+        sigma: float = 5,
+        log: bool = False,
+        colorbar: bool = True,
+        **kwargs,
+    ):
+        """Compute the Pole Density Function (PDF) of vectors in the
+        stereographic projection.
+
+        Parameters
+        ----------
+        args
+            Azimuth and polar angles passed as separate arguments (not keyword
+            arguments).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.scatter
+        """
+        from orix.sampling.S2_sampling import _sample_S2_equal_area_arrays
+        from scipy.ndimage import gaussian_filter
+
+        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
+        updated_kwargs = {**kwargs, **new_kwargs}
+        azimuth, polar = args
+        if not azimuth.size:
+            return
+        # np.histogram2d expects 1d arrays
+        azimuth, polar = azimuth.ravel(), polar.ravel()
+
+        # generate angular mesh on S2
+        azimuth_arr, polar_arr = _sample_S2_equal_area_arrays(
+            resolution, hemisphere=self.hemisphere, azimuthal_endpoint=True
+        )
+        azimuth_prod, polar_prod = np.meshgrid(azimuth_arr, polar_arr, indexing="ij")
+        # generate histogram in angular space
+        hist, *_ = np.histogram2d(
+            azimuth, polar, bins=(azimuth_arr, polar_arr), density=False
+        )
+        # Normalize by the average number of counts per cell on the
+        # unit sphere to calculate in terms of Multiples of Random
+        # Distribution (MRD). See :cite:`rohrer2004distribution`.
+        hist = hist / hist.mean()
+
+        # apply gaussian filtering to plot
+        # "wrap" along azimuthal axis, "reflect" along polar axis
+        hist = gaussian_filter(hist, sigma / resolution, mode=("wrap", "reflect"))
+
+        if log:
+            # +1 to avoid taking the log of 0
+            hist = np.log(hist + 1)
+
+        # get mesh vertices in stereographic plane
+        v_mesh = Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
+        x, y = self._projection.vector2xy(v_mesh)
+        x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
+
+        # plot mesh
+        updated_kwargs.setdefault("cmap", "magma")
+
+        pc = self.pcolormesh(x, y, hist, **updated_kwargs)
+
+        if colorbar:
+            label = "MRD"
+            if log:
+                label = f"log({label})"
+            plt.colorbar(pc, label=label, ax=self)
 
     def scatter(self, *args, **kwargs):
         """A scatter plot of vectors.

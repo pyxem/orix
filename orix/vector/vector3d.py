@@ -25,7 +25,6 @@ from dask.diagnostics import ProgressBar
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import ndimage
 
 from orix.base import check, Object3d
 
@@ -638,7 +637,7 @@ class Vector3d(Object3d):
         self,
         resolution: float = 1,
         sigma: float = 5,
-        log: bool = True,
+        log: bool = False,
         colorbar: bool = True,
         projection: str = "stereographic",
         figure: Optional[Figure] = None,
@@ -715,14 +714,12 @@ class Vector3d(Object3d):
         fig
             The created figure, returned if `return_figure` is True.
         """
-        from orix.sampling.S2_sampling import _sample_S2_equal_area_arrays
-
         if hemisphere is None:
             hemisphere = "upper"
         if hemisphere not in ("upper", "lower", "both"):
             raise ValueError('Hemisphere must be either "upper", "lower", or "both".')
 
-        # computation done in spherical cooridnates
+        # computation done in spherical coordinates
         azimuth, polar, _ = self.to_polar()
 
         (
@@ -755,47 +752,15 @@ class Vector3d(Object3d):
             if show_hemisphere_label:
                 ax.show_hemisphere_label()
 
-            # generate angular mesh on S2
-            azimuth_arr, polar_arr = _sample_S2_equal_area_arrays(
-                resolution, hemisphere=hemisphere[i], azimuthal_endpoint=True
+            ax.pole_density_function(
+                azimuth,
+                polar,
+                resolution=resolution,
+                sigma=sigma,
+                log=log,
+                colorbar=colorbar,
+                **kwargs,
             )
-            azimuth_prod, polar_prod = np.meshgrid(
-                azimuth_arr, polar_arr, indexing="ij"
-            )
-            # generate histogram in angular space
-            hist, *_ = np.histogram2d(
-                azimuth, polar, bins=(azimuth_arr, polar_arr), density=False
-            )
-            # Normalize by the average number of counts per cell on the
-            # unit sphere to calculate in terms of Multiples of Random
-            # Distribution (MRD). See :cite:`rohrer2004distribution`.
-            hist = hist / hist.mean()
-
-            # apply gaussian filtering to plot
-            hist = ndimage.gaussian_filter(
-                hist,
-                sigma / resolution,
-                mode=("wrap", "reflect"),  # wrap along azimuthal axis
-            )
-
-            if log:
-                # +1 to avoid taking the log of 0
-                hist = np.log(hist + 1)
-
-            # get mesh vertices in stereographic plane
-            v_mesh = Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
-            x, y = ax._projection.vector2xy(v_mesh)
-            x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
-
-            # plot mesh
-            kwargs.setdefault("cmap", "magma")
-            pc = ax.pcolormesh(x, y, hist, **kwargs)
-
-            if colorbar:
-                label = "MRD"
-                if log:
-                    label = f"log({label})"
-                plt.colorbar(pc, label=label, ax=ax)
 
         if return_figure:
             return fig
