@@ -18,7 +18,7 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Optional, Callable, Mapping, Sequence, Final
+from typing import Optional, Callable, Mapping, Sequence
 from functools import partial
 
 import numpy as np
@@ -333,7 +333,7 @@ _sampling_method_registry: Mapping[str, Callable] = {
     "hexagonal": _sample_S2_hexagonal_mesh,
     "random": _sample_S2_random_mesh,
 }
-sampling_methods: Final[Sequence[str]] = list(_sampling_method_registry.keys())
+sampling_methods: Sequence[str] = list(_sampling_method_registry.keys())
 
 _s2_sampling_docstring = (
     """Generate unit vectors that sample S2 with a specific angular resolution
