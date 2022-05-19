@@ -229,7 +229,12 @@ the documentation doesn't take too long to build, either by us locally or the Re
 Docs GitHub action. To check that the notebooks with stored cell outputs are compatible
 with the current API, we run a scheduled GitHub Action every Monday morning which checks
 that the notebooks run OK and that they produce the same output now as when they were
-last executed. We use `nbval <https://nbval.readthedocs.io/en/latest/>`_ for this.
+last executed. We use `nbval <https://nbval.readthedocs.io>`_ for this.
+
+The user guide notebooks can be run interactively in the browser with the help of
+`Binder <https://mybinder.readthedocs.io>`_. When creating a server from the orix source
+code, Binder installs the packages listed in the `environment.yml` configuration file,
+which must include all `doc` dependencies in `setup.py` necessary to run the notebooks.
 
 Deprecations
 ============
