@@ -35,10 +35,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.9, '3.10']
+        python-version: [3.9, "3.10"]
         include:
           - os: ubuntu-latest
-            python-version: 3.6
+            python-version: 3.7
             OLDEST_SUPPORTED_VERSION: true
             DEPENDENCIES: diffpy.structure==3  matplotlib==3.3
             LABEL: -oldest

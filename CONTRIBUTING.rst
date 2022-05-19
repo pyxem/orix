@@ -81,6 +81,37 @@ Package imports should be structured into three blocks with blank lines between 
 (descending order): standard library (like ``os`` and ``typing``), third party packages
 (like ``numpy`` and ``matplotlib``) and finally ``orix`` imports.
 
+As of ``orix`` version 0.9, the code base is being transitioned to use type hints. New
+changes should be implemented using type hints in the function definition and without 
+type duplication in the function docstring, for example::
+
+    def my_function(arg1: int, arg2: Optional[bool] = None) -> Tuple[float, np.ndarray]:
+        """This is a new function.
+
+        Parameters
+        ----------
+        arg1
+            Explanation about argument 1.
+        arg2
+            Explanation about flag argument 2. Default is None.
+
+        Returns
+        -------
+        values
+            Explanation about returned values.
+        """
+
+When working with classes in ``orix``, often a method argument will require another
+instance of the class. An example of this is :meth:`orix.vector.Vector3d.dot`, where the
+first argument to this function ``other`` is another instance of ``Vector3d``. In this
+case, to allow for the correct type hinting behaviour, the following import is required
+at the top of the file::
+
+    from __future__ import annotations
+
+Type hints for various built-in classes are available from the ``typing`` module.
+``np.ndarray`` should be used for arrays.
+
 Make changes
 ============
 

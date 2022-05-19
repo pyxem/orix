@@ -4,7 +4,7 @@ Installation
 
 orix can be installed from `Anaconda <https://anaconda.org/conda-forge/orix>`_, the
 `Python Package Index <https://pypi.org/project/orix/>`_ (``pip``), or from source, and
-supports Python >= 3.6.
+supports Python >= 3.7.
 
 We recommend you install it in a `conda environment
 <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
