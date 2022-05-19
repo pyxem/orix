@@ -82,7 +82,7 @@ html_favicon = "_static/img/orix_logo.png"
 # when the documentation is launched from a orix version with "dev" in
 # the version
 if "dev" in orix.__version__:
-    release_version = "master"
+    release_version = "develop"
 else:
     release_version = "v" + orix.__version__
 # This is processed by Jinja2 and inserted before each notebook
@@ -192,7 +192,7 @@ def linkcode_resolve(domain, info):
         if m:
             return pre_link + "%s/%s%s" % (m.group(1), fn, linespec)
         elif "dev" in orix.__version__:
-            return pre_link + "master/%s%s" % (fn, linespec)
+            return pre_link + "develop/%s%s" % (fn, linespec)
         else:
             return pre_link + "v%s/%s%s" % (orix.__version__, fn, linespec)
     else:
