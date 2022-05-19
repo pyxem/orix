@@ -25,6 +25,7 @@ with open("../../orix/__init__.py") as fid:
     for line in fid:
         if line.startswith("__version__"):
             branch_version_str = line.strip().split(" = ")[-1][1:-1]
+            break
 
 # Within a try/except because we don't want to throw the error if a new
 # tagged release draft is to be made, we just want to know if the branch
@@ -67,11 +68,12 @@ if make_release:
                 changelog_start = i + 3
             elif pypi_version.base_version in line:
                 changelog_end = i - 1
+                break
         if changelog_start == 0:
             changelog_end = 0
     with open("release_part_in_changelog.rst", mode="w") as f:
         f.write(
-            f"orix {branch_version_str} is a {release_type} release of orix, an open-source Python library for handling orientations, rotations and crystal symmetry..\n\n"
+            f"orix {branch_version_str} is a {release_type} release of orix, an open-source Python library for handling orientations, rotations and crystal symmetry.\n\n"
             f"See below, the `changelog <https://orix.readthedocs.io/en/stable/changelog.html>`_ or the `GitHub changelog <https://github.com/pyxem/orix/compare/v{pypi_version_str}...v{branch_version_str}>`_ for all updates from the previous release.\n\n"
         )
         for line in content[changelog_start:changelog_end]:
