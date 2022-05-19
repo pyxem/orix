@@ -144,14 +144,14 @@ ang
 ~~~
 .. automodule:: orix.io.plugins.ang
     :members:
-    :undoc-members:
-    :show-inheritance:
+   :undoc-members:
+   :show-inheritance:
 
-bruker_h5ebsd
-~~~~~~~~~~~~~
-.. automodule:: orix.io.plugins.bruker_h5ebsd
-    :members:
-    :undoc-members:
+ruker_h5ebsd
+~~~~~~~~~~~~
+. automodule:: orix.io.plugins.bruker_h5ebsd
+   :members:
+   :undoc-members:
     :show-inheritance:
 
 emsoft_h5ebsd
@@ -454,7 +454,7 @@ sampling
     get_sample_fundamental
     get_sample_local
     uniform_SO3_sample
-    sample_S2_uv_mesh
+    sample_S2
 .. automodule:: orix.sampling
     :members:
     :show-inheritance:

@@ -18,7 +18,7 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Optional, Callable, Mapping, Any
+from typing import Optional, Callable, Mapping, Sequence, Final
 from functools import partial
 
 import numpy as np
@@ -33,7 +33,7 @@ from orix.sampling._polyhedral_sampling import (
 )
 
 
-def sample_S2_uv_mesh(resolution: float) -> Vector3d:
+def _sample_S2_uv_mesh(resolution: float) -> Vector3d:
     r"""Vectors of a UV mesh on a unit sphere *S2*.
 
     The mesh vertices are defined by the parametrization
@@ -81,9 +81,9 @@ def sample_S2_uv_mesh(resolution: float) -> Vector3d:
     return Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
 
 
-def sample_S2_cube_mesh(
+def _sample_S2_cube_mesh(
     resolution: float,
-    grid_type: str = "spherified_edge",
+    grid_type: str,
 ) -> Vector3d:
     """Vectors of a cube mesh projected on a unit sphere *S2*.
 
@@ -146,7 +146,7 @@ def sample_S2_cube_mesh(
     return Vector3d(np.vstack((bottom, top, east, west, south, north, m_c))).unit
 
 
-def sample_S2_hexagonal_mesh(
+def _sample_S2_hexagonal_mesh(
     resolution: float,
 ) -> Vector3d:
     """Vectors of a hexagonal bipyramid mesh projected on a unit sphere *S2*.
@@ -215,7 +215,7 @@ def sample_S2_hexagonal_mesh(
     return Vector3d(all_points.T).unit
 
 
-def sample_S2_random_mesh(
+def _sample_S2_random_mesh(
     resolution: float,
     seed: Optional[int] = None,
 ) -> Vector3d:
@@ -246,7 +246,7 @@ def sample_S2_random_mesh(
     return Vector3d(xyz).unit
 
 
-def sample_S2_icosahedral_mesh(
+def _sample_S2_icosahedral_mesh(
     resolution: float,
 ) -> Vector3d:
     """Vectors of an icosahedral mesh on *S2*
@@ -315,14 +315,57 @@ def sample_S2_icosahedral_mesh(
     return Vector3d(vertices).unit
 
 
-SAMPLING_METHODS: Mapping[str, Callable] = {
-    "uv": sample_S2_uv_mesh,
-    "normalized_cube": partial(sample_S2_cube_mesh, grid_type="normalized"),
-    "spherified_cube_edge": partial(sample_S2_cube_mesh, grid_type="spherified_edge"),
-    "spherified_cube_corner": partial(
-        sample_S2_cube_mesh, grid_type="spherified_corner"
+_sampling_method_registry: Mapping[str, Callable] = {
+    "uv": _sample_S2_uv_mesh,
+    "normalized_cube": partial(
+        _sample_S2_cube_mesh,
+        grid_type="normalized",
     ),
-    "icosahedral": sample_S2_icosahedral_mesh,
-    "hexagonal": sample_S2_hexagonal_mesh,
-    "random": sample_S2_random_mesh,
+    "spherified_cube_edge": partial(
+        _sample_S2_cube_mesh,
+        grid_type="spherified_edge",
+    ),
+    "spherified_cube_corner": partial(
+        _sample_S2_cube_mesh,
+        grid_type="spherified_corner",
+    ),
+    "icosahedral": _sample_S2_icosahedral_mesh,
+    "hexagonal": _sample_S2_hexagonal_mesh,
+    "random": _sample_S2_random_mesh,
 }
+sampling_methods: Final[Sequence[str]] = list(_sampling_method_registry.keys())
+
+_s2_sampling_docstring = (
+    """Generate unit vectors that sample S2 with a specific angular resolution
+
+    Parameters
+    ----------
+    resolution
+        Maximum angle between nearest neighbour grid points, in degrees.
+    method
+        Sphere meshing method. Options are: {}.
+
+    Returns
+    -------
+    vectors
+        Vectors that sample the unit sphere.
+    """
+).format(sampling_methods)
+
+
+def sample_S2(
+    resolution: float,
+    method: str = "spherified_cube_edge",
+    **kwargs,
+) -> Vector3d:
+
+    try:
+        sampling_method = _sampling_method_registry[method]
+    except KeyError:
+        raise NotImplementedError(
+            f"Method not implemented. Valid options: {sampling_methods}"
+        )
+    return sampling_method(resolution, **kwargs)
+
+
+setattr(sample_S2, "__doc__", _s2_sampling_docstring)
