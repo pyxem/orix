@@ -171,7 +171,8 @@ class StereographicPlot(maxes.Axes):
 
     def pole_density_function(
         self,
-        *args: Tuple[np.ndarray],
+        azimuth: np.ndarray,
+        polar: np.ndarray,
         resolution: float = 1,
         sigma: float = 5,
         log: bool = False,
@@ -183,9 +184,8 @@ class StereographicPlot(maxes.Axes):
 
         Parameters
         ----------
-        args
-            Azimuth and polar angles passed as separate arguments (not keyword
-            arguments).
+        azimuth, polar
+            Azimuth and polar angles in radians.
         resolution
             The angular resolution of the sampling grid in degrees.
             Default value is 1.
@@ -210,7 +210,6 @@ class StereographicPlot(maxes.Axes):
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
         updated_kwargs = {**kwargs, **new_kwargs}
-        azimuth, polar = args
         if not azimuth.size:
             return
         # np.histogram2d expects 1d arrays
