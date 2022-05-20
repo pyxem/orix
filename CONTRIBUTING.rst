@@ -227,7 +227,13 @@ files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
   Cell output should only be stored in notebooks which are too computationally intensive
   for the Read the Docs server to handle, which has a limit of 15 minutes and 3 GB of
   memory per `documentation build <https://docs.readthedocs.io/en/stable/builds.html>`_.
-
+- We use the also use ``black`` to format notebooks cells. To prevent ``black`` from
+  automatically formatting regions of your code, please wrap these code blocks with the
+  following::
+      # fmt: off
+      python_code_block = not_to_be_formatted
+      # fmt: on
+    
 In general, we run all notebooks every time the documentation is built with Sphinx, to
 ensure that all notebooks are compatible with the current API at all times. This is
 important! For computationally expensive notebooks however, we store the cell outputs so
