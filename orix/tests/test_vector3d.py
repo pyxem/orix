@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from click import progressbar
 from matplotlib.collections import QuadMesh
 import matplotlib.pyplot as plt
 import numpy as np
@@ -549,7 +548,8 @@ class TestPoleDensityFunction:
         v = Vector3d(np.empty((0, 3)))
         assert not v.size
         fig = v.pole_density_function(return_figure=True)
-        assert not any(isinstance(c, QuadMesh) for c in fig.axes[0].collections)
+        qm = [isinstance(c, QuadMesh) for c in fig.axes[0].collections]
+        assert not any(qm)
 
     def test_pdf_hemisphere_raises(self):
         v = Vector3d(np.random.randn(100, 3)).unit
