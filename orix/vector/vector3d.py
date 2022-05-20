@@ -678,7 +678,7 @@ class Vector3d(Object3d):
         figure
             Which figure to plot onto. Default is None, which creates a
             new figure.
-        axes_labels : list of str, optional
+        axes_labels
             Reference frame axes labels, defaults to [None, None, None].
         hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
@@ -703,7 +703,7 @@ class Vector3d(Object3d):
             Dictionary of keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.text`, which passes
             these on to :meth:`matplotlib.axes.Axes.text`.
-        return_figure : bool, optional
+        return_figure
             Whether to return the figure (default is False).
         kwargs
             Keyword arguments passed to

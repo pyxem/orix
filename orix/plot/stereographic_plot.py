@@ -186,6 +186,17 @@ class StereographicPlot(maxes.Axes):
         args
             Azimuth and polar angles passed as separate arguments (not keyword
             arguments).
+        resolution
+            The angular resolution of the sampling grid in degrees.
+            Default value is 1.
+        sigma
+            The angular resolution of the applied broadening in degrees.
+            Default value is 5.
+        log
+            If True the log(PDF) is calculated. Default is True.
+        colorbar
+            If True a colorabar is shown alongside the PDF plot.
+            Default is True.
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
