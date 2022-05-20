@@ -559,6 +559,7 @@ Vector3d
     get_nearest
     in_fundamental_sector
     mean
+    pole_density_function
     rotate
     scatter
     to_polar
