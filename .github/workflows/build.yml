@@ -10,11 +10,11 @@ jobs:
       - uses: actions/checkout@v2
       - uses: psf/black@stable
 
-      - name: Check code style of Jupyter notebooks
-        run: |
-          pip install black[jupyter]
-          black doc/*.ipynb
+      - name: Install Black with Jupyter extension
+        run: pip install black[jupyter]
 
+      - name: Check code style of Jupyter notebooks
+        run: black doc/*.ipynb
   # Make sure all necessary files will be included in a release
   manifest:
     name: check manifest
