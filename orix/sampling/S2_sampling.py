@@ -18,7 +18,7 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Optional, Callable, Mapping, Sequence
+from typing import Optional, Callable, Mapping, List
 from functools import partial
 
 import numpy as np
@@ -33,7 +33,7 @@ from orix.sampling._polyhedral_sampling import (
 )
 
 
-def _sample_S2_uv_mesh(resolution: float) -> Vector3d:
+def sample_S2_uv_mesh(resolution: float) -> Vector3d:
     r"""Vectors of a UV mesh on a unit sphere *S2*.
 
     The mesh vertices are defined by the parametrization
@@ -81,10 +81,7 @@ def _sample_S2_uv_mesh(resolution: float) -> Vector3d:
     return Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
 
 
-def _sample_S2_cube_mesh(
-    resolution: float,
-    grid_type: str,
-) -> Vector3d:
+def sample_S2_cube_mesh(resolution: float, grid_type: str) -> Vector3d:
     """Vectors of a cube mesh projected on a unit sphere *S2*.
 
     Parameters
@@ -146,9 +143,7 @@ def _sample_S2_cube_mesh(
     return Vector3d(np.vstack((bottom, top, east, west, south, north, m_c))).unit
 
 
-def _sample_S2_hexagonal_mesh(
-    resolution: float,
-) -> Vector3d:
+def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
     """Vectors of a hexagonal bipyramid mesh projected on a unit sphere *S2*.
 
     Parameters
@@ -215,10 +210,7 @@ def _sample_S2_hexagonal_mesh(
     return Vector3d(all_points.T).unit
 
 
-def _sample_S2_random_mesh(
-    resolution: float,
-    seed: Optional[int] = None,
-) -> Vector3d:
+def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vector3d:
     """Vectors of a random mesh on *S2*
 
     Parameters
@@ -246,10 +238,8 @@ def _sample_S2_random_mesh(
     return Vector3d(xyz).unit
 
 
-def _sample_S2_icosahedral_mesh(
-    resolution: float,
-) -> Vector3d:
-    """Vectors of an icosahedral mesh on *S2*
+def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
+    """Vectors of an icosahedral mesh on *S2*.
 
     Parameters
     ----------
@@ -316,41 +306,53 @@ def _sample_S2_icosahedral_mesh(
 
 
 _sampling_method_registry: Mapping[str, Callable] = {
-    "uv": _sample_S2_uv_mesh,
-    "normalized_cube": partial(
-        _sample_S2_cube_mesh,
-        grid_type="normalized",
-    ),
-    "spherified_cube_edge": partial(
-        _sample_S2_cube_mesh,
-        grid_type="spherified_edge",
-    ),
+    "uv": sample_S2_uv_mesh,
+    "normalized_cube": partial(sample_S2_cube_mesh, grid_type="normalized"),
+    "spherified_cube_edge": partial(sample_S2_cube_mesh, grid_type="spherified_edge"),
     "spherified_cube_corner": partial(
-        _sample_S2_cube_mesh,
-        grid_type="spherified_corner",
+        sample_S2_cube_mesh, grid_type="spherified_corner"
     ),
-    "icosahedral": _sample_S2_icosahedral_mesh,
-    "hexagonal": _sample_S2_hexagonal_mesh,
-    "random": _sample_S2_random_mesh,
+    "icosahedral": sample_S2_icosahedral_mesh,
+    "hexagonal": sample_S2_hexagonal_mesh,
+    "random": sample_S2_random_mesh,
 }
-sampling_methods: Sequence[str] = list(_sampling_method_registry.keys())
+sampling_methods: List[str] = []
+_sampling_method_names = set()
+for sampling_name, sampling_method in _sampling_method_registry.items():
+    sampling_methods.append(sampling_name)
+    _func = (
+        sampling_method.func
+        if isinstance(sampling_method, partial)
+        else sampling_method
+    )
+    _sampling_method_names.add(f":func:`orix.sampling.{_func.__name__}`")
 
 _s2_sampling_docstring = (
-    """Generate unit vectors that sample S2 with a specific angular resolution
+    """Generate unit vectors that sample S2 with a specific angular resolution.
 
     Parameters
     ----------
     resolution
         Maximum angle between nearest neighbour grid points, in degrees.
     method
-        Sphere meshing method. Options are: {}.
+        Sphere meshing method. Options are: {}. The default is \"spherified_cub_edge\".
+    kwargs
+        Keyword arguments passed to the sampling function. For details see
+        the underlying sampling functions.
 
     Returns
     -------
     vectors
         Vectors that sample the unit sphere.
+
+    See also
+    --------
+    {}
     """
-).format(sampling_methods)
+).format(
+    ", ".join(map(lambda x: f'"{x}"', sampling_methods)),
+    "\n    ".join(_sampling_method_names),
+)
 
 
 def sample_S2(

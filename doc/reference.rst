@@ -144,14 +144,14 @@ ang
 ~~~
 .. automodule:: orix.io.plugins.ang
     :members:
-   :undoc-members:
-   :show-inheritance:
+    :undoc-members:
+    :show-inheritance:
 
-ruker_h5ebsd
-~~~~~~~~~~~~
-. automodule:: orix.io.plugins.bruker_h5ebsd
-   :members:
-   :undoc-members:
+bruker_h5ebsd
+~~~~~~~~~~~~~
+.. automodule:: orix.io.plugins.bruker_h5ebsd
+    :members:
+    :undoc-members:
     :show-inheritance:
 
 emsoft_h5ebsd

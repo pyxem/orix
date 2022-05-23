@@ -22,7 +22,12 @@ from orix.sampling.sample_generators import get_sample_fundamental, get_sample_l
 from orix.sampling.SO3_sampling import uniform_SO3_sample
 from orix.sampling.S2_sampling import (
     sample_S2,
-    sampling_methods as sampling_methods_S2,
+    sample_S2_cube_mesh,
+    sample_S2_hexagonal_mesh,
+    sample_S2_icosahedral_mesh,
+    sample_S2_random_mesh,
+    sample_S2_uv_mesh,
+    sampling_methods as sample_S2_methods,
 )
 
 
@@ -31,6 +36,11 @@ __all__ = [
     "get_sample_fundamental",
     "get_sample_local",
     "sample_S2",
-    "sampling_methods_S2",
+    "sample_S2_methods",
     "uniform_SO3_sample",
+    "sample_S2_cube_mesh",
+    "sample_S2_hexagonal_mesh",
+    "sample_S2_icosahedral_mesh",
+    "sample_S2_random_mesh",
+    "sample_S2_uv_mesh",
 ]
