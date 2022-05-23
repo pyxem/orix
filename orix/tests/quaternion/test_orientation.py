@@ -91,6 +91,7 @@ def test_orientation_persistence(symmetry, vector):
     assert v1._tuples == v2._tuples
 
 
+# TODO: Remove in 0.10
 @pytest.mark.parametrize(
     "orientation, symmetry, expected",
     [
@@ -115,7 +116,8 @@ def test_orientation_persistence(symmetry, vector):
 def test_distance(orientation, symmetry, expected):
     orientation.symmetry = symmetry
     orientation = orientation.map_into_symmetry_reduced_zone(verbose=True)
-    distance = orientation.distance(verbose=True)
+    with pytest.warns(np.VisibleDeprecationWarning, match="Function "):
+        distance = orientation.distance(verbose=True)
     assert np.allclose(distance, expected, atol=1e-3)
 
 
@@ -376,7 +378,7 @@ class TestMisorientation:
         angle2 = p12.angle.min(axis=(0, 2, 3, 5))
         assert np.allclose(angle1, angle2)
 
-    # TODO: remove when distance() is removed
+    # TODO: Remove in 0.10
     @pytest.mark.parametrize("symmetry", _groups[:-1])
     def test_get_distance_matrix_equal_distance(self, symmetry):
         # do not test Oh, as this takes ~4 GB
@@ -388,7 +390,8 @@ class TestMisorientation:
         m1 = m.flatten()
         angle2 = m1.get_distance_matrix()
         assert np.allclose(angle1, angle2)
-        angle3 = m1.distance()
+        with pytest.warns(np.VisibleDeprecationWarning, match="Function "):
+            angle3 = m1.distance()
         assert np.allclose(angle1, angle3)
 
 

@@ -7,8 +7,21 @@ All notable changes to the ``orix`` project are documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
-2022-05-16 v0.9.0
-=================
+Unreleased
+==========
+
+Added
+-----
+- Support for type hints has been introduced and a section on this topic has been added
+  to the contributing guide.
+
+Removed
+-------
+- Support for Python 3.6 has been removed. The minimum supported version in ``orix`` is
+  now Python 3.7.
+
+2022-05-16 - version 0.9.0
+==========================
 
 Added
 -----
@@ -55,6 +68,7 @@ Deprecated
 - The ``convention`` parameter in ``from_euler()`` and ``to_euler()`` methods has been
   deprecated, in favour of ``direction`` in the former. This parameter will be removed
   in release 1.0.
+- ``Misorientation.distance()`` in favour of ``Misorientation.get_distance_matrix()``.
 
 Fixed
 -----

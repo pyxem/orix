@@ -11,7 +11,7 @@ from os.path import relpath, dirname
 import re
 import sys
 
-from orix import __author__, __version__
+import orix
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -20,9 +20,9 @@ from orix import __author__, __version__
 sys.path.append("../")
 
 project = "orix"
-copyright = f"2018-{str(datetime.now().year)}, {__author__}"
-author = __author__
-release = __version__
+copyright = f"2018-{str(datetime.now().year)}, {orix.__author__}"
+author = orix.__author__
+release = orix.__version__
 
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -81,10 +81,10 @@ html_favicon = "_static/img/orix_logo.png"
 # modification to point nbviewer and Binder to the GitHub master links
 # when the documentation is launched from a orix version with "dev" in
 # the version
-if "dev" in __version__:
-    release_version = "master"
+if "dev" in orix.__version__:
+    release_version = "develop"
 else:
-    release_version = "v" + __version__
+    release_version = "v" + orix.__version__
 # This is processed by Jinja2 and inserted before each notebook
 nbsphinx_prolog = (
     r"""
@@ -138,8 +138,8 @@ bibtex_bibfiles = ["bibliography.bib"]
 def linkcode_resolve(domain, info):
     """Determine the URL corresponding to Python object.
 
-    This is taken from SciPy's conf.py:
-    https://github.com/scipy/scipy/blob/master/doc/source/conf.py.
+    This is taken from SciPy's ``conf.py``:
+    https://github.com/scipy/scipy/blob/main/doc/source/conf.py.
     """
     if domain != "py":
         return None
@@ -157,6 +157,9 @@ def linkcode_resolve(domain, info):
             obj = getattr(obj, part)
         except Exception:
             return None
+
+    # Use the original function object if it is wrapped.
+    obj = getattr(obj, "__wrapped__", obj)
 
     try:
         fn = inspect.getsourcefile(obj)
@@ -180,17 +183,17 @@ def linkcode_resolve(domain, info):
     else:
         linespec = ""
 
-    startdir = os.path.abspath(os.path.join(dirname(__file__), ".."))
+    startdir = os.path.abspath(os.path.join(dirname(orix.__file__), ".."))
     fn = relpath(fn, start=startdir).replace(os.path.sep, "/")
 
     if fn.startswith("orix/"):
-        m = re.match(r"^.*dev0\+([a-f0-9]+)$", __version__)
+        m = re.match(r"^.*dev0\+([a-f\d]+)$", orix.__version__)
         pre_link = "https://github.com/pyxem/orix/blob/"
         if m:
             return pre_link + "%s/%s%s" % (m.group(1), fn, linespec)
-        elif "dev" in __version__:
-            return pre_link + "master/%s%s" % (fn, linespec)
+        elif "dev" in orix.__version__:
+            return pre_link + "develop/%s%s" % (fn, linespec)
         else:
-            return pre_link + "v%s/%s%s" % (__version__, fn, linespec)
+            return pre_link + "v%s/%s%s" % (orix.__version__, fn, linespec)
     else:
         return None

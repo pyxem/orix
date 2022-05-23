@@ -234,6 +234,11 @@ class Misorientation(Rotation):
         o_inside._symmetry = (Gl, Gr)
         return o_inside
 
+    @deprecated(
+        since="0.9",
+        alternative="orix.quaternion.Misorientation.get_distance_matrix",
+        removal="0.10",
+    )
     def distance(self, verbose=False, split_size=100):
         """Symmetry reduced distance.
 

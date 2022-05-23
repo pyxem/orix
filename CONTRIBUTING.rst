@@ -81,12 +81,46 @@ Package imports should be structured into three blocks with blank lines between 
 (descending order): standard library (like ``os`` and ``typing``), third party packages
 (like ``numpy`` and ``matplotlib``) and finally ``orix`` imports.
 
+As of ``orix`` version 0.9, the code base is being transitioned to use type hints. New
+changes should be implemented using type hints in the function definition and without 
+type duplication in the function docstring, for example::
+
+    def my_function(arg1: int, arg2: Optional[bool] = None) -> Tuple[float, np.ndarray]:
+        """This is a new function.
+
+        Parameters
+        ----------
+        arg1
+            Explanation about argument 1.
+        arg2
+            Explanation about flag argument 2. Default is None.
+
+        Returns
+        -------
+        values
+            Explanation about returned values.
+        """
+
+When working with classes in ``orix``, often a method argument will require another
+instance of the class. An example of this is :meth:`orix.vector.Vector3d.dot`, where the
+first argument to this function ``other`` is another instance of ``Vector3d``. In this
+case, to allow for the correct type hinting behaviour, the following import is required
+at the top of the file::
+
+    from __future__ import annotations
+
+Type hints for various built-in classes are available from the ``typing`` module.
+``np.ndarray`` should be used for arrays.
+
 Make changes
 ============
 
-Create a new feature branch::
+If you want to add a new feature, branch from the ``develop`` branch, and when you want
+to fix a bug, branch from ``main`` instead.
 
-    git checkout master -b your-awesome-feature-name
+To create a new feature branch that tracks the upstream development branch::
+
+    git checkout develop -b your-awesome-feature-name upstream/develop
 
 When you've made some changes you can view them with::
 
@@ -105,18 +139,21 @@ The ``-s`` flag makes sure that you sign your commit with your `GitHub-registere
 Keep your branch up-to-date
 ===========================
 
-Switch to the ``master`` branch::
+If you are adding a new feature, make sure to merge ``develop`` into your feature
+branch. If you are fixing a bug, merge ``main`` into your bug fix branch instead.
 
-    git checkout master
+To update a feature branch, switch to the ``develop`` branch::
 
-Fetch changes and update ``master``::
+    git checkout develop
 
-    git pull upstream master --tags
+Fetch changes from the upstream branch and update ``develop``::
+
+    git pull upstream develop --tags
 
 Update your feature branch::
 
     git checkout your-awesome-feature-name
-    git merge master
+    git merge develop
 
 Share your changes
 ==================
@@ -127,7 +164,7 @@ Update your remote branch::
 
 You can then make a `pull request
 <https://guides.github.com/activities/forking/#making-a-pull-request>`_ to orix's
-``master`` branch. Good job!
+``develop`` branch for new features and ``main`` branch for bug fixes. Good job!
 
 Build and write documentation
 =============================
@@ -190,7 +227,19 @@ files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
   Cell output should only be stored in notebooks which are too computationally intensive
   for the Read the Docs server to handle, which has a limit of 15 minutes and 3 GB of
   memory per `documentation build <https://docs.readthedocs.io/en/stable/builds.html>`_.
+- We also use ``black`` to format notebooks cells. To run the ``black`` formatter on
+  your notebook(s) locally please specify the notebook(s), ie.
+  ``black my_notebook.ipynb`` or ``black *.ipynb``, as ``black .`` will not format 
+  ``.ipynb`` files without explicit consent. To prevent ``black`` from automatically
+  formatting regions of your code, please wrap these code blocks with the following::
 
+      # fmt: off
+      python_code_block = not_to_be_formatted
+      # fmt: on
+
+  Please see the `black documentation <https://black.readthedocs.io/en/stable/index.html>`_
+  for more details.
+    
 In general, we run all notebooks every time the documentation is built with Sphinx, to
 ensure that all notebooks are compatible with the current API at all times. This is
 important! For computationally expensive notebooks however, we store the cell outputs so
@@ -198,7 +247,12 @@ the documentation doesn't take too long to build, either by us locally or the Re
 Docs GitHub action. To check that the notebooks with stored cell outputs are compatible
 with the current API, we run a scheduled GitHub Action every Monday morning which checks
 that the notebooks run OK and that they produce the same output now as when they were
-last executed. We use `nbval <https://nbval.readthedocs.io/en/latest/>`_ for this.
+last executed. We use `nbval <https://nbval.readthedocs.io>`_ for this.
+
+The user guide notebooks can be run interactively in the browser with the help of
+`Binder <https://mybinder.readthedocs.io>`_. When creating a server from the orix source
+code, Binder installs the packages listed in the `environment.yml` configuration file,
+which must include all `doc` dependencies in `setup.py` necessary to run the notebooks.
 
 Deprecations
 ============
@@ -286,4 +340,4 @@ We use `GitHub Actions <https://github.com/pyxem/orix/actions>`_ to ensure that
 orix can be installed on Windows, macOS and Linux (Ubuntu). After a successful
 installation, the CI server runs the tests. After the tests return no errors, code
 coverage is reported to `Coveralls
-<https://coveralls.io/github/pyxem/orix?branch=master>`_.
+<https://coveralls.io/github/pyxem/orix?branch=develop>`_.
