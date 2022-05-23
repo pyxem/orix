@@ -21,7 +21,7 @@ extra_feature_requirements = {
     "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
 }
 extra_feature_requirements["dev"] = [
-    "black",
+    "black[jupyter]",
     "manifix",
     "outdated",
     "pre-commit >= 1.16",
