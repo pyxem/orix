@@ -23,7 +23,6 @@ from functools import partial
 
 import numpy as np
 
-from orix.vector import Vector3d
 from orix.sampling._polyhedral_sampling import (
     _sample_length_equidistant,
     _edge_grid_normalized_cube,
@@ -31,6 +30,7 @@ from orix.sampling._polyhedral_sampling import (
     _edge_grid_spherified_corner_cube,
     _compose_from_faces,
 )
+from orix.vector import Vector3d
 
 
 def sample_S2_uv_mesh(resolution: float) -> Vector3d:
@@ -43,8 +43,6 @@ def sample_S2_uv_mesh(resolution: float) -> Vector3d:
         y &= \sin(u)\sin(v), \\
         z &= \cos(u).
 
-    Taken from diffsims.
-
     Parameters
     ----------
     resolution
@@ -54,7 +52,7 @@ def sample_S2_uv_mesh(resolution: float) -> Vector3d:
 
     Returns
     -------
-    vectors
+    Vector3d
         Vectors that sample the unit sphere.
 
     References
@@ -89,22 +87,23 @@ def sample_S2_cube_mesh(resolution: float, grid_type: str) -> Vector3d:
     resolution
         Maximum angle between neighbour grid points, in degrees.
     grid_type
-        Type of cube grid: "normalized", "spherified_edge" (default) or
-        "spherified_corner".
+        Type of cube grid: ``"normalized"``, ``"spherified_edge"`` or
+        ``"spherified_corner"``.
 
     Returns
     -------
-    vectors
+    Vector3d
         Vectors that sample the unit sphere.
 
     Notes
     -----
-    Vectors are sampled by projecting a grid on a cube onto the unit sphere.
-    The mesh on the cube can be generated in a number of ways. A regular square
-    grid with equidistant points corresponds to the 'normalized' option.
-    'spherified_edge' corresponds to points such that the row of vectors from
-    the [001] to [011] is equiangular. 'spherified_corner' corresponds to the case
-    where the row of vectors from [001] to [111] is equiangular.
+    Vectors are sampled by projecting a grid on a cube onto the unit
+    sphere. The mesh on the cube can be generated in a number of ways. A
+    regular square grid with equidistant points corresponds to the
+    ``"normalized"`` option. ``"spherified_edge"`` corresponds to points
+    such that the row of vectors from the [001] to [011] is equiangular.
+    ``"spherified_corner"`` corresponds to the case where the row of
+    vectors from [001] to [111] is equiangular.
 
     References
     ----------
@@ -120,8 +119,8 @@ def sample_S2_cube_mesh(resolution: float, grid_type: str) -> Vector3d:
         grid_on_edge = grid_mapping[grid_type](resolution)
     except KeyError:
         raise ValueError(
-            f"The `grid_type` {grid_type} is not among the valid "
-            f"options {list(grid_mapping.keys())}"
+            f"The `grid_type` {grid_type} is not among the valid options "
+            f"{list(grid_mapping.keys())}"
         )
 
     x, y = np.meshgrid(grid_on_edge, grid_on_edge)
@@ -144,7 +143,8 @@ def sample_S2_cube_mesh(resolution: float, grid_type: str) -> Vector3d:
 
 
 def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
-    """Vectors of a hexagonal bipyramid mesh projected on a unit sphere *S2*.
+    """Vectors of a hexagonal bipyramid mesh projected on a unit sphere
+    *S2*.
 
     Parameters
     ----------
@@ -153,7 +153,7 @@ def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
 
     Returns
     -------
-    vectors
+    Vector3d
         Vectors that sample the unit sphere.
     """
     number_of_steps = int(np.ceil(2 / np.tan(np.deg2rad(resolution))))
@@ -211,20 +211,20 @@ def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
 
 
 def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vector3d:
-    """Vectors of a random mesh on *S2*
+    """Vectors of a random mesh on *S2*.
 
     Parameters
     ----------
     resolution
-        The expected mean angle between nearest neighbor
-        grid points in degrees.
+        The expected mean angle between nearest neighbor grid points in
+        degrees.
     seed
-        Passed to :func:`numpy.random.default_rng`, defaults to None which
-        will give a "new" random result each time.
+        Passed to :func:`numpy.random.default_rng`, defaults to None
+        which will give a "new" random result each time.
 
     Returns
     -------
-    vectors
+    Vector3d
         Vectors that sample the unit sphere.
 
     References
@@ -248,7 +248,7 @@ def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
 
     Returns
     -------
-    vectors
+    Vector3d
         Vectors that sample the unit sphere.
 
     References
@@ -328,21 +328,23 @@ for sampling_name, sampling_method in _sampling_method_registry.items():
     _sampling_method_names.add(f":func:`orix.sampling.{_func.__name__}`")
 
 _s2_sampling_docstring = (
-    """Generate unit vectors that sample S2 with a specific angular resolution.
+    """Generate unit vectors that sample S2 with a specific angular
+    resolution.
 
     Parameters
     ----------
     resolution
         Maximum angle between nearest neighbour grid points, in degrees.
     method
-        Sphere meshing method. Options are: {}. The default is \"spherified_cub_edge\".
+        Sphere meshing method. Options are: {}. The default is
+        ``\"spherified_cube_edge\"```.
     kwargs
-        Keyword arguments passed to the sampling function. For details see
-        the underlying sampling functions.
+        Keyword arguments passed to the sampling function. For details
+        see the underlying sampling functions.
 
     Returns
     -------
-    vectors
+    Vector3d
         Vectors that sample the unit sphere.
 
     See also
@@ -350,15 +352,13 @@ _s2_sampling_docstring = (
     {}
     """
 ).format(
-    ", ".join(map(lambda x: f'"{x}"', sampling_methods)),
+    ", ".join(map(lambda x: f'``"{x}"``', sampling_methods)),
     "\n    ".join(_sampling_method_names),
 )
 
 
 def sample_S2(
-    resolution: float,
-    method: str = "spherified_cube_edge",
-    **kwargs,
+    resolution: float, method: str = "spherified_cube_edge", **kwargs
 ) -> Vector3d:
 
     try:

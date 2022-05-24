@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Generation of grids on *S2* or *SO(3)* (rotation space)."""
+"""Generation of grids on *S2* (vectors) or *SO(3)* (rotations)."""
 
 from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
 from orix.sampling.SO3_sampling import uniform_SO3_sample
