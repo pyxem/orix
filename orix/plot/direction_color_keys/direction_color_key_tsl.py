@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional, Tuple, Union
+
+from matplotlib.figure import Figure
 import numpy as np
 from scipy.interpolate import griddata
 
@@ -25,6 +28,7 @@ from orix.plot.direction_color_keys._util import (
     rgb_from_polar_coordinates,
 )
 from orix.projections import StereographicProjection
+from orix.quaternion import Symmetry
 from orix.sampling import sample_S2_cube_mesh
 from orix.vector import Vector3d
 
@@ -37,21 +41,21 @@ class DirectionColorKeyTSL(DirectionColorKey):
     This is based on the TSL color key implemented in MTEX.
     """
 
-    def __init__(self, symmetry):
+    def __init__(self, symmetry: Symmetry) -> None:
         """Create an inverse pole figure (IPF) color key to color
         crystal directions according to a Laue symmetry's fundamental
         sector (IPF).
 
         Parameters
         ----------
-        symmetry : orix.quaternion.Symmetry
+        symmetry
             (Laue) symmetry of the crystal. If a non-Laue symmetry
             is given, the Laue symmetry of that symmetry will be used.
         """
         laue_symmetry = symmetry.laue
         super().__init__(laue_symmetry)
 
-    def direction2color(self, direction):
+    def direction2color(self, direction: Vector3d) -> np.ndarray:
         """Return an RGB color per orientation given a Laue symmetry
         and a sample direction.
 
@@ -59,12 +63,12 @@ class DirectionColorKeyTSL(DirectionColorKey):
 
         Parameters
         ----------
-        direction : orix.vector.Vector3d
+        direction
             Directions to color.
 
         Returns
         -------
-        rgb : numpy.ndarray
+        rgb
             Color array of shape `direction.shape` + (3,).
         """
         laue_group = self.symmetry
@@ -73,21 +77,27 @@ class DirectionColorKeyTSL(DirectionColorKey):
         polar = 0.5 + polar / 2
         return rgb_from_polar_coordinates(azimuth, polar)
 
-    def plot(self, return_figure=False):
-        """Plot the inverse pole figure color key.
+    def _create_rgb_grid(
+        self, return_min_max: bool = False
+    ) -> Union[np.ndarray, Tuple[np.ndarray, Tuple[float, float], Tuple[float, float]]]:
+        """Create the 2d colormap used to represent crystal directions.
 
         Parameters
         ----------
-        return_figure : bool, optional
-            Whether to return the figure. Default is False.
+        return_min_max
+            If True the tuples `(min, max)` of the fundamental sector in
+            the stereographic projection for both `x` and `y` are also
+            returned. Default is False
 
         Returns
         -------
-        figure : matplotlib.figure.Figure
-            Color key figure, returned if `return_figure` is True.
+        rgb_grid
+            Colormap values.
+        (x_min, x_max), (y_min, y_max)
+            Tuples `(min, max)` of the fundamental sector in the
+            stereographic projection for both `x` and `y`. Returned if
+            `return_min_max` is True.
         """
-        from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
-
         laue_group = self.symmetry
         sector = laue_group.fundamental_sector
 
@@ -114,9 +124,35 @@ class DirectionColorKeyTSL(DirectionColorKey):
         r2 = griddata(values=r, **griddata_kwargs)
         g2 = griddata(values=g, **griddata_kwargs)
         b2 = griddata(values=b, **griddata_kwargs)
-        rgb_grid = np.clip(np.dstack((r2, g2, b2)), 0, 1)
+        rgb_grid = np.dstack((r2, g2, b2)).clip(0, 1)
         rgb_grid[np.isnan(r2)] = 1
-        rgb_grid = np.flipud(rgb_grid)
+        rgb_grid = rgb_grid[::-1]
+
+        if return_min_max:
+            return rgb_grid, (x_min, x_max), (y_min, y_max)
+        else:
+            return rgb_grid
+
+    def plot(self, return_figure: bool = False) -> Optional[Figure]:
+        """Plot the inverse pole figure color key.
+
+        Parameters
+        ----------
+        return_figure
+            Whether to return the figure. Default is False.
+
+        Returns
+        -------
+        figure : matplotlib.figure.Figure
+            Color key figure, returned if `return_figure` is True.
+        """
+        from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
+
+        laue_group = self.symmetry
+
+        rgb_grid, (x_min, x_max), (y_min, y_max) = self._create_rgb_grid(
+            return_min_max=True
+        )
 
         fig, axes = _setup_inverse_pole_figure_plot(laue_group)
         ax = axes[0]
