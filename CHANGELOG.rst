@@ -14,7 +14,7 @@ Added
 -----
 - Support for type hints has been introduced and a section on this topic has been added
   to the contributing guide.
-- Seven methods for sampling unit vectors in spherical grids in *S2* via
+- Seven methods for sampling unit vectors from regular grids on *S2* via
   ``orix.sampling.sample_S2()``.
 
 Removed

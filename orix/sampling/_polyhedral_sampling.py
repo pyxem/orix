@@ -179,9 +179,9 @@ def _get_first_nearest_neighbors(
 
     Parameters
     ----------
-    points : numpy.ndarray (N, D)
-        Point cloud with N points in D dimensions
-    leaf_size : int
+    points
+        Point cloud with shape (N, D) representing N points in D dimensions.
+    leaf_size
         The NN search is performed using a cKDTree object. The way
         this tree is constructed depends on leaf_size, so this parameter
         will influence speed of tree construction and search.
@@ -191,7 +191,7 @@ def _get_first_nearest_neighbors(
     nn1_vec
         Point cloud represented by an array of shape (N, D) with N points in
         D dimensions, representing the nearest neighbor point of each point
-        in "points"
+        in `points`.
     """
     tree = cKDTree(points, leaf_size)
     # get the indexes of the first nearest neighbor of each vertex
