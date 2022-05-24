@@ -64,19 +64,16 @@ class InversePoleFigurePlot(StereographicPlot):
         args
             Arguments passed to
             :meth:`orix.plot.StereographicPlot.__init__`.
-        symmetry : ~orix.quaternion.Symmetry, optional
+        symmetry
             Laue group symmetry of crystal to plot directions with. If
             not given, point group C1 (only identity rotation) is used.
-        direction : ~orix.vector.Vector3d, optional
+        direction
             Sample direction to plot with respect to crystal directions.
             If not given, the out of plane direction, sample Z, is used.
-        hemisphere : str, optional
+        hemisphere
             Which hemisphere(s) to plot the vectors in. If not given,
             "upper" is used. Options are "upper", "lower", and "both",
             which plots two projections side by side.
-        hemisphere : str, optional
-            Which hemisphere to plot vectors in, either "upper"
-            (default) or "lower".
         kwargs
             Keyword arguments passed to
             :meth:`orix.plot.StereographicPlot.__init__`.
@@ -104,13 +101,15 @@ class InversePoleFigurePlot(StereographicPlot):
         patches = self.patches
         return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
 
-    def scatter(self, *args: Any, **kwargs: Any) -> None:
+    def scatter(
+        self, *args: Union[np.ndarray, Orientation, Vector3d], **kwargs: Any
+    ) -> None:
         """A scatter plot of sample directions rotated by orientations,
         or orientations to rotate sample directions with.
 
         Parameters
         ----------
-        args : tuple of numpy.ndarray, Orientation, or Vector3d
+        args
             Spherical coordinates (azimuth, polar), orientations, or
             vectors. If spherical coordinates are given, they are
             assumed to describe unit vectors. Vectors will be made into
