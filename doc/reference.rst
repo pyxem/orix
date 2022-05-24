@@ -453,8 +453,13 @@ sampling
 .. autosummary::
     get_sample_fundamental
     get_sample_local
-    uniform_SO3_sample
+    sample_S2
+    sample_S2_cube_mesh
+    sample_S2_hexagonal_mesh
+    sample_S2_icosahedral_mesh
+    sample_S2_random_mesh
     sample_S2_uv_mesh
+    uniform_SO3_sample
 .. automodule:: orix.sampling
     :members:
     :show-inheritance:
