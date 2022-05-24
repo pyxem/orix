@@ -232,7 +232,7 @@ class InversePoleFigurePlot(StereographicPlot):
         return v.in_fundamental_sector(self._symmetry)
 
     def plot_ipf_color_key(self) -> None:
-        """Plot an IPF color key code on an axis."""
+        """Plot an IPF color key code on this axis."""
         symmetry = self._symmetry
         direction_color_key = DirectionColorKeyTSL(symmetry)
 
@@ -253,8 +253,7 @@ class InversePoleFigurePlot(StereographicPlot):
             if any(is_close) and plt.rcParams["axes.titley"] is None:
                 loc = "left"
 
-        self.set_title(_get_ipf_title(self._direction), loc=loc, fontweight="bold")
-        self.set_title(symmetry.name, fontweight="bold")
+        self.set_title(symmetry.name, loc=loc, fontweight="bold")
         self.stereographic_grid(False)
         self._edge_patch.set_linewidth(1.5)
         self.imshow(rgb_grid, extent=(x_min, x_max, y_min, y_max), zorder=0)

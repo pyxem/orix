@@ -143,26 +143,14 @@ class DirectionColorKeyTSL(DirectionColorKey):
 
         Returns
         -------
-        figure : matplotlib.figure.Figure
+        figure
             Color key figure, returned if `return_figure` is True.
         """
         from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
 
-        laue_group = self.symmetry
-
-        rgb_grid, (x_min, x_max), (y_min, y_max) = self._create_rgb_grid(
-            return_min_max=True
-        )
-
-        fig, axes = _setup_inverse_pole_figure_plot(laue_group)
+        fig, axes = _setup_inverse_pole_figure_plot(self.symmetry)
         ax = axes[0]
-        for loc in ["left", "center", "right"]:
-            title = ax.get_title(loc)
-            if title != "":
-                ax.set_title(laue_group.name, loc=loc, fontweight="bold")
-        ax.stereographic_grid(False)
-        ax._edge_patch.set_linewidth(1.5)
-        ax.imshow(rgb_grid, extent=(x_min, x_max, y_min, y_max), zorder=0)
+        ax.plot_ipf_color_key()
 
         if return_figure:
             return fig
