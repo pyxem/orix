@@ -205,7 +205,7 @@ class StereographicPlot(maxes.Axes):
         --------
         matplotlib.axes.Axes.scatter
         """
-        from orix.sampling.S2_sampling import _sample_S2_equal_area_arrays
+        from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
         from scipy.ndimage import gaussian_filter
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
@@ -216,7 +216,7 @@ class StereographicPlot(maxes.Axes):
         azimuth, polar = azimuth.ravel(), polar.ravel()
 
         # generate angular mesh on S2
-        azimuth_arr, polar_arr = _sample_S2_equal_area_arrays(
+        azimuth_arr, polar_arr = _sample_S2_equal_area_coordinates(
             resolution, hemisphere=self.hemisphere, azimuthal_endpoint=True
         )
         azimuth_prod, polar_prod = np.meshgrid(azimuth_arr, polar_arr, indexing="ij")
