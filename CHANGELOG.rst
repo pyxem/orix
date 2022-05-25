@@ -17,6 +17,8 @@ Added
 - `Vector3d.pole_density_function()` has been implemented which allows for calculation 
   of the Pole Density Function (PDF) and quantification of poles in the stereographic
   projection.
+- Seven methods for sampling unit vectors from regular grids on *S2* via
+  ``orix.sampling.sample_S2()``.
 
 Removed
 -------

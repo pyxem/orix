@@ -25,7 +25,7 @@ from orix.plot.direction_color_keys._util import (
     rgb_from_polar_coordinates,
 )
 from orix.projections import StereographicProjection
-from orix.sampling import sample_S2_cube_mesh
+from orix.sampling import sample_S2
 from orix.vector import Vector3d
 
 
@@ -91,7 +91,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         laue_group = self.symmetry
         sector = laue_group.fundamental_sector
 
-        v = sample_S2_cube_mesh(2)
+        v = sample_S2(2)
         v2 = Vector3d(np.row_stack((v[v <= sector].data, sector.edges.data)))
 
         rgb = self.direction2color(v2)

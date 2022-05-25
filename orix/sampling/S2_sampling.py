@@ -18,10 +18,18 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Tuple
+from typing import Callable, List, Mapping, Optional, Tuple
+from functools import partial
 
 import numpy as np
 
+from orix.sampling._polyhedral_sampling import (
+    _sample_length_equidistant,
+    _edge_grid_normalized_cube,
+    _edge_grid_spherified_edge_cube,
+    _edge_grid_spherified_corner_cube,
+    _compose_from_faces,
+)
 from orix.vector import Vector3d
 
 
@@ -142,8 +150,6 @@ def sample_S2_uv_mesh(
         y &= \sin(u)\sin(v), \\
         z &= \cos(u).
 
-    Taken from diffsims.
-
     Parameters
     ----------
     resolution
@@ -163,6 +169,11 @@ def sample_S2_uv_mesh(
     Returns
     -------
     Vector3d
+        Vectors that sample the unit sphere.
+
+    References
+    ----------
+    :cite:`cajaravelli2015four`
     """
     azimuth, polar = _sample_S2_uv_mesh_arrays(resolution, hemisphere, offset)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
@@ -267,7 +278,7 @@ def sample_S2_equal_area_mesh(
 def sample_S2_cube_mesh(
     resolution: float, grid_type: str = "spherified_corner"
 ) -> Vector3d:
-    """Vectors of a cube mesh on a unit sphere *S2*.
+    """Vectors of a cube mesh projected on a unit sphere *S2*.
 
     Taken from diffsims.
 
@@ -276,45 +287,43 @@ def sample_S2_cube_mesh(
     resolution
         Maximum angle between neighbour grid points, in degrees.
     grid_type
-        Type of cube grid: "normalized", "spherified_edge" or
-        "spherified_corner" (default).
+        Type of cube grid: ``"normalized"``, ``"spherified_edge"`` or
+        ``"spherified_corner"``.
 
     Returns
     -------
     Vector3d
+        Vectors that sample the unit sphere.
+
+    Notes
+    -----
+    Vectors are sampled by projecting a grid on a cube onto the unit
+    sphere. The mesh on the cube can be generated in a number of ways. A
+    regular square grid with equidistant points corresponds to the
+    ``"normalized"`` option. ``"spherified_edge"`` corresponds to points
+    such that the row of vectors from the [001] to [011] is equiangular.
+    ``"spherified_corner"`` corresponds to the case where the row of
+    vectors from [001] to [111] is equiangular.
+
+    References
+    ----------
+    :cite:`cajaravelli2015four`
     """
-    vz = Vector3d.zvector()
-    v011 = Vector3d((0, 1, 1))
-    max_angle = vz.angle_with(v011)  # = pi / 4
-    max_distance = vz.dot(v011)  # = 1
-
-    res = np.radians(resolution)
-
     grid_type = grid_type.lower()
-    grid_types = ["normalized", "spherified_edge", "spherified_corner"]
-    if grid_type == grid_types[0]:
-        grid_length = np.tan(res)
-        steps = np.ceil(max_distance / grid_length)
-        i = np.arange(-steps, steps) / steps
-    elif grid_type == grid_types[1]:
-        steps = np.ceil((max_angle / res).round(2))
-        k = np.arange(-steps, steps)
-        theta = np.arctan(max_distance) / steps
-        i = np.tan(k * theta)
-    elif grid_type == grid_types[2]:
-        v111 = Vector3d((1, 1, 1))
-        max_angle = vz.angle_with(v111)
-
-        steps = np.ceil(max_angle / res)
-        k = np.arange(-steps, steps)
-        theta = np.arctan(np.sqrt(2)) / steps
-        i = np.tan(k * theta) / np.sqrt(2)
-    else:
+    grid_mapping = {
+        "normalized": _edge_grid_normalized_cube,
+        "spherified_edge": _edge_grid_spherified_edge_cube,
+        "spherified_corner": _edge_grid_spherified_corner_cube,
+    }
+    try:
+        grid_on_edge = grid_mapping[grid_type](resolution)
+    except KeyError:
         raise ValueError(
-            f"The `grid_type` {grid_type} is not among the valid options {grid_types}"
+            f"The `grid_type` {grid_type} is not among the valid options "
+            f"{list(grid_mapping.keys())}"
         )
 
-    x, y = np.meshgrid(i, i)
+    x, y = np.meshgrid(grid_on_edge, grid_on_edge)
     x = x.ravel()
     y = y.ravel()
     z = np.ones(x.shape[0])
@@ -331,3 +340,234 @@ def sample_S2_cube_mesh(
     m_c = np.array([[-1, 1, 1], [1, -1, -1]])
 
     return Vector3d(np.vstack((bottom, top, east, west, south, north, m_c))).unit
+
+
+def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
+    """Vectors of a hexagonal bipyramid mesh projected on a unit sphere
+    *S2*.
+
+    Parameters
+    ----------
+    resolution
+        Maximum angle between neighbour grid points, in degrees.
+
+    Returns
+    -------
+    Vector3d
+        Vectors that sample the unit sphere.
+    """
+    number_of_steps = int(np.ceil(2 / np.tan(np.deg2rad(resolution))))
+    if number_of_steps % 2 == 1:
+        # an even number of steps is required to get a point in the middle
+        # of the hexagon edge
+        number_of_steps += 1
+    grid_1D = _sample_length_equidistant(
+        number_of_steps,
+        length=1.0,
+        include_start=True,
+        include_end=True,
+        positive_and_negative=False,
+    )
+
+    # top and bottom face of the hexagon
+    axis_to_corner_1 = grid_1D[1:]
+    axis_to_corner_2 = grid_1D
+    u, v = np.meshgrid(axis_to_corner_1, axis_to_corner_2)
+    u = u.ravel()
+    v = v.ravel()
+
+    # from square to hex lattice
+    hexagon_edge_length = 2 / np.sqrt(3)
+    transform = np.array([[hexagon_edge_length, hexagon_edge_length / 2], [0, 1]])
+    uv = np.stack([u, v])
+    xy = np.dot(transform, uv)
+    x, y = xy
+
+    # raise to pyramidal plane
+    z = -1 / hexagon_edge_length * x - 1 / 2 * y + 1
+    tolerance = -1e-7
+    include_points = z > tolerance
+    points_one_face = np.stack([coordinate[include_points] for coordinate in [x, y, z]])
+
+    # repeat 6 times by rotating 60 degrees
+    def rotation(r):
+        return np.array(
+            [[np.cos(r), -np.sin(r), 0], [np.sin(r), np.cos(r), 0], [0, 0, 1]]
+        )
+
+    angle = np.deg2rad(60)
+    top_faces = np.hstack(
+        [np.dot(rotation(i * angle), points_one_face) for i in range(6)]
+    )
+    bottom_faces = top_faces.copy()
+    bottom_faces[2] *= -1
+    exclude_rim = bottom_faces[2] < tolerance
+    bottom_faces = bottom_faces.T[exclude_rim].T
+    north_pole = np.array([[0, 0, 1]]).T
+    south_pole = np.array([[0, 0, -1]]).T
+    all_points = np.hstack([top_faces, north_pole, bottom_faces, south_pole])
+
+    return Vector3d(all_points.T).unit
+
+
+def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vector3d:
+    """Vectors of a random mesh on *S2*.
+
+    Parameters
+    ----------
+    resolution
+        The expected mean angle between nearest neighbor grid points in
+        degrees.
+    seed
+        Passed to :func:`numpy.random.default_rng`, defaults to None
+        which will give a "new" random result each time.
+
+    Returns
+    -------
+    Vector3d
+        Vectors that sample the unit sphere.
+
+    References
+    ----------
+    https://mathworld.wolfram.com/SpherePointPicking.html
+    """
+    # convert resolution in degrees to number of points
+    number = int(1 / (4 * np.pi) * (360 / resolution) ** 2)
+    rng = np.random.default_rng(seed=seed)
+    xyz = rng.normal(size=(number, 3))
+    return Vector3d(xyz).unit
+
+
+def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
+    """Vectors of an icosahedral mesh on *S2*.
+
+    Parameters
+    ----------
+    resolution
+        Maximum angle between neighbour grid points, in degrees.
+
+    Returns
+    -------
+    Vector3d
+        Vectors that sample the unit sphere.
+
+    References
+    ----------
+    :cite:`meshzoo`
+    """
+    t = (1.0 + np.sqrt(5.0)) / 2.0
+    corners = np.array(
+        [
+            [-1, +t, +0],
+            [+1, +t, +0],
+            [-1, -t, +0],
+            [+1, -t, +0],
+            #
+            [+0, -1, +t],
+            [+0, +1, +t],
+            [+0, -1, -t],
+            [+0, +1, -t],
+            #
+            [+t, +0, -1],
+            [+t, +0, +1],
+            [-t, +0, -1],
+            [-t, +0, +1],
+        ]
+    )
+    faces = [
+        (0, 11, 5),
+        (0, 5, 1),
+        (0, 1, 7),
+        (0, 7, 10),
+        (0, 10, 11),
+        (1, 5, 9),
+        (5, 11, 4),
+        (11, 10, 2),
+        (10, 7, 6),
+        (7, 1, 8),
+        (3, 9, 4),
+        (3, 4, 2),
+        (3, 2, 6),
+        (3, 6, 8),
+        (3, 8, 9),
+        (4, 9, 5),
+        (2, 4, 11),
+        (6, 2, 10),
+        (8, 6, 7),
+        (9, 8, 1),
+    ]
+    # icosahedron edge length
+    a = np.linalg.norm(corners[0]) / np.sin(2 * np.pi / 5)
+    # icosahedron inscribed sphere radius
+    r_i = np.sqrt(3) / 12 * (3 + np.sqrt(5)) * a
+    n = int(np.ceil(a / (r_i * np.tan(np.deg2rad(resolution)))))
+    vertices = _compose_from_faces(corners, faces, n)
+    return Vector3d(vertices).unit
+
+
+_sampling_method_registry: Mapping[str, Callable] = {
+    "uv": sample_S2_uv_mesh,
+    "normalized_cube": partial(sample_S2_cube_mesh, grid_type="normalized"),
+    "spherified_cube_edge": partial(sample_S2_cube_mesh, grid_type="spherified_edge"),
+    "spherified_cube_corner": partial(
+        sample_S2_cube_mesh, grid_type="spherified_corner"
+    ),
+    "icosahedral": sample_S2_icosahedral_mesh,
+    "hexagonal": sample_S2_hexagonal_mesh,
+    "random": sample_S2_random_mesh,
+}
+sampling_methods: List[str] = []
+_sampling_method_names = set()
+for sampling_name, sampling_method in _sampling_method_registry.items():
+    sampling_methods.append(sampling_name)
+    _func = (
+        sampling_method.func
+        if isinstance(sampling_method, partial)
+        else sampling_method
+    )
+    _sampling_method_names.add(f":func:`orix.sampling.{_func.__name__}`")
+
+_s2_sampling_docstring = (
+    """Generate unit vectors that sample S2 with a specific angular
+    resolution.
+
+    Parameters
+    ----------
+    resolution
+        Maximum angle between nearest neighbour grid points, in degrees.
+    method
+        Sphere meshing method. Options are: {}. The default is
+        ``\"spherified_cube_edge\"```.
+    kwargs
+        Keyword arguments passed to the sampling function. For details
+        see the underlying sampling functions.
+
+    Returns
+    -------
+    Vector3d
+        Vectors that sample the unit sphere.
+
+    See also
+    --------
+    {}
+    """
+).format(
+    ", ".join(map(lambda x: f'``"{x}"``', sampling_methods)),
+    "\n    ".join(_sampling_method_names),
+)
+
+
+def sample_S2(
+    resolution: float, method: str = "spherified_cube_edge", **kwargs
+) -> Vector3d:
+
+    try:
+        sampling_method = _sampling_method_registry[method]
+    except KeyError:
+        raise NotImplementedError(
+            f"Method not implemented. Valid options: {sampling_methods}"
+        )
+    return sampling_method(resolution, **kwargs)
+
+
+setattr(sample_S2, "__doc__", _s2_sampling_docstring)
