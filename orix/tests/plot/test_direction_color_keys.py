@@ -39,27 +39,55 @@ class TestDirectionColorKeyTSL:
         assert rgb2[0].size == rgb2[1].size == 0
 
     @pytest.mark.parametrize(
-        "symmetry, expected_shape, expected_xlim, expected_ylim",
+        "symmetry, expected_shape",
         [
-            [symmetry.C1, (2000, 2000, 3), (-1.0, 1.0), (-1.0, 1.0)],
-            [symmetry.C2, (1000, 2000, 3), (-1.0, 1.0), (0.0, 1.0)],
-            [symmetry.D6, (500, 1000, 3), (0.0, 1.0), (0.0, 0.5)],
-            [symmetry.Oh, (367, 415, 3), (0.0, 0.414), (0.0, 0.366)],
-            [symmetry.Th, (415, 415, 3), (0.0, 0.414), (0.0, 0.414)],
+            [symmetry.C1, (2000, 2000, 4)],
+            [symmetry.C2, (1000, 2000, 4)],
+            [symmetry.D6, (500, 1000, 4)],
+            [symmetry.Oh, (367, 415, 4)],
+            [symmetry.Th, (415, 415, 4)],
         ],
     )
-    def test_rgb_grid(self, symmetry, expected_shape, expected_xlim, expected_ylim):
-        ckey_oh = IPFColorKeyTSL(symmetry)
-        ckey_oh_direction = ckey_oh.direction_color_key
-        rgb_grid = ckey_oh_direction._create_rgb_grid()
+    def test_rgba_grid_shape(self, symmetry, expected_shape):
+        ckey = IPFColorKeyTSL(symmetry)
+        ckey_direction = ckey.direction_color_key
+        rgb_grid = ckey_direction._create_rgba_grid()
         assert isinstance(rgb_grid, np.ndarray)
         assert rgb_grid.shape == expected_shape
+
+    @pytest.mark.parametrize(
+        "symmetry, expected_xlim, expected_ylim",
+        [
+            [symmetry.C1, (-1.0, 1.0), (-1.0, 1.0)],
+            [symmetry.C2, (-1.0, 1.0), (0.0, 1.0)],
+            [symmetry.D6, (0.0, 1.0), (0.0, 0.5)],
+            [symmetry.Oh, (0.0, 0.414), (0.0, 0.366)],
+            [symmetry.Th, (0.0, 0.414), (0.0, 0.414)],
+        ],
+    )
+    def test_rgba_grid_limits(self, symmetry, expected_xlim, expected_ylim):
+        ckey = IPFColorKeyTSL(symmetry)
+        ckey_direction = ckey.direction_color_key
         (
             _,
             (x_min, x_max),
             (y_min, y_max),
-        ) = ckey_oh_direction._create_rgb_grid(True)
+        ) = ckey_direction._create_rgba_grid(return_min_max=True)
         assert round(x_min, 3) == round(expected_xlim[0], 3)
         assert round(x_max, 3) == round(expected_xlim[1], 3)
         assert round(y_min, 3) == round(expected_ylim[0], 3)
         assert round(y_max, 3) == round(expected_ylim[1], 3)
+
+    @pytest.mark.parametrize(
+        "symmetry",
+        [symmetry.C2, symmetry.D6, symmetry.Oh],
+    )
+    def test_rgba_grid_alpha(self, symmetry):
+        ckey = IPFColorKeyTSL(symmetry)
+        ckey_direction = ckey.direction_color_key
+        rgba_grid = ckey_direction._create_rgba_grid()
+        # test invalid points have alpha = 0
+        assert (rgba_grid[0, 0] == (1, 1, 1, 0)).all()
+        rgba_grid = ckey_direction._create_rgba_grid(alpha=0.5)
+        valid = (rgba_grid != (1, 1, 1, 0)).all(axis=-1)
+        assert (rgba_grid[valid][..., -1] == 0.5).all()
