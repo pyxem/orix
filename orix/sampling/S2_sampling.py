@@ -56,7 +56,7 @@ def _remove_pole_duplicates(
     return azimuth[mask], polar[mask]
 
 
-def _sample_S2_uv_mesh_arrays(
+def _sample_S2_uv_mesh_coordinates(
     resolution: float,
     hemisphere: str = "both",
     offset: float = 0,
@@ -175,7 +175,7 @@ def sample_S2_uv_mesh(
     ----------
     :cite:`cajaravelli2015four`
     """
-    azimuth, polar = _sample_S2_uv_mesh_arrays(resolution, hemisphere, offset)
+    azimuth, polar = _sample_S2_uv_mesh_coordinates(resolution, hemisphere, offset)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
 
     if remove_pole_duplicates:
@@ -184,7 +184,7 @@ def sample_S2_uv_mesh(
     return Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
 
 
-def _sample_S2_equal_area_arrays(
+def _sample_S2_equal_area_coordinates(
     resolution: float,
     hemisphere: str = "both",
     azimuthal_endpoint: bool = False,
@@ -266,7 +266,7 @@ def sample_S2_equal_area_mesh(
     -------
     Vector3d
     """
-    azimuth, polar = _sample_S2_equal_area_arrays(resolution, hemisphere)
+    azimuth, polar = _sample_S2_equal_area_coordinates(resolution, hemisphere)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
 
     if remove_pole_duplicates:
@@ -507,6 +507,7 @@ def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
 
 _sampling_method_registry: Mapping[str, Callable] = {
     "uv": sample_S2_uv_mesh,
+    "equal_area": sample_S2_equal_area_mesh,
     "normalized_cube": partial(sample_S2_cube_mesh, grid_type="normalized"),
     "spherified_cube_edge": partial(sample_S2_cube_mesh, grid_type="spherified_edge"),
     "spherified_cube_corner": partial(
