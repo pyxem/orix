@@ -21,7 +21,7 @@
 :class:`~orix.vector.Vector3d`, typically parallel to sample directions,
 rotated by orientations.
 """
-from pyexpat.errors import XML_ERROR_INCOMPLETE_PE
+
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.axes as maxes
@@ -103,7 +103,9 @@ class InversePoleFigurePlot(StereographicPlot):
         return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
 
     def scatter(
-        self, *args: Union[np.ndarray, Orientation, Vector3d], **kwargs: Any
+        self,
+        *args: Union[Tuple[np.ndarray, np.ndarray], Orientation, Vector3d],
+        **kwargs: Any,
     ) -> None:
         """A scatter plot of sample directions rotated by orientations,
         or orientations to rotate sample directions with.
