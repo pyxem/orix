@@ -77,13 +77,15 @@ class DirectionColorKeyTSL(DirectionColorKey):
         polar = 0.5 + polar / 2
         return rgb_from_polar_coordinates(azimuth, polar)
 
-    def _create_rgb_grid(
-        self, return_min_max: bool = False
+    def _create_rgba_grid(
+        self, alpha: float = 1.0, return_min_max: bool = False
     ) -> Union[np.ndarray, Tuple[np.ndarray, Tuple[float, float], Tuple[float, float]]]:
         """Create the 2d colormap used to represent crystal directions.
 
         Parameters
         ----------
+        alpha
+            Transparency value for plot.
         return_min_max
             If True the tuples `(min, max)` of the fundamental sector in
             the stereographic projection for both `x` and `y` are also
@@ -91,8 +93,8 @@ class DirectionColorKeyTSL(DirectionColorKey):
 
         Returns
         -------
-        rgb_grid
-            Colormap values.
+        rgba_grid
+            Colormap values with RGBA channels.
         (x_min, x_max), (y_min, y_max)
             Tuples `(min, max)` of the fundamental sector in the
             stereographic projection for both `x` and `y`. Returned if
@@ -124,14 +126,20 @@ class DirectionColorKeyTSL(DirectionColorKey):
         r2 = griddata(values=r, **griddata_kwargs)
         g2 = griddata(values=g, **griddata_kwargs)
         b2 = griddata(values=b, **griddata_kwargs)
-        rgb_grid = np.dstack((r2, g2, b2)).clip(0, 1)
-        rgb_grid[np.isnan(r2)] = 1
-        rgb_grid = rgb_grid[::-1]
+        a2 = np.full_like(r2, alpha)
+        # create RGBA image and clip to ensure [0..1] range
+        rgba_grid = np.dstack((r2, g2, b2, a2)).clip(0, 1)
+        # some values are NaN as they are not within fundamental zone
+        NaN_values = np.isnan(r2)
+        rgba_grid[NaN_values] = 1  # set to valid values
+        # make invalid points transparent
+        rgba_grid[NaN_values, -1] = 0
+        rgba_grid = rgba_grid[::-1]
 
         if return_min_max:
-            return rgb_grid, (x_min, x_max), (y_min, y_max)
+            return rgba_grid, (x_min, x_max), (y_min, y_max)
         else:
-            return rgb_grid
+            return rgba_grid
 
     def plot(self, return_figure: bool = False) -> Optional[Figure]:
         """Plot the inverse pole figure color key.

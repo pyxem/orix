@@ -21,6 +21,7 @@
 :class:`~orix.vector.Vector3d`, typically parallel to sample directions,
 rotated by orientations.
 """
+from pyexpat.errors import XML_ERROR_INCOMPLETE_PE
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.axes as maxes
@@ -235,9 +236,11 @@ class InversePoleFigurePlot(StereographicPlot):
         symmetry = self._symmetry
         direction_color_key = DirectionColorKeyTSL(symmetry)
 
-        rgb_grid, (x_min, x_max), (y_min, y_max) = direction_color_key._create_rgb_grid(
+        rgba_grid, x_lim, y_lim = direction_color_key._create_rgba_grid(
             return_min_max=True
         )
+        x_min, x_max = x_lim
+        y_min, y_max = y_lim
 
         label_xy = np.column_stack(
             self._projection.vector2xy(symmetry.fundamental_sector.vertices)
@@ -255,7 +258,7 @@ class InversePoleFigurePlot(StereographicPlot):
         self.set_title(symmetry.name, loc=loc, fontweight="bold")
         self.stereographic_grid(False)
         self._edge_patch.set_linewidth(1.5)
-        self.imshow(rgb_grid, extent=(x_min, x_max, y_min, y_max), zorder=0)
+        self.imshow(rgba_grid, extent=(x_min, x_max, y_min, y_max), zorder=0)
 
 
 mprojections.register_projection(InversePoleFigurePlot)
