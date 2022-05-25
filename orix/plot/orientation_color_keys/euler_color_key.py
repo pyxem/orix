@@ -121,8 +121,8 @@ class EulerColorKey:
                 ha="left",
                 **text_kwargs,
             )
-            ax.set_xticks([], [])
-            ax.set_yticks([], [])
+            ax.set_xticks([])
+            ax.set_yticks([])
 
         fig.axes[0].set_title(
             self.symmetry.proper_subgroup.name, ha="center", fontweight="bold"
