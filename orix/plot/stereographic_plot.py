@@ -21,7 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Tuple
+from typing import Any, Optional, Tuple, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -38,6 +38,7 @@ from orix.plot._symmetry_marker import (
     FourFoldMarker,
     SixFoldMarker,
 )
+from orix.quaternion import Symmetry
 from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.vector import Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
@@ -171,21 +172,22 @@ class StereographicPlot(maxes.Axes):
 
     def pole_density_function(
         self,
-        azimuth: np.ndarray,
-        polar: np.ndarray,
+        *args: Union[Tuple[np.ndarray, np.ndarray], Vector3d],
         resolution: float = 1,
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
-        **kwargs,
+        symmetry: Optional[Symmetry] = None,
+        **kwargs: Any,
     ):
         """Compute the Pole Density Function (PDF) of vectors in the
         stereographic projection.
 
         Parameters
         ----------
-        azimuth, polar
-            Azimuth and polar angles in radians.
+        args
+            Vector(s), or azimuth and polar angles, the latter two
+            passed as separate arguments (not keyword arguments).
         resolution
             The angular resolution of the sampling grid in degrees.
             Default value is 1.
@@ -197,6 +199,9 @@ class StereographicPlot(maxes.Axes):
         colorbar
             If True a colorabar is shown alongside the PDF plot.
             Default is True.
+        symmetry
+            Restrict the grid points to the given point group fundamental
+            sector if provided. Default is None.
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
@@ -210,19 +215,42 @@ class StereographicPlot(maxes.Axes):
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
         updated_kwargs = {**kwargs, **new_kwargs}
+
+        if len(args) == 1:
+            v = args[0]
+            if not isinstance(v, Vector3d):
+                raise TypeError(
+                    "If one argument is passed it must be an instance of "
+                    + "`orix.vector.Vector3d`."
+                )
+            azimuth, polar, _ = v.to_polar()
+        elif len(args) == 2:
+            azimuth, polar = args
+        else:
+            raise ValueError(
+                "Args must be either `Vector3d` or a tuple of azimuth and polar angles."
+            )
+
+        if symmetry is not None:
+            v = Vector3d.from_polar(azimuth, polar)
+            v = v.in_fundamental_sector(symmetry)
+            azimuth, polar, _ = v.to_polar()
+
+        # np.histogram2d expects 1d arrays
+        azimuth, polar = np.ravel(azimuth), np.ravel(polar)
         if not azimuth.size:
             return
-        # np.histogram2d expects 1d arrays
-        azimuth, polar = azimuth.ravel(), polar.ravel()
 
         # generate angular mesh on S2
-        azimuth_arr, polar_arr = _sample_S2_equal_area_coordinates(
+        azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
             resolution, hemisphere=self.hemisphere, azimuthal_endpoint=True
         )
-        azimuth_prod, polar_prod = np.meshgrid(azimuth_arr, polar_arr, indexing="ij")
+        azimuth_grid, polar_grid = np.meshgrid(
+            azimuth_coords, polar_coords, indexing="ij"
+        )
         # generate histogram in angular space
         hist, *_ = np.histogram2d(
-            azimuth, polar, bins=(azimuth_arr, polar_arr), density=False
+            azimuth, polar, bins=(azimuth_coords, polar_coords), density=False
         )
         # Normalize by the average number of counts per cell on the
         # unit sphere to calculate in terms of Multiples of Random
@@ -238,9 +266,22 @@ class StereographicPlot(maxes.Axes):
             hist = np.log(hist + 1)
 
         # get mesh vertices in stereographic plane
-        v_mesh = Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
+        v_mesh = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
         x, y = self._projection.vector2xy(v_mesh)
         x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
+
+        # mask mesh points outside of fundamental sector if provided
+        if symmetry is not None:
+            azimuth_center_grid, polar_center_grid = np.meshgrid(
+                azimuth_coords[:-1] + np.ediff1d(azimuth_coords) / 2,
+                polar_coords[:-1] + np.ediff1d(polar_coords) / 2,
+                indexing="ij",
+            )
+            v_center_mesh = Vector3d.from_polar(
+                azimuth=azimuth_center_grid, polar=polar_center_grid
+            ).unit
+            mask = v_center_mesh <= symmetry.fundamental_sector
+            hist = np.ma.masked_array(hist, ~mask)
 
         # plot mesh
         updated_kwargs.setdefault("cmap", "magma")
