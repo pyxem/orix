@@ -21,7 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Tuple
+from typing import Any, Optional, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -31,6 +31,7 @@ import matplotlib.path as mpath
 import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 from orix.plot._symmetry_marker import (
     TwoFoldMarker,
@@ -171,21 +172,21 @@ class StereographicPlot(maxes.Axes):
 
     def pole_density_function(
         self,
-        azimuth: np.ndarray,
-        polar: np.ndarray,
+        *args: Union[np.ndarray, Vector3d],
         resolution: float = 1,
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ):
         """Compute the Pole Density Function (PDF) of vectors in the
         stereographic projection.
 
         Parameters
         ----------
-        azimuth, polar
-            Azimuth and polar angles of the vectors in radians.
+        args
+            Vector(s), or azimuth and polar angles, the latter passed as
+            two separate arguments.
         resolution
             The angular resolution of the sampling grid in degrees.
             Default value is 1.
@@ -195,7 +196,7 @@ class StereographicPlot(maxes.Axes):
         log
             If True the log(PDF) is calculated. Default is True.
         colorbar
-            If True a colorbar is shown alongside the PDF plot.
+            If True a colorabar is shown alongside the PDF plot.
             Default is True.
         kwargs
             Keyword arguments passed to
@@ -206,14 +207,30 @@ class StereographicPlot(maxes.Axes):
         matplotlib.axes.Axes.scatter
         """
         from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
-        from scipy.ndimage import gaussian_filter
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
         updated_kwargs = {**kwargs, **new_kwargs}
+
+        if len(args) == 1:
+            v = args[0]
+            if not isinstance(v, Vector3d):
+                raise TypeError(
+                    "If one argument is passed it must be an instance of "
+                    + "`orix.vector.Vector3d`."
+                )
+            azimuth, polar, _ = v.to_polar()
+        elif len(args) == 2:
+            azimuth, polar = args
+        else:
+            raise ValueError(
+                "Args must be either `Vector3d` or arrays of azimuth and polar angles."
+            )
+
         if not azimuth.size:
             return
+
         # np.histogram2d expects 1d arrays
-        azimuth, polar = azimuth.ravel(), polar.ravel()
+        azimuth, polar = np.ravel(azimuth), np.ravel(polar)
 
         # generate angular mesh on S2
         azimuth_arr, polar_arr = _sample_S2_equal_area_coordinates(

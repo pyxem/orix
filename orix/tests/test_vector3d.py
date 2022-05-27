@@ -545,7 +545,7 @@ class TestPoleDensityFunction:
         assert not np.allclose(qmesh1, qmesh2)
 
     def test_pdf_empty_vector(self):
-        v = Vector3d(np.empty((0, 3)))
+        v = Vector3d.empty()
         assert not v.size
         fig = v.pole_density_function(return_figure=True)
         qm = [isinstance(c, QuadMesh) for c in fig.axes[0].collections]

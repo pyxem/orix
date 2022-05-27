@@ -138,7 +138,6 @@ class TestS2Sampling:
     def test_equal_area_mesh_raises(self):
         with pytest.raises(ValueError, match="Hemisphere must be one of "):
             sampling.sample_S2_equal_area_mesh(10, hemisphere="test")
-            _ = S2_sampling.sample_S2_cube_mesh(2, "hexagonal")
 
     def test_random_sphere_mesh(self):
         grid = S2_sampling.sample_S2_random_mesh(1).data
