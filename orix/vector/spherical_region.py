@@ -53,7 +53,7 @@ class SphericalRegion(Vector3d):
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
         """
         return np.all(self.dot_outer(x) > 1e-9, axis=0)
 
@@ -66,6 +66,6 @@ class SphericalRegion(Vector3d):
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
         """
         return np.all(self.dot_outer(x) > -1e-9, axis=0)

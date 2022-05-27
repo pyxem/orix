@@ -23,6 +23,7 @@ from orix.sampling.SO3_sampling import uniform_SO3_sample
 from orix.sampling.S2_sampling import (
     sample_S2,
     sample_S2_cube_mesh,
+    sample_S2_equal_area_mesh,
     sample_S2_hexagonal_mesh,
     sample_S2_icosahedral_mesh,
     sample_S2_random_mesh,
@@ -39,6 +40,7 @@ __all__ = [
     "sample_S2_methods",
     "uniform_SO3_sample",
     "sample_S2_cube_mesh",
+    "sample_S2_equal_area_mesh",
     "sample_S2_hexagonal_mesh",
     "sample_S2_icosahedral_mesh",
     "sample_S2_random_mesh",

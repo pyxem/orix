@@ -18,7 +18,7 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Optional, Callable, Mapping, List
+from typing import Callable, List, Mapping, Optional, Tuple
 from functools import partial
 
 import numpy as np
@@ -33,7 +33,114 @@ from orix.sampling._polyhedral_sampling import (
 from orix.vector import Vector3d
 
 
-def sample_S2_uv_mesh(resolution: float) -> Vector3d:
+def _remove_pole_duplicates(
+    azimuth: np.ndarray, polar: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Remove duplicate directions at the North (polar = 0) and South
+    (polar = pi) poles from the grid on S2. In each case the direction
+    with azimuth = 0 is kept.
+
+    Parameters
+    ----------
+    azimuth, polar
+
+    Returns
+    -------
+    azimuth, polar
+    """
+    mask_azimuth = azimuth > 0
+    mask_polar_0 = np.isclose(polar, 0) * mask_azimuth
+    mask_polar_pi = np.isclose(polar, np.pi) * mask_azimuth
+    # create mask of vectors to keep
+    mask = ~np.logical_or(mask_polar_0, mask_polar_pi)
+    return azimuth[mask], polar[mask]
+
+
+def _sample_S2_uv_mesh_coordinates(
+    resolution: float,
+    hemisphere: str = "both",
+    offset: float = 0,
+    azimuthal_endpoint: bool = False,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Get spherical coordinates for UV mesh points on unit sphere *S2*.
+
+    For more information see the docstring for
+    :meth:`orix.sampling.S2_sampling.sample_S2_uv_mesh`.
+
+    Parameters
+    ----------
+    resolution
+        Maximum angle between nearest neighbour grid points, in degrees.
+        The resolution of :math:`u` and :math:`v` are rounded up to get
+        an integer number of equispaced polar and azimuthal grid lines.
+    hemisphere
+        Generate mesh points on either the "upper", "lower" or "both"
+        hemispheres. Default is "both".
+    offset
+        Mesh points are offset in angular space by this fraction of the
+        step size, must be in the range [0..1]. Default is 0.
+    azimuthal_endpoint
+        If True then endpoint of the azimuthal array is included in the
+        calculation. Default is False.
+
+    Returns
+    -------
+    azimuth, polar
+    """
+    hemisphere = hemisphere.lower()
+    if hemisphere not in ("upper", "lower", "both"):
+        raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
+
+    if not 0 <= offset < 1:
+        raise ValueError(
+            "Offset is a fractional value of the angular step size "
+            + "and must be in the range [0..1]."
+        )
+
+    if hemisphere == "both":
+        polar_min = 0
+        polar_max = 180
+    elif hemisphere == "upper":
+        polar_min = 0
+        polar_max = 90
+    elif hemisphere == "lower":
+        polar_min = 90
+        polar_max = 180
+    polar_range = polar_max - polar_min
+    # calculate steps in degrees to avoid rounding errors
+    steps_azimuth = int(np.ceil(360 / resolution))
+    steps_polar = int(np.ceil(polar_range / resolution)) + 1
+    resolution = np.deg2rad(resolution)
+    # calculate number of steps and step size angular spacing
+    step_size_azimuth = (2 * np.pi) / steps_azimuth
+    step_size_polar = np.deg2rad(polar_range) / (steps_polar - 1)
+
+    azimuth = np.linspace(
+        offset * step_size_azimuth,
+        2 * np.pi + offset * step_size_azimuth,
+        num=steps_azimuth,
+        endpoint=azimuthal_endpoint,
+    )
+    # convert to radians
+    polar_min, polar_max = np.deg2rad(polar_min), np.deg2rad(polar_max)
+    polar = np.linspace(
+        polar_min + offset * step_size_polar,
+        polar_max + offset * step_size_polar,
+        num=steps_polar,
+        endpoint=True,
+    )
+    # polar coordinate cannot exceed polar_max
+    polar = polar[polar <= polar_max]
+
+    return azimuth, polar
+
+
+def sample_S2_uv_mesh(
+    resolution: float,
+    hemisphere: str = "both",
+    offset: float = 0,
+    remove_pole_duplicates: bool = True,
+) -> Vector3d:
     r"""Vectors of a UV mesh on a unit sphere *S2*.
 
     The mesh vertices are defined by the parametrization
@@ -49,6 +156,15 @@ def sample_S2_uv_mesh(resolution: float) -> Vector3d:
         Maximum angle between nearest neighbour grid points, in degrees.
         The resolution of :math:`u` and :math:`v` are rounded up to get
         an integer number of equispaced polar and azimuthal grid lines.
+    hemisphere
+        Generate mesh points on the "upper", "lower" or "both"
+        hemispheres. Default is "both".
+    offset
+        Mesh points are offset in angular space by this fraction of the
+        step size, must be in the range [0..1]. Default is 0.
+    remove_pole_duplicates
+        If True the duplicate mesh grid points at the North and South
+        pole of the unit sphere are removed. Default is True.
 
     Returns
     -------
@@ -59,27 +175,109 @@ def sample_S2_uv_mesh(resolution: float) -> Vector3d:
     ----------
     :cite:`cajaravelli2015four`
     """
-    steps_azimuth = int(np.ceil(360 / resolution))
-    steps_polar = int(np.ceil(180 / resolution)) + 1
-    azimuth = np.linspace(0, 2 * np.pi, num=steps_azimuth, endpoint=False)
-    polar = np.linspace(0, np.pi, num=steps_polar, endpoint=True)
+    azimuth, polar = _sample_S2_uv_mesh_coordinates(resolution, hemisphere, offset)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
-    azimuth_prod = azimuth_prod.ravel()
-    polar_prod = polar_prod.ravel()
-    # remove duplicated vectors at north (polar == 0) and
-    # south (polar == np.pi) poles. Keep the azimuth == 0 vector in each
-    # case. Masks here are vectors to remove
-    mask_azimuth = azimuth_prod > 0
-    mask_polar_0 = np.isclose(polar_prod, 0) * mask_azimuth
-    mask_polar_pi = np.isclose(polar_prod, np.pi) * mask_azimuth
-    # create mask of vectors to keep
-    mask = ~np.logical_or(mask_polar_0, mask_polar_pi)
-    azimuth_prod = azimuth_prod[mask]
-    polar_prod = polar_prod[mask]
+
+    if remove_pole_duplicates:
+        azimuth_prod, polar_prod = _remove_pole_duplicates(azimuth_prod, polar_prod)
+
     return Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
 
 
-def sample_S2_cube_mesh(resolution: float, grid_type: str) -> Vector3d:
+def _sample_S2_equal_area_coordinates(
+    resolution: float,
+    hemisphere: str = "both",
+    azimuthal_endpoint: bool = False,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Get spherical coordinates for equal area mesh points on unit
+    sphere *S2*.
+
+    For more information see the docstring for
+    :meth:`orix.sampling.S2_sampling.sample_S2_equal_area_mesh`.
+
+    Parameters
+    ----------
+    resolution
+        The angular resolution in degrees of the azimuthal vectors.
+    hemisphere
+        Generate mesh points on the "upper", "lower" or "both"
+        hemispheres. Default is "both".
+    azimuthal_endpoint
+        If True then endpoint of the azimuthal array is included in the
+        calculation. Default is False.
+
+    Returns
+    -------
+    azimuth, polar
+    """
+    hemisphere = hemisphere.lower()
+    if hemisphere not in ("upper", "lower", "both"):
+        raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
+
+    # calculate number of steps and step size angular spacing
+    # this parameter D in :cite:`rohrer2004distribution`.
+    steps = int(np.ceil(90 / resolution))
+    azimuth = np.linspace(0, 2 * np.pi, num=4 * steps, endpoint=azimuthal_endpoint)
+    # polar coordinate is parameterized in terms of cos(theta)
+    if hemisphere == "both":
+        polar_min = 1
+        polar_max = -1
+        steps *= 2
+    elif hemisphere == "upper":
+        polar_min = 1
+        polar_max = 0
+    elif hemisphere == "lower":
+        polar_min = 0
+        polar_max = -1
+
+    polar = np.linspace(
+        polar_min,
+        polar_max,
+        num=steps,
+        endpoint=True,
+    )
+    polar = np.arccos(polar)
+
+    return azimuth, polar
+
+
+def sample_S2_equal_area_mesh(
+    resolution: float,
+    hemisphere: str = "both",
+    remove_pole_duplicates: bool = True,
+) -> Vector3d:
+    """Vectors of a cube mesh on a unit sphere *S2* according to equal
+    area spacing :cite:`rohrer2004distribution`.
+
+    Parameters
+    ----------
+    resolution
+        The angular resolution in degrees of the azimuthal vectors.
+    hemisphere
+        Generate mesh points on the "upper", "lower" or "both"
+        hemispheres. Default is "both".
+    remove_pole_duplicates
+        If True the duplicate mesh grid points at the North and South
+        pole of the unit sphere are removed. If True then the returned
+        vector has `ndim` = 1, whereas `ndim` = 2 (grid) if False.
+        Default is True.
+
+    Returns
+    -------
+    Vector3d
+    """
+    azimuth, polar = _sample_S2_equal_area_coordinates(resolution, hemisphere)
+    azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
+
+    if remove_pole_duplicates:
+        azimuth_prod, polar_prod = _remove_pole_duplicates(azimuth_prod, polar_prod)
+
+    return Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
+
+
+def sample_S2_cube_mesh(
+    resolution: float, grid_type: str = "spherified_corner"
+) -> Vector3d:
     """Vectors of a cube mesh projected on a unit sphere *S2*.
 
     Parameters
@@ -307,6 +505,7 @@ def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
 
 _sampling_method_registry: Mapping[str, Callable] = {
     "uv": sample_S2_uv_mesh,
+    "equal_area": sample_S2_equal_area_mesh,
     "normalized_cube": partial(sample_S2_cube_mesh, grid_type="normalized"),
     "spherified_cube_edge": partial(sample_S2_cube_mesh, grid_type="spherified_edge"),
     "spherified_cube_corner": partial(
