@@ -21,6 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
+from typing import Any, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -28,7 +29,9 @@ import matplotlib.collections as mcollections
 import matplotlib.patches as mpatches
 import matplotlib.path as mpath
 import matplotlib.projections as mprojections
+import matplotlib.pyplot as plt
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 from orix.plot._symmetry_marker import (
     TwoFoldMarker,
@@ -41,7 +44,7 @@ from orix.vector import Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
 
 
-ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3)
+ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3, mesh=2)
 
 
 class StereographicPlot(maxes.Axes):
@@ -167,6 +170,107 @@ class StereographicPlot(maxes.Axes):
 
         super().plot(x, y, **updated_kwargs)
 
+    def pole_density_function(
+        self,
+        *args: Union[np.ndarray, Vector3d],
+        resolution: float = 1,
+        sigma: float = 5,
+        log: bool = False,
+        colorbar: bool = True,
+        **kwargs: Any,
+    ):
+        """Compute the Pole Density Function (PDF) of vectors in the
+        stereographic projection.
+
+        Parameters
+        ----------
+        args
+            Vector(s), or azimuth and polar angles of the vectors, the
+            latter passed as two separate arguments.
+        resolution
+            The angular resolution of the sampling grid in degrees.
+            Default value is 1.
+        sigma
+            The angular resolution of the applied broadening in degrees.
+            Default value is 5.
+        log
+            If True the log(PDF) is calculated. Default is True.
+        colorbar
+            If True a colorbar is shown alongside the PDF plot.
+            Default is True.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.scatter
+        orix.vector.Vector3d.pole_density_function
+        """
+        from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
+
+        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
+        updated_kwargs = {**kwargs, **new_kwargs}
+
+        if len(args) == 1:
+            v = args[0]
+            if not isinstance(v, Vector3d):
+                raise TypeError(
+                    "If one argument is passed it must be an instance of "
+                    + "`orix.vector.Vector3d`."
+                )
+            azimuth, polar, _ = v.to_polar()
+        elif len(args) == 2:
+            azimuth, polar = args
+        else:
+            raise ValueError(
+                "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
+            )
+
+        if not azimuth.size:
+            return
+
+        # np.histogram2d expects 1d arrays
+        azimuth, polar = np.ravel(azimuth), np.ravel(polar)
+
+        # generate angular mesh on S2
+        azimuth_arr, polar_arr = _sample_S2_equal_area_coordinates(
+            resolution, hemisphere=self.hemisphere, azimuthal_endpoint=True
+        )
+        azimuth_prod, polar_prod = np.meshgrid(azimuth_arr, polar_arr, indexing="ij")
+        # generate histogram in angular space
+        hist, *_ = np.histogram2d(
+            azimuth, polar, bins=(azimuth_arr, polar_arr), density=False
+        )
+        # Normalize by the average number of counts per cell on the
+        # unit sphere to calculate in terms of Multiples of Random
+        # Distribution (MRD). See :cite:`rohrer2004distribution`.
+        hist = hist / hist.mean()
+
+        # apply gaussian filtering to plot
+        # "wrap" along azimuthal axis, "reflect" along polar axis
+        hist = gaussian_filter(hist, sigma / resolution, mode=("wrap", "reflect"))
+
+        if log:
+            # +1 to avoid taking the log of 0
+            hist = np.log(hist + 1)
+
+        # get mesh vertices in stereographic plane
+        v_mesh = Vector3d.from_polar(azimuth=azimuth_prod, polar=polar_prod).unit
+        x, y = self._projection.vector2xy(v_mesh)
+        x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
+
+        # plot mesh
+        updated_kwargs.setdefault("cmap", "magma")
+
+        pc = self.pcolormesh(x, y, hist, **updated_kwargs)
+
+        if colorbar:
+            label = "MRD"
+            if log:
+                label = f"log({label})"
+            plt.colorbar(pc, label=label, ax=self)
+
     def scatter(self, *args, **kwargs):
         """A scatter plot of vectors.
 
@@ -248,7 +352,7 @@ class StereographicPlot(maxes.Axes):
         if value in ["upper", "lower"]:
             self._hemisphere = value
         else:
-            raise ValueError(f"Hemisphere must be 'upper' or 'lower', not {value}")
+            raise ValueError(f"Hemisphere must be 'upper' or 'lower', not {value}.")
 
     @property
     def pole(self):
@@ -703,7 +807,7 @@ class StereographicPlot(maxes.Axes):
             except (ValueError, AttributeError):
                 raise ValueError(
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
-                    "arguments"
+                    "arguments."
                 )
         visible = v <= self._projection.region
         return x, y, visible

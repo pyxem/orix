@@ -275,6 +275,7 @@ StereographicPlot
 .. autosummary::
     draw_circle
     plot
+    pole_density_function
     restrict_to_sector
     scatter
     show_hemisphere_label
@@ -283,7 +284,7 @@ StereographicPlot
     symmetry_marker
     text
 .. autoclass:: orix.plot.StereographicPlot
-    :members: draw_circle, hemisphere, name, plot, pole, restrict_to_sector, scatter, set_labels, show_hemisphere_label, stereographic_grid, symmetry_marker, text
+    :members: draw_circle, hemisphere, name, plot, pole, pole_density_function, restrict_to_sector, scatter, set_labels, show_hemisphere_label, stereographic_grid, symmetry_marker, text
     :undoc-members:
     :show-inheritance:
 
@@ -455,6 +456,7 @@ sampling
     get_sample_local
     sample_S2
     sample_S2_cube_mesh
+    sample_S2_equal_area_mesh
     sample_S2_hexagonal_mesh
     sample_S2_icosahedral_mesh
     sample_S2_random_mesh
@@ -564,6 +566,7 @@ Vector3d
     get_nearest
     in_fundamental_sector
     mean
+    pole_density_function
     rotate
     scatter
     to_polar

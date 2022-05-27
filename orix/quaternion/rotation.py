@@ -384,7 +384,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             Array of Euler angles in radians, in the ranges
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
@@ -517,7 +517,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        ndarray
+        numpy.ndarray
             Array of orientation matrices.
 
         Examples

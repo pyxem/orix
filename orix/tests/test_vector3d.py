@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from matplotlib.collections import QuadMesh
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -195,6 +196,20 @@ def test_dot_outer(vector, something):
     for i in np.ndindex(vector.shape):
         for j in np.ndindex(something.shape):
             assert np.allclose(d[i + j], vector[i].dot(something[j]))
+    d_lazy = vector.dot_outer(something, lazy=True)
+    assert isinstance(d_lazy, np.ndarray)
+    assert np.allclose(d, d_lazy)
+    d_lazy_no_pb = vector.dot_outer(
+        something, lazy=True, progressbar=False, chunk_size=25
+    )
+    assert np.allclose(d_lazy, d_lazy_no_pb)
+
+
+def test_dot_outer_progressbar(vector, something, capsys):
+    d = vector.dot_outer(something, lazy=True, progressbar=True)
+    out, _ = capsys.readouterr()
+    assert "Completed" in out
+    assert d.shape == vector.shape + something.shape
 
 
 def test_cross(vector, something):
@@ -434,6 +449,112 @@ class TestSpareNotImplemented:
 
     def test_rmul_notimplemented(self, vector):
         "cantmul" * vector
+
+
+class TestPoleDensityFunction:
+    def test_pdf_plot_colorbar(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.pole_density_function(return_figure=True, colorbar=True)
+        assert len(fig1.axes) == 2  # plot and colorbar
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
+        plt.close(fig1)
+
+        fig2 = v.pole_density_function(return_figure=True, colorbar=False)
+        assert len(fig2.axes) == 1  # just plot
+        plt.close(fig2)
+
+        fig3 = v.pole_density_function(
+            return_figure=True, hemisphere="both", colorbar=False
+        )
+        assert len(fig3.axes) == 2
+        assert fig3.axes[0].hemisphere == "upper"
+        assert fig3.axes[1].hemisphere == "lower"
+        plt.close(fig3)
+
+        fig4 = v.pole_density_function(
+            return_figure=True, hemisphere="both", colorbar=True
+        )
+        assert len(fig4.axes) == 4
+        plt.close(fig4)
+
+    def test_pdf_plot_hemisphere(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.pole_density_function(return_figure=True, hemisphere="upper")
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
+        qmesh1 = fig1.axes[0].collections[qm1.index(True)].get_array().data
+        plt.close(fig1)
+
+        fig2 = v.pole_density_function(return_figure=True, hemisphere="lower")
+        qm2 = [isinstance(c, QuadMesh) for c in fig2.axes[0].collections]
+        assert any(qm2)
+        qmesh2 = fig2.axes[0].collections[qm2.index(True)].get_array().data
+        plt.close(fig2)
+
+        # test mesh not the same, sigma is different
+        assert not np.allclose(qmesh1, qmesh2)
+
+        fig3 = v.pole_density_function(
+            return_figure=True, colorbar=False, hemisphere="both"
+        )
+        qm3_1 = [isinstance(c, QuadMesh) for c in fig3.axes[0].collections]
+        assert any(qm3_1)
+        qmesh3_1 = fig3.axes[0].collections[qm3_1.index(True)].get_array().data
+        qm3_2 = [isinstance(c, QuadMesh) for c in fig3.axes[1].collections]
+        assert any(qm3_2)
+        qmesh3_2 = fig3.axes[1].collections[qm3_2.index(True)].get_array().data
+        plt.close(fig3)
+
+        # test mesh the same as single plots
+        assert np.allclose(qmesh1, qmesh3_1)  # upper
+        assert np.allclose(qmesh2, qmesh3_2)  # lower
+
+    def test_pdf_plot_sigma(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.pole_density_function(return_figure=True, sigma=5)
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
+        qmesh1 = fig1.axes[0].collections[qm1.index(True)].get_array().data
+        plt.close(fig1)
+
+        fig2 = v.pole_density_function(return_figure=True, sigma=2)
+        qm2 = [isinstance(c, QuadMesh) for c in fig2.axes[0].collections]
+        assert any(qm2)
+        qmesh2 = fig2.axes[0].collections[qm2.index(True)].get_array().data
+        plt.close(fig2)
+
+        # test mesh not the same, sigma is different
+        assert not np.allclose(qmesh1, qmesh2)
+
+    def test_pdf_plot_log(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.pole_density_function(return_figure=True, log=False)
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
+        qmesh1 = fig1.axes[0].collections[qm1.index(True)].get_array().data
+        plt.close(fig1)
+
+        fig2 = v.pole_density_function(return_figure=True, log=True)
+        qm2 = [isinstance(c, QuadMesh) for c in fig2.axes[0].collections]
+        assert any(qm2)
+        qmesh2 = fig2.axes[0].collections[qm2.index(True)].get_array().data
+        plt.close(fig2)
+
+        # test mesh not the same, log is different
+        assert not np.allclose(qmesh1, qmesh2)
+
+    def test_pdf_empty_vector(self):
+        v = Vector3d.empty()
+        assert not v.size
+        fig = v.pole_density_function(return_figure=True)
+        qm = [isinstance(c, QuadMesh) for c in fig.axes[0].collections]
+        assert not any(qm)
+
+    def test_pdf_hemisphere_raises(self):
+        v = Vector3d(np.random.randn(100, 3)).unit
+        with pytest.raises(ValueError, match=r"Hemisphere must be either "):
+            fig1 = v.pole_density_function(return_figure=True, hemisphere="test")
 
 
 class TestSphericalCoordinates:

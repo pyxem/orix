@@ -16,15 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
 from copy import deepcopy
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+import dask.array as da
+from dask.diagnostics import ProgressBar
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.base import check, Object3d
 
 
-def check_vector(obj):
+def check_vector(obj: Any) -> bool:
     return check(obj, Vector3d)
 
 
@@ -78,46 +83,46 @@ class Vector3d(Object3d):
     dim = 3
 
     @property
-    def x(self):
+    def x(self) -> np.ndarray:
         """numpy.ndarray : This vector's x data."""
         return self.data[..., 0]
 
     @x.setter
-    def x(self, value):
+    def x(self, value: np.ndarray):
         self.data[..., 0] = value
 
     @property
-    def y(self):
+    def y(self) -> np.ndarray:
         """numpy.ndarray : This vector's y data."""
         return self.data[..., 1]
 
     @y.setter
-    def y(self, value):
+    def y(self, value: np.ndarray):
         self.data[..., 1] = value
 
     @property
-    def z(self):
+    def z(self) -> np.ndarray:
         """numpy.ndarray : This vector's z data."""
         return self.data[..., 2]
 
     @z.setter
-    def z(self, value):
+    def z(self, value: np.ndarray):
         self.data[..., 2] = value
 
     @property
-    def xyz(self):
-        """tuple of ndarray : This vector's components, useful for plotting."""
+    def xyz(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """tuple of numpy.ndarray : This vector's components, useful for plotting."""
         return self.x, self.y, self.z
 
     @property
-    def _tuples(self):
+    def _tuples(self) -> Set:
         """set of tuple : the set of comparable vectors."""
         s = self.flatten()
         tuples = set([tuple(d) for d in s.data])
         return tuples
 
     @property
-    def perpendicular(self):
+    def perpendicular(self) -> Vector3d:
         if np.any(self.x == 0) and np.any(self.y == 0):
             if np.any(self.z == 0):
                 raise ValueError("No vectors are perpendicular")
@@ -128,7 +133,7 @@ class Vector3d(Object3d):
         return Vector3d(np.stack((x, y, z), axis=-1))
 
     @property
-    def radial(self):
+    def radial(self) -> np.ndarray:
         """Radial spherical coordinate, i.e. the distance from a point
         on the sphere to the origin, according to the ISO 31-11 standard
         [SphericalWolfram]_.
@@ -157,7 +162,7 @@ class Vector3d(Object3d):
         return azimuth
 
     @property
-    def polar(self):
+    def polar(self) -> np.ndarray:
         r"""Polar spherical coordinate, i.e. the angle
         :math:`\theta \in [0, \pi]` from the positive z-axis to a point
         on the sphere, according to the ISO 31-11 standard
@@ -169,10 +174,12 @@ class Vector3d(Object3d):
         """
         return np.arccos(self.data[..., 2] / self.radial.data)
 
-    def __neg__(self):
+    def __neg__(self) -> Vector3d:
         return self.__class__(-self.data)
 
-    def __add__(self, other):
+    def __add__(
+        self, other: Union[int, float, List, Tuple, np.ndarray, Vector3d]
+    ) -> Vector3d:
         if isinstance(other, Vector3d):
             return self.__class__(self.data + other.data)
         elif isinstance(other, (int, float)):
@@ -185,7 +192,7 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __radd__(self, other):
+    def __radd__(self, other: Union[int, float, List, Tuple, np.ndarray]) -> Vector3d:
         if isinstance(other, (int, float)):
             return self.__class__(other + self.data)
         elif isinstance(other, (list, tuple)):
@@ -196,7 +203,9 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __sub__(self, other):
+    def __sub__(
+        self, other: Union[int, float, List, Tuple, np.ndarray, Vector3d]
+    ) -> Vector3d:
         if isinstance(other, Vector3d):
             return self.__class__(self.data - other.data)
         elif isinstance(other, (int, float)):
@@ -209,7 +218,7 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rsub__(self, other):
+    def __rsub__(self, other: Union[int, float, List, Tuple, np.ndarray]) -> Vector3d:
         if isinstance(other, (int, float)):
             return self.__class__(other - self.data)
         elif isinstance(other, (list, tuple)):
@@ -220,7 +229,9 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __mul__(self, other):
+    def __mul__(
+        self, other: Union[int, float, List, Tuple, np.ndarray, Vector3d]
+    ) -> Vector3d:
         if isinstance(other, Vector3d):
             raise ValueError(
                 "Multiplying one vector with another is ambiguous. "
@@ -236,7 +247,7 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: Union[int, float, List, Tuple, np.ndarray]) -> Vector3d:
         if isinstance(other, (int, float)):
             return self.__class__(other * self.data)
         elif isinstance(other, (list, tuple)):
@@ -247,7 +258,9 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __truediv__(self, other):
+    def __truediv__(
+        self, other: Union[int, float, List, Tuple, np.ndarray, Vector3d]
+    ) -> Vector3d:
         if isinstance(other, Vector3d):
             raise ValueError("Dividing vectors is undefined")
         elif isinstance(other, (int, float)):
@@ -260,10 +273,10 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: Any):
         raise ValueError("Division by a vector is undefined")
 
-    def dot(self, other):
+    def dot(self, other: Vector3d) -> np.ndarray:
         """The dot product of a vector with another vector.
 
         Vectors must have compatible shape.
@@ -285,11 +298,32 @@ class Vector3d(Object3d):
             raise ValueError("{} is not a vector!".format(other))
         return np.sum(self.data * other.data, axis=-1)
 
-    def dot_outer(self, other):
+    def dot_outer(
+        self,
+        other: Vector3d,
+        lazy: bool = False,
+        chunk_size: int = 20,
+        progressbar: bool = False,
+    ) -> np.ndarray:
         """The outer dot product of a vector with another vector.
 
         The dot product for every combination of vectors in `self` and
         `other` is computed.
+
+        Parameters
+        ----------
+        other
+            Compute the outer dot product with these vectors.
+        lazy
+            Whether to perform the computation lazily with Dask. Default
+            is False.
+        chunk_size
+            Number of orientations per axis to include in each iteration
+            of the computation. Default is 20. Only applies when `lazy`
+            is True.
+        progressbar
+            Whether to show a progressbar during computation if `lazy`
+            is True. Default is True.
 
         Returns
         -------
@@ -307,10 +341,19 @@ class Vector3d(Object3d):
                [  0.,  0.4]
                [ 0.5,  0.5]])
         """
-        dots = np.tensordot(self.data, other.data, axes=(-1, -1))
+        if lazy:
+            dots = np.empty(self.shape + other.shape)
+            dp = self._dot_outer_dask(other, chunk_size)
+            if progressbar:
+                with ProgressBar():
+                    da.store(sources=dp, targets=dots)
+            else:
+                da.store(sources=dp, targets=dots)
+        else:
+            dots = np.tensordot(self.data, other.data, axes=(-1, -1))
         return dots
 
-    def cross(self, other):
+    def cross(self, other: Vector3d) -> Vector3d:
         """The cross product of a vector with another vector.
 
         Vectors must have compatible shape for broadcasting to work.
@@ -318,7 +361,7 @@ class Vector3d(Object3d):
         Returns
         -------
         Vector3d
-            The class of 'other' is preserved.
+            The class of `other` is preserved.
 
         Examples
         --------
@@ -332,18 +375,20 @@ class Vector3d(Object3d):
         return other.__class__(np.cross(self.data, other.data))
 
     @classmethod
-    def from_polar(cls, azimuth, polar, radial=1):
+    def from_polar(
+        cls, azimuth: np.ndarray, polar: np.ndarray, radial: float = 1.0
+    ) -> Vector3d:
         """Create a :class:`~orix.vector.Vector3d` from spherical
         coordinates according to the ISO 31-11 standard
         [SphericalWolfram]_.
 
         Parameters
         ----------
-        azimuth : array_like
+        azimuth
             The azimuth angle, in radians.
-        polar : array_like
+        polar
             The polar angle, in radians.
-        radial : array_like
+        radial
             The radial distance. Defaults to 1 to produce unit vectors.
 
         Returns
@@ -365,12 +410,12 @@ class Vector3d(Object3d):
         return radial * cls(np.stack((x, y, z), axis=-1))
 
     @classmethod
-    def zero(cls, shape=(1,)):
+    def zero(cls, shape: Tuple[int] = (1,)) -> Vector3d:
         """Returns zero vectors in the specified shape.
 
         Parameters
         ----------
-        shape : tuple
+        shape
 
         Returns
         -------
@@ -379,21 +424,21 @@ class Vector3d(Object3d):
         return cls(np.zeros(shape + (cls.dim,)))
 
     @classmethod
-    def xvector(cls):
+    def xvector(cls) -> Vector3d:
         """Vector3d : a single unit vector parallel to the x-direction."""
         return cls((1, 0, 0))
 
     @classmethod
-    def yvector(cls):
+    def yvector(cls) -> Vector3d:
         """Vector3d : a single unit vector parallel to the y-direction."""
         return cls((0, 1, 0))
 
     @classmethod
-    def zvector(cls):
+    def zvector(cls) -> Vector3d:
         """Vector3d : a single unit vector parallel to the z-direction."""
         return cls((0, 0, 1))
 
-    def angle_with(self, other):
+    def angle_with(self, other: Vector3d) -> np.ndarray:
         """Calculate the angles between these vectors in other vectors.
 
         Vectors must have compatible shapes for broadcasting to work.
@@ -406,7 +451,11 @@ class Vector3d(Object3d):
         cosines = np.round(self.dot(other) / self.norm / other.norm, 12)
         return np.arccos(cosines)
 
-    def rotate(self, axis=None, angle=0):
+    def rotate(
+        self,
+        axis: Union[np.ndarray, Vector3d] = None,
+        angle: Union[float, np.np.ndarray] = 0,
+    ) -> Vector3d:
         """Convenience function for rotating this vector.
 
         Shapes of 'axis' and 'angle' must be compatible with shape of
@@ -414,9 +463,9 @@ class Vector3d(Object3d):
 
         Parameters
         ----------
-        axis : Vector3d or array_like, optional
+        axis
             The axis of rotation. Defaults to the z-vector.
-        angle : array_like, optional
+        angle
             The angle of rotation, in radians.
 
         Returns
@@ -441,16 +490,18 @@ class Vector3d(Object3d):
         q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
         return q * self
 
-    def get_nearest(self, x, inclusive=False, tiebreak=None):
+    def get_nearest(
+        self, x: Vector3d, inclusive: bool = False, tiebreak: bool = None
+    ) -> Vector3d:
         """The vector among x with the smallest angle to this one.
 
         Parameters
         ----------
-        x : Vector3d
-        inclusive : bool
+        x
+        inclusive
             if False (default) vectors exactly parallel to this will not
             be considered.
-        tiebreak : Vector3d
+        tiebreak
             If multiple vectors are equally close to this one,
             `tiebreak` will be used as a secondary comparison. By
             default equal to (0, 0, 1).
@@ -472,11 +523,11 @@ class Vector3d(Object3d):
         order = np.lexsort((cosines, verticality))
         return x[order[-1]]
 
-    def mean(self):
+    def mean(self) -> Vector3d:
         axis = tuple(range(self.ndim))
         return self.__class__(self.data.mean(axis=axis))
 
-    def to_polar(self):
+    def to_polar(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""Return the azimuth :math:`\phi`, polar :math:`\theta`, and
         radial :math:`r` spherical coordinates, the angles in radians.
         The coordinates are defined as in the ISO 31-11 standard
@@ -488,7 +539,7 @@ class Vector3d(Object3d):
         """
         return self.azimuth, self.polar, self.radial
 
-    def in_fundamental_sector(self, symmetry):
+    def in_fundamental_sector(self, symmetry: "Symmetry") -> Vector3d:
         """Project vectors to a symmetry's fundamental sector (inverse
         pole figure).
 
@@ -497,7 +548,7 @@ class Vector3d(Object3d):
 
         Parameters
         ----------
-        symmetry : ~orix.quaternion.Symmetry
+        symmetry
             Symmetry with a fundamental sector.
 
         Returns
@@ -549,7 +600,9 @@ class Vector3d(Object3d):
 
         return v2
 
-    def get_circle(self, opening_angle=np.pi / 2, steps=100):
+    def get_circle(
+        self, opening_angle: Union[float, np.ndarray] = np.pi / 2, steps: int = 100
+    ) -> Vector3d:
         r"""Get vectors delineating great or small circle(s) with a
         given `opening_angle` about each vector.
 
@@ -557,16 +610,16 @@ class Vector3d(Object3d):
 
         Parameters
         ----------
-        opening_angle : float or numpy.ndarray, optional
+        opening_angle
             Opening angle(s) around the vector(s). Default is
             :math:`\pi/2`, giving a great circle. If an array is passed,
             its size must be equal to the number of vectors.
-        steps : int, optional
+        steps
             Number of vectors to describe each circle, default is 100.
 
         Returns
         -------
-        circles : Vector3d
+        circles
             Vectors delineating circles with the `opening_angle` about
             the vectors.
 
@@ -584,63 +637,199 @@ class Vector3d(Object3d):
             circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)
         return circles
 
+    def pole_density_function(
+        self,
+        resolution: float = 1,
+        sigma: float = 5,
+        log: bool = False,
+        colorbar: bool = True,
+        projection: str = "stereographic",
+        figure: Optional[Figure] = None,
+        axes_labels: Optional[List[str]] = None,
+        hemisphere: Optional[str] = None,
+        show_hemisphere_label: Optional[bool] = None,
+        grid: Optional[bool] = None,
+        grid_resolution: Optional[Tuple[float, float]] = None,
+        figure_kwargs: Optional[Dict] = None,
+        text_kwargs: Optional[Dict] = None,
+        return_figure: bool = False,
+        **kwargs: Any,
+    ) -> Optional[Figure]:
+        """Plot the Pole Density Function (PDF) on a given hemisphere
+        in the stereographic projection.
+
+        The PDF is calculated in terms of Multiples of Random
+        Distribution (MRD), ie. multiples of the expected density if the
+        pole distribution was completely random, see
+        :cite:`rohrer2004distribution`.
+
+        Parameters
+        ----------
+        resolution
+            The angular resolution of the sampling grid in degrees.
+            Default value is 1.
+        sigma
+            The angular resolution of the applied broadening in degrees.
+            Default value is 5.
+        log
+            If True the log(PDF) is calculated. Default is True.
+        colorbar
+            If True a colorbar is shown alongside the PDF plot.
+            Default is True.
+        projection
+            Which projection to use. The default is "stereographic", the
+            only current option.
+        figure
+            Which figure to plot onto. Default is None, which creates a
+            new figure.
+        axes_labels
+            Reference frame axes labels, defaults to [None, None, None].
+        hemisphere
+            Which hemisphere(s) to plot the vectors in, defaults to
+            "None", which means "upper" if a new figure is created,
+            otherwise adds to the current figure's hemispheres. Options
+            are "upper" and "lower".
+        show_hemisphere_label
+            Whether to show hemisphere labels "upper" or "lower".
+            Default is True if `hemisphere` is "both", otherwise False.
+        grid
+            Whether to show the azimuth and polar grid. Default is
+            whatever `axes.grid` is set to in
+            :obj:`matplotlib.rcParams`.
+        grid_resolution
+            Azimuth and polar grid resolution in degrees, as a tuple.
+            Default is whatever is default in
+            :class:`~orix.plot.StereographicPlot.stereographic_grid`.
+        figure_kwargs
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
+        text_kwargs
+            Dictionary of keyword arguments passed to
+            :meth:`~orix.plot.StereographicPlot.text`, which passes
+            these on to :meth:`matplotlib.axes.Axes.text`.
+        return_figure
+            Whether to return the figure (default is False).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        Returns
+        -------
+        fig
+            The created figure, returned if `return_figure` is True.
+
+        See Also
+        --------
+        orix.plot.StereographicPlot.pole_density_function
+        """
+        if hemisphere is None:
+            hemisphere = "upper"
+        if hemisphere not in ("upper", "lower", "both"):
+            raise ValueError('Hemisphere must be either "upper", "lower", or "both".')
+
+        # computation done in spherical coordinates
+        azimuth, polar, _ = self.to_polar()
+
+        (
+            fig,
+            axes,
+            hemisphere,
+            show_hemisphere_label,
+            grid,
+            grid_resolution,
+            text_kwargs,
+            axes_labels,
+        ) = self._setup_plot(
+            projection=projection,
+            figure=figure,
+            hemisphere=hemisphere,
+            show_hemisphere_label=show_hemisphere_label,
+            grid=grid,
+            grid_resolution=grid_resolution,
+            figure_kwargs=figure_kwargs,
+            text_kwargs=text_kwargs,
+            axes_labels=axes_labels,
+        )
+
+        for i, ax in enumerate(axes):
+            # setup plot
+            ax.hemisphere = hemisphere[i]
+            ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
+            ax._stereographic_grid = grid[i]
+            ax.set_labels(*axes_labels)
+            if show_hemisphere_label:
+                ax.show_hemisphere_label()
+
+            ax.pole_density_function(
+                azimuth,
+                polar,
+                resolution=resolution,
+                sigma=sigma,
+                log=log,
+                colorbar=colorbar,
+                **kwargs,
+            )
+
+        if return_figure:
+            return fig
+
     def scatter(
         self,
-        projection="stereographic",
-        figure=None,
-        axes_labels=None,
-        vector_labels=None,
-        hemisphere=None,
-        reproject=False,
-        show_hemisphere_label=None,
-        grid=None,
-        grid_resolution=None,
-        figure_kwargs=None,
-        reproject_scatter_kwargs=None,
-        text_kwargs=None,
-        return_figure=False,
-        **kwargs,
-    ):
+        projection: str = "stereographic",
+        figure: Optional[Figure] = None,
+        axes_labels: Optional[List[str]] = None,
+        vector_labels: Optional[List[str]] = None,
+        hemisphere: Optional[str] = None,
+        reproject: bool = False,
+        show_hemisphere_label: Optional[bool] = None,
+        grid: Optional[bool] = None,
+        grid_resolution: Optional[Tuple[float, float]] = None,
+        figure_kwargs: Optional[Dict] = None,
+        reproject_scatter_kwargs: Optional[Dict] = None,
+        text_kwargs: Optional[Dict] = None,
+        return_figure: bool = False,
+        **kwargs: Any,
+    ) -> Optional[Figure]:
         """Plot vectors in the stereographic projection.
 
         Parameters
         ----------
-        projection : str, optional
+        projection
             Which projection to use. The default is "stereographic", the
             only current option.
-        figure : matplotlib.figure.Figure, optional
+        figure
             Which figure to plot onto. Default is None, which creates a
             new figure.
-        axes_labels : list of str, optional
+        axes_labels
             Reference frame axes labels, defaults to [None, None, None].
-        vector_labels : list of str, optional
+        vector_labels
             Vector text labels, which by default aren't added.
-        hemisphere : str, optional
+        hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
             "None", which means "upper" if a new figure is created,
             otherwise adds to the current figure's hemispheres. Options
             are "upper", "lower", and "both", which plots two
             projections side by side.
-        reproject : bool, optional
+        reproject
             Whether to reproject vectors onto the chosen hemisphere.
             Reprojection is achieved by reflection of the vectors
             located on the opposite hemisphere in the projection plane.
             Ignored if `hemisphere` is "both". Default is False.
-        show_hemisphere_label : bool, optional
+        show_hemisphere_label
             Whether to show hemisphere labels "upper" or "lower".
             Default is True if `hemisphere` is "both", otherwise False.
-        grid : bool, optional
+        grid
             Whether to show the azimuth and polar grid. Default is
             whatever `axes.grid` is set to in
             :obj:`matplotlib.rcParams`.
-        grid_resolution : tuple, optional
+        grid_resolution
             Azimuth and polar grid resolution in degrees, as a tuple.
             Default is whatever is default in
             :class:`~orix.plot.StereographicPlot.stereographic_grid`.
-        figure_kwargs : dict, optional
+        figure_kwargs
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
-        reproject_scatter_kwargs: dict, optional
+        reproject_scatter_kwargs
             Dictionary of keyword arguments for the reprojected scatter
             points which is passed to
             :meth:`~orix.plot.StereographicPlot.scatter`, which passes
@@ -648,20 +837,20 @@ class Vector3d(Object3d):
             default marker style for reprojected vectors is "+". Values
             used for vector(s) on the visible hemisphere are used unless
             another value is passed here.
-        text_kwargs : dict, optional
+        text_kwargs
             Dictionary of keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.text`, which passes
             these on to :meth:`matplotlib.axes.Axes.text`.
-        return_figure : bool, optional
+        return_figure
             Whether to return the figure (default is False).
-        kwargs : dict, optional
+        kwargs
             Keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.scatter`, which passes
             these on to :meth:`matplotlib.axes.Axes.scatter`.
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
+        fig
             The created figure, returned if `return_figure` is True.
 
         Notes
@@ -731,21 +920,21 @@ class Vector3d(Object3d):
 
     def draw_circle(
         self,
-        projection="stereographic",
-        figure=None,
-        opening_angle=np.pi / 2,
-        steps=100,
-        reproject=False,
-        axes_labels=None,
-        hemisphere=None,
-        show_hemisphere_label=None,
-        grid=None,
-        grid_resolution=None,
-        figure_kwargs=None,
-        reproject_plot_kwargs=None,
-        return_figure=False,
-        **kwargs,
-    ):
+        projection: str = "stereographic",
+        figure: Optional[Figure] = None,
+        opening_angle: Union[float, np.ndarray] = np.pi / 2,
+        steps: int = 100,
+        reproject: bool = False,
+        axes_labels: Optional[List[str]] = None,
+        hemisphere: Optional[str] = None,
+        show_hemisphere_label: Optional[bool] = None,
+        grid: Optional[bool] = None,
+        grid_resolution: Optional[Tuple[float, float]] = None,
+        figure_kwargs: Optional[Dict] = None,
+        reproject_plot_kwargs: Optional[Dict] = None,
+        return_figure: bool = False,
+        **kwargs: Any,
+    ) -> Optional[Figure]:
         r"""Draw great or small circles with a given `opening_angle` to
         to the vectors in the stereographic projection.
 
@@ -754,54 +943,54 @@ class Vector3d(Object3d):
 
         Parameters
         ----------
-        projection : str, optional
+        projection
             Which projection to use. The default is "stereographic", the
             only current option.
-        figure : matplotlib.figure.Figure, optional
+        figure
             Which figure to plot onto. Default is None, which creates a
             new figure.
-        opening_angle : float or numpy.ndarray, optional
+        opening_angle
             Opening angle(s) around the vector(s). Default is
             :math:`\pi/2`, giving a great circle. If an array is passed,
             its size must be equal to the number of vectors.
-        steps : int, optional
+        steps
             Number of vectors to describe each circle, default is 100.
-        reproject : bool, optional
+        reproject
             Whether to reproject parts of the circle(s) visible on the
             other hemisphere. Reprojection is achieved by reflection of
             the circle(s) parts located on the other hemisphere in the
             projection plane. Ignored if hemisphere is “both”. Default
             is False.
-        axes_labels : list of str, optional
+        axes_labels
             Reference frame axes labels, defaults to [None, None, None].
-        hemisphere : str, optional
+        hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
             "None", which means "upper" if a new figure is created,
             otherwise adds to the current figure's hemispheres. Options
             are "upper", "lower", and "both", which plots two
             projections side by side.
-        show_hemisphere_label : bool, optional
+        show_hemisphere_label
             Whether to show hemisphere labels "upper" or "lower`.
             Default is True if `hemisphere` is "both", otherwise False.
-        grid : bool, optional
+        grid
             Whether to show the azimuth and polar grid. Default is
             whatever `axes.grid` is set to in
             :obj:`matplotlib.rcParams`.
-        grid_resolution : tuple, optional
+        grid_resolution
             Azimuth and polar grid resolution in degrees, as a tuple.
             Default is whatever is default in
             :class:`~orix.plot.StereographicPlot.stereographic_grid`.
-        figure_kwargs : dict, optional
+        figure_kwargs
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
-        reproject_plot_kwargs : dict, optional
+        reproject_plot_kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.plot` to alter the appearance of
             parts of the circle(s) visible on the other hemisphere if
             `reproject` is True. These lines are dashed by default.
             Values used for circle(s) on the current hemisphere are used
             unless values are passed here.
-        return_figure : bool, optional
+        return_figure
             Whether to return the figure (default is False).
         kwargs
             Keyword arguments passed to
@@ -810,7 +999,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
+        fig
             The created figure, returned if `return_figure` is True.
 
         Notes
@@ -878,15 +1067,15 @@ class Vector3d(Object3d):
 
     @staticmethod
     def _setup_plot(
-        projection="stereographic",
-        figure=None,
-        hemisphere=None,
-        show_hemisphere_label=None,
-        grid=None,
-        grid_resolution=None,
-        figure_kwargs=None,
-        text_kwargs=None,
-        axes_labels=None,
+        projection: str = "stereographic",
+        figure: Optional[Figure] = None,
+        hemisphere: Optional[str] = None,
+        show_hemisphere_label: Optional[bool] = None,
+        grid: Optional[bool] = None,
+        grid_resolution: Optional[Tuple[float, float]] = None,
+        figure_kwargs: Optional[Dict] = None,
+        text_kwargs: Optional[Dict] = None,
+        axes_labels: Optional[List[str]] = None,
     ):
         """Set up a stereographic projection plot.
 
@@ -999,3 +1188,17 @@ class Vector3d(Object3d):
             text_kwargs,
             new_axes_labels,
         )
+
+    def _dot_outer_dask(self, other: Vector3d, chunk_size: int = 20) -> da.Array:
+        """Compute the lazy dot product between this vector and another."""
+        ndim1 = self.ndim
+        ndim2 = other.ndim
+
+        # Set chunk sizes
+        chunks1 = (chunk_size,) * ndim1 + (-1,)
+        chunks2 = (chunk_size,) * ndim2 + (-1,)
+
+        v1 = da.from_array(self.data, chunks=chunks1)
+        v2 = da.from_array(other.data, chunks=chunks2)
+
+        return da.tensordot(v1, v2, axes=(v1.ndim - 1, v2.ndim - 1))
