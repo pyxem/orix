@@ -261,12 +261,12 @@ class StereographicPlot(maxes.Axes):
                 polar_coords[:-1] + np.ediff1d(polar_coords) / 2,
                 indexing="ij",
             )
-            v_center_mesh = Vector3d.from_polar(
+            v_center_grid = Vector3d.from_polar(
                 azimuth=azimuth_center_grid, polar=polar_center_grid
             ).unit
             # fold back in into FS
-            v_center_mesh_fs = v_center_mesh.in_fundamental_sector(symmetry)
-            azimuth_center_fs, polar_center_fs, _ = v_center_mesh_fs.to_polar()
+            v_center_grid_fs = v_center_grid.in_fundamental_sector(symmetry)
+            azimuth_center_fs, polar_center_fs, _ = v_center_grid_fs.to_polar()
             azimuth_center_fs = azimuth_center_fs.ravel()
             polar_center_fs = polar_center_fs.ravel()
             # get correct histogram bin for vectors folded back into FS
@@ -277,7 +277,7 @@ class StereographicPlot(maxes.Axes):
             # add hist data to new histogram by buffering
             np.add.at(temp, (i, j), hist.ravel())
             hist = np.ma.array(
-                temp, mask=~(v_center_mesh <= symmetry.fundamental_sector)
+                temp, mask=~(v_center_grid <= symmetry.fundamental_sector)
             )
         else:
             symmetry = None
@@ -938,12 +938,3 @@ def _order_in_hemisphere(polar, pole):
         order = np.roll(order, shift=-(indices[-1] + 1))
 
     return order
-
-
-def _roll_columns_independently(arr, shifts):
-    """Roll columns of a 2d array by different values."""
-    rows, cols = np.ogrid[: arr.shape[0], : arr.shape[1]]
-    # use positive shifts
-    shifts = shifts % arr.shape[1]
-    out = arr[rows, cols - shifts[:, np.newaxis]]
-    return out
