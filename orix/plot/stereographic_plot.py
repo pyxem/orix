@@ -21,7 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -187,8 +187,8 @@ class StereographicPlot(maxes.Axes):
         Parameters
         ----------
         args
-            Vector(s), or azimuth and polar angles, the latter passed as
-            two separate arguments.
+            Vector(s), or azimuth and polar angles of the vectors, the
+            latter passed as two separate arguments.
         resolution
             The angular resolution of the sampling grid in degrees.
             Default value is 1.
@@ -210,6 +210,7 @@ class StereographicPlot(maxes.Axes):
         See Also
         --------
         matplotlib.axes.Axes.scatter
+        orix.vector.Vector3d.pole_density_function
         """
         from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
 
