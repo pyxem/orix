@@ -88,7 +88,7 @@ class Vector3d(Object3d):
         return self.data[..., 0]
 
     @x.setter
-    def x(self, value: np.ndarray) -> None:
+    def x(self, value: np.ndarray):
         self.data[..., 0] = value
 
     @property
@@ -97,7 +97,7 @@ class Vector3d(Object3d):
         return self.data[..., 1]
 
     @y.setter
-    def y(self, value: np.ndarray) -> None:
+    def y(self, value: np.ndarray):
         self.data[..., 1] = value
 
     @property
@@ -106,7 +106,7 @@ class Vector3d(Object3d):
         return self.data[..., 2]
 
     @z.setter
-    def z(self, value: np.ndarray) -> None:
+    def z(self, value: np.ndarray):
         self.data[..., 2] = value
 
     @property
@@ -273,7 +273,7 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rtruediv__(self, other: Any) -> None:
+    def __rtruediv__(self, other: Any):
         raise ValueError("Division by a vector is undefined")
 
     def dot(self, other: Vector3d) -> np.ndarray:
