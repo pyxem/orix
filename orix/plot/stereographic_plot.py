@@ -265,15 +265,17 @@ class StereographicPlot(maxes.Axes):
                 azimuth=azimuth_center_grid, polar=polar_center_grid
             ).unit
             # fold back in into FS
-            v_center_mesh_fs = v_center_mesh.flatten().in_fundamental_sector(symmetry)
+            v_center_mesh_fs = v_center_mesh.in_fundamental_sector(symmetry)
             azimuth_center_fs, polar_center_fs, _ = v_center_mesh_fs.to_polar()
+            azimuth_center_fs = azimuth_center_fs.ravel()
+            polar_center_fs = polar_center_fs.ravel()
             # get correct histogram bin for vectors folded back into FS
             i = np.digitize(azimuth_center_fs, azimuth_coords) - 1
             j = np.digitize(polar_center_fs, polar_coords) - 1
             # recompute histogram
             temp = np.zeros_like(hist)
             # add hist data to new histogram by buffering
-            np.add.at(temp, (i, j), hist[i, j])
+            np.add.at(temp, (i, j), hist.ravel())
             hist = np.ma.array(
                 temp, mask=~(v_center_mesh <= symmetry.fundamental_sector)
             )
