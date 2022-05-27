@@ -21,7 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -205,6 +205,7 @@ class StereographicPlot(maxes.Axes):
         See Also
         --------
         matplotlib.axes.Axes.scatter
+        orix.vector.Vector3d.pole_density_function
         """
         from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
 
