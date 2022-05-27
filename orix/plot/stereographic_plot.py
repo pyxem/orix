@@ -227,21 +227,6 @@ class StereographicPlot(maxes.Axes):
                 "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
             )
 
-        # this is true for InversePoleFigure subclass
-        if hasattr(self, "_symmetry"):
-            symmetry = self._symmetry
-            v = Vector3d.from_polar(azimuth, polar)
-            v = v.in_fundamental_sector(symmetry)
-            azimuth, polar, _ = v.to_polar()
-            # reduce range of histogram to that of FS
-            azimuth_fs, polar_fs, _ = symmetry.fundamental_sector.vertices.to_polar()
-            azimuth_range = (azimuth_fs.min(), azimuth_fs.max())
-            polar_range = (polar_fs.min(), polar_fs.max())
-        else:
-            symmetry = None
-            azimuth_range = None
-            polar_range = None
-
         # np.histogram2d expects 1d arrays
         azimuth, polar = np.ravel(azimuth), np.ravel(polar)
         if not azimuth.size:
@@ -252,8 +237,6 @@ class StereographicPlot(maxes.Axes):
             resolution,
             hemisphere=self.hemisphere,
             azimuth_endpoint=True,
-            azimuth_range=azimuth_range,
-            polar_range=polar_range,
         )
         azimuth_grid, polar_grid = np.meshgrid(
             azimuth_coords, polar_coords, indexing="ij"
@@ -263,13 +246,16 @@ class StereographicPlot(maxes.Axes):
             azimuth, polar, bins=(azimuth_coords, polar_coords), density=False
         )
 
-        # get mesh vertices in stereographic plane
-        v_mesh = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
-        x, y = self._projection.vector2xy(v_mesh)
-        x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
+        # "wrap" along azimuthal axis, "reflect" along polar axis
+        mode = ("wrap", "reflect")
+        # apply broadening in angular space
+        hist = gaussian_filter(hist, sigma / resolution, mode=mode)
 
-        # get mask of mesh points inside of fundamental sector for IPF
-        if symmetry is not None:
+        # in the case of IPF, accumulate all values outside FS back into
+        # correct bin in FS
+        if hasattr(self, "_symmetry"):
+            symmetry = self._symmetry
+            # compute histogram bin centers in azimuth and polar coords
             azimuth_center_grid, polar_center_grid = np.meshgrid(
                 azimuth_coords[:-1] + np.ediff1d(azimuth_coords) / 2,
                 polar_coords[:-1] + np.ediff1d(polar_coords) / 2,
@@ -278,43 +264,42 @@ class StereographicPlot(maxes.Axes):
             v_center_mesh = Vector3d.from_polar(
                 azimuth=azimuth_center_grid, polar=polar_center_grid
             ).unit
-            mask = v_center_mesh <= symmetry.fundamental_sector
+            # fold back in into FS
+            v_center_mesh_fs = v_center_mesh.flatten().in_fundamental_sector(symmetry)
+            azimuth_center_fs, polar_center_fs, _ = v_center_mesh_fs.to_polar()
+            # get correct histogram bin for vectors folded back into FS
+            i = np.digitize(azimuth_center_fs, azimuth_coords) - 1
+            j = np.digitize(polar_center_fs, polar_coords) - 1
+            # recompute histogram
+            temp = np.zeros_like(hist)
+            # add hist data to new histogram by buffering
+            np.add.at(temp, (i, j), hist[i, j])
+            hist = np.ma.array(
+                temp, mask=~(v_center_mesh <= symmetry.fundamental_sector)
+            )
         else:
-            mask = np.ones_like(hist, dtype=bool)
+            symmetry = None
+            hist = np.ma.array(hist, mask=np.zeros_like(hist, dtype=bool))
 
         # Normalize by the average number of counts per cell on the
         # unit sphere to calculate in terms of Multiples of Random
         # Distribution (MRD). See :cite:`rohrer2004distribution`.
-        # `hist.mean()` is only computed over the values in point group
-        # fudamental # sector for IPF
-        hist = hist / hist[mask].mean()
-
-        # apply gaussian filtering to plot
-        if symmetry is not None:
-            mode = ("reflect", "reflect")
-        else:
-            # "wrap" along azimuthal axis, "reflect" along polar axis
-            mode = ("wrap", "reflect")
-        # In the case of IPF, because not all grid points are in point
-        # group FS, some histogram values are 0 and will never be
-        # populated, this leads to uneven blurring. In this case, just
-        # for the broadening procedure, populate these histogram values
-        # with the valid value from the nearest neighbour
-        if mask.sum() < hist.size:
-            shifts = 2 * (hist == 0).argmax(axis=1) - hist.shape[1] - 2
-            hist_reflected = _roll_columns_independently(hist[:, ::-1], shifts)
-            hist[~mask] = hist_reflected[~mask]
-        # apply broadening in angular space
-        hist = gaussian_filter(hist, sigma / resolution, mode=mode)
+        # as `hist` is a masked array, only valid (unmasked) values are
+        # used in this computation
+        hist = hist / hist.mean()
 
         if log:
             # +1 to avoid taking the log of 0
             hist = np.log(hist + 1)
 
+        # get mesh vertices in stereographic plane
+        v_mesh = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
+        x, y = self._projection.vector2xy(v_mesh)
+        x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
+
         # plot mesh
         updated_kwargs.setdefault("cmap", "magma")
         # mpl.QuadMesh handles masked values by default
-        hist = np.ma.array(hist, mask=~mask)
         pc = self.pcolormesh(x, y, hist, **updated_kwargs)
 
         if colorbar:
