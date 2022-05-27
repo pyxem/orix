@@ -21,7 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
