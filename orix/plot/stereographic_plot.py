@@ -185,8 +185,8 @@ class StereographicPlot(maxes.Axes):
         Parameters
         ----------
         args
-            Vector(s), or azimuth and polar angles, the latter passed as
-            two separate arguments.
+            Vector(s), or azimuth and polar angles of the vectors, the
+            latter passed as two separate arguments.
         resolution
             The angular resolution of the sampling grid in degrees.
             Default value is 1.
