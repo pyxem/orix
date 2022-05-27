@@ -51,7 +51,7 @@ class TestS2Sampling:
         self, hemisphere, min_polar, max_polar
     ):
         azi, polar = S2_sampling._sample_S2_uv_mesh_coordinates(
-            10, hemisphere=hemisphere, azimuthal_endpoint=False
+            10, hemisphere=hemisphere, azimuth_endpoint=False
         )
         assert isinstance(azi, np.ndarray)
         assert isinstance(polar, np.ndarray)
@@ -63,7 +63,7 @@ class TestS2Sampling:
         assert azi.max() < 2 * np.pi
         assert azi.size == 36
         azi2, _ = S2_sampling._sample_S2_equal_area_coordinates(
-            10, hemisphere=hemisphere, azimuthal_endpoint=True
+            10, hemisphere=hemisphere, azimuth_endpoint=True
         )
         assert azi2.max() == 2 * np.pi
 
@@ -100,7 +100,7 @@ class TestS2Sampling:
     )
     def test_equal_area_coordinates(self, hemisphere, min_polar, max_polar):
         azi, polar = S2_sampling._sample_S2_equal_area_coordinates(
-            10, hemisphere=hemisphere, azimuthal_endpoint=False
+            10, hemisphere=hemisphere, azimuth_endpoint=False
         )
         assert isinstance(azi, np.ndarray)
         assert isinstance(polar, np.ndarray)
@@ -112,7 +112,7 @@ class TestS2Sampling:
         assert azi.max() < 2 * np.pi
         assert azi.size == 36
         azi2, _ = S2_sampling._sample_S2_equal_area_coordinates(
-            10, hemisphere=hemisphere, azimuthal_endpoint=True
+            10, hemisphere=hemisphere, azimuth_endpoint=True
         )
         assert azi2.max() == 2 * np.pi
 

@@ -60,7 +60,7 @@ def _sample_S2_uv_mesh_coordinates(
     resolution: float,
     hemisphere: str = "both",
     offset: float = 0,
-    azimuthal_endpoint: bool = False,
+    azimuth_endpoint: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Get spherical coordinates for UV mesh points on unit sphere *S2*.
 
@@ -79,7 +79,7 @@ def _sample_S2_uv_mesh_coordinates(
     offset
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
-    azimuthal_endpoint
+    azimuth_endpoint
         If True then endpoint of the azimuthal array is included in the
         calculation. Default is False.
 
@@ -119,7 +119,7 @@ def _sample_S2_uv_mesh_coordinates(
         offset * step_size_azimuth,
         2 * np.pi + offset * step_size_azimuth,
         num=steps_azimuth,
-        endpoint=azimuthal_endpoint,
+        endpoint=azimuth_endpoint,
     )
     # convert to radians
     polar_min, polar_max = np.deg2rad(polar_min), np.deg2rad(polar_max)
