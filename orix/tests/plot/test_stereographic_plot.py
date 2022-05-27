@@ -433,9 +433,7 @@ class TestDrawCircle:
         ):
             ax.pole_density_function("test")
 
-        with pytest.raises(
-            ValueError, match="Args must be either `Vector3d` or arrays of azimuth "
-        ):
+        with pytest.raises(ValueError, match="Accepts only one "):
             ax.pole_density_function([1], [2], [3])
 
         plt.close("all")

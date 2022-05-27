@@ -224,7 +224,7 @@ class StereographicPlot(maxes.Axes):
             azimuth, polar = args
         else:
             raise ValueError(
-                "Args must be either `Vector3d` or a tuple of azimuth and polar angles."
+                "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
             )
 
         # this is true for InversePoleFigure subclass
@@ -859,7 +859,7 @@ class StereographicPlot(maxes.Axes):
             except (ValueError, AttributeError):
                 raise ValueError(
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
-                    "arguments"
+                    "arguments."
                 )
         visible = v <= self._projection.region
         return x, y, visible
