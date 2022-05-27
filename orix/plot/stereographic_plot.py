@@ -196,7 +196,7 @@ class StereographicPlot(maxes.Axes):
         log
             If True the log(PDF) is calculated. Default is True.
         colorbar
-            If True a colorabar is shown alongside the PDF plot.
+            If True a colorbar is shown alongside the PDF plot.
             Default is True.
         kwargs
             Keyword arguments passed to
