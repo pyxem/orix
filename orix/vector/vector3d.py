@@ -157,7 +157,11 @@ class Vector3d(Object3d):
         -------
         numpy.ndarray
         """
-        azimuth = np.arctan2(self.data[..., 1], self.data[..., 0])
+        x, y = self.data[..., 0], self.data[..., 1]
+        # avoid rounding errors
+        x[np.isclose(x, 0)] = 0
+        y[np.isclose(y, 0)] = 0
+        azimuth = np.arctan2(y, x)
         azimuth += (azimuth < 0) * 2 * np.pi
         return azimuth
 
