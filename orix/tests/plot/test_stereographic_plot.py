@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from matplotlib.collections import QuadMesh
 import matplotlib.colors as mcolors
 import matplotlib.path as mpath
 import matplotlib.pyplot as plt
@@ -404,6 +405,38 @@ class TestDrawCircle:
 
         assert len(ax0.lines) == 2
         assert len(ax1.lines) == 1
+
+        plt.close("all")
+
+    def test_pdf_args(self):
+        v = Vector3d(np.random.randn(10, 3)).unit
+        resolution = 5
+        fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection="stereographic"))
+        # vector arg
+        ax[0].pole_density_function(v, resolution=resolution)
+        qm0 = [isinstance(c, QuadMesh) for c in ax[0].collections]
+        assert any(qm0)
+        qmesh0 = ax[0].collections[qm0.index(True)].get_array().data
+        # azimuth, polar args
+        ax[1].pole_density_function(v.azimuth, v.polar, resolution=resolution)
+        qm1 = [isinstance(c, QuadMesh) for c in ax[1].collections]
+        assert any(qm1)
+        qmesh1 = ax[1].collections[qm1.index(True)].get_array().data
+
+        assert np.allclose(qmesh0, qmesh1)
+        plt.close("all")
+
+    def test_pdf_args_raises(self):
+        fig, ax = plt.subplots(subplot_kw=dict(projection="stereographic"))
+        with pytest.raises(
+            TypeError, match="If one argument is passed it must be an instance of "
+        ):
+            ax.pole_density_function("test")
+
+        with pytest.raises(
+            ValueError, match="Args must be either `Vector3d` or arrays of azimuth "
+        ):
+            ax.pole_density_function([1], [2], [3])
 
         plt.close("all")
 

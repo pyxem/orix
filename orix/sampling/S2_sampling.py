@@ -280,8 +280,6 @@ def sample_S2_cube_mesh(
 ) -> Vector3d:
     """Vectors of a cube mesh projected on a unit sphere *S2*.
 
-    Taken from diffsims.
-
     Parameters
     ----------
     resolution

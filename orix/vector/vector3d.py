@@ -88,7 +88,7 @@ class Vector3d(Object3d):
         return self.data[..., 0]
 
     @x.setter
-    def x(self, value: np.ndarray) -> None:
+    def x(self, value: np.ndarray):
         self.data[..., 0] = value
 
     @property
@@ -97,7 +97,7 @@ class Vector3d(Object3d):
         return self.data[..., 1]
 
     @y.setter
-    def y(self, value: np.ndarray) -> None:
+    def y(self, value: np.ndarray):
         self.data[..., 1] = value
 
     @property
@@ -106,7 +106,7 @@ class Vector3d(Object3d):
         return self.data[..., 2]
 
     @z.setter
-    def z(self, value: np.ndarray) -> None:
+    def z(self, value: np.ndarray):
         self.data[..., 2] = value
 
     @property
@@ -273,7 +273,7 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rtruediv__(self, other: Any) -> None:
+    def __rtruediv__(self, other: Any):
         raise ValueError("Division by a vector is undefined")
 
     def dot(self, other: Vector3d) -> np.ndarray:
@@ -352,20 +352,6 @@ class Vector3d(Object3d):
         else:
             dots = np.tensordot(self.data, other.data, axes=(-1, -1))
         return dots
-
-    def _dot_outer_dask(self, other: Vector3d, chunk_size: int = 20) -> da.Array:
-        """Compute the lazy dot product between this vector and another."""
-        ndim1 = self.ndim
-        ndim2 = other.ndim
-
-        # Set chunk sizes
-        chunks1 = (chunk_size,) * ndim1 + (-1,)
-        chunks2 = (chunk_size,) * ndim2 + (-1,)
-
-        v1 = da.from_array(self.data, chunks=chunks1)
-        v2 = da.from_array(other.data, chunks=chunks2)
-
-        return da.tensordot(v1, v2, axes=(v1.ndim - 1, v2.ndim - 1))
 
     def cross(self, other: Vector3d) -> Vector3d:
         """The cross product of a vector with another vector.
@@ -688,7 +674,7 @@ class Vector3d(Object3d):
         log
             If True the log(PDF) is calculated. Default is True.
         colorbar
-            If True a colorabar is shown alongside the PDF plot.
+            If True a colorbar is shown alongside the PDF plot.
             Default is True.
         projection
             Which projection to use. The default is "stereographic", the
@@ -731,6 +717,10 @@ class Vector3d(Object3d):
         -------
         fig
             The created figure, returned if `return_figure` is True.
+
+        See Also
+        --------
+        orix.plot.StereographicPlot.pole_density_function
         """
         if hemisphere is None:
             hemisphere = "upper"
@@ -1198,3 +1188,17 @@ class Vector3d(Object3d):
             text_kwargs,
             new_axes_labels,
         )
+
+    def _dot_outer_dask(self, other: Vector3d, chunk_size: int = 20) -> da.Array:
+        """Compute the lazy dot product between this vector and another."""
+        ndim1 = self.ndim
+        ndim2 = other.ndim
+
+        # Set chunk sizes
+        chunks1 = (chunk_size,) * ndim1 + (-1,)
+        chunks2 = (chunk_size,) * ndim2 + (-1,)
+
+        v1 = da.from_array(self.data, chunks=chunks1)
+        v2 = da.from_array(other.data, chunks=chunks2)
+
+        return da.tensordot(v1, v2, axes=(v1.ndim - 1, v2.ndim - 1))

@@ -21,7 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -31,6 +31,7 @@ import matplotlib.path as mpath
 import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 from orix.plot._symmetry_marker import (
     TwoFoldMarker,
@@ -172,7 +173,7 @@ class StereographicPlot(maxes.Axes):
 
     def pole_density_function(
         self,
-        *args: Union[Tuple[np.ndarray, np.ndarray], Vector3d],
+        *args: Union[np.ndarray, Vector3d],
         resolution: float = 1,
         sigma: float = 5,
         log: bool = False,
@@ -186,8 +187,8 @@ class StereographicPlot(maxes.Axes):
         Parameters
         ----------
         args
-            Vector(s), or azimuth and polar angles, the latter two
-            passed as separate arguments (not keyword arguments).
+            Vector(s), or azimuth and polar angles, the latter passed as
+            two separate arguments.
         resolution
             The angular resolution of the sampling grid in degrees.
             Default value is 1.
@@ -197,7 +198,7 @@ class StereographicPlot(maxes.Axes):
         log
             If True the log(PDF) is calculated. Default is True.
         colorbar
-            If True a colorabar is shown alongside the PDF plot.
+            If True a colorbar is shown alongside the PDF plot.
             Default is True.
         symmetry
             Restrict the grid points to the given point group fundamental
@@ -211,7 +212,6 @@ class StereographicPlot(maxes.Axes):
         matplotlib.axes.Axes.scatter
         """
         from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
-        from scipy.ndimage import gaussian_filter
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
         updated_kwargs = {**kwargs, **new_kwargs}
