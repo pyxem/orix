@@ -39,7 +39,6 @@ from orix.plot._symmetry_marker import (
     FourFoldMarker,
     SixFoldMarker,
 )
-from orix.quaternion import Symmetry
 from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.vector import Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
@@ -178,7 +177,6 @@ class StereographicPlot(maxes.Axes):
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
-        symmetry: Optional[Symmetry] = None,
         **kwargs: Any,
     ):
         """Compute the Pole Density Function (PDF) of vectors in the
@@ -200,9 +198,6 @@ class StereographicPlot(maxes.Axes):
         colorbar
             If True a colorbar is shown alongside the PDF plot.
             Default is True.
-        symmetry
-            Restrict the grid points to the given point group fundamental
-            sector if provided. Default is None.
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
@@ -232,10 +227,20 @@ class StereographicPlot(maxes.Axes):
                 "Args must be either `Vector3d` or a tuple of azimuth and polar angles."
             )
 
-        if symmetry is not None:
+        # this is true for InversePoleFigure subclass
+        if hasattr(self, "_symmetry"):
+            symmetry = self._symmetry
             v = Vector3d.from_polar(azimuth, polar)
             v = v.in_fundamental_sector(symmetry)
             azimuth, polar, _ = v.to_polar()
+            # reduce range of histogram to that of FS
+            azimuth_fs, polar_fs, _ = symmetry.fundamental_sector.vertices.to_polar()
+            azimuth_range = (azimuth_fs.min(), azimuth_fs.max())
+            polar_range = (polar_fs.min(), polar_fs.max())
+        else:
+            symmetry = None
+            azimuth_range = None
+            polar_range = None
 
         # np.histogram2d expects 1d arrays
         azimuth, polar = np.ravel(azimuth), np.ravel(polar)
@@ -244,7 +249,11 @@ class StereographicPlot(maxes.Axes):
 
         # generate angular mesh on S2
         azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
-            resolution, hemisphere=self.hemisphere, azimuthal_endpoint=True
+            resolution,
+            hemisphere=self.hemisphere,
+            azimuth_endpoint=True,
+            azimuth_range=azimuth_range,
+            polar_range=polar_range,
         )
         azimuth_grid, polar_grid = np.meshgrid(
             azimuth_coords, polar_coords, indexing="ij"
@@ -253,25 +262,13 @@ class StereographicPlot(maxes.Axes):
         hist, *_ = np.histogram2d(
             azimuth, polar, bins=(azimuth_coords, polar_coords), density=False
         )
-        # Normalize by the average number of counts per cell on the
-        # unit sphere to calculate in terms of Multiples of Random
-        # Distribution (MRD). See :cite:`rohrer2004distribution`.
-        hist = hist / hist.mean()
-
-        # apply gaussian filtering to plot
-        # "wrap" along azimuthal axis, "reflect" along polar axis
-        hist = gaussian_filter(hist, sigma / resolution, mode=("wrap", "reflect"))
-
-        if log:
-            # +1 to avoid taking the log of 0
-            hist = np.log(hist + 1)
 
         # get mesh vertices in stereographic plane
         v_mesh = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
         x, y = self._projection.vector2xy(v_mesh)
         x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
 
-        # mask mesh points outside of fundamental sector if provided
+        # get mask of mesh points inside of fundamental sector for IPF
         if symmetry is not None:
             azimuth_center_grid, polar_center_grid = np.meshgrid(
                 azimuth_coords[:-1] + np.ediff1d(azimuth_coords) / 2,
@@ -282,11 +279,42 @@ class StereographicPlot(maxes.Axes):
                 azimuth=azimuth_center_grid, polar=polar_center_grid
             ).unit
             mask = v_center_mesh <= symmetry.fundamental_sector
-            hist = np.ma.masked_array(hist, ~mask)
+        else:
+            mask = np.ones_like(hist, dtype=bool)
+
+        # Normalize by the average number of counts per cell on the
+        # unit sphere to calculate in terms of Multiples of Random
+        # Distribution (MRD). See :cite:`rohrer2004distribution`.
+        # `hist.mean()` is only computed over the values in point group
+        # fudamental # sector for IPF
+        hist = hist / hist[mask].mean()
+
+        # apply gaussian filtering to plot
+        if symmetry is not None:
+            mode = ("reflect", "reflect")
+        else:
+            # "wrap" along azimuthal axis, "reflect" along polar axis
+            mode = ("wrap", "reflect")
+        # In the case of IPF, because not all grid points are in point
+        # group FS, some histogram values are 0 and will never be
+        # populated, this leads to uneven blurring. In this case, just
+        # for the broadening procedure, populate these histogram values
+        # with the valid value from the nearest neighbour
+        if mask.sum() < hist.size:
+            shifts = 2 * (hist == 0).argmax(axis=1) - hist.shape[1] - 2
+            hist_reflected = _roll_columns_independently(hist[:, ::-1], shifts)
+            hist[~mask] = hist_reflected[~mask]
+        # apply broadening in angular space
+        hist = gaussian_filter(hist, sigma / resolution, mode=mode)
+
+        if log:
+            # +1 to avoid taking the log of 0
+            hist = np.log(hist + 1)
 
         # plot mesh
         updated_kwargs.setdefault("cmap", "magma")
-
+        # mpl.QuadMesh handles masked values by default
+        hist = np.ma.array(hist, mask=~mask)
         pc = self.pcolormesh(x, y, hist, **updated_kwargs)
 
         if colorbar:
@@ -923,3 +951,12 @@ def _order_in_hemisphere(polar, pole):
         order = np.roll(order, shift=-(indices[-1] + 1))
 
     return order
+
+
+def _roll_columns_independently(arr, shifts):
+    """Roll columns of a 2d array by different values."""
+    rows, cols = np.ogrid[: arr.shape[0], : arr.shape[1]]
+    # use positive shifts
+    shifts = shifts % arr.shape[1]
+    out = arr[rows, cols - shifts[:, np.newaxis]]
+    return out
