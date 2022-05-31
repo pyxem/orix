@@ -25,16 +25,11 @@ the rotation axis of a quaternion or the normal to the bounding planes
 of a spherical region.
 """
 
-# Must be imported first
-# fmt: off
-# isort: off
-from orix.vector.spherical_region import SphericalRegion
-# isort: on
-# fmt: on
+from orix.vector.vector3d import Vector3d, check_vector  # isort: skip
+from orix.vector.spherical_region import SphericalRegion  # isort: skip
 from orix.vector.fundamental_sector import FundamentalSector
 from orix.vector.miller import Miller
 from orix.vector.neo_euler import AxAngle, Homochoric, NeoEuler, Rodrigues
-from orix.vector.vector3d import Vector3d, check_vector
 
 # Lists what will be imported when calling "from orix.vector import *"
 __all__ = [
