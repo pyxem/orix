@@ -26,11 +26,10 @@ import warnings
 from diffpy.structure import Lattice, Structure
 import numpy as np
 
+from orix import __version__
 from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import point_group_aliases
-from orix import __version__
-
 
 # MTEX has this format sorted out, check out their readers when fixing
 # issues and adapting to other versions of this file format in the future:

@@ -24,7 +24,6 @@ import numpy as np
 
 from orix.vector import SphericalRegion, Vector3d
 
-
 _EDGE_STEPS = 1000
 
 

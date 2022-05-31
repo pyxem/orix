@@ -38,8 +38,8 @@ reference. However, because the square has fourfold symmetry, it is
 indistinguishable in both cases, and hence has the same orientation.
 """
 
-from itertools import product as iproduct
 from itertools import combinations_with_replacement as icombinations
+from itertools import product as iproduct
 import warnings
 
 import dask.array as da
@@ -47,11 +47,11 @@ from dask.diagnostics import ProgressBar
 import numpy as np
 from tqdm import tqdm
 
+from orix._util import deprecated
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
 from orix.vector import AxAngle
-from orix._util import deprecated
 
 
 def _distance(misorientation, verbose, split_size=100):

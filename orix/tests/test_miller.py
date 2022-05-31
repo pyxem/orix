@@ -23,8 +23,7 @@ import pytest
 from orix.crystal_map import Phase
 from orix.quaternion import Orientation, symmetry
 from orix.vector import Miller
-from orix.vector.miller import _round_indices, _uvw2UVTW, _UVTW2uvw, _transform_space
-
+from orix.vector.miller import _round_indices, _transform_space, _UVTW2uvw, _uvw2UVTW
 
 TRIGONAL_PHASE = Phase(
     point_group="321", structure=Structure(lattice=Lattice(4.9, 4.9, 5.4, 90, 90, 120))

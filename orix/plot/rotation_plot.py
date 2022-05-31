@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from packaging import version
-
-from matplotlib import projections, __version__
-from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import __version__, projections
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from packaging import version
 
 from orix.vector import AxAngle, Rodrigues
 
@@ -31,7 +30,7 @@ class RotationPlot(Axes3D):
     transformation_class = None
 
     def transform(self, xs, fundamental_zone=None):
-        from orix.quaternion import Rotation, Misorientation, OrientationRegion
+        from orix.quaternion import Misorientation, OrientationRegion, Rotation
 
         # Project rotations into fundamental zone if necessary
         if isinstance(xs, Misorientation):

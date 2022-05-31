@@ -30,9 +30,9 @@ from orix.quaternion.symmetry import (
     D2,
     D3,
     D6,
-    T,
     O,
     Oh,
+    T,
     _groups,
     _proper_groups,
 )

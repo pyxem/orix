@@ -16,14 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-
 import numpy as np
+import pytest
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C6, D6, get_point_group
-from orix.sampling.SO3_sampling import uniform_SO3_sample, _resolution_to_num_steps
 from orix.sampling import get_sample_fundamental, get_sample_local
+from orix.sampling.SO3_sampling import _resolution_to_num_steps, uniform_SO3_sample
 from orix.sampling._polyhedral_sampling import (
     _get_angles_between_nn_gridpoints,
     _get_first_nearest_neighbors,

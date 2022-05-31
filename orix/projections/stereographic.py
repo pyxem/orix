@@ -22,7 +22,6 @@ import numpy as np
 
 from orix.vector import SphericalRegion, Vector3d
 
-
 _UPPER_HEMISPHERE = SphericalRegion([0, 0, 1])
 _LOWER_HEMISPHERE = SphericalRegion([0, 0, -1])
 

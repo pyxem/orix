@@ -38,7 +38,6 @@ from orix import __version__, io
 from orix.data._registry import registry_hashes, registry_urls
 from orix.quaternion import Orientation, symmetry
 
-
 __all__ = [
     "sdss_austenite",
     "sdss_ferrite_austenite",

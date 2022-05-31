@@ -27,7 +27,6 @@ import numpy as np
 from orix.io.plugins import plugin_list
 from orix.io.plugins._h5ebsd import hdf5group2dict
 
-
 extensions = [plugin.file_extensions for plugin in plugin_list if plugin.writes]
 
 

@@ -23,7 +23,7 @@ from dask.diagnostics import ProgressBar
 import numpy as np
 import quaternion
 
-from orix.base import check, Object3d
+from orix.base import Object3d, check
 from orix.vector import Miller, Vector3d
 
 

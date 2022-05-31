@@ -16,17 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from packaging import version
-
 from matplotlib import __version__ as _MPL_VERSION
 from matplotlib import pyplot as plt
 import numpy as np
+from packaging import version
 import pytest
 
-from orix.plot import RodriguesPlot, AxAnglePlot, RotationPlot
+from orix.plot import AxAnglePlot, RodriguesPlot, RotationPlot
 from orix.quaternion import Misorientation, Orientation, OrientationRegion
 from orix.quaternion.symmetry import C1, D6
-
 
 # TODO: Remove when the oldest supported version of Matplotlib
 # increases from 3.3 to 3.4.
