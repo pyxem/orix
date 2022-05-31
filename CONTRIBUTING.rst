@@ -61,9 +61,10 @@ Code style
 
 The code making up orix is formatted closely following the `Style Guide for Python Code
 <https://www.python.org/dev/peps/pep-0008/>`_ with `The Black Code style
-<https://black.readthedocs.io/en/stable/the_black_code_style/index.html>`_. We use
-`pre-commit <https://pre-commit.com>`_ to run ``black`` automatically prior to each
-local commit. Please install it in your environment::
+<https://black.readthedocs.io/en/stable/the_black_code_style/index.html>`_ and
+`isort <https://pycqa.github.io/isort/>`_ to handle module imports. We use
+`pre-commit <https://pre-commit.com>`_ to run ``black`` and ``isort`` automatically
+prior to each local commit. Please install it in your environment::
 
     pre-commit install
 
@@ -74,6 +75,11 @@ Note that ``black`` won't format `docstrings
 <https://www.python.org/dev/peps/pep-0257/>`_. We follow the `numpydoc
 <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
 standard.
+
+Note that if imports must be sorted in a certain order, for example to avoid recursion,
+then ``isort`` provides `commands
+<https://pycqa.github.io/isort/docs/configuration/action_comments.html>`_ that may be
+used to prevent sorting.
 
 Comment lines should preferably be limited to 72 characters.
 
