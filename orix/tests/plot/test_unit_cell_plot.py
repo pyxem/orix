@@ -16,12 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from packaging import version
-
 from diffpy.structure import Lattice, Structure
 from matplotlib import __version__ as _MPL_VERSION
 from matplotlib import pyplot as plt
 import numpy as np
+from packaging import version
 import pytest
 
 from orix.plot._util import Arrow3D

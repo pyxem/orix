@@ -1,7 +1,8 @@
 from itertools import chain
-from setuptools import setup, find_packages
 
-from orix import __name__, __version__, __author__, __author_email__, __description__
+from setuptools import find_packages, setup
+
+from orix import __author__, __author_email__, __description__, __name__, __version__
 
 # Projects with optional features for building the documentation and running
 # tests. From setuptools:
@@ -22,6 +23,7 @@ extra_feature_requirements = {
 }
 extra_feature_requirements["dev"] = [
     "black[jupyter]",
+    "isort >= 5.10",
     "manifix",
     "outdated",
     "pre-commit >= 1.16",

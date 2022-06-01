@@ -17,8 +17,8 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from diffpy.structure import Lattice, Structure
-import pytest
 import numpy as np
+import pytest
 
 from orix.io import load
 

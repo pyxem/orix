@@ -26,7 +26,6 @@ from orix.plot import CrystalMapPlot
 from orix.quaternion import Orientation, Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
 
-
 # Note that many parts of the CrystalMap() class are tested while
 # testing IO and the Phase() and PhaseList() classes
 

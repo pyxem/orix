@@ -23,8 +23,8 @@ rotated by orientations.
 """
 
 import matplotlib.axes as maxes
-import matplotlib.pyplot as plt
 import matplotlib.projections as mprojections
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map import Phase

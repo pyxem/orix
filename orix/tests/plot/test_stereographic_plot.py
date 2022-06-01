@@ -23,16 +23,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from orix import plot
+
+# fmt: off
+# isort: off
 from orix.plot.stereographic_plot import (
     TwoFoldMarker,
     ThreeFoldMarker,
     FourFoldMarker,
     SixFoldMarker,
 )
-from orix import plot
+# isort: on
+# fmt: on
 from orix.quaternion.symmetry import C1, C6, Oh
 from orix.vector import Vector3d
-
 
 plt.rcParams["axes.grid"] = True
 PROJ_NAME = "stereographic"

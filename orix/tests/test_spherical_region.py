@@ -19,7 +19,7 @@
 import numpy as np
 import pytest
 
-from orix.vector import Vector3d, SphericalRegion
+from orix.vector import SphericalRegion, Vector3d
 
 
 @pytest.fixture(params=[(0, 0, 1)])

@@ -19,9 +19,8 @@
 import numpy as np
 import pytest
 
-from orix.vector import Homochoric, Rodrigues
 from orix.quaternion import Rotation
-
+from orix.vector import Homochoric, Rodrigues
 
 # Rodrigues
 

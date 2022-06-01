@@ -23,7 +23,10 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
+from orix.quaternion import Rotation, Symmetry, get_point_group
+
 # fmt: off
+# isort: off
 from orix.quaternion.symmetry import (
     C1, Ci,  # triclinic
     C2x, C2y, C2z, Csx, Csy, Csz, Cs, C2, C2h,  # monoclinic
@@ -34,8 +37,8 @@ from orix.quaternion.symmetry import (
     T, Th, O, Td, Oh,  # cubic
     spacegroup2pointgroup_dict, _groups, _get_unique_symmetry_elements
 )
+# isort: on
 # fmt: on
-from orix.quaternion import get_point_group, Rotation, Symmetry
 from orix.vector import Vector3d
 
 
