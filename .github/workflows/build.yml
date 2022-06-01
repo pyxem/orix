@@ -9,12 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: psf/black@stable
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: isort/isort-action@master
+        with:
+          configuration: --profile black --ff --fss --check-only --diff
 
       - name: Install Black with Jupyter extension
         run: pip install black[jupyter]
 
       - name: Check code style of Jupyter notebooks
         run: black doc/*.ipynb
+
   # Make sure all necessary files will be included in a release
   manifest:
     name: check manifest
