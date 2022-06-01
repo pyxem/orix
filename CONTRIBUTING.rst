@@ -76,16 +76,15 @@ Note that ``black`` won't format `docstrings
 <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
 standard.
 
-Note that if imports must be sorted in a certain order, for example to avoid recursion,
-then ``isort`` provides `commands
-<https://pycqa.github.io/isort/docs/configuration/action_comments.html>`_ that may be
-used to prevent sorting.
-
-Comment lines should preferably be limited to 72 characters.
-
 Package imports should be structured into three blocks with blank lines between them
 (descending order): standard library (like ``os`` and ``typing``), third party packages
-(like ``numpy`` and ``matplotlib``) and finally ``orix`` imports.
+(like ``numpy`` and ``matplotlib``) and finally first party ``orix`` imports. ``isort``
+will structure the import order in this way by default. Note that if imports must be
+sorted in a certain order, for example to avoid recursion, then ``isort`` provides 
+`commands <https://pycqa.github.io/isort/docs/configuration/action_comments.html>`_ that
+may be used to prevent sorting.
+
+Comment lines should preferably be limited to 72 characters.
 
 As of ``orix`` version 0.9, the code base is being transitioned to use type hints. New
 changes should be implemented using type hints in the function definition and without 
