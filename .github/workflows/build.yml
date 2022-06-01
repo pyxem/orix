@@ -14,7 +14,7 @@ jobs:
           python-version: 3.9
       - uses: isort/isort-action@master
         with:
-          configuration: --profile black --ff --fss --check-only --diff
+          configuration: --profile black --filter-files --force-sort-within-sections --check-only --diff
 
       - name: Install Black with Jupyter extension
         run: pip install black[jupyter]
