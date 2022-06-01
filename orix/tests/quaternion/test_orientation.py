@@ -20,23 +20,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+# fmt: off
+# isort: off
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
 from orix.quaternion.symmetry import (
     C1,
     C2,
-    C3,
-    C4,
     D2,
+    C4,
+    C3,
     D3,
     D6,
+    T,
     O,
     Oh,
-    T,
     _groups,
     _proper_groups,
 )
 from orix.vector import AxAngle, Vector3d
+# isort: on
+# fmt: on
 
 
 @pytest.fixture

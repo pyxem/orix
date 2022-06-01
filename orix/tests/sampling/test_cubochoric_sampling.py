@@ -19,14 +19,18 @@
 import numpy as np
 import pytest
 
+# fmt: off
+# isort: off
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, C2, C3, C4, C6, D2, D3, D4, D6, O, T
+from orix.quaternion.symmetry import C1, C2, D2, C4, D4, C3, D3, C6, D6, T, O
 from orix.sampling import get_sample_fundamental, get_sample_local
 from orix.sampling._cubochoric_sampling import (
     _cubochoric_sampling_loop,
     cubochoric_sampling,
     resolution_to_semi_edge_steps,
 )
+# isort: on
+# fmt: on
 
 
 class TestCubochoricSampling:
