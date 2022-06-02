@@ -97,14 +97,17 @@ def pole_density_function(
                 "If one argument is passed it must be an instance of "
                 + "`orix.vector.Vector3d`."
             )
-        azimuth, polar, _ = v.to_polar()
     elif len(args) == 2:
-        azimuth, polar = args
+        v = Vector3d.from_polar(azimuth, polar)
     else:
         raise ValueError(
             "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
         )
 
+    if symmetry is not None:
+        v = v.in_fundamental_sector(symmetry)
+
+    azimuth, polar, _ = v.to_polar()
     # np.histogram2d expects 1d arrays
     azimuth, polar = np.ravel(azimuth), np.ravel(polar)
     if not azimuth.size:
