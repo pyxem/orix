@@ -175,6 +175,8 @@ measure
 =======
 .. automodule:: orix.measure
 .. currentmodule:: orix.measure
+.. autosummary::
+    pole_density_function
 
 ....
 

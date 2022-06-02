@@ -173,68 +173,6 @@ class StereographicPlot(maxes.Axes):
 
         super().plot(x, y, **updated_kwargs)
 
-    def pole_density_function(
-        self,
-        *args: Union[np.ndarray, Vector3d],
-        resolution: float = 1,
-        sigma: float = 5,
-        log: bool = False,
-        colorbar: bool = True,
-        **kwargs: Any,
-    ):
-        """Compute the Pole Density Function (PDF) of vectors in the
-        stereographic projection.
-
-        Parameters
-        ----------
-        args
-            Vector(s), or azimuth and polar angles of the vectors, the
-            latter passed as two separate arguments.
-        resolution
-            The angular resolution of the sampling grid in degrees.
-            Default value is 1.
-        sigma
-            The angular resolution of the applied broadening in degrees.
-            Default value is 5.
-        log
-            If True the log(PDF) is calculated. Default is True.
-        colorbar
-            If True a colorbar is shown alongside the PDF plot.
-            Default is True.
-        kwargs
-            Keyword arguments passed to
-            :meth:`matplotlib.axes.Axes.pcolormesh`.
-
-        See Also
-        --------
-        matplotlib.axes.Axes.scatter
-        orix.vector.Vector3d.pole_density_function
-        """
-
-        hist, (x, y) = pole_density_function(
-            *args,
-            resolution=resolution,
-            sigma=sigma,
-            log=log,
-            hemisphere=self.hemisphere,
-            symmetry=None,
-            mrd=True,
-        )
-
-        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
-        updated_kwargs = {**kwargs, **new_kwargs}
-
-        # plot mesh
-        updated_kwargs.setdefault("cmap", "magma")
-        # mpl.QuadMesh handles masked values by default
-        pc = self.pcolormesh(x, y, hist, **updated_kwargs)
-
-        if colorbar:
-            label = "MRD"
-            if log:
-                label = f"log({label})"
-            plt.colorbar(pc, label=label, ax=self)
-
     def scatter(self, *args, **kwargs):
         """A scatter plot of vectors.
 
@@ -336,6 +274,68 @@ class StereographicPlot(maxes.Axes):
     @property
     def _inverse_projection(self):
         return InverseStereographicProjection(self.pole)
+
+    def pole_density_function(
+        self,
+        *args: Union[np.ndarray, Vector3d],
+        resolution: float = 1,
+        sigma: float = 5,
+        log: bool = False,
+        colorbar: bool = True,
+        **kwargs: Any,
+    ):
+        """Compute the Pole Density Function (PDF) of vectors in the
+        stereographic projection.
+
+        Parameters
+        ----------
+        args
+            Vector(s), or azimuth and polar angles of the vectors, the
+            latter passed as two separate arguments.
+        resolution
+            The angular resolution of the sampling grid in degrees.
+            Default value is 1.
+        sigma
+            The angular resolution of the applied broadening in degrees.
+            Default value is 5.
+        log
+            If True the log(PDF) is calculated. Default is True.
+        colorbar
+            If True a colorbar is shown alongside the PDF plot.
+            Default is True.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.scatter
+        orix.vector.Vector3d.pole_density_function
+        """
+
+        hist, (x, y) = pole_density_function(
+            *args,
+            resolution=resolution,
+            sigma=sigma,
+            log=log,
+            hemisphere=self.hemisphere,
+            symmetry=None,
+            mrd=True,
+        )
+
+        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
+        updated_kwargs = {**kwargs, **new_kwargs}
+
+        # plot mesh
+        updated_kwargs.setdefault("cmap", "magma")
+        # mpl.QuadMesh handles masked values by default
+        pc = self.pcolormesh(x, y, hist, **updated_kwargs)
+
+        if colorbar:
+            label = "MRD"
+            if log:
+                label = f"log({label})"
+            plt.colorbar(pc, label=label, ax=self)
 
     def draw_circle(
         self,
@@ -448,7 +448,7 @@ class StereographicPlot(maxes.Axes):
         pad = 0.01
         self.set_xlim(np.min(x) - pad, np.max(x) + pad)
         self.set_ylim(np.min(y) - pad, np.max(y) + pad)
-        self.margins(0, 0)
+        # self.margins(0, 0)
         self.patches[0].set_visible(False)
         patch = mpatches.PathPatch(
             mpath.Path(np.column_stack([x, y]), closed=True),
