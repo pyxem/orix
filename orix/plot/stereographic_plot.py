@@ -47,7 +47,7 @@ from orix.projections import InverseStereographicProjection, StereographicProjec
 from orix.vector import Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
 
-ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3, mesh=2)
+ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3, mesh=0)
 
 
 class StereographicPlot(maxes.Axes):
