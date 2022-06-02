@@ -134,25 +134,6 @@ class TestS2Sampling:
         with pytest.raises(ValueError, match="Polar_range requires values "):
             S2_sampling._sample_S2_equal_area_coordinates(10, polar_range=(1, -1))
 
-    def test_equal_area_coordinates_parity(self):
-        azi_even, polar_even = S2_sampling._sample_S2_equal_area_coordinates(
-            10, azimuth_endpoint=False, parity="even"
-        )
-        assert not polar_even.size % 2
-        assert not azi_even.size % 2
-
-        azi_odd, polar_odd = S2_sampling._sample_S2_equal_area_coordinates(
-            10, azimuth_endpoint=False, parity="odd"
-        )
-        assert polar_odd.size % 2
-        assert azi_odd.size % 2
-
-    def test_equal_area_coordinates_parity_raises(self):
-        with pytest.raises(ValueError, match="Parity must be either None or one "):
-            _ = S2_sampling._sample_S2_equal_area_coordinates(
-                10, azimuth_endpoint=False, parity="test"
-            )
-
     def test_equal_area_mesh(self):
         v = sampling.sample_S2_equal_area_mesh(
             10, hemisphere="both", remove_pole_duplicates=True

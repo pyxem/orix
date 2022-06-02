@@ -190,7 +190,6 @@ def _sample_S2_equal_area_coordinates(
     azimuth_endpoint: bool = False,
     azimuth_range: Optional[Tuple[float, float]] = None,
     polar_range: Optional[Tuple[float, float]] = None,
-    parity: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Get spherical coordinates for equal area mesh points on unit
     sphere *S2*.
@@ -212,21 +211,11 @@ def _sample_S2_equal_area_coordinates(
         The (min, max) angular range for the azimuthal and polar
         coordinates, respectively, in radians. If provided then the
         `hemisphere` argument is ignored. Default is None.
-    parity
-        Calculate an "even" or "odd" number of azimuth and polar
-        coordinates. Options are "even", "odd", or None. If None then no
-        constraint is applied to the number of coordinates. Default is
-        None.
 
     Returns
     -------
     azimuth, polar
     """
-
-    if parity is not None:
-        parity = parity.lower()
-        if parity not in {"even", "odd"}:
-            raise ValueError('Parity must be either None or one of "even" or "odd".')
 
     # calculate number of steps and step size angular spacing
     # this parameter D in :cite:`rohrer2004distribution`.
@@ -287,18 +276,6 @@ def _sample_S2_equal_area_coordinates(
     # extra data point to account for endpoint
     if azimuth_endpoint:
         azimuth_num += 1
-
-    # return even or odd number of points if requested
-    if parity == "even":
-        if azimuth_num % 2:
-            azimuth_num -= 1
-        if polar_num % 2:
-            polar_num -= 1
-    elif parity == "odd":
-        if not azimuth_num % 2:
-            azimuth_num -= 1
-        if not polar_num % 2:
-            polar_num -= 1
 
     azimuth = np.linspace(
         azimuth_min,
