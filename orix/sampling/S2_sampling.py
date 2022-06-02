@@ -190,6 +190,7 @@ def _sample_S2_equal_area_coordinates(
     azimuth_endpoint: bool = False,
     azimuth_range: Optional[Tuple[float, float]] = None,
     polar_range: Optional[Tuple[float, float]] = None,
+    parity: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Get spherical coordinates for equal area mesh points on unit
     sphere *S2*.
@@ -211,11 +212,22 @@ def _sample_S2_equal_area_coordinates(
         The (min, max) angular range for the azimuthal and polar
         coordinates, respectively, in radians. If provided then the
         `hemisphere` argument is ignored. Default is None.
+    parity
+        Calculate an "even" or "odd" number of azimuth and polar
+        coordinates. Options are "even", "odd", or None. If None then no
+        constraint is applied to the number of coordinates. Default is
+        None.
 
     Returns
     -------
     azimuth, polar
     """
+
+    if parity is not None:
+        parity = parity.lower()
+        if parity not in {"even", "odd"}:
+            raise ValueError('When defined `parity` must be one of "even" or "odd".')
+
     # calculate number of steps and step size angular spacing
     # this parameter D in :cite:`rohrer2004distribution`.
     steps = int(np.ceil(90 / resolution))
@@ -239,6 +251,12 @@ def _sample_S2_equal_area_coordinates(
     azimuth_range = azimuth_max - azimuth_min
     # azimuth should have 4D steps over range [0..2pi]
     azimuth_steps = int(np.ceil(azimuth_range / (np.pi / 2) * steps))
+    if parity == "even":
+        if azimuth_steps % 2:
+            azimuth_steps -= 1
+    elif parity == "odd":
+        if not azimuth_steps % 2:
+            azimuth_steps -= 1
 
     # polar coordinate is parameterized in terms of cos(theta)
     if polar_range is not None:
@@ -270,6 +288,12 @@ def _sample_S2_equal_area_coordinates(
     polar_range = polar_min - polar_max  # opposite as cos([0..pi]) -> [1..-1]
     # polar should have D steps over range [0..pi/2] rad, ie. [1..0]
     polar_steps = int(np.ceil(polar_range * steps))
+    if parity == "even":
+        if polar_steps % 2:
+            polar_steps -= 1
+    elif parity == "odd":
+        if not polar_steps % 2:
+            polar_steps -= 1
 
     azimuth = np.linspace(
         azimuth_min,
