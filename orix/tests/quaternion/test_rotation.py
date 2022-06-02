@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from math import cos, sin, tan, pi
+from math import cos, pi, sin, tan
 
 from diffpy.structure.spacegroups import sg225
 import numpy as np
@@ -24,7 +24,6 @@ import pytest
 
 from orix.quaternion import Quaternion, Rotation
 from orix.vector import AxAngle, Vector3d
-
 
 rotations = [
     (0.707, 0.0, 0.0, 0.707),

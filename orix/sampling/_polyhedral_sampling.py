@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Tuple, List
+from typing import List, Tuple
 
 import numpy as np
 from scipy.spatial import cKDTree

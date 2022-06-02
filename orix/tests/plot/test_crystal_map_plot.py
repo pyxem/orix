@@ -18,14 +18,14 @@
 
 import copy
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.colorbar as mbar
+import matplotlib.pyplot as plt
 from matplotlib_scalebar import scalebar
+import numpy as np
 import pytest
 
-from orix.plot import CrystalMapPlot
 from orix.crystal_map import CrystalMap, PhaseList
+from orix.plot import CrystalMapPlot
 
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"

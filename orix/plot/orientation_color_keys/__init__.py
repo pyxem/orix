@@ -22,7 +22,6 @@ from orix.plot.orientation_color_keys.euler_color_key import EulerColorKey
 from orix.plot.orientation_color_keys.ipf_color_key import IPFColorKey
 from orix.plot.orientation_color_keys.ipf_color_key_tsl import IPFColorKeyTSL
 
-
 __all__ = [
     "EulerColorKey",
     "IPFColorKeyTSL",

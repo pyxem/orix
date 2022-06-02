@@ -17,6 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
+
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -26,7 +27,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.base import check, Object3d
+from orix.base import Object3d, check
 
 
 def check_vector(obj: Any) -> bool:

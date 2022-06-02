@@ -20,7 +20,7 @@ import numpy as np
 
 from orix.quaternion import OrientationRegion
 from orix.quaternion.symmetry import get_point_group
-from orix.sampling.SO3_sampling import uniform_SO3_sample, _three_uniform_samples_method
+from orix.sampling.SO3_sampling import _three_uniform_samples_method, uniform_SO3_sample
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 

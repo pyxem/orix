@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from orix.plot.orientation_color_keys import IPFColorKey
 from orix.plot.direction_color_keys import DirectionColorKeyTSL
+from orix.plot.orientation_color_keys import IPFColorKey
 
 
 class IPFColorKeyTSL(IPFColorKey):

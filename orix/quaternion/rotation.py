@@ -47,9 +47,9 @@ from dask.diagnostics import ProgressBar
 import numpy as np
 from scipy.special import hyp0f1
 
+from orix._util import deprecated_argument
 from orix.quaternion import Quaternion
 from orix.vector import AxAngle, Vector3d
-from orix._util import deprecated_argument
 
 # Used to round values below 1e-16 to zero
 _FLOAT_EPS = np.finfo(float).eps

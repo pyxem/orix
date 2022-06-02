@@ -25,13 +25,13 @@ rotated by orientations.
 from typing import Any, Union
 
 import matplotlib.axes as maxes
-import matplotlib.pyplot as plt
 import matplotlib.projections as mprojections
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map import Phase
 from orix.measure import pole_density_function
-from orix.plot.stereographic_plot import StereographicPlot, ZORDER
+from orix.plot.stereographic_plot import ZORDER, StereographicPlot
 from orix.quaternion.symmetry import C1
 from orix.vector import Miller, Vector3d
 

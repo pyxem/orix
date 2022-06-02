@@ -61,9 +61,10 @@ Code style
 
 The code making up orix is formatted closely following the `Style Guide for Python Code
 <https://www.python.org/dev/peps/pep-0008/>`_ with `The Black Code style
-<https://black.readthedocs.io/en/stable/the_black_code_style/index.html>`_. We use
-`pre-commit <https://pre-commit.com>`_ to run ``black`` automatically prior to each
-local commit. Please install it in your environment::
+<https://black.readthedocs.io/en/stable/the_black_code_style/index.html>`_ and
+`isort <https://pycqa.github.io/isort/>`_ to handle module imports. We use
+`pre-commit <https://pre-commit.com>`_ to run ``black`` and ``isort`` automatically
+prior to each local commit. Please install it in your environment::
 
     pre-commit install
 
@@ -75,11 +76,15 @@ Note that ``black`` won't format `docstrings
 <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
 standard.
 
-Comment lines should preferably be limited to 72 characters.
-
 Package imports should be structured into three blocks with blank lines between them
 (descending order): standard library (like ``os`` and ``typing``), third party packages
-(like ``numpy`` and ``matplotlib``) and finally ``orix`` imports.
+(like ``numpy`` and ``matplotlib``) and finally first party ``orix`` imports. ``isort``
+will structure the import order in this way by default. Note that if imports must be
+sorted in a certain order, for example to avoid recursion, then ``isort`` provides 
+`commands <https://pycqa.github.io/isort/docs/configuration/action_comments.html>`_ that
+may be used to prevent sorting.
+
+Comment lines should preferably be limited to 72 characters.
 
 As of ``orix`` version 0.9, the code base is being transitioned to use type hints. New
 changes should be implemented using type hints in the function definition and without 
