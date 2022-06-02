@@ -131,6 +131,6 @@ class TestInversePoleFigurePlot:
         v = Vector3d(np.random.randn(10_000, 3)).unit
         axes[0].pole_density_function(v, colorbar=True, log=True)
         assert len(fig.axes) == 2
-        assert isinstance(fig.axes[0].collections[0], QuadMesh)
+        assert any(isinstance(c, QuadMesh) for c in fig.axes[0].collections)
         assert fig.axes[1].get_label() == "<colorbar>"
         assert fig.axes[1].get_ylabel() == "log(MRD)"

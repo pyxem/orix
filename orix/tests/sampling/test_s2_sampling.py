@@ -118,14 +118,17 @@ class TestS2Sampling:
 
     def test_equal_area_coordinates_ranges(self):
         azi, polar = S2_sampling._sample_S2_equal_area_coordinates(
-            10, azimuth_range=(-0.1, 2 * np.pi + 0.1), polar_range=(-0.1, np.pi + 0.1)
+            10,
+            azimuth_range=(-0.1, 2 * np.pi + 0.1),
+            polar_range=(-0.1, np.pi + 0.1),
+            azimuth_endpoint=True,
         )
 
         # code fixes wrap around in ranges
         assert azi.min() == 0
-        assert azi.max() == 2 * np.pi
+        assert np.allclose(azi.max(), 2 * np.pi)
         assert polar.min() == 0
-        assert polar.max() == np.pi
+        assert np.allclose(polar.max(), np.pi)
 
     def test_equal_area_coordinates_ranges_raises(self):
         with pytest.raises(ValueError, match="Azimuth_range requires values "):
