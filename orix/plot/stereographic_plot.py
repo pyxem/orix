@@ -21,7 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -31,8 +31,8 @@ import matplotlib.path as mpath
 import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import gaussian_filter
 
+from orix.measure import pole_density_function
 from orix.plot._symmetry_marker import (
     TwoFoldMarker,
     ThreeFoldMarker,
@@ -207,97 +207,18 @@ class StereographicPlot(maxes.Axes):
         matplotlib.axes.Axes.scatter
         orix.vector.Vector3d.pole_density_function
         """
-        from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
+
+        hist, (x, y) = pole_density_function(
+            *args,
+            resolution=resolution,
+            sigma=sigma,
+            log=log,
+            hemisphere=self.hemisphere,
+            symmetry=None,
+        )
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
         updated_kwargs = {**kwargs, **new_kwargs}
-
-        if len(args) == 1:
-            v = args[0]
-            if not isinstance(v, Vector3d):
-                raise TypeError(
-                    "If one argument is passed it must be an instance of "
-                    + "`orix.vector.Vector3d`."
-                )
-            azimuth, polar, _ = v.to_polar()
-        elif len(args) == 2:
-            azimuth, polar = args
-        else:
-            raise ValueError(
-                "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
-            )
-
-        # np.histogram2d expects 1d arrays
-        azimuth, polar = np.ravel(azimuth), np.ravel(polar)
-        if not azimuth.size:
-            return
-
-        # generate angular mesh on S2
-        azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
-            resolution,
-            hemisphere=self.hemisphere,
-            azimuth_endpoint=True,
-        )
-        azimuth_grid, polar_grid = np.meshgrid(
-            azimuth_coords, polar_coords, indexing="ij"
-        )
-        # generate histogram in angular space
-        hist, *_ = np.histogram2d(
-            azimuth, polar, bins=(azimuth_coords, polar_coords), density=False
-        )
-
-        # "wrap" along azimuthal axis, "reflect" along polar axis
-        mode = ("wrap", "reflect")
-        # apply broadening in angular space
-        hist = gaussian_filter(hist, sigma / resolution, mode=mode)
-
-        # in the case of IPF, accumulate all values outside FS back into
-        # correct bin in FS
-        if hasattr(self, "_symmetry"):
-            symmetry = self._symmetry
-            # compute histogram bin centers in azimuth and polar coords
-            azimuth_center_grid, polar_center_grid = np.meshgrid(
-                azimuth_coords[:-1] + np.ediff1d(azimuth_coords) / 2,
-                polar_coords[:-1] + np.ediff1d(polar_coords) / 2,
-                indexing="ij",
-            )
-            v_center_grid = Vector3d.from_polar(
-                azimuth=azimuth_center_grid, polar=polar_center_grid
-            ).unit
-            # fold back in into FS
-            v_center_grid_fs = v_center_grid.in_fundamental_sector(symmetry)
-            azimuth_center_fs, polar_center_fs, _ = v_center_grid_fs.to_polar()
-            azimuth_center_fs = azimuth_center_fs.ravel()
-            polar_center_fs = polar_center_fs.ravel()
-            # get correct histogram bin for vectors folded back into FS
-            i = np.digitize(azimuth_center_fs, azimuth_coords) - 1
-            j = np.digitize(polar_center_fs, polar_coords) - 1
-            # recompute histogram
-            temp = np.zeros_like(hist)
-            # add hist data to new histogram by buffering
-            np.add.at(temp, (i, j), hist.ravel())
-            hist = np.ma.array(
-                temp, mask=~(v_center_grid <= symmetry.fundamental_sector)
-            )
-        else:
-            symmetry = None
-            hist = np.ma.array(hist, mask=np.zeros_like(hist, dtype=bool))
-
-        # Normalize by the average number of counts per cell on the
-        # unit sphere to calculate in terms of Multiples of Random
-        # Distribution (MRD). See :cite:`rohrer2004distribution`.
-        # as `hist` is a masked array, only valid (unmasked) values are
-        # used in this computation
-        hist = hist / hist.mean()
-
-        if log:
-            # +1 to avoid taking the log of 0
-            hist = np.log(hist + 1)
-
-        # get mesh vertices in stereographic plane
-        v_mesh = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
-        x, y = self._projection.vector2xy(v_mesh)
-        x, y = x.reshape(v_mesh.shape), y.reshape(v_mesh.shape)
 
         # plot mesh
         updated_kwargs.setdefault("cmap", "magma")
