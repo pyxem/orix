@@ -115,7 +115,6 @@ def pole_density_function(
         resolution if symmetry is None else resolution / 2,
         hemisphere=hemisphere,
         azimuth_endpoint=True,
-        parity=None if symmetry is None else "odd",
     )
     azimuth_grid, polar_grid = np.meshgrid(azimuth_coords, polar_coords, indexing="ij")
     # generate histogram in angular space
@@ -150,7 +149,9 @@ def pole_density_function(
         # was defined, the initial grid was calculated with resolution
         # `resolution / 2`
         azimuth_coords_res2, polar_coords_res2 = _sample_S2_equal_area_coordinates(
-            resolution, hemisphere=hemisphere, azimuth_endpoint=True, parity="even"
+            resolution,
+            hemisphere=hemisphere,
+            azimuth_endpoint=True,
         )
         azimuth_res2_grid, polar_res2_grid = np.meshgrid(
             azimuth_coords_res2, polar_coords_res2, indexing="ij"
