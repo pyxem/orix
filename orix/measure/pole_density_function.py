@@ -33,6 +33,7 @@ def pole_density_function(
     hemisphere: Optional[str] = None,
     symmetry: Optional[Symmetry] = None,
     log: bool = False,
+    mrd: bool = True
 ) -> Tuple[np.ma.MaskedArray, Tuple[np.ndarray, np.ndarray]]:
     """Compute the Pole Density Function (PDF) of vectors in the
     stereographic projection.
@@ -60,6 +61,10 @@ def pole_density_function(
         on `hemisphere`. Default is None.
     log
         If True the log(PDF) is calculated. Default is True.
+    mrd
+        If True the returned PDF is in units of Multiples of Random
+        Distribution (MRD), otherwise the units are bin counts. Default
+        is True.
 
     Returns
     -------
@@ -192,7 +197,8 @@ def pole_density_function(
     # Distribution (MRD). See :cite:`rohrer2004distribution`.
     # as `hist` is a masked array, only valid (unmasked) values are
     # used in this computation
-    hist = hist / hist.mean()
+    if mrd:
+        hist = hist / hist.mean()
 
     if log:
         # +1 to avoid taking the log of 0

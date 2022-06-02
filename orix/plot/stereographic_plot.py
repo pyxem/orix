@@ -215,6 +215,7 @@ class StereographicPlot(maxes.Axes):
             log=log,
             hemisphere=self.hemisphere,
             symmetry=None,
+            mrd=True,
         )
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)

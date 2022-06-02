@@ -148,6 +148,7 @@ class InversePoleFigurePlot(StereographicPlot):
             log=log,
             hemisphere=self.hemisphere,
             symmetry=self._symmetry,
+            mrd=True,
         )
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
