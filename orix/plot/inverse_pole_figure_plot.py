@@ -151,7 +151,7 @@ class InversePoleFigurePlot(StereographicPlot):
             mrd=True,
         )
 
-        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
+        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=True)
         updated_kwargs = {**kwargs, **new_kwargs}
 
         # plot mesh

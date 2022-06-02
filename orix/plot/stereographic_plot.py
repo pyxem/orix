@@ -323,7 +323,7 @@ class StereographicPlot(maxes.Axes):
             mrd=True,
         )
 
-        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=False)
+        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=True)
         updated_kwargs = {**kwargs, **new_kwargs}
 
         # plot mesh
@@ -448,7 +448,7 @@ class StereographicPlot(maxes.Axes):
         pad = 0.01
         self.set_xlim(np.min(x) - pad, np.max(x) + pad)
         self.set_ylim(np.min(y) - pad, np.max(y) + pad)
-        # self.margins(0, 0)
+        self.margins(0, 0)
         self.patches[0].set_visible(False)
         patch = mpatches.PathPatch(
             mpath.Path(np.column_stack([x, y]), closed=True),
