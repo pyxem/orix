@@ -226,7 +226,7 @@ def _sample_S2_equal_area_coordinates(
     if parity is not None:
         parity = parity.lower()
         if parity not in {"even", "odd"}:
-            raise ValueError('When defined `parity` must be one of "even" or "odd".')
+            raise ValueError('Parity must be either None or one of "even" or "odd".')
 
     # calculate number of steps and step size angular spacing
     # this parameter D in :cite:`rohrer2004distribution`.
@@ -295,6 +295,9 @@ def _sample_S2_equal_area_coordinates(
         if not polar_steps % 2:
             polar_steps -= 1
 
+    # extra data point to account for endpoint
+    if azimuth_endpoint:
+        azimuth_steps += 1
     azimuth = np.linspace(
         azimuth_min,
         azimuth_max,
@@ -304,7 +307,7 @@ def _sample_S2_equal_area_coordinates(
     polar = np.linspace(
         polar_min,
         polar_max,
-        num=polar_steps,
+        num=polar_steps + 1,  # extra data point to account for endpoint
         endpoint=True,
     )
     polar = np.arccos(polar)
