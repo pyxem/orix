@@ -19,6 +19,7 @@ The list of top modules:
     data
     crystal_map
     io
+    measure
     plot
     projections
     quaternion
@@ -167,6 +168,12 @@ orix_hdf5
     :members:
     :undoc-members:
     :show-inheritance:
+
+....
+
+measure
+=======
+.. automodule:: orix.measure
 
 ....
 
