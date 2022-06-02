@@ -110,7 +110,9 @@ def pole_density_function(
     if not azimuth.size:
         return
 
-    # generate angular mesh on S2
+    # Generate angular mesh on S2.
+    # To help with aliasing after reprojection into FS in IPF case,
+    # the initial sampling is performed at half the angular resolution
     azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
         resolution if symmetry is None else resolution / 2,
         hemisphere=hemisphere,
