@@ -250,13 +250,7 @@ def _sample_S2_equal_area_coordinates(
 
     azimuth_range = azimuth_max - azimuth_min
     # azimuth should have 4D steps over range [0..2pi]
-    azimuth_steps = int(np.ceil(azimuth_range / (np.pi / 2) * steps))
-    if parity == "even":
-        if azimuth_steps % 2:
-            azimuth_steps -= 1
-    elif parity == "odd":
-        if not azimuth_steps % 2:
-            azimuth_steps -= 1
+    azimuth_num = int(np.ceil(azimuth_range / (np.pi / 2) * steps))
 
     # polar coordinate is parameterized in terms of cos(theta)
     if polar_range is not None:
@@ -287,27 +281,35 @@ def _sample_S2_equal_area_coordinates(
 
     polar_range = polar_min - polar_max  # opposite as cos([0..pi]) -> [1..-1]
     # polar should have D steps over range [0..pi/2] rad, ie. [1..0]
-    polar_steps = int(np.ceil(polar_range * steps))
-    if parity == "even":
-        if polar_steps % 2:
-            polar_steps -= 1
-    elif parity == "odd":
-        if not polar_steps % 2:
-            polar_steps -= 1
+    # extra point as polar endpoint is True
+    polar_num = int(np.ceil(polar_range * steps)) + 1
 
     # extra data point to account for endpoint
     if azimuth_endpoint:
-        azimuth_steps += 1
+        azimuth_num += 1
+
+    # return even or odd number of points if requested
+    if parity == "even":
+        if azimuth_num % 2:
+            azimuth_num -= 1
+        if polar_num % 2:
+            polar_num -= 1
+    elif parity == "odd":
+        if not azimuth_num % 2:
+            azimuth_num -= 1
+        if not polar_num % 2:
+            polar_num -= 1
+
     azimuth = np.linspace(
         azimuth_min,
         azimuth_max,
-        num=azimuth_steps,
+        num=azimuth_num,
         endpoint=azimuth_endpoint,
     )
     polar = np.linspace(
         polar_min,
         polar_max,
-        num=polar_steps + 1,  # extra data point to account for endpoint
+        num=polar_num,
         endpoint=True,
     )
     polar = np.arccos(polar)
