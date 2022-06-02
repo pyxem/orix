@@ -725,6 +725,8 @@ class Vector3d(Object3d):
 
         See Also
         --------
+        orix.measure.pole_density_function
+        orix.plot.InversePoleFigurePlot.pole_density_function
         orix.plot.StereographicPlot.pole_density_function
         """
         if hemisphere is None:

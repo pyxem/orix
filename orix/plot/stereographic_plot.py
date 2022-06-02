@@ -309,7 +309,8 @@ class StereographicPlot(maxes.Axes):
 
         See Also
         --------
-        matplotlib.axes.Axes.scatter
+        orix.measure.pole_density_function
+        orix.plot.InversePoleFigurePlot.pole_density_function
         orix.vector.Vector3d.pole_density_function
         """
 

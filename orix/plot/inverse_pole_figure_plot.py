@@ -137,7 +137,8 @@ class InversePoleFigurePlot(StereographicPlot):
 
         See Also
         --------
-        matplotlib.axes.Axes.scatter
+        orix.measure.pole_density_function
+        orix.plot.StereographicPlot.pole_density_function
         orix.vector.Vector3d.pole_density_function
         """
 

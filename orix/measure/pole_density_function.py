@@ -78,9 +78,11 @@ def pole_density_function(
 
     See Also
     --------
-    matplotlib.axes.Axes.scatter
+    orix.plot.InversePoleFigurePlot.pole_density_function
+    orix.plot.StereographicPlot.pole_density_function
     orix.vector.Vector3d.pole_density_function
     """
+
     from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
 
     if hemisphere is None:

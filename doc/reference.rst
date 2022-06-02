@@ -173,10 +173,12 @@ orix_hdf5
 
 measure
 =======
-.. automodule:: orix.measure
 .. currentmodule:: orix.measure
 .. autosummary::
     pole_density_function
+
+.. automodule:: orix.measure
+    :members:
 
 ....
 
@@ -244,11 +246,12 @@ InversePoleFigurePlot
 ---------------------
 .. currentmodule:: orix.plot.InversePoleFigurePlot
 .. autosummary::
+    pole_density_function
     scatter
     show_hemisphere_label
     text
 .. autoclass:: orix.plot.InversePoleFigurePlot
-    :members: hemisphere, name, scatter, show_hemisphere_label, text
+    :members: hemisphere, name, pole_density_function, scatter, show_hemisphere_label, text
     :undoc-members:
     :show-inheritance:
 
