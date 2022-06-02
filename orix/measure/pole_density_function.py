@@ -98,7 +98,8 @@ def pole_density_function(
                 + "`orix.vector.Vector3d`."
             )
     elif len(args) == 2:
-        v = Vector3d.from_polar(azimuth, polar)
+        # azimuth and polar angles
+        v = Vector3d.from_polar(*args)
     else:
         raise ValueError(
             "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
