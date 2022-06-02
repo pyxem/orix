@@ -43,7 +43,7 @@ def point_groups(request):
     return request.param
 
 
-class TestPoleDensityFunction:
+class TestMeasurePoleDensityFunction:
     def test_pole_density_function(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
 
@@ -114,3 +114,10 @@ class TestPoleDensityFunction:
         hist1, _ = pole_density_function(v, sigma=2.5)
         hist2, _ = pole_density_function(v, sigma=5)
         assert not np.allclose(hist1, hist2)
+
+    def test_pole_density_function_empty_vector_raises(self):
+        v = Vector3d.empty()
+        assert not v.size
+
+        with pytest.raises(ValueError, match="Azimuth and polar have 0 size"):
+            pole_density_function(v)
