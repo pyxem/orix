@@ -174,6 +174,7 @@ orix_hdf5
 measure
 =======
 .. automodule:: orix.measure
+.. currentmodule:: orix.measure
 
 ....
 
