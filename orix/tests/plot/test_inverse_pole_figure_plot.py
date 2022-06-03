@@ -18,7 +18,6 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
 from orix.quaternion import Orientation, symmetry
@@ -123,16 +122,5 @@ class TestInversePoleFigurePlot:
         for a, hemi, title in zip(axes4, hemispheres, titles):
             assert a.hemisphere == hemi
             assert a.title.get_text() == title
-
-        plt.close("all")
-
-    @pytest.mark.parametrize("symmetry", [symmetry.D3d, symmetry.C6h, symmetry.Oh])
-    def test_plot_ipf_color_key(self, symmetry):
-        fig, ax = plt.subplots(subplot_kw=dict(projection="ipf", symmetry=symmetry))
-        ax.plot_ipf_color_key()
-        assert len(ax.images) == 1
-        assert len(ax.texts) == 3
-        assert all(t.get_text().startswith("[") for t in ax.texts)
-        assert all(t.get_text().endswith("]") for t in ax.texts)
 
         plt.close("all")
