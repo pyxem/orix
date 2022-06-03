@@ -21,7 +21,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -31,7 +31,6 @@ import matplotlib.path as mpath
 import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import gaussian_filter
 
 # fmt: off
 # isort: off
@@ -283,6 +282,7 @@ class StereographicPlot(maxes.Axes):
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
+        weights: Optional[np.ndarray] = None,
         **kwargs: Any,
     ):
         """Compute the Pole Density Function (PDF) of vectors in the
@@ -303,6 +303,9 @@ class StereographicPlot(maxes.Axes):
         colorbar
             If True a colorbar is shown alongside the PDF plot.
             Default is True.
+        weights
+            The weights for the individual vectors. Default is None, in
+            which case each vector is 1.
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
@@ -321,6 +324,7 @@ class StereographicPlot(maxes.Axes):
             hemisphere=self.hemisphere,
             symmetry=None,
             mrd=True,
+            weights=weights,
         )
 
         new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=True)

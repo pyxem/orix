@@ -649,6 +649,7 @@ class Vector3d(Object3d):
         log: bool = False,
         colorbar: bool = True,
         symmetry: Optional["Symmetry"] = None,
+        weights: Optional[np.ndarray] = None,
         figure: Optional[Figure] = None,
         axes_labels: Optional[List[str]] = None,
         hemisphere: Optional[str] = None,
@@ -685,6 +686,9 @@ class Vector3d(Object3d):
         symmetry
             The point group symmetry. Default is None, in which case
             `orix.quaternion.symmetry.C1` is used.
+        weights
+            The weights for the individual vectors. Default is None, in
+            which case each vector is 1.
         projection
             Which projection to use. The default is "stereographic", the
             only current option.
@@ -779,6 +783,7 @@ class Vector3d(Object3d):
                 sigma=sigma,
                 log=log,
                 colorbar=colorbar,
+                weights=weights,
                 **kwargs,
             )
 
@@ -791,6 +796,7 @@ class Vector3d(Object3d):
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
+        weights: Optional[np.ndarray] = None,
         figure: Optional[Figure] = None,
         axes_labels: Optional[List[str]] = None,
         hemisphere: Optional[str] = None,
@@ -823,6 +829,9 @@ class Vector3d(Object3d):
         colorbar
             If True a colorbar is shown alongside the PDF plot.
             Default is True.
+        weights
+            The weights for the individual vectors. Default is None, in
+            which case each vector is 1.
         projection
             Which projection to use. The default is "stereographic", the
             only current option.
@@ -916,6 +925,7 @@ class Vector3d(Object3d):
                 sigma=sigma,
                 log=log,
                 colorbar=colorbar,
+                weights=weights,
                 **kwargs,
             )
 

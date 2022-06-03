@@ -30,6 +30,7 @@ def pole_density_function(
     *args: Union[np.ndarray, Vector3d],
     resolution: float = 1,
     sigma: float = 5,
+    weights: Optional[np.ndarray] = None,
     hemisphere: Optional[str] = None,
     symmetry: Optional[Symmetry] = None,
     log: bool = False,
@@ -37,6 +38,7 @@ def pole_density_function(
 ) -> Tuple[np.ma.MaskedArray, Tuple[np.ndarray, np.ndarray]]:
     """Compute the Pole Density Function (PDF) of vectors in the
     stereographic projection.
+
     If `symmetry` is defined then the PDF is folded back into the point
     group fundamental sector and accumulated.
     Parameters
@@ -50,6 +52,9 @@ def pole_density_function(
     sigma
         The angular resolution of the applied broadening in degrees.
         Default value is 5.
+    weights
+        The weights for the individual vectors. Default is None, in
+        which case each vector is 1.
     hemisphere
         Which hemisphere(s) to plot the vectors on, defaults to
         None, which means "upper". Options are "upper" and "lower".
@@ -115,15 +120,22 @@ def pole_density_function(
     # Generate angular mesh on S2.
     # To help with aliasing after reprojection into FS in IPF case,
     # the initial sampling is performed at half the angular resolution
+    if symmetry is not None:
+        resolution = resolution / 2
+
     azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
-        resolution if symmetry is None else resolution / 2,
+        resolution,
         hemisphere=hemisphere,
         azimuth_endpoint=True,
     )
     azimuth_grid, polar_grid = np.meshgrid(azimuth_coords, polar_coords, indexing="ij")
     # generate histogram in angular space
     hist, *_ = np.histogram2d(
-        azimuth, polar, bins=(azimuth_coords, polar_coords), density=False
+        azimuth,
+        polar,
+        bins=(azimuth_coords, polar_coords),
+        density=False,
+        weights=weights,
     )
 
     # "wrap" along azimuthal axis, "reflect" along polar axis
@@ -151,9 +163,9 @@ def pole_density_function(
 
         # generate coorinates with proper resolution. When `symmetry`
         # was defined, the initial grid was calculated with resolution
-        # `resolution / 2`
+        # `resolution = resolution / 2`
         azimuth_coords_res2, polar_coords_res2 = _sample_S2_equal_area_coordinates(
-            resolution,
+            2 * resolution,
             hemisphere=hemisphere,
             azimuth_endpoint=True,
         )
