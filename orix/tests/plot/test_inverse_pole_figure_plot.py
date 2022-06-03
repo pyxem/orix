@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from matplotlib.collections import QuadMesh
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -136,3 +137,12 @@ class TestInversePoleFigurePlot:
         assert all(t.get_text().endswith("]") for t in ax.texts)
 
         plt.close("all")
+
+    def test_inverse_pole_density_function(self):
+        fig, axes = _setup_inverse_pole_figure_plot(symmetry=symmetry.C6h)
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        axes[0].pole_density_function(v, colorbar=True, log=True)
+        assert len(fig.axes) == 2
+        assert any(isinstance(c, QuadMesh) for c in fig.axes[0].collections)
+        assert fig.axes[1].get_label() == "<colorbar>"
+        assert fig.axes[1].get_ylabel() == "log(MRD)"

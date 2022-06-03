@@ -60,7 +60,7 @@ def _sample_S2_uv_mesh_coordinates(
     resolution: float,
     hemisphere: str = "both",
     offset: float = 0,
-    azimuthal_endpoint: bool = False,
+    azimuth_endpoint: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Get spherical coordinates for UV mesh points on unit sphere *S2*.
 
@@ -79,7 +79,7 @@ def _sample_S2_uv_mesh_coordinates(
     offset
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
-    azimuthal_endpoint
+    azimuth_endpoint
         If True then endpoint of the azimuthal array is included in the
         calculation. Default is False.
 
@@ -119,7 +119,7 @@ def _sample_S2_uv_mesh_coordinates(
         offset * step_size_azimuth,
         2 * np.pi + offset * step_size_azimuth,
         num=steps_azimuth,
-        endpoint=azimuthal_endpoint,
+        endpoint=azimuth_endpoint,
     )
     # convert to radians
     polar_min, polar_max = np.deg2rad(polar_min), np.deg2rad(polar_max)
@@ -187,7 +187,9 @@ def sample_S2_uv_mesh(
 def _sample_S2_equal_area_coordinates(
     resolution: float,
     hemisphere: str = "both",
-    azimuthal_endpoint: bool = False,
+    azimuth_endpoint: bool = False,
+    azimuth_range: Optional[Tuple[float, float]] = None,
+    polar_range: Optional[Tuple[float, float]] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Get spherical coordinates for equal area mesh points on unit
     sphere *S2*.
@@ -202,38 +204,89 @@ def _sample_S2_equal_area_coordinates(
     hemisphere
         Generate mesh points on the "upper", "lower" or "both"
         hemispheres. Default is "both".
-    azimuthal_endpoint
-        If True then endpoint of the azimuthal array is included in the
+    azimuth_endpoint
+        If True then endpoint of the azimuth array is included in the
         calculation. Default is False.
+    azimuth_range, polar_range
+        The (min, max) angular range for the azimuthal and polar
+        coordinates, respectively, in radians. If provided then the
+        `hemisphere` argument is ignored. Default is None.
 
     Returns
     -------
     azimuth, polar
     """
-    hemisphere = hemisphere.lower()
-    if hemisphere not in ("upper", "lower", "both"):
-        raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
 
     # calculate number of steps and step size angular spacing
     # this parameter D in :cite:`rohrer2004distribution`.
     steps = int(np.ceil(90 / resolution))
-    azimuth = np.linspace(0, 2 * np.pi, num=4 * steps, endpoint=azimuthal_endpoint)
-    # polar coordinate is parameterized in terms of cos(theta)
-    if hemisphere == "both":
-        polar_min = 1
-        polar_max = -1
-        steps *= 2
-    elif hemisphere == "upper":
-        polar_min = 1
-        polar_max = 0
-    elif hemisphere == "lower":
-        polar_min = 0
-        polar_max = -1
 
+    if azimuth_range is not None:
+        azimuth_min, azimuth_max = azimuth_range
+        if azimuth_min >= azimuth_max:
+            raise ValueError(
+                "Azimuth_range requires values (min, max) where min < max."
+            )
+    else:
+        # use full range
+        azimuth_min, azimuth_max = 0, 2 * np.pi
+
+    # no wrap around
+    if azimuth_min < 0:
+        azimuth_min = 0
+    if azimuth_max > 2 * np.pi:
+        azimuth_max = 2 * np.pi
+
+    azimuth_range = azimuth_max - azimuth_min
+    # azimuth should have 4D steps over range [0..2pi]
+    azimuth_num = int(np.ceil(azimuth_range / (np.pi / 2) * steps))
+
+    # polar coordinate is parameterized in terms of cos(theta)
+    if polar_range is not None:
+        polar_min, polar_max = polar_range
+        # no wrap around
+        if polar_min < 0:
+            polar_min = 0
+        if polar_max > np.pi:
+            polar_max = np.pi
+        if polar_min >= polar_max:
+            raise ValueError("Polar_range requires values (min, max) where min < max.")
+        # convert to units of cos(theta) for equal area spacing
+        polar_min, polar_max = np.cos((polar_min, polar_max))
+    else:
+        hemisphere = hemisphere.lower()
+        if hemisphere not in ("upper", "lower", "both"):
+            raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
+        # polar_min and polar_max in units of cos(theta)
+        if hemisphere == "both":
+            polar_min = 1
+            polar_max = -1
+        elif hemisphere == "upper":
+            polar_min = 1
+            polar_max = 0
+        elif hemisphere == "lower":
+            polar_min = 0
+            polar_max = -1
+
+    polar_range = polar_min - polar_max  # opposite as cos([0..pi]) -> [1..-1]
+    # polar should have D steps over range [0..pi/2] rad, ie. [1..0]
+    # extra point as polar endpoint is True
+    polar_num = int(np.ceil(polar_range * steps)) + 1
+
+    # extra data point to account for endpoint
+    if azimuth_endpoint:
+        azimuth_num += 1
+
+    azimuth = np.linspace(
+        azimuth_min,
+        azimuth_max,
+        num=azimuth_num,
+        endpoint=azimuth_endpoint,
+    )
     polar = np.linspace(
         polar_min,
         polar_max,
-        num=steps,
+        num=polar_num,
         endpoint=True,
     )
     polar = np.arccos(polar)

@@ -21,6 +21,11 @@ Added
   ``orix.sampling.sample_S2()``.
 - Plotting IPF color maps on axes now possible on through
   `InversePoleFigurePlot.plot_ipf_color_key()`.
+- Calculation of the Inverse Pole Density Function (IPDF), ie. pole density in the
+  crystal point group fundamental sector, through 
+  ``InverseStereographcPlot.pole_density_function()``.
+- The ``orix.measure`` module has been introduced. The ``measure`` module is related to
+  quantification of orientation and vector data.
 
 Removed
 -------
