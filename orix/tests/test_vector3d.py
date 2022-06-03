@@ -450,6 +450,18 @@ class TestSpareNotImplemented:
         "cantmul" * vector
 
 
+class TestVector3dInversePoleDensityFunction:
+    def test_ipdf_plot(self):
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        fig1 = v.inverse_pole_density_function(
+            symmetry=symmetry.Th, return_figure=True, colorbar=True
+        )
+        assert len(fig1.axes) == 2  # plot and colorbar
+        qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
+        assert any(qm1)
+        plt.close(fig1)
+
+
 class TestVector3dPoleDensityFunction:
     def test_pdf_plot_colorbar(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
