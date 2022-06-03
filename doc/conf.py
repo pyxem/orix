@@ -7,7 +7,7 @@
 from datetime import datetime
 import inspect
 import os
-from os.path import relpath, dirname
+from os.path import dirname, relpath
 import re
 import sys
 

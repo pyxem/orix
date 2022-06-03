@@ -16,22 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
+import pytest
 
 from orix.crystal_map import CrystalMap, Phase
 from orix.io import load, loadang, save
 from orix.io.plugins.ang import (
+    _get_column_width,
     _get_header,
+    _get_nrows_ncols_step_sizes,
     _get_phases_from_header,
     _get_vendor_columns,
-    _get_nrows_ncols_step_sizes,
-    _get_column_width,
 )
 from orix.tests.conftest import (
-    ANGFILE_TSL_HEADER,
     ANGFILE_ASTAR_HEADER,
     ANGFILE_EMSOFT_HEADER,
+    ANGFILE_TSL_HEADER,
 )
 
 

@@ -16,12 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import matplotlib.patches as mpatches
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
+import matplotlib.patches as mpatches
 from matplotlib.projections import register_projection
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib_scalebar import dimension, scalebar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
 

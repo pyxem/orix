@@ -33,16 +33,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+# fmt: off
+# isort: off
 from orix.plot._symmetry_marker import (
     TwoFoldMarker,
     ThreeFoldMarker,
     FourFoldMarker,
     SixFoldMarker,
 )
+# isort: on
+# fmt: on
 from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.vector import Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
-
 
 ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3, mesh=2)
 

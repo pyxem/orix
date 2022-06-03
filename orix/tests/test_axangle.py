@@ -20,9 +20,8 @@ import itertools
 import numpy as np
 import pytest
 
-from orix.vector import AxAngle, Vector3d
 from orix.quaternion import Rotation
-
+from orix.vector import AxAngle, Vector3d
 
 axes = [
     (1, 0, 0),

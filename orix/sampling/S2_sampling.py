@@ -18,17 +18,17 @@
 
 """Generation of spherical grids in *S2*."""
 
-from typing import Callable, List, Mapping, Optional, Tuple
 from functools import partial
+from typing import Callable, List, Mapping, Optional, Tuple
 
 import numpy as np
 
 from orix.sampling._polyhedral_sampling import (
-    _sample_length_equidistant,
-    _edge_grid_normalized_cube,
-    _edge_grid_spherified_edge_cube,
-    _edge_grid_spherified_corner_cube,
     _compose_from_faces,
+    _edge_grid_normalized_cube,
+    _edge_grid_spherified_corner_cube,
+    _edge_grid_spherified_edge_cube,
+    _sample_length_equidistant,
 )
 from orix.vector import Vector3d
 

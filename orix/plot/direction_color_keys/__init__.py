@@ -21,7 +21,6 @@
 from orix.plot.direction_color_keys.direction_color_key import DirectionColorKey
 from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
 
-
 __all__ = [
     "DirectionColorKeyTSL",
 ]

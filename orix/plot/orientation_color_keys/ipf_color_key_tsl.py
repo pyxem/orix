@@ -21,8 +21,8 @@ from typing import Optional
 from matplotlib.figure import Figure
 import numpy as np
 
-from orix.plot.orientation_color_keys import IPFColorKey
 from orix.plot.direction_color_keys import DirectionColorKeyTSL
+from orix.plot.orientation_color_keys import IPFColorKey
 from orix.quaternion import Orientation, Symmetry
 from orix.vector.vector3d import Vector3d
 

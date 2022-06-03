@@ -22,7 +22,7 @@ orientation.
 
 from itertools import combinations, product
 
-from diffpy.structure import Structure, Lattice
+from diffpy.structure import Lattice, Structure
 import matplotlib.pyplot as plt
 import numpy as np
 

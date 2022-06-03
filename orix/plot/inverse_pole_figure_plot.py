@@ -27,8 +27,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import matplotlib.axes as maxes
 from matplotlib.figure import Figure
 from matplotlib.patches import PathPatch
-import matplotlib.pyplot as plt
 import matplotlib.projections as mprojections
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map import Phase

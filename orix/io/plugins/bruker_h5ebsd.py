@@ -25,7 +25,6 @@ from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.io.plugins._h5ebsd import H5ebsdFile
 from orix.quaternion import Rotation
 
-
 __all__ = ["file_reader"]
 
 # Plugin description

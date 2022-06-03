@@ -24,7 +24,6 @@ import pytest
 from orix.quaternion import Orientation, symmetry
 from orix.vector import Vector3d, check_vector
 
-
 vectors = [
     (1, 0, 0),
     (0, 0, 1),

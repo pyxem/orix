@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 
-from packaging.version import Version
 import re
 
 from outdated import check_outdated
-
+from packaging.version import Version
 
 with open("../../orix/__init__.py") as fid:
     for line in fid:
