@@ -1282,7 +1282,8 @@ class Vector3d(Object3d):
 
         if projection not in {"ipf", "stereographic"}:
             raise NotImplementedError(
-                'Currently supported projections are "ipf" and "stereographc".'
+                f'Projection "{projection}" is unsupported. '
+                + 'The currently supported projections are "ipf" and "stereographic".'
             )
         if projection == "ipf":
             hemisphere = "upper"
@@ -1295,7 +1296,7 @@ class Vector3d(Object3d):
 
         # Which hemisphere(s) to plot
         ncols = 1
-        hemispheres = {"upper", "lower"}
+        hemispheres = ("upper", "lower")
         if hemisphere is None:
             hemisphere = "upper"
         if hemisphere.lower() in hemispheres:

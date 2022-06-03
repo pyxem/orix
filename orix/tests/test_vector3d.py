@@ -667,9 +667,7 @@ class TestPlotting:
         plt.close("all")
 
     def test_scatter_projection(self):
-        with pytest.raises(
-            NotImplementedError, match="Stereographic is the only supported"
-        ):
+        with pytest.raises(NotImplementedError, match="Projection "):
             self.v.scatter(projection="equal_angle")
 
     def test_scatter_reproject(self):
