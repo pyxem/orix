@@ -216,9 +216,6 @@ def _sample_S2_equal_area_coordinates(
     -------
     azimuth, polar
     """
-    hemisphere = hemisphere.lower()
-    if hemisphere not in ("upper", "lower", "both"):
-        raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
 
     # calculate number of steps and step size angular spacing
     # this parameter D in :cite:`rohrer2004distribution`.
