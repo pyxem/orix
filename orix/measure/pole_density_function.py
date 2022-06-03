@@ -33,13 +33,12 @@ def pole_density_function(
     hemisphere: Optional[str] = None,
     symmetry: Optional[Symmetry] = None,
     log: bool = False,
+    mrd: bool = True
 ) -> Tuple[np.ma.MaskedArray, Tuple[np.ndarray, np.ndarray]]:
     """Compute the Pole Density Function (PDF) of vectors in the
     stereographic projection.
-
     If `symmetry` is defined then the PDF is folded back into the point
     group fundamental sector and accumulated.
-
     Parameters
     ----------
     args
@@ -60,7 +59,10 @@ def pole_density_function(
         on `hemisphere`. Default is None.
     log
         If True the log(PDF) is calculated. Default is True.
-
+    mrd
+        If True the returned PDF is in units of Multiples of Random
+        Distribution (MRD), otherwise the units are bin counts. Default
+        is True.
     Returns
     -------
     hist
@@ -70,12 +72,13 @@ def pole_density_function(
         of `x` and `y` are cartesian coordinates on the stereographic
         projection plane and the shape of both `x` and `y` is
         (N + 1, M + 1).
-
     See Also
     --------
-    matplotlib.axes.Axes.scatter
+    orix.plot.InversePoleFigurePlot.pole_density_function
+    orix.plot.StereographicPlot.pole_density_function
     orix.vector.Vector3d.pole_density_function
     """
+
     from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
 
     if hemisphere is None:
@@ -92,25 +95,30 @@ def pole_density_function(
                 "If one argument is passed it must be an instance of "
                 + "`orix.vector.Vector3d`."
             )
-        azimuth, polar, _ = v.to_polar()
     elif len(args) == 2:
-        azimuth, polar = args
+        # azimuth and polar angles
+        v = Vector3d.from_polar(*args)
     else:
         raise ValueError(
             "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
         )
 
+    if symmetry is not None:
+        v = v.in_fundamental_sector(symmetry)
+
+    azimuth, polar, _ = v.to_polar()
     # np.histogram2d expects 1d arrays
     azimuth, polar = np.ravel(azimuth), np.ravel(polar)
     if not azimuth.size:
-        return
+        raise ValueError("Azimuth and polar have 0 size.")
 
-    # generate angular mesh on S2
+    # Generate angular mesh on S2.
+    # To help with aliasing after reprojection into FS in IPF case,
+    # the initial sampling is performed at half the angular resolution
     azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
         resolution if symmetry is None else resolution / 2,
         hemisphere=hemisphere,
         azimuth_endpoint=True,
-        parity=None if symmetry is None else "odd",
     )
     azimuth_grid, polar_grid = np.meshgrid(azimuth_coords, polar_coords, indexing="ij")
     # generate histogram in angular space
@@ -145,7 +153,9 @@ def pole_density_function(
         # was defined, the initial grid was calculated with resolution
         # `resolution / 2`
         azimuth_coords_res2, polar_coords_res2 = _sample_S2_equal_area_coordinates(
-            resolution, hemisphere=hemisphere, azimuth_endpoint=True, parity="even"
+            resolution,
+            hemisphere=hemisphere,
+            azimuth_endpoint=True,
         )
         azimuth_res2_grid, polar_res2_grid = np.meshgrid(
             azimuth_coords_res2, polar_coords_res2, indexing="ij"
@@ -192,7 +202,8 @@ def pole_density_function(
     # Distribution (MRD). See :cite:`rohrer2004distribution`.
     # as `hist` is a masked array, only valid (unmasked) values are
     # used in this computation
-    hist = hist / hist.mean()
+    if mrd:
+        hist = hist / hist.mean()
 
     if log:
         # +1 to avoid taking the log of 0

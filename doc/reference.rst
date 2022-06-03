@@ -19,6 +19,7 @@ The list of top modules:
     data
     crystal_map
     io
+    measure
     plot
     projections
     quaternion
@@ -170,6 +171,17 @@ orix_hdf5
 
 ....
 
+measure
+=======
+.. currentmodule:: orix.measure
+.. autosummary::
+    pole_density_function
+
+.. automodule:: orix.measure
+    :members:
+
+....
+
 plot
 ====
 .. automodule:: orix.plot
@@ -234,11 +246,12 @@ InversePoleFigurePlot
 ---------------------
 .. currentmodule:: orix.plot.InversePoleFigurePlot
 .. autosummary::
+    pole_density_function
     scatter
     show_hemisphere_label
     text
 .. autoclass:: orix.plot.InversePoleFigurePlot
-    :members: hemisphere, name, scatter, show_hemisphere_label, text
+    :members: hemisphere, name, pole_density_function, scatter, show_hemisphere_label, text
     :undoc-members:
     :show-inheritance:
 
