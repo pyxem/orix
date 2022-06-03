@@ -16,15 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional
-
-from matplotlib.figure import Figure
-import numpy as np
-
 from orix.plot.direction_color_keys import DirectionColorKeyTSL
 from orix.plot.orientation_color_keys import IPFColorKey
-from orix.quaternion import Orientation, Symmetry
-from orix.vector.vector3d import Vector3d
 
 
 class IPFColorKeyTSL(IPFColorKey):
@@ -35,9 +28,7 @@ class IPFColorKeyTSL(IPFColorKey):
     This is based on the TSL color key implemented in MTEX.
     """
 
-    def __init__(
-        self, symmetry: Symmetry, direction: Optional[Vector3d] = None
-    ) -> None:
+    def __init__(self, symmetry, direction=None):
         """Create an inverse pole figure (IPF) color key to color
         orientations according a sample direction and a Laue symmetry's
         fundamental sector (IPF).
@@ -54,10 +45,10 @@ class IPFColorKeyTSL(IPFColorKey):
         super().__init__(symmetry.laue, direction=direction)
 
     @property
-    def direction_color_key(self) -> DirectionColorKeyTSL:
+    def direction_color_key(self):
         return DirectionColorKeyTSL(self.symmetry)
 
-    def orientation2color(self, orientation: Orientation) -> np.ndarray:
+    def orientation2color(self, orientation):
         """Return an RGB color per orientation given a Laue symmetry
         and a sample direction.
 
@@ -74,22 +65,22 @@ class IPFColorKeyTSL(IPFColorKey):
             Color array of shape `orientation.shape` + (3,).
         """
         # TODO: Take crystal axes into account, by using Miller instead
-        # of Vector3d
+        #  of Vector3d
         m = orientation * self.direction
         rgb = self.direction_color_key.direction2color(m)
         return rgb
 
-    def plot(self, return_figure: bool = False) -> Optional[Figure]:
+    def plot(self, return_figure=False):
         """Plot the inverse pole figure color key.
 
         Parameters
         ----------
-        return_figure
+        return_figure : bool, optional
             Whether to return the figure. Default is False.
 
         Returns
         -------
-        figure
+        figure : matplotlib.figure.Figure
             Color key figure, returned if `return_figure` is True.
         """
         return self.direction_color_key.plot(return_figure=return_figure)
