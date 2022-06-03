@@ -158,11 +158,7 @@ class Vector3d(Object3d):
         -------
         numpy.ndarray
         """
-        x, y = self.data[..., 0], self.data[..., 1]
-        # avoid rounding errors
-        x[np.isclose(x, 0)] = 0
-        y[np.isclose(y, 0)] = 0
-        azimuth = np.arctan2(y, x)
+        azimuth = np.arctan2(self.data[..., 1], self.data[..., 0])
         azimuth += (azimuth < 0) * 2 * np.pi
         return azimuth
 
@@ -725,8 +721,6 @@ class Vector3d(Object3d):
 
         See Also
         --------
-        orix.measure.pole_density_function
-        orix.plot.InversePoleFigurePlot.pole_density_function
         orix.plot.StereographicPlot.pole_density_function
         """
         if hemisphere is None:

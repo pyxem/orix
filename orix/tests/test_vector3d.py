@@ -450,7 +450,7 @@ class TestSpareNotImplemented:
         "cantmul" * vector
 
 
-class TestVector3dPoleDensityFunction:
+class TestPoleDensityFunction:
     def test_pdf_plot_colorbar(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
         fig1 = v.pole_density_function(return_figure=True, colorbar=True)
@@ -542,6 +542,13 @@ class TestVector3dPoleDensityFunction:
 
         # test mesh not the same, log is different
         assert not np.allclose(qmesh1, qmesh2)
+
+    def test_pdf_empty_vector(self):
+        v = Vector3d.empty()
+        assert not v.size
+        fig = v.pole_density_function(return_figure=True)
+        qm = [isinstance(c, QuadMesh) for c in fig.axes[0].collections]
+        assert not any(qm)
 
     def test_pdf_hemisphere_raises(self):
         v = Vector3d(np.random.randn(100, 3)).unit
