@@ -115,6 +115,40 @@ class TestMeasurePoleDensityFunction:
         hist2, _ = pole_density_function(v, sigma=5)
         assert not np.allclose(hist1, hist2)
 
+    def test_pole_density_function_weights(self):
+        v = Vector3d(np.random.randn(11_234, 3)).unit
+        v.z[v.z < 0] *= -1
+
+        hist0, _ = pole_density_function(v, weights=None)
+        weights1 = np.ones(v.shape[0])
+        hist1, _ = pole_density_function(v, weights=weights1)
+        assert np.allclose(hist0, hist1)
+
+        weights2 = 2 * np.ones(v.shape[0])
+        hist2, _ = pole_density_function(v, weights=weights2)
+        # the same because MRD normalizes by average
+        assert np.allclose(hist0, hist2)
+
+        hist0_counts, _ = pole_density_function(v, weights=None, mrd=False)
+        hist2_counts, _ = pole_density_function(v, weights=weights2, mrd=False)
+        # not the same because hist values are not normalized
+        assert not np.allclose(hist0_counts, hist2_counts)
+
+        # non-uniform weights
+        weights2[54] *= 1.01
+        hist2_1, _ = pole_density_function(v, weights=weights2)
+        assert not np.allclose(hist0, hist2_1)
+
+    def test_PDF_IPDF_equivalence(self):
+        v = Vector3d(np.random.randn(100_000, 3)).unit
+
+        hist_pdf, _ = pole_density_function(v, weights=None)
+        hist_ipdf, _ = pole_density_function(v, weights=None, symmetry=symmetry.C1)
+
+        # in testing this test passes at tolerance of 1% for 100_000
+        # vectors, but raise tolerance to 2% to ensure pass
+        assert np.allclose(hist_pdf, hist_ipdf, atol=0.02)
+
     def test_pole_density_function_empty_vector_raises(self):
         v = Vector3d.empty()
         assert not v.size
