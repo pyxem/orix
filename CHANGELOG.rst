@@ -19,6 +19,8 @@ Added
   projection.
 - Seven methods for sampling unit vectors from regular grids on *S2* via
   ``orix.sampling.sample_S2()``.
+- Plotting IPF color maps on axes now possible on through
+  `InversePoleFigurePlot.plot_ipf_color_key()`.
 
 Removed
 -------
