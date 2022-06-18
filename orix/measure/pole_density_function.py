@@ -21,7 +21,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from orix.projections.stereographic import StereographicProjection
+from orix.projections import StereographicProjection
 from orix.quaternion import Symmetry
 from orix.vector import Vector3d
 
