@@ -153,5 +153,5 @@ class TestMeasurePoleDensityFunction:
         v = Vector3d.empty()
         assert not v.size
 
-        with pytest.raises(ValueError, match="Azimuth and polar have 0 size"):
+        with pytest.raises(ValueError, match="`azimuth` and `polar` angles have 0 size"):
             pole_density_function(v)
