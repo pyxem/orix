@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Tools for quantification or orientation and vector data."""
+"""Tools for quantification of orientation and vector data."""
 
 from orix.measure.pole_density_function import pole_density_function
 
