@@ -225,7 +225,7 @@ def _sample_S2_equal_area_coordinates(
         azimuth_min, azimuth_max = azimuth_range
         if azimuth_min >= azimuth_max:
             raise ValueError(
-                "Azimuth_range requires values (min, max) where min < max."
+                "`azimuth_range` requires values (min, max) where min < max."
             )
     else:
         # use full range
