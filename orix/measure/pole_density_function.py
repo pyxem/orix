@@ -39,7 +39,7 @@ def pole_density_function(
     """Compute the Pole Density Function (PDF) of vectors in the
     stereographic projection.
 
-    If `symmetry` is defined then the PDF is folded back into the point
+    If `symmetry` is provided then the PDF is folded back into the point
     group fundamental sector and accumulated.
     Parameters
     ----------
