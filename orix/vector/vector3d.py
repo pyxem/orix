@@ -681,7 +681,7 @@ class Vector3d(Object3d):
         log
             If True the log(PDF) is calculated. Default is True.
         colorbar
-            If True a colorbar is shown alongside the PDF plot.
+            If True a colorbar is shown alongside the IPDF plot.
             Default is True.
         symmetry
             The point group symmetry. Default is None, in which case
