@@ -759,7 +759,6 @@ class Vector3d(Object3d):
             grid_resolution=grid_resolution,
             figure_kwargs=figure_kwargs,
             text_kwargs=text_kwargs,
-            axes_labels=axes_labels,
         )
 
         for i, ax in enumerate(axes):
