@@ -661,7 +661,7 @@ class Vector3d(Object3d):
         return_figure: bool = False,
         **kwargs: Any,
     ) -> Optional[Figure]:
-        """Plot the inverse Pole Density Function (IPDF) within the
+        """Plot the Inverse Pole Density Function (IPDF) within the
         fundamental sector of a given point group symmetry in the
         stereographic projection.
 
