@@ -89,8 +89,6 @@ def pole_density_function(
 
     from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
 
-    if hemisphere is None:
-        hemisphere = "upper"
     hemisphere = hemisphere.lower()
 
     poles = {"upper": -1, "lower": 1}
