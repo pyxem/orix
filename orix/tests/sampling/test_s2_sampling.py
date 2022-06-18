@@ -161,7 +161,7 @@ class TestS2Sampling:
         assert np.count_nonzero(polar2 == np.pi) > 1
 
     def test_equal_area_mesh_raises(self):
-        with pytest.raises(ValueError, match="Hemisphere must be one of "):
+        with pytest.raises(ValueError, match="`hemisphere` must be one of "):
             sampling.sample_S2_equal_area_mesh(10, hemisphere="test")
 
     def test_random_sphere_mesh(self):
