@@ -143,8 +143,9 @@ def pole_density_function(
     # apply broadening in angular space
     hist = gaussian_filter(hist, sigma / resolution, mode=mode)
 
-    # in the case of IPF, accumulate all values outside FS back into
-    # correct bin in FS
+    # In the case of inverse pole figure, accumulate all values outside
+    # of the point group fundamental sector back into correct bin within
+    # fundamental sector
     if symmetry is not None:
         # compute histogram bin centers in azimuth and polar coords
         azimuth_center_grid, polar_center_grid = np.meshgrid(
@@ -155,7 +156,7 @@ def pole_density_function(
         v_center_grid = Vector3d.from_polar(
             azimuth=azimuth_center_grid, polar=polar_center_grid
         ).unit
-        # fold back in into FS
+        # fold back in into fundamental sector
         v_center_grid_fs = v_center_grid.in_fundamental_sector(symmetry)
         azimuth_center_fs, polar_center_fs, _ = v_center_grid_fs.to_polar()
         azimuth_center_fs = azimuth_center_fs.ravel()
@@ -176,7 +177,8 @@ def pole_density_function(
             azimuth=azimuth_res2_grid, polar=polar_res2_grid
         )
 
-        # calculate histogram bin for vectors folded back into FS
+        # calculate histogram values for vectors folded back into
+        # fundamental sector
         i = np.digitize(azimuth_center_fs, azimuth_coords_res2[1:-1])
         j = np.digitize(polar_center_fs, polar_coords_res2[1:-1])
         # recompute histogram
