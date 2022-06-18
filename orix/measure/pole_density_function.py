@@ -115,7 +115,7 @@ def pole_density_function(
     # np.histogram2d expects 1d arrays
     azimuth, polar = np.ravel(azimuth), np.ravel(polar)
     if not azimuth.size:
-        raise ValueError("Azimuth and polar have 0 size.")
+        raise ValueError("`azimuth` and `polar` angles have 0 size.")
 
     # Generate angular mesh on S2.
     # To help with aliasing after reprojection into FS in IPF case,
