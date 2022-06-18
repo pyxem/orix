@@ -244,7 +244,7 @@ def _sample_S2_equal_area_coordinates(
         polar_min, polar_max = polar_range
         # no wrap around
         polar_min = max(polar_min, 0)
-        polar_max = min(polar_max, 0)
+        polar_max = min(polar_max, np.pi)
         if polar_min >= polar_max:
             raise ValueError(
                 "`polar_range` requires values (min, max) where min < max."
