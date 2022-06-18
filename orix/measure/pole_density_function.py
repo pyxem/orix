@@ -161,7 +161,7 @@ def pole_density_function(
         azimuth_center_fs = azimuth_center_fs.ravel()
         polar_center_fs = polar_center_fs.ravel()
 
-        # generate coorinates with proper resolution. When `symmetry`
+        # generate coordinates with proper resolution. When `symmetry`
         # was defined, the initial grid was calculated with resolution
         # `resolution = resolution / 2`
         azimuth_coords_res2, polar_coords_res2 = _sample_S2_equal_area_coordinates(
