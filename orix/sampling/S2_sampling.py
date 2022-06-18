@@ -256,7 +256,7 @@ def _sample_S2_equal_area_coordinates(
     else:
         hemisphere = hemisphere.lower()
         if hemisphere not in ("upper", "lower", "both"):
-            raise ValueError('Hemisphere must be one of "upper", "lower", or "both".')
+            raise ValueError("`hemisphere` must be one of 'upper', 'lower', or 'both'.")
         # polar_min and polar_max in units of cos(theta)
         if hemisphere == "both":
             polar_min = 1
