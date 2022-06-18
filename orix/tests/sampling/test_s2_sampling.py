@@ -138,7 +138,7 @@ class TestS2Sampling:
             S2_sampling._sample_S2_equal_area_coordinates(10, polar_range=(1, -1))
 
     def test_equal_are_coordinates_hemisphere_raises(self):
-        with pytest.raises(ValueError, match="Hemisphere must be one of "):
+        with pytest.raises(ValueError, match="`hemisphere` must be one of "):
             S2_sampling._sample_S2_equal_area_coordinates(10, hemisphere="test")
 
     def test_equal_area_mesh(self):
