@@ -286,7 +286,7 @@ class StereographicPlot(maxes.Axes):
         **kwargs: Any,
     ):
         """Compute the Pole Density Function (PDF) of vectors in the
-        stereographic projection.
+        stereographic projection. See :cite:`rohrer2004distribution`.
 
         Parameters
         ----------
