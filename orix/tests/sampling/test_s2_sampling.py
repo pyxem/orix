@@ -134,7 +134,7 @@ class TestS2Sampling:
         with pytest.raises(ValueError, match="`azimuth_range` requires values "):
             S2_sampling._sample_S2_equal_area_coordinates(10, azimuth_range=(1, -1))
 
-        with pytest.raises(ValueError, match="Polar_range requires values "):
+        with pytest.raises(ValueError, match="`polar_range` requires values "):
             S2_sampling._sample_S2_equal_area_coordinates(10, polar_range=(1, -1))
 
     def test_equal_are_coordinates_hemisphere_raises(self):
