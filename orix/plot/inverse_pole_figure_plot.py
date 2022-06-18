@@ -114,7 +114,9 @@ class InversePoleFigurePlot(StereographicPlot):
     ):
         """Compute the Inverse Pole Density Function (IPDF) of vectors
         in the stereographic projection. The PDF is computed within the
-        fundamental sector of the point group symmetry.
+        fundamental sector of the point group symmetry. See
+        :cite:`rohrer2004distribution`.
+
         Parameters
         ----------
         args
@@ -137,6 +139,7 @@ class InversePoleFigurePlot(StereographicPlot):
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
+
         See Also
         --------
         orix.measure.pole_density_function

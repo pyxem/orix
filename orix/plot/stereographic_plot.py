@@ -287,6 +287,7 @@ class StereographicPlot(maxes.Axes):
     ):
         """Compute the Pole Density Function (PDF) of vectors in the
         stereographic projection.
+
         Parameters
         ----------
         args
@@ -299,16 +300,17 @@ class StereographicPlot(maxes.Axes):
             The angular resolution of the applied broadening in degrees.
             Default value is 5.
         log
-            If True the log(PDF) is calculated. Default is True.
+            If `True` the log(PDF) is calculated. Default is `True`.
         colorbar
-            If True a colorbar is shown alongside the PDF plot.
+            If `True` a colorbar is shown alongside the PDF plot.
             Default is True.
         weights
-            The weights for the individual vectors. Default is None, in
-            which case each vector is 1.
+            The weights for the individual vectors. Default is `None`,
+            in which case the weight of each vector is 1.
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
+
         See Also
         --------
         orix.measure.pole_density_function

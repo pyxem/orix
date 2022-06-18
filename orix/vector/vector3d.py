@@ -679,32 +679,30 @@ class Vector3d(Object3d):
             The angular resolution of the applied broadening in degrees.
             Default value is 5.
         log
-            If True the log(PDF) is calculated. Default is True.
+            If `True` the log(PDF) is calculated. Default is `True`.
         colorbar
-            If True a colorbar is shown alongside the IPDF plot.
-            Default is True.
+            If `True` a colorbar is shown alongside the IPDF plot.
+            Default is `True`.
         symmetry
-            The point group symmetry. Default is None, in which case
-            `orix.quaternion.symmetry.C1` is used.
+            The point group symmetry. Default is `None`, in which case
+            `C1` is used.
         weights
             The weights for the individual vectors. Default is None, in
             which case each vector is 1.
-        projection
-            Which projection to use. The default is "stereographic", the
-            only current option.
         figure
-            Which figure to plot onto. Default is None, which creates a
+            Which figure to plot onto. Default is `None`, which creates a
             new figure.
         axes_labels
-            Reference frame axes labels, defaults to [None, None, None].
+            Reference frame axes labels, defaults to `[None, None, None]`.
         hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
-            "None", which means "upper" if a new figure is created,
+            `None`, which means `"upper"` if a new figure is created,
             otherwise adds to the current figure's hemispheres. Options
-            are "upper" and "lower".
+            are `"upper"` and `"lower"`.
         show_hemisphere_label
-            Whether to show hemisphere labels "upper" or "lower".
-            Default is True if `hemisphere` is "both", otherwise False.
+            Whether to show hemisphere labels `"upper"` or `"lower"`.
+            Default is `True` if `hemisphere` is `"both"`, otherwise
+            `False`.
         grid
             Whether to show the azimuth and polar grid. Default is
             whatever `axes.grid` is set to in
@@ -721,7 +719,7 @@ class Vector3d(Object3d):
             :meth:`~orix.plot.StereographicPlot.text`, which passes
             these on to :meth:`matplotlib.axes.Axes.text`.
         return_figure
-            Whether to return the figure (default is False).
+            Whether to return the figure (default is `False`).
         kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
@@ -729,7 +727,7 @@ class Vector3d(Object3d):
         Returns
         -------
         fig
-            The created figure, returned if `return_figure` is True.
+            The created figure, returned if `return_figure` is `True`.
 
         See Also
         --------
@@ -743,7 +741,7 @@ class Vector3d(Object3d):
             raise ValueError('Hemisphere must be either "upper", "lower", or "both".')
 
         # computation done in spherical coordinates
-        azimuth, polar, _ = self.to_polar()
+        azimuth, polar, _ = self.unit.to_polar()
 
         (
             fig,
@@ -832,9 +830,6 @@ class Vector3d(Object3d):
         weights
             The weights for the individual vectors. Default is None, in
             which case each vector is 1.
-        projection
-            Which projection to use. The default is "stereographic", the
-            only current option.
         figure
             Which figure to plot onto. Default is None, which creates a
             new figure.
@@ -1242,8 +1237,9 @@ class Vector3d(Object3d):
         Parameters
         ----------
         projection
-            Which projection to use. The default is "stereographic", the
-            only current option.
+            Which projection to use. Available projections are "ipf" and
+            "stereographic". If projection is "ipf" then `symmetry` must
+            also be defined. The default is "stereographic".
         figure
             Which figure to plot onto. Default is None, which creates a
             new figure.

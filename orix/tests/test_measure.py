@@ -50,7 +50,7 @@ class TestMeasurePoleDensityFunction:
         hist1, (x1, y1) = pole_density_function(v)
         assert hist1.shape[0] + 1 == x1.shape[0] == y1.shape[0]
         assert hist1.shape[1] + 1 == x1.shape[1] == y1.shape[1]
-        assert np.allclose(hist1.mean(), 1)
+        assert np.allclose(hist1.mean(), 1, rtol=1e-3)
         assert isinstance(hist1, np.ma.MaskedArray)
         assert hist1.mask.sum() == 0
 
@@ -153,5 +153,7 @@ class TestMeasurePoleDensityFunction:
         v = Vector3d.empty()
         assert not v.size
 
-        with pytest.raises(ValueError, match="`azimuth` and `polar` angles have 0 size"):
+        with pytest.raises(
+            ValueError, match="`azimuth` and `polar` angles have 0 size"
+        ):
             pole_density_function(v)

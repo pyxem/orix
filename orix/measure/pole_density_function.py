@@ -31,16 +31,17 @@ def pole_density_function(
     resolution: float = 1,
     sigma: float = 5,
     weights: Optional[np.ndarray] = None,
-    hemisphere: Optional[str] = None,
+    hemisphere: str = "upper",
     symmetry: Optional[Symmetry] = None,
     log: bool = False,
     mrd: bool = True
 ) -> Tuple[np.ma.MaskedArray, Tuple[np.ndarray, np.ndarray]]:
     """Compute the Pole Density Function (PDF) of vectors in the
-    stereographic projection.
+    stereographic projection. See :cite:`rohrer2004distribution`.
 
-    If `symmetry` is provided then the PDF is folded back into the point
+    If `symmetry` is defined then the PDF is folded back into the point
     group fundamental sector and accumulated.
+
     Parameters
     ----------
     args
@@ -53,21 +54,22 @@ def pole_density_function(
         The angular resolution of the applied broadening in degrees.
         Default value is 5.
     weights
-        The weights for the individual vectors. Default is None, in
-        which case each vector is 1.
+        The weights for the individual vectors. Default is `None`, in
+        which case the weight of each vector is 1.
     hemisphere
-        Which hemisphere(s) to plot the vectors on, defaults to
-        None, which means "upper". Options are "upper" and "lower".
+        Which hemisphere(s) to plot the vectors on, options are `"upper"`
+        and `"lower"`. Default is `"upper"`.
     symmetry
         If provided the PDF is calculated within the fundamental sector
         of the point group symmetry, otherwise the PDF is calculated
-        on `hemisphere`. Default is None.
+        on `hemisphere`. Default is `None`.
     log
-        If True the log(PDF) is calculated. Default is True.
+        If `True` the log(PDF) is calculated. Default is `True`.
     mrd
-        If True the returned PDF is in units of Multiples of Random
+        If `True` the returned PDF is in units of Multiples of Random
         Distribution (MRD), otherwise the units are bin counts. Default
-        is True.
+        is `True`.
+
     Returns
     -------
     hist
@@ -77,6 +79,7 @@ def pole_density_function(
         of `x` and `y` are cartesian coordinates on the stereographic
         projection plane and the shape of both `x` and `y` is
         (N + 1, M + 1).
+
     See Also
     --------
     orix.plot.InversePoleFigurePlot.pole_density_function
@@ -110,6 +113,10 @@ def pole_density_function(
 
     if symmetry is not None:
         v = v.in_fundamental_sector(symmetry)
+        # To help with aliasing after reprojection into point group
+        # fundamental sector in the inverse pole figure case, the
+        # initial sampling is performed at half the angular resolution
+        resolution = resolution / 2
 
     azimuth, polar, _ = v.to_polar()
     # np.histogram2d expects 1d arrays
@@ -117,12 +124,7 @@ def pole_density_function(
     if not azimuth.size:
         raise ValueError("`azimuth` and `polar` angles have 0 size.")
 
-    # Generate angular mesh on S2.
-    # To help with aliasing after reprojection into FS in IPF case,
-    # the initial sampling is performed at half the angular resolution
-    if symmetry is not None:
-        resolution = resolution / 2
-
+    # Generate equal area mesh on S2
     azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
         resolution,
         hemisphere=hemisphere,
@@ -148,8 +150,8 @@ def pole_density_function(
     if symmetry is not None:
         # compute histogram bin centers in azimuth and polar coords
         azimuth_center_grid, polar_center_grid = np.meshgrid(
-            azimuth_coords[:-1] + np.ediff1d(azimuth_coords) / 2,
-            polar_coords[:-1] + np.ediff1d(polar_coords) / 2,
+            azimuth_coords[:-1] + np.diff(azimuth_coords) / 2,
+            polar_coords[:-1] + np.diff(polar_coords) / 2,
             indexing="ij",
         )
         v_center_grid = Vector3d.from_polar(
@@ -161,9 +163,9 @@ def pole_density_function(
         azimuth_center_fs = azimuth_center_fs.ravel()
         polar_center_fs = polar_center_fs.ravel()
 
-        # generate coordinates with proper resolution. When `symmetry`
-        # was defined, the initial grid was calculated with resolution
-        # `resolution = resolution / 2`
+        # Generate coorinates with user-defined resolution.
+        # When `symmetry` is defined, the initial grid was calculated
+        # with `resolution = resolution / 2`
         azimuth_coords_res2, polar_coords_res2 = _sample_S2_equal_area_coordinates(
             2 * resolution,
             hemisphere=hemisphere,
@@ -181,7 +183,7 @@ def pole_density_function(
         j = np.digitize(polar_center_fs, polar_coords_res2[1:-1])
         # recompute histogram
         temp = np.zeros((azimuth_coords_res2.size - 1, polar_coords_res2.size - 1))
-        # add hist data to new histogram by buffering
+        # add hist data to new histogram without buffering
         np.add.at(temp, (i, j), hist.ravel())
 
         # get new histogram bins centers to compute histogram mask

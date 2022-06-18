@@ -202,15 +202,15 @@ def _sample_S2_equal_area_coordinates(
     resolution
         The angular resolution in degrees of the azimuthal vectors.
     hemisphere
-        Generate mesh points on the "upper", "lower" or "both"
-        hemispheres. Default is "both".
+        Generate mesh points on the `"upper"`, "`lower"` or `"both"`
+        hemispheres. Default is `"both"`.
     azimuth_endpoint
-        If True then endpoint of the azimuth array is included in the
-        calculation. Default is False.
+        If `True` then endpoint of the azimuth array is included in the
+        calculation. Default is `False`.
     azimuth_range, polar_range
         The (min, max) angular range for the azimuthal and polar
         coordinates, respectively, in radians. If provided then the
-        `hemisphere` argument is ignored. Default is None.
+        `hemisphere` argument is ignored. Default is `None`.
 
     Returns
     -------
@@ -232,10 +232,8 @@ def _sample_S2_equal_area_coordinates(
         azimuth_min, azimuth_max = 0, 2 * np.pi
 
     # no wrap around
-    if azimuth_min < 0:
-        azimuth_min = 0
-    if azimuth_max > 2 * np.pi:
-        azimuth_max = 2 * np.pi
+    azimuth_min = max(azimuth_min, 0)
+    azimuth_max = min(azimuth_max, 2 * np.pi)
 
     azimuth_range = azimuth_max - azimuth_min
     # azimuth should have 4D steps over range [0..2pi]
@@ -245,12 +243,12 @@ def _sample_S2_equal_area_coordinates(
     if polar_range is not None:
         polar_min, polar_max = polar_range
         # no wrap around
-        if polar_min < 0:
-            polar_min = 0
-        if polar_max > np.pi:
-            polar_max = np.pi
+        polar_min = max(polar_min, 0)
+        polar_max = min(polar_max, 0)
         if polar_min >= polar_max:
-            raise ValueError("`polar_range` requires values (min, max) where min < max.")
+            raise ValueError(
+                "`polar_range` requires values (min, max) where min < max."
+            )
         # convert to units of cos(theta) for equal area spacing
         polar_min, polar_max = np.cos((polar_min, polar_max))
     else:
