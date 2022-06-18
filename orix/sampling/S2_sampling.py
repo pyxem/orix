@@ -250,7 +250,7 @@ def _sample_S2_equal_area_coordinates(
         if polar_max > np.pi:
             polar_max = np.pi
         if polar_min >= polar_max:
-            raise ValueError("Polar_range requires values (min, max) where min < max.")
+            raise ValueError("`polar_range` requires values (min, max) where min < max.")
         # convert to units of cos(theta) for equal area spacing
         polar_min, polar_max = np.cos((polar_min, polar_max))
     else:
