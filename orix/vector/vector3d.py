@@ -651,7 +651,6 @@ class Vector3d(Object3d):
         symmetry: Optional["Symmetry"] = None,
         weights: Optional[np.ndarray] = None,
         figure: Optional[Figure] = None,
-        axes_labels: Optional[List[str]] = None,
         hemisphere: Optional[str] = None,
         show_hemisphere_label: Optional[bool] = None,
         grid: Optional[bool] = None,
@@ -692,8 +691,6 @@ class Vector3d(Object3d):
         figure
             Which figure to plot onto. Default is `None`, which creates a
             new figure.
-        axes_labels
-            Reference frame axes labels, defaults to `[None, None, None]`.
         hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
             `None`, which means `"upper"` if a new figure is created,
@@ -770,7 +767,6 @@ class Vector3d(Object3d):
             ax.hemisphere = hemisphere[i]
             ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
             ax._stereographic_grid = grid[i]
-            ax.set_labels(*axes_labels)
             if show_hemisphere_label:
                 ax.show_hemisphere_label()
 
@@ -1237,23 +1233,26 @@ class Vector3d(Object3d):
         Parameters
         ----------
         projection
-            Which projection to use. Available projections are "ipf" and
-            "stereographic". If projection is "ipf" then `symmetry` must
-            also be defined. The default is "stereographic".
+            Which projection to use. Available projections are `"ipf"`
+            and `"stereographic"`. If projection is `"ipf"` then
+            `symmetry` must also be defined. The default is
+            `"stereographic"`.
         figure
-            Which figure to plot onto. Default is None, which creates a
-            new figure.
+            Which figure to plot onto. Default is `None`, which creates
+            a new figure.
         hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
-            "None", which means "upper" if a new figure is created,
+            `None`, which means `"upper"` if a new figure is created,
             otherwise adds to the current figure's hemispheres. Options
-            are "upper", "lower", and "both", which plots two
+            are `"upper"`, `"lower"`, and `"both"`, which plots two
             projections side by side.
         show_hemisphere_label
-            Whether to show hemisphere labels "upper" or "lower".
-            Default is True if `hemisphere` is "both", otherwise False.
+            Whether to show hemisphere labels `"upper"` or `"lower"`.
+            Default is `True` if `hemisphere` is `"both"`, otherwise
+            `False`.
         symmetry
-            The point group symmetry. Required if `projection` is "ipf".
+            The point group symmetry. Required if `projection` is
+            `"ipf"`.
         grid
             Whether to show the azimuth and polar grid. Default is
             whatever `axes.grid` is set to in
@@ -1271,7 +1270,7 @@ class Vector3d(Object3d):
         axes_labels
             List of axes labels, passed to
             :meth:`orix.plot.StereographicPlot.set_labels`.
-            Default is None.
+            Default is `None`.
 
         Returns
         -------
