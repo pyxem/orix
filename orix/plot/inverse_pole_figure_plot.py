@@ -22,13 +22,16 @@
 rotated by orientations.
 """
 
+from typing import Any, Optional, Union
+
 import matplotlib.axes as maxes
 import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map import Phase
-from orix.plot import StereographicPlot
+from orix.measure import pole_density_function
+from orix.plot.stereographic_plot import ZORDER, StereographicPlot
 from orix.quaternion.symmetry import C1
 from orix.vector import Miller, Vector3d
 
@@ -98,6 +101,76 @@ class InversePoleFigurePlot(StereographicPlot):
         """Easy access to the fundamental sector border patch."""
         patches = self.patches
         return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
+
+    def pole_density_function(
+        self,
+        *args: Union[np.ndarray, Vector3d],
+        resolution: float = 0.25,
+        sigma: float = 5,
+        log: bool = False,
+        colorbar: bool = True,
+        weights: Optional[np.ndarray] = None,
+        **kwargs: Any,
+    ):
+        """Compute the Inverse Pole Density Function (IPDF) of vectors
+        in the stereographic projection. The PDF is computed within the
+        fundamental sector of the point group symmetry. See
+        :cite:`rohrer2004distribution`.
+
+        Parameters
+        ----------
+        args
+            Vector(s), or azimuth and polar angles of the vectors, the
+            latter passed as two separate arguments.
+        resolution
+            The angular resolution of the sampling grid in degrees.
+            Default value is 0.25.
+        sigma
+            The angular resolution of the applied broadening in degrees.
+            Default value is 5.
+        log
+            If True the log(IPDF) is calculated. Default is True.
+        colorbar
+            If True a colorbar is shown alongside the IPDF plot.
+            Default is True.
+        weights
+            The weights for the individual vectors. Default is None, in
+            which case each vector is 1.
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        See Also
+        --------
+        orix.measure.pole_density_function
+        orix.plot.StereographicPlot.pole_density_function
+        orix.vector.Vector3d.pole_density_function
+        """
+
+        hist, (x, y) = pole_density_function(
+            *args,
+            resolution=resolution,
+            sigma=sigma,
+            log=log,
+            hemisphere=self.hemisphere,
+            symmetry=self._symmetry,
+            mrd=True,
+            weights=weights,
+        )
+
+        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=True)
+        updated_kwargs = {**kwargs, **new_kwargs}
+
+        # plot mesh
+        updated_kwargs.setdefault("cmap", "magma")
+        # mpl.QuadMesh handles masked values by default
+        pc = self.pcolormesh(x, y, hist, **updated_kwargs)
+
+        if colorbar:
+            label = "MRD"
+            if log:
+                label = f"log({label})"
+            plt.colorbar(pc, label=label, ax=self)
 
     def scatter(self, *args, **kwargs):
         """A scatter plot of sample directions rotated by orientations,

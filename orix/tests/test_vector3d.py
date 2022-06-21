@@ -450,7 +450,33 @@ class TestSpareNotImplemented:
         "cantmul" * vector
 
 
-class TestPoleDensityFunction:
+class TestVector3dInversePoleDensityFunction:
+    def test_ipdf_plot(self):
+        v = Vector3d(np.random.randn(1_000, 3)).unit
+        fig = v.inverse_pole_density_function(
+            symmetry=symmetry.Th,
+            return_figure=True,
+            colorbar=True,
+            show_hemisphere_label=True,
+        )
+        assert len(fig.axes) == 2  # plot and colorbar
+        qm1 = [isinstance(c, QuadMesh) for c in fig.axes[0].collections]
+        assert any(qm1)
+        plt.close(fig)
+
+    def test_ipdf_plot_hemisphere_raises(self):
+        with pytest.raises(ValueError, match="Hemisphere must be either "):
+            v = Vector3d(np.random.randn(1_000, 3)).unit
+            fig = v.inverse_pole_density_function(
+                symmetry=symmetry.Th,
+                return_figure=True,
+                colorbar=True,
+                hemisphere="test",
+            )
+            plt.close(fig)
+
+
+class TestVector3dPoleDensityFunction:
     def test_pdf_plot_colorbar(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
         fig1 = v.pole_density_function(return_figure=True, colorbar=True)
@@ -542,13 +568,6 @@ class TestPoleDensityFunction:
 
         # test mesh not the same, log is different
         assert not np.allclose(qmesh1, qmesh2)
-
-    def test_pdf_empty_vector(self):
-        v = Vector3d.empty()
-        assert not v.size
-        fig = v.pole_density_function(return_figure=True)
-        qm = [isinstance(c, QuadMesh) for c in fig.axes[0].collections]
-        assert not any(qm)
 
     def test_pdf_hemisphere_raises(self):
         v = Vector3d(np.random.randn(100, 3)).unit
@@ -674,9 +693,7 @@ class TestPlotting:
         plt.close("all")
 
     def test_scatter_projection(self):
-        with pytest.raises(
-            NotImplementedError, match="Stereographic is the only supported"
-        ):
+        with pytest.raises(NotImplementedError, match="Projection "):
             self.v.scatter(projection="equal_angle")
 
     def test_scatter_reproject(self):
