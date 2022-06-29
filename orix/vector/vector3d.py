@@ -158,7 +158,11 @@ class Vector3d(Object3d):
         -------
         numpy.ndarray
         """
-        azimuth = np.arctan2(self.data[..., 1], self.data[..., 0])
+        x, y = self.data[..., 0], self.data[..., 1]
+        # avoid rounding errors
+        x[np.isclose(x, 0)] = 0
+        y[np.isclose(y, 0)] = 0
+        azimuth = np.arctan2(y, x)
         azimuth += (azimuth < 0) * 2 * np.pi
         return azimuth
 
@@ -638,13 +642,154 @@ class Vector3d(Object3d):
             circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)
         return circles
 
+    def inverse_pole_density_function(
+        self,
+        resolution: float = 0.25,
+        sigma: float = 5,
+        log: bool = False,
+        colorbar: bool = True,
+        symmetry: Optional["Symmetry"] = None,
+        weights: Optional[np.ndarray] = None,
+        figure: Optional[Figure] = None,
+        hemisphere: Optional[str] = None,
+        show_hemisphere_label: Optional[bool] = None,
+        grid: Optional[bool] = None,
+        grid_resolution: Optional[Tuple[float, float]] = None,
+        figure_kwargs: Optional[Dict] = None,
+        text_kwargs: Optional[Dict] = None,
+        return_figure: bool = False,
+        **kwargs: Any,
+    ) -> Optional[Figure]:
+        """Plot the Inverse Pole Density Function (IPDF) within the
+        fundamental sector of a given point group symmetry in the
+        stereographic projection.
+
+        The IPDF is calculated in terms of Multiples of Random
+        Distribution (MRD), ie. multiples of the expected density if the
+        pole distribution was completely random, see
+        :cite:`rohrer2004distribution`.
+
+        Parameters
+        ----------
+        resolution
+            The angular resolution of the sampling grid in degrees.
+            Default value is 0.25.
+        sigma
+            The angular resolution of the applied broadening in degrees.
+            Default value is 5.
+        log
+            If `True` the log(PDF) is calculated. Default is `True`.
+        colorbar
+            If `True` a colorbar is shown alongside the IPDF plot.
+            Default is `True`.
+        symmetry
+            The point group symmetry. Default is `None`, in which case
+            `C1` is used.
+        weights
+            The weights for the individual vectors. Default is None, in
+            which case each vector is 1.
+        figure
+            Which figure to plot onto. Default is `None`, which creates a
+            new figure.
+        hemisphere
+            Which hemisphere(s) to plot the vectors in, defaults to
+            `None`, which means `"upper"` if a new figure is created,
+            otherwise adds to the current figure's hemispheres. Options
+            are `"upper"` and `"lower"`.
+        show_hemisphere_label
+            Whether to show hemisphere labels `"upper"` or `"lower"`.
+            Default is `True` if `hemisphere` is `"both"`, otherwise
+            `False`.
+        grid
+            Whether to show the azimuth and polar grid. Default is
+            whatever `axes.grid` is set to in
+            :obj:`matplotlib.rcParams`.
+        grid_resolution
+            Azimuth and polar grid resolution in degrees, as a tuple.
+            Default is whatever is default in
+            :class:`~orix.plot.StereographicPlot.stereographic_grid`.
+        figure_kwargs
+            Dictionary of keyword arguments passed to
+            :func:`matplotlib.pyplot.subplots`.
+        text_kwargs
+            Dictionary of keyword arguments passed to
+            :meth:`~orix.plot.StereographicPlot.text`, which passes
+            these on to :meth:`matplotlib.axes.Axes.text`.
+        return_figure
+            Whether to return the figure (default is `False`).
+        kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        Returns
+        -------
+        fig
+            The created figure, returned if `return_figure` is `True`.
+
+        See Also
+        --------
+        orix.measure.pole_density_function
+        orix.plot.InversePoleFigurePlot.pole_density_function
+        orix.plot.StereographicPlot.pole_density_function
+        """
+        if hemisphere is None:
+            hemisphere = "upper"
+        if hemisphere not in ("upper", "lower", "both"):
+            raise ValueError('Hemisphere must be either "upper", "lower", or "both".')
+
+        # computation done in spherical coordinates
+        azimuth, polar, _ = self.unit.to_polar()
+
+        (
+            fig,
+            axes,
+            hemisphere,
+            show_hemisphere_label,
+            grid,
+            grid_resolution,
+            text_kwargs,
+            axes_labels,
+        ) = self._setup_plot(
+            projection="ipf",
+            figure=figure,
+            hemisphere=hemisphere,
+            show_hemisphere_label=show_hemisphere_label,
+            symmetry=symmetry,
+            grid=grid,
+            grid_resolution=grid_resolution,
+            figure_kwargs=figure_kwargs,
+            text_kwargs=text_kwargs,
+        )
+
+        for i, ax in enumerate(axes):
+            # setup plot
+            ax.hemisphere = hemisphere[i]
+            ax.stereographic_grid(grid[i], grid_resolution[0], grid_resolution[1])
+            ax._stereographic_grid = grid[i]
+            if show_hemisphere_label:
+                ax.show_hemisphere_label()
+
+            ax.pole_density_function(
+                azimuth,
+                polar,
+                resolution=resolution,
+                sigma=sigma,
+                log=log,
+                colorbar=colorbar,
+                weights=weights,
+                **kwargs,
+            )
+
+        if return_figure:
+            return fig
+
     def pole_density_function(
         self,
         resolution: float = 1,
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
-        projection: str = "stereographic",
+        weights: Optional[np.ndarray] = None,
         figure: Optional[Figure] = None,
         axes_labels: Optional[List[str]] = None,
         hemisphere: Optional[str] = None,
@@ -677,9 +822,9 @@ class Vector3d(Object3d):
         colorbar
             If True a colorbar is shown alongside the PDF plot.
             Default is True.
-        projection
-            Which projection to use. The default is "stereographic", the
-            only current option.
+        weights
+            The weights for the individual vectors. Default is None, in
+            which case each vector is 1.
         figure
             Which figure to plot onto. Default is None, which creates a
             new figure.
@@ -721,6 +866,8 @@ class Vector3d(Object3d):
 
         See Also
         --------
+        orix.measure.pole_density_function
+        orix.plot.InversePoleFigurePlot.pole_density_function
         orix.plot.StereographicPlot.pole_density_function
         """
         if hemisphere is None:
@@ -741,7 +888,7 @@ class Vector3d(Object3d):
             text_kwargs,
             axes_labels,
         ) = self._setup_plot(
-            projection=projection,
+            projection="stereographic",
             figure=figure,
             hemisphere=hemisphere,
             show_hemisphere_label=show_hemisphere_label,
@@ -768,6 +915,7 @@ class Vector3d(Object3d):
                 sigma=sigma,
                 log=log,
                 colorbar=colorbar,
+                weights=weights,
                 **kwargs,
             )
 
@@ -1072,6 +1220,7 @@ class Vector3d(Object3d):
         figure: Optional[Figure] = None,
         hemisphere: Optional[str] = None,
         show_hemisphere_label: Optional[bool] = None,
+        symmetry: Optional["Symmetry"] = None,
         grid: Optional[bool] = None,
         grid_resolution: Optional[Tuple[float, float]] = None,
         figure_kwargs: Optional[Dict] = None,
@@ -1082,50 +1231,66 @@ class Vector3d(Object3d):
 
         Parameters
         ----------
-        projection : str, optional
-            Which projection to use. The default is "stereographic", the
-            only current option.
-        figure : matplotlib.figure.Figure, optional
-            Which figure to plot onto. Default is None, which creates a
-            new figure.
-        hemisphere : str, optional
+        projection
+            Which projection to use. Available projections are `"ipf"`
+            and `"stereographic"`. If projection is `"ipf"` then
+            `symmetry` must also be defined. The default is
+            `"stereographic"`.
+        figure
+            Which figure to plot onto. Default is `None`, which creates
+            a new figure.
+        hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
-            "None", which means "upper" if a new figure is created,
+            `None`, which means `"upper"` if a new figure is created,
             otherwise adds to the current figure's hemispheres. Options
-            are "upper", "lower", and "both", which plots two
+            are `"upper"`, `"lower"`, and `"both"`, which plots two
             projections side by side.
-        show_hemisphere_label : bool, optional
-            Whether to show hemisphere labels "upper" or "lower".
-            Default is True if `hemisphere` is "both", otherwise False.
-        grid : bool, optional
+        show_hemisphere_label
+            Whether to show hemisphere labels `"upper"` or `"lower"`.
+            Default is `True` if `hemisphere` is `"both"`, otherwise
+            `False`.
+        symmetry
+            The point group symmetry. Required if `projection` is
+            `"ipf"`.
+        grid
             Whether to show the azimuth and polar grid. Default is
             whatever `axes.grid` is set to in
             :obj:`matplotlib.rcParams`.
-        grid_resolution : tuple, optional
+        grid_resolution
             Azimuth and polar grid resolution in degrees, as a tuple.
             Default is whatever is default in
             :class:`~orix.plot.StereographicPlot.stereographic_grid`.
-        figure_kwargs : dict, optional
+        figure_kwargs
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
-        text_kwargs : dict, optional
+        text_kwargs
             Dictionary of keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.text`.
-        axes_labels : list, optional
+        axes_labels
+            List of axes labels, passed to
+            :meth:`orix.plot.StereographicPlot.set_labels`.
+            Default is `None`.
 
         Returns
         -------
-        figure : matplotlib.figure.Figure
-        axes : matplotlib.axes.Axes
-        hemisphere : tuple of str
-        show_hemisphere_label : bool
-        grid : list of bool
-        grid_resolution : tuple
-        text_kwargs : dict
-        axes_labels : list
+        figure
+        axes
+        hemisphere
+        show_hemisphere_label
+        grid
+        grid_resolution
+        text_kwargs
+        axes_labels
         """
-        if projection.lower() != "stereographic":
-            raise NotImplementedError("Stereographic is the only supported projection.")
+        projection = projection.lower()
+
+        if projection not in {"ipf", "stereographic"}:
+            raise NotImplementedError(
+                f'Projection "{projection}" is unsupported. '
+                + 'The currently supported projections are "ipf" and "stereographic".'
+            )
+        if projection == "ipf":
+            hemisphere = "upper"
 
         import orix.plot.stereographic_plot
 
@@ -1147,11 +1312,15 @@ class Vector3d(Object3d):
                 show_hemisphere_label = True
 
         # Create new figure and axis/axes
+        subplot_kw = dict(projection=projection)
+        if projection == "ipf":
+            subplot_kw["symmetry"] = symmetry
+
         if figure is None:
             if figure_kwargs is None:
                 figure_kwargs = dict()
             figure, axes = plt.subplots(
-                ncols=ncols, subplot_kw=dict(projection=projection), **figure_kwargs
+                ncols=ncols, subplot_kw=subplot_kw, **figure_kwargs
             )
 
         # Make axes iterable
