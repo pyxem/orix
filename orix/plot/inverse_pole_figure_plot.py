@@ -33,8 +33,8 @@ import numpy as np
 
 from orix.crystal_map import Phase
 from orix.measure import pole_density_function
-from orix.plot.sterographic_plot import ZORDER, StereographicPlot
 from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
+from orix.plot.sterographic_plot import ZORDER, StereographicPlot
 from orix.quaternion import Orientation
 from orix.quaternion.symmetry import C1, Symmetry
 from orix.vector import Miller, Vector3d
