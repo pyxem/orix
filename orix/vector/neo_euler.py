@@ -30,6 +30,7 @@ about a fixed axis.
 import abc
 
 import numpy as np
+
 from orix.vector import Vector3d
 
 

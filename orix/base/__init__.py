@@ -23,7 +23,6 @@ Note that this class is not meant to be used directly.
 
 import numpy as np
 
-
 # Lists what will be imported when calling "from orix.base import *"
 __all__ = [
     "check",

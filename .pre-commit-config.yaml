@@ -3,3 +3,15 @@ repos:
     rev: 22.3.0
     hooks:
       - id: black-jupyter
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        name: isort (python)
+        args:
+          [
+            "--profile",
+            "black",
+            "--filter-files",
+            "--force-sort-within-sections",
+          ]

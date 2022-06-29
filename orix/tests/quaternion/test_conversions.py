@@ -21,22 +21,22 @@ import pytest
 
 from orix.quaternion import Rotation
 from orix.quaternion._conversions import (
-    ax2qu_single,
     ax2qu,
-    ax2ro_single,
+    ax2qu_single,
     ax2ro,
-    cu2ho_single,
+    ax2ro_single,
     cu2ho,
-    cu2ro_single,
+    cu2ho_single,
     cu2ro,
+    cu2ro_single,
     eu2qu_single,
-    ho2ax_single,
-    ho2ax,
-    ho2ro_single,
-    ho2ro,
     get_pyramid_single,
-    ro2ax_single,
+    ho2ax,
+    ho2ax_single,
+    ho2ro,
+    ho2ro_single,
     ro2ax,
+    ro2ax_single,
 )
 
 

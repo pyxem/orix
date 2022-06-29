@@ -16,11 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Tools for assigning colors to crystal directions."""
+"""Tools for quantification of orientation and vector data."""
 
-from orix.plot.direction_color_keys.direction_color_key import DirectionColorKey
-from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
+from orix.measure.pole_density_function import pole_density_function
 
-__all__ = [
-    "DirectionColorKeyTSL",
-]
+__all__ = ["pole_density_function"]

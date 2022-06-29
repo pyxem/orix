@@ -18,8 +18,8 @@
 
 from collections import OrderedDict
 import copy
-import os
 from itertools import islice
+import os
 import warnings
 
 from diffpy.structure import Structure
@@ -29,13 +29,12 @@ import matplotlib.colors as mcolors
 import numpy as np
 
 from orix.quaternion.symmetry import (
+    Symmetry,
     _groups,
     get_point_group,
-    Symmetry,
     point_group_aliases,
 )
 from orix.vector import Miller, Vector3d
-
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS

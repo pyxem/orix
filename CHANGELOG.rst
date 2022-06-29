@@ -19,6 +19,11 @@ Added
   projection.
 - Seven methods for sampling unit vectors from regular grids on *S2* via
   ``orix.sampling.sample_S2()``.
+- Calculation of the Inverse Pole Density Function (IPDF), ie. pole density in the
+  crystal point group fundamental sector, through 
+  ``InversePoleFigurePlot.pole_density_function()``.
+- The ``orix.measure`` module has been introduced. The ``measure`` module is related to
+  quantification of orientation and vector data.
 - Plotting IPF color maps on axes now possible on through
   ```InversePoleFigurePlot.plot_ipf_color_key()``.
 
