@@ -307,10 +307,10 @@ class InversePoleFigurePlot(StereographicPlot):
     def plot_ipf_color_key(self, show_title=True) -> None:
         """Plot an IPF color key code on this axis.
 
-        This function maybe used to plot the IPF color key alongside
+        This function may be used to plot the IPF color key alongside
         another plot where the same key was used to color
-        :meth:`orix.quaternion.Orientation` or
-        :meth:`orix.vector.Vector3d` data.
+        :class:`~orix.quaternion.Orientation` or
+        :class:`~orix.vector.Vector3d` data.
         """
         symmetry = self._symmetry
         direction_color_key = DirectionColorKeyTSL(symmetry)
