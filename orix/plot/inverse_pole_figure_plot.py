@@ -313,10 +313,10 @@ class InversePoleFigurePlot(StereographicPlot):
             If ``True`` the Laue group name is displayed as the axes
             title.
 
-        This function maybe used to plot the IPF color key alongside
+        This function may be used to plot the IPF color key alongside
         another plot where the same key was used to color
-        :meth:`orix.quaternion.Orientation` or
-        :meth:`orix.vector.Vector3d` data.
+        :class:`~orix.quaternion.Orientation` or
+        :class:`~orix.vector.Vector3d` data.
         """
         symmetry = self._symmetry
         direction_color_key = DirectionColorKeyTSL(symmetry)
