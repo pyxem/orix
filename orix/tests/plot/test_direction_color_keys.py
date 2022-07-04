@@ -70,9 +70,9 @@ class TestDirectionColorKeyTSL:
         ckey_direction = ckey.direction_color_key
         (
             _,
-            (x_min, x_max),
-            (y_min, y_max),
-        ) = ckey_direction._create_rgba_grid(return_min_max=True)
+            (x_lim, y_lim),
+        ) = ckey_direction._create_rgba_grid(return_extent=True)
+        (x_min, x_max), (y_min, y_max) = x_lim, y_lim
         assert round(x_min, 3) == round(expected_xlim[0], 3)
         assert round(x_max, 3) == round(expected_xlim[1], 3)
         assert round(y_min, 3) == round(expected_ylim[0], 3)
