@@ -140,7 +140,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         rgba_grid = rgba_grid[::-1]
 
         if return_extent:
-            return rgba_grid, (x_min, x_max), (y_min, y_max)
+            return rgba_grid, ((x_min, x_max), (y_min, y_max))
         else:
             return rgba_grid
 
