@@ -87,9 +87,9 @@ class DirectionColorKeyTSL(DirectionColorKey):
         alpha
             Transparency value for plot.
         return_min_max
-            If True the tuples `(min, max)` of the fundamental sector in
-            the stereographic projection for both `x` and `y` are also
-            returned. Default is False
+            If ``True`` the tuples `(min, max)` of the extent of the
+            fundamental sector in the stereographic projection for
+            both `x` and `y` are also returned. Default is ``False``.
 
         Returns
         -------
