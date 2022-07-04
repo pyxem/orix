@@ -304,34 +304,39 @@ class InversePoleFigurePlot(StereographicPlot):
             v = values[0] * self._direction
         return v.in_fundamental_sector(self._symmetry)
 
-    def plot_ipf_color_key(self) -> None:
-        """Plot an IPF color key code on this axis."""
+    def plot_ipf_color_key(self, show_title=True) -> None:
+        """Plot an IPF color key code on this axis.
+
+        This function maybe used to plot the IPF color key alongside
+        another plot where the same key was used to color
+        :meth:`orix.quaternion.Orientation` or
+        :meth:`orix.vector.Vector3d` data.
+        """
         symmetry = self._symmetry
         direction_color_key = DirectionColorKeyTSL(symmetry)
 
-        rgba_grid, x_lim, y_lim = direction_color_key._create_rgba_grid(
-            return_min_max=True
+        rgba_grid, (x_lim, y_lim) = direction_color_key._create_rgba_grid(
+            return_extent=True
         )
-        x_min, x_max = x_lim
-        y_min, y_max = y_lim
 
-        label_xy = np.column_stack(
-            self._projection.vector2xy(symmetry.fundamental_sector.vertices)
-        )
-        loc = None
-        if label_xy.size != 0:
-            # Expected title position
-            expected_xy = np.array(
-                [np.diff(self.get_xlim())[0] / 2, np.max(self.get_ylim())]
+        if show_title:
+            label_xy = np.column_stack(
+                self._projection.vector2xy(symmetry.fundamental_sector.vertices)
             )
-            is_close = np.isclose(label_xy, expected_xy, atol=0.1).all(axis=1)
-            if any(is_close) and plt.rcParams["axes.titley"] is None:
-                loc = "left"
+            loc = None
+            if label_xy.size != 0:
+                # Expected title position
+                expected_xy = np.array(
+                    [np.diff(self.get_xlim())[0] / 2, np.max(self.get_ylim())]
+                )
+                is_close = np.isclose(label_xy, expected_xy, atol=0.1).all(axis=1)
+                if any(is_close) and plt.rcParams["axes.titley"] is None:
+                    loc = "left"
+            self.set_title(symmetry.name, loc=loc, fontweight="bold")
 
-        self.set_title(symmetry.name, loc=loc, fontweight="bold")
         self.stereographic_grid(False)
         self._edge_patch.set_linewidth(1.5)
-        self.imshow(rgba_grid, extent=(x_min, x_max, y_min, y_max), zorder=0)
+        self.imshow(rgba_grid, extent=x_lim + y_lim, zorder=0)
 
 
 mprojections.register_projection(InversePoleFigurePlot)
