@@ -24,8 +24,8 @@ Added
   ``InversePoleFigurePlot.pole_density_function()``.
 - The ``orix.measure`` module has been introduced. The ``measure`` module is related to
   quantification of orientation and vector data.
-- Plotting IPF color maps on axes now possible on through
-  ```InversePoleFigurePlot.plot_ipf_color_key()``.
+- Plotting the IPF color key on a created ``InversePoleFigurePlot`` is now possible with
+  ``plot_ipf_color_key()``.
 
 Removed
 -------
