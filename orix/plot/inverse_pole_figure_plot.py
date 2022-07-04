@@ -304,8 +304,14 @@ class InversePoleFigurePlot(StereographicPlot):
             v = values[0] * self._direction
         return v.in_fundamental_sector(self._symmetry)
 
-    def plot_ipf_color_key(self, show_title=True) -> None:
+    def plot_ipf_color_key(self, show_title: bool = True) -> None:
         """Plot an IPF color key code on this axis.
+
+        Parameters
+        ----------
+        show_title
+            If ``True`` the Laue group name is displayed as the axes
+            title.
 
         This function maybe used to plot the IPF color key alongside
         another plot where the same key was used to color
