@@ -78,27 +78,30 @@ class DirectionColorKeyTSL(DirectionColorKey):
         return rgb_from_polar_coordinates(azimuth, polar)
 
     def _create_rgba_grid(
-        self, alpha: float = 1.0, return_min_max: bool = False
-    ) -> Union[np.ndarray, Tuple[np.ndarray, Tuple[float, float], Tuple[float, float]]]:
+        self, alpha: float = 1.0, return_extent: bool = False
+    ) -> Union[
+        np.ndarray, Tuple[np.ndarray, Tuple[Tuple[float, float], Tuple[float, float]]]
+    ]:
         """Create the 2d colormap used to represent crystal directions.
 
         Parameters
         ----------
         alpha
             Transparency value for plot.
-        return_min_max
-            If ``True`` the tuples `(min, max)` of the extent of the
-            fundamental sector in the stereographic projection for
-            both `x` and `y` are also returned. Default is ``False``.
+        return_extent
+            If ``True`` a tuple of tuples `(min, max)` representing the
+            extent of the fundamental sector in the stereographic
+            projection for both `x` and `y` is also returned.
+            Default is ``False``.
 
         Returns
         -------
         rgba_grid
             Colormap values with RGBA channels.
-        (x_min, x_max), (y_min, y_max)
-            Tuples `(min, max)` of the fundamental sector in the
-            stereographic projection for both `x` and `y`. Returned if
-            `return_min_max` is True.
+        extent
+            Tuple of tuples `(min, max)` representing the extent of the
+            fundamental sector in the stereographic projection for both
+            `x` and `y`. Returned if `return_extent` is ``True``.
         """
         laue_group = self.symmetry
         sector = laue_group.fundamental_sector
@@ -136,7 +139,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         rgba_grid[NaN_values, -1] = 0
         rgba_grid = rgba_grid[::-1]
 
-        if return_min_max:
+        if return_extent:
             return rgba_grid, (x_min, x_max), (y_min, y_max)
         else:
             return rgba_grid
