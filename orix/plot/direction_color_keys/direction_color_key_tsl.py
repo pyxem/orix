@@ -150,7 +150,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         Parameters
         ----------
         return_figure
-            Whether to return the figure. Default is False.
+            Whether to return the figure. Default is ``False``.
 
         Returns
         -------

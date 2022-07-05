@@ -74,8 +74,8 @@ class InversePoleFigurePlot(StereographicPlot):
             If not given, the out of plane direction, sample Z, is used.
         hemisphere
             Which hemisphere(s) to plot the vectors in. If not given,
-            "upper" is used. Options are "upper", "lower", and "both",
-            which plots two projections side by side.
+            `"upper"` is used. Options are `"upper"`, `"lower"`, and
+            `"both"`, which plots two projections side by side.
         kwargs
             Keyword arguments passed to
             :meth:`orix.plot.StereographicPlot.__init__`.
@@ -310,8 +310,8 @@ class InversePoleFigurePlot(StereographicPlot):
         Parameters
         ----------
         show_title
-            If ``True`` the Laue group name is displayed as the axes
-            title.
+            Whether to display the Laue group name as the axes title.
+            Default is ``True``.
 
         This function may be used to plot the IPF color key alongside
         another plot where the same key was used to color
@@ -358,23 +358,23 @@ def _setup_inverse_pole_figure_plot(
 
     Parameters
     ----------
-    symmetry : ~orix.quaternion.Symmetry
+    symmetry
         Laue group symmetry of crystal to plot directions with.
-    direction : ~orix.vector.Vector3d, optional
+    direction
         Sample direction to plot with respect to crystal directions. If
         not given, the out of plane direction, sample Z, is used.
-    hemisphere : str, optional
+    hemisphere
         Which hemisphere(s) to plot the vectors in. If not given,
-        "upper" is used. Options are "upper", "lower", and "both", which
-        plots two projections side by side.
-    figure_kwargs : dict, optional
+        `"upper"` is used. Options are `"upper"`, `"lower"`, and
+        `"both",` which plots two projections side by side.
+    figure_kwargs
         Dictionary of keyword arguments passed to
         :func:`matplotlib.pyplot.figure`.
 
     Returns
     -------
-    figure : matplotlib.figure.Figure
-    axes : matplotlib.axes.Axes
+    figure
+    axes
     """
     if direction is None:
         direction = Vector3d.zvector()
