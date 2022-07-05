@@ -19,6 +19,7 @@
 from matplotlib.collections import QuadMesh
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
 from orix.quaternion import Orientation, symmetry
@@ -132,5 +133,30 @@ class TestInversePoleFigurePlot:
         assert any(isinstance(c, QuadMesh) for c in fig.axes[0].collections)
         assert fig.axes[1].get_label() == "<colorbar>"
         assert fig.axes[1].get_ylabel() == "log(MRD)"
+
+        plt.close("all")
+
+    @pytest.mark.parametrize("symmetry", [symmetry.D3d, symmetry.C6h, symmetry.Oh])
+    def test_plot_ipf_color_key(self, symmetry):
+        fig, ax = plt.subplots(subplot_kw=dict(projection="ipf", symmetry=symmetry))
+        ax.plot_ipf_color_key(show_title=True)
+        assert len(ax.images) == 1
+        assert len(ax.texts) == 3
+        assert all(t.get_text().startswith("[") for t in ax.texts)
+        assert all(t.get_text().endswith("]") for t in ax.texts)
+
+        plt.close("all")
+
+    @pytest.mark.parametrize(
+        "symmetry, loc", [(symmetry.C6h, "left"), (symmetry.Oh, "center")]
+    )
+    def test_plot_ipf_color_key_show_title(self, symmetry, loc):
+        fig, ax = plt.subplots(
+            ncols=2, subplot_kw=dict(projection="ipf", symmetry=symmetry)
+        )
+        ax[0].plot_ipf_color_key(show_title=True)
+        assert ax[0].get_title(loc=loc)
+        ax[1].plot_ipf_color_key(show_title=False)
+        assert not ax[1].get_title(loc=loc)
 
         plt.close("all")

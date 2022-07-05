@@ -246,12 +246,13 @@ InversePoleFigurePlot
 ---------------------
 .. currentmodule:: orix.plot.InversePoleFigurePlot
 .. autosummary::
+    plot_ipf_color_key
     pole_density_function
     scatter
     show_hemisphere_label
     text
 .. autoclass:: orix.plot.InversePoleFigurePlot
-    :members: hemisphere, name, pole_density_function, scatter, show_hemisphere_label, text
+    :members: hemisphere, name, plot_ipf_color_key, pole_density_function, scatter, show_hemisphere_label, text
     :undoc-members:
     :show-inheritance:
 
