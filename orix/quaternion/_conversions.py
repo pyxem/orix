@@ -67,6 +67,34 @@ def get_pyramid_single(xyz):
         return 6
 
 
+@nb.jit("int64[:](float64[:, :])", cache=True, nogil=True, nopython=True)
+def get_pyramid(xyz):
+    """Determine to which out of six pyramids in the cube a 2D array of
+    (x, y, z) coordinates belongs.
+
+    Parameters
+    ----------
+    xyz : numpy.ndarray
+        2D array of n (x, y, z) as 64-bit floats.
+
+    Returns
+    -------
+    pyramid : int
+        1D array of length n.
+        Which pyramid `xyz` belongs to as a 64-bit integer.
+
+    Notes
+    -----
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    n_scalars = xyz.shape[0]
+    pyramids = np.zeros(n_scalars, dtype=np.int64)
+    for i in nb.prange(n_scalars):
+        pyramids[i] = get_pyramid_single(xyz[i])
+    return pyramids
+
+
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
 def cu2ho_single(cu):
     """Conversion from a single set of cubochoric coordinates to
@@ -561,4 +589,31 @@ def eu2qu_single(alpha, beta, gamma):
     if qu[0] < 0:
         qu = -qu
 
+    return qu
+
+
+@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+def eu2qu(eu):
+    """Conversion from multiple Euler angles (alpha, beta, gamma) to unit
+    quaternions
+
+    Parameters
+    ----------
+    eu : numpy.ndarray
+        2D array of n (alpha, beta, gamma) as 64-bit floats.
+
+    Returns
+    -------
+    qu : numpy.ndarray
+        2D array of n (qo, q1, q2, q3) quaternions as 64-bit floats.
+
+    Notes
+    -----
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    n_vectors = eu.shape[0]
+    qu = np.zeros((n_vectors, 4), dtype=np.float64)
+    for i in nb.prange(n_vectors):
+        qu[i] = eu2qu_single(eu[i, 0], eu[i, 1], eu[i, 2])
     return qu
