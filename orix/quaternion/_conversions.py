@@ -209,7 +209,7 @@ def cu2ho2d(cu):
 
 
 def cu2ho(cu):
-    """ n-dimensional wrapper for cu2ho2d"""
+    """n-dimensional wrapper for cu2ho2d"""
     n_cu = np.prod(cu.shape[:-1])
     cu2d = cu.reshape(n_cu, 3)
     ho = cu2ho2d(cu2d).reshape(cu.shape)
@@ -295,10 +295,10 @@ def ho2ax2d(ho):
 
 
 def ho2ax(ho):
-    """ n-dimensional wrapper for ho2ax2d"""
+    """n-dimensional wrapper for ho2ax2d"""
     n_ho = np.prod(ho.shape[:-1])
     ho2d = ho.reshape(n_ho, 3)
-    ho = ho2ax2d(ho2d).reshape(ho.shape[:-1]+(4,))
+    ho = ho2ax2d(ho2d).reshape(ho.shape[:-1] + (4,))
     return ho
 
 
@@ -363,7 +363,7 @@ def ax2ro2d(ax):
 
 
 def ax2ro(ax):
-    """ n-dimensional wrapper for ax2ro2d"""
+    """n-dimensional wrapper for ax2ro2d"""
     n_ax = np.prod(ax.shape[:-1])
     ax2d = ax.reshape(n_ax, 4)
     ro = ax2ro2d(ax2d).reshape(ax.shape)
@@ -489,7 +489,7 @@ def ax2qu2d(ax):
 
 
 def ax2qu(ax):
-    """ n-dimensional wrapper for ax2qu2d"""
+    """n-dimensional wrapper for ax2qu2d"""
     n_ax = np.prod(ax.shape[:-1])
     ax2d = ax.reshape(n_ax, 4)
     qu = ax2qu2d(ax2d).reshape(ax.shape)
@@ -547,10 +547,10 @@ def ho2ro2d(ho):
 
 
 def ho2ro(ho):
-    """ n-dimensional wrapper for ho2ro2d"""
+    """n-dimensional wrapper for ho2ro2d"""
     n_ho = np.prod(ho.shape[:-1])
     ho2d = ho.reshape(n_ho, 3)
-    ro = ho2ro2d(ho2d).reshape(ho.shape[:-1]+(4,))
+    ro = ho2ro2d(ho2d).reshape(ho.shape[:-1] + (4,))
     return ro
 
 
@@ -608,10 +608,10 @@ def cu2ro2d(cu):
 
 
 def cu2ro(cu):
-    """ n-dimensional wrapper for cu2ro2d"""
+    """n-dimensional wrapper for cu2ro2d"""
     n_cu = np.prod(cu.shape[:-1])
     cu2d = cu.reshape(n_cu, 3)
-    ro = cu2ro2d(cu2d).reshape(cu.shape[:-1]+(4,))
+    ro = cu2ro2d(cu2d).reshape(cu.shape[:-1] + (4,))
     return ro
 
 
@@ -683,8 +683,8 @@ def eu2qu2d(eu):
 
 
 def eu2qu(eu):
-    """ n-dimensional wrapper for eu2qu2d"""
+    """n-dimensional wrapper for eu2qu2d"""
     n_eu = np.prod(eu.shape[:-1])
     eu2d = eu.reshape(n_eu, 3)
-    qu = eu2qu2d(eu2d).reshape(eu.shape[:-1]+(4,))
+    qu = eu2qu2d(eu2d).reshape(eu.shape[:-1] + (4,))
     return qu
