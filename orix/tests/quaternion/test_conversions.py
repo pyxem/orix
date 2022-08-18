@@ -22,20 +22,31 @@ import pytest
 from orix.quaternion import Rotation
 from orix.quaternion._conversions import (
     ax2qu,
+    ax2qu2d,
     ax2qu_single,
     ax2ro,
+    ax2ro2d,
     ax2ro_single,
     cu2ho,
+    cu2ho2d,
     cu2ho_single,
     cu2ro,
+    cu2ro2d,
     cu2ro_single,
+    eu2qu,
+    eu2qu2d,
     eu2qu_single,
+    get_pyramid,
+    get_pyramid2d,
     get_pyramid_single,
     ho2ax,
+    ho2ax2d,
     ho2ax_single,
     ho2ro,
+    ho2ro2d,
     ho2ro_single,
     ro2ax,
+    ro2ax2d,
     ro2ax_single,
 )
 
@@ -133,75 +144,114 @@ def quaternions_conversions():
 class TestRotationConversions:
     def test_rotation_from_euler(self):
         euler = np.array([1, 2, 3])
+        eulers = np.arange(1, 2.5, 0.05).reshape(10, 3)
         rot_np = Rotation.from_euler(euler).data
-        assert np.allclose(rot_np, eu2qu_single.py_func(*euler))
+        rots_np = Rotation.from_euler(eulers).data
+        # single
+        assert np.allclose(rot_np, eu2qu_single.py_func(euler))
+        # 2d
+        assert np.allclose(rots_np, eu2qu2d.py_func(eulers))
+        # nd
+        assert np.allclose(rots_np, eu2qu(eulers))
 
-    def test_get_pyramid_single(self, cubochoric_coordinates):
+    def test_get_pyramid(self, cubochoric_coordinates):
         pyramid = [3, 1, 1, 1, 2, 3, 4, 5, 6]
+        # single
         for xyz, p in zip(cubochoric_coordinates, pyramid):
             assert get_pyramid_single.py_func(xyz) == p
-
-    def test_cu2ho_single(self, cubochoric_coordinates, homochoric_vectors):
-        for cu, ho in zip(cubochoric_coordinates, homochoric_vectors):
-            assert np.allclose(cu2ho_single.py_func(cu), ho, atol=1e-4)
+        # 2d
+        assert all(get_pyramid2d.py_func(cubochoric_coordinates) == pyramid)
+        # nd
+        assert all(get_pyramid(cubochoric_coordinates) == pyramid)
 
     def test_cu2ho(self, cubochoric_coordinates, homochoric_vectors):
+        # single
+        for cu, ho in zip(cubochoric_coordinates, homochoric_vectors):
+            assert np.allclose(cu2ho_single.py_func(cu), ho, atol=1e-4)
+        # 2d
+        assert np.allclose(cu2ho2d.py_func(
+            cubochoric_coordinates), homochoric_vectors, atol=1e-4)
+        # nd
         assert np.allclose(
-            cu2ho.py_func(cubochoric_coordinates), homochoric_vectors, atol=1e-4
-        )
-
-    def test_ho2ax_single(self, homochoric_vectors, axis_angle_pairs):
-        for ho, ax in zip(homochoric_vectors, axis_angle_pairs):
-            assert np.allclose(ho2ax_single.py_func(ho), ax, atol=1e-4)
+            cu2ho(cubochoric_coordinates), homochoric_vectors, atol=1e-4)
 
     def test_ho2ax(self, homochoric_vectors, axis_angle_pairs):
+        # single
+        for ho, ax in zip(homochoric_vectors, axis_angle_pairs):
+            assert np.allclose(ho2ax_single.py_func(ho), ax, atol=1e-4)
+        # 2d
         assert np.allclose(
-            ho2ax.py_func(homochoric_vectors), axis_angle_pairs, atol=1e-4
-        )
-
-    def test_ax2ro_single(self, axis_angle_pairs, rodrigues_vectors):
-        for ax, ro in zip(axis_angle_pairs, rodrigues_vectors):
-            assert np.allclose(ax2ro_single.py_func(ax), ro, atol=1e-4)
-        assert np.isinf(ax2ro_single.py_func(np.array([0, 0, 0, np.pi]))[3])
+            ho2ax2d.py_func(homochoric_vectors), axis_angle_pairs, atol=1e-4)
+        # nd
+        assert np.allclose(
+            ho2ax(homochoric_vectors), axis_angle_pairs, atol=1e-4)
 
     def test_ax2ro(self, axis_angle_pairs, rodrigues_vectors):
+        # single
+        for ax, ro in zip(axis_angle_pairs, rodrigues_vectors):
+            assert np.allclose(ax2ro_single.py_func(ax), ro, atol=1e-4)
+        # 2d
+        assert np.isinf(ax2ro_single.py_func(np.array([0, 0, 0, np.pi]))[3])
+        # nd
         assert np.allclose(
-            ax2ro.py_func(axis_angle_pairs), rodrigues_vectors, atol=1e-4
-        )
+            ax2ro2d.py_func(axis_angle_pairs), rodrigues_vectors, atol=1e-4
+            )
+        assert np.allclose(
+            ax2ro(axis_angle_pairs), rodrigues_vectors, atol=1e-4
+            )
 
-    def test_ro2ax_single(self, rodrigues_vectors, axis_angle_pairs):
+    def test_ro2ax(self, rodrigues_vectors, axis_angle_pairs):
+        # single
         for ro, ax in zip(rodrigues_vectors, axis_angle_pairs):
             assert np.allclose(ro2ax_single.py_func(ro), ax, atol=1e-4)
         assert ro2ax_single.py_func(np.array([0, 0, 0, np.inf]))[3] == np.pi
-
-    def test_ro2ax(self, rodrigues_vectors, axis_angle_pairs):
+        # 2d
         assert np.allclose(
-            ro2ax.py_func(rodrigues_vectors), axis_angle_pairs, atol=1e-4
+            ro2ax2d.py_func(rodrigues_vectors), axis_angle_pairs, atol=1e-4
         )
-
-    def test_ax2qu_single(self, axis_angle_pairs, quaternions_conversions):
-        for ax, qu in zip(axis_angle_pairs, quaternions_conversions):
-            assert np.allclose(ax2qu_single.py_func(ax), qu, atol=1e-4)
+        # nd
+        assert np.allclose(
+            ro2ax(rodrigues_vectors), axis_angle_pairs, atol=1e-4
+        )
 
     def test_ax2qu(self, axis_angle_pairs, quaternions_conversions):
+        # single
+        for ax, qu in zip(axis_angle_pairs, quaternions_conversions):
+            assert np.allclose(ax2qu_single.py_func(ax), qu, atol=1e-4)
+        # 2d
         assert np.allclose(
-            ax2qu.py_func(axis_angle_pairs), quaternions_conversions, atol=1e-4
-        )
-
-    def test_ho2ro_single(self, homochoric_vectors, rodrigues_vectors):
-        for ho, ro in zip(homochoric_vectors, rodrigues_vectors):
-            assert np.allclose(ho2ro_single.py_func(ho), ro, atol=1e-4)
+            ax2qu2d.py_func(axis_angle_pairs),
+            quaternions_conversions, atol=1e-4
+            )
+        # nd
+        assert np.allclose(
+            ax2qu(axis_angle_pairs), quaternions_conversions, atol=1e-4
+            )
 
     def test_ho2ro(self, homochoric_vectors, rodrigues_vectors):
+        # single
+        for ho, ro in zip(homochoric_vectors, rodrigues_vectors):
+            assert np.allclose(ho2ro_single.py_func(ho), ro, atol=1e-4)
+        # 2d
         assert np.allclose(
-            ho2ro.py_func(homochoric_vectors), rodrigues_vectors, atol=1e-4
+            ho2ro2d.py_func(homochoric_vectors), rodrigues_vectors, atol=1e-4
         )
-
-    def test_cu2ro_single(self, cubochoric_coordinates, rodrigues_vectors):
-        for cu, ro in zip(cubochoric_coordinates, rodrigues_vectors):
-            assert np.allclose(cu2ro_single.py_func(cu), ro, atol=1e-4)
+        # nd
+        assert np.allclose(
+            ho2ro(homochoric_vectors), rodrigues_vectors, atol=1e-4
+        )
 
     def test_cu2ro(self, cubochoric_coordinates, rodrigues_vectors):
+        # single
+        for cu, ro in zip(cubochoric_coordinates, rodrigues_vectors):
+            assert np.allclose(cu2ro_single.py_func(cu), ro, atol=1e-4)
+        # 2d
         assert np.allclose(
-            cu2ro.py_func(cubochoric_coordinates), rodrigues_vectors, atol=1e-4
-        )
+            cu2ro2d.py_func(cubochoric_coordinates),
+            rodrigues_vectors, atol=1e-4
+            )
+        # nd
+        assert np.allclose(
+            cu2ro(cubochoric_coordinates),
+            rodrigues_vectors, atol=1e-4
+            )

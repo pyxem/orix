@@ -68,7 +68,7 @@ def get_pyramid_single(xyz):
 
 
 @nb.jit("int64[:](float64[:, :])", cache=True, nogil=True, nopython=True)
-def get_pyramid(xyz):
+def get_pyramid2d(xyz):
     """Determine to which out of six pyramids in the cube a 2D array of
     (x, y, z) coordinates belongs.
 
@@ -92,6 +92,14 @@ def get_pyramid(xyz):
     pyramids = np.zeros(n_scalars, dtype=np.int64)
     for i in nb.prange(n_scalars):
         pyramids[i] = get_pyramid_single(xyz[i])
+    return pyramids
+
+
+def get_pyramid(xyz):
+    """n-dimensional wrapper for get_pyramid2d"""
+    n_xyz = np.prod(xyz.shape[:-1])
+    xyz2d = xyz.reshape(n_xyz, 3)
+    pyramids = get_pyramid2d(xyz2d).reshape(n_xyz)
     return pyramids
 
 
@@ -175,7 +183,7 @@ def cu2ho_single(cu):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def cu2ho(cu):
+def cu2ho2d(cu):
     """Conversion from multiple cubochoric coordinates to un-normalized
     homochoric coordinates :cite:`singh2016orientation`.
 
@@ -197,6 +205,14 @@ def cu2ho(cu):
     ho = np.zeros_like(cu)
     for i in nb.prange(cu.shape[0]):
         ho[i] = cu2ho_single(cu[i])
+    return ho
+
+
+def cu2ho(cu):
+    """ n-dimensional wrapper for cu2ho2d"""
+    n_cu = np.prod(cu.shape[:-1])
+    cu2d = cu.reshape(n_cu, 3)
+    ho = cu2ho2d(cu2d).reshape(cu.shape)
     return ho
 
 
@@ -252,7 +268,7 @@ def ho2ax_single(ho):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ho2ax(ho):
+def ho2ax2d(ho):
     """Conversion from multiple homochoric coordinates to un-normalized
     axis-angle pairs :cite:`rowenhorst2015consistent`.
 
@@ -276,6 +292,14 @@ def ho2ax(ho):
     for i in nb.prange(n_vectors):
         ax[i] = ho2ax_single(ho[i])
     return ax
+
+
+def ho2ax(ho):
+    """ n-dimensional wrapper for ho2ax2d"""
+    n_ho = np.prod(ho.shape[:-1])
+    ho2d = ho.reshape(n_ho, 3)
+    ho = ho2ax2d(ho2d).reshape(ho.shape[:-1]+(4,))
+    return ho
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
@@ -313,7 +337,7 @@ def ax2ro_single(ax):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ax2ro(ax):
+def ax2ro2d(ax):
     """Conversion from multiple axis-angle pairs to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
@@ -335,6 +359,14 @@ def ax2ro(ax):
     ro = np.zeros_like(ax)
     for i in nb.prange(ax.shape[0]):
         ro[i] = ax2ro_single(ax[i])
+    return ro
+
+
+def ax2ro(ax):
+    """ n-dimensional wrapper for ax2ro2d"""
+    n_ax = np.prod(ax.shape[:-1])
+    ax2d = ax.reshape(n_ax, 4)
+    ro = ax2ro2d(ax2d).reshape(ax.shape)
     return ro
 
 
@@ -368,7 +400,7 @@ def ro2ax_single(ro):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ro2ax(ro):
+def ro2ax2d(ro):
     """Conversion from multiple Rodrigues vectors to un-normalized
     axis-angle pairs :cite:`rowenhorst2015consistent`.
 
@@ -391,6 +423,13 @@ def ro2ax(ro):
     ax = np.zeros((n_vectors, 4), dtype=np.float64)
     for i in nb.prange(n_vectors):
         ax[i] = ro2ax_single(ro[i])
+    return ax
+
+
+def ro2ax(ro):
+    n_ro = np.prod(ro.shape[:-1])
+    ro2d = ro.reshape(n_ro, 4)
+    ax = ro2ax2d(ro2d).reshape(ro.shape)
     return ax
 
 
@@ -423,7 +462,7 @@ def ax2qu_single(ax):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ax2qu(ax):
+def ax2qu2d(ax):
     """Conversion from multiple axis-angle pairs to un-normalized
     quaternions :cite:`rowenhorst2015consistent`.
 
@@ -446,6 +485,14 @@ def ax2qu(ax):
     qu = np.zeros((n_vectors, 4), dtype=np.float64)
     for i in nb.prange(n_vectors):
         qu[i] = ax2qu_single(ax[i])
+    return qu
+
+
+def ax2qu(ax):
+    """ n-dimensional wrapper for ax2qu2d"""
+    n_ax = np.prod(ax.shape[:-1])
+    ax2d = ax.reshape(n_ax, 4)
+    qu = ax2qu2d(ax2d).reshape(ax.shape)
     return qu
 
 
@@ -473,7 +520,7 @@ def ho2ro_single(ho):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ho2ro(ho):
+def ho2ro2d(ho):
     """Conversion from multiple homochoric coordinates to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
@@ -496,6 +543,14 @@ def ho2ro(ho):
     ro = np.zeros((n_vectors, 4), dtype=np.float64)
     for i in nb.prange(n_vectors):
         ro[i] = ho2ro_single(ho[i])
+    return ro
+
+
+def ho2ro(ho):
+    """ n-dimensional wrapper for ho2ro2d"""
+    n_ho = np.prod(ho.shape[:-1])
+    ho2d = ho.reshape(n_ho, 3)
+    ro = ho2ro2d(ho2d).reshape(ho.shape[:-1]+(4,))
     return ro
 
 
@@ -526,7 +581,7 @@ def cu2ro_single(cu):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def cu2ro(cu):
+def cu2ro2d(cu):
     """Conversion from multiple cubochoric coordinates to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
@@ -552,8 +607,16 @@ def cu2ro(cu):
     return ro
 
 
-@nb.jit("float64[:](float64, float64, float64)", cache=True, nogil=True, nopython=True)
-def eu2qu_single(alpha, beta, gamma):
+def cu2ro(cu):
+    """ n-dimensional wrapper for cu2ro2d"""
+    n_cu = np.prod(cu.shape[:-1])
+    cu2d = cu.reshape(n_cu, 3)
+    ro = cu2ro2d(cu2d).reshape(cu.shape[:-1]+(4,))
+    return ro
+
+
+@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+def eu2qu_single(eu):
     """Convert three Euler angles (alpha, beta, gamma) to a unit
     quaternion.
 
@@ -575,16 +638,16 @@ def eu2qu_single(alpha, beta, gamma):
     This function is optimized with Numba, so care must be taken with
     array shapes and data types.
     """
-    sigma = 0.5 * np.add(alpha, gamma)
-    delta = 0.5 * np.subtract(alpha, gamma)
-    c = np.cos(beta / 2)
-    s = np.sin(beta / 2)
+    sigma = 0.5 * np.add(eu[0], eu[2])
+    delta = 0.5 * np.subtract(eu[0], eu[2])
+    c = np.cos(eu[1] / 2)
+    s = np.sin(eu[1] / 2)
 
     qu = np.zeros(4, dtype=np.float64)
-    qu[0] = c * np.cos(sigma)
-    qu[1] = -s * np.cos(delta)
-    qu[2] = -s * np.sin(delta)
-    qu[3] = -c * np.sin(sigma)
+    qu[0] = np.array(c * np.cos(sigma), dtype=np.float64)
+    qu[1] = np.array(-s * np.cos(delta), dtype=np.float64)
+    qu[2] = np.array(-s * np.sin(delta), dtype=np.float64)
+    qu[3] = np.array(-c * np.sin(sigma), dtype=np.float64)
 
     if qu[0] < 0:
         qu = -qu
@@ -593,7 +656,7 @@ def eu2qu_single(alpha, beta, gamma):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def eu2qu(eu):
+def eu2qu2d(eu):
     """Conversion from multiple Euler angles (alpha, beta, gamma) to unit
     quaternions
 
@@ -615,5 +678,13 @@ def eu2qu(eu):
     n_vectors = eu.shape[0]
     qu = np.zeros((n_vectors, 4), dtype=np.float64)
     for i in nb.prange(n_vectors):
-        qu[i] = eu2qu_single(eu[i, 0], eu[i, 1], eu[i, 2])
+        qu[i] = eu2qu_single(eu[i])
+    return qu
+
+
+def eu2qu(eu):
+    """ n-dimensional wrapper for eu2qu2d"""
+    n_eu = np.prod(eu.shape[:-1])
+    eu2d = eu.reshape(n_eu, 3)
+    qu = eu2qu2d(eu2d).reshape(eu.shape[:-1]+(4,))
     return qu
