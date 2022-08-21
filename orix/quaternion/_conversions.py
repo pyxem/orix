@@ -79,7 +79,7 @@ def get_pyramid2d(xyz):
 
     Returns
     -------
-    pyramid : int
+    pyramids : numpy.ndarray
         1D array of length n.
         Which pyramid `xyz` belongs to as a 64-bit integer.
 
@@ -209,7 +209,9 @@ def cu2ho2d(cu):
 
 
 def cu2ho(cu):
-    """n-dimensional wrapper for cu2ho2d"""
+    """N-dimensional wrapper for cu2ho_2d, see the docstring of that
+    function.
+    """
     n_cu = np.prod(cu.shape[:-1])
     cu2d = cu.reshape(n_cu, 3)
     ho = cu2ho2d(cu2d).reshape(cu.shape)
@@ -295,7 +297,9 @@ def ho2ax2d(ho):
 
 
 def ho2ax(ho):
-    """n-dimensional wrapper for ho2ax2d"""
+    """N-dimensional wrapper for ho2ax_2d, see the docstring of that
+    function.
+    """
     n_ho = np.prod(ho.shape[:-1])
     ho2d = ho.reshape(n_ho, 3)
     ho = ho2ax2d(ho2d).reshape(ho.shape[:-1] + (4,))
@@ -363,7 +367,9 @@ def ax2ro2d(ax):
 
 
 def ax2ro(ax):
-    """n-dimensional wrapper for ax2ro2d"""
+    """N-dimensional wrapper for ax2ro_2d, see the docstring of that
+    function.
+    """
     n_ax = np.prod(ax.shape[:-1])
     ax2d = ax.reshape(n_ax, 4)
     ro = ax2ro2d(ax2d).reshape(ax.shape)
@@ -427,6 +433,9 @@ def ro2ax2d(ro):
 
 
 def ro2ax(ro):
+    """N-dimensional wrapper for ro2ax_2d, see the docstring of that
+    function.
+    """
     n_ro = np.prod(ro.shape[:-1])
     ro2d = ro.reshape(n_ro, 4)
     ax = ro2ax2d(ro2d).reshape(ro.shape)
@@ -489,7 +498,9 @@ def ax2qu2d(ax):
 
 
 def ax2qu(ax):
-    """n-dimensional wrapper for ax2qu2d"""
+    """N-dimensional wrapper for ax2qu_2d, see the docstring of that
+    function.
+    """
     n_ax = np.prod(ax.shape[:-1])
     ax2d = ax.reshape(n_ax, 4)
     qu = ax2qu2d(ax2d).reshape(ax.shape)
@@ -547,7 +558,9 @@ def ho2ro2d(ho):
 
 
 def ho2ro(ho):
-    """n-dimensional wrapper for ho2ro2d"""
+    """N-dimensional wrapper for ho2ro_2d, see the docstring of that
+    function.
+    """
     n_ho = np.prod(ho.shape[:-1])
     ho2d = ho.reshape(n_ho, 3)
     ro = ho2ro2d(ho2d).reshape(ho.shape[:-1] + (4,))
@@ -608,7 +621,9 @@ def cu2ro2d(cu):
 
 
 def cu2ro(cu):
-    """n-dimensional wrapper for cu2ro2d"""
+    """N-dimensional wrapper for cu2ro_2d, see the docstring of that
+    function.
+    """
     n_cu = np.prod(cu.shape[:-1])
     cu2d = cu.reshape(n_cu, 3)
     ro = cu2ro2d(cu2d).reshape(cu.shape[:-1] + (4,))
@@ -668,7 +683,7 @@ def eu2qu2d(eu):
     Returns
     -------
     qu : numpy.ndarray
-        2D array of n (qo, q1, q2, q3) quaternions as 64-bit floats.
+        2D array of n (q0, q1, q2, q3) quaternions as 64-bit floats.
 
     Notes
     -----
@@ -683,7 +698,9 @@ def eu2qu2d(eu):
 
 
 def eu2qu(eu):
-    """n-dimensional wrapper for eu2qu2d"""
+    """N-dimensional wrapper for eu2qu_2d, see the docstring of that
+    function.
+    """
     n_eu = np.prod(eu.shape[:-1])
     eu2d = eu.reshape(n_eu, 3)
     qu = eu2qu2d(eu2d).reshape(eu.shape[:-1] + (4,))
