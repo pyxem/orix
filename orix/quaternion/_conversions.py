@@ -80,7 +80,7 @@ def get_pyramid_2d(xyz):
     Returns
     -------
     pyramids : numpy.ndarray
-        1D array of 2hich pyramids ``xyz`` belong to as 64-bit integers.
+        1D array of pyramids as 64-bit integers.
 
     Notes
     -----
@@ -95,11 +95,11 @@ def get_pyramid_2d(xyz):
 
 
 def get_pyramid(xyz):
-    """n-dimensional wrapper for get_pyramid_2d, see the docstring of that
-    function.
+    """n-dimensional wrapper for get_pyramid_2d, see the docstring of
+    that function.
     """
     n_xyz = np.prod(xyz.shape[:-1])
-    xyz2d = xyz.reshape(n_xyz, 3)
+    xyz2d = xyz.astype(np.float64).reshape(n_xyz, 3)
     pyramids = get_pyramid_2d(xyz2d).reshape(n_xyz)
     return pyramids
 
@@ -214,7 +214,7 @@ def cu2ho(cu):
     function.
     """
     n_cu = np.prod(cu.shape[:-1])
-    cu2d = cu.reshape(n_cu, 3)
+    cu2d = cu.astype(np.float64).reshape(n_cu, 3)
     ho = cu2ho_2d(cu2d).reshape(cu.shape)
     return ho
 
@@ -282,8 +282,8 @@ def ho2ax_2d(ho):
 
     Returns
     -------
-    ho : numpy.ndarray
-        2D array of n (x, y, z) as 64-bit floats.
+    ax : numpy.ndarray
+        2D array of n (x, y, z, angle) as 64-bit floats.
 
     Notes
     -----
@@ -302,7 +302,7 @@ def ho2ax(ho):
     function.
     """
     n_ho = np.prod(ho.shape[:-1])
-    ho2d = ho.reshape(n_ho, 3)
+    ho2d = ho.astype(np.float64).reshape(n_ho, 3)
     ho = ho2ax_2d(ho2d).reshape(ho.shape[:-1] + (4,))
     return ho
 
@@ -372,7 +372,7 @@ def ax2ro(ax):
     function.
     """
     n_ax = np.prod(ax.shape[:-1])
-    ax2d = ax.reshape(n_ax, 4)
+    ax2d = ax.astype(np.float64).reshape(n_ax, 4)
     ro = ax2ro_2d(ax2d).reshape(ax.shape)
     return ro
 
@@ -438,7 +438,7 @@ def ro2ax(ro):
     function.
     """
     n_ro = np.prod(ro.shape[:-1])
-    ro2d = ro.reshape(n_ro, 4)
+    ro2d = ro.astype(np.float64).reshape(n_ro, 4)
     ax = ro2ax_2d(ro2d).reshape(ro.shape)
     return ax
 
@@ -503,7 +503,7 @@ def ax2qu(ax):
     function.
     """
     n_ax = np.prod(ax.shape[:-1])
-    ax2d = ax.reshape(n_ax, 4)
+    ax2d = ax.astype(np.float64).reshape(n_ax, 4)
     qu = ax2qu_2d(ax2d).reshape(ax.shape)
     return qu
 
@@ -563,7 +563,7 @@ def ho2ro(ho):
     function.
     """
     n_ho = np.prod(ho.shape[:-1])
-    ho2d = ho.reshape(n_ho, 3)
+    ho2d = ho.astype(np.float64).reshape(n_ho, 3)
     ro = ho2ro_2d(ho2d).reshape(ho.shape[:-1] + (4,))
     return ro
 
@@ -626,7 +626,7 @@ def cu2ro(cu):
     function.
     """
     n_cu = np.prod(cu.shape[:-1])
-    cu2d = cu.reshape(n_cu, 3)
+    cu2d = cu.astype(np.float64).reshape(n_cu, 3)
     ro = cu2ro_2d(cu2d).reshape(cu.shape[:-1] + (4,))
     return ro
 
@@ -639,8 +639,8 @@ def eu2qu_single(eu):
     Parameters
     ----------
     eu : numpy.ndarray
-        1D array of (alpha, beta, gamma) Euler angles given in radians in the
-        Bunge convention (ie, passive Z-X-Z) as 64-bit floats.
+        1D array of (alpha, beta, gamma) Euler angles given in radians
+        in the Bunge convention (ie, passive Z-X-Z) as 64-bit floats.
 
     Returns
     -------
@@ -703,6 +703,6 @@ def eu2qu(eu):
     function.
     """
     n_eu = np.prod(eu.shape[:-1])
-    eu2d = eu.reshape(n_eu, 3)
+    eu2d = eu.astype(np.float64).reshape(n_eu, 3)
     qu = eu2qu_2d(eu2d).reshape(eu.shape[:-1] + (4,))
     return qu
