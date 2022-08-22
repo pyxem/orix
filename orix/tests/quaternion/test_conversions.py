@@ -143,7 +143,7 @@ def quaternions_conversions():
 
 class TestRotationConversions:
     def test_rotation_from_euler(self):
-        eulers = np.arange(30).reshape(10, 3)/30
+        eulers = np.arange(30).reshape(10, 3) / 30
         eulers[0] = [1, 2, 3]
         rots_np = Rotation.from_euler(eulers).data
         # single
