@@ -44,7 +44,7 @@ def get_pyramid_single(xyz):
     Returns
     -------
     pyramid : int
-        Which pyramid `xyz` belongs to as a 64-bit integer.
+        Which pyramid ``xyz`` belongs to as a 64-bit integer.
 
     Notes
     -----
@@ -68,7 +68,7 @@ def get_pyramid_single(xyz):
 
 
 @nb.jit("int64[:](float64[:, :])", cache=True, nogil=True, nopython=True)
-def get_pyramid2d(xyz):
+def get_pyramid_2d(xyz):
     """Determine to which out of six pyramids in the cube a 2D array of
     (x, y, z) coordinates belongs.
 
@@ -80,8 +80,7 @@ def get_pyramid2d(xyz):
     Returns
     -------
     pyramids : numpy.ndarray
-        1D array of length n.
-        Which pyramid `xyz` belongs to as a 64-bit integer.
+        1D array of 2hich pyramids ``xyz`` belong to as 64-bit integers.
 
     Notes
     -----
@@ -96,10 +95,12 @@ def get_pyramid2d(xyz):
 
 
 def get_pyramid(xyz):
-    """n-dimensional wrapper for get_pyramid2d"""
+    """n-dimensional wrapper for get_pyramid_2d, see the docstring of that
+    function.
+    """
     n_xyz = np.prod(xyz.shape[:-1])
     xyz2d = xyz.reshape(n_xyz, 3)
-    pyramids = get_pyramid2d(xyz2d).reshape(n_xyz)
+    pyramids = get_pyramid_2d(xyz2d).reshape(n_xyz)
     return pyramids
 
 
@@ -183,7 +184,7 @@ def cu2ho_single(cu):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def cu2ho2d(cu):
+def cu2ho_2d(cu):
     """Conversion from multiple cubochoric coordinates to un-normalized
     homochoric coordinates :cite:`singh2016orientation`.
 
@@ -214,7 +215,7 @@ def cu2ho(cu):
     """
     n_cu = np.prod(cu.shape[:-1])
     cu2d = cu.reshape(n_cu, 3)
-    ho = cu2ho2d(cu2d).reshape(cu.shape)
+    ho = cu2ho_2d(cu2d).reshape(cu.shape)
     return ho
 
 
@@ -270,7 +271,7 @@ def ho2ax_single(ho):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ho2ax2d(ho):
+def ho2ax_2d(ho):
     """Conversion from multiple homochoric coordinates to un-normalized
     axis-angle pairs :cite:`rowenhorst2015consistent`.
 
@@ -302,7 +303,7 @@ def ho2ax(ho):
     """
     n_ho = np.prod(ho.shape[:-1])
     ho2d = ho.reshape(n_ho, 3)
-    ho = ho2ax2d(ho2d).reshape(ho.shape[:-1] + (4,))
+    ho = ho2ax_2d(ho2d).reshape(ho.shape[:-1] + (4,))
     return ho
 
 
@@ -341,7 +342,7 @@ def ax2ro_single(ax):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ax2ro2d(ax):
+def ax2ro_2d(ax):
     """Conversion from multiple axis-angle pairs to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
@@ -372,7 +373,7 @@ def ax2ro(ax):
     """
     n_ax = np.prod(ax.shape[:-1])
     ax2d = ax.reshape(n_ax, 4)
-    ro = ax2ro2d(ax2d).reshape(ax.shape)
+    ro = ax2ro_2d(ax2d).reshape(ax.shape)
     return ro
 
 
@@ -406,7 +407,7 @@ def ro2ax_single(ro):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ro2ax2d(ro):
+def ro2ax_2d(ro):
     """Conversion from multiple Rodrigues vectors to un-normalized
     axis-angle pairs :cite:`rowenhorst2015consistent`.
 
@@ -438,7 +439,7 @@ def ro2ax(ro):
     """
     n_ro = np.prod(ro.shape[:-1])
     ro2d = ro.reshape(n_ro, 4)
-    ax = ro2ax2d(ro2d).reshape(ro.shape)
+    ax = ro2ax_2d(ro2d).reshape(ro.shape)
     return ax
 
 
@@ -471,7 +472,7 @@ def ax2qu_single(ax):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ax2qu2d(ax):
+def ax2qu_2d(ax):
     """Conversion from multiple axis-angle pairs to un-normalized
     quaternions :cite:`rowenhorst2015consistent`.
 
@@ -503,7 +504,7 @@ def ax2qu(ax):
     """
     n_ax = np.prod(ax.shape[:-1])
     ax2d = ax.reshape(n_ax, 4)
-    qu = ax2qu2d(ax2d).reshape(ax.shape)
+    qu = ax2qu_2d(ax2d).reshape(ax.shape)
     return qu
 
 
@@ -531,7 +532,7 @@ def ho2ro_single(ho):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ho2ro2d(ho):
+def ho2ro_2d(ho):
     """Conversion from multiple homochoric coordinates to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
@@ -563,7 +564,7 @@ def ho2ro(ho):
     """
     n_ho = np.prod(ho.shape[:-1])
     ho2d = ho.reshape(n_ho, 3)
-    ro = ho2ro2d(ho2d).reshape(ho.shape[:-1] + (4,))
+    ro = ho2ro_2d(ho2d).reshape(ho.shape[:-1] + (4,))
     return ro
 
 
@@ -594,7 +595,7 @@ def cu2ro_single(cu):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def cu2ro2d(cu):
+def cu2ro_2d(cu):
     """Conversion from multiple cubochoric coordinates to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
@@ -626,7 +627,7 @@ def cu2ro(cu):
     """
     n_cu = np.prod(cu.shape[:-1])
     cu2d = cu.reshape(n_cu, 3)
-    ro = cu2ro2d(cu2d).reshape(cu.shape[:-1] + (4,))
+    ro = cu2ro_2d(cu2d).reshape(cu.shape[:-1] + (4,))
     return ro
 
 
@@ -637,9 +638,9 @@ def eu2qu_single(eu):
 
     Parameters
     ----------
-    alpha, beta, gamma : float
-        Euler angles in the Bunge convention in radians as 64-bit
-        floats.
+    eu : numpy.ndarray
+        1D array of (alpha, beta, gamma) Euler angles given in radians in the
+        Bunge convention (ie, passive Z-X-Z) as 64-bit floats.
 
     Returns
     -------
@@ -671,7 +672,7 @@ def eu2qu_single(eu):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def eu2qu2d(eu):
+def eu2qu_2d(eu):
     """Conversion from multiple Euler angles (alpha, beta, gamma) to unit
     quaternions
 
@@ -703,5 +704,5 @@ def eu2qu(eu):
     """
     n_eu = np.prod(eu.shape[:-1])
     eu2d = eu.reshape(n_eu, 3)
-    qu = eu2qu2d(eu2d).reshape(eu.shape[:-1] + (4,))
+    qu = eu2qu_2d(eu2d).reshape(eu.shape[:-1] + (4,))
     return qu

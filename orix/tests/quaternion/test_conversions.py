@@ -22,31 +22,31 @@ import pytest
 from orix.quaternion import Rotation
 from orix.quaternion._conversions import (
     ax2qu,
-    ax2qu2d,
+    ax2qu_2d,
     ax2qu_single,
     ax2ro,
-    ax2ro2d,
+    ax2ro_2d,
     ax2ro_single,
     cu2ho,
-    cu2ho2d,
+    cu2ho_2d,
     cu2ho_single,
     cu2ro,
-    cu2ro2d,
+    cu2ro_2d,
     cu2ro_single,
     eu2qu,
-    eu2qu2d,
+    eu2qu_2d,
     eu2qu_single,
     get_pyramid,
-    get_pyramid2d,
+    get_pyramid_2d,
     get_pyramid_single,
     ho2ax,
-    ho2ax2d,
+    ho2ax_2d,
     ho2ax_single,
     ho2ro,
-    ho2ro2d,
+    ho2ro_2d,
     ho2ro_single,
     ro2ax,
-    ro2ax2d,
+    ro2ax_2d,
     ro2ax_single,
 )
 
@@ -143,14 +143,13 @@ def quaternions_conversions():
 
 class TestRotationConversions:
     def test_rotation_from_euler(self):
-        euler = np.array([1, 2, 3])
-        eulers = np.arange(1, 2.5, 0.05).reshape(10, 3)
-        rot_np = Rotation.from_euler(euler).data
+        eulers = np.arange(30).reshape(10, 3) / 30
+        rot_np = Rotation.from_euler(eulers[0]).data
         rots_np = Rotation.from_euler(eulers).data
         # single
-        assert np.allclose(rot_np, eu2qu_single.py_func(euler))
+        assert np.allclose(rot_np, eu2qu_single.py_func(eulers[0]))
         # 2d
-        assert np.allclose(rots_np, eu2qu2d.py_func(eulers))
+        assert np.allclose(rots_np, eu2qu_2d.py_func(eulers))
         # nd
         assert np.allclose(rots_np, eu2qu(eulers))
 
@@ -160,7 +159,7 @@ class TestRotationConversions:
         for xyz, p in zip(cubochoric_coordinates, pyramid):
             assert get_pyramid_single.py_func(xyz) == p
         # 2d
-        assert all(get_pyramid2d.py_func(cubochoric_coordinates) == pyramid)
+        assert all(get_pyramid_2d.py_func(cubochoric_coordinates) == pyramid)
         # nd
         assert all(get_pyramid(cubochoric_coordinates) == pyramid)
 
@@ -170,7 +169,7 @@ class TestRotationConversions:
             assert np.allclose(cu2ho_single.py_func(cu), ho, atol=1e-4)
         # 2d
         assert np.allclose(
-            cu2ho2d.py_func(cubochoric_coordinates), homochoric_vectors, atol=1e-4
+            cu2ho_2d.py_func(cubochoric_coordinates), homochoric_vectors, atol=1e-4
         )
         # nd
         assert np.allclose(cu2ho(cubochoric_coordinates), homochoric_vectors, atol=1e-4)
@@ -181,7 +180,7 @@ class TestRotationConversions:
             assert np.allclose(ho2ax_single.py_func(ho), ax, atol=1e-4)
         # 2d
         assert np.allclose(
-            ho2ax2d.py_func(homochoric_vectors), axis_angle_pairs, atol=1e-4
+            ho2ax_2d.py_func(homochoric_vectors), axis_angle_pairs, atol=1e-4
         )
         # nd
         assert np.allclose(ho2ax(homochoric_vectors), axis_angle_pairs, atol=1e-4)
@@ -194,7 +193,7 @@ class TestRotationConversions:
         assert np.isinf(ax2ro_single.py_func(np.array([0, 0, 0, np.pi]))[3])
         # nd
         assert np.allclose(
-            ax2ro2d.py_func(axis_angle_pairs), rodrigues_vectors, atol=1e-4
+            ax2ro_2d.py_func(axis_angle_pairs), rodrigues_vectors, atol=1e-4
         )
         assert np.allclose(ax2ro(axis_angle_pairs), rodrigues_vectors, atol=1e-4)
 
@@ -205,7 +204,7 @@ class TestRotationConversions:
         assert ro2ax_single.py_func(np.array([0, 0, 0, np.inf]))[3] == np.pi
         # 2d
         assert np.allclose(
-            ro2ax2d.py_func(rodrigues_vectors), axis_angle_pairs, atol=1e-4
+            ro2ax_2d.py_func(rodrigues_vectors), axis_angle_pairs, atol=1e-4
         )
         # nd
         assert np.allclose(ro2ax(rodrigues_vectors), axis_angle_pairs, atol=1e-4)
@@ -216,7 +215,7 @@ class TestRotationConversions:
             assert np.allclose(ax2qu_single.py_func(ax), qu, atol=1e-4)
         # 2d
         assert np.allclose(
-            ax2qu2d.py_func(axis_angle_pairs), quaternions_conversions, atol=1e-4
+            ax2qu_2d.py_func(axis_angle_pairs), quaternions_conversions, atol=1e-4
         )
         # nd
         assert np.allclose(ax2qu(axis_angle_pairs), quaternions_conversions, atol=1e-4)
@@ -227,7 +226,7 @@ class TestRotationConversions:
             assert np.allclose(ho2ro_single.py_func(ho), ro, atol=1e-4)
         # 2d
         assert np.allclose(
-            ho2ro2d.py_func(homochoric_vectors), rodrigues_vectors, atol=1e-4
+            ho2ro_2d.py_func(homochoric_vectors), rodrigues_vectors, atol=1e-4
         )
         # nd
         assert np.allclose(ho2ro(homochoric_vectors), rodrigues_vectors, atol=1e-4)
@@ -238,7 +237,7 @@ class TestRotationConversions:
             assert np.allclose(cu2ro_single.py_func(cu), ro, atol=1e-4)
         # 2d
         assert np.allclose(
-            cu2ro2d.py_func(cubochoric_coordinates), rodrigues_vectors, atol=1e-4
+            cu2ro_2d.py_func(cubochoric_coordinates), rodrigues_vectors, atol=1e-4
         )
         # nd
         assert np.allclose(cu2ro(cubochoric_coordinates), rodrigues_vectors, atol=1e-4)
