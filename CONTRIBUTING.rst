@@ -312,6 +312,14 @@ prints a nice report in the terminal. For an even nicer presentation, you can us
 Then, you can open the created ``htmlcov/index.html`` in the browser and inspect the
 coverage in more detail.
 
+Tips for writing tests of Numba decorated functions:
+
+- A Numba decorated function ``numba_func()`` is only covered if it is called in the
+  test as ``numba_func.py_func()``.
+- Always test a Numba decorated function calling ``numba_func()`` directly, in addition
+  to ``numba_func.py_func()``, because the machine code function might give different
+  results on different OS with the same Python code.
+
 .. _adding-data-to-data-module:
 
 Adding data to the data module
