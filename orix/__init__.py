@@ -11,5 +11,6 @@ __credits__ = [
     "Paddy Harrison",
     "Duncan Johnstone",
     "Niels Cautaerts",
+    "Austin Gerlt",
     "Simon Høgås",
 ]
