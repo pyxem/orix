@@ -142,18 +142,25 @@ def quaternions_conversions():
 
 
 class TestRotationConversions:
-    def test_rotation_from_euler(self):
+    """Tests of conversions between rotation representations.
+
+    Functions are accelerated with Numba, so both the Numba and Python
+    versions of the function are tested.
+    """
+
+    def test_eu2qu(self):
         eulers = np.arange(30).reshape(10, 3) / 30
-        eulers[0] = [1, 2, 3]
+        eulers[0] = [1, 2, 3]  # Covers case where q0 < 0
         rots_np = Rotation.from_euler(eulers).data
         # single
         assert np.allclose(rots_np[0], eu2qu_single.py_func(eulers[0]))
         # 2d
-        assert np.allclose(rots_np, eu2qu_2d.py_func(eulers), atol=1e-40)
+        assert np.allclose(rots_np, eu2qu_2d.py_func(eulers), atol=1e-4)
         # nd
-        assert np.allclose(rots_np, eu2qu(eulers), atol=1e-40)
+        assert np.allclose(rots_np, eu2qu(eulers), atol=1e-4)
 
     def test_get_pyramid(self, cubochoric_coordinates):
+        """Cubochoric coordinates situated in expected pyramid."""
         pyramid = [3, 1, 1, 1, 2, 3, 4, 5, 6]
         # single
         for xyz, p in zip(cubochoric_coordinates, pyramid):
@@ -174,8 +181,8 @@ class TestRotationConversions:
         # nd
         assert np.allclose(cu2ho(cubochoric_coordinates), homochoric_vectors, atol=1e-4)
         # nd_float32
-        cu_32 = cubochoric_coordinates.astype((np.float32))
-        ho_32 = homochoric_vectors.astype((np.float32))
+        cu_32 = cubochoric_coordinates.astype(np.float32)
+        ho_32 = homochoric_vectors.astype(np.float32)
         assert np.allclose(cu2ho(cu_32), ho_32, atol=1e-4)
 
     def test_ho2ax(self, homochoric_vectors, axis_angle_pairs):
@@ -189,8 +196,8 @@ class TestRotationConversions:
         # nd
         assert np.allclose(ho2ax(homochoric_vectors), axis_angle_pairs, atol=1e-4)
         # nd_float32
-        axang_32 = axis_angle_pairs.astype((np.float32))
-        ho_32 = homochoric_vectors.astype((np.float32))
+        axang_32 = axis_angle_pairs.astype(np.float32)
+        ho_32 = homochoric_vectors.astype(np.float32)
         assert np.allclose(ho2ax(ho_32), axang_32, atol=1e-4)
 
     def test_ax2ro(self, axis_angle_pairs, rodrigues_vectors):
@@ -205,8 +212,8 @@ class TestRotationConversions:
         # nd
         assert np.allclose(ax2ro(axis_angle_pairs), rodrigues_vectors, atol=1e-4)
         # nd_float32
-        axang_32 = axis_angle_pairs.astype((np.float32))
-        rod_32 = rodrigues_vectors.astype((np.float32))
+        axang_32 = axis_angle_pairs.astype(np.float32)
+        rod_32 = rodrigues_vectors.astype(np.float32)
         assert np.allclose(ax2ro(axang_32), rod_32, atol=1e-4)
 
     def test_ro2ax(self, rodrigues_vectors, axis_angle_pairs):
@@ -221,8 +228,8 @@ class TestRotationConversions:
         # nd
         assert np.allclose(ro2ax(rodrigues_vectors), axis_angle_pairs, atol=1e-4)
         # nd_float32
-        axang_32 = axis_angle_pairs.astype((np.float32))
-        rod_32 = rodrigues_vectors.astype((np.float32))
+        axang_32 = axis_angle_pairs.astype(np.float32)
+        rod_32 = rodrigues_vectors.astype(np.float32)
         assert np.allclose(ro2ax(rod_32), axang_32, atol=1e-4)
 
     def test_ax2qu(self, axis_angle_pairs, quaternions_conversions):
@@ -236,8 +243,8 @@ class TestRotationConversions:
         # nd
         assert np.allclose(ax2qu(axis_angle_pairs), quaternions_conversions, atol=1e-4)
         # nd_float32
-        axang_32 = axis_angle_pairs.astype((np.float32))
-        qu_32 = quaternions_conversions.astype((np.float32))
+        axang_32 = axis_angle_pairs.astype(np.float32)
+        qu_32 = quaternions_conversions.astype(np.float32)
         assert np.allclose(ax2qu(axang_32), qu_32, atol=1e-4)
 
     def test_ho2ro(self, homochoric_vectors, rodrigues_vectors):
@@ -251,8 +258,8 @@ class TestRotationConversions:
         # nd
         assert np.allclose(ho2ro(homochoric_vectors), rodrigues_vectors, atol=1e-4)
         # nd_float32
-        ho_32 = homochoric_vectors.astype((np.float32))
-        rod_32 = rodrigues_vectors.astype((np.float32))
+        ho_32 = homochoric_vectors.astype(np.float32)
+        rod_32 = rodrigues_vectors.astype(np.float32)
         assert np.allclose(ho2ro(ho_32), rod_32, atol=1e-4)
 
     def test_cu2ro(self, cubochoric_coordinates, rodrigues_vectors):
@@ -266,6 +273,6 @@ class TestRotationConversions:
         # nd
         assert np.allclose(cu2ro(cubochoric_coordinates), rodrigues_vectors, atol=1e-4)
         # nd_float32
-        cub_32 = cubochoric_coordinates.astype((np.float32))
-        rod_32 = rodrigues_vectors.astype((np.float32))
+        cub_32 = cubochoric_coordinates.astype(np.float32)
+        rod_32 = rodrigues_vectors.astype(np.float32)
         assert np.allclose(cu2ro(cub_32), rod_32, atol=1e-4)
