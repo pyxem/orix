@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Conversions of orientations between many common representations from
+"""Conversions of rotations between many common representations from
 :cite:`rowenhorst2015consistent`, accelerated with Numba.
 
 This module and documentation is only relevant for orix developers, not
@@ -203,7 +203,7 @@ def cu2ho_2d(cu):
     This function is optimized with Numba, so care must be taken with
     array shapes and data types.
     """
-    ho = np.zeros_like(cu)
+    ho = np.zeros_like(cu, dtype=np.float64)
     for i in nb.prange(cu.shape[0]):
         ho[i] = cu2ho_single(cu[i])
     return ho
@@ -361,7 +361,7 @@ def ax2ro_2d(ax):
     This function is optimized with Numba, so care must be taken with
     array shapes and data types.
     """
-    ro = np.zeros_like(ax)
+    ro = np.zeros_like(ax, dtype=np.float64)
     for i in nb.prange(ax.shape[0]):
         ro[i] = ax2ro_single(ax[i])
     return ro
