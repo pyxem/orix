@@ -246,7 +246,7 @@ class Misorientation(Rotation):
         considering symmetries.
 
         Parameters
-        ---------
+        ----------
         verbose : bool
             Output progress bar while computing. Default is False.
         split_size : int

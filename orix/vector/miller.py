@@ -386,8 +386,8 @@ class Miller(Vector3d):
         max_index : int
             Maximum integer index to round to, by default 20.
 
-        Return
-        ------
+        Returns
+        -------
         Miller
             Rounded set of index triplet(s) or quartet(s).
         """
