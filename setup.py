@@ -7,27 +7,39 @@ from orix import __author__, __author_email__, __description__, __name__, __vers
 # Projects with optional features for building the documentation and running
 # tests. From setuptools:
 # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
+# fmt: off
 extra_feature_requirements = {
     "doc": [
         "furo",
-        "ipykernel",  # https://github.com/spatialaudio/nbsphinx/issues/121
-        "nbsphinx >= 0.7",
-        "sphinx >= 3.0.2",
-        "sphinx-copybutton >= 0.2.5",
-        "sphinx-gallery >= 0.6",
-        "sphinxcontrib-bibtex >= 1.0",
+        "memory_profiler",
+        "nbsphinx                       >= 0.7",
+        "numpydoc",
+        "sphinx                         >= 3.0.2",
+        "sphinx-codeautolink[ipython]",
+        "sphinx-copybutton              >= 0.2.5",
+        "sphinx-design",
+        "sphinx-gallery                 < 0.11",
+        "sphinx-last-updated-by-git",
+        "sphinxcontrib-bibtex           >= 1.0",
         "scikit-image",
         "scikit-learn",
     ],
-    "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
+    "tests": [
+        "coverage                       >= 5.0",
+        "numpydoc",
+        "pytest                         >= 5.4",
+        "pytest-cov                     >= 2.8.1",
+        "pytest-xdist",
+    ],
 }
 extra_feature_requirements["dev"] = [
     "black[jupyter]",
-    "isort >= 5.10",
+    "isort                              >= 5.10",
     "manifix",
     "outdated",
-    "pre-commit >= 1.16",
+    "pre-commit                         >= 1.16",
 ] + list(chain(*list(extra_feature_requirements.values())))
+# fmt: on
 
 # Remove the "raw" ReStructuredText directive from the README so we can
 # use it as the long_description on PyPI
