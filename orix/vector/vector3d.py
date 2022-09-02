@@ -27,11 +27,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.base import Object3d, check
-
-
-def check_vector(obj: Any) -> bool:
-    return check(obj, Vector3d)
+from orix.base import Object3d
 
 
 class Vector3d(Object3d):

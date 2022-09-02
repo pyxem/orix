@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 
 from orix.quaternion import Orientation, symmetry
-from orix.vector import Vector3d, check_vector
+from orix.vector import Vector3d
 
 vectors = [
     (1, 0, 0),
@@ -69,11 +69,6 @@ def something(request):
 @pytest.fixture(params=numbers)
 def number(request):
     return request.param
-
-
-def test_check_vector():
-    vector3 = Vector3d([2, 2, 2])
-    assert np.allclose(vector3.data, check_vector(vector3).data)
 
 
 def test_neg(vector):
