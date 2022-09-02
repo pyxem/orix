@@ -18,30 +18,18 @@
 
 """Base class for 3d objects.
 
-Note that this class is not meant to be used directly.
+.. note::
+
+    This class is not meant to be used directly.
 """
 
 import numpy as np
 
 # Lists what will be imported when calling "from orix.base import *"
 __all__ = [
-    "check",
     "DimensionError",
     "Object3d",
 ]
-
-
-def check(obj, cls):
-    if not isinstance(obj, cls):
-        try:
-            obj = cls(obj)
-        except BaseException:
-            raise ValueError(
-                "Could not turn {} (type {}) into {}".format(
-                    obj, obj.__class__.__name__, cls.__name__
-                )
-            )
-    return obj
 
 
 class DimensionError(Exception):
