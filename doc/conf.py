@@ -12,6 +12,7 @@ import sys
 from numpydoc.docscrape_sphinx import SphinxDocString
 
 import orix
+from orix import data
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -29,6 +30,7 @@ release = orix.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "matplotlib.sphinxext.plot_directive",
     "nbsphinx",
     "numpydoc",
     "sphinxcontrib.bibtex",
@@ -298,3 +300,9 @@ sphinx_gallery_conf = {
     "show_memory": True,
 }
 autosummary_generate = True
+
+# Download example datasets prior to building the docs
+print("[orix] Downloading example datasets")
+_ = data.sdss_ferrite_austenite(allow_download=True)
+_ = data.sdss_austenite(allow_download=True)
+_ = data.ti_orientations(allow_download=True)
