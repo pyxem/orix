@@ -11,6 +11,7 @@ from orix import __author__, __author_email__, __description__, __name__, __vers
 extra_feature_requirements = {
     "doc": [
         "furo",
+        "ipykernel",  # Used by nbsphinx to execute notebooks
         "memory_profiler",
         "nbsphinx                       >= 0.7",
         "numpydoc",
