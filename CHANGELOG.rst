@@ -31,6 +31,8 @@ Removed
 -------
 - Support for Python 3.6 has been removed. The minimum supported version in ``orix`` is
   now Python 3.7.
+- ``Object3d.check()``, ``Quaternion.check_quaternion()`` and
+  ``Vector3d.check_vector()``, as these methods were not used internally.
 
 2022-05-16 - version 0.9.0
 ==========================
