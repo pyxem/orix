@@ -17,6 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,97 +28,195 @@ from orix.quaternion import Orientation, Rotation
 
 
 class CrystalMap:
-    """Crystallographic map of rotations, crystal phases and key
-    properties associated with every spatial coordinate in a 1D, 2D or 3D
-    space.
+    """Crystallographic map of orientations, crystal phases and key
+    properties associated with every spatial coordinate in a 1D or 2D.
 
-    All properties are stored as 1D arrays, and reshaped when necessary.
+    Parameters
+    ----------
+    rotations
+        Rotation in each point. Must be passed with all spatial
+        dimensions in the first array axis (flattened). May contain
+        multiple rotations per point, included in the second array
+        axes. Crystal map data size is set equal to the first array
+        axis' size.
+    phase_id
+        Phase ID of each pixel. IDs equal to ``-1`` are considered not
+        indexed. If not given, all points are considered to belong to
+        one phase with ID ``0``.
+    x
+        Map x coordinate of each data point. If not given, the map is
+        assumed to be 1D, and it is set to an array of increasing
+        integers from 0 to the length of the ``phase_id`` array.
+    y
+        Map y coordinate of each data point. If not given, the map is
+        assumed to be 1D, and it is set to ``None``.
+    z
+        Map z coordinate of each data point. If not given, the map is
+        assumed to be 2D or 1D, and it is set to ``None``.
+    phase_list
+        A list of phases in the data with their with names, space
+        groups, point groups, and structures. The order in which the
+        phases appear in the list is important, as it is this, and not
+        the phases' IDs, that is used to link the phases to the
+        input ``phase_id`` if the IDs aren't exactly the same as in
+        ``phase_id``. If not given, a phase list with as many phases as
+        there are unique phase IDs in ``phase_id`` is created.
+    prop
+        Dictionary of properties of each data point.
+    scan_unit
+        Length unit of the data. Default is ``"px"``.
+    is_in_data
+        Array of booleans signifying whether a point is in the data.
+
+    See Also
+    --------
+    create_coordinate_arrays
+    :mod:`~orix.data`
+    :func:`~orix.io.load`
+
+    Notes
+    -----
+    Data is stored as 1D arrays and reshaped when necessary.
+
+    Examples
+    --------
+    Constructing a crystal map from scratch, with two rows and three
+    columns and containing Austenite and Ferrite orientations
+
+    >>> from diffpy.structure import Atom, Lattice, Structure
+    >>> import numpy as np
+    >>> from orix.crystal_map import create_coordinate_arrays, CrystalMap, PhaseList
+    >>> from orix.quaternion import Rotation
+    >>> coords, n = create_coordinate_arrays(shape=(2, 3))
+    >>> structures = [
+    ...     Structure(
+    ...         title="austenite",
+    ...         atoms=[Atom("fe", [0] * 3)],
+    ...         lattice=Lattice(0.360, 0.360, 0.360, 90, 90, 90)
+    ...     ),
+    ...     Structure(
+    ...         title="ferrite",
+    ...         atoms=[Atom("fe", [0] * 3)],
+    ...         lattice=Lattice(0.287, 0.287, 0.287, 90, 90, 90)
+    ...     )
+    ... ]
+    >>> xmap = CrystalMap(
+    ...     rotations=Rotation.from_axes_angles([0, 0, 1], np.linspace(0, np.pi, n),
+    ...     phase_id=np.array([0, 0, 1, 1, 0, 1]),
+    ...     x=coords["x"],
+    ...     y=coords["y"],
+    ...     phase_list=PhaseList(space_groups=[225, 229], structures=structures),
+    ...     prop={"score": np.random.random(n)},
+    ...     scan_unit="um",
+    ... )
+    >>> xmap
+    Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+        0     3 (50.0%)  austenite        Fm-3m         m-3m                 432    tab:blue
+        1     3 (50.0%)    ferrite        Im-3m         m-3m                 432  tab:orange
+    Properties: score
+    Scan unit: um
+
+    Data in a crystal map can be selected in multiple ways. Let's
+    demonstrate this on a dual phase dataset available in the
+    :mod:`~orix.data` module
+
+    >>> from orix import data
+    >>> xmap = data.sdss_ferrite_austenite()
+    >>> xmap
+    Phase   Orientations       Name  Space group  Point group  Proper point group       Color
+        1   5657 (48.4%)  austenite         None          432                 432    tab:blue
+        2   6043 (51.6%)    ferrite         None          432                 432  tab:orange
+    Properties: iq, dp
+    >>> xmap.shape
+    (100, 117)
+
+    Selecting based on coordinates, passing ranges (slices), integers or
+    both
+
+    >>> xmap2 = xmap[20:40, 50:60]
+    >>> xmap2
+    Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+        1   148 (74.0%)  austenite         None          432                 432    tab:blue
+        2    52 (26.0%)    ferrite         None          432                 432  tab:orange
+    Properties: iq, dp
+    Scan unit: um
+    >>> xmap2.shape
+    (20, 10)
+    >>> xmap2 = xmap[20:40, 3]
+    >>> xmap2
+    Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+        1    16 (80.0%)  austenite         None          432                 432    tab:blue
+        2     4 (20.0%)    ferrite         None          432                 432  tab:orange
+    Properties: iq, dp
+    Scan unit: um
+    >>> xmap2.shape
+    (20, 3)
+
+    Note that 1-dimensions are NOT removed
+
+    >>> xmap2 = xmap[10, 10]
+    >>> xmap2
+    Phase  Orientations     Name  Space group  Point group  Proper point group       Color
+        2    1 (100.0%)  ferrite         None          432                 432  tab:orange
+    Properties: iq, dp
+    Scan unit: um
+    >>> xmap2.shape
+    (1, 1)
+
+    Select by phase name(s)
+
+    >>> xmap2 = xmap["austenite"]
+    Phase  Orientations       Name  Space group  Point group  Proper point group     Color
+        1  5657 (100.0%)  austenite         None          432                 432  tab:blue
+    Properties: iq, dp
+    Scan unit: um
+    >>> xmap2.shape
+    (100, 117)
+    >>> xmap["austenite", "ferrite"]
+    Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+        1  5657 (48.4%)  austenite         None          432                 432    tab:blue
+        2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
+    Properties: iq, dp
+    Scan unit: um
+
+    Select by indexed and not indexed data
+
+    >>> xmap["indexed"]
+    Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+        1  5657 (48.4%)  austenite         None          432                 432    tab:blue
+        2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
+    Properties: iq, dp
+    Scan unit: um
+    >>> xmap["not_indexed"]
+    No data.
+
+    Select with a boolean array (possibly chained)
+
+    >>> xmap[xmap.dp > 0.81]
+    Phase  Orientations       Name  Space group  Point group  Proper point group       Color
+        1  4092 (44.8%)  austenite         None          432                 432    tab:blue
+        2  5035 (55.2%)    ferrite         None          432                 432  tab:orange
+    Properties: iq, dp
+    Scan unit: um
+    >>> xmap[(xmap.iq > np.mean(xmap.iq)) & (xmap.phase_id == 1)]
+    Phase  Orientations       Name  Space group  Point group  Proper point group     Color
+        1  1890 (100.0%)  austenite         None          432                 432  tab:blue
+    Properties: iq, dp
+    Scan unit: um
     """
 
     def __init__(
         self,
-        rotations,
-        phase_id=None,
-        x=None,
-        y=None,
-        z=None,
-        phase_list=None,
-        prop=None,
-        scan_unit=None,
-        is_in_data=None,
+        rotations: Rotation,
+        phase_id: Optional[np.ndarray] = None,
+        x: Optional[np.ndarray] = None,
+        y: Optional[np.ndarray] = None,
+        z: Optional[np.ndarray] = None,
+        phase_list: Optional[PhaseList] = None,
+        prop: Optional[dict] = None,
+        scan_unit: Optional[str] = "px",
+        is_in_data: Optional[np.ndarray] = None,
     ):
-        """
-        Parameters
-        ----------
-        rotations : orix.quaternion.Rotation
-            Rotation of each data point. Must be passed with all spatial
-            dimensions in the first array axis (flattened). May contain
-            multiple rotations per point, included in the second array
-            axes. Crystal map data size is set equal to the first array
-            axis' size.
-        phase_id : numpy.ndarray, optional
-            Phase ID of each pixel. IDs equal to -1 are considered not
-            indexed. If None is passed (default), all points are
-            considered to belong to one phase with ID 0.
-        x : numpy.ndarray, optional
-            Map x coordinate of each data point. If None is passed,
-            the map is assumed to be 1D, and it is set to an array of
-            increasing integers from 0 to the length of the `phase_id`
-            array.
-        y : numpy.ndarray, optional
-            Map y coordinate of each data point. If None is passed,
-            the map is assumed to be 1D, and it is set to None.
-        z : numpy.ndarray, optional
-            Map z coordinate of each data point. If None is passed, the
-            map is assumed to be 2D or 1D, and it is set to None.
-        phase_list : PhaseList, optional
-            A list of phases in the data with their with names,
-            space groups, point groups, and structures. The order in which
-            the phases appear in the list is important, as it is this, and
-            not the phases' IDs, that is used to link the phases to the
-            input `phase_id` if the IDs aren't exactly the same as in
-            `phase_id`. If None (default), a phase list with as many
-            phases as there are unique phase IDs in `phase_id` is created.
-        prop : dict of numpy.ndarray, optional
-            Dictionary of properties of each data point.
-        scan_unit : str, optional
-            Length unit of the data. If None (default), "px" is used.
-        is_in_data : numpy.ndarray, optional
-            Array of booleans signifying whether a point is in the data.
-
-        Examples
-        --------
-        >>> from diffpy.structure import Atom, Lattice, Structure
-        >>> import numpy as np
-        >>> from orix.crystal_map import CrystalMap
-        >>> from orix.quaternion.rotation import Rotation
-        >>> euler1, euler2, euler3, x, y, iq, dp, phase_id = np.loadtxt(
-        ...     "/some/file.ang", unpack=True)
-        >>> euler_angles = np.column_stack((euler1, euler2, euler3))
-        >>> rotations = Rotation.from_euler(euler_angles)
-        >>> properties = {"iq": iq, "dp": dp}
-        >>> structures = [
-        ...     Structure(
-        ...         title="austenite",
-        ...         atoms=[Atom("fe", [0] * 3)],
-        ...         lattice=Lattice(0.360, 0.360, 0.360, 90, 90, 90)
-        ...     ),
-        ...     Structure(
-        ...         title="ferrite",
-        ...         atoms=[Atom("fe", [0] * 3)],
-        ...         lattice=Lattice(0.287, 0.287, 0.287, 90, 90, 90)
-        ...     )
-        ... ]
-        >>> pl = PhaseList(space_groups=[225, 229], structures=structures)
-        >>> xmap = CrystalMap(
-        ...     rotations=rotations,
-        ...     phase_id=phase_id,
-        ...     x=x,
-        ...     y=y,
-        ...     phase_list=pl,
-        ...     prop=properties,
-        ... )
-        """
         # Set rotations
         if not isinstance(rotations, Rotation):
             raise ValueError(
@@ -154,7 +253,7 @@ class CrystalMap:
             unique_phase_ids = unique_phase_ids[1:]
         # Also sorted in ascending order
         if phase_list is None:
-            self.phases = PhaseList(ids=unique_phase_ids)
+            self._phases = PhaseList(ids=unique_phase_ids)
         else:
             phase_list = copy.deepcopy(phase_list)
             phase_ids = phase_list.ids
@@ -182,7 +281,7 @@ class CrystalMap:
             # Ensure phase list IDs correspond to IDs in phase_id array
             new_ids = list(unique_phase_ids.astype(int))
             phase_list._dict = dict(zip(new_ids, phase_list._dict.values()))
-            self.phases = phase_list
+            self._phases = phase_list
 
         # Set whether measurements are indexed
         is_indexed = np.ones(data_size, dtype=bool)
@@ -200,8 +299,6 @@ class CrystalMap:
         self.is_in_data = is_in_data
 
         # Set scan unit
-        if scan_unit is None:
-            scan_unit = "px"
         self.scan_unit = scan_unit
 
         # Set properties
@@ -214,79 +311,99 @@ class CrystalMap:
         self._original_shape = self._data_shape_from_coordinates(only_is_in_data=False)
 
     @property
-    def id(self):
-        """ID of points in data."""
+    def id(self) -> np.ndarray:
+        """Return the ID of points in data."""
         return self._id[self.is_in_data]
 
     @property
-    def size(self):
-        """Total number of points in data."""
+    def size(self) -> int:
+        """Return the total number of points in data."""
         return np.count_nonzero(self.is_in_data)
 
     @property
-    def shape(self):
-        """Shape of points in data."""
+    def shape(self) -> tuple:
+        """Return the shape of points in data."""
         return self._data_shape_from_coordinates()
 
     @property
-    def ndim(self):
-        """Number of data dimensions of points in data."""
+    def ndim(self) -> int:
+        """Return the number of data dimensions of points in data."""
         return len(self.shape)
 
     @property
-    def x(self):
-        """X coordinates of points in data."""
+    def x(self) -> Union[None, np.ndarray]:
+        """Return the x coordinates of points in data."""
         if self._x is None or len(np.unique(self._x)) == 1:
             return None
         else:
             return self._x[self.is_in_data]
 
     @property
-    def y(self):
-        """Y coordinates of points in data."""
+    def y(self) -> Union[None, np.ndarray]:
+        """Return the y coordinates of points in data."""
         if self._y is None or len(np.unique(self._y)) == 1:
             return None
         else:
             return self._y[self.is_in_data]
 
     @property
-    def z(self):
-        """Z coordinates of points in data."""
+    def z(self) -> Union[None, np.ndarray]:
+        """Return the z coordinates of points in data."""
         if self._z is None or len(np.unique(self._z)) == 1:
             return None
         else:
             return self._z[self.is_in_data]
 
     @property
-    def dx(self):
+    def dx(self) -> float:
+        """Return the x coordinate step size."""
         return self._step_size_from_coordinates(self._x)
 
     @property
-    def dy(self):
+    def dy(self) -> float:
+        """Return the y coordinate step size."""
         return self._step_size_from_coordinates(self._y)
 
     @property
-    def dz(self):
+    def dz(self) -> float:
+        """Return the z coordiante step size."""
         return self._step_size_from_coordinates(self._z)
 
     @property
-    def phase_id(self):
-        """Phase IDs of points in data."""
+    def phase_id(self) -> np.ndarray:
+        """Return or set the phase IDs of points in data.
+
+        Parameters
+        ----------
+        value : numpy.ndarray or int
+            Phase ID of points in data.
+        """
         return self._phase_id[self.is_in_data]
 
     @phase_id.setter
-    def phase_id(self, value):
-        """Set phase ID of points in data by passing an int to `value`."""
+    def phase_id(self, value: Union[np.ndarray, int]):
+        """Set phase ID of points in data."""
         self._phase_id[self.is_in_data] = value
         if value == -1 and "not_indexed" not in self.phases.names:
             self.phases.add_not_indexed()
 
     @property
-    def phases_in_data(self):
-        """List of phases in data.
+    def phases(self) -> PhaseList:
+        """Return the list of phases."""
+        return self._phases
 
-        Needed because it can be useful to have phases not in data but in
-        `self.phases`.
+    @property
+    def phases_in_data(self) -> PhaseList:
+        """Return the list of phases in data.
+
+        See Also
+        --------
+        phases
+
+        Notes
+        -----
+        Can be useful when there are phases in :attr:`phases` which are
+        not in the data.
         """
         unique_ids = np.unique(self.phase_id)
         phase_list = self.phases[np.intersect1d(unique_ids, self.phases.ids)]
@@ -300,27 +417,56 @@ class CrystalMap:
             return phase_list
 
     @property
-    def rotations(self):
-        """Rotations in data."""
+    def rotations(self) -> Rotation:
+        """Return the rotations in the data."""
         return self._rotations[self.is_in_data]
 
     @property
-    def rotations_per_point(self):
-        """Number of rotations per data point in data."""
+    def rotations_per_point(self) -> int:
+        """Return the number of rotations per data point in data."""
         return self.rotations.size // self.is_indexed.size
 
     @property
-    def rotations_shape(self):
-        """Shape of rotation instance.
+    def rotations_shape(self) -> tuple:
+        """Return the shape of :attr:`rotations`.
 
-        Map shape and possible multiple rotations per point are accounted
-        for. 1-dimensions are squeezed out.
+        Notes
+        -----
+        Map shape and possible multiple rotations per point are
+        accounted for. 1-dimensions are squeezed out.
         """
         return tuple(i for i in self.shape + (self.rotations_per_point,) if i != 1)
 
     @property
-    def orientations(self):
-        """Rotations, respecting symmetry, in data."""
+    def orientations(self) -> Orientation:
+        """Return orientations (rotations respecting symmetry), in data.
+
+        Raises
+        ------
+        ValueError
+            When the (potentially sliced map) has more than one phase in
+            the data.
+
+        Examples
+        --------
+        >>> from orix import data
+        >>> xmap = data.sdss_ferrite_austenite()
+        >>> xmap
+        Phase   Orientations       Name  Space group  Point group  Proper point group       Color
+            1   5657 (48.4%)  austenite         None          432                 432    tab:blue
+            2   6043 (51.6%)    ferrite         None          432                 432  tab:orange
+        Properties: iq, dp
+        Scan unit: um
+        >>> xmap["austenite"].orientations
+        Orientation (5657,) 432
+        [[ 0.8686  0.3569 -0.2749 -0.2064]
+         [ 0.8681  0.3581 -0.2744 -0.2068]
+         [ 0.8684  0.3578 -0.2751 -0.2052]
+         ...
+         [ 0.9639  0.022   0.0754 -0.2545]
+         [ 0.8854  0.3337 -0.2385  0.2187]
+         [ 0.885   0.3341 -0.2391  0.2193]]
+        """
         phases = self.phases_in_data
         if phases.size == 1:
             # Extract top matching rotations per point, if more than one
@@ -341,59 +487,55 @@ class CrystalMap:
             )
 
     @property
-    def is_indexed(self):
-        """Whether points in data are indexed."""
+    def is_indexed(self) -> np.ndarray:
+        """Return whether points in data are indexed."""
         return self.phase_id != -1
 
     @property
-    def all_indexed(self):
-        """Whether all points in data are indexed."""
+    def all_indexed(self) -> np.ndarray:
+        """Return whether all points in data are indexed."""
         return np.count_nonzero(self.is_indexed) == self.is_indexed.size
 
     @property
-    def prop(self):
-        """:class:`~orix.crystal_map.CrystalMapProperties` dictionary
-        with data properties in each data point.
-        """
+    def prop(self) -> CrystalMapProperties:
+        """Return the data properties in each data point."""
         self._prop.is_in_data = self.is_in_data
         self._prop.id = self.id
         return self._prop
 
     @property
-    def _coordinates(self):
-        """Dictionary of coordinates of points in data."""
+    def _coordinates(self) -> dict:
+        """Return the coordinates of points in the data."""
         # TODO: Make this "dynamic"/dependable when enabling specimen
         #  reference frame
         return {"z": self.z, "y": self.y, "x": self.x}
 
     @property
-    def _all_coordinates(self):
-        """Dictionary of coordinates of all points."""
+    def _all_coordinates(self) -> dict:
+        """Return the coordinates of all points."""
         # TODO: Make this "dynamic"/dependable when enabling specimen
         #  reference frame
         return {"z": self._z, "y": self._y, "x": self._x}
 
     @property
-    def _step_sizes(self):
-        """Dictionary of step sizes of dimensions in data."""
+    def _step_sizes(self) -> dict:
+        """Return the step sizes of dimensions in the data."""
         # TODO: Make this "dynamic"/dependable when enabling specimen
         #  reference frame
         return {"z": self.dz, "y": self.dy, "x": self.dx}
 
     @property
-    def _coordinate_axes(self):
-        """Dictionary of which data axis corresponds to which cartesian
-        coordinate.
-        """
+    def _coordinate_axes(self) -> dict:
+        """Return which data axis corresponds to which coordinate."""
         present_coordinates = [k for k, v in self._coordinates.items() if v is not None]
         return {i: coord for i, coord in zip(range(self.ndim), present_coordinates)}
 
     def __getattr__(self, item):
-        """Get an attribute in the `prop` dictionary directly from the
-        CrystalMap instance.
+        """Return an attribute in the :attr:`prop` dictionary directly
+        from the ``CrystalMap`` instance.
 
         Called when the default attribute access fails with an
-        AttributeError.
+        ``AttributeError``.
         """
         if item in self.__getattribute__("_prop"):
             # Calls CrystalMapProperties.__getitem__()
@@ -409,102 +551,18 @@ class CrystalMap:
         else:
             return object.__setattr__(self, name, value)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[str, slice, tuple, int, np.ndarray]):
         """Get a masked copy of the CrystalMap instance.
+
+        See the docstring of ``__init__()`` for examples.
 
         Parameters
         ----------
-        key : str, slice, tuple, int or boolean numpy.ndarray
-            If ``str``, it must be a valid phase or "not_indexed" or
-            "indexed". If ``slice`` or ``tuple``, it must be within the
-            map shape. If ``int``, it must be a valid ``self.id``. If
-            boolean array, it must be of map shape.
-
-        Examples
-        --------
-        A CrystalMap instance can be indexed in multiple ways...
-
-        >>> xmap
-        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
-            1  5657 (48.4%)  austenite         None          432                 432    tab:blue
-            2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
-        Properties: iq, dp
-        Scan unit: um
-        >>> xmap.shape
-        (100, 117)
-
-        ... by slicing with slices, integers, or both
-
-        >>> xmap2 = xmap[20:40, 50:60]
-        >>> xmap2
-        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
-            1   148 (74.0%)  austenite         None          432                 432    tab:blue
-            2    52 (26.0%)    ferrite         None          432                 432  tab:orange
-        Properties: iq, dp
-        Scan unit: um
-        >>> xmap2.shape
-        (20, 10)
-        >>> xmap2 = xmap[20:40, 3]
-        >>> xmap2
-        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
-            1    16 (80.0%)  austenite         None          432                 432    tab:blue
-            2     4 (20.0%)    ferrite         None          432                 432  tab:orange
-        Properties: iq, dp
-        Scan unit: um
-        >>> xmap2.shape
-        (20, 3)
-
-        Note that 1-dimensions are NOT removed
-
-        >>> xmap2 = xmap[10, 10]
-        >>> xmap2
-        Phase  Orientations     Name  Space group  Point group  Proper point group       Color
-            2    1 (100.0%)  ferrite         None          432                 432  tab:orange
-        Properties: iq, dp
-        Scan unit: um
-        >>> xmap.shape
-        (1, 1)
-
-        ... by phase name(s)
-
-        >>> xmap2 = xmap["austenite"]
-        Phase  Orientations       Name  Space group  Point group  Proper point group     Color
-            1  5657 (100.0%)  austenite         None          432                 432  tab:blue
-        Properties: iq, dp
-        Scan unit: um
-        >>> xmap2.shape
-        (100, 117)
-        >>> xmap["austenite", "ferrite"]
-        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
-            1  5657 (48.4%)  austenite         None          432                 432    tab:blue
-            2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
-        Properties: iq, dp
-        Scan unit: um
-
-        ... by "indexed" and "not_indexed"
-
-        >>> xmap["indexed"]
-        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
-            1  5657 (48.4%)  austenite         None          432                 432    tab:blue
-            2  6043 (51.6%)    ferrite         None          432                 432  tab:orange
-        Properties: iq, dp
-        Scan unit: um
-        >>> xmap["not_indexed"]
-        No data.
-
-        ... or by boolean arrays ((chained) conditional(s))
-
-        >>> xmap[xmap.dp > 0.81]
-        Phase  Orientations       Name  Space group  Point group  Proper point group       Color
-            1  4092 (44.8%)  austenite         None          432                 432    tab:blue
-            2  5035 (55.2%)    ferrite         None          432                 432  tab:orange
-        Properties: iq, dp
-        Scan unit: um
-        >>> xmap[(xmap.iq > np.mean(xmap.iq)) & (xmap.phase_id == 1)]
-        Phase  Orientations       Name  Space group  Point group  Proper point group     Color
-            1  1890 (100.0%)  austenite         None          432                 432  tab:blue
-        Properties: iq, dp
-        Scan unit: um
+        key
+            If ``str``, it must be a valid phase or ``"not_indexed"`` or
+            ``"indexed"``. If ``slice`` or ``tuple``, it must be within
+            the map shape. If ``int``, it must be a valid
+            :attr`self.id`. If boolean array, it must be of map shape.
         """
         # TODO: Crop new map to the extremal spatial values (e.g. if all values in first
         #  or last row/column are masked out by the key), i.e. not just mask the values
@@ -568,8 +626,8 @@ class CrystalMap:
 
         return new_map
 
-    def __repr__(self):
-        """Print a nice representation of the data."""
+    def __repr__(self) -> str:
+        """Return a nice representation of the data."""
         if self.size == 0:
             return "No data."
 
@@ -637,27 +695,32 @@ class CrystalMap:
 
         return representation
 
-    def deepcopy(self):
+    def deepcopy(self) -> "CrystalMap":
         """Return a deep copy using :func:`copy.deepcopy` function."""
         return copy.deepcopy(self)
 
     @classmethod
-    def empty(cls, shape=None, step_sizes=None):
-        """Create a crystal map of a given shape and step sizes with
+    def empty(
+        cls,
+        shape: Union[None, int, tuple] = None,
+        step_sizes: Union[None, int, tuple] = None,
+    ) -> "CrystalMap":
+        """Return a crystal map of a given shape and step sizes with
         identity rotations.
 
         Parameters
         ----------
-        shape : tuple of int, optional
+        shape
             Map shape. Default is a 2D map of shape (5, 10), i.e. with
             five rows and ten columns.
-        step_sizes : tuple, optional
-            Map step sizes. If None (default), it is set to 1 px in each
-            map direction given by `shape`.
+        step_sizes
+            Map step sizes. If not given, it is set to 1 px in each map
+            direction given by ``shape``.
 
         Returns
         -------
-        CrystalMap
+        xmap
+            Crystal map.
 
         Examples
         --------
@@ -674,31 +737,64 @@ class CrystalMap:
         d["rotations"] = Rotation.identity((n,))
         return cls(**d)
 
-    def get_map_data(self, item, decimals=None, fill_value=None):
+    def get_map_data(
+        self,
+        item: Union[str, np.ndarray],
+        decimals: Optional[int] = None,
+        fill_value: Union[int, float, None] = np.nan,
+    ) -> np.ndarray:
         """Return an array of a class instance attribute, with values
-        equal to ``False`` in ``self.is_in_data`` set to `fill_value`, of
-        map data shape.
-
-        If `item` is "orientations"/"rotations" and there are multiple
-        rotations per point, only the first rotation is used. Rotations
-        are returned as Euler angles.
+        equal to ``False`` in :attr:`self.is_in_data` set to
+        ``fill_value``, of map data shape.
 
         Parameters
         ----------
-        item : str or numpy.ndarray
-            Name of the class instance attribute or a numpy.ndarray.
-        decimals : int, optional
+        item
+            Name of the class instance attribute or a
+            :class:`numpy.ndarray`.
+        decimals
             Number of decimals to round data point values to. If not
             given, no rounding is done.
-        fill_value : None, optional
-            Value to fill points not in the data with. If None
-            (default), np.nan is used.
+        fill_value
+            Value to fill points not in the data with. Default is
+            :class:`numpy.nan`.
 
         Returns
         -------
-        output_array : numpy.ndarray
+        output_array
             Array of the class instance attribute with points not in
-            data set to `fill_value`, of float data type.
+            data set to ``fill_value``, of float data type.
+
+        Notes
+        -----
+        Rotations and orientations should be accessed via
+        :attr:`rotations` and :attr:`orientations`.
+
+        If ``item`` is ``"orientations"`` or ``"rotations"`` and there
+        are multiple rotations per point, only the first rotation is
+        used. Rotations are returned as Euler angles.
+
+        Examples
+        --------
+        >>> from orix import data
+        >>> xmap = data.sdss_ferrite_austenite()
+        >>> xmap
+        Phase   Orientations       Name  Space group  Point group  Proper point group       Color
+            1   5657 (48.4%)  austenite         None          432                 432    tab:blue
+            2   6043 (51.6%)    ferrite         None          432                 432  tab:orange
+        Properties: iq, dp
+        Scan unit: um
+        >>> xmap.shape
+        (100, 117)
+
+        Get a 2D map in the correct shape of any attribute, ready for
+        plotting
+
+        >>> xmap.iq.shape
+        (11700,)
+        >>> iq = xmap.get_map_data("iq")
+        >>> iq.shape
+        (100, 117)
         """
         # TODO: Consider an `axes` argument along which to get map data
         #  if > 2D
@@ -780,70 +876,72 @@ class CrystalMap:
 
     def plot(
         self,
-        value=None,
-        overlay=None,
-        scalebar=True,
-        scalebar_properties=None,
-        legend=True,
-        legend_properties=None,
-        colorbar=False,
-        colorbar_label=None,
-        colorbar_properties=None,
-        remove_padding=False,
-        return_figure=False,
-        figure_kwargs=None,
+        value: Union[np.ndarray, str, None] = None,
+        overlay: Union[str, np.ndarray, None] = None,
+        scalebar: bool = True,
+        scalebar_properties: Optional[dict] = None,
+        legend: bool = True,
+        legend_properties: Optional[dict] = None,
+        colorbar: bool = False,
+        colorbar_label: Optional[str] = None,
+        colorbar_properties: Optional[dict] = None,
+        remove_padding: bool = False,
+        return_figure: bool = False,
+        figure_kwargs: Optional[dict] = None,
         **kwargs,
-    ):
+    ) -> plt.Figure:
         r"""Plot a 2D map with any crystallographic map property as map
         values.
 
-        Wraps :meth:`matplotlib.axes.Axes.imshow`, see that method for
+        Wraps :meth:`matplotlib.axes.Axes.imshow`: see that method for
         relevant keyword arguments.
 
         Parameters
         ----------
-        value : numpy.ndarray, optional
-            Attribute array to plot. If None (default), a phase map is
-            plotted.
-        overlay : str or numpy.ndarray, optional
+        value
+            An array or an attribute string to plot. If not given, a
+            phase map is plotted.
+        overlay
             Name of map property or a property array to use in the
             alpha (RGBA) channel. The property range is adjusted for
-            maximum contrast. Default is None.
-        scalebar : bool, optional
-            Whether to add a scalebar (default is True) along the
+            maximum contrast. Not used if not given.
+        scalebar
+            Whether to add a scalebar (default is ``True``) along the
             horizontal map dimension.
-        scalebar_properties : dict, optional
+        scalebar_properties
             Keyword arguments passed to
             :class:`matplotlib_scalebar.scalebar.ScaleBar`.
-        legend : bool, optional
+        legend
             Whether to add a legend to the plot. This is only
             implemented for a phase plot (in which case default is
-            True).
-        legend_properties : dict, optional
-            Keyword arguments passed to :meth:`matplotlib.axes.legend`.
-        colorbar : bool, optional
-            Whether to add an opinionated colorbar (default is False).
-        colorbar_label : str, optional
-            Label/title of colorbar.
-        colorbar_properties : dict, optional
+            ``True``).
+        legend_properties
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.legend`.
+        colorbar
+            Whether to add an opinionated colorbar (default is
+            ``False``).
+        colorbar_label
+            Label of colorbar.
+        colorbar_properties
             Keyword arguments passed to
             :meth:`orix.plot.CrystalMapPlot.add_colorbar`.
-        remove_padding : bool, optional
-            Whether to remove white padding around figure, default is
-            False.
-        return_figure: bool, optional
-            Whether to return the figure (default is False).
-        figure_kwargs : dict, optional
+        remove_padding
+            Whether to remove white padding around figure (default is
+            ``False``).
+        return_figure
+            Whether to return the figure (default is ``False``).
+        figure_kwargs
             Keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.imshow`.
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            The created figure, returned if `return_figure` is True.
+        fig
+            The created figure, returned if ``return_figure=True``.
 
         See Also
         --------
@@ -852,6 +950,29 @@ class CrystalMap:
         orix.plot.CrystalMapPlot.add_scalebar
         orix.plot.CrystalMapPlot.add_overlay
         orix.plot.CrystalMapPlot.add_colorbar
+
+        Examples
+        --------
+        >>> from orix import data
+        >>> xmap = data.sdss_ferrite_austenite()
+        >>> xmap
+        Phase   Orientations       Name  Space group  Point group  Proper point group       Color
+            1   5657 (48.4%)  austenite         None          432                 432    tab:blue
+            2   6043 (51.6%)    ferrite         None          432                 432  tab:orange
+        Properties: iq, dp
+        Scan unit: um
+
+        Plot phase map
+
+        >>> xmap.plot()
+
+        Remove padding and return the figure (e.g. to be saved)
+
+        >>> fig = xmap.plot(remove_padding=True, return_figure=True)
+
+        Plot a dot product (similarity score) map
+
+        >>> xmap.plot("dp", colorbar=True, colorbar_label="Dot product", cmap="gray")
         """
         # Register "plot_map" projection with Matplotlib
         import orix.plot.crystal_map_plot
@@ -881,18 +1002,18 @@ class CrystalMap:
             return fig
 
     @staticmethod
-    def _step_size_from_coordinates(coordinates):
-        """Return step size in input `coordinates` array.
+    def _step_size_from_coordinates(coordinates: np.ndarray) -> float:
+        """Return step size in input ``coordinates`` array.
 
         Parameters
         ----------
-        coordinates : numpy.ndarray
+        coordinates
             Linear coordinate array.
 
         Returns
         -------
-        step_size : float
-            Step size in `coordinates` array.
+        step_size
+            Step size in ``coordinates`` array.
         """
         unique_sorted = np.sort(np.unique(coordinates))
         step_size = 0
@@ -900,19 +1021,19 @@ class CrystalMap:
             step_size = unique_sorted[1] - unique_sorted[0]
         return step_size
 
-    def _data_slices_from_coordinates(self, only_is_in_data=True):
+    def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
         """Return a tuple of slices defining the current data extent in
         all directions.
 
         Parameters
         ----------
-        only_is_in_data : bool, optional
+        only_is_in_data
             Whether to determine slices of points in data or all points.
-            Default is True.
+            Default is ``True``.
 
         Returns
         -------
-        slices : tuple of slices
+        slices
             Data slice in each existing dimension, in (z, y, x) order.
         """
         if only_is_in_data:
@@ -931,18 +1052,18 @@ class CrystalMap:
 
         return tuple(slices)
 
-    def _data_shape_from_coordinates(self, only_is_in_data=True):
+    def _data_shape_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
         """Return data shape based upon coordinate arrays.
 
         Parameters
         ----------
-        only_is_in_data : bool, optional
+        only_is_in_data
             Whether to determine shape of points in data or all points.
-            Default is True.
+            Default is ``True``.
 
         Returns
         -------
-        data_shape : tuple of ints
+        data_shape
             Shape of data in all existing dimensions, in (z, y, x) order.
         """
         data_shape = []
@@ -951,28 +1072,40 @@ class CrystalMap:
         return tuple(data_shape)
 
 
-def create_coordinate_arrays(shape=None, step_sizes=None):
+def create_coordinate_arrays(
+    shape: Optional[tuple] = None, step_sizes: Optional[tuple] = None
+) -> Tuple[dict, int]:
     """Create flattened coordinate arrays from a given map shape and
     step sizes, suitable for initializing a
-    :class:`orix.crystal_map.CrystalMap`. Arrays for 1D, 2D, or 3D maps
+    :class:`~orix.crystal_map.CrystalMap`. Arrays for 1D, 2D, or 3D maps
     can be returned.
 
     Parameters
     ----------
-    shape : tuple of int, optional
+    shape
         Map shape. Default is a 2D map of shape (5, 10) with five rows
         and ten columns. Can be up to 3D.
-    step_sizes : tuple, optional
-        Map step sizes. If None (default), it is set to 1 px in each
-        map direction given by `shape`.
+    step_sizes
+        Map step sizes. If not given, it is set to 1 px in each map
+        direction given by ``shape``.
 
     Returns
     -------
-    d : dict of numpy.ndarray
-        Dictionary with keys "z", "y", and "x", depending on the length
-        of `shape`, with coordinate arrays.
-    map_size : int
+    d
+        Dictionary with keys ``"z"``, ``"y"``, and ``"x"``, depending on
+        the length of ``shape``, with coordinate arrays.
+    map_size
         Number of map points.
+
+    Examples
+    --------
+    >>> from orix.crystal_map import create_coordinate_arrays
+    >>> create_coordinate_arrays((2, 3))
+    {'x': array([0, 1, 2, 0, 1, 2]), 'y': array([0, 0, 0, 1, 1, 1])}, 6)
+    >>> create_coordinate_arrays((3, 2))
+    ({'x': array([0, 1, 0, 1, 0, 1]), 'y': array([0, 0, 1, 1, 2, 2])}, 6)
+    >>> create_coordinate_arrays((2, 3), (1.5, 1.5))
+    ({'x': array([0. , 1.5, 3. , 0. , 1.5, 3. ]), 'y': array([0. , 0. , 0. , 1.5, 1.5, 1.5])}, 6)
     """
     if shape is None:
         shape = (5, 10)
