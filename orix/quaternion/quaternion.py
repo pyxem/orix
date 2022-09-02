@@ -23,12 +23,8 @@ from dask.diagnostics import ProgressBar
 import numpy as np
 import quaternion
 
-from orix.base import Object3d, check
+from orix.base import Object3d
 from orix.vector import Miller, Vector3d
-
-
-def check_quaternion(obj):
-    return check(obj, Quaternion)
 
 
 class Quaternion(Object3d):
