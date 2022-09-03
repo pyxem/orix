@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import deepcopy
+from typing import Optional, Union
 
 from matplotlib import __version__, projections
 import matplotlib.pyplot as plt
@@ -27,11 +27,20 @@ from orix.vector import AxAngle, Rodrigues
 
 
 class RotationPlot(Axes3D):
+    """Plot of a (mis)orientation region, extending Matplotlib."""
 
     name = None
     transformation_class = None
 
-    def transform(self, xs, fundamental_zone=None):
+    def transform(
+        self,
+        xs: Union["Misorientation", "OrientationRegion", "Rotation"],
+        fundamental_zone: Optional["OrientationRegion"] = None,
+    ):
+        """Prepare (mis)orientations or rotations for plotting.
+
+        Parameters
+        ----------"""
         from orix.quaternion import Misorientation, OrientationRegion, Rotation
 
         # Project rotations into fundamental zone if necessary

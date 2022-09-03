@@ -63,9 +63,8 @@ class InversePoleFigurePlot(StereographicPlot):
 
         Parameters
         ----------
-        args
-            Arguments passed to
-            :meth:`orix.plot.StereographicPlot.__init__`.
+        *args
+            Arguments passed to :class:`~orix.plot.StereographicPlot`.
         symmetry
             Laue group symmetry of crystal to plot directions with. If
             not given, point group C1 (only identity rotation) is used.
@@ -74,11 +73,11 @@ class InversePoleFigurePlot(StereographicPlot):
             If not given, the out of plane direction, sample Z, is used.
         hemisphere
             Which hemisphere(s) to plot the vectors in. If not given,
-            `"upper"` is used. Options are `"upper"`, `"lower"`, and
-            `"both"`, which plots two projections side by side.
-        kwargs
+            ``"upper"`` is used. Options are ``"upper"``, ``"lower"``,
+            and ``"both"``, which plots two projections side by side.
+        **kwargs
             Keyword arguments passed to
-            :meth:`orix.plot.StereographicPlot.__init__`.
+            :class:`~orix.plot.StereographicPlot`.
         """
         super().__init__(*args, **kwargs)
 
@@ -120,7 +119,7 @@ class InversePoleFigurePlot(StereographicPlot):
 
         Parameters
         ----------
-        args
+        *args
             Vector(s), or azimuth and polar angles of the vectors, the
             latter passed as two separate arguments.
         resolution
@@ -130,14 +129,15 @@ class InversePoleFigurePlot(StereographicPlot):
             The angular resolution of the applied broadening in degrees.
             Default value is 5.
         log
-            If True the log(IPDF) is calculated. Default is True.
+            If ``True`` the log(IPDF) is calculated. Default is
+            ``True``.
         colorbar
-            If True a colorbar is shown alongside the IPDF plot.
-            Default is True.
+            If ``True`` a colorbar is shown alongside the IPDF plot.
+            Default is ``True``.
         weights
             The weights for the individual vectors. Default is None, in
             which case each vector is 1.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
 
@@ -145,9 +145,8 @@ class InversePoleFigurePlot(StereographicPlot):
         --------
         orix.measure.pole_density_function
         orix.plot.StereographicPlot.pole_density_function
-        orix.vector.Vector3d.pole_density_function
+        orix.Vector3d.pole_density_function
         """
-
         hist, (x, y) = pole_density_function(
             *args,
             resolution=resolution,
@@ -183,14 +182,14 @@ class InversePoleFigurePlot(StereographicPlot):
 
         Parameters
         ----------
-        args
+        *args
             Spherical coordinates (azimuth, polar), orientations, or
             vectors. If spherical coordinates are given, they are
             assumed to describe unit vectors. Vectors will be made into
             unit vectors if they aren't already. If orientations are
             passed, the crystal directions returned are the sample
             :attr:`direction` rotated by the orientations.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.scatter`.
 
@@ -202,12 +201,12 @@ class InversePoleFigurePlot(StereographicPlot):
         super().scatter(crystal_directions, **kwargs)
 
     def show_hemisphere_label(self, **kwargs: Any) -> None:
-        """Add a hemisphere label ("upper"/"lower") to the upper left
-        outside the inverse pole figure.
+        """Add a hemisphere label (``"upper"``/``"lower"``) to the upper
+        left outside the inverse pole figure.
 
         Parameters
         ----------
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.text`.
 
@@ -365,8 +364,8 @@ def _setup_inverse_pole_figure_plot(
         not given, the out of plane direction, sample Z, is used.
     hemisphere
         Which hemisphere(s) to plot the vectors in. If not given,
-        `"upper"` is used. Options are `"upper"`, `"lower"`, and
-        `"both",` which plots two projections side by side.
+        ``"upper"`` is used. Options are ``"upper"``, ``"lower"``, and
+        ``"both"``, which plots two projections side by side.
     figure_kwargs
         Dictionary of keyword arguments passed to
         :func:`matplotlib.pyplot.figure`.
