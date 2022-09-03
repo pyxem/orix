@@ -69,7 +69,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         Returns
         -------
         rgb
-            Color array of shape `direction.shape` + (3,).
+            Color array of shape ``direction.shape + (3,)``.
         """
         laue_group = self.symmetry
         h = direction.in_fundamental_sector(laue_group)
@@ -80,7 +80,8 @@ class DirectionColorKeyTSL(DirectionColorKey):
     def _create_rgba_grid(
         self, alpha: float = 1.0, return_extent: bool = False
     ) -> Union[
-        np.ndarray, Tuple[np.ndarray, Tuple[Tuple[float, float], Tuple[float, float]]]
+        np.ndarray,
+        Tuple[np.ndarray, Tuple[Tuple[float, float], Tuple[float, float]]],
     ]:
         """Create the 2d colormap used to represent crystal directions.
 
@@ -89,9 +90,9 @@ class DirectionColorKeyTSL(DirectionColorKey):
         alpha
             Transparency value for plot.
         return_extent
-            If ``True`` a tuple of tuples `(min, max)` representing the
-            extent of the fundamental sector in the stereographic
-            projection for both `x` and `y` is also returned.
+            If ``True`` a tuple of tuples ``(min, max)`` representing
+            the extent of the fundamental sector in the stereographic
+            projection for both ``x`` and ``y`` is also returned.
             Default is ``False``.
 
         Returns
@@ -99,9 +100,9 @@ class DirectionColorKeyTSL(DirectionColorKey):
         rgba_grid
             Colormap values with RGBA channels.
         extent
-            Tuple of tuples `(min, max)` representing the extent of the
-            fundamental sector in the stereographic projection for both
-            `x` and `y`. Returned if `return_extent` is ``True``.
+            Tuple of tuples ``(min, max)`` representing the extent of
+            the fundamental sector in the stereographic projection for
+            both ``x`` and ``y``. Returned if ``return_extent=True``.
         """
         laue_group = self.symmetry
         sector = laue_group.fundamental_sector
@@ -155,7 +156,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         Returns
         -------
         figure
-            Color key figure, returned if `return_figure` is True.
+            Color key figure, returned if ``return_figure=True``.
         """
         from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
 

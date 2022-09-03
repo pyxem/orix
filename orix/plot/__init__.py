@@ -39,6 +39,7 @@ from orix.plot.stereographic_plot import StereographicPlot
 # Must be imported below StereographicPlot since it imports it
 from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot  # isort: skip
 
+
 # Lists what will be imported when calling "from orix.plot import *"
 __all__ = [
     "AxAnglePlot",

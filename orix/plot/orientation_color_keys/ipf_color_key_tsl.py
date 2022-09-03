@@ -65,13 +65,13 @@ class IPFColorKeyTSL(IPFColorKey):
 
         Parameters
         ----------
-        orientation : orix.quaternion.Orientation
+        orientation
             Orientations to color.
 
         Returns
         -------
-        rgb : numpy.ndarray
-            Color array of shape `orientation.shape` + (3,).
+        rgb
+            Color array of shape ``orientation.shape + (3,)``.
         """
         # TODO: Take crystal axes into account, by using Miller instead
         # of Vector3d
@@ -85,11 +85,11 @@ class IPFColorKeyTSL(IPFColorKey):
         Parameters
         ----------
         return_figure
-            Whether to return the figure. Default is False.
+            Whether to return the figure. Default is ``False``.
 
         Returns
         -------
         figure
-            Color key figure, returned if `return_figure` is True.
+            Color key figure, returned if ``return_figure=True``.
         """
         return self.direction_color_key.plot(return_figure=return_figure)

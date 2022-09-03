@@ -16,10 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import List, Optional, Tuple
+
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 import matplotlib.patches as mpatches
 from matplotlib.projections import register_projection
+import matplotlib.pyplot as plt
 from matplotlib_scalebar import dimension, scalebar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
@@ -39,15 +42,15 @@ class CrystalMapPlot(Axes):
 
     def plot_map(
         self,
-        crystal_map,
-        value=None,
-        scalebar=True,
-        scalebar_properties=None,
-        legend=True,
-        legend_properties=None,
-        axes=None,
-        depth=None,
-        override_status_bar=False,
+        crystal_map: "orix.crystal_map.CrystalMap",
+        value: Optional[np.ndarray] = None,
+        scalebar: bool = True,
+        scalebar_properties: Optional[dict] = None,
+        legend: bool = True,
+        legend_properties: Optional[dict] = None,
+        axes: Tuple[int] = None,
+        depth: Optional[int] = None,
+        override_status_bar: bool = False,
         **kwargs,
     ) -> AxesImage:
         r"""Plot a 2D map with any CrystalMap attribute as map values.
@@ -57,44 +60,44 @@ class CrystalMapPlot(Axes):
 
         Parameters
         ----------
-        crystal_map : orix.crystal_map.CrystalMap
+        crystal_map
             Crystal map object to obtain data to plot from.
-        value : numpy.ndarray, optional
+        value
             Attribute array to plot. If value is None (default), a phase
             map is plotted.
-        scalebar : bool, optional
-            Whether to add a scalebar (default is True) along the
+        scalebar
+            Whether to add a scalebar (default is ``True``) along the
             horizontal map dimension.
-        scalebar_properties : dict
+        scalebar_properties
             Dictionary of keyword arguments passed to
             :func:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
-        legend : bool, optional
+        legend
             Whether to add a legend to the plot. This is only
             implemented for a phase plot (in which case default is
             True).
-        legend_properties : dict
+        legend_properties
             Dictionary of keyword arguments passed to
             :meth:`matplotlib.axes.legend`.
-        axes : tuple of ints, optional
+        axes
             Which data axes to plot if data has more than two
             dimensions. The index of data to plot in the final dimension
             is determined by `depth`. If None (default), data along the
             two last axes is plotted.
-        depth : int, optional
+        depth
             Which layer along the third axis to plot if data has more
             than two dimensions. If None (default), data in the first
             index (layer) is plotted.
-        override_status_bar : bool, optional
+        override_status_bar
             Whether to display Euler angles and any overlay values in
             the status bar when hovering over the map (default is
             False).
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.imshow`.
 
         Returns
         -------
-        im : matplotlib.image.AxesImage
+        im
             Image object, to be used further to get data from etc.
 
         See Also
@@ -108,12 +111,12 @@ class CrystalMapPlot(Axes):
         --------
         >>> import matplotlib.pyplot as plt
         >>> import numpy as np
-        >>> from orix import plot
+        >>> from orix import data, plot
         >>> from orix.io import load
 
         Import a crystal map
 
-        >>> xmap = load("/some/directory/data.ang")
+        >>> xmap = data.sdss_ferrite_austenite()
 
         Plot a phase map
 
@@ -205,32 +208,31 @@ class CrystalMapPlot(Axes):
 
         return im
 
-    def add_scalebar(self, crystal_map, **kwargs):
+    def add_scalebar(
+        self, crystal_map: "orix.crystal_map.CrystalMap", **kwargs
+    ) -> scalebar.ScaleBar:
         """Add a scalebar to the axes instance and return it.
 
         The scalebar is also available as an attribute :attr:`scalebar`.
 
         Parameters
         ----------
-        crystal_map : orix.crystal_map.CrystalMap
+        crystal_map
             Crystal map instance to obtain necessary data from.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :class:`matplotlib_scalebar.scalebar.ScaleBar`.
 
         Returns
         -------
-        bar : matplotlib_scalebar.scalebar.ScaleBar
+        bar
             Scalebar.
 
         Examples
         --------
-        >>> xmap
-        Phase  Orientations   Name       Symmetry  Color
-        1      5657 (48.4%)   austenite  432       tab:blue
-        2      6043 (51.6%)   ferrite    432       tab:orange
-        Properties: iq, dp
-        Scan unit: um
+        >>> import matplotlib.pyplot as plt
+        >>> from orix import data, plot
+        >>> xmap = data.sdss_ferrite_austenite()
 
         Create a phase map without a scale bar and add it afterwards
 
@@ -274,7 +276,7 @@ class CrystalMapPlot(Axes):
 
         return bar
 
-    def add_overlay(self, crystal_map, item):
+    def add_overlay(self, crystal_map: "orix.crystal_map.CrystalMap", item: str):
         """Use a crystal map property as gray scale values of a phase
         map.
 
@@ -282,20 +284,17 @@ class CrystalMapPlot(Axes):
 
         Parameters
         ----------
-        crystal_map : orix.crystal_map.CrystalMap
+        crystal_map
             Crystal map object to obtain necessary data from.
-        item : str
+        item
             Name of map property to scale phase array with. The property
             range is adjusted for maximum contrast.
 
         Examples
         --------
-        >>> xmap
-        Phase  Orientations   Name       Symmetry  Color
-        1      5657 (48.4%)   austenite  432       tab:blue
-        2      6043 (51.6%)   ferrite    432       tab:orange
-        Properties: iq, dp
-        Scan unit: um
+        >>> from orix import data, plot
+        >>> import matplotlib.pyplot as plt
+        >>> xmap = data.sdss_ferrite_austenite()
 
         Plot a phase map with a map property as overlay
 
@@ -323,7 +322,7 @@ class CrystalMapPlot(Axes):
 
         image.set_data(image_data)
 
-    def add_colorbar(self, label=None, **kwargs):
+    def add_colorbar(self, label: Optional[str] = None, **kwargs):
         """Add an opinionated colorbar to the figure and return it.
 
         The colorbar is also available as an attribute :attr:`colorbar`.
@@ -384,12 +383,9 @@ class CrystalMapPlot(Axes):
 
         Examples
         --------
-        >>> xmap
-        Phase  Orientations   Name       Symmetry  Color
-        1      5657 (48.4%)   austenite  432       tab:blue
-        2      6043 (51.6%)   ferrite    432       tab:orange
-        Properties: iq, dp
-        Scan unit: um
+        >>> import matplotlib.pyplot as plt
+        >>> from orix import data, plot
+        >>> xmap = data.sdss_ferrite_austenite()
 
         Remove all figure and axes padding of a phase map
 
@@ -409,18 +405,23 @@ class CrystalMapPlot(Axes):
             right = 1
         self.figure.subplots_adjust(top=1, bottom=0, right=right, left=0)
 
-    def _set_plot_shape(self, crystal_map, axes=None, depth=None):
+    def _set_plot_shape(
+        self,
+        crystal_map: "orix.crystal_map.CrystalMap",
+        axes: Optional[List[int]] = None,
+        depth: Optional[int] = None,
+    ):
         """Set `CrystalMapPlot` attributes describing which data axes to
         plot.
 
         Parameters
         ----------
-        crystal_map : orix.crystal_map.CrystalMap
+        crystal_map
             Map to determine plotting axes and slices from.
-        axes : list of ints, optional
+        axes
             Data axes to plot. If ``None``, the last two data axes are
             plotted (default).
-        depth : int, optional
+        depth
             Which data layer to plot along the final axis not in `axes` if
             data is 3D. If ``None``, this is set to zero, i.e. the first
             layer (default).
@@ -452,14 +453,14 @@ class CrystalMapPlot(Axes):
         self._data_slices = tuple(slices)
         self._data_shape = tuple(data_shape)
 
-    def _add_legend(self, patches, **kwargs):
+    def _add_legend(self, patches: List[mpatches.Patch], **kwargs):
         """Add a legend to the axes object.
 
         Parameters
         ----------
-        patches : list of matplotlib.patches.Patch
+        patches
             Patches with color code and name.
-        kwargs
+        **kwargs
             Keyword arguments passed to :meth:`matplotlib.axes.legend`.
         """
         d = {
@@ -471,7 +472,9 @@ class CrystalMapPlot(Axes):
         [kwargs.setdefault(k, v) for k, v in d.items()]
         self.legend(handles=patches, **kwargs)
 
-    def _override_status_bar(self, image, crystal_map):
+    def _override_status_bar(
+        self, image: AxesImage, crystal_map: "orix.crystal_map.CrystalMap"
+    ) -> AxesImage:
         """Display coordinates, a property value (if scalar values are
         plotted), and Euler angles (in radians) per data point in the
         status bar.
@@ -483,14 +486,14 @@ class CrystalMapPlot(Axes):
 
         Parameters
         ----------
-        image : matplotlib.images.AxesImage
+        image
             Image object.
-        crystal_map : orix.crystal_map.CrystalMap
+        crystal_map
             Crystal map object to obtain necessary data from.
 
         Returns
         -------
-        image : matplotlib.images.AxesImage
+        image
             Image object where the above mentioned methods are overridden.
         """
         # Get data shape to plot
