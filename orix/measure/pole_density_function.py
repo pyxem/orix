@@ -39,8 +39,8 @@ def pole_density_function(
     """Compute the Pole Density Function (PDF) of vectors in the
     stereographic projection. See :cite:`rohrer2004distribution`.
 
-    If `symmetry` is defined then the PDF is folded back into the point
-    group fundamental sector and accumulated.
+    If ``symmetry`` is defined then the PDF is folded back into the
+    point group fundamental sector and accumulated.
 
     Parameters
     ----------
@@ -54,31 +54,31 @@ def pole_density_function(
         The angular resolution of the applied broadening in degrees.
         Default value is 5.
     weights
-        The weights for the individual vectors. Default is `None`, in
+        The weights for the individual vectors. Default is ``None``, in
         which case the weight of each vector is 1.
     hemisphere
-        Which hemisphere(s) to plot the vectors on, options are `"upper"`
-        and `"lower"`. Default is `"upper"`.
+        Which hemisphere(s) to plot the vectors on, options are
+        ``"upper"`` and ``"lower"``. Default is ``"upper"``.
     symmetry
         If provided the PDF is calculated within the fundamental sector
         of the point group symmetry, otherwise the PDF is calculated
-        on `hemisphere`. Default is `None`.
+        on ``hemisphere``. Default is ``None``.
     log
-        If `True` the log(PDF) is calculated. Default is `True`.
+        If ``True`` the log(PDF) is calculated. Default is ``True``.
     mrd
-        If `True` the returned PDF is in units of Multiples of Random
+        If ``True`` the returned PDF is in units of Multiples of Random
         Distribution (MRD), otherwise the units are bin counts. Default
-        is `True`.
+        is ``True``.
 
     Returns
     -------
     hist
         The computed histogram, shape is (N, M).
     x, y
-        Tuple of coordinate grids for the bin edges of `hist`. The units
-        of `x` and `y` are cartesian coordinates on the stereographic
-        projection plane and the shape of both `x` and `y` is
-        (N + 1, M + 1).
+        Tuple of coordinate grids for the bin edges of ``hist``. The
+        units of ``x`` and ``y`` are cartesian coordinates on the
+        stereographic projection plane and the shape of both ``x`` and
+        ``y`` is (N + 1, M + 1).
 
     See Also
     --------
@@ -86,7 +86,6 @@ def pole_density_function(
     orix.plot.StereographicPlot.pole_density_function
     orix.vector.Vector3d.pole_density_function
     """
-
     from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
 
     hemisphere = hemisphere.lower()
@@ -114,7 +113,7 @@ def pole_density_function(
         # To help with aliasing after reprojection into point group
         # fundamental sector in the inverse pole figure case, the
         # initial sampling is performed at half the angular resolution
-        resolution = resolution / 2
+        resolution /= 2
 
     azimuth, polar, _ = v.to_polar()
     # np.histogram2d expects 1d arrays
