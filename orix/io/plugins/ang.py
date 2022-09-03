@@ -20,7 +20,9 @@
 EDAX TSL, NanoMegas ASTAR Index, or EMsoft's EMdpmerge program.
 """
 
+from io import TextIOWrapper
 import re
+from typing import List, Optional, Tuple, Union
 import warnings
 
 from diffpy.structure import Lattice, Structure
@@ -28,7 +30,7 @@ import numpy as np
 
 from orix import __version__
 from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
-from orix.quaternion.rotation import Rotation
+from orix.quaternion import Rotation
 from orix.quaternion.symmetry import point_group_aliases
 
 # MTEX has this format sorted out, check out their readers when fixing
@@ -43,33 +45,32 @@ writes = True
 writes_this = CrystalMap
 
 
-def file_reader(filename):
+def file_reader(filename: str) -> CrystalMap:
     """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
     from a file in EDAX TLS's .ang format. The map in the input is
     assumed to be 2D.
 
-    Many vendors produce an .ang file. Supported vendors are
-    * EDAX TSL
+    Many vendors produce an .ang file. Supported vendors are:
 
-    * NanoMegas ASTAR Index
-
-    * EMsoft (from program `EMdpmerge`)
-
-    * orix
+        * EDAX TSL
+        * NanoMegas ASTAR Index
+        * EMsoft (from program `EMdpmerge`)
+        * orix
 
     All points satisfying the following criteria are classified as not
     indexed:
 
-    * EDAX TSL: confidence index == -1
+        * EDAX TSL: confidence index == -1
 
     Parameters
     ----------
-    filename : str
+    filename
         Path and file name.
 
     Returns
     -------
-    CrystalMap
+    xmap
+        Crystal map.
     """
     # Get file header
     with open(filename) as f:
@@ -136,17 +137,17 @@ def file_reader(filename):
     return CrystalMap(**data_dict)
 
 
-def _get_header(file):
+def _get_header(file: TextIOWrapper) -> List[str]:
     """Return the first lines starting with '#' in an .ang file.
 
     Parameters
     ----------
-    file : _io.TextIO
+    file
         File object.
 
     Returns
     -------
-    header : list
+    header
         List with header lines as individual elements.
     """
     header = []
@@ -157,22 +158,22 @@ def _get_header(file):
     return header
 
 
-def _get_vendor_columns(header, n_cols_file):
+def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[str]]:
     """Return the .ang file column names and vendor, determined from the
     header.
 
     Parameters
     ----------
-    header : list
+    header
         List with header lines as individual elements.
-    n_cols_file : int
+    n_cols_file
         Number of file columns.
 
     Returns
     -------
-    vendor : str
-        Determined vendor ("tsl", "astar", or "emsoft").
-    column_names : list of str
+    vendor
+        Determined vendor (``"tsl"``, ``"astar"``, or ``"emsoft"``).
+    column_names
         List of column names.
     """
     # Assume EDAX TSL by default
@@ -280,24 +281,26 @@ def _get_vendor_columns(header, n_cols_file):
     return vendor, column_names[vendor]
 
 
-def _get_phases_from_header(header):
+def _get_phases_from_header(
+    header: List[str],
+) -> Tuple[List[int], List[str], List[str], List[List[float]]]:
     """Return phase names and symmetries detected in an .ang file
     header.
 
     Parameters
     ----------
-    header : list
+    header
         List with header lines as individual elements.
 
     Returns
     -------
-    ids : list of int
+    ids
         Phase IDs.
-    phase_names : list of str
+    phase_names
         List of names of detected phases.
-    phase_point_groups : list of str
+    phase_point_groups
         List of point groups of detected phase.
-    lattice_constants : list of list of floats
+    lattice_constants
         List of list of lattice parameters of detected phases.
 
     Notes
@@ -354,75 +357,72 @@ def _get_phases_from_header(header):
 
 
 def file_writer(
-    filename,
-    xmap,
-    index=None,
-    image_quality_prop=None,
-    confidence_index_prop=None,
-    detector_signal_prop=None,
-    pattern_fit_prop=None,
-    extra_prop=None,
+    filename: str,
+    xmap: CrystalMap,
+    index: Optional[int] = None,
+    image_quality_prop: Optional[str] = None,
+    confidence_index_prop: Optional[str] = None,
+    detector_signal_prop: Optional[str] = None,
+    pattern_fit_prop: Optional[str] = None,
+    extra_prop: Union[str, List[str], None] = None,
 ):
-    """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` to an
-    .ang file readable (at least) by MTEX and EDAX TSL OIM Analysis v7.
+    """Write a :class:`~orix.crystal_map.CrystalMap` to an .ang file
+    readable by MTEX and EDAX TSL OIM Analysis v7.
 
     The columns are phi1, Phi, phi2, x, y, image_quality,
     confidence_index, phase_id, detector_signal, and pattern_fit.
 
-    Parameters in masked out or non-indexed points are set to
+    Parameters in masked out or non-indexed points are set to:
 
-    * euler angles = 4 * pi
-
-    * image quality = 0
-
-    * confidence index = -1
-
-    * phase ID = 0 if single phase or -1 if multi phase
-
-    * pattern fit = 180
-
-    * detector signal = 0
-
-    * extra properties = 0
+        * euler angles = 4 * pi
+        * image quality = 0
+        * confidence index = -1
+        * phase ID = 0 if single phase or -1 if multi phase
+        * pattern fit = 180
+        * detector signal = 0
+        * extra properties = 0
 
     Parameters
     ----------
-    filename : str
-        File name with an ".ang" file extension to write to.
-    xmap : CrystalMap
+    filename
+        File name with an ``".ang"`` file extension to write to.
+    xmap
         Crystal map to write to file.
-    index : int, optional
+    index
         If the crystal map has more than one rotation/match and phase
         ID per point, this index can be set to write that "layer" of
         data to the file. For properties to be written as well, these
         must also have multiple values per point. To get the best match
-        at every point, use None (default).
-    image_quality_prop : str, optional
-        Which map property to use as the image quality. If None
-        (default), "iq" or "imagequality", if present, is used, or just
-        zeros. If the property has more than one value per point and
-        `index` is not given, only the first value is used.
-    confidence_index_prop : str, optional
-        Which map property to use as the confidence index. If None
-        (default), "ci", "confidenceindex", "scores", or "correlation",
-        if present, is used, or just zeros. If the property has more
-        than one value per point and `index` is not given, only the
-        first value is used.
-    detector_signal_prop : str, optional
-        Which map property to use as the detector signal. If None
-        (default), "ds", or "detector_signal", if present, is used, or
-        just zeros. If the property has more than one value per point
-        and `index` is not given, only the first value is used.
-    pattern_fit_prop : str, optional
-        Which map property to use as the pattern fit. If None
-        (default), "fit" or "patternfit", if present, is used, or just
-        zeros. If the property has more than one value per point and
-        `index` is not given, only the first value is used.
-    extra_prop : str or list of str, optional
+        at every point, use ``None`` (default).
+    image_quality_prop
+        Which map property to use as the image quality. If not given
+        (default), ``"iq"`` or ``"imagequality"``, if present, is used,
+        otherwise just zeros. If the property has more than one value
+        per point and ``index`` is not given, only the first value is
+        used.
+    confidence_index_prop
+        Which map property to use as the confidence index. If not given
+        (default), ``"ci"``, ``"confidenceindex"``, ``"scores"``, or
+        ``"correlation"``, if present, is used, otherwise just zeros. If
+        the property has more than one value per point and ``index`` is
+        not given, only the first value is used.
+    detector_signal_prop
+        Which map property to use as the detector signal. If not given
+        (default), ``"ds"``, or ``"detector_signal"``, if present, is
+        used, otherwise just zeros. If the property has more than one
+        value per point and ``index`` is not given, only the first value
+        is used.
+    pattern_fit_prop
+        Which map property to use as the pattern fit. If not given
+        (default), ``"fit"`` or ``"patternfit"``, if present, is used,
+        otherwise just zeros. If the property has more than one value
+        per point and ``index`` is not given, only the first value is
+        used.
+    extra_prop
         One or multiple properties to add as extra columns in the .ang
-        file, as a string or a list of strings. If None (default), no
-        extra properties are added. If a property has more than one
-        value per point and `index` is not given, only the first value
+        file, as a string or a list of strings. If not given (default),
+        no extra properties are added. If a property has more than one
+        value per point and ``index`` is not given, only the first value
         is used.
     """
     if xmap.ndim > 2:
@@ -530,9 +530,19 @@ def file_writer(
     )
 
 
-def _get_header_from_phases(xmap):
+def _get_header_from_phases(xmap: CrystalMap) -> str:
     """Return a string with the .ang file header from the crystal map
     metadata.
+
+    Parameters
+    ----------
+    xmap
+        Crystal map.
+
+    Returns
+    -------
+    header
+        File header.
 
     Notes
     -----
@@ -600,8 +610,21 @@ def _get_header_from_phases(xmap):
     return header
 
 
-def _get_nrows_ncols_step_sizes(xmap):
-    """Get crystal map shape and step sizes."""
+def _get_nrows_ncols_step_sizes(xmap: CrystalMap) -> Tuple[int, int, float, float]:
+    """Get crystal map shape and step sizes.
+
+    Parameters
+    ----------
+    xmap
+        Crystal map.
+
+    Returns
+    -------
+    nrows
+    ncols
+    dy
+    dx
+    """
     nrows, ncols = (1, 1)
     dy, dx = xmap.dy, xmap.dx
     if xmap.ndim == 1:
@@ -612,14 +635,30 @@ def _get_nrows_ncols_step_sizes(xmap):
     return nrows, ncols, dy, dx
 
 
-def _get_column_width(max_value, decimals=5):
+def _get_column_width(max_value: int, decimals: int = 5) -> int:
     """Get width of column to pass to :func:`numpy.savetxt`, accounting
     for the decimal point and a sign +/-.
+
+    Parameters
+    ----------
+    max_value
+    decimals
+
+    Returns
+    -------
+    column_width
     """
     return len(str(int(max_value // 1))) + decimals + 2
 
 
-def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, decimals=5):
+def _get_prop_arrays(
+    xmap: CrystalMap,
+    prop_names: List[str],
+    desired_prop_names: List[str],
+    map_size: int,
+    index: Union[int, None],
+    decimals: int = 5,
+) -> np.ndarray:
     """Return a 2D array (n_points, n_properties) with desired property
     values in, or just zeros.
 
@@ -628,16 +667,16 @@ def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, deci
 
     Parameters
     ----------
-    xmap : CrystalMap
-    prop_names : list of str
-    desired_prop_names : list of str
-    map_size : int
-    index : int or None
-    decimals : int, optional
+    xmap
+    prop_names
+    desired_prop_names
+    map_size
+    index
+    decimals
 
     Returns
     -------
-    numpy.ndarray
+    prop_arrays
     """
     # "Image_quality" -> "imagequality" etc.
     prop_names_lower = [k.lower().replace("_", "") for k in prop_names]
@@ -661,7 +700,6 @@ def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, deci
             prop_names_lower_arr=prop_names_lower_arr,
             decimals=decimals,
             index=index,
-            fill_value=0,
         )
         if prop is not None:
             prop_arrays[:, i] = prop.reshape(map_size)
@@ -669,36 +707,39 @@ def _get_prop_arrays(xmap, prop_names, desired_prop_names, map_size, index, deci
 
 
 def _get_prop_array(
-    xmap,
-    prop_name,
-    expected_prop_names,
-    prop_names,
-    prop_names_lower_arr,
-    index,
-    decimals=5,
-    fill_value=0,
-):
+    xmap: CrystalMap,
+    prop_name: str,
+    expected_prop_names: List[str],
+    prop_names: List[str],
+    prop_names_lower_arr: np.ndarray,
+    index: Union[int, None],
+    decimals: int = 5,
+    fill_value: Union[int, float, bool] = 0,
+) -> Union[np.ndarray, None]:
     """Return a 1D array (n_points,) with the desired property values or
-    None if the property cannot be read.
+    ``None`` if the property cannot be read.
 
     Reasons for why the property cannot be read:
-    * Property name isn't among the crystal map properties
-    * Property has only one value per point, but `index` is not None
+
+        * Property name isn't among the crystal map properties
+        * Property has only one value per point, but ``index`` is not
+          ``None``
 
     Parameters
     ----------
-    xmap : CrystalMap
-    prop_name : str
-    expected_prop_names : list of str
-    prop_names : list of str
-    prop_names : list of str
-    index : int or None
-    decimals : int, optional
-    fill_value : int, float, or bool, optional
+    xmap
+    prop_name
+    expected_prop_names
+    prop_names
+    prop_names_lower_arr
+    index
+    decimals
+    fill_value
 
     Returns
     -------
-    numpy.ndarray or None
+    prop_array
+        Property array or none if none found.
     """
     kwargs = dict(decimals=decimals, fill_value=fill_value)
     if len(prop_names_lower_arr) == 0 and prop_name is None:

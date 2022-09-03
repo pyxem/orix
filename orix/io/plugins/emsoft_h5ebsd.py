@@ -40,22 +40,23 @@ writes = False
 writes_this = CrystalMap
 
 
-def file_reader(filename, refined=False, **kwargs):
+def file_reader(filename: str, refined: bool = False, **kwargs) -> CrystalMap:
     """Return a :class:`~orix.crystal_map.CrystalMap` from a file in
     EMsoft's dictionary indexing dot product file format.
 
     Parameters
     ----------
-    filename : str
+    filename
         Path and file name.
-    refined : bool, optional
-        Whether to return refined orientations. Default is False.
-    kwargs
+    refined
+        Whether to return refined orientations. Default is ``False``.
+    **kwargs
         Keyword arguments passed to :func:`h5py.File`.
 
     Returns
     -------
-    CrystalMap
+    xmap
+        Crystal map.
     """
     f = EMsoftH5ebsdFile(filename)
     f.read_refined = refined
@@ -206,17 +207,17 @@ class EMsoftH5ebsdFile(H5ebsdFile):
         gc.collect()
 
 
-def dict2phase(dictionary):
+def dict2phase(dictionary: dict) -> Phase:
     """Return a phase from a dictionary with keys and values from an
     EMsoft dot product file.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
 
     Returns
     -------
-    Phase
+    phase
     """
     name = re.search(r"([A-z0-9]+)", dictionary["MaterialName"]).group(1)
     point_group = re.search(r"\[([A-z0-9/-]+)]", dictionary["Point Group"]).group(1)
