@@ -15,8 +15,8 @@ of the descriptions include brief examples. For learning how to use orix, see th
     orix is in continuous development, meaning that some breaking changes and changes to
     this reference are likely with each release.
 
-orix is organized in modules (also called subpackages). It is recommended to import
-functionality from the below list of functions and modules like this:
+orix is organized in modules. This is the recommended way to import functionality from
+the below list of modules:
 
 .. autolink-skip::
 .. code-block:: python
