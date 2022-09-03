@@ -389,8 +389,30 @@ class CrystalMap:
 
     @property
     def phases(self) -> PhaseList:
-        """Return the list of phases."""
+        """Return or set the list of phases.
+
+        Parameters
+        ----------
+        value : PhaseList
+            Phase list with at least as many phases as unique phase IDs
+            in :attr:`phase_id`.
+
+        Raises
+        ------
+        ValueError
+            If there are fewer phases in the list than unique phase IDs.
+        """
         return self._phases
+
+    @phases.setter
+    def phases(self, value: PhaseList):
+        """Set the list of phases."""
+        if np.unique(self.phase_id).size > value.size:
+            raise ValueError(
+                "There must be at least as many phases as there are unique phase IDs"
+            )
+        else:
+            self._phases = value
 
     @property
     def phases_in_data(self) -> PhaseList:

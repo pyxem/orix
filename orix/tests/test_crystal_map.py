@@ -30,7 +30,7 @@ from orix.quaternion.symmetry import C2, C3, C4, O
 # testing IO and the Phase() and PhaseList() classes
 
 
-class TestCrystalMapInit:
+class TestCrystalMap:
     def test_minimal_init(self, rotations):
         map_size = 2
 
@@ -49,8 +49,6 @@ class TestCrystalMapInit:
     def test_init_with_invalid_rotations(self, rotations):
         with pytest.raises(ValueError):
             _ = CrystalMap(rotations=rotations.data)
-        with pytest.raises(ValueError):
-            _ = CrystalMap(rotations=list(rotations.data))
 
     @pytest.mark.parametrize(
         (
@@ -293,6 +291,19 @@ class TestCrystalMapInit:
         assert xmap3.shape == new_shape3
         assert xmap3._original_shape == map_shape
         assert np.allclose(xmap3.get_map_data("phase_id"), np.zeros(new_shape3))
+
+    def test_set_phases(self, phase_list):
+        assert phase_list.size == 3
+        xmap = CrystalMap.empty((2, 3))
+
+        # OK
+        xmap._phase_id = np.array([0, 1, 2, 0, 1, 2])
+        xmap.phases = phase_list
+
+        # Not OK
+        xmap._phase_id = np.array([0, 1, 2, 1, 2, 3])
+        with pytest.raises(ValueError, match="There must be at least as many phases "):
+            xmap.phases = phase_list
 
 
 class TestCrystalMapGetItem:
@@ -802,8 +813,8 @@ class TestCrystalMapGetMapData:
 
         # Test https://github.com/pyxem/orix/issues/220
         xmap2 = CrystalMap.empty((3,))
-        x = xmap2.get_map_data("x")
-        x2 = xmap2.get_map_data(xmap2.x)
+        _ = xmap2.get_map_data("x")
+        _ = xmap2.get_map_data(xmap2.x)
 
 
 class TestCrystalMapRepresentation:
