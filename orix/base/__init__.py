@@ -105,7 +105,7 @@ class Object3d:
         data = np.array_str(self.data, precision=4, suppress_small=True)
         return "\n".join([name + " " + shape, data])
 
-    def __getitem__(self, key) -> "Object3d":
+    def __getitem__(self, key):
         """Return a slice of the object."""
         data = np.atleast_2d(self.data[key])
         obj = self.__class__(data)

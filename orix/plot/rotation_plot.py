@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from copy import deepcopy
+
 from matplotlib import __version__, projections
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -48,7 +50,9 @@ class RotationPlot(Axes3D):
                 xs = xs.map_into_symmetry_reduced_zone()
 
         if isinstance(xs, Rotation):
-            transformed = self.transformation_class.from_rotation(xs.get_plot_data())
+            if isinstance(xs, OrientationRegion):
+                xs = xs.get_plot_data()
+            transformed = self.transformation_class.from_rotation(xs)
         else:
             transformed = self.transformation_class(xs)
         x, y, z = transformed.xyz
