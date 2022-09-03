@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -496,9 +498,9 @@ class TestOrientationInitialization:
         """
         euler = np.random.rand(10, 3)
 
-        with pytest.warns(None) as record1:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
             _ = Orientation.from_euler(euler)
-        assert len(record1) == 0
 
         msg = (
             r"Argument `convention` is deprecated and will be removed in version 1.0. "
@@ -528,9 +530,9 @@ class TestOrientationInitialization:
         """
         ori1 = Orientation.from_euler(np.random.rand(10, 3))
 
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
             ori2 = ori1.to_euler()
-        assert len(record) == 0
 
         msg = (
             r"Argument `convention` is deprecated and will be removed in version 1.0. "
