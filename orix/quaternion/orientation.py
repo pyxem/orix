@@ -38,6 +38,8 @@ reference. However, because the square has fourfold symmetry, it is
 indistinguishable in both cases, and hence has the same orientation.
 """
 
+from __future__ import annotations
+
 from itertools import combinations_with_replacement as icombinations
 from itertools import product as iproduct
 from typing import List, Optional, Tuple, Union
@@ -151,10 +153,10 @@ class Misorientation(Rotation):
             raise ValueError("Value must be a 2-tuple of Symmetry objects.")
         self._symmetry = tuple(value)
 
-    def __getitem__(self, key):
-        m = super().__getitem__(key)
-        m._symmetry = self._symmetry
-        return m
+    def __getitem__(self, key) -> Misorientation:
+        mori = super().__getitem__(key)
+        mori._symmetry = self._symmetry
+        return mori
 
     def __eq__(self, other):
         v1 = super().__eq__(other)
@@ -167,22 +169,22 @@ class Misorientation(Rotation):
                 v2.append(sym_s == sym_o)
             return all(v2)
 
-    def reshape(self, *shape) -> "Misorientation":
+    def reshape(self, *shape) -> Misorientation:
         m = super().reshape(*shape)
         m._symmetry = self._symmetry
         return m
 
-    def flatten(self) -> "Misorientation":
+    def flatten(self) -> Misorientation:
         m = super().flatten()
         m._symmetry = self._symmetry
         return m
 
-    def squeeze(self) -> "Misorientation":
+    def squeeze(self) -> Misorientation:
         m = super().squeeze()
         m._symmetry = self._symmetry
         return m
 
-    def transpose(self, *axes) -> "Misorientation":
+    def transpose(self, *axes) -> Misorientation:
         m = super().transpose(*axes)
         m._symmetry = self._symmetry
         return m
@@ -208,7 +210,7 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
-    def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> "Misorientation":
+    def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> Misorientation:
         """Computes equivalent transformations which have the smallest
         angle of rotation and return these as a new Misorientation object.
 
@@ -279,7 +281,7 @@ class Misorientation(Rotation):
         >>> m.symmetry = (symmetry.C4, symmetry.C2)
         >>> m = m.map_into_symmetry_reduced_zone()
         >>> m.distance()
-        array([[3.14159265, 1.57079633],
+        array([[0.        , 1.57079633],
                [1.57079633, 0.        ]])
         """
         distance = _distance(self, verbose, split_size)
@@ -440,12 +442,9 @@ class Misorientation(Rotation):
         --------
         >>> import numpy as np
         >>> from orix.quaternion import Misorientation, symmetry
-        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, np.pi/2])
+        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, np.pi / 2])
         >>> m.symmetry = (symmetry.D6, symmetry.D6)
         >>> d = m.get_distance_matrix()  # doctest: +SKIP
-        >>> d
-        [[0.         1.57079633]
-         [1.57079633 0.        ]]
         """
         # Reduce symmetry operations to the unique ones
         symmetry = _get_unique_symmetry_elements(*self.symmetry)
@@ -503,18 +502,18 @@ class Orientation(Misorientation):
         self._symmetry = (C1, value)
 
     @property
-    def unit(self) -> "Orientation":
+    def unit(self) -> Orientation:
         """Unit orientations."""
         o = super().unit
         o.symmetry = self.symmetry
         return o
 
-    def __invert__(self) -> "Orientation":
+    def __invert__(self) -> Orientation:
         o = super().__invert__()
         o.symmetry = self.symmetry
         return o
 
-    def __neg__(self) -> "Orientation":
+    def __neg__(self) -> Orientation:
         o = super().__neg__()
         o.symmetry = self.symmetry
         return o
@@ -524,7 +523,7 @@ class Orientation(Misorientation):
         data = np.array_str(self.data, precision=4, suppress_small=True)
         return f"{self.__class__.__name__} {self.shape} {self.symmetry.name}\n{data}"
 
-    def __sub__(self, other: "Orientation") -> "Misorientation":
+    def __sub__(self, other: Orientation) -> Misorientation:
         if isinstance(other, Orientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             misorientation = Misorientation(self * ~other).squeeze()
@@ -540,7 +539,7 @@ class Orientation(Misorientation):
         symmetry: Optional[Symmetry] = None,
         direction: str = "lab2crystal",
         **kwargs,
-    ) -> "Orientation":
+    ) -> Orientation:
         """Return orientation(s) from an array of Euler angles.
 
         Parameters
@@ -567,7 +566,7 @@ class Orientation(Misorientation):
     @classmethod
     def from_matrix(
         cls, matrix: np.ndarray, symmetry: Optional[Symmetry] = None
-    ) -> "Orientation":
+    ) -> Orientation:
         """Return orientation(s) from orientation matrices
         :cite:`rowenhorst2015consistent`.
 
@@ -587,7 +586,7 @@ class Orientation(Misorientation):
     @classmethod
     def from_neo_euler(
         cls, neo_euler: "NeoEuler", symmetry: Optional[Symmetry] = None
-    ) -> "Orientation":
+    ) -> Orientation:
         """Return orientation(s) from a neo-euler (vector)
         representation.
 
@@ -614,7 +613,7 @@ class Orientation(Misorientation):
         axes: Union["Vector3d", np.ndarray],
         angles: np.ndarray,
         symmetry: Optional[Symmetry] = None,
-    ) -> "Orientation":
+    ) -> Orientation:
         """Creates orientation(s) from axis-angle pair(s).
 
         Parameters
@@ -647,7 +646,7 @@ class Orientation(Misorientation):
         axangle = AxAngle.from_axes_angles(axes, angles)
         return cls.from_neo_euler(axangle, symmetry)
 
-    def angle_with(self, other: "Orientation") -> np.ndarray:
+    def angle_with(self, other: Orientation) -> np.ndarray:
         """The smallest symmetry reduced angle of rotation transforming
         this orientation to the other.
 
@@ -670,7 +669,7 @@ class Orientation(Misorientation):
 
     def angle_with_outer(
         self,
-        other: "Orientation",
+        other: Orientation,
         lazy: bool = False,
         chunk_size: int = 20,
         progressbar: bool = True,
@@ -685,6 +684,8 @@ class Orientation(Misorientation):
 
         Parameters
         ----------
+        other
+            Another orientation.
         lazy
             Whether to perform the computation lazily with Dask. Default
             is False.
@@ -724,7 +725,7 @@ class Orientation(Misorientation):
         >>> ori2 = Orientation.random((6, 2))
         >>> dist1 = ori1.angle_with_outer(ori2)
         >>> dist1.shape
-        (6, 2, 5, 3)
+        (5, 3, 6, 2)
         >>> ori1.symmetry = symmetry.Oh
         >>> ori2.symmetry = symmetry.Oh
         >>> dist_sym = ori1.angle_with_outer(ori2)
@@ -800,7 +801,7 @@ class Orientation(Misorientation):
         )
         return angles
 
-    def dot(self, other: "Orientation") -> np.ndarray:
+    def dot(self, other: Orientation) -> np.ndarray:
         """Symmetry reduced dot product of orientations in this instance
         to orientations in another instance, returned as numpy.ndarray.
 
@@ -823,7 +824,7 @@ class Orientation(Misorientation):
         highest_dot_product = np.max(all_dot_products, axis=-1)
         return highest_dot_product
 
-    def dot_outer(self, other: "Orientation") -> np.ndarray:
+    def dot_outer(self, other: Orientation) -> np.ndarray:
         """Symmetry reduced dot product of every orientation in this
         instance to every orientation in another instance, returned as
         numpy.ndarray.
@@ -1063,7 +1064,7 @@ class Orientation(Misorientation):
         if return_figure:
             return figure
 
-    def _dot_outer_dask(self, other: "Orientation", chunk_size: int = 20) -> da.Array:
+    def _dot_outer_dask(self, other: Orientation, chunk_size: int = 20) -> da.Array:
         """Symmetry reduced dot product of every orientation in this
         instance to every orientation in another instance, returned as a
         Dask array.

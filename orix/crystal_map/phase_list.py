@@ -90,8 +90,7 @@ class Phase:
         ...     )
         ... )
         >>> p
-        <name: al. space group: Fm-3m. point group: m-3m. proper point \
-        ... group: 432. color: tab:blue>
+        <name: al. space group: Fm-3m. point group: m-3m. proper point group: 432. color: tab:blue>
         >>> p.structure
         [al   0.000000 0.000000 0.000000 1.0000]
         >>> p.structure.lattice
@@ -385,9 +384,9 @@ class PhaseList:
         ...     ]
         ... )
         >>> pl
-        Id  Name  Space group  Point group  Proper point group     Color
-         0    al        Fm-3m         m-3m                 432  tab:blue
-         1    cu        Fm-3m         m-3m                 432  tab:blue
+        Id  Name  Space group  Point group  Proper point group       Color
+         0    al        Fm-3m         m-3m                 432    tab:blue
+         1    cu        Fm-3m         m-3m                 432  tab:orange
         >>> pl["al"].structure
         [al   0.000000 0.000000 0.000000 1.0000]
         """
@@ -550,7 +549,8 @@ class PhaseList:
         --------
         A PhaseList object can be indexed in multiple ways.
 
-        >>> pl = PhaseList(names=['a', 'b'], space_groups=[200, 220])
+        >>> from orix.crystal_map import PhaseList
+        >>> pl = PhaseList(names=["a", "b"], space_groups=[200, 220])
         >>> pl
         Id  Name  Space group  Point group  Proper point group       Color
          0     a         Pm-3          m-3                  23    tab:blue
@@ -559,14 +559,11 @@ class PhaseList:
         Return a Phase object if only one phase matches the key
 
         >>> pl[0]  # Index with a single phase id
-        <name: a. space group: Pm-3. point group: m-3. proper point \
-        ... group: 23. color: tab:blue>
-        >>> pl['b']  # Index with a phase name
-        <name: b. space group: I-43d. point group: -43m. proper point \
-        ... group: 23. color: tab:orange>
+        <name: a. space group: Pm-3. point group: m-3. proper point group: 23. color: tab:blue>
+        >>> pl["b"]  # Index with a phase name
+        <name: b. space group: I-43d. point group: -43m. proper point group: 23. color: tab:orange>
         >>> pl[:1]
-        <name: b. space group: I-43d. point group: -43m. proper point \
-        ... group: 23. color: tab:orange>
+        <name: a. space group: Pm-3. point group: m-3. proper point group: 23. color: tab:blue>
 
         Return a PhaseList object
 
@@ -574,7 +571,7 @@ class PhaseList:
         Id  Name  Space group  Point group  Proper point group       Color
          0     a         Pm-3          m-3                  23    tab:blue
          1     b        I-43d         -43m                  23  tab:orange
-        >>> pl['a', 'b']  # Index with a tuple of phase names
+        >>> pl["a", "b"]  # Index with a tuple of phase names
         Id  Name  Space group  Point group  Proper point group       Color
          0     a         Pm-3          m-3                  23    tab:blue
          1     b        I-43d         -43m                  23  tab:orange

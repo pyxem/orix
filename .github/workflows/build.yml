@@ -76,6 +76,12 @@ jobs:
       - name: Display package versions
         run: pip list
 
+      - name: Run docstring tests
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        continue-on-error: true
+        run: |
+          pytest --doctest-modules --ignore-glob=orix/tests orix/*.py
+
       - name: Run tests
         run: pytest --cov=orix --pyargs orix
 

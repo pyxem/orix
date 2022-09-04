@@ -369,7 +369,9 @@ class Rotation(Quaternion):
 
     @classmethod
     def from_axes_angles(
-        cls, axes: Union[np.ndarray, Vector3d, tuple, list], angles: np.ndarray
+        cls,
+        axes: Union[np.ndarray, Vector3d, tuple, list],
+        angles: Union[np.ndarray, tuple, list],
     ) -> "Rotation":
         """Creates rotation(s) from axis-angle pair(s).
 

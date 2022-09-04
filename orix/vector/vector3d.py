@@ -53,7 +53,7 @@ class Vector3d(Object3d):
     array([1, 0])
     >>> v.unit
     Vector3d (1,)
-    [[ 0.2673  0.5345  0.8018]]
+    [[0.2673 0.5345 0.8018]]
     >>> -v
     Vector3d (1,)
     [[-1 -2 -3]]
@@ -70,11 +70,11 @@ class Vector3d(Object3d):
     [[3 6 9]]
     >>> v / 2
     Vector3d (1,)
-    [[0.5 1.0 1.5]]
+    [[0.5 1.  1.5]]
     >>> v / (2, -2)
-    Vector3d (1,)
-    [[0.5 1.0 1.5]
-     [-0.5 -1.0 -1.5]]
+    Vector3d (2,)
+    [[ 0.5  1.   1.5]
+     [-0.5 -1.  -1.5]]
     """
 
     dim = 3
@@ -307,12 +307,13 @@ class Vector3d(Object3d):
 
         Examples
         --------
+        >>> from orix.vector import Vector3d
         >>> v = Vector3d((0, 0, 1.0))
         >>> w = Vector3d(((0, 0, 0.5), (0.4, 0.6, 0)))
         >>> v.dot(w)
-        array([0.5, 0.])
+        array([0.5, 0. ])
         >>> w.dot(v)
-        array([0.5, 0.])
+        array([0.5, 0. ])
         """
         if not isinstance(other, Vector3d):
             raise ValueError("{} is not a vector!".format(other))
@@ -355,12 +356,12 @@ class Vector3d(Object3d):
         >>> v = Vector3d(((0.0, 0.0, 1.0), (1.0, 0.0, 0.0)))  # shape = (2, )
         >>> w = Vector3d(((0.0, 0.0, 0.5), (0.4, 0.6, 0.0), (0.5, 0.5, 0.5)))  # shape = (3, )
         >>> v.dot_outer(w)
-        array([[ 0.5,  0.,  0.5]
-               [  0., 0.4,  0.5]])
+        array([[0.5, 0. , 0.5],
+               [0. , 0.4, 0.5]])
         >>> w.dot_outer(v)  # shape = (3, 2)
-        array([[ 0.5,  0. ]
-               [  0.,  0.4]
-               [ 0.5,  0.5]])
+        array([[0.5, 0. ],
+               [0. , 0.4],
+               [0.5, 0.5]])
         """
         if lazy:
             dots = np.empty(self.shape + other.shape)
@@ -502,6 +503,12 @@ class Vector3d(Object3d):
         >>> axis = Vector3d((0, 0, 1))
         >>> angles = [0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi]
         >>> v.rotate(axis=axis, angle=angles)
+        Vector3d (5,)
+        [[ 0.      1.      0.    ]
+         [-0.7071  0.7071  0.    ]
+         [-1.      0.      0.    ]
+         [-0.7071 -0.7071  0.    ]
+         [-0.     -1.      0.    ]]
         """
         # Import here to avoid circular import
         from orix.quaternion import Rotation

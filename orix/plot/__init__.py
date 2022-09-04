@@ -25,9 +25,10 @@
 Example of usage::
 
     >>> import matplotlib.pyplot as plt
-    >>> from orix import plot, vector
-    >>> fig, ax = plt.subplots(subplot_kw=dict(projections="stereographic"))
-    >>> ax.scatter(vector.Vector3d([[0, 0, 1], [1, 0, 1]]))
+    >>> from orix import plot
+    >>> from orix.vector import Vector3d
+    >>> fig, ax = plt.subplots(subplot_kw=dict(projection="stereographic"))
+    >>> ax.scatter(Vector3d([[0, 0, 1], [1, 0, 1]]))
 """
 
 from orix.plot.crystal_map_plot import CrystalMapPlot

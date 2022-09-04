@@ -64,9 +64,18 @@ def get_sample_fundamental(
 
     Examples
     --------
-    >>> from orix.quaternion.symmetry import C2
+    >>> from orix.quaternion.symmetry import Oh
     >>> from orix.sampling import get_sample_fundamental
-    >>> rot = get_sample_fundamental(1, point_group=C2)
+    >>> rot = get_sample_fundamental(5, point_group=Oh)
+    >>> rot
+    Rotation (6579,)
+    [[ 0.877  -0.2774 -0.2774 -0.2774]
+     [ 0.877  -0.2884 -0.2884 -0.2538]
+     [ 0.877  -0.2986 -0.2986 -0.2291]
+     ...
+     [ 0.877   0.2986  0.2986  0.2291]
+     [ 0.877   0.2884  0.2884  0.2538]
+     [ 0.877   0.2774  0.2774  0.2774]]
     """
     if point_group is None:
         point_group = get_point_group(space_group, proper=True)

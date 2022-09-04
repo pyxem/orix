@@ -101,20 +101,20 @@ class CrystalMap:
     ...     )
     ... ]
     >>> xmap = CrystalMap(
-    ...     rotations=Rotation.from_axes_angles([0, 0, 1], np.linspace(0, np.pi, n),
+    ...     rotations=Rotation.from_axes_angles([0, 0, 1], np.linspace(0, np.pi, n)),
     ...     phase_id=np.array([0, 0, 1, 1, 0, 1]),
     ...     x=coords["x"],
     ...     y=coords["y"],
     ...     phase_list=PhaseList(space_groups=[225, 229], structures=structures),
     ...     prop={"score": np.random.random(n)},
-    ...     scan_unit="um",
+    ...     scan_unit="nm",
     ... )
     >>> xmap
     Phase  Orientations       Name  Space group  Point group  Proper point group       Color
         0     3 (50.0%)  austenite        Fm-3m         m-3m                 432    tab:blue
         1     3 (50.0%)    ferrite        Im-3m         m-3m                 432  tab:orange
     Properties: score
-    Scan unit: um
+    Scan unit: nm
 
     Data in a crystal map can be selected in multiple ways. Let's
     demonstrate this on a dual phase dataset available in the
@@ -127,6 +127,7 @@ class CrystalMap:
         1   5657 (48.4%)  austenite         None          432                 432    tab:blue
         2   6043 (51.6%)    ferrite         None          432                 432  tab:orange
     Properties: iq, dp
+    Scan unit: um
     >>> xmap.shape
     (100, 117)
 
@@ -150,7 +151,7 @@ class CrystalMap:
     Properties: iq, dp
     Scan unit: um
     >>> xmap2.shape
-    (20, 3)
+    (20, 1)
 
     Note that 1-dimensions are NOT removed
 
@@ -166,6 +167,7 @@ class CrystalMap:
     Select by phase name(s)
 
     >>> xmap2 = xmap["austenite"]
+    >>> xmap2
     Phase  Orientations       Name  Space group  Point group  Proper point group     Color
         1  5657 (100.0%)  austenite         None          432                 432  tab:blue
     Properties: iq, dp
@@ -1123,7 +1125,7 @@ def create_coordinate_arrays(
     --------
     >>> from orix.crystal_map import create_coordinate_arrays
     >>> create_coordinate_arrays((2, 3))
-    {'x': array([0, 1, 2, 0, 1, 2]), 'y': array([0, 0, 0, 1, 1, 1])}, 6)
+    ({'x': array([0, 1, 2, 0, 1, 2]), 'y': array([0, 0, 0, 1, 1, 1])}, 6)
     >>> create_coordinate_arrays((3, 2))
     ({'x': array([0, 1, 0, 1, 0, 1]), 'y': array([0, 0, 1, 1, 2, 2])}, 6)
     >>> create_coordinate_arrays((2, 3), (1.5, 1.5))

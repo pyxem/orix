@@ -64,8 +64,8 @@ class CrystalMapPlot(Axes):
         crystal_map
             Crystal map object to obtain data to plot from.
         value
-            Attribute array to plot. If value is None (default), a phase
-            map is plotted.
+            Attribute array to plot. If value is ``None`` (default), a
+            phase map is plotted.
         scalebar
             Whether to add a scalebar (default is ``True``) along the
             horizontal map dimension.
@@ -75,23 +75,23 @@ class CrystalMapPlot(Axes):
         legend
             Whether to add a legend to the plot. This is only
             implemented for a phase plot (in which case default is
-            True).
+            ``True``).
         legend_properties
             Dictionary of keyword arguments passed to
             :meth:`matplotlib.axes.legend`.
         axes
             Which data axes to plot if data has more than two
             dimensions. The index of data to plot in the final dimension
-            is determined by `depth`. If None (default), data along the
-            two last axes is plotted.
+            is determined by ``depth``. If ``None`` (default), data
+            along the two last axes is plotted.
         depth
             Which layer along the third axis to plot if data has more
-            than two dimensions. If None (default), data in the first
-            index (layer) is plotted.
+            than two dimensions. If ``None`` (default), data in the
+            first index (layer) is plotted.
         override_status_bar
             Whether to display Euler angles and any overlay values in
             the status bar when hovering over the map (default is
-            False).
+            ``False``).
         **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.imshow`.
@@ -132,9 +132,7 @@ class CrystalMapPlot(Axes):
         Plot an arbitrary map property, also changing scalebar location
 
         >>> ax = plt.subplot(projection="plot_map")
-        >>> ax.plot_map(
-        ...     xmap, xmap.dp, cmap="cividis", scalebar_properties={"loc": 4}
-        ... )
+        >>> _ = ax.plot_map(xmap, xmap.dp, cmap="cividis", scalebar_properties={"location": 4})
 
         Add a colorbar
 
@@ -147,23 +145,19 @@ class CrystalMapPlot(Axes):
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap2, austenite_angles)
-        >>> ax.add_colorbar("Orientation angle [$^{\circ}$]")
+        >>> _ = ax.add_colorbar("Orientation angle [$^{\circ}$]")
 
         Remove all figure and axes padding
 
-        >>> ax.remove_padding()
+        >>> _ = ax.remove_padding()
 
         Write annotated figure to file
 
-        >>> fig.savefig(
-        ...     "/some/directory/image.png",
-        ...     pad_inches=0,
-        ...     bbox_inches="tight"
-        ... )
+        >>> #fig.savefig("image.png", pad_inches=0, bbox_inches="tight")
 
         Write un-annotated image to file
 
-        >>> plt.imsave("/some/directory/image2.png", im.get_array())
+        >>> #plt.imsave("image2.png", im.get_array())
         """
         self._set_plot_shape(crystal_map=crystal_map, axes=axes, depth=depth)
 
@@ -240,7 +234,7 @@ class CrystalMapPlot(Axes):
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap, scalebar=False)
-        >>> sbar = ax.add_scalebar(xmap, location=4, frameon=False)
+        >>> sbar = ax.add_scalebar(xmap, location=4, frameon=False);
         """
         # Get whether z, y or x
         last_axis = crystal_map.ndim - 1
@@ -302,8 +296,7 @@ class CrystalMapPlot(Axes):
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap)
-        >>> ax.add_overlay(xmap, xmap.dp)
-
+        >>> ax.add_overlay(xmap, xmap.dp);
         """
         image = self.images[0]
         image_data = image.get_array()
@@ -343,12 +336,10 @@ class CrystalMapPlot(Axes):
 
         Examples
         --------
-        >>> xmap
-        Phase  Orientations   Name       Symmetry  Color
-        1      5657 (48.4%)   austenite  432       tab:blue
-        2      6043 (51.6%)   ferrite    432       tab:orange
-        Properties: iq, dp
-        Scan unit: um
+        >>> from orix import data
+        >>> xmap = data.sdss_ferrite_austenite()
+        >>> xmap.scan_unit
+        'um'
 
         Plot a map property and add a colorbar
 
@@ -360,7 +351,7 @@ class CrystalMapPlot(Axes):
         If the default options are not satisfactory, the colorbar can be
         updated
 
-        >>> cbar.ax.set_ylabel(ylabel="dp", rotation=90)
+        >>> _ = cbar.ax.set_ylabel(ylabel="dp", rotation=90)
         """
         # Keyword arguments
         d = {"position": "right", "size": "5%", "pad": 0.1}
@@ -392,7 +383,7 @@ class CrystalMapPlot(Axes):
 
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
-        >>> ax.plot_map(xmap)
+        >>> _ = ax.plot_map(xmap)
         >>> ax.remove_padding()
         """
         self.set_axis_off()

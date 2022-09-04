@@ -28,12 +28,13 @@ the spherical region.
 
 Examples
 --------
+>>> from orix.vector import SphericalRegion, Vector3d
 >>> sr = SphericalRegion([0, 0, 1])  # Region above the x-y plane
 >>> v = Vector3d([(0, 0, 1), (0, 0, -1), (1, 0, 0)])
 >>> v < sr
-array([ True, False, False], dtype=bool)
+array([ True, False, False])
 >>> v <= sr
-array([ True, False,  True], dtype=bool)
+array([ True, False,  True])
 """
 
 import numpy as np
