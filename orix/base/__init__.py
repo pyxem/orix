@@ -23,7 +23,7 @@
     Contents of this module are not meant to be used directly.
 """
 
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
@@ -140,13 +140,14 @@ class Object3d:
         return int(np.prod(self.shape))
 
     @classmethod
-    def stack(cls, sequence: Union[np.ndarray, list, tuple]):
+    def stack(cls, sequence: Any):
         """Return a stacked object from the sequence.
 
         Parameters
         ----------
         sequence
-            Sequence to stack.
+            A sequence of instances of a class inheriting from
+            ``Object3d`` to stack.
         """
         sequence = [s._data for s in sequence]
         stack = np.stack(sequence, axis=-2)

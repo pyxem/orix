@@ -40,6 +40,7 @@ rotation of 180° about the z-axis, illustrated in the figure below.
    :align: center
 """
 
+from typing import Any, Tuple, Union
 import warnings
 
 import dask.array as da
@@ -71,7 +72,7 @@ class Rotation(Quaternion):
     neo-Euler representations. See :class:`NeoEuler`.
     """
 
-    def __init__(self, data):
+    def __init__(self, data: Union[np.ndarray, "Rotation", Quaternion, list, tuple]):
         super().__init__(data)
         self._data = np.concatenate((self.data, np.zeros(self.shape + (1,))), axis=-1)
         if isinstance(data, Rotation):
@@ -79,7 +80,9 @@ class Rotation(Quaternion):
         with np.errstate(divide="ignore", invalid="ignore"):
             self.data = self.data / self.norm[..., np.newaxis]
 
-    def __mul__(self, other):
+    def __mul__(
+        self, other: Union["Rotation", Quaternion, Vector3d, np.ndarray, int, list]
+    ):
         if isinstance(other, Rotation):
             q = Quaternion(self) * Quaternion(other)
             r = other.__class__(q)
@@ -105,22 +108,22 @@ class Rotation(Quaternion):
             return r
         return NotImplemented
 
-    def __neg__(self):
+    def __neg__(self) -> "Rotation":
         r = self.__class__(self.data)
         r.improper = np.logical_not(self.improper)
         return r
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> "Rotation":
         r = super().__getitem__(key)
         r.improper = self.improper[key]
         return r
 
-    def __invert__(self):
+    def __invert__(self) -> "Rotation":
         r = super().__invert__()
         r.improper = self.improper
         return r
 
-    def __eq__(self, other):
+    def __eq__(self, other: Union[Any, "Rotation"]) -> bool:
         """Check if Rotation objects are equal by their shape and values."""
         # only return equal if shape, values, and improper arrays are equal
         if (
@@ -133,7 +136,16 @@ class Rotation(Quaternion):
         else:
             return False
 
-    def unique(self, return_index=False, return_inverse=False, antipodal=True):
+    def unique(
+        self,
+        return_index: bool = False,
+        return_inverse: bool = False,
+        antipodal: bool = True,
+    ) -> Union[
+        "Rotation",
+        Tuple["Rotation", np.ndarray],
+        Tuple["Rotation", np.ndarray, np.ndarray],
+    ]:
         """Returns a new object containing only this object's unique
         entries.
 
@@ -145,14 +157,14 @@ class Rotation(Quaternion):
 
         Parameters
         ----------
-        return_index : bool, optional
-            If True, will also return the indices of the (flattened)
+        return_index
+            If ``True``, will also return the indices of the (flattened)
             data where the unique entries were found.
-        return_inverse : bool, optional
-            If True, will also return the indices to reconstruct the
+        return_inverse
+            If ``True``, will also return the indices to reconstruct the
             (flattened) data from the unique data.
-        antipodal : bool, optional
-            If False, rotations representing the same transformation
+        antipodal
+            If ``False``, rotations representing the same transformation
             whose values are numerically different (negative) will *not*
             be considered unique.
         """
@@ -190,7 +202,7 @@ class Rotation(Quaternion):
         else:
             return dat
 
-    def _differentiators(self):
+    def _differentiators(self) -> np.ndarray:
         a = self.a
         b = self.b
         c = self.c
@@ -214,13 +226,13 @@ class Rotation(Quaternion):
         ).round(12)
         return abcd
 
-    def angle_with(self, other):
+    def angle_with(self, other: "Rotation") -> np.ndarray:
         """The angle of rotation transforming this rotation to the
         other.
 
         Returns
         -------
-        numpy.ndarray
+        angles
 
         See also
         --------
@@ -233,16 +245,17 @@ class Rotation(Quaternion):
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 
-    def angle_with_outer(self, other):
+    def angle_with_outer(self, other: "Rotation"):
         """The angle of rotation transforming this rotation to the other.
 
         Parameters
         ----------
-        other : Rotation
+        other
+            Another rotation.
 
         Returns
         -------
-        numpy.ndarray
+        angles
 
         See also
         --------
@@ -261,28 +274,35 @@ class Rotation(Quaternion):
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 
-    def outer(self, other, lazy=False, chunk_size=20, progressbar=True):
+    def outer(
+        self,
+        other: Union["Rotation", Vector3d],
+        lazy: bool = False,
+        chunk_size: int = 20,
+        progressbar: bool = True,
+    ) -> Union["Rotation", Vector3d]:
         """Compute the outer product of this rotation and the other
         rotation or vector.
 
         Parameters
         ----------
-        other : Rotation or Vector3d
-        lazy : bool, optional
+        other
+            Another rotation or a vector.
+        lazy
             Whether to computer this computation using Dask. This option
             can be used to reduce memory usage when working with large
-            arrays. Default is False.
-        chunk_size : int, optional
+            arrays. Default is ``False``.
+        chunk_size
             When using `lazy` computation, `chunk_size` represents the
             number of objects per axis for each input to include in each
             iteration of the computation. Default is 20.
-        progressbar : bool, optional
-            Whether to show a progressbar during computation if `lazy`
-            is True. Default is True.
+        progressbar
+            Whether to show a progressbar during computation if
+            ``lazy=True``. Default is ``True``.
 
         Returns
         -------
-        Rotation or Vector3d
+        rot
         """
         if lazy:
             darr = self._outer_dask(other, chunk_size=chunk_size)
@@ -292,33 +312,35 @@ class Rotation(Quaternion):
                     da.store(darr, arr)
             else:
                 da.store(darr, arr)
-            r = other.__class__(arr)
+            rot = other.__class__(arr)
         else:
-            r = super().outer(other)
+            rot = super().outer(other)
 
-        if isinstance(r, Rotation):
-            r.improper = np.logical_xor.outer(self.improper, other.improper)
-        elif isinstance(r, Vector3d):
-            r[self.improper] = -r[self.improper]
-        return r
+        if isinstance(rot, Rotation):
+            rot.improper = np.logical_xor.outer(self.improper, other.improper)
+        elif isinstance(rot, Vector3d):
+            rot[self.improper] = -rot[self.improper]
+        return rot
 
-    def flatten(self):
+    def flatten(self) -> "Rotation":
         """A new object with the same data in a single column."""
-        r = super().flatten()
-        r.improper = self.improper.T.flatten().T
-        return r
+        rot = super().flatten()
+        rot.improper = self.improper.T.flatten().T
+        return rot
 
     @property
-    def improper(self):
-        """ndarray : True for improper rotations and False otherwise."""
+    def improper(self) -> np.ndarray:
+        """Return ``True`` for improper rotations and ``False``
+        otherwise.
+        """
         return self._data[..., -1].astype(bool)
 
     @improper.setter
-    def improper(self, value):
+    def improper(self, value: np.ndarray):
         self._data[..., -1] = value
 
-    def dot_outer(self, other):
-        """numpy.ndarray : the outer dot product of this rotation and the other."""
+    def dot_outer(self, other: "Rotation") -> np.ndarray:
+        """Return the outer dot product of this rotation and the other."""
         cosines = np.abs(super().dot_outer(other))
         if isinstance(other, Rotation):
             improper = self.improper.reshape(self.shape + (1,) * len(other.shape))
@@ -329,7 +351,7 @@ class Rotation(Quaternion):
         return cosines
 
     @classmethod
-    def from_neo_euler(cls, neo_euler):
+    def from_neo_euler(cls, neo_euler: "NeoEuler") -> "Rotation":
         """Creates a rotation from a neo-euler (vector) representation.
 
         Parameters
@@ -342,23 +364,25 @@ class Rotation(Quaternion):
         b = s * neo_euler.axis.x
         c = s * neo_euler.axis.y
         d = s * neo_euler.axis.z
-        r = cls(np.stack([a, b, c, d], axis=-1))
-        return r
+        rot = cls(np.stack([a, b, c, d], axis=-1))
+        return rot
 
     @classmethod
-    def from_axes_angles(cls, axes, angles):
+    def from_axes_angles(
+        cls, axes: Union[np.ndarray, Vector3d, tuple, list], angles: np.ndarray
+    ) -> "Rotation":
         """Creates rotation(s) from axis-angle pair(s).
 
         Parameters
         ----------
-        axes : Vector3d or array_like
+        axes
             The axis of rotation.
-        angles : array_like
+        angles
             The angle of rotation, in radians.
 
         Returns
         -------
-        Rotation
+        rot
 
         Examples
         --------
@@ -378,13 +402,13 @@ class Rotation(Quaternion):
 
     # TODO: Remove decorator and **kwargs in 1.0
     @deprecated_argument("convention", since="0.9", removal="1.0")
-    def to_euler(self, **kwargs):
+    def to_euler(self, **kwargs) -> np.ndarray:
         r"""Rotations as Euler angles in the Bunge convention
         :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
-        numpy.ndarray
+        e
             Array of Euler angles in radians, in the ranges
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
@@ -447,14 +471,16 @@ class Rotation(Quaternion):
     # TODO: Remove decorator, **kwargs, and use of "convention" in 1.0
     @classmethod
     @deprecated_argument("convention", "0.9", "1.0", "direction")
-    def from_euler(cls, euler, direction="lab2crystal", **kwargs):
+    def from_euler(
+        cls, euler: np.ndarray, direction: str = "lab2crystal", **kwargs
+    ) -> "Rotation":
         """Creates a rotation from an array of Euler angles in radians.
 
         Parameters
         ----------
-        euler : array-like
+        euler
             Euler angles in radians in the Bunge convention.
-        direction : str
+        direction
             "lab2crystal" (default) or "crystal2lab". "lab2crystal"
             is the Bunge convention. If "MTEX" is provided then the
             direction is "crystal2lab".
@@ -511,7 +537,7 @@ class Rotation(Quaternion):
         rot.improper = np.zeros(n)
         return rot
 
-    def to_matrix(self):
+    def to_matrix(self) -> np.ndarray:
         """Rotations as orientation matrices
         :cite:`rowenhorst2015consistent`.
 
@@ -557,13 +583,13 @@ class Rotation(Quaternion):
         return om
 
     @classmethod
-    def from_matrix(cls, matrix):
+    def from_matrix(cls, matrix: np.ndarray) -> "Rotation":
         """Creates rotations from orientation matrices
         :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
-        matrix : array_like
+        matrix
             Array of orientation matrices.
 
         Examples
@@ -600,7 +626,7 @@ class Rotation(Quaternion):
         return cls(Quaternion(q)).unit  # Normalized
 
     @classmethod
-    def identity(cls, shape=(1,)):
+    def identity(cls, shape: tuple = (1,)) -> "Rotation":
         """Create identity rotations.
 
         Parameters
@@ -613,7 +639,7 @@ class Rotation(Quaternion):
         return cls(data)
 
     @property
-    def axis(self):
+    def axis(self) -> Vector3d:
         """The axis of rotation as a :class:`~orix.vector.Vector3d`."""
         axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
         a_is_zero = self.a < -1e-6
@@ -624,17 +650,17 @@ class Rotation(Quaternion):
         return axis
 
     @property
-    def angle(self):
+    def angle(self) -> np.ndarray:
         """The angle of rotation as a numpy.ndarray."""
         return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
 
     @classmethod
-    def random(cls, shape=(1,)):
+    def random(cls, shape: Union[int, tuple] = (1,)) -> "Rotation":
         """Uniformly distributed rotations.
 
         Parameters
         ----------
-        shape : int or tuple of int, optional
+        shape
             The shape of the required object.
         """
         shape = (shape,) if isinstance(shape, int) else shape
@@ -648,18 +674,23 @@ class Rotation(Quaternion):
         return cls(np.array(rotations[:n])).reshape(*shape)
 
     @classmethod
-    def random_vonmises(cls, shape=(1,), alpha=1.0, reference=(1, 0, 0, 0)):
+    def random_vonmises(
+        cls,
+        shape: Union[int, tuple] = (1,),
+        alpha: float = 1.0,
+        reference: Union[list, tuple, "Rotation"] = (1, 0, 0, 0),
+    ) -> "Rotation":
         """Random rotations with a simplified Von Mises-Fisher
         distribution.
 
         Parameters
         ----------
-        shape : int or tuple of int, optional
+        shape
             The shape of the required object.
-        alpha : float
+        alpha
             Parameter for the VM-F distribution. Lower values lead to
             "looser" distributions.
-        reference : Rotation
+        reference
             The center of the distribution.
         """
         shape = (shape,) if isinstance(shape, int) else shape
@@ -677,14 +708,14 @@ class Rotation(Quaternion):
         return cls.stack(rotations[:n]).reshape(*shape)
 
     @property
-    def antipodal(self):
+    def antipodal(self) -> "Rotation":
         """Rotation : this and antipodally equivalent rotations."""
         r = self.__class__(np.stack([self.data, -self.data], axis=0))
         r.improper = self.improper
         return r
 
 
-def von_mises(x, alpha, reference=Rotation((1, 0, 0, 0))):
+def von_mises(x: Rotation, alpha: float, reference: Rotation = Rotation((1, 0, 0, 0))):
     r"""A vastly simplified Von Mises-Fisher distribution calculation.
 
     Parameters

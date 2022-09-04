@@ -35,12 +35,13 @@ Rotations or orientations can be inside or outside of an orientation region.
 """
 
 import itertools
+from typing import Tuple
 
 import numpy as np
 
 from orix.quaternion import Quaternion
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, get_distinguished_points
+from orix.quaternion.symmetry import C1, Symmetry, get_distinguished_points
 from orix.vector import AxAngle, Rodrigues
 
 _EPSILON = 1e-9  # small number to avoid round off problems
@@ -72,24 +73,27 @@ def _get_large_cell_normals(s1, s2):
     return normals
 
 
-def get_proper_groups(Gl, Gr):
-    """Return the appropriate groups for the asymmetric domain calculation.
+def get_proper_groups(Gl: Symmetry, Gr: Symmetry) -> Tuple[Symmetry, Symmetry]:
+    """Return the appropriate groups for the asymmetric domain
+    calculation.
 
     Parameters
     ----------
-    Gl, Gr : Symmetry
+    Gl
+    Gr
 
     Returns
     -------
-    Gl, Gr : Symmetry
-        The proper subgroup(s) or proper inversion subgroup(s) as appropriate.
+    Gl, Gr
+        The proper subgroup(s) or proper inversion subgroup(s) as
+        appropriate.
 
     Raises
     ------
     NotImplementedError
-        If both groups are improper and neither contain an inversion, special
-        consideration is needed which is not yet implemented in orix.
-
+        If both groups are improper and neither contain an inversion,
+        special consideration is needed which is not yet implemented in
+        orix.
     """
     if Gl.is_proper and Gr.is_proper:
         return Gl, Gr
@@ -116,12 +120,13 @@ class OrientationRegion(Rotation):
     """
 
     @classmethod
-    def from_symmetry(cls, s1, s2=C1):
+    def from_symmetry(cls, s1: Symmetry, s2: Symmetry = C1) -> "OrientationRegion":
         """The set of unique (mis)orientations of a symmetrical object.
 
         Parameters
         ----------
-        s1, s2 : Symmetry
+        s1
+        s2
         """
         s1, s2 = get_proper_groups(s1, s2)
         large_cell_normals = _get_large_cell_normals(s1, s2)
@@ -137,12 +142,12 @@ class OrientationRegion(Rotation):
             ]
         return orientation_region
 
-    def vertices(self):
+    def vertices(self) -> Rotation:
         """The vertices of the asymmetric domain.
 
         Returns
         -------
-        Rotation
+        v
         """
         normal_combinations = list(itertools.combinations(self, 3))
         if len(normal_combinations) < 1:
@@ -159,7 +164,7 @@ class OrientationRegion(Rotation):
         surface = np.any(np.isclose(v.dot_outer(self), 0), axis=1)
         return v[surface]
 
-    def faces(self):
+    def faces(self) -> list:
         normals = Rotation(self)
         vertices = self.vertices()
         faces = []
@@ -168,7 +173,7 @@ class OrientationRegion(Rotation):
         faces = [f for f in faces if f.size > 2]
         return faces
 
-    def __gt__(self, other):
+    def __gt__(self, other: "OrientationRegion") -> np.ndarray:
         """Overridden greater than method. Applying this to an
         Orientation will return only those orientations that lie within
         the OrientationRegion.
@@ -180,7 +185,7 @@ class OrientationRegion(Rotation):
         )
         return inside
 
-    def get_plot_data(self):
+    def get_plot_data(self) -> Rotation:
         """Suitable Rotations for the construction of a wireframe."""
         from orix.vector import Vector3d
 

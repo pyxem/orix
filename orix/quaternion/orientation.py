@@ -40,10 +40,14 @@ indistinguishable in both cases, and hence has the same orientation.
 
 from itertools import combinations_with_replacement as icombinations
 from itertools import product as iproduct
+from typing import List, Optional, Tuple, Union
 import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
+from diffpy.structure import Structure
+from matplotlib.gridspec import SubplotSpec
+import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
@@ -51,7 +55,7 @@ from orix._util import deprecated
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import AxAngle
+from orix.vector import AxAngle, Vector3d
 
 
 def _distance(misorientation, verbose, split_size=100):
@@ -118,22 +122,29 @@ class Misorientation(Rotation):
 
     They have symmetries associated with each of the starting
     orientations.
+
+    Parameters
+    ----------
+    data
+        Quaternions.
+    symmetry
+        Crystal symmetries.
     """
 
     _symmetry = (C1, C1)
 
-    def __init__(self, data, symmetry=None):
+    def __init__(self, data: np.ndarray, symmetry: Optional[Symmetry] = None):
         super().__init__(data)
         if symmetry:
             self.symmetry = symmetry
 
     @property
-    def symmetry(self):
-        """Tuple of :class:`~orix.quaternion.Symmetry`."""
+    def symmetry(self) -> Tuple[Symmetry, Symmetry]:
+        """Crystal symmetries."""
         return self._symmetry
 
     @symmetry.setter
-    def symmetry(self, value):
+    def symmetry(self, value: Union[List[Symmetry], Tuple[Symmetry, Symmetry]]):
         if not isinstance(value, (list, tuple)):
             raise TypeError("Value must be a 2-tuple of Symmetry objects.")
         if len(value) != 2 or not all(isinstance(s, Symmetry) for s in value):
@@ -156,32 +167,32 @@ class Misorientation(Rotation):
                 v2.append(sym_s == sym_o)
             return all(v2)
 
-    def reshape(self, *shape):
+    def reshape(self, *shape) -> "Misorientation":
         m = super().reshape(*shape)
         m._symmetry = self._symmetry
         return m
 
-    def flatten(self):
+    def flatten(self) -> "Misorientation":
         m = super().flatten()
         m._symmetry = self._symmetry
         return m
 
-    def squeeze(self):
+    def squeeze(self) -> "Misorientation":
         m = super().squeeze()
         m._symmetry = self._symmetry
         return m
 
-    def transpose(self, *axes):
+    def transpose(self, *axes) -> "Misorientation":
         m = super().transpose(*axes)
         m._symmetry = self._symmetry
         return m
 
-    def equivalent(self, grain_exchange=False):
+    def equivalent(self, grain_exchange: bool = False):
         r"""Equivalent misorientations.
 
-        grain_exchange : bool
-            If True the rotation $g$ and $g^{-1}$ are considered to be
-            identical. Default is False.
+        grain_exchange
+            If ``True`` the rotation :math:`g` and :math:`g^{-1}` are
+            considered to be identical. Default is ``False``.
 
         Returns
         -------
@@ -197,17 +208,18 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
-    def map_into_symmetry_reduced_zone(self, verbose=False):
+    def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> "Misorientation":
         """Computes equivalent transformations which have the smallest
         angle of rotation and return these as a new Misorientation object.
 
         Returns
         -------
-        Misorientation
+        mori
             A new misorientation object with the assigned symmetry.
 
         Examples
         --------
+        >>> import numpy as np
         >>> from orix.quaternion.symmetry import C4, C2
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> m = Misorientation(data)
@@ -239,7 +251,7 @@ class Misorientation(Rotation):
         alternative="orix.quaternion.Misorientation.get_distance_matrix",
         removal="0.10",
     )
-    def distance(self, verbose=False, split_size=100):
+    def distance(self, verbose: bool = False, split_size: int = 100) -> np.ndarray:
         """Symmetry reduced distance.
 
         Compute the shortest distance between all orientations
@@ -247,14 +259,14 @@ class Misorientation(Rotation):
 
         Parameters
         ----------
-        verbose : bool
-            Output progress bar while computing. Default is False.
-        split_size : int
+        verbose
+            Output progress bar while computing. Default is ``False``.
+        split_size
             Size of block to compute at a time. Default is 100.
 
         Returns
         -------
-        distance : numpy.ndarray
+        distance
             2D matrix containing the angular distance between every
             orientation, considering symmetries.
 
@@ -286,56 +298,55 @@ class Misorientation(Rotation):
 
     def scatter(
         self,
-        projection="axangle",
-        figure=None,
-        position=None,
-        return_figure=False,
-        wireframe_kwargs=None,
-        size=None,
-        figure_kwargs=None,
+        projection: str = "axangle",
+        figure: Optional[plt.Figure] = None,
+        position: Union[int, Tuple[int, int], SubplotSpec] = None,
+        return_figure: bool = False,
+        wireframe_kwargs: Optional[dict] = None,
+        size: Optional[int] = None,
+        figure_kwargs: Optional[dict] = None,
         **kwargs,
-    ):
+    ) -> plt.Figure:
         """Plot misorientations in axis-angle space or the Rodrigues
         fundamental zone.
 
         Parameters
         ----------
-        projection : str, optional
+        projection
             Which misorientation space to plot misorientations in,
-            either "axangle" (default) or "rodrigues".
-        figure : matplotlib.figure.Figure
+            either ``"axangle"`` (default) or ``"rodrigues"``.
+        figure
             If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
             :class:`~orix.plot.RodriguesPlot` is added to the figure in
-            the position specified by `position`. If not given, a new
+            the position specified by ``position``. If not given, a new
             figure is created.
-        position : int, tuple of int, matplotlib.gridspec.SubplotSpec,
-                optional
+        position
             Where to add the new plot axis. 121 or (1, 2, 1) places it
             in the first of two positions in a grid of 1 row and 2
             columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
             for further details. Default is (1, 1, 1).
-        return_figure : bool, optional
-            Whether to return the figure. Default is False.
-        wireframe_kwargs : dict, optional
+        return_figure
+            Whether to return the figure. Default is ``False``.
+        wireframe_kwargs
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
             :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
-        size : int, optional
+        size
             If not given, all misorientations are plotted. If given, a
-            random sample of this `size` of the misorientations is
+            random sample of this ``size`` of the misorientations is
             plotted.
-        figure_kwargs : dict, optional
+        figure_kwargs
             Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.figure` if `figure` is not given.
-        kwargs
+            :func:`matplotlib.pyplot.figure` if ``figure`` is not given.
+        **kwargs
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.scatter` or
             :meth:`orix.plot.RodriguesPlot.scatter`.
 
         Returns
         -------
-        figure : matplotlib.figure.Figure
-            Figure with the added plot axis, if `return_figure` is True.
+        figure
+            Figure with the added plot axis, if ``return_figure=True``.
 
         See Also
         --------
@@ -380,7 +391,9 @@ class Misorientation(Rotation):
         if return_figure:
             return figure
 
-    def get_distance_matrix(self, chunk_size=20, progressbar=True):
+    def get_distance_matrix(
+        self, chunk_size: int = 20, progressbar: bool = True
+    ) -> np.ndarray:
         r"""The symmetry reduced smallest angle of rotation transforming
         every misorientation in this instance to every other
         misorientation :cite:`johnstone2020density`.
@@ -391,16 +404,16 @@ class Misorientation(Rotation):
 
         Parameters
         ----------
-        chunk_size : int, optional
+        chunk_size
             Number of misorientations per axis to include in each
             iteration of the computation. Default is 20.
-        progressbar : bool, optional
+        progressbar
             Whether to show a progressbar during computation. Default is
-            True.
+            ``True``.
 
         Returns
         -------
-        numpy.ndarray
+        distances
 
         Notes
         -----
@@ -479,39 +492,39 @@ class Orientation(Misorientation):
     """
 
     @property
-    def symmetry(self):
+    def symmetry(self) -> Symmetry:
         """Symmetry."""
         return self._symmetry[1]
 
     @symmetry.setter
-    def symmetry(self, value):
+    def symmetry(self, value: Symmetry):
         if not isinstance(value, Symmetry):
             raise TypeError("Value must be an instance of orix.quaternion.Symmetry.")
         self._symmetry = (C1, value)
 
     @property
-    def unit(self):
+    def unit(self) -> "Orientation":
         """Unit orientations."""
         o = super().unit
         o.symmetry = self.symmetry
         return o
 
-    def __invert__(self):
+    def __invert__(self) -> "Orientation":
         o = super().__invert__()
         o.symmetry = self.symmetry
         return o
 
-    def __neg__(self):
+    def __neg__(self) -> "Orientation":
         o = super().__neg__()
         o.symmetry = self.symmetry
         return o
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """String representation."""
         data = np.array_str(self.data, precision=4, suppress_small=True)
         return f"{self.__class__.__name__} {self.shape} {self.symmetry.name}\n{data}"
 
-    def __sub__(self, other):
+    def __sub__(self, other: "Orientation") -> "Misorientation":
         if isinstance(other, Orientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             misorientation = Misorientation(self * ~other).squeeze()
@@ -521,38 +534,50 @@ class Orientation(Misorientation):
 
     # TODO: Remove use of **kwargs in 1.0
     @classmethod
-    def from_euler(cls, euler, symmetry=None, direction="lab2crystal", **kwargs):
-        """Creates orientation(s) from an array of Euler angles.
+    def from_euler(
+        cls,
+        euler: np.ndarray,
+        symmetry: Optional[Symmetry] = None,
+        direction: str = "lab2crystal",
+        **kwargs,
+    ) -> "Orientation":
+        """Return orientation(s) from an array of Euler angles.
 
         Parameters
         ----------
-        euler : array-like
+        euler
             Euler angles in the Bunge convention.
-        symmetry : Symmetry, optional
-            Symmetry of orientation(s). If None (default), no symmetry
-            is set.
-        direction : str
-            "lab2crystal" (default) or "crystal2lab". "lab2crystal"
-            is the Bunge convention. If "MTEX" is provided then the
-            direction is "crystal2lab".
+        symmetry
+            Symmetry of orientation(s). If not given (default), no
+            symmetry is set.
+        direction
+            ``"lab2crystal"`` (default) or ``"crystal2lab"``.
+            ``"lab2crystal"`` is the Bunge convention. If ``"MTEX"`` is
+            provided then the direction is ``"crystal2lab"``.
+
+        Returns
+        -------
+        ori
         """
-        o = super().from_euler(euler=euler, direction=direction, **kwargs)
+        ori = super().from_euler(euler=euler, direction=direction, **kwargs)
         if symmetry:
-            o.symmetry = symmetry
-        return o
+            ori.symmetry = symmetry
+        return ori
 
     @classmethod
-    def from_matrix(cls, matrix, symmetry=None):
-        """Creates orientation(s) from orientation matrices
+    def from_matrix(
+        cls, matrix: np.ndarray, symmetry: Optional[Symmetry] = None
+    ) -> "Orientation":
+        """Return orientation(s) from orientation matrices
         :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
-        matrix : array_like
+        matrix
             Array of orientation matrices.
-        symmetry : Symmetry, optional
-            Symmetry of orientation(s). If None (default), no symmetry
-            is set.
+        symmetry
+            Symmetry of orientation(s). If not given (default), no
+            symmetry is set.
         """
         o = super().from_matrix(matrix)
         if symmetry:
@@ -560,40 +585,51 @@ class Orientation(Misorientation):
         return o
 
     @classmethod
-    def from_neo_euler(cls, neo_euler, symmetry=None):
-        """Creates orientation(s) from a neo-euler (vector)
+    def from_neo_euler(
+        cls, neo_euler: "NeoEuler", symmetry: Optional[Symmetry] = None
+    ) -> "Orientation":
+        """Return orientation(s) from a neo-euler (vector)
         representation.
 
         Parameters
         ----------
-        neo_euler : NeoEuler
+        neo_euler
             Vector parametrization of orientation(s).
-        symmetry : Symmetry, optional
-            Symmetry of orientation(s). If None (default), no symmetry
-            is set.
+        symmetry
+            Symmetry of orientation(s). If not given (default), no
+            symmetry is set.
+
+        Returns
+        -------
+        ori
         """
-        o = super().from_neo_euler(neo_euler)
+        ori = super().from_neo_euler(neo_euler)
         if symmetry:
-            o.symmetry = symmetry
-        return o
+            ori.symmetry = symmetry
+        return ori
 
     @classmethod
-    def from_axes_angles(cls, axes, angles, symmetry=None):
+    def from_axes_angles(
+        cls,
+        axes: Union["Vector3d", np.ndarray],
+        angles: np.ndarray,
+        symmetry: Optional[Symmetry] = None,
+    ) -> "Orientation":
         """Creates orientation(s) from axis-angle pair(s).
 
         Parameters
         ----------
-        axes : Vector3d or array_like
+        axes
             The axis of rotation.
-        angles : array_like
+        angles
             The angle of rotation, in radians.
-        symmetry : Symmetry, optional
-            Symmetry of orientation(s). If None (default), no symmetry
-            is set.
+        symmetry
+            Symmetry of orientation(s). If not given (default), no
+            symmetry is set.
 
         Returns
         -------
-        Orientation
+        ori
 
         Examples
         --------
@@ -611,17 +647,18 @@ class Orientation(Misorientation):
         axangle = AxAngle.from_axes_angles(axes, angles)
         return cls.from_neo_euler(axangle, symmetry)
 
-    def angle_with(self, other):
+    def angle_with(self, other: "Orientation") -> np.ndarray:
         """The smallest symmetry reduced angle of rotation transforming
         this orientation to the other.
 
         Parameters
         ----------
-        other : orix.quaternion.Orientation
+        other
+            Another orientation.
 
         Returns
         -------
-        numpy.ndarray
+        angles
 
         See also
         --------
@@ -631,7 +668,13 @@ class Orientation(Misorientation):
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
         return angles
 
-    def angle_with_outer(self, other, lazy=False, chunk_size=20, progressbar=True):
+    def angle_with_outer(
+        self,
+        other: "Orientation",
+        lazy: bool = False,
+        chunk_size: int = 20,
+        progressbar: bool = True,
+    ) -> np.ndarray:
         r"""The symmetry reduced smallest angle of rotation transforming
         every orientation in this instance to every orientation in
         another instance.
@@ -642,20 +685,20 @@ class Orientation(Misorientation):
 
         Parameters
         ----------
-        lazy : bool, optional
+        lazy
             Whether to perform the computation lazily with Dask. Default
             is False.
-        chunk_size : int, optional
+        chunk_size
             Number of orientations per axis to include in each iteration
-            of the computation. Default is 20. Only applies when `lazy`
-            is True.
-        progressbar : bool, optional
-            Whether to show a progressbar during computation if `lazy`
-            is True. Default is True.
+            of the computation. Default is 20. Only applies when
+            ``lazy=True``.
+        progressbar
+            Whether to show a progressbar during computation if
+            ``lazy=True``. Default is ``True``.
 
         Returns
         -------
-        numpy.ndarray
+        angles
 
         See also
         --------
@@ -712,7 +755,9 @@ class Orientation(Misorientation):
 
         return angles
 
-    def get_distance_matrix(self, lazy=False, chunk_size=20, progressbar=True):
+    def get_distance_matrix(
+        self, lazy: bool = False, chunk_size: int = 20, progressbar: bool = True
+    ) -> np.ndarray:
         r"""The symmetry reduced smallest angle of rotation transforming
         every orientation in this instance to every other orientation
         :cite:`johnstone2020density`.
@@ -723,20 +768,20 @@ class Orientation(Misorientation):
 
         Parameters
         ----------
-        lazy : bool, optional
+        lazy
             Whether to perform the computation lazily with Dask. Default
             is False.
-        chunk_size : int, optional
+        chunk_size
             Number of orientations per axis to include in each iteration
-            of the computation. Default is 20. Only applies when `lazy`
-            is True.
-        progressbar : bool, optional
-            Whether to show a progressbar during computation if `lazy`
-            is True. Default is True.
+            of the computation. Default is 20. Only applies when
+            ``lazy=True``.
+        progressbar
+            Whether to show a progressbar during computation if
+            ``lazy=True``. Default is ``True``.
 
         Returns
         -------
-        numpy.ndarray
+        distances
 
         Notes
         -----
@@ -755,9 +800,18 @@ class Orientation(Misorientation):
         )
         return angles
 
-    def dot(self, other):
+    def dot(self, other: "Orientation") -> np.ndarray:
         """Symmetry reduced dot product of orientations in this instance
         to orientations in another instance, returned as numpy.ndarray.
+
+        Parameters
+        ----------
+        other
+            Another orientation.
+
+        Returns
+        -------
+        highest_dot_product
 
         See Also
         --------
@@ -769,10 +823,19 @@ class Orientation(Misorientation):
         highest_dot_product = np.max(all_dot_products, axis=-1)
         return highest_dot_product
 
-    def dot_outer(self, other):
+    def dot_outer(self, other: "Orientation") -> np.ndarray:
         """Symmetry reduced dot product of every orientation in this
         instance to every orientation in another instance, returned as
         numpy.ndarray.
+
+        Parameters
+        ----------
+        other
+            Another orientation.
+
+        Returns
+        -------
+        highest_dot_product
 
         See Also
         --------
@@ -798,44 +861,45 @@ class Orientation(Misorientation):
 
     def plot_unit_cell(
         self,
-        c="tab:blue",
-        return_figure=False,
-        axes_length=0.5,
-        structure=None,
-        crystal_axes_loc="origin",
+        c: str = "tab:blue",
+        return_figure: bool = False,
+        axes_length: float = 0.5,
+        structure: Optional[Structure] = None,
+        crystal_axes_loc: str = "origin",
         **arrow_kwargs,
-    ):
+    ) -> plt.Figure:
         """Plot the unit cell orientation, showing the sample and
         crystal reference frames.
 
         Parameters
         ----------
-        c : str, optional
+        c
             Unit cell edge color.
-        return_figure : bool, optional
+        return_figure
             Return the plotted figure.
-        axes_length : float, optional
+        axes_length
             Length of the reference axes in Angstroms, by default 0.5.
-        structure : diffpy.structure.Structure or None, optional
-            Structure of the unit cell, only orthorhombic lattices are currently
-            supported. If not given, a cubic unit cell with a lattice parameter of
-            2 Angstroms will be plotted.
-        crystal_axes_loc : str, optional
-            Plot the crystal reference frame axes at the "origin" (default) or
-            "center" of the plotted cell.
-        arrow_kwargs : dict, optional
+        structure
+            Structure of the unit cell, only orthorhombic lattices are
+            currently supported. If not given, a cubic unit cell with a
+            lattice parameter of 2 Angstroms will be plotted.
+        crystal_axes_loc
+            Plot the crystal reference frame axes at the ``"origin"``
+            (default) or ``"center"`` of the plotted cell.
+        **arrow_kwargs
             Keyword arguments passed to
-            :class:`matplotlib.patches.FancyArrowPatch`, for example "arrowstyle".
+            :class:`matplotlib.patches.FancyArrowPatch`, for example
+            ``"arrowstyle"``.
 
         Returns
         -------
-        fig: matplotlib.figure.Figure
-            The plotted figure.
+        fig
+            The plotted figure, returned if ``return_figure=True``.
 
         Raises
         ------
         ValueError
-            If self.size > 1.
+            If :attr:`size` > 1.
         """
         if self.size > 1:
             raise ValueError("Can only plot a single unit cell, so *size* must be 1")
@@ -854,7 +918,7 @@ class Orientation(Misorientation):
         if return_figure:
             return fig
 
-    def in_euler_fundamental_region(self):
+    def in_euler_fundamental_region(self) -> np.ndarray:
         """Euler angles in the fundamental Euler region of the proper
         subgroup.
 
@@ -865,7 +929,7 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        euler_in_region : numpy.ndarray
+        euler_in_region
             Euler angles in radians.
         """
         pg = self.symmetry.proper_subgroup
@@ -895,54 +959,53 @@ class Orientation(Misorientation):
 
     def scatter(
         self,
-        projection="axangle",
-        figure=None,
-        position=None,
-        return_figure=False,
-        wireframe_kwargs=None,
-        size=None,
-        direction=None,
-        figure_kwargs=None,
+        projection: str = "axangle",
+        figure: Optional[plt.Figure] = None,
+        position: Union[int, Tuple[int], SubplotSpec] = None,
+        return_figure: bool = False,
+        wireframe_kwargs: Optional[dict] = None,
+        size: Optional[int] = None,
+        direction: Optional[Vector3d] = None,
+        figure_kwargs: Optional[dict] = None,
         **kwargs,
-    ):
+    ) -> plt.Figure:
         """Plot orientations in axis-angle space, the Rodrigues
         fundamental zone, or an inverse pole figure (IPF) given a sample
         direction.
 
         Parameters
         ----------
-        projection : str, optional
+        projection
             Which orientation space to plot orientations in, either
             "axangle" (default), "rodrigues" or "ipf" (inverse pole
             figure).
-        figure : matplotlib.figure.Figure
+        figure
             If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
             :class:`~orix.plot.RodriguesPlot` is added to the figure in
             the position specified by `position`. If not given, a new
             figure is created.
-        position : int, tuple of int, matplotlib.gridspec.SubplotSpec,
-                optional
+        position
             Where to add the new plot axis. 121 or (1, 2, 1) places it
             in the first of two positions in a grid of 1 row and 2
             columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
             for further details. Default is (1, 1, 1).
-        return_figure : bool, optional
+        return_figure
             Whether to return the figure. Default is False.
-        wireframe_kwargs : dict, optional
+        wireframe_kwargs
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
             :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
-        size : int, optional
+        size
             If not given, all orientations are plotted. If given, a
             random sample of this `size` of the orientations is plotted.
-        direction : Vector3d, optional
+        direction
             Sample direction to plot with respect to crystal directions.
             If not given, the out of plane direction, sample Z, is used.
             Only used when plotting IPF(s).
-        figure_kwargs : dict, optional
+        figure_kwargs
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.figure` if `figure` is not given.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.scatter`,
             :meth:`orix.plot.RodriguesPlot.scatter`, or
@@ -950,8 +1013,8 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        figure : matplotlib.figure.Figure
-            Figure with the added plot axis, if `return_figure` is True.
+        figure
+            Figure with the added plot axis, if ``return_figure=True``.
 
         See Also
         --------
@@ -1000,22 +1063,22 @@ class Orientation(Misorientation):
         if return_figure:
             return figure
 
-    def _dot_outer_dask(self, other, chunk_size=20):
+    def _dot_outer_dask(self, other: "Orientation", chunk_size: int = 20) -> da.Array:
         """Symmetry reduced dot product of every orientation in this
         instance to every orientation in another instance, returned as a
         Dask array.
 
         Parameters
         ----------
-        other : orix.quaternion.Orientation
-        chunk_size : int, optional
+        other
+        chunk_size
             Number of orientations per axis in each orientation instance
             to include in each iteration of the computation. Default is
             20.
 
         Returns
         -------
-        dask.array.Array
+        highest_dot_product
 
         Notes
         -----
