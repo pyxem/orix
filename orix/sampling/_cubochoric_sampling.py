@@ -26,6 +26,8 @@ for users.
     code. We may change the API at any time with no warning.
 """
 
+from typing import Optional, Union
+
 import numba as nb
 import numpy as np
 
@@ -33,32 +35,36 @@ from orix.quaternion import Rotation
 from orix.quaternion._conversions import ax2qu_single, cu2ro_single, ro2ax_single
 
 
-def cubochoric_sampling(semi_edge_steps=None, resolution=None):
-    r"""Uniform cubochoric sampling of *SO(3)*
+def cubochoric_sampling(
+    semi_edge_steps: Optional[int] = None,
+    resolution: Optional[Union[int, float]] = None,
+) -> Rotation:
+    r"""Uniform cubochoric sampling of rotations *SO(3)*
     :cite:`singh2016orientation`.
 
     Parameters
     ----------
-    semi_edge_steps : int, optional
-        Number of grid points *N* along the semi-edge of the cubochoric
-        cube. If not given, it will be calculated from `resolution`
-        following Eq. (9) in :cite:`singh2016orientation`. For example,
-        if an average disorientation of 1 degree is needed, this should
-        be set to 137. This will result in $(2N + 1)^3$ = 20 796 875
-        unique orientations.
-    resolution : float, optional
-        Average disorientation between resulting orientations. This must
-        be given if `semi_edge_steps` is not.
+    semi_edge_steps
+        Number of grid points :math:`N` along the semi-edge of the
+        cubochoric cube. If not given, it will be calculated from
+        ``resolution`` following Eq. (9) in
+        :cite:`singh2016orientation`. For example, if an average
+        disorientation of 1 degree is needed, this should be set to 137.
+        This will result in :math:`(2N + 1)^3 = 20 796 875` unique
+        rotations.
+    resolution
+        Average disorientation between resulting rotations. This must be
+        given if ``semi_edge_steps`` is not.
 
     Returns
     -------
-    ~orix.quaternion.Rotation
+    rot
         Sampled rotations in *SO(3)*.
 
     Notes
     -----
-    The cubochoric grid sampled is $S_{000}(N)$, which contains the
-    identity rotation.
+    The cubochoric grid sampled is :math:`S_{000}(N)`, which contains
+    the identity rotation.
     """
     if semi_edge_steps is None:
         if resolution is None:
@@ -70,27 +76,29 @@ def cubochoric_sampling(semi_edge_steps=None, resolution=None):
 
 
 @nb.jit(cache=True, nogil=True, nopython=True)
-def resolution_to_semi_edge_steps(resolution):
-    """Calculate the number of grid points *N* along the semi-edge of
-    the cubochoric cube given an average disorientation between
-    orientations :cite:`singh2016orientation`.
+def resolution_to_semi_edge_steps(resolution: Union[int, float]) -> int:
+    r"""Calculate the number of grid points :math:`N` along the
+    semi-edge of the cubochoric cube given an average disorientation
+    between rotations :cite:`singh2016orientation`.
 
     Parameters
     ----------
-    resolution : float
+    resolution
+        Resolution in degrees.
 
     Returns
     -------
-    int
+    steps
+        Semi-edge steps.
     """
     return int(np.round(131.97049 / (resolution - 0.03732)))
 
 
 @nb.jit("float64[:, :](int64)", cache=True, nogil=True, nopython=True)
-def _cubochoric_sampling_loop(semi_edge_steps):
+def _cubochoric_sampling_loop(semi_edge_steps: int) -> np.ndarray:
     """See :func:`cubochoric_sampling`.
 
-    If `semi_edge_steps` is 100, there will be (201, 201, 201) points
+    If ``semi_edge_steps`` is 100, there will be (201, 201, 201) points
     sampled.
     """
     semi_edge_length = 0.5 * np.pi ** (2 / 3)
