@@ -25,8 +25,8 @@ representation does not scale the angle of rotation, making it easy for direct
 interpretation, whereas the Rodrigues representation applies a scaled tangent
 function, such that any straight lines in Rodrigues space represent rotations
 about a fixed axis.
-
 """
+
 import abc
 
 import numpy as np

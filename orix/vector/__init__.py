@@ -35,7 +35,6 @@ from orix.vector.fundamental_sector import FundamentalSector
 from orix.vector.miller import Miller
 from orix.vector.neo_euler import AxAngle, Homochoric, NeoEuler, Rodrigues
 
-# Lists what will be imported when calling "from orix.vector import *"
 __all__ = [
     "AxAngle",
     "FundamentalSector",

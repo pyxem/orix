@@ -44,28 +44,29 @@ from orix.vector import Vector3d
 class SphericalRegion(Vector3d):
     """A set of vectors representing normals segmenting a sphere."""
 
-    def __gt__(self, x):
+    def __gt__(self, x: Vector3d) -> np.ndarray:
         """Returns True where x is strictly inside the region.
 
         Parameters
         ----------
-        x : Vector3d
+        x
 
         Returns
         -------
-        numpy.ndarray
+        x_out
         """
         return np.all(self.dot_outer(x) > 1e-9, axis=0)
 
-    def __ge__(self, x):
-        """Returns True if x is inside the region or one of the bounding planes.
+    def __ge__(self, x: Vector3d) -> np.ndarray:
+        """Returns ``True`` if ``x`` is inside the region or one of the
+        bounding planes.
 
         Parameters
         ----------
-        x : Vector3d
+        x
 
         Returns
         -------
-        numpy.ndarray
+        x_out
         """
         return np.all(self.dot_outer(x) > -1e-9, axis=0)
