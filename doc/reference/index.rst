@@ -43,6 +43,7 @@ code lines.
     data
     crystal_map
     io
+    measure
     plot
     projections
     quaternion

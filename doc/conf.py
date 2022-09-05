@@ -271,6 +271,7 @@ def _str_examples(self):
         self.use_plots
         and (
             re.search(r"\b(.plot)\b", examples_str)
+            or re.search(r"\b(.plot_map)\b", examples_str)
             or re.search(r"\b(.imshow)\b", examples_str)
         )
         and "plot::" not in examples_str
@@ -292,11 +293,11 @@ SphinxDocString._str_examples = _str_examples
 # https://sphinx-gallery.github.io
 sphinx_gallery_conf = {
     "backreferences_dir": "reference/generated",
-    "doc_module": ("kikuchipy",),
+    "doc_module": ("orix",),
     "examples_dirs": "../examples",
     "filename_pattern": "^((?!sgskip).)*$",
     "gallery_dirs": "examples",
-    "reference_url": {"kikuchipy": None},
+    "reference_url": {"orix": None},
     "run_stale_examples": True,
     "show_memory": True,
 }
