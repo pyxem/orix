@@ -78,11 +78,11 @@ class Miller(Vector3d):
         hkl: Union[np.ndarray, list, tuple, None] = None,
         hkil: Union[np.ndarray, list, tuple, None] = None,
         phase: Optional["orix.crystal_map.Phase"] = None,
-    ) -> Miller:
-        """Create a set of direct lattice vectors (uvw or UVTW)
-        or reciprocal lattice vectors (hkl or hkil) describing
-        directions with respect to a crystal reference frame defined by
-        a phase's crystal lattice and symmetry.
+    ):
+        """Create a set of direct lattice vectors (uvw or UVTW) or
+        reciprocal lattice vectors (hkl or hkil) describing directions
+        with respect to a crystal reference frame defined by a phase's
+        crystal lattice and symmetry.
         """
         n_passed = np.sum([i is not None for i in [xyz, uvw, UVTW, hkl, hkil]])
         if n_passed == 0 or n_passed > 1:
@@ -459,7 +459,7 @@ class Miller(Vector3d):
     ) -> Union[
         Miller, Tuple[Miller, np.ndarray], Tuple[Miller, np.ndarray, np.ndarray]
     ]:
-        """Vectors symmetrically equivalent to the ones in `self`.
+        """Return vectors symmetrically equivalent to the vectors.
 
         Parameters
         ----------
@@ -469,8 +469,9 @@ class Miller(Vector3d):
             Whether to return the multiplicity of each vector. Default
             is ``False``.
         return_index
-            Whether to return the index into ``self`` for the returned
-            symmetrically equivalent vectors. Default is ``False``.
+            Whether to return the index into the vectors for the
+            returned symmetrically equivalent vectors. Default is
+            ``False``.
 
         Returns
         -------
@@ -480,8 +481,8 @@ class Miller(Vector3d):
             Multiplicity of each vector. Returned if
             ``return_multiplicity=True``.
         idx
-            Index into ``self`` for the symmetrically equivalent
-            vectors. Returned if ``return_index=True``.
+            Index into the vectors for the returned symmetrically
+            equivalent vectors. Returned if ``return_index=True``.
         """
         if return_multiplicity and not unique:
             raise ValueError("`unique` must be True when `return_multiplicity` is True")
@@ -577,7 +578,7 @@ class Miller(Vector3d):
     # ------------- Overwritten Vector3d/Object3d methods ------------ #
 
     def angle_with(self, other: Miller, use_symmetry: bool = False) -> np.ndarray:
-        """Calculate angles between vectors in ``self`` and ``other``,
+        """Calculate angles between these vectors and the other vectors
         possibly using symmetrically equivalent vectors to find the
         smallest angle under symmetry.
 
@@ -587,6 +588,7 @@ class Miller(Vector3d):
         Parameters
         ----------
         other
+            Other vectors.
         use_symmetry
             Whether to consider equivalent vectors to find the smallest
             angle under symmetry. Default is ``False``.
@@ -609,12 +611,14 @@ class Miller(Vector3d):
             return super().angle_with(other)
 
     def cross(self, other: Miller):
-        """Cross product of a direct or reciprocal lattice vector with
-        another vector, which is considered the zone axis between the
-        vectors.
+        """Return the cross products of the vectors with the other
+        vectors, which is considered the zone axes between the vectors.
 
-        Vectors must have compatible shapes, and be in the same space
-        (direct or reciprocal) and crystal reference frames.
+        Parameters
+        ----------
+        other
+            Other vectors, which must be in the same space (direct or
+            reciprocal) and have the same crystal reference frame.
 
         Returns
         -------
@@ -629,10 +633,13 @@ class Miller(Vector3d):
         return mill
 
     def dot(self, other: Miller) -> np.ndarray:
-        """Dot product of a vector with another vector.
+        """Return the dot products of the vectors and the other vectors.
 
-        Vectors must have compatible shapes, and be in the same space
-        (direct or reciprocal) and crystal reference frames.
+        Parameters
+        ----------
+        other
+            Other vectors, which must be in the same space (direct or
+            reciprocal) and have the same crystal reference frame.
 
         Returns
         -------
@@ -643,13 +650,14 @@ class Miller(Vector3d):
         return super().dot(other)
 
     def dot_outer(self, other: Miller) -> np.ndarray:
-        """Outer dot product of a vector with another vector.
+        """Return the outer dot products of the vectors and the other
+        vectors.
 
-        Vectors must be in the same space (direct or reciprocal) and
-        crystal reference frames.
-
-        The dot product for every combination of vectors in ``self`` and
-        ``other`` is computed.
+        Parameters
+        ----------
+        other
+            Other vectors, which must be in the same space (direct or
+            reciprocal) and have the same crystal reference frame.
 
         Returns
         -------
@@ -660,21 +668,27 @@ class Miller(Vector3d):
         return super().dot_outer(other)
 
     def flatten(self) -> Miller:
+        """Return the flattened vectors.
+
+        Returns
+        -------
+        mill
+            Flattened vectors.
+        """
         mill = self.__class__(xyz=super().flatten().data, phase=self.phase)
         mill.coordinate_format = self.coordinate_format
         return mill
 
     def transpose(self, *axes: Optional[int]) -> Miller:
-        """Returns a new Miller object containing the same data
-        transposed.
+        """Return a new instance with the data transposed.
 
-        If :attr:`ndim` is originally 2, then order may be undefined. In
-        this case the first two dimensions will be transposed.
+        The order may be undefined if :attr:`ndim` is originally 2. In
+        this case the first two dimensions are transposed.
 
         Parameters
         ----------
         axes
-            The transposed axes order. Only navigation axes need to be
+            Transposed axes order. Only navigation axes need to be
             defined. May be undefined if self only contains two
             navigation dimensions.
 
@@ -712,9 +726,21 @@ class Miller(Vector3d):
         return mill
 
     def reshape(self, *shape: Optional[int]) -> Miller:
-        m = self.__class__(xyz=super().reshape(*shape).data, phase=self.phase)
-        m.coordinate_format = self.coordinate_format
-        return m
+        """Return a new instance with the vectors reshaped.
+
+        Parameters
+        ----------
+        *shape
+            New shape.
+
+        Returns
+        -------
+        mill
+            New instance.
+        """
+        mill = self.__class__(xyz=super().reshape(*shape).data, phase=self.phase)
+        mill.coordinate_format = self.coordinate_format
+        return mill
 
     def unique(
         self, use_symmetry: bool = False, return_index: bool = False
@@ -756,12 +782,12 @@ class Miller(Vector3d):
             _, idx = np.unique(data_sorted, return_index=True, axis=0)
             v = v[idx[::-1]]
 
-        m = self.__class__(xyz=v.data, phase=self.phase)
-        m.coordinate_format = self.coordinate_format
+        mill = self.__class__(xyz=v.data, phase=self.phase)
+        mill.coordinate_format = self.coordinate_format
         if return_index:
-            return m, idx
+            return mill, idx
         else:
-            return m
+            return mill
 
     def in_fundamental_sector(
         self, symmetry: Optional["orix.quaternion.Symmetry"] = None
@@ -783,17 +809,18 @@ class Miller(Vector3d):
         Returns
         -------
         mill
+            Vectors within the fundamental sector.
 
         Examples
         --------
         >>> from orix.crystal_map import Phase
         >>> from orix.quaternion.symmetry import D6h
         >>> from orix.vector import Miller
-        >>> h = Miller(uvw=(-1, 1, 0), phase=Phase(point_group="m-3m"))
-        >>> h.in_fundamental_sector()
+        >>> mill = Miller(uvw=(-1, 1, 0), phase=Phase(point_group="m-3m"))
+        >>> mill.in_fundamental_sector()
         Miller (1,), point group m-3m, uvw
         [[1. 0. 1.]]
-        >>> h.in_fundamental_sector(D6h)
+        >>> mill.in_fundamental_sector(D6h)
         Miller (1,), point group m-3m, uvw
         [[1.366 0.366 0.   ]]
         """

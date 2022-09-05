@@ -34,18 +34,17 @@ class Vector3d(Object3d):
     """Vector base class.
 
     Vectors support the following mathematical operations:
-
-    - Unary negation.
-    - Addition to other vectors, scalars, numbers, and compatible
-      array-like objects.
-    - Subtraction to and from the above.
-    - Multiplication to scalars, numbers, and compatible array-like objects.
-    - Division by the same as multiplication. Division by a vector is not
-      defined in general.
+        - Unary negation.
+        - Addition to other vectors, scalars, numbers, and compatible
+          array-like objects.
+        - Subtraction to and from the above.
+        - Multiplication to scalars, numbers, and compatible array-like
+          objects.
+        - Division by the same as multiplication. Division by a vector
+          is not defined in general.
 
     Examples
     --------
-    >>> import numpy as np
     >>> from orix.vector import Vector3d
     >>> v = Vector3d((1, 2, 3))
     >>> w = Vector3d(np.array([[1, 0, 0], [0, 1, 1]]))
@@ -92,6 +91,7 @@ class Vector3d(Object3d):
 
     @x.setter
     def x(self, value: np.ndarray):
+        """Set the x coordinates."""
         self.data[..., 0] = value
 
     @property
@@ -107,6 +107,7 @@ class Vector3d(Object3d):
 
     @y.setter
     def y(self, value: np.ndarray):
+        """Set the y coordinates."""
         self.data[..., 1] = value
 
     @property
@@ -122,11 +123,14 @@ class Vector3d(Object3d):
 
     @z.setter
     def z(self, value: np.ndarray):
+        """Set the z coordinates."""
         self.data[..., 2] = value
 
     @property
     def xyz(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Return the coordinates as three arrays, useful for plotting."""
+        """Return the coordinates as three arrays, useful for
+        plotting.
+        """
         return self.x, self.y, self.z
 
     @property
@@ -157,6 +161,7 @@ class Vector3d(Object3d):
         Returns
         -------
         radial
+            Radial spherical coordinate.
         """
         return np.sqrt(
             self.data[..., 0] ** 2 + self.data[..., 1] ** 2 + self.data[..., 2] ** 2
@@ -297,13 +302,17 @@ class Vector3d(Object3d):
         raise ValueError("Division by a vector is undefined")
 
     def dot(self, other: Vector3d) -> np.ndarray:
-        """The dot product of a vector with another vector.
+        """Return the dot products of the vectors and the other vectors.
 
-        Vectors must have compatible shape.
+        Parameters
+        ----------
+        other
+            Other vectors with a compatible shape.
 
         Returns
         -------
         dot_products
+            Dot products.
 
         Examples
         --------
@@ -326,10 +335,8 @@ class Vector3d(Object3d):
         chunk_size: int = 20,
         progressbar: bool = False,
     ) -> np.ndarray:
-        """The outer dot product of a vector with another vector.
-
-        The dot product for every combination of vectors in ``self`` and
-        ``other`` is computed.
+        """Return the outer dot products of all vectors and all the
+        other vectors.
 
         Parameters
         ----------
@@ -349,6 +356,7 @@ class Vector3d(Object3d):
         Returns
         -------
         dot_products
+            Dot products.
 
         Examples
         --------
@@ -428,15 +436,17 @@ class Vector3d(Object3d):
 
     @classmethod
     def zero(cls, shape: Tuple[int] = (1,)) -> Vector3d:
-        """Returns zero vectors in the specified shape.
+        """Return zero vectors in the specified shape.
 
         Parameters
         ----------
         shape
+            Output vectors' shape.
 
         Returns
         -------
         vec
+            Zero vectors.
         """
         return cls(np.zeros(shape + (cls.dim,)))
 
@@ -497,7 +507,6 @@ class Vector3d(Object3d):
 
         Examples
         --------
-        >>> import numpy as np
         >>> from orix.vector import Vector3d
         >>> v = Vector3d.yvector()
         >>> axis = Vector3d((0, 0, 1))
@@ -522,11 +531,14 @@ class Vector3d(Object3d):
     def get_nearest(
         self, x: Vector3d, inclusive: bool = False, tiebreak: bool = None
     ) -> Vector3d:
-        """The vector among x with the smallest angle to this one.
+        """Return the vector in ``x`` with the smallest angle to this
+        vector.
 
         Parameters
         ----------
         x
+            Set of vectors in which to find the one with the smallest
+            angle to this vector.
         inclusive
             If ``False`` (default) vectors exactly parallel to this will
             not be considered.
@@ -538,6 +550,20 @@ class Vector3d(Object3d):
         Returns
         -------
         vec
+            Vector with the smallest angle to this vector.
+
+        Raises
+        ------
+        ValueError
+            If this is not a single vector.
+
+        Examples
+        --------
+        >>> from orix.vector import Vector3d
+        >>> v1 = Vector3d([1, 0, 0])
+        >>> v1.get_nearest(Vector3d([[0.5, 0, 0], [0.6, 0, 0]]))
+        Vector3d (1,)
+        [[0.6 0.  0. ]]
         """
         assert self.size == 1, "`get_nearest` only works for single vectors."
         tiebreak = Vector3d.zvector() if tiebreak is None else tiebreak
@@ -558,6 +584,7 @@ class Vector3d(Object3d):
         Returns
         -------
         vec
+            The mean vector.
         """
         axis = tuple(range(self.ndim))
         return self.__class__(self.data.mean(axis=axis))
@@ -571,8 +598,11 @@ class Vector3d(Object3d):
         Returns
         -------
         azimuth
+            Azimuth angles.
         polar
+            Polar angles.
         radial
+            Radial values.
         """
         return self.azimuth, self.polar, self.radial
 
@@ -591,6 +621,7 @@ class Vector3d(Object3d):
         Returns
         -------
         vec
+            Vectors within the fundamental sector.
 
         Examples
         --------
