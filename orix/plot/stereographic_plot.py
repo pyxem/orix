@@ -53,8 +53,6 @@ ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3, mesh=0)
 class StereographicPlot(maxes.Axes):
     """Stereographic plot for plotting :class:`~orix.vector.Vector3d`.
 
-    Inherits from :class:`~matplotlib.axes.Axes`.
-
     Parameters
     ----------
     *args

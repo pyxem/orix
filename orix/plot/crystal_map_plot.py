@@ -19,6 +19,7 @@
 from typing import List, Optional, Tuple
 
 from matplotlib.axes import Axes
+import matplotlib.colorbar as mbar
 from matplotlib.image import AxesImage
 import matplotlib.patches as mpatches
 from matplotlib.projections import register_projection
@@ -54,7 +55,7 @@ class CrystalMapPlot(Axes):
         override_status_bar: bool = False,
         **kwargs,
     ) -> AxesImage:
-        r"""Plot a 2D map with any CrystalMap attribute as map values.
+        """Plot a 2D map with any CrystalMap attribute as map values.
 
         Wraps :meth:`matplotlib.axes.Axes.imshow`, see that method for
         relevant keyword arguments.
@@ -71,14 +72,14 @@ class CrystalMapPlot(Axes):
             horizontal map dimension.
         scalebar_properties
             Dictionary of keyword arguments passed to
-            :func:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
+            :class:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
         legend
             Whether to add a legend to the plot. This is only
             implemented for a phase plot (in which case default is
             ``True``).
         legend_properties
             Dictionary of keyword arguments passed to
-            :meth:`matplotlib.axes.legend`.
+            :meth:`matplotlib.axes.Axes.legend`.
         axes
             Which data axes to plot if data has more than two
             dimensions. The index of data to plot in the final dimension
@@ -104,14 +105,12 @@ class CrystalMapPlot(Axes):
         See Also
         --------
         matplotlib.axes.Axes.imshow
-        orix.plot.CrystalMapPlot.add_scalebar
-        orix.plot.CrystalMapPlot.add_overlay
-        orix.plot.CrystalMapPlot.add_colorbar
+        add_scalebar
+        add_overlay
+        add_colorbar
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
         >>> from orix import data, plot
         >>> from orix.io import load
 
@@ -121,9 +120,8 @@ class CrystalMapPlot(Axes):
 
         Plot a phase map
 
-        >>> fig = plt.figure()  # Get figure
-        >>> ax = fig.add_subplot(projection="plot_map")  # Get axes
-        >>> im = ax.plot_map(xmap)  # Get image
+        >>> fig, ax = plt.subplots(subplot_kw=dict(projection="plot_map"))
+        >>> _ = ax.plot_map(xmap)
 
         Add an overlay
 
@@ -132,7 +130,7 @@ class CrystalMapPlot(Axes):
         Plot an arbitrary map property, also changing scalebar location
 
         >>> ax = plt.subplot(projection="plot_map")
-        >>> _ = ax.plot_map(xmap, xmap.dp, cmap="cividis", scalebar_properties={"location": 4})
+        >>> _ = ax.plot_map(xmap, xmap.dp, scalebar_properties={"location": 4})
 
         Add a colorbar
 
@@ -145,7 +143,7 @@ class CrystalMapPlot(Axes):
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap2, austenite_angles)
-        >>> _ = ax.add_colorbar("Orientation angle [$^{\circ}$]")
+        >>> _ = ax.add_colorbar("Orientation angle [deg]")
 
         Remove all figure and axes padding
 
@@ -225,7 +223,6 @@ class CrystalMapPlot(Axes):
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt
         >>> from orix import data, plot
         >>> xmap = data.sdss_ferrite_austenite()
 
@@ -234,7 +231,7 @@ class CrystalMapPlot(Axes):
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap, scalebar=False)
-        >>> sbar = ax.add_scalebar(xmap, location=4, frameon=False);
+        >>> sbar = ax.add_scalebar(xmap, location=4, frameon=False)
         """
         # Get whether z, y or x
         last_axis = crystal_map.ndim - 1
@@ -288,7 +285,6 @@ class CrystalMapPlot(Axes):
         Examples
         --------
         >>> from orix import data, plot
-        >>> import matplotlib.pyplot as plt
         >>> xmap = data.sdss_ferrite_austenite()
 
         Plot a phase map with a map property as overlay
@@ -296,7 +292,7 @@ class CrystalMapPlot(Axes):
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap)
-        >>> ax.add_overlay(xmap, xmap.dp);
+        >>> ax.add_overlay(xmap, xmap.dp)
         """
         image = self.images[0]
         image_data = image.get_array()
@@ -316,22 +312,22 @@ class CrystalMapPlot(Axes):
 
         image.set_data(image_data)
 
-    def add_colorbar(self, label: Optional[str] = None, **kwargs):
+    def add_colorbar(self, label: Optional[str] = None, **kwargs) -> mbar.Colorbar:
         """Add an opinionated colorbar to the figure and return it.
 
         The colorbar is also available as an attribute :attr:`colorbar`.
 
         Parameters
         ----------
-        label : str, optional
+        label
             Colorbar title, default is ``None``.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`mpl_toolkits.axes_grid1.make_axes_locatable.append_axes`.
 
         Returns
         -------
-        cbar : matplotlib.colorbar
+        cbar
             Colorbar.
 
         Examples
@@ -375,7 +371,6 @@ class CrystalMapPlot(Axes):
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt
         >>> from orix import data, plot
         >>> xmap = data.sdss_ferrite_austenite()
 
@@ -414,9 +409,9 @@ class CrystalMapPlot(Axes):
             Data axes to plot. If ``None``, the last two data axes are
             plotted (default).
         depth
-            Which data layer to plot along the final axis not in `axes` if
-            data is 3D. If ``None``, this is set to zero, i.e. the first
-            layer (default).
+            Which data layer to plot along the final axis not in `axes`
+            if data is 3D. If ``None``, this is set to zero, i.e. the
+            first layer (default).
         """
         ndim = crystal_map.ndim
 
@@ -486,7 +481,8 @@ class CrystalMapPlot(Axes):
         Returns
         -------
         image
-            Image object where the above mentioned methods are overridden.
+            Image object where the above mentioned methods are
+            overridden.
         """
         # Get data shape to plot
         n_rows, n_cols = self._data_shape
