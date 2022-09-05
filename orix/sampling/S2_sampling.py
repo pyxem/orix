@@ -43,12 +43,16 @@ def _remove_pole_duplicates(
     Parameters
     ----------
     azimuth
+        Azimuth angles.
     polar
+        Polar angles.
 
     Returns
     -------
     azimuth
+        Azimuth angles without duplicates.
     polar
+        Polar angles without duplicates.
     """
     mask_azimuth = azimuth > 0
     mask_polar_0 = np.isclose(polar, 0) * mask_azimuth
@@ -88,7 +92,9 @@ def _sample_S2_uv_mesh_coordinates(
     Returns
     -------
     azimuth
+        Azimuth angles.
     polar
+        Polar angles.
     """
     hemisphere = hemisphere.lower()
     if hemisphere not in ("upper", "lower", "both"):
@@ -130,7 +136,6 @@ def _sample_S2_uv_mesh_coordinates(
         polar_min + offset * step_size_polar,
         polar_max + offset * step_size_polar,
         num=steps_polar,
-        endpoint=True,
     )
     # polar coordinate cannot exceed polar_max
     polar = polar[polar <= polar_max]
@@ -144,7 +149,7 @@ def sample_S2_uv_mesh(
     offset: float = 0,
     remove_pole_duplicates: bool = True,
 ) -> Vector3d:
-    r"""Vectors of a UV mesh on a unit sphere *S2*
+    r"""Return vectors of a UV mesh on a unit sphere *S2*
     :cite:`cajaravelli2015four`.
 
     The mesh vertices are defined by the parametrization
@@ -215,7 +220,9 @@ def _sample_S2_equal_area_coordinates(
     Returns
     -------
     azimuth
+        Azimuth angles.
     polar
+        Polar angles.
     """
     # calculate number of steps and step size angular spacing
     # this parameter D in :cite:`rohrer2004distribution`.
@@ -293,8 +300,8 @@ def sample_S2_equal_area_mesh(
     hemisphere: str = "both",
     remove_pole_duplicates: bool = True,
 ) -> Vector3d:
-    """Vectors of a cube mesh on a unit sphere *S2* according to equal
-    area spacing :cite:`rohrer2004distribution`.
+    """Return vectors of a cube mesh on a unit sphere *S2* according to
+    equal area spacing :cite:`rohrer2004distribution`.
 
     Parameters
     ----------
@@ -312,6 +319,7 @@ def sample_S2_equal_area_mesh(
     Returns
     -------
     vec
+        Vectors that sample the unit sphere.
     """
     azimuth, polar = _sample_S2_equal_area_coordinates(resolution, hemisphere)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
@@ -325,7 +333,7 @@ def sample_S2_equal_area_mesh(
 def sample_S2_cube_mesh(
     resolution: float, grid_type: str = "spherified_corner"
 ) -> Vector3d:
-    """Vectors of a cube mesh projected on a unit sphere *S2*
+    """Return vectors of a cube mesh projected on a unit sphere *S2*
     :cite:`cajaravelli2015four`.
 
     Parameters
@@ -385,8 +393,8 @@ def sample_S2_cube_mesh(
 
 
 def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
-    """Vectors of a hexagonal bipyramid mesh projected on a unit sphere
-    *S2*.
+    """Return vectors of a hexagonal bipyramid mesh projected on a unit
+    sphere *S2*.
 
     Parameters
     ----------
@@ -452,7 +460,7 @@ def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
 
 
 def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vector3d:
-    """Vectors of a random mesh on *S2*.
+    """Return vectors of a random mesh on *S2*.
 
     Parameters
     ----------
@@ -480,7 +488,7 @@ def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vect
 
 
 def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
-    """Vectors of an icosahedral mesh on *S2* :cite:`meshzoo`.
+    """Return vectors of an icosahedral mesh on *S2* :cite:`meshzoo`.
 
     Parameters
     ----------
@@ -566,7 +574,7 @@ for sampling_name, sampling_method in _sampling_method_registry.items():
     _sampling_method_names.add(f":func:`orix.sampling.{_func.__name__}`")
 
 _s2_sampling_docstring = (
-    """Generate unit vectors that sample S2 with a specific angular
+    """Return unit vectors that sample S2 with a specific angular
     resolution.
 
     Parameters
@@ -585,7 +593,7 @@ _s2_sampling_docstring = (
     vec
         Vectors that sample the unit sphere.
 
-    See also
+    See Also
     --------
     {}
     """

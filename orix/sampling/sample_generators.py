@@ -33,8 +33,7 @@ def get_sample_fundamental(
     method: str = "cubochoric",
     **kwargs
 ) -> Rotation:
-    """Generates an equispaced grid of rotations within a fundamental
-    zone.
+    """Return an equispaced grid of rotations within a fundamental zone.
 
     Parameters
     ----------
@@ -98,7 +97,7 @@ def get_sample_local(
     method: str = "cubochoric",
     **kwargs
 ) -> Rotation:
-    """Generates a grid of rotations about a given rotation.
+    """Return a grid of rotations about a given rotation.
 
     Parameters
     ----------
@@ -146,7 +145,7 @@ def get_sample_local(
 
 
 def _remove_larger_than_angle(rot: Rotation, max_angle: Union[int, float]) -> Rotation:
-    """Removes large angle rotations from a sample of rotations.
+    """Remove large angle rotations from a sample of rotations.
 
     Parameters
     ----------
