@@ -84,7 +84,6 @@ class CrystalMap:
     columns and containing Austenite and Ferrite orientations
 
     >>> from diffpy.structure import Atom, Lattice, Structure
-    >>> import numpy as np
     >>> from orix.crystal_map import create_coordinate_arrays, CrystalMap, PhaseList
     >>> from orix.quaternion import Rotation
     >>> coords, n = create_coordinate_arrays(shape=(2, 3))
