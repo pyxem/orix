@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Reader of a crystal map from an .ang text file in formats produced by
-EDAX TSL, NanoMegas ASTAR Index, or EMsoft's EMdpmerge program.
+"""Reader of a crystal map from an .ang file in formats produced by EDAX
+TSL, NanoMegas ASTAR Index or EMsoft's EMdpmerge program.
 """
 
 from io import TextIOWrapper
@@ -33,6 +33,8 @@ from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
 from orix.quaternion import Rotation
 from orix.quaternion.symmetry import point_group_aliases
 
+__all__ = ["file_reader", "file_writer"]
+
 # MTEX has this format sorted out, check out their readers when fixing
 # issues and adapting to other versions of this file format in the future:
 # https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ang.m
@@ -46,21 +48,20 @@ writes_this = CrystalMap
 
 
 def file_reader(filename: str) -> CrystalMap:
-    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
-    from a file in EDAX TLS's .ang format. The map in the input is
-    assumed to be 2D.
+    """Return a crystal map from a file in EDAX TLS's .ang format. The
+    map in the input is assumed to be 2D.
 
     Many vendors produce an .ang file. Supported vendors are:
 
-        * EDAX TSL
-        * NanoMegas ASTAR Index
-        * EMsoft (from program `EMdpmerge`)
-        * orix
+    * EDAX TSL
+    * NanoMegas ASTAR Index
+    * EMsoft (from program `EMdpmerge`)
+    * orix
 
     All points satisfying the following criteria are classified as not
     indexed:
 
-        * EDAX TSL: confidence index == -1
+    * EDAX TSL: confidence index == -1
 
     Parameters
     ----------
@@ -366,21 +367,21 @@ def file_writer(
     pattern_fit_prop: Optional[str] = None,
     extra_prop: Union[str, List[str], None] = None,
 ):
-    """Write a :class:`~orix.crystal_map.CrystalMap` to an .ang file
-    readable by MTEX and EDAX TSL OIM Analysis v7.
+    """Write a crystal map to an .ang file readable by MTEX and EDAX TSL
+    OIM Analysis v7.
 
     The columns are phi1, Phi, phi2, x, y, image_quality,
     confidence_index, phase_id, detector_signal, and pattern_fit.
 
     Parameters in masked out or non-indexed points are set to:
 
-        * euler angles = 4 * pi
-        * image quality = 0
-        * confidence index = -1
-        * phase ID = 0 if single phase or -1 if multi phase
-        * pattern fit = 180
-        * detector signal = 0
-        * extra properties = 0
+    * euler angles = 4 * pi
+    * image quality = 0
+    * confidence index = -1
+    * phase ID = 0 if single phase or -1 if multi phase
+    * pattern fit = 180
+    * detector signal = 0
+    * extra properties = 0
 
     Parameters
     ----------

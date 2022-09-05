@@ -41,8 +41,8 @@ writes_this = CrystalMap
 
 
 def file_reader(filename: str, refined: bool = False, **kwargs) -> CrystalMap:
-    """Return a :class:`~orix.crystal_map.CrystalMap` from a file in
-    EMsoft's dictionary indexing dot product file format.
+    """Return a crystal map from a file in EMsoft's dictionary indexing
+    dot product file format.
 
     Parameters
     ----------
@@ -51,7 +51,7 @@ def file_reader(filename: str, refined: bool = False, **kwargs) -> CrystalMap:
     refined
         Whether to return refined orientations. Default is ``False``.
     **kwargs
-        Keyword arguments passed to :func:`h5py.File`.
+        Keyword arguments passed to :class:`h5py.File`.
 
     Returns
     -------

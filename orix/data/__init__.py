@@ -108,14 +108,15 @@ def sdss_austenite(allow_download: bool = False, **kwargs) -> CrystalMap:
     Read only refined orientations from the EMsoft HDF5 file by passing
     keyword arguments on to the reader and plot the dot product map
 
-    >>> from orix import data
+    >>> from orix import data, plot
     >>> xmap = data.sdss_austenite(allow_download=True, refined=True)
     >>> xmap
     Phase    Orientations       Name  Space group  Point group  Proper point group     Color
         0  11700 (100.0%)  austenite         None         m-3m                 432  tab:blue
     Properties: AvDotProductMap, CI, IQ, ISM, KAM, OSM, RefinedDotProducts, TopDotProductList, TopMatchIndices
     Scan unit: um
-    >>> xmap.plot("RefinedDotProducts")
+    >>> ipf_key = plot.IPFColorKeyTSL(xmap.phases[0].point_group)
+    >>> xmap.plot(ipf_key.orientation2color(xmap.orientations), overlay="RefinedDotProducts")
     """
     fname = _fetch("sdss/sdss_austenite.h5", allow_download)
     return io.load(fname, **kwargs)
@@ -160,7 +161,7 @@ def sdss_ferrite_austenite(allow_download: bool = False, **kwargs) -> CrystalMap
         2   6043 (51.6%)    ferrite         None          432                 432  tab:orange
     Properties: iq, dp
     Scan unit: um
-    >>> xmap.plot()
+    >>> xmap.plot(overlay="dp")
     """
     fname = _fetch("sdss/sdss_ferrite_austenite.ang", allow_download)
     xmap = io.load(fname, **kwargs)
@@ -194,7 +195,9 @@ def ti_orientations(allow_download: bool = False) -> Orientation:
 
     Examples
     --------
-    >>> from orix import data
+    >>> import matplotlib.pyplot as plt
+    >>> from orix import data, plot
+    >>> from orix.quaternion.symmetry import D6
     >>> ori = data.ti_orientations()
     >>> ori
     Orientation (193167,) 622
@@ -205,6 +208,9 @@ def ti_orientations(allow_download: bool = False) -> Orientation:
      [ 0.4925 -0.1633 -0.668   0.5334]
      [ 0.4946 -0.1592 -0.6696  0.5307]
      [ 0.4946 -0.1592 -0.6696  0.5307]]
+    >>> ipf_key = plot.IPFColorKeyTSL(D6)
+    >>> fig, ax = plt.subplots()
+    >>> _ = ax.imshow(ipf_key.orientation2color(ori).reshape((381, 507, 3)))
     """
     fname = _fetch("ti_orientations/ti_orientations.ctf", allow_download)
     euler = np.loadtxt(fname, skiprows=1, usecols=(0, 1, 2))

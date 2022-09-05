@@ -36,15 +36,15 @@ writes_this = CrystalMap
 
 
 def file_reader(filename: str, **kwargs) -> CrystalMap:
-    """Return a :class:`~orix.crystal_map.CrystalMap` from a file in
-    Bruker Nano's dot product file format.
+    """Return a crystal map from a file in Bruker Nano's dot product
+    file format.
 
     Parameters
     ----------
     filename
         Path and file name.
     **kwargs
-        Keyword arguments passed to :func:`h5py.File`.
+        Keyword arguments passed to :class:`h5py.File`.
 
     Returns
     -------

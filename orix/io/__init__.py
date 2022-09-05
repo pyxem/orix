@@ -16,7 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Load and save utilities."""
+"""Read and write crystal maps from and to file.
+
+.. currentmodule:: orix.io
+
+.. rubric:: Modules
+
+.. autosummary::
+    :toctree: ../generated/
+    :template: custom-module-template.rst
+
+    plugins
+"""
 
 import os
 from typing import Optional
@@ -81,15 +92,17 @@ def loadctf(file_string: str) -> Rotation:
 
 
 def load(filename: str, **kwargs) -> CrystalMap:
-    """Load data from a supported file.
+    """Load data from a supported file format listed in
+    :doc:`orix.io.plugins`.
 
     Parameters
     ----------
     filename
         Name of file to load.
     **kwargs
-        Keyword arguments passed to the corresponding orix reader. See
-        their individual docstrings for available arguments.
+        Keyword arguments passed to the corresponding plugins'
+        ``file_reader()``. See their individual docstrings for available
+        arguments.
 
     Returns
     -------
@@ -157,7 +170,8 @@ def _plugin_from_manufacturer(filename: str, plugins: list):
 def save(
     filename: str, object2write: CrystalMap, overwrite: Optional[bool] = None, **kwargs
 ):
-    """Write data to a supported file format.
+    """Write data to a supported file format listed in
+    :doc:`orix.io.plugins`.
 
     Parameters
     ----------
@@ -169,8 +183,9 @@ def save(
         If not given and the file exists, the user is queried. If
         ``True`` (``False``) the file is (not) overwritten if it exists.
     **kwargs
-        Keyword arguments passed to the corresponding orix writer. See
-        their individual docstrings for available arguments.
+        Keyword arguments passed to the corresponding plugins'
+        ``file_writer()``. See their individual docstrings for available
+        arguments.
     """
     ext = os.path.splitext(filename)[1][1:]
 

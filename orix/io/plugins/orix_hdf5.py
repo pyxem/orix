@@ -44,15 +44,14 @@ writes_this = CrystalMap
 
 
 def file_reader(filename: str, **kwargs) -> CrystalMap:
-    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
-    from a file in orix' HDF5 file format.
+    """Return a crystal map from a file in orix' HDF5 file format.
 
     Parameters
     ----------
     filename
         Path and file name.
     **kwargs
-        Keyword arguments passed to :func:`h5py.File`.
+        Keyword arguments passed to :class:`h5py.File`.
 
     Returns
     -------
@@ -225,8 +224,7 @@ def dict2atom(dictionary: dict) -> Atom:
 
 
 def file_writer(filename: str, crystal_map: CrystalMap, **kwargs):
-    """Write a :class:`~orix.crystal_map.CrystalMap` object to an HDF5
-    file.
+    """Write a crystal map to an HDF5 file.
 
     Parameters
     ----------
@@ -235,7 +233,7 @@ def file_writer(filename: str, crystal_map: CrystalMap, **kwargs):
     crystal_map
         Object to write to file.
     **kwargs
-        Keyword arguments passed to :meth:`h5py:Group.require_dataset`.
+        Keyword arguments passed to :meth:`h5py.Group.require_dataset`.
     """
     # Open file in correct mode
     try:
