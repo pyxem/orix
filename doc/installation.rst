@@ -64,5 +64,5 @@ To install orix from source, clone the repository from `GitHub
     cd orix
     pip install --editable .
 
-See the :ref:`contributing guide <setting-up-a-development-installation>` for how
-to set up a development installation and keep it up to date.
+See the :ref:`contributing guide <set-up-a-development-installation>` for how to set up
+a development installation and keep it up to date.

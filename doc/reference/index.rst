@@ -22,11 +22,14 @@ the below list of modules:
 .. code-block:: python
 
     >>> from orix.quaternion import Orientation, symmetry
-    >>> import numpy as np
     >>> ori = Orientation.from_axes_angles([1, 1, 1], np.pi / 2, symmetry.Oh)
     >>> ori
     Orientation (1,) m-3m
     [[0.7071 0.4082 0.4082 0.4082]]
+
+Note that :mod:`numpy` and :mod:`matplotlib.pyplot` are available as ``np`` and ``plt``
+in docstring examples, although they are not imported in order to reduce the number of
+code lines.
 
 .. currentmodule:: orix
 

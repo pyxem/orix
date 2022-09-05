@@ -55,6 +55,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable", None),
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
+    "sklearn": ("https://scikit-learn.org/stable", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -300,6 +301,7 @@ sphinx_gallery_conf = {
     "show_memory": True,
 }
 autosummary_generate = True
+
 
 # Download example datasets prior to building the docs
 print("[orix] Downloading example datasets")
