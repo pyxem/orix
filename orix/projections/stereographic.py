@@ -88,7 +88,7 @@ class StereographicProjection:
         r"""Return stereographic coordinates (X, Y) from 3D unit vectors
         created from spherical coordinates, azimuth :math:`\phi` and
         polar :math:`\theta`, defined as in the ISO 31-11 standard
-        [SphericalWolfram]_.
+        :cite:`weisstein2005spherical`.
 
         Parameters
         ----------
@@ -159,8 +159,8 @@ class StereographicProjection:
         r"""Return two sets of stereographic coordinates (X, Y) from 3D
         unit vectors created from spherical coordinates, azimuth
         :math:`\phi` and polar :math:`\theta`, defined as in the
-        ISO 31-11 standard [SphericalWolfram]_: one set for vectors in
-        the upper hemisphere, and one for the lower.
+        ISO 31-11 standard :cite:`weisstein2005spherical`: one set for
+        vectors in the upper hemisphere, and one for the lower.
 
         Parameters
         ----------
@@ -263,7 +263,9 @@ class InverseStereographicProjection:
         Parameters
         ----------
         x
+            X coordinates.
         y
+            Y coordinates.
 
         Returns
         -------
@@ -298,12 +300,15 @@ class InverseStereographicProjection:
     ) -> Tuple[np.ndarray, np.ndarray]:
         r"""Return spherical coordinates, azimuth :math:`phi` and
         polar :math:`theta`, defined as in the ISO 31-11 standard
-        [SphericalWolfram]_, from stereographic coordinates (X, Y).
+        :cite:`weisstein2005spherical`, from stereographic coordinates
+        (X, Y).
 
         Parameters
         ----------
         x
+            X coordinates.
         y
+            Y coordinates.
 
         Returns
         -------
