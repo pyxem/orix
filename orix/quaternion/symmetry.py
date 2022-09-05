@@ -16,26 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Collections of transformations representing a symmetry group.
-
-An object's symmetry can be characterized by the transformations relating
-symmetrically-equivalent views on that object. Consider the following shape.
-
-.. image:: /_static/img/triad-object.png
-   :width: 200px
-   :alt: Image of an object with three-fold symmetry.
-   :align: center
-
-This obviously has three-fold symmetry. If we rotated it by
-:math:`\\frac{2}{3}\\pi` or :math:`\\frac{4}{3}\\pi`, the image would be unchanged.
-These angles, as well as :math:`0`, or the identity, expressed as quaternions,
-form a group. Applying any operation in the group to any other results in
-another member of the group.
-
-Symmetries can consist of rotations or inversions, expressed as
-improper rotations. A mirror symmetry is equivalent to a 2-fold rotation
-combined with inversion.
-"""
+from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -48,7 +29,28 @@ from orix.vector import AxAngle, Vector3d
 
 
 class Symmetry(Rotation):
-    """The set of rotations comprising a point group."""
+    r"""The set of rotations comprising a point group.
+
+    An object's symmetry can be characterized by the transformations
+    relating symmetrically-equivalent views on that object. Consider
+    the following shape.
+
+    .. image:: /_static/img/triad-object.png
+       :width: 200px
+       :alt: Image of an object with three-fold symmetry.
+       :align: center
+
+    This obviously has three-fold symmetry. If we rotated it by
+    :math:`\frac{2}{3}\pi` or :math:`\frac{4}{3}\pi`, the image
+    would be unchanged. These angles, as well as :math:`0`, or the
+    identity, expressed as quaternions, form a group. Applying any
+    operation in the group to any other results in another member of the
+    group.
+
+    Symmetries can consist of rotations or inversions, expressed as
+    improper rotations. A mirror symmetry is equivalent to a 2-fold
+    rotation combined with inversion.
+    """
 
     name = ""
 
@@ -56,7 +58,7 @@ class Symmetry(Rotation):
         data = np.array_str(self.data, precision=4, suppress_small=True)
         return f"{self.__class__.__name__} {self.shape} {self.name}\n{data}"
 
-    def __and__(self, other: "Symmetry") -> "Symmetry":
+    def __and__(self, other: Symmetry) -> Symmetry:
         generators = [g for g in self.subgroups if g in other.subgroups]
         return Symmetry.from_generators(*generators)
 
@@ -74,19 +76,19 @@ class Symmetry(Rotation):
         return np.all(np.equal(self.improper, 0))
 
     @property
-    def subgroups(self) -> List["Symmetry"]:
+    def subgroups(self) -> List[Symmetry]:
         """Return the list groups that are subgroups of this group."""
         return [g for g in _groups if g._tuples <= self._tuples]
 
     @property
-    def proper_subgroups(self) -> List["Symmetry"]:
+    def proper_subgroups(self) -> List[Symmetry]:
         """Return the list of proper groups that are subgroups of this
         group.
         """
         return [g for g in self.subgroups if g.is_proper]
 
     @property
-    def proper_subgroup(self) -> Union[List["Symmetry"], "Symmetry"]:
+    def proper_subgroup(self) -> Union[List[Symmetry], Symmetry]:
         """Return the largest proper group of this subgroup."""
         subgroups = self.proper_subgroups
         if len(subgroups) == 0:
@@ -96,14 +98,14 @@ class Symmetry(Rotation):
             return subgroups_sorted[-1]
 
     @property
-    def laue(self) -> "Symmetry":
+    def laue(self) -> Symmetry:
         """Return this group plus inversion."""
         laue = Symmetry.from_generators(self, Ci)
         laue.name = _get_laue_group_name(self.name)
         return laue
 
     @property
-    def laue_proper_subgroup(self) -> "Symmetry":
+    def laue_proper_subgroup(self) -> Symmetry:
         """Return the proper subgroup of this group plus inversion."""
         return self.laue.proper_subgroup
 
@@ -350,7 +352,7 @@ class Symmetry(Rotation):
         return rot.flatten()
 
     @classmethod
-    def from_generators(cls, *generators: Rotation) -> "Symmetry":
+    def from_generators(cls, *generators: Rotation) -> Symmetry:
         """Create a Symmetry from a minimum list of generating
         transformations.
 
@@ -368,6 +370,7 @@ class Symmetry(Rotation):
         Combining a 180° rotation about [1, -1, 0] with a 4-fold
         rotoinversion axis along [0, 0, 1]
 
+        >>> from orix.quaternion import Symmetry
         >>> myC2 = Symmetry([(1, 0, 0, 0), (0, 0.75**0.5, -0.75**0.5, 0)])
         >>> myS4 = Symmetry([(1, 0, 0, 0), (0.5**0.5, 0, 0, 0.5**0.5)])
         >>> myS4.improper = [0, 1]
@@ -704,13 +707,15 @@ _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T
 
 
 def get_distinguished_points(s1: Symmetry, s2: Symmetry = C1) -> Rotation:
-    """Points symmetrically equivalent to identity with respect to
-    ``s1`` and ``s2``.
+    """Return points symmetrically equivalent to identity with respect
+    to ``s1`` and ``s2``.
 
     Parameters
     ----------
     s1
+        First symmetry.
     s2
+        Second symmetry.
 
     Returns
     -------
@@ -765,7 +770,7 @@ spacegroup2pointgroup_dict = {
 
 
 def get_point_group(space_group_number: int, proper: bool = False) -> Symmetry:
-    """Maps a space group number to its (proper) point group.
+    """Map a space group number to its (proper) point group.
 
     Parameters
     ----------

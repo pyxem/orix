@@ -16,28 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Rotations respecting symmetry.
-
-An orientation is simply a rotation with respect to some reference
-frame. In this respect, an orientation is in fact a *misorientation* -
-a change of orientation - with respect to a reference of the identity
-rotation.
-
-In orix, orientations and misorientations are distinguished from
-rotations only by the inclusion of a notion of symmetry. Consider the
-following example:
-
-.. image:: /_static/img/orientation.png
-   :width: 200px
-   :alt: Two objects with two different rotations each. The square, with
-         fourfold symmetry, has the same orientation in both cases.
-   :align: center
-
-Both objects have undergone the same *rotations* with respect to the
-reference. However, because the square has fourfold symmetry, it is
-indistinguishable in both cases, and hence has the same orientation.
-"""
-
 from __future__ import annotations
 
 from itertools import combinations_with_replacement as icombinations
@@ -57,7 +35,7 @@ from orix._util import deprecated
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import AxAngle, Vector3d
+from orix.vector import AxAngle, NeoEuler, Vector3d
 
 
 def _distance(misorientation, verbose, split_size=100):
@@ -120,7 +98,7 @@ class Misorientation(Rotation):
     r"""Misorientation object.
 
     Misorientations represent transformations from one orientation,
-    :math:`o_1` to another, :math:`o_2`: :math:`o_2 \cdot o_1^{-1}`.
+    :math:`g_1` to another, :math:`g_2`: :math:`g_2 \cdot g_1^{-1}`.
 
     They have symmetries associated with each of the starting
     orientations.
@@ -142,7 +120,13 @@ class Misorientation(Rotation):
 
     @property
     def symmetry(self) -> Tuple[Symmetry, Symmetry]:
-        """Crystal symmetries."""
+        """Return or set the crystal symmetries.
+
+        Parameters
+        ----------
+        value : list of Symmetry or 2-tuple of Symmetry
+            Crystal symmetries.
+        """
         return self._symmetry
 
     @symmetry.setter
@@ -170,27 +154,27 @@ class Misorientation(Rotation):
             return all(v2)
 
     def reshape(self, *shape) -> Misorientation:
-        m = super().reshape(*shape)
-        m._symmetry = self._symmetry
-        return m
+        mori = super().reshape(*shape)
+        mori._symmetry = self._symmetry
+        return mori
 
     def flatten(self) -> Misorientation:
-        m = super().flatten()
-        m._symmetry = self._symmetry
-        return m
+        mori = super().flatten()
+        mori._symmetry = self._symmetry
+        return mori
 
     def squeeze(self) -> Misorientation:
-        m = super().squeeze()
-        m._symmetry = self._symmetry
-        return m
+        mori = super().squeeze()
+        mori._symmetry = self._symmetry
+        return mori
 
     def transpose(self, *axes) -> Misorientation:
-        m = super().transpose(*axes)
-        m._symmetry = self._symmetry
-        return m
+        mori = super().transpose(*axes)
+        mori._symmetry = self._symmetry
+        return mori
 
-    def equivalent(self, grain_exchange: bool = False):
-        r"""Equivalent misorientations.
+    def equivalent(self, grain_exchange: bool = False) -> Misorientation:
+        r"""Return the equivalent misorientations.
 
         grain_exchange
             If ``True`` the rotation :math:`g` and :math:`g^{-1}` are
@@ -198,7 +182,8 @@ class Misorientation(Rotation):
 
         Returns
         -------
-        Misorientation
+        mori
+            The equivalent misorientations.
         """
         Gl, Gr = self._symmetry
 
@@ -211,8 +196,13 @@ class Misorientation(Rotation):
         return self.__class__(equivalent).flatten()
 
     def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> Misorientation:
-        """Computes equivalent transformations which have the smallest
-        angle of rotation and return these as a new Misorientation object.
+        """Return equivalent transformations which have the smallest
+        angle of rotation as a new misorientation.
+
+        Parameters
+        ----------
+        verbose
+            Whether to print a progressbar. Default is ``False``.
 
         Returns
         -------
@@ -221,7 +211,6 @@ class Misorientation(Rotation):
 
         Examples
         --------
-        >>> import numpy as np
         >>> from orix.quaternion.symmetry import C4, C2
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> m = Misorientation(data)
@@ -254,7 +243,7 @@ class Misorientation(Rotation):
         removal="0.10",
     )
     def distance(self, verbose: bool = False, split_size: int = 100) -> np.ndarray:
-        """Symmetry reduced distance.
+        """Return the symmetry reduced distance.
 
         Compute the shortest distance between all orientations
         considering symmetries.
@@ -274,7 +263,6 @@ class Misorientation(Rotation):
 
         Examples
         --------
-        >>> import numpy as np
         >>> from orix.quaternion import Misorientation, symmetry
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> m = Misorientation(data)
@@ -352,7 +340,8 @@ class Misorientation(Rotation):
 
         See Also
         --------
-        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot
+        orix.plot.AxAnglePlot
+        orix.plot.RodriguesPlot
         """
         from orix.plot.rotation_plot import _setup_rotation_plot
 
@@ -415,7 +404,8 @@ class Misorientation(Rotation):
 
         Returns
         -------
-        distances
+        angles
+            Misorientation angles.
 
         Notes
         -----
@@ -440,26 +430,27 @@ class Misorientation(Rotation):
 
         Examples
         --------
-        >>> import numpy as np
         >>> from orix.quaternion import Misorientation, symmetry
         >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, np.pi / 2])
         >>> m.symmetry = (symmetry.D6, symmetry.D6)
-        >>> d = m.get_distance_matrix()  # doctest: +SKIP
+        >>> m.get_distance_matrix(progressbar=False)
+        array([[0.        , 1.57079633],
+               [1.57079633, 0.        ]])
         """
         # Reduce symmetry operations to the unique ones
         symmetry = _get_unique_symmetry_elements(*self.symmetry)
 
         # Perform "s_k m_i s_l s_k m_j" (see Notes)
-        misorientation1 = symmetry.outer(self).outer(symmetry)
-        misorientation2 = misorientation1._outer_dask(~self, chunk_size=chunk_size)
+        mori1 = symmetry.outer(self).outer(symmetry)
+        mori2 = mori1._outer_dask(~self, chunk_size=chunk_size)
 
         # Perform last outer product and reduce to all dot products at
         # the same time
         warnings.filterwarnings("ignore", category=da.PerformanceWarning)
-        str1 = "abcdefghijklmnopqrstuvwxy"[: misorientation2.ndim]
+        str1 = "abcdefghijklmnopqrstuvwxy"[: mori2.ndim]
         str2 = "z" + str1[-1]  # Last axis has shape (4,)
         sum_over = f"{str1},{str2}->{str1[:-1] + str2[0]}"
-        all_dot_products = da.einsum(sum_over, misorientation2, symmetry.data)
+        all_dot_products = da.einsum(sum_over, mori2, symmetry.data)
 
         # Get highest dot product
         axes = (0, self.ndim + 1, 2 * self.ndim + 2)
@@ -482,12 +473,27 @@ class Misorientation(Rotation):
 
 
 class Orientation(Misorientation):
-    """Orientations represent misorientations away from a reference of
+    r"""Orientations represent misorientations away from a reference of
     identity and have only one associated symmetry.
 
     Orientations support binary subtraction, producing a misorientation.
-    That is, to compute the misorientation from :math:`o_1` to
-    :math:`o_2`, call :code:`o_2 - o_1`.
+    That is, to compute the misorientation from :math:`g_1` to
+    :math:`g_2`, call :code:`g_2 - g_1`.
+
+    In orix, orientations and misorientations are distinguished from
+    rotations only by the inclusion of a notion of symmetry. Consider
+    the following example:
+
+    .. image:: /_static/img/orientation.png
+       :width: 200px
+       :alt: Two objects with two different rotations each. The square,
+             with four-fold symmetry, has the same orientation in both
+             cases.
+       :align: center
+
+    Both objects have undergone the same *rotations* with respect to the
+    reference. However, because the square has four-fold symmetry, it is
+    indistinguishable in both cases, and hence has the same orientation.
     """
 
     @property
@@ -557,6 +563,7 @@ class Orientation(Misorientation):
         Returns
         -------
         ori
+            Orientations.
         """
         ori = super().from_euler(euler=euler, direction=direction, **kwargs)
         if symmetry:
@@ -577,15 +584,20 @@ class Orientation(Misorientation):
         symmetry
             Symmetry of orientation(s). If not given (default), no
             symmetry is set.
+
+        Returns
+        -------
+        ori
+            Orientations.
         """
-        o = super().from_matrix(matrix)
+        ori = super().from_matrix(matrix)
         if symmetry:
-            o.symmetry = symmetry
-        return o
+            ori.symmetry = symmetry
+        return ori
 
     @classmethod
     def from_neo_euler(
-        cls, neo_euler: "NeoEuler", symmetry: Optional[Symmetry] = None
+        cls, neo_euler: NeoEuler, symmetry: Optional[Symmetry] = None
     ) -> Orientation:
         """Return orientation(s) from a neo-euler (vector)
         representation.
@@ -601,6 +613,7 @@ class Orientation(Misorientation):
         Returns
         -------
         ori
+            Orientations.
         """
         ori = super().from_neo_euler(neo_euler)
         if symmetry:
@@ -610,45 +623,45 @@ class Orientation(Misorientation):
     @classmethod
     def from_axes_angles(
         cls,
-        axes: Union["Vector3d", np.ndarray],
-        angles: np.ndarray,
+        axes: Union[np.ndarray, Vector3d, tuple, list],
+        angles: Union[np.ndarray, tuple, list],
         symmetry: Optional[Symmetry] = None,
     ) -> Orientation:
-        """Creates orientation(s) from axis-angle pair(s).
+        """Return orientations from axis-angle pairs.
 
         Parameters
         ----------
         axes
-            The axis of rotation.
+            The axes of rotation.
         angles
-            The angle of rotation, in radians.
+            The angles of rotation, in radians.
         symmetry
-            Symmetry of orientation(s). If not given (default), no
+            Symmetry of orientations. If not given (default), no
             symmetry is set.
 
         Returns
         -------
         ori
+            Orientations.
+
+        See Also
+        --------
+        from_neo_euler
 
         Examples
         --------
-        >>> import numpy as np
         >>> from orix.quaternion import Orientation, symmetry
         >>> ori = Orientation.from_axes_angles((0, 0, -1), np.pi / 2, symmetry.Oh)
         >>> ori
         Orientation (1,) m-3m
         [[ 0.7071  0.      0.     -0.7071]]
-
-        See Also
-        --------
-        from_neo_euler
         """
         axangle = AxAngle.from_axes_angles(axes, angles)
         return cls.from_neo_euler(axangle, symmetry)
 
     def angle_with(self, other: Orientation) -> np.ndarray:
-        """The smallest symmetry reduced angle of rotation transforming
-        this orientation to the other.
+        """Return the smallest symmetry reduced angles of rotation
+        transforming the orientations to the other orientations.
 
         Parameters
         ----------
@@ -658,10 +671,12 @@ class Orientation(Misorientation):
         Returns
         -------
         angles
+            Smallest symmetry reduced angles.
 
-        See also
+        See Also
         --------
         angle_with_outer
+        Rotation.angle_with_outer
         """
         dot_products = self.unit.dot(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
@@ -700,8 +715,9 @@ class Orientation(Misorientation):
         Returns
         -------
         angles
+            Smallest symmetry reduced angles.
 
-        See also
+        See Also
         --------
         angle_with
 
@@ -719,7 +735,6 @@ class Orientation(Misorientation):
 
         Examples
         --------
-        >>> import numpy as np
         >>> from orix.quaternion import Orientation, symmetry
         >>> ori1 = Orientation.random((5, 3))
         >>> ori2 = Orientation.random((6, 2))
@@ -759,9 +774,9 @@ class Orientation(Misorientation):
     def get_distance_matrix(
         self, lazy: bool = False, chunk_size: int = 20, progressbar: bool = True
     ) -> np.ndarray:
-        r"""The symmetry reduced smallest angle of rotation transforming
-        every orientation in this instance to every other orientation
-        :cite:`johnstone2020density`.
+        r"""Return the symmetry reduced smallest angle of rotation
+        transforming all these orientations to all the other
+        orientations :cite:`johnstone2020density`.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance` for
@@ -771,7 +786,7 @@ class Orientation(Misorientation):
         ----------
         lazy
             Whether to perform the computation lazily with Dask. Default
-            is False.
+            is ``False``.
         chunk_size
             Number of orientations per axis to include in each iteration
             of the computation. Default is 20. Only applies when
@@ -782,7 +797,8 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        distances
+        angles
+            Symmetry reduced angles.
 
         Notes
         -----
@@ -802,55 +818,73 @@ class Orientation(Misorientation):
         return angles
 
     def dot(self, other: Orientation) -> np.ndarray:
-        """Symmetry reduced dot product of orientations in this instance
-        to orientations in another instance, returned as numpy.ndarray.
+        """Return the symmetry reduced dot products of the orientations
+        and the other orientations.
 
         Parameters
         ----------
         other
-            Another orientation.
+            Other orientations.
 
         Returns
         -------
-        highest_dot_product
+        highest_dot_products
+            Symmetry reduced dot products.
 
         See Also
         --------
         dot_outer
+
+        Examples
+        --------
+        >>> from orix.quaternion import Orientation, symmetry
+        >>> ori1 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([0, 45]), symmetry.Oh)
+        >>> ori2 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([45, 90]), symmetry.Oh)
+        >>> ori1.dot(ori2)
+        array([0.92387953, 0.92387953])
         """
         symmetry = _get_unique_symmetry_elements(self.symmetry, other.symmetry)
         misorientation = other * ~self
         all_dot_products = Rotation(misorientation).dot_outer(symmetry)
-        highest_dot_product = np.max(all_dot_products, axis=-1)
-        return highest_dot_product
+        highest_dot_products = np.max(all_dot_products, axis=-1)
+        return highest_dot_products
 
     def dot_outer(self, other: Orientation) -> np.ndarray:
-        """Symmetry reduced dot product of every orientation in this
-        instance to every orientation in another instance, returned as
-        numpy.ndarray.
+        """Return the symmetry reduced dot products of all orientations
+        to all other orientations.
 
         Parameters
         ----------
         other
-            Another orientation.
+            Other orientations.
 
         Returns
         -------
-        highest_dot_product
+        highest_dot_products
+            Symmetry reduced dot products.
 
         See Also
         --------
         dot
+
+        Examples
+        --------
+        >>> from orix.quaternion import Orientation, symmetry
+        >>> ori1 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([0, 45]), symmetry.Oh)
+        >>> ori2 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([45, 90]), symmetry.Oh)
+        >>> ori1.dot_outer(ori2)
+        array([[0.92387953, 1.        ],
+               [1.        , 0.92387953]])
         """
         symmetry = _get_unique_symmetry_elements(self.symmetry, other.symmetry)
         misorientation = other.outer(~self)
         all_dot_products = Rotation(misorientation).dot_outer(symmetry)
-        highest_dot_product = np.max(all_dot_products, axis=-1)
+        highest_dot_products = np.max(all_dot_products, axis=-1)
         # need to return axes order so that self is first
         order = tuple(range(self.ndim, self.ndim + other.ndim)) + tuple(
             range(self.ndim)
         )
-        return highest_dot_product.transpose(*order)
+        return highest_dot_products.transpose(*order)
 
     @deprecated(
         since="0.7",
@@ -858,6 +892,7 @@ class Orientation(Misorientation):
         removal="0.8",
     )
     def distance(self, verbose=False, split_size=100):
+        """Return the orientation distance."""
         return super().distance(verbose=verbose, split_size=split_size)
 
     def plot_unit_cell(

@@ -34,6 +34,8 @@ domain of an adjusted 432 symmetry.
 Rotations or orientations can be inside or outside of an orientation region.
 """
 
+from __future__ import annotations
+
 import itertools
 from typing import Tuple
 
@@ -80,12 +82,17 @@ def get_proper_groups(Gl: Symmetry, Gr: Symmetry) -> Tuple[Symmetry, Symmetry]:
     Parameters
     ----------
     Gl
+        First point group.
     Gr
+        Second point group.
 
     Returns
     -------
-    Gl, Gr
-        The proper subgroup(s) or proper inversion subgroup(s) as
+    Gl
+        First proper subgroup(s) or proper inversion subgroup(s), as
+        appropriate.
+    Gr
+        Second proper subgroup(s) or proper inversion subgroup(s), as
         appropriate.
 
     Raises
@@ -120,13 +127,15 @@ class OrientationRegion(Rotation):
     """
 
     @classmethod
-    def from_symmetry(cls, s1: Symmetry, s2: Symmetry = C1) -> "OrientationRegion":
+    def from_symmetry(cls, s1: Symmetry, s2: Symmetry = C1) -> OrientationRegion:
         """The set of unique (mis)orientations of a symmetrical object.
 
         Parameters
         ----------
         s1
+            First symmetry.
         s2
+            Second symmetry.
         """
         s1, s2 = get_proper_groups(s1, s2)
         large_cell_normals = _get_large_cell_normals(s1, s2)
@@ -143,11 +152,12 @@ class OrientationRegion(Rotation):
         return orientation_region
 
     def vertices(self) -> Rotation:
-        """The vertices of the asymmetric domain.
+        """Return the vertices of the asymmetric domain.
 
         Returns
         -------
-        v
+        rot
+            Domain vertices.
         """
         normal_combinations = list(itertools.combinations(self, 3))
         if len(normal_combinations) < 1:
@@ -158,11 +168,11 @@ class OrientationRegion(Rotation):
             Rotation.stack(c2).flatten(),
             Rotation.stack(c3).flatten(),
         )
-        v = Rotation.triple_cross(c1, c2, c3)
-        v = v[~np.any(np.isnan(v.data), axis=-1)]
-        v = v[v < self].unique()
-        surface = np.any(np.isclose(v.dot_outer(self), 0), axis=1)
-        return v[surface]
+        rot = Rotation.triple_cross(c1, c2, c3)
+        rot = rot[~np.any(np.isnan(rot.data), axis=-1)]
+        rot = rot[rot < self].unique()
+        surface = np.any(np.isclose(rot.dot_outer(self), 0), axis=1)
+        return rot[surface]
 
     def faces(self) -> list:
         normals = Rotation(self)
@@ -173,7 +183,7 @@ class OrientationRegion(Rotation):
         faces = [f for f in faces if f.size > 2]
         return faces
 
-    def __gt__(self, other: "OrientationRegion") -> np.ndarray:
+    def __gt__(self, other: OrientationRegion) -> np.ndarray:
         """Overridden greater than method. Applying this to an
         Orientation will return only those orientations that lie within
         the OrientationRegion.

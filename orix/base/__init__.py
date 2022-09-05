@@ -23,6 +23,8 @@
     Contents of this module are not meant to be used directly.
 """
 
+from __future__ import annotations
+
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
@@ -42,15 +44,10 @@ class DimensionError(Exception):
         Array.
     """
 
-    def __init__(self, this: "Object3d", data: np.ndarray):
-        class_name = this.__class__.__name__
-        required_dimension = this.dim
-        received_dimension = data.shape[-1]
+    def __init__(self, this: Object3d, data: np.ndarray):
         super().__init__(
-            "{} requires data of dimension {} "
-            "but received dimension {}.".format(
-                class_name, required_dimension, received_dimension
-            )
+            f"{this.__class__.__name__} requires data of dimension {this.dim} but "
+            f"received dimension {data.shape[-1]}"
         )
 
 
@@ -68,10 +65,9 @@ class Object3d:
     """
 
     dim = None
-    """int : The number of dimensions for this object."""  # pragma: no cover
+    """Return the number of dimensions for this object."""  # pragma: no cover
 
     _data = None
-    """numpy.ndarray : Array holding this object's numerical data."""  # pragma: no cover
 
     __array_ufunc__ = None
 
@@ -165,9 +161,9 @@ class Object3d:
     def unique(
         self, return_index: bool = False, return_inverse: bool = False
     ) -> Union[
-        Tuple["Object3d", np.ndarray, np.ndarray],
-        Tuple["Object3d", np.ndarray],
-        "Object3d",
+        Tuple[Object3d, np.ndarray, np.ndarray],
+        Tuple[Object3d, np.ndarray],
+        Object3d,
     ]:
         """Return a new object containing only this object's unique
         entries.
@@ -216,13 +212,13 @@ class Object3d:
         return np.sqrt(np.sum(np.square(self.data), axis=-1))
 
     @property
-    def unit(self) -> "Object3d":
+    def unit(self) -> Object3d:
         """Return the unit object."""
         with np.errstate(divide="ignore", invalid="ignore"):
             obj = self.__class__(np.nan_to_num(self.data / self.norm[..., np.newaxis]))
             return obj
 
-    def squeeze(self) -> "Object3d":
+    def squeeze(self) -> Object3d:
         """Return a new object with length one dimensions removed.
 
         Returns
@@ -234,7 +230,7 @@ class Object3d:
         obj._data = np.atleast_2d(np.squeeze(self._data))
         return obj
 
-    def reshape(self, *shape: int) -> "Object3d":
+    def reshape(self, *shape: int) -> Object3d:
         """Return a new object containing the same data with a new
         shape.
 
@@ -252,7 +248,7 @@ class Object3d:
         obj._data = self._data.reshape(*shape, -1)
         return obj
 
-    def transpose(self, *axes: Optional[int]) -> "Object3d":
+    def transpose(self, *axes: Optional[int]) -> Object3d:
         """Return a new object containing the same data transposed.
 
         If :attr:`ndim` is originally 2, then order may be undefined. In
