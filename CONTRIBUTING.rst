@@ -6,22 +6,22 @@ Contributing
 reports, feature requests, code, documentation, and more. These guidelines provide
 resources on how best to contribute.
 
-For new users, checking out the `GitHub guides <https://guides.github.com>`_ are
+For new users, checking out the `GitHub guides <https://guides.github.com>`__ are
 recommended.
 
 .. tip::
     This guide can look intimidating to people who want to contribute, but have limited
     experience with tools like ``git``, ``pytest``, and ``sphinx``. The shortest route
     to start contributing is to create a GitHub account and explain what you want to do
-    `in an issue <https://github.com/pyxem/orix/issues/new>`_.
+    `in an issue <https://github.com/pyxem/orix/issues/new>`__.
 
 Questions, comments, and feedback
 =================================
 
 Have any questions, comments, suggestions for improvements, or any other
 inquiries regarding the project? Feel free to
-`open an issue <https://github.com/pyxem/orix/issues>`_ or
-`make a pull request <https://github.com/pyxem/orix/pulls>`_ in our GitHub repository.
+`open an issue <https://github.com/pyxem/orix/issues>`__ or
+`make a pull request <https://github.com/pyxem/orix/pulls>`__ in our GitHub repository.
 
 .. _set-up-a-development-installation:
 
@@ -29,8 +29,8 @@ Set up a development installation
 =================================
 
 You need a `fork
-<https://docs.github.com/en/get-started/quickstart/contributing-to-projects#about-forking>`_
-of the `repository <https://github.com/pyxem/orix>`_ in order to make changes to orix.
+<https://docs.github.com/en/get-started/quickstart/contributing-to-projects#about-forking>`__
+of the `repository <https://github.com/pyxem/orix>`__ in order to make changes to orix.
 
 Make a local copy of your forked repository and change directories::
 
@@ -42,8 +42,8 @@ Set the ``upstream`` remote to the main orix repository::
     git remote add upstream https://github.com/pyxem/orix.git
 
 We recommend installing in a `conda environment
-<https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
-with the `Miniconda distribution <https://docs.conda.io/en/latest/miniconda.html>`_::
+<https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`__
+with the `Miniconda distribution <https://docs.conda.io/en/latest/miniconda.html>`__::
 
     conda create --name orix-dev python=3.10
     conda activate orix-dev
@@ -60,10 +60,10 @@ Code style
 ==========
 
 The code making up orix is formatted closely following the `Style Guide for Python Code
-<https://www.python.org/dev/peps/pep-0008/>`_ with `The Black Code style
-<https://black.readthedocs.io/en/stable/the_black_code_style/index.html>`_ and
-`isort <https://pycqa.github.io/isort/>`_ to handle module imports. We use
-`pre-commit <https://pre-commit.com>`_ to run ``black`` and ``isort`` automatically
+<https://www.python.org/dev/peps/pep-0008/>`__ with `The Black Code style
+<https://black.readthedocs.io/en/stable/the_black_code_style/index.html>`__ and
+`isort <https://pycqa.github.io/isort/>`__ to handle module imports. We use
+`pre-commit <https://pre-commit.com>`__ to run ``black`` and ``isort`` automatically
 prior to each local commit. Please install it in your environment::
 
     pre-commit install
@@ -72,17 +72,18 @@ Next time you commit some code, your code will be formatted inplace according
 to the default black configuration.
 
 Note that ``black`` won't format `docstrings
-<https://www.python.org/dev/peps/pep-0257/>`_. We follow the `numpydoc
-<https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
-standard.
+<https://www.python.org/dev/peps/pep-0257/>`__. We follow the `numpydoc
+<https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`__ standard
+(with some exceptions), and docstrings are checked against this standard when the
+documentation is built.
 
 Package imports should be structured into three blocks with blank lines between them
 (descending order): standard library (like ``os`` and ``typing``), third party packages
 (like ``numpy`` and ``matplotlib``) and finally first party ``orix`` imports. ``isort``
 will structure the import order in this way by default. Note that if imports must be
 sorted in a certain order, for example to avoid recursion, then ``isort`` provides 
-`commands <https://pycqa.github.io/isort/docs/configuration/action_comments.html>`_ that
-may be used to prevent sorting.
+`commands <https://pycqa.github.io/isort/docs/configuration/action_comments.html>`__
+that may be used to prevent sorting.
 
 Comment lines should preferably be limited to 72 characters.
 
@@ -137,9 +138,9 @@ Add and commit your created, modified or deleted files::
     git commit -s -m "An explanatory commit message"
 
 The ``-s`` flag makes sure that you sign your commit with your `GitHub-registered email
-<https://github.com/settings/emails>`_ as the author. You can set this up following
+<https://github.com/settings/emails>`__ as the author. You can set this up following
 `this GitHub guide
-<https://help.github.com/en/github/setting-up-and-managing-your-github-user-account/setting-your-commit-email-address>`_.
+<https://help.github.com/en/github/setting-up-and-managing-your-github-user-account/setting-your-commit-email-address>`__.
 
 Keep your branch up-to-date
 ===========================
@@ -168,20 +169,25 @@ Update your remote branch::
     git push -u origin your-awesome-feature-name
 
 You can then make a `pull request
-<https://guides.github.com/activities/forking/#making-a-pull-request>`_ to orix's
+<https://guides.github.com/activities/forking/#making-a-pull-request>`__ to orix's
 ``develop`` branch for new features and ``main`` branch for bug fixes. Good job!
 
 Build and write documentation
 =============================
 
-We use `Sphinx <https://www.sphinx-doc.org/en/master/>`_ for documenting functionality.
+The documentation contains three categories of documents: ``examples``, ``tutorials``
+and the ``reference``. The documentation strategy is based on the
+`Diátaxis Framework <https://diataxis.fr/>`__. New documents should fit into one of
+these categories.
+
+We use `Sphinx <https://www.sphinx-doc.org/en/master/>`__ for documenting functionality.
 Install necessary dependencies to build the documentation::
 
     pip install --editable .[doc]
 
 .. note::
 
-    The user guide notebooks require some small datasets to be downloaded via the
+    The tutorials and examples require some small datasets to be downloaded via the
     :mod:`orix.data` module upon building the documentation. See the section on the
     :ref:`data module <adding-data-to-data-module>` for more details.
 
@@ -192,12 +198,20 @@ Then, build the documentation from the ``doc`` directory::
 
 The documentation's HTML pages are built in the ``doc/build/html`` directory from files
 in the `reStructuredText (reST)
-<https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_
+<https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`__
 plaintext markup language. They should be accessible in the browser by typing
-``file:///your-absolute/path/to/orix/doc/build/html/index.html`` in the address bar.
+``file:///your-absolute/path/to/orix/doc/_build/html/index.html`` in the address bar.
 
-Tips for writing Jupyter Notebooks that are meant to be converted to reST text
-files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
+We use `Sphinx-Gallery <https://sphinx-gallery.github.io/stable/index.html>`__ to build
+the :doc:`examples/index`. The examples are located in the top source directory
+``examples/``, and a new directory ``doc/examples/`` is created when the docs are built.
+
+We use `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`__ for converting
+notebooks into tutorials. The tutorials are located in the top source directory
+``tutorials/``, and links to these notebooks are added using
+`nbsphinx-link <https://github.com/vidartf/nbsphinx-link>`__.
+
+Here are some tips for writing tutorial notebooks:
 
 - Notebooks (with the ``.ipynb`` file extension) are ignored by git (listed in the
   ``.gitignore`` file). The ``-f`` `git flag
@@ -212,9 +226,12 @@ files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
   displayed in the documentation.
 - Use ``ax[0].imshow(...);`` to silence ``matplotlib`` output if a ``matplotlib``
   command is the last line in a cell.
-- Refer to our API reference with this general MD
-  ``[Vector3d.zvector()](reference.rst#orix.vector.Vector3d.zvector)``. Remember to add
-  the parentheses ``()`` if the reference points to a function or method.
+- Refer to our API reference with this MD
+  ``[Vector3d.zvector()](../reference/generated/orix.vector.Vector3d.zvector.rst)``.
+  Remember to add the parentheses ``()`` if the reference points to a function or
+  method.
+- Reference sections in other tutorial notebooks using this MD
+  ``[plotting](../tutorials/crystal_map.ipynb#Plotting)``.
 - Reference external APIs via standard MD like
   ``[Lattice](https://www.diffpy.org/diffpy.structure/mod_lattice.html#diffpy.structure.lattice.Lattice)``.
 - The Sphinx gallery thumbnail used for a notebook is set by adding the
@@ -231,7 +248,8 @@ files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
   within them are run and tested to ensure continued compatibility with code changes.
   Cell output should only be stored in notebooks which are too computationally intensive
   for the Read the Docs server to handle, which has a limit of 15 minutes and 3 GB of
-  memory per `documentation build <https://docs.readthedocs.io/en/stable/builds.html>`_.
+  memory per `documentation build
+  <https://docs.readthedocs.io/en/stable/builds.html>`__.
 - We also use ``black`` to format notebooks cells. To run the ``black`` formatter on
   your notebook(s) locally please specify the notebook(s), ie.
   ``black my_notebook.ipynb`` or ``black *.ipynb``, as ``black .`` will not format 
@@ -242,8 +260,8 @@ files by `nbsphinx <https://nbsphinx.readthedocs.io/en/latest/>`_:
       python_code_block = not_to_be_formatted
       # fmt: on
 
-  Please see the `black documentation <https://black.readthedocs.io/en/stable/index.html>`_
-  for more details.
+  Please see the `black documentation
+  <https://black.readthedocs.io/en/stable/index.html>`__ for more details.
     
 In general, we run all notebooks every time the documentation is built with Sphinx, to
 ensure that all notebooks are compatible with the current API at all times. This is
@@ -252,12 +270,13 @@ the documentation doesn't take too long to build, either by us locally or the Re
 Docs GitHub action. To check that the notebooks with stored cell outputs are compatible
 with the current API, we run a scheduled GitHub Action every Monday morning which checks
 that the notebooks run OK and that they produce the same output now as when they were
-last executed. We use `nbval <https://nbval.readthedocs.io>`_ for this.
+last executed. We use `nbval <https://nbval.readthedocs.io>`__ for this.
 
-The user guide notebooks can be run interactively in the browser with the help of
-`Binder <https://mybinder.readthedocs.io>`_. When creating a server from the orix source
-code, Binder installs the packages listed in the `environment.yml` configuration file,
-which must include all `doc` dependencies in `setup.py` necessary to run the notebooks.
+The tutorial notebooks can be run interactively in the browser with the help of
+`Binder <https://mybinder.readthedocs.io>`__. When creating a server from the orix
+source code, Binder installs the packages listed in the ``environment.yml``
+configuration file, which must include all ``doc`` dependencies in ``setup.py``
+necessary to run the notebooks.
 
 Deprecations
 ============
@@ -282,14 +301,14 @@ The decorator should be placed right above the object signature to be deprecated
 Run and write tests
 ===================
 
-All functionality in orix is tested with `pytest <https://docs.pytest.org>`_. The tests
+All functionality in orix is tested with `pytest <https://docs.pytest.org>`__. The tests
 reside in a ``tests`` module. Tests are short methods that call functions in ``orix``
 and compare resulting output values with known answers. Install necessary dependencies
 to run the tests::
 
    pip install --editable .[tests]
 
-Some useful `fixtures <https://docs.pytest.org/en/latest/fixture.html>`_ are available
+Some useful `fixtures <https://docs.pytest.org/en/latest/fixture.html>`__ are available
 in the ``conftest.py`` file.
 
 .. note::
@@ -303,7 +322,7 @@ To run the tests::
 
    pytest --cov --pyargs orix
 
-The ``--cov`` flag makes `coverage.py <https://coverage.readthedocs.io/en/latest/>`_
+The ``--cov`` flag makes `coverage.py <https://coverage.readthedocs.io/en/latest/>`__
 prints a nice report in the terminal. For an even nicer presentation, you can use
 ``coverage.py`` directly::
 
@@ -311,6 +330,14 @@ prints a nice report in the terminal. For an even nicer presentation, you can us
 
 Then, you can open the created ``htmlcov/index.html`` in the browser and inspect the
 coverage in more detail.
+
+Docstring examples are tested `with pytest
+<https://docs.pytest.org/en/stable/how-to/doctest.html>`__ as well. :mod:`numpy` and
+:mod:`matplotlib.pyplot` should not be imported in examples as they are already
+available in the namespace as ``np`` and ``plt``, respectively. The docstring tests can
+be run from the top directory::
+
+    pytest --doctest-modules --ignore-glob=orix/tests orix/*.py
 
 Tips for writing tests of Numba decorated functions:
 
@@ -325,13 +352,13 @@ Tips for writing tests of Numba decorated functions:
 Adding data to the data module
 ==============================
 
-Test data for user guides and tests are included in the :mod:`orix.data` module via the
-`pooch <https://www.fatiando.org/pooch/latest>`_ Python library. These are listed in a
-file registry (``orix.data._registry.py``) with their file verification string (hash,
-SHA256, obtained with e.g. ``sha256sum <file>``) and location, the latter potentially
-not within the package but from the `orix-data <https://github.com/pyxem/orix-data>`_
-repository or elsewhere, since some files are considered too large to include in the
-package.
+Example datasets used in the documentation and tests are included in the
+:mod:`orix.data` module via the `pooch <https://www.fatiando.org/pooch/latest/>`__
+Python library. These are listed in a file registry (``orix.data._registry.py``) with
+their file verification string (hash, SHA256, obtain with e.g. ``sha256sum <file>``) and
+location, the latter potentially not within the package but from the `orix-data
+<https://github.com/pyxem/orix-data>`__ repository or elsewhere, since some files are
+considered too large to include in the package.
 
 If a required dataset isn't in the package, but is in the registry, it can be downloaded
 from the repository when the user passes ``allow_download=True`` to e.g.
@@ -349,8 +376,9 @@ should then be deleted manually if desired.
 Continuous integration (CI)
 ===========================
 
-We use `GitHub Actions <https://github.com/pyxem/orix/actions>`_ to ensure that
+We use `GitHub Actions <https://github.com/pyxem/orix/actions>`__ to ensure that
 orix can be installed on Windows, macOS and Linux (Ubuntu). After a successful
 installation, the CI server runs the tests. After the tests return no errors, code
 coverage is reported to `Coveralls
-<https://coveralls.io/github/pyxem/orix?branch=develop>`_.
+<https://coveralls.io/github/pyxem/orix?branch=develop>`__. Add ``"[skip ci"]`` to a
+commit message to skip this workflow on any commit to a pull request.
