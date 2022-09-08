@@ -39,7 +39,9 @@ This tutorial covers how to sample orientation space of the proper point groups.
 Vectors
 =======
 
-This tutorial covers how to visualize 3D vectors in the stereographic projection.
+These tutorials cover how to visualize 3D vectors in the stereographic projection,
+sample unit vectors and quantify and visualize the distribution of crystal poles in the
+sample reference frame.
 
 .. nbgallery::
 
