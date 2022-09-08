@@ -15,7 +15,7 @@ package `MTEX <https://mtex-toolbox.github.io>`_.
 
     examples/index.rst
     tutorials/index.rst
-    Reference <reference/index.rst>
+    API reference <reference/index.rst>
     related_projects.rst
     bibliography.rst
 
@@ -71,7 +71,7 @@ Learning resources
 
         In-depth guides for using orix.
 
-    .. grid-item-card:: Reference
+    .. grid-item-card:: API reference
         :img-top: _static/img/colormap_banners/banner2.png
         :link: reference/index
         :link-type: doc
