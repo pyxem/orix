@@ -6,22 +6,27 @@ Contributing
 reports, feature requests, code, documentation, and more. These guidelines provide
 resources on how best to contribute.
 
-For new users, checking out the `GitHub guides <https://guides.github.com>`__ are
-recommended.
+For contributors unfamiliar with GitHub, checking out the `GitHub guides
+<https://guides.github.com>`__ are recommended.
 
 .. tip::
+
     This guide can look intimidating to people who want to contribute, but have limited
     experience with tools like ``git``, ``pytest``, and ``sphinx``. The shortest route
     to start contributing is to create a GitHub account and explain what you want to do
     `in an issue <https://github.com/pyxem/orix/issues/new>`__.
 
+    That said, our contributing workflow is typical for Python projects, so reading this
+    guide can make contributing to similar projects in the future much smoother!
+
 Questions, comments, and feedback
 =================================
 
-Have any questions, comments, suggestions for improvements, or any other
-inquiries regarding the project? Feel free to
-`open an issue <https://github.com/pyxem/orix/issues>`__ or
-`make a pull request <https://github.com/pyxem/orix/pulls>`__ in our GitHub repository.
+Have a question, comment, suggestion for improvements, or any other inquiries
+regarding the project? Feel free to `ask a question
+<https://github.com/pyxem/orix/discussions>`__, `open an issue
+<https://github.com/pyxem/orix/issues>`__ or `make a pull request
+<https://github.com/pyxem/orix/pulls>`__ in our GitHub repository.
 
 .. _set-up-a-development-installation:
 
@@ -171,6 +176,9 @@ Update your remote branch::
 You can then make a `pull request
 <https://guides.github.com/activities/forking/#making-a-pull-request>`__ to orix's
 ``develop`` branch for new features and ``main`` branch for bug fixes. Good job!
+
+All pull requests require a review by at least one other member of the development team
+before merging.
 
 Build and write documentation
 =============================
