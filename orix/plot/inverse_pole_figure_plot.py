@@ -45,7 +45,23 @@ class InversePoleFigurePlot(StereographicPlot):
     is a stereographic plot for showing sample directions with respect
     to a crystal reference frame.
 
-    Inherits from :class:`~orix.plot.StereographicPlot`.
+    Parameters
+    ----------
+    *args
+        Arguments passed to :class:`~orix.plot.StereographicPlot`.
+    symmetry
+        Laue group symmetry of crystal to plot directions with. If not
+        given, point group C1 (only identity rotation) is used.
+    direction
+        Sample direction to plot with respect to crystal directions. If
+        not given, the out of plane direction, sample Z, is used.
+    hemisphere
+        Which hemisphere(s) to plot the vectors in. If not given,
+        ``"upper"`` is used. Options are ``"upper"``, ``"lower"`` and
+        ``"both"``, which plots two projections side by side.
+    **kwargs
+        Keyword arguments passed to
+        :class:`~orix.plot.StereographicPlot`.
     """
 
     name = "ipf"
@@ -60,24 +76,6 @@ class InversePoleFigurePlot(StereographicPlot):
     ) -> None:
         """Create an inverse pole figure axis for plotting
         :class:`~orix.vector.Vector3d`.
-
-        Parameters
-        ----------
-        *args
-            Arguments passed to :class:`~orix.plot.StereographicPlot`.
-        symmetry
-            Laue group symmetry of crystal to plot directions with. If
-            not given, point group C1 (only identity rotation) is used.
-        direction
-            Sample direction to plot with respect to crystal directions.
-            If not given, the out of plane direction, sample Z, is used.
-        hemisphere
-            Which hemisphere(s) to plot the vectors in. If not given,
-            ``"upper"`` is used. Options are ``"upper"``, ``"lower"``,
-            and ``"both"``, which plots two projections side by side.
-        **kwargs
-            Keyword arguments passed to
-            :class:`~orix.plot.StereographicPlot`.
         """
         super().__init__(*args, **kwargs)
 
@@ -113,9 +111,10 @@ class InversePoleFigurePlot(StereographicPlot):
         **kwargs: Any,
     ):
         """Compute the Inverse Pole Density Function (IPDF) of vectors
-        in the stereographic projection. The PDF is computed within the
-        fundamental sector of the point group symmetry. See
-        :cite:`rohrer2004distribution`.
+        in the stereographic projection.
+
+        The PDF is computed within the fundamental sector of the point
+        group symmetry. See :cite:`rohrer2004distribution`.
 
         Parameters
         ----------
@@ -135,17 +134,17 @@ class InversePoleFigurePlot(StereographicPlot):
             If ``True`` a colorbar is shown alongside the IPDF plot.
             Default is ``True``.
         weights
-            The weights for the individual vectors. Default is None, in
-            which case each vector is 1.
+            The weights for the individual vectors. If not given, each
+            vector is 1.
         **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.pcolormesh`.
 
         See Also
         --------
-        orix.measure.pole_density_function
-        orix.plot.StereographicPlot.pole_density_function
-        orix.Vector3d.pole_density_function
+        measure.pole_density_function
+        StereographicPlot.pole_density_function
+        Vector3d.pole_density_function
         """
         hist, (x, y) = pole_density_function(
             *args,

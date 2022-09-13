@@ -26,6 +26,13 @@ Added
   quantification of orientation and vector data.
 - Plotting the IPF color key on a created ``InversePoleFigurePlot`` is now possible with
   ``plot_ipf_color_key()``.
+- Examples gallery to documentation.
+
+Changed
+-------
+- Moved part of documentation showing plotting of Wulff net and symmetry markers from
+  the tutorials to examples.
+- Renamed user guide notebooks to tutorials in documentation.
 
 Removed
 -------
