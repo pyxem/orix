@@ -45,16 +45,37 @@ builds primarily on `NumPy <https://www.numpy.org>`_ and `Matplotlib
 <https://matplotlib.org>`_ and is heavily inspired by the MATLAB package `MTEX
 <https://mtex-toolbox.github.io>`_.
 
+orix is released under the GPL v3 license.
+
+Documentation
+-------------
+
+Refer to the `documentation <https://orix.readthedocs.io>`__ for detailed installation
+instructions, a user guide, and the `changelog
+<https://orix.readthedocs.io/en/latest/changelog.html>`_.
+
+Installation
+------------
+
+orix can be installed with ``pip``::
+
+    pip install orix
+
+or ``conda``::
+
+    conda install orix -c conda-forge
+
+You can also visit `PyPI <https://pypi.org/project/orix>`_, `Anaconda
+<https://anaconda.org/conda-forge/orix>`_ or `GitHub <https://github.com/pyxem/orix>`_
+to download the source.
+
+Further details are available in the `installation guide
+<https://orix.readthedocs.io/en/latest/installation.html>`_.
+
+Citing orix
+-----------
+
 If analysis using orix forms a part of published work please cite the paper (`journal
 <https://doi.org/10.1107/S1600576720011103>`_, `arXiv
-<https://arxiv.org/abs/2001.02716>`_).
-
-`Documentation <https://orix.readthedocs.io>`_ is hosted on Read the Docs with a
-complete reference for functions and classes, as well as a user guide in the form of
-Jupyter notebooks. These notebooks can be inspected statically on the web page or via
-`nbviewer <https://nbviewer.org/github/pyxem/orix/tree/develop/doc>`_,
-interactively in the browser by clicking the Binder link above and navigating to the
-``doc/`` directory, or on your own computer by downloading them and the corresponding
-data. We hope you find them useful!
-
-orix is released under the GPL v3 license.
+<https://arxiv.org/abs/2001.02716>`_) and/or `the software
+<https://doi.org/10.5281/zenodo.3459662>`_.
