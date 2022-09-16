@@ -16,7 +16,7 @@ with `pip <https://pip.pypa.io/en/stable>`__. To install, run the following::
 
     pip install orix
 
-To orix kikuchipy to the latest release::
+To update orix to the latest release::
 
     pip install --upgrade orix
 
