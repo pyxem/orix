@@ -16,16 +16,30 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Load and save utilities."""
+"""Read and write crystal maps from and to file.
+
+.. currentmodule:: orix.io
+
+.. rubric:: Modules
+
+.. autosummary::
+    :toctree: ../generated/
+    :template: custom-module-template.rst
+
+    plugins
+"""
 
 import os
+from typing import Optional
 from warnings import warn
 
 from h5py import File, is_hdf5
 import numpy as np
 
+from orix.crystal_map import CrystalMap
 from orix.io.plugins import plugin_list
 from orix.io.plugins._h5ebsd import hdf5group2dict
+from orix.quaternion import Rotation
 
 extensions = [plugin.file_extensions for plugin in plugin_list if plugin.writes]
 
@@ -39,65 +53,60 @@ __all__ = [
 ]
 
 
-def loadang(file_string):
+def loadang(file_string: str) -> Rotation:
     """Load ``.ang`` files.
 
     Parameters
     ----------
-    file_string : str
-        Path to the ``.ang`` file. This file is assumed to list the Euler
-        angles in the Bunge convention in the first three columns.
+    file_string
+        Path to the ``.ang`` file. This file is assumed to list the
+        Euler angles in the Bunge convention in the first three columns.
 
     Returns
     -------
-    Rotation
-
+    rotation
+        Rotations in the file.
     """
-    from orix.quaternion.rotation import Rotation
-
     data = np.loadtxt(file_string)
     euler = data[:, :3]
-    rotation = Rotation.from_euler(euler)
-    return rotation
+    return Rotation.from_euler(euler)
 
 
-def loadctf(file_string):
-    """Load ``.ang`` files.
+def loadctf(file_string: str) -> Rotation:
+    """Load ``.ctf`` files.
 
     Parameters
     ----------
-    file_string : str
-        Path to the ``.ctf`` file. This file is assumed to list the Euler
-        angles in the Bunge convention in the columns 5, 6, and 7.
+    file_string
+        Path to the ``.ctf`` file. This file is assumed to list the
+        Euler angles in the Bunge convention in the columns 5, 6, and 7.
 
     Returns
     -------
-    Rotation
-
+    rotation
+        Rotations in the file.
     """
-
-    from orix.quaternion.rotation import Rotation
-
     data = np.loadtxt(file_string, skiprows=17)[:, 5:8]
     euler = np.radians(data)
-    rotation = Rotation.from_euler(euler)
-    return rotation
+    return Rotation.from_euler(euler)
 
 
-def load(filename, **kwargs):
-    """Load data from a supported file.
+def load(filename: str, **kwargs) -> CrystalMap:
+    """Load data from a supported file format listed in
+    :doc:`orix.io.plugins`.
 
     Parameters
     ----------
-    filename : str
+    filename
         Name of file to load.
-    kwargs
-        Keyword arguments passed to the corresponding orix reader. See
-        their individual docstrings for available arguments.
+    **kwargs
+        Keyword arguments passed to the corresponding plugins'
+        ``file_reader()``. See their individual docstrings for available
+        arguments.
 
     Returns
     -------
-    data : CrystalMap
+    data
         Crystal map read from the file.
     """
     if not os.path.isfile(filename):
@@ -124,15 +133,15 @@ def load(filename, **kwargs):
     return reader.file_reader(filename, **kwargs)
 
 
-def _plugin_from_manufacturer(filename, plugins):
+def _plugin_from_manufacturer(filename: str, plugins: list):
     """Return the correct plugin based on the manufacturer listed in a
     top group named 'Manufacturer' in an HDF5 file.
 
     Parameters
     ----------
-    filename : str
+    filename
         Name of the file to find the correct plugin for.
-    plugins : list
+    plugins
         List of potential HDF5 plugins.
 
     Returns
@@ -141,7 +150,7 @@ def _plugin_from_manufacturer(filename, plugins):
         One of the potential plugins, or None if no matching plugin was
         found.
     """
-    with File(filename, mode="r") as f:
+    with File(filename) as f:
         d = hdf5group2dict(f["/"])
         manufacturer = None
         for key, value in d.items():
@@ -158,21 +167,25 @@ def _plugin_from_manufacturer(filename, plugins):
     return matching_plugin
 
 
-def save(filename, object2write, overwrite=None, **kwargs):
-    """Write data to a supported file format.
+def save(
+    filename: str, object2write: CrystalMap, overwrite: Optional[bool] = None, **kwargs
+):
+    """Write data to a supported file format listed in
+    :doc:`orix.io.plugins`.
 
     Parameters
     ----------
-    filename : str
+    filename
         Name of file to write to.
-    object2write : CrystalMap
+    object2write
         Object to write to file.
-    overwrite : bool, optional
-        If None and the file exists, the user is queried. If True (False)
-        the file is (not) overwritten if it exists.
-    kwargs
-        Keyword arguments passed to the corresponding orix writer. See
-        their individual docstrings for available arguments.
+    overwrite
+        If not given and the file exists, the user is queried. If
+        ``True`` (``False``) the file is (not) overwritten if it exists.
+    **kwargs
+        Keyword arguments passed to the corresponding plugins'
+        ``file_writer()``. See their individual docstrings for available
+        arguments.
     """
     ext = os.path.splitext(filename)[1][1:]
 
@@ -206,20 +219,20 @@ def save(filename, object2write, overwrite=None, **kwargs):
         writer.file_writer(filename, object2write, **kwargs)
 
 
-def _overwrite_or_not(filename):
-    """If the file exists, ask the user for overwriting and return True or
-    False, else return True.
+def _overwrite_or_not(filename: str) -> bool:
+    """If the file exists, ask the user for overwriting and return
+    ``True`` or ``False``, else return ``True``.
 
     This function is adapted from HyperSpy.
 
     Parameters
     ----------
-    filename : str
+    filename
         Name of file to write to.
 
     Returns
     -------
-    overwrite : bool
+    overwrite
         Whether to overwrite the file.
     """
     overwrite = True

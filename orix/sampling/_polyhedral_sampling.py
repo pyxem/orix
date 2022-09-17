@@ -33,10 +33,10 @@ def _get_start_and_end_index(
     else:
         start = 0
     if not include_start:
-        start = start + 1
+        start += 1
     end = number_of_steps
     if include_end:
-        end = end + 1
+        end += 1
     return start, end
 
 
@@ -114,13 +114,14 @@ def _compose_from_faces(
     faces: List[Tuple[int, int, int]],
     n: int,
 ) -> np.ndarray:
-    """Refine a grid starting from a platonic solid; adapted from meshzoo.
+    """Refine a grid starting from a platonic solid; adapted from
+    :mod:`meshzoo` :cite:`meshzoo`.
 
     Parameters
     ----------
     corners
-        Coordinates of vertices for starting shape. Shape of the array should
-        be (N, 3).
+        Coordinates of vertices for starting shape. Shape of the array
+        should be (N, 3).
     faces
         Each tuple in the list corresponds to the vertex indices making
         up a triangular face of the mesh.
@@ -130,11 +131,8 @@ def _compose_from_faces(
     Returns
     -------
     vertices
-        The coordinates of the refined mesh vertices, an array of shape (N, 3).
-
-    References
-    ----------
-    :cite:`meshzoo`
+        The coordinates of the refined mesh vertices, an array of shape
+        (N, 3).
     """
     # create corner nodes
     vertices = [corners]
@@ -175,23 +173,25 @@ def _get_first_nearest_neighbors(
     points: np.ndarray,
     leaf_size: int = 50,
 ) -> np.ndarray:
-    """Get array of first nearest neighbor points for all points in a point cloud
+    """Get array of first nearest neighbor points for all points in a
+    point cloud.
 
     Parameters
     ----------
     points
-        Point cloud with shape (N, D) representing N points in D dimensions.
+        Point cloud with shape (N, D) representing N points in D
+        dimensions.
     leaf_size
-        The NN search is performed using a cKDTree object. The way
-        this tree is constructed depends on leaf_size, so this parameter
+        The NN search is performed using a cKDTree object. The way this
+        tree is constructed depends on ``leaf_size``, so this parameter
         will influence speed of tree construction and search.
 
     Returns
     -------
     nn1_vec
-        Point cloud represented by an array of shape (N, D) with N points in
-        D dimensions, representing the nearest neighbor point of each point
-        in `points`.
+        Point cloud represented by an array of shape (N, D) with N
+        points in D dimensions, representing the nearest neighbor point
+        of each point in ``points``.
     """
     tree = cKDTree(points, leaf_size)
     # get the indexes of the first nearest neighbor of each vertex
@@ -204,7 +204,9 @@ def _get_angles_between_nn_gridpoints(
     vertices: np.ndarray,
     leaf_size: int = 50,
 ) -> np.ndarray:
-    """Return angles between all nearest neighbor grid points on unit sphere."""
+    """Return angles between all nearest neighbor grid points on unit
+    sphere.
+    """
     # normalize the vertex vectors
     vertices = (vertices.T / np.linalg.norm(vertices, axis=1)).T
     nn1_vec = _get_first_nearest_neighbors(vertices, leaf_size)
@@ -219,5 +221,7 @@ def _get_max_grid_angle(
     vertices: np.ndarray,
     leaf_size: int = 50,
 ) -> np.ndarray:
-    """Get the maximum angle between nearest neighbor grid points on a unit sphere."""
+    """Get the maximum angle between nearest neighbor grid points on a
+    unit sphere.
+    """
     return np.max(_get_angles_between_nn_gridpoints(vertices, leaf_size))

@@ -22,6 +22,7 @@ from tempfile import TemporaryDirectory
 
 from diffpy.structure import Atom, Lattice, Structure
 from h5py import File
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -714,3 +715,14 @@ loop_
     f.close()
     yield f.name
     gc.collect()
+
+
+@pytest.fixture(autouse=True)
+def import_to_namespace(doctest_namespace):
+    """Make :mod:`numpy` and :mod:`matplotlib.pyplot` available in
+    docstring examples without having to import them.
+
+    See https://docs.pytest.org/en/stable/how-to/doctest.html#doctest-namespace-fixture.
+    """
+    doctest_namespace["plt"] = plt
+    doctest_namespace["np"] = np

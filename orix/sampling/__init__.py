@@ -31,7 +31,6 @@ from orix.sampling.S2_sampling import sampling_methods as sample_S2_methods
 from orix.sampling.SO3_sampling import uniform_SO3_sample
 from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
 
-# Lists what will be imported when calling "from orix.sampling import *"
 __all__ = [
     "get_sample_fundamental",
     "get_sample_local",

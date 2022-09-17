@@ -32,18 +32,18 @@ import numpy as np
 
 
 @nb.jit("int64(float64[:])", cache=True, nogil=True, nopython=True)
-def get_pyramid_single(xyz):
+def get_pyramid_single(xyz: np.ndarray) -> int:
     """Determine to which out of six pyramids in the cube a (x, y, z)
     coordinate belongs.
 
     Parameters
     ----------
-    xyz : numpy.ndarray
+    xyz
         1D array (x, y, z) of 64-bit floats.
 
     Returns
     -------
-    pyramid : int
+    pyramid
         Which pyramid ``xyz`` belongs to as a 64-bit integer.
 
     Notes
@@ -68,18 +68,18 @@ def get_pyramid_single(xyz):
 
 
 @nb.jit("int64[:](float64[:, :])", cache=True, nogil=True, nopython=True)
-def get_pyramid_2d(xyz):
+def get_pyramid_2d(xyz: np.ndarray) -> np.ndarray:
     """Determine to which out of six pyramids in the cube a 2D array of
     (x, y, z) coordinates belongs.
 
     Parameters
     ----------
-    xyz : numpy.ndarray
+    xyz
         2D array of n (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    pyramids : numpy.ndarray
+    pyramids
         1D array of pyramids as 64-bit integers.
 
     Notes
@@ -94,7 +94,7 @@ def get_pyramid_2d(xyz):
     return pyramids
 
 
-def get_pyramid(xyz):
+def get_pyramid(xyz: np.ndarray) -> np.ndarray:
     """n-dimensional wrapper for get_pyramid_2d, see the docstring of
     that function.
     """
@@ -105,18 +105,18 @@ def get_pyramid(xyz):
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
-def cu2ho_single(cu):
+def cu2ho_single(cu: np.ndarray) -> np.ndarray:
     """Conversion from a single set of cubochoric coordinates to
     un-normalized homochoric coordinates :cite:`singh2016orientation`.
 
     Parameters
     ----------
-    cu : numpy.ndarray
+    cu
         1D array of (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    ho : numpy.ndarray
+    ho
         1D array of (x, y, z) as 64-bit floats.
 
     Notes
@@ -184,18 +184,18 @@ def cu2ho_single(cu):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def cu2ho_2d(cu):
+def cu2ho_2d(cu: np.ndarray) -> np.ndarray:
     """Conversion from multiple cubochoric coordinates to un-normalized
     homochoric coordinates :cite:`singh2016orientation`.
 
     Parameters
     ----------
-    cu : numpy.ndarray
+    cu
         2D array of n (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    ho : numpy.ndarray
+    ho
         2D array of n (x, y, z) as 64-bit floats.
 
     Notes
@@ -209,7 +209,7 @@ def cu2ho_2d(cu):
     return ho
 
 
-def cu2ho(cu):
+def cu2ho(cu: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for cu2ho_2d, see the docstring of that
     function.
     """
@@ -220,18 +220,18 @@ def cu2ho(cu):
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
-def ho2ax_single(ho):
+def ho2ax_single(ho: np.ndarray) -> np.ndarray:
     """Conversion from a single set of homochoric coordinates to an
     un-normalized axis-angle pair :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ho : numpy.ndarray
+    ho
         1D array of (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    ax : numpy.ndarray
+    ax
         1D array of (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -271,18 +271,18 @@ def ho2ax_single(ho):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ho2ax_2d(ho):
+def ho2ax_2d(ho: np.ndarray) -> np.ndarray:
     """Conversion from multiple homochoric coordinates to un-normalized
     axis-angle pairs :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ho : numpy.ndarray
+    ho
         2D array of n (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    ax : numpy.ndarray
+    ax
         2D array of n (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -297,7 +297,7 @@ def ho2ax_2d(ho):
     return ax
 
 
-def ho2ax(ho):
+def ho2ax(ho: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for ho2ax_2d, see the docstring of that
     function.
     """
@@ -308,18 +308,18 @@ def ho2ax(ho):
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
-def ax2ro_single(ax):
+def ax2ro_single(ax: np.ndarray) -> np.ndarray:
     """Conversion from a single angle-axis pair to an un-normalized
     Rodrigues vector :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ax : numpy.ndarray
+    ax
         1D array of (x, y, z, angle) as 64-bit floats.
 
     Returns
     -------
-    ro : numpy.ndarray
+    ro
         1D array of (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -342,18 +342,18 @@ def ax2ro_single(ax):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ax2ro_2d(ax):
+def ax2ro_2d(ax: np.ndarray) -> np.ndarray:
     """Conversion from multiple axis-angle pairs to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ax : numpy.ndarray
+    ax
         2D array of n (x, y, z, angle) as 64-bit floats.
 
     Returns
     -------
-    ro : numpy.ndarray
+    ro
         2D array of n (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -367,7 +367,7 @@ def ax2ro_2d(ax):
     return ro
 
 
-def ax2ro(ax):
+def ax2ro(ax: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for ax2ro_2d, see the docstring of that
     function.
     """
@@ -378,18 +378,18 @@ def ax2ro(ax):
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
-def ro2ax_single(ro):
+def ro2ax_single(ro: np.ndarray) -> np.ndarray:
     """Conversion from a single Rodrigues vector to an un-normalized
     axis-angle pair :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ro : numpy.ndarray
+    ro
         1D array of (x, y, z, angle) as 64-bit floats.
 
     Returns
     -------
-    ax : numpy.ndarray
+    ax
         1D array of (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -407,18 +407,18 @@ def ro2ax_single(ro):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ro2ax_2d(ro):
+def ro2ax_2d(ro: np.ndarray) -> np.ndarray:
     """Conversion from multiple Rodrigues vectors to un-normalized
     axis-angle pairs :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ro : numpy.ndarray
+    ro
         2D array of n (x, y, z, angle) as 64-bit floats.
 
     Returns
     -------
-    ax : numpy.ndarray
+    ax
         2D array of n (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -433,7 +433,7 @@ def ro2ax_2d(ro):
     return ax
 
 
-def ro2ax(ro):
+def ro2ax(ro: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for ro2ax_2d, see the docstring of that
     function.
     """
@@ -444,18 +444,18 @@ def ro2ax(ro):
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
-def ax2qu_single(ax):
+def ax2qu_single(ax: np.ndarray) -> np.ndarray:
     """Conversion from a single axis-angle pair to an un-normalized
     quaternion :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ax : numpy.ndarray
+    ax
         1D array of (x, y, z, angle) as 64-bit floats.
 
     Returns
     -------
-    qu : numpy.ndarray
+    qu
         1D array of (a, b, c, d) as 64-bit floats.
 
     Notes
@@ -472,18 +472,18 @@ def ax2qu_single(ax):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ax2qu_2d(ax):
+def ax2qu_2d(ax: np.ndarray) -> np.ndarray:
     """Conversion from multiple axis-angle pairs to un-normalized
     quaternions :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ax : numpy.ndarray
+    ax
         2D array of n (x, y, z, angle) as 64-bit floats.
 
     Returns
     -------
-    qu : numpy.ndarray
+    qu
         2D array of n (a, b, c, d) as 64-bit floats.
 
     Notes
@@ -498,7 +498,7 @@ def ax2qu_2d(ax):
     return qu
 
 
-def ax2qu(ax):
+def ax2qu(ax: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for ax2qu_2d, see the docstring of that
     function.
     """
@@ -509,18 +509,18 @@ def ax2qu(ax):
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
-def ho2ro_single(ho):
+def ho2ro_single(ho: np.ndarray) -> np.ndarray:
     """Conversion from a single set of homochoric coordinates to an
     un-normalized Rodrigues vector :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ho : numpy.ndarray
+    ho
         1D array of (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    ro : numpy.ndarray
+    ro
         1D array of (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -532,18 +532,18 @@ def ho2ro_single(ho):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def ho2ro_2d(ho):
+def ho2ro_2d(ho: np.ndarray) -> np.ndarray:
     """Conversion from multiple homochoric coordinates to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    ho : numpy.ndarray
+    ho
         2D array of n (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    ax : numpy.ndarray
+    ax
         2D array of n (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -558,7 +558,7 @@ def ho2ro_2d(ho):
     return ro
 
 
-def ho2ro(ho):
+def ho2ro(ho: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for ho2ro_2d, see the docstring of that
     function.
     """
@@ -569,18 +569,18 @@ def ho2ro(ho):
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
-def cu2ro_single(cu):
+def cu2ro_single(cu: np.ndarray) -> np.ndarray:
     """Conversion from a single set of cubochoric coordinates to an
     un-normalized Rodrigues vector :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    cu : numpy.ndarray
+    cu
         1D array of (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    ro : numpy.ndarray
+    ro
         1D array of (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -595,18 +595,18 @@ def cu2ro_single(cu):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def cu2ro_2d(cu):
+def cu2ro_2d(cu: np.ndarray) -> np.ndarray:
     """Conversion from multiple cubochoric coordinates to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
 
     Parameters
     ----------
-    cu : numpy.ndarray
+    cu
         2D array of n (x, y, z) as 64-bit floats.
 
     Returns
     -------
-    ro : numpy.ndarray
+    ro
         2D array of n (x, y, z, angle) as 64-bit floats.
 
     Notes
@@ -621,7 +621,7 @@ def cu2ro_2d(cu):
     return ro
 
 
-def cu2ro(cu):
+def cu2ro(cu: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for cu2ro_2d, see the docstring of that
     function.
     """
@@ -632,19 +632,19 @@ def cu2ro(cu):
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
-def eu2qu_single(eu):
+def eu2qu_single(eu: np.ndarray) -> np.ndarray:
     """Convert three Euler angles (alpha, beta, gamma) to a unit
     quaternion.
 
     Parameters
     ----------
-    eu : numpy.ndarray
+    eu
         1D array of (alpha, beta, gamma) Euler angles given in radians
         in the Bunge convention (ie, passive Z-X-Z) as 64-bit floats.
 
     Returns
     -------
-    qu : numpy.ndarray
+    qu
         1D unit quaternion (a, b, c, d) as 64-bit floats.
 
     Notes
@@ -672,18 +672,18 @@ def eu2qu_single(eu):
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
-def eu2qu_2d(eu):
+def eu2qu_2d(eu: np.ndarray) -> np.ndarray:
     """Conversion from multiple Euler angles (alpha, beta, gamma) to unit
     quaternions
 
     Parameters
     ----------
-    eu : numpy.ndarray
+    eu
         2D array of n (alpha, beta, gamma) as 64-bit floats.
 
     Returns
     -------
-    qu : numpy.ndarray
+    qu
         2D array of n (q0, q1, q2, q3) quaternions as 64-bit floats.
 
     Notes
@@ -698,7 +698,7 @@ def eu2qu_2d(eu):
     return qu
 
 
-def eu2qu(eu):
+def eu2qu(eu: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for eu2qu_2d, see the docstring of that
     function.
     """

@@ -16,61 +16,73 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 from copy import deepcopy
 from itertools import product
+from typing import Optional, Tuple, Union
 
+from diffpy.structure import Lattice
 import numpy as np
 
 from orix.vector import Vector3d
 
 
 class Miller(Vector3d):
-    """Direct crystal lattice vectors (uvw or UVTW) and reciprocal
+    r"""Direct crystal lattice vectors (uvw or UVTW) and reciprocal
     crystal lattice vectors (hkl or hkil), the latter known as Miller
     indices, describing directions with respect to the crystal reference
     frame defined by a phase's crystal lattice and symmetry.
+
+    Exactly one of ``xyz``, ``uvw``, ``UVTW``, ``hkl``, or ``hkil``
+    must be passed.
+
+    The vectors are stored internally as cartesian coordinates in
+    :attr:`data`.
+
+    Parameters
+    ----------
+    xyz
+        Vector(s) given in cartesian coordinates. Default is ``None``.
+    uvw
+        Indices of direct lattice vector(s). Default is ``None``.
+    UVTW
+        Indices of direct lattice vector(s), often preferred over
+        ``uvw`` in trigonal and hexagonal lattices. Default is ``None``.
+    hkl
+        Indices of reciprocal lattice vector(s). Default is ``None``.
+    hkil
+        Indices of reciprocal lattice vector(s), often preferred
+        over ``hkl`` in trigonal and hexagonal lattices. Default is
+        ``None``.
+    phase
+        A phase with a crystal lattice and symmetry. Must be passed
+        whenever direct or reciprocal lattice vectors are created.
+
+    Notes
+    -----
+    The Miller-Bravais indices :math:`UVTW` are defined as
+
+    .. math::
+        U &= \frac{2u - v}{3}, \\
+        V &= \frac{2v - u}{3}, \\
+        T &= -\frac{u + v}{3}, \\
+        W &= w.
     """
 
-    def __init__(self, xyz=None, uvw=None, UVTW=None, hkl=None, hkil=None, phase=None):
-        r"""Create a set of direct lattice vectors (uvw or UVTW)
-        or reciprocal lattice vectors (hkl or hkil) describing
-        directions with respect to a crystal reference frame defined by
-        a phase's crystal lattice and symmetry.
-
-        Exactly one of `xyz`, `uvw`, `UVTW`, `hkl`, or `hkil` must be
-        passed.
-
-        The vectors are stored internally as cartesian coordinates in
-        the `data` attribute.
-
-        Parameters
-        ----------
-        xyz : numpy.ndarray, list, or tuple, optional
-            Vector(s) given in cartesian coordinates. Default is None.
-        uvw : numpy.ndarray, list, or tuple, optional
-            Indices of direct lattice vector(s). Default is None.
-        UVTW : numpy.ndarray, list, or tuple, optional
-            Indices of direct lattice vector(s), often preferred over
-            `uvw` in trigonal and hexagonal lattices. Default is None.
-        hkl : numpy.ndarray, list, or tuple, optional
-            Indices of reciprocal lattice vector(s). Default is None.
-        hkil : numpy.ndarray, list, or tuple, optional
-            Indices of reciprocal lattice vector(s), often preferred
-            over `hkl` in trigonal and hexagonal lattices. Default is
-            None.
-        phase : orix.crystal_map.Phase, optional
-            A phase with a crystal lattice and symmetry. Must be passed
-            whenever direct or reciprocal lattice vectors are created.
-
-        Notes
-        -----
-        The Miller-Bravais indices :math:`UVTW` are defined as
-
-        .. math::
-            U &= \frac{2u - v}{3}, \\
-            V &= \frac{2v - u}{3}, \\
-            T &= -\frac{u + v}{3}, \\
-            W &= w.
+    def __init__(
+        self,
+        xyz: Union[np.ndarray, list, tuple, None] = None,
+        uvw: Union[np.ndarray, list, tuple, None] = None,
+        UVTW: Union[np.ndarray, list, tuple, None] = None,
+        hkl: Union[np.ndarray, list, tuple, None] = None,
+        hkil: Union[np.ndarray, list, tuple, None] = None,
+        phase: Optional["orix.crystal_map.Phase"] = None,
+    ):
+        """Create a set of direct lattice vectors (uvw or UVTW) or
+        reciprocal lattice vectors (hkl or hkil) describing directions
+        with respect to a crystal reference frame defined by a phase's
+        crystal lattice and symmetry.
         """
         n_passed = np.sum([i is not None for i in [xyz, uvw, UVTW, hkl, hkil]])
         if n_passed == 0 or n_passed > 1:
@@ -107,7 +119,7 @@ class Miller(Vector3d):
             self.coordinate_format = "hkil"
         super().__init__(xyz)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """String representation."""
         name = self.__class__.__name__
         shape = self.shape
@@ -118,7 +130,7 @@ class Miller(Vector3d):
             f"{name} {shape}, point group {symmetry}, {coordinate_format}\n" f"{data}"
         )
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Miller:
         """NumPy fancy indexing of vectors."""
         m = self.__class__(xyz=self.data[key], phase=self.phase).deepcopy()
         m.coordinate_format = self.coordinate_format
@@ -127,25 +139,28 @@ class Miller(Vector3d):
     # ---------------------- Unique properties ---------------------- #
 
     @property
-    def coordinate_format(self):
-        """Vector coordinate format, either "xyz", "uvw", "UVTW", "hkl",
-        or "hkil".
+    def coordinate_format(self) -> str:
+        """Return or set the vector coordinate format.
+
+        Parameters
+        ----------
+        value : str
+            Vector coordinate format, either ``"xyz"``, ``"uvw"``,
+            ``"UVTW"``, ``"hkl"`` or ``"hkil"``.
         """
         return self._coordinate_format
 
     @coordinate_format.setter
-    def coordinate_format(self, value):
-        """Set the vector coordinate format, either "xyz", "uvw",
-        "UVTW", "hkl", or "hkil".
-        """
+    def coordinate_format(self, value: str):
+        """Set the vector coordinate format."""
         formats = ["xyz", "uvw", "UVTW", "hkl", "hkil"]
         if value not in formats:
             raise ValueError(f"Available coordinate formats are {formats}")
         self._coordinate_format = value
 
     @property
-    def coordinates(self):
-        """Vector coordinates."""
+    def coordinates(self) -> np.ndarray:
+        """Return the vector coordinates."""
         coordinate_format = self.coordinate_format
         if coordinate_format == "xyz":
             coordinate_format = "data"
@@ -153,67 +168,87 @@ class Miller(Vector3d):
         return coordinates
 
     @property
-    def hkl(self):
-        """Reciprocal lattice vectors."""
+    def hkl(self) -> np.ndarray:
+        """Return or set the reciprocal lattice vectors.
+
+        Parameters
+        ----------
+        value : np.ndarray
+            New reciprocal lattice vector array.
+        """
         return _transform_space(self.data, "c", "r", self.phase.structure.lattice)
 
     @hkl.setter
-    def hkl(self, value):
+    def hkl(self, value: np.ndarray):
         """Set the reciprocal lattice vectors."""
         self.data = _transform_space(value, "r", "c", self.phase.structure.lattice)
 
     @property
     def hkil(self):
-        """Reciprocal lattice vectors expressed as 4-index
-        Miller-Bravais indices.
+        r"""Return or set the reciprocal lattice vectors expressed as
+        4-index Miller-Bravais indices.
+
+        Parameters
+        ----------
+        value : np.ndarray
+            New reciprocal lattice vector array. The sum of the first
+            three indices, :math:`h`, :math:`k`, and :math:`i` must be
+            zero.
         """
         return _hkl2hkil(self.hkl)
 
     @hkil.setter
-    def hkil(self, value):
-        r"""Set the reciprocal lattice vectors expressed as 4-index
-        Miller-Bravais indices. The sum of the first three indices,
-        :math:`h`, :math:`k`, and :math:`i` must be zero.
+    def hkil(self, value: np.ndarray):
+        """Set the reciprocal lattice vectors expressed as 4-index
+        Miller-Bravais indices.
         """
         self.hkl = _hkil2hkl(value)
 
     @property
-    def h(self):
-        """First reciprocal lattice vector index."""
+    def h(self) -> np.ndarray:
+        """Return the first reciprocal lattice vector index."""
         return self.hkl[..., 0]
 
     @property
-    def k(self):
-        """Second reciprocal lattice vector index."""
+    def k(self) -> np.ndarray:
+        """Return the second reciprocal lattice vector index."""
         return self.hkl[..., 1]
 
     @property
-    def i(self):
-        r"""Third reciprocal lattice vector index in 4-index
+    def i(self) -> np.ndarray:
+        r"""Return the third reciprocal lattice vector index in 4-index
         Miller-Bravais indices, equal to :math:`-(h + k)`.
         """
         return self.hkil[..., 2]
 
     @property
-    def l(self):
-        """Third reciprocal lattice vector index, or fourth index in
-        4-index Miller Bravais indices.
+    def l(self) -> np.ndarray:
+        """Return the third reciprocal lattice vector index, or fourth
+        index in 4-index Miller Bravais indices.
         """
         return self.hkl[..., 2]
 
     @property
-    def uvw(self):
-        """Direct lattice vectors."""
+    def uvw(self) -> np.ndarray:
+        """Return or set the direct lattice vectors.
+
+        Parameters
+        ----------
+        value : np.ndarray
+            New direct lattice vector array.
+        """
         return _transform_space(self.data, "c", "d", self.phase.structure.lattice)
 
     @uvw.setter
-    def uvw(self, value):
+    def uvw(self, value: np.ndarray):
         """Set the direct lattice vectors."""
         self.data = _transform_space(value, "d", "c", self.phase.structure.lattice)
 
     @property
     def UVTW(self):
-        r"""Direct lattice vectors expressed as 4-index Weber symbols.
+        r"""Return or set the direct lattice vectors expressed as
+        4-index Weber symbols.
+
         They are defined as
 
         .. math::
@@ -221,67 +256,74 @@ class Miller(Vector3d):
             V &= \frac{2v - u}{3}, \\
             T &= -\frac{u + v}{3}, \\
             W &= w.
+
+        Parameters
+        ----------
+        value : np.ndarray
+            New direct lattice vector array. The sum of the first three
+            indices, :math:`U`, :math:`V`, and :math:`T` must be zero.
         """
         return _uvw2UVTW(self.uvw)
 
     @UVTW.setter
     def UVTW(self, value):
-        r"""Set the direct lattice vectors expressed as 4-index Weber
-        symbols. The sum of the first three indices, :math:`U`,
-        :math:`V`, and :math:`T` must be zero.
+        """Set the direct lattice vectors expressed as 4-index Weber
+        symbols.
         """
         self.uvw = _UVTW2uvw(value)
 
     @property
-    def u(self):
-        """First direct lattice vector index."""
+    def u(self) -> np.ndarray:
+        """Return the first direct lattice vector index."""
         return self.uvw[..., 0]
 
     @property
-    def v(self):
-        """Second direct lattice vector index."""
+    def v(self) -> np.ndarray:
+        """Return the second direct lattice vector index."""
         return self.uvw[..., 1]
 
     @property
-    def w(self):
-        """Third direct lattice vector index."""
+    def w(self) -> np.ndarray:
+        """Return the third direct lattice vector index."""
         return self.uvw[..., 2]
 
     @property
-    def U(self):
-        r"""First direct lattice vector index in 4-index Weber symbols,
-        equal to :math:`(2u - v)/(3)`.
+    def U(self) -> np.ndarray:
+        r"""Return the first direct lattice vector index in 4-index
+        Weber symbols, equal to :math:`(2u - v)/(3)`.
         """
         return self.UVTW[..., 0]
 
     @property
-    def V(self):
-        r"""Second direct lattice vector index in 4-index Weber symbols,
-        equal to :math:`(2v - u)/3`.
+    def V(self) -> np.ndarray:
+        r"""Return the second direct lattice vector index in 4-index
+        Weber symbols, equal to :math:`(2v - u)/3`.
         """
         return self.UVTW[..., 1]
 
     @property
-    def T(self):
-        r"""Third direct lattice vector index in 4-index Weber symbols,
-        equal to :math:`-(u + v)/3`.
+    def T(self) -> np.ndarray:
+        r"""Return the third direct lattice vector index in 4-index
+        Weber symbols, equal to :math:`-(u + v)/3`.
         """
         return self.UVTW[..., 2]
 
     @property
-    def W(self):
-        r"""Fourth direct lattice vector index in 4-index Weber symbols,
-        equal to :math:`w`.
+    def W(self) -> np.ndarray:
+        r"""Return the fourth direct lattice vector index in 4-index
+        Weber symbols, equal to :math:`w`.
         """
         return self.UVTW[..., 3]
 
     @property
-    def length(self):
-        """Length of each vector given in lattice parameter units if
-        the :attr:`coordinate_format` attribute equals "uvw" or "UVTW",
-        and inverse lattice parameter units if the attribute equals
-        "hkl" or "hkil". If the attribute equals "xyz", the norms of the
-        vectors in :attr:`data` are returned.
+    def length(self) -> np.ndarray:
+        """Return the length of each vector given in lattice parameter
+        units if the :attr:`coordinate_format` attribute equals
+        ``"uvw"`` or ``"UVTW"``, and inverse lattice parameter units if
+        the attribute equals ``"hkl"`` or ``"hkil"``.
+
+        If the attribute equals ``"xyz"``, the norms of the vectors in
+        :attr:`data` are returned.
         """
         if self.coordinate_format in ["hkl", "hkil"]:
             return self.phase.structure.lattice.rnorm(self.hkl)
@@ -291,31 +333,35 @@ class Miller(Vector3d):
             return self.norm
 
     @property
-    def multiplicity(self):
-        """Number of symmetrically equivalent directions per vector."""
-        l = self.symmetrise(unique=True, return_multiplicity=True)[1]
+    def multiplicity(self) -> np.ndarray:
+        """Return the number of symmetrically equivalent directions per
+        vector.
+        """
+        _, l = self.symmetrise(unique=True, return_multiplicity=True)
         return l.reshape(self.shape)
 
     @property
-    def space(self):
-        """Whether the vector is in "direct" or "reciprocal" space."""
+    def space(self) -> str:
+        """Return whether the vector is in direct (``"d"``) or
+        reciprocal (``"r"``) space.
+        """
         if self.coordinate_format in ["xyz", "uvw", "UVTW"]:
             return "d"
         else:
             return "r"
 
     @property
-    def is_hexagonal(self):
-        """Whether the crystal reference frame is hexagonal/trigonal or
-        not.
+    def is_hexagonal(self) -> bool:
+        """Return whether the crystal reference frame is
+        hexagonal/trigonal.
         """
         return self.phase.is_hexagonal
 
     # ----------- Overwritten Vector3d/Object3d properties ----------- #
 
     @property
-    def unit(self):
-        """Unit vectors."""
+    def unit(self) -> Miller:
+        """Return unit vectors."""
         m = self.__class__(xyz=super().unit.data, phase=self.phase)
         m.coordinate_format = self.coordinate_format
         return m
@@ -323,18 +369,23 @@ class Miller(Vector3d):
     # ------------------------ Unique methods ------------------------ #
 
     @classmethod
-    def from_highest_indices(cls, phase, uvw=None, hkl=None):
+    def from_highest_indices(
+        cls,
+        phase: "orix.crystal_map.Phase",
+        uvw: Union[np.ndarray, list, tuple, None] = None,
+        hkl: Union[np.ndarray, list, tuple, None] = None,
+    ) -> Miller:
         """Create a set of unique direct or reciprocal lattice vectors
         from three highest indices and a phase (crystal lattice and
         symmetry).
 
         Parameters
         ----------
-        phase : orix.crystal_map.Phase
+        phase
             A phase with a crystal lattice and symmetry.
-        uvw : numpy.ndarray, list, or tuple, optional
+        uvw
             Three highest direct lattice vector indices.
-        hkl : numpy.ndarray, list, or tuple, optional
+        hkl
             Three highest reciprocal lattice vector indices.
         """
         if uvw is not None:
@@ -350,19 +401,21 @@ class Miller(Vector3d):
         return cls(**init_kw).unique()
 
     @classmethod
-    def from_min_dspacing(cls, phase, min_dspacing=0.05):
+    def from_min_dspacing(
+        cls, phase: "orix.crystal_map.Phase", min_dspacing: float = 0.05
+    ) -> Miller:
         """Create a set of unique reciprocal lattice vectors with a
         a direct space interplanar spacing greater than a lower
         threshold.
 
         Parameters
         ----------
-        phase : orix.crystal_map.Phase
+        phase
             A phase with a crystal lattice and symmetry.
-        min_dspacing : float, optional
+        min_dspacing
             Smallest interplanar spacing to consider. Default is 0.05,
             in the unit used to define the lattice parameters in
-            `phase`.
+            ``phase``.
         """
         highest_hkl = _get_highest_hkl(
             lattice=phase.structure.lattice, min_dspacing=min_dspacing
@@ -371,11 +424,11 @@ class Miller(Vector3d):
         hkl = hkl.astype(float).round(0)
         return cls(hkl=hkl, phase=phase).unique()
 
-    def deepcopy(self):
+    def deepcopy(self) -> Miller:
         """Return a deepcopy of the instance."""
         return deepcopy(self)
 
-    def round(self, max_index=20):
+    def round(self, max_index: int = 20) -> Miller:
         """Round a set of index triplet (Miller) or quartet
         (Miller-Bravais/Weber) to the *closest* smallest integers.
 
@@ -383,12 +436,12 @@ class Miller(Vector3d):
 
         Parameters
         ----------
-        max_index : int
+        max_index
             Maximum integer index to round to, by default 20.
 
-        Return
-        ------
-        Miller
+        Returns
+        -------
+        mill
             Rounded set of index triplet(s) or quartet(s).
         """
         if self.coordinate_format == "xyz":
@@ -398,30 +451,38 @@ class Miller(Vector3d):
             init_kw = {self.coordinate_format: new_coords, "phase": self.phase}
             return self.__class__(**init_kw)
 
-    def symmetrise(self, unique=False, return_multiplicity=False, return_index=False):
-        """Vectors symmetrically equivalent to the ones in `self`.
+    def symmetrise(
+        self,
+        unique: bool = False,
+        return_multiplicity: bool = False,
+        return_index: bool = False,
+    ) -> Union[
+        Miller, Tuple[Miller, np.ndarray], Tuple[Miller, np.ndarray, np.ndarray]
+    ]:
+        """Return vectors symmetrically equivalent to the vectors.
 
         Parameters
         ----------
-        unique : bool, optional
-            Whether to return only unique vectors. Default is False.
-        return_multiplicity : bool, optional
+        unique
+            Whether to return only unique vectors. Default is ``False``.
+        return_multiplicity
             Whether to return the multiplicity of each vector. Default
-            is False.
-        return_index : bool, optional
-            Whether to return the index into `self` for the returned
-            symmetrically equivalent vectors. Default is False.
+            is ``False``.
+        return_index
+            Whether to return the index into the vectors for the
+            returned symmetrically equivalent vectors. Default is
+            ``False``.
 
         Returns
         -------
-        Miller
+        mill
             Flattened symmetrically equivalent vectors.
-        multiplicity : numpy.ndarray
+        multiplicity
             Multiplicity of each vector. Returned if
-            `return_multiplicity` is True.
-        idx : numpy.ndarray
-            Index into `self` for the symmetrically equivalent vectors.
-            Returned if `return_index` is True.
+            ``return_multiplicity=True``.
+        idx
+            Index into the vectors for the returned symmetrically
+            equivalent vectors. Returned if ``return_index=True``.
         """
         if return_multiplicity and not unique:
             raise ValueError("`unique` must be True when `return_multiplicity` is True")
@@ -482,20 +543,22 @@ class Miller(Vector3d):
         else:
             return m
 
-    def _compatible_with(self, other, raise_error=False):
-        """Whether `self` and `other` are the same (the same crystal
+    def _compatible_with(self, other: Miller, raise_error: bool = False) -> bool:
+        """Whether ``self`` and ``other`` are the same (the same crystal
         lattice and symmetry) with vectors in the same space.
 
         Parameters
         ----------
-        other : Miller
-        raise_error : bool, optional
-            Whether to raise a ValueError if the instances are
-            incompatible (default is False).
+        other
+            Another vector instance.
+        raise_error
+            Whether to raise a ``ValueError`` if the instances are
+            incompatible (default is ``False``).
 
         Returns
         -------
-        bool
+        compatible
+            Whether they are compatible.
         """
         same_symmetry = self.phase.point_group == other.phase.point_group
         same_lattice = np.allclose(
@@ -514,8 +577,8 @@ class Miller(Vector3d):
 
     # ------------- Overwritten Vector3d/Object3d methods ------------ #
 
-    def angle_with(self, other, use_symmetry=False):
-        """Calculate angles between vectors in `self` and `other`,
+    def angle_with(self, other: Miller, use_symmetry: bool = False) -> np.ndarray:
+        """Calculate angles between these vectors and the other vectors
         possibly using symmetrically equivalent vectors to find the
         smallest angle under symmetry.
 
@@ -524,14 +587,15 @@ class Miller(Vector3d):
 
         Parameters
         ----------
-        other : Vector3d or Miller
-        use_symmetry : bool, optional
+        other
+            Other vectors.
+        use_symmetry
             Whether to consider equivalent vectors to find the smallest
-            angle under symmetry. Default is False.
+            angle under symmetry. Default is ``False``.
 
         Returns
         -------
-        numpy.ndarray
+        angles
             The angle between the vectors, in radians.
         """
         self._compatible_with(other, raise_error=True)
@@ -546,118 +610,157 @@ class Miller(Vector3d):
         else:
             return super().angle_with(other)
 
-    def cross(self, other):
-        """Cross product of a direct or reciprocal lattice vector with
-        another vector, which is considered the zone axis between the
-        vectors.
+    def cross(self, other: Miller):
+        """Return the cross products of the vectors with the other
+        vectors, which is considered the zone axes between the vectors.
 
-        Vectors must have compatible shapes, and be in the same space
-        (direct or reciprocal) and crystal reference frames.
+        Parameters
+        ----------
+        other
+            Other vectors, which must be in the same space (direct or
+            reciprocal) and have the same crystal reference frame.
 
         Returns
         -------
-        Miller
+        mill
             Vectors in reciprocal (direct) space if direct (reciprocal)
             vectors are crossed.
         """
         self._compatible_with(other, raise_error=True)
         new_fmt = dict(hkl="uvw", uvw="hkl", hkil="UVTW", UVTW="hkil")
-        m = self.__class__(xyz=super().cross(other).data, phase=self.phase)
-        m.coordinate_format = new_fmt[self.coordinate_format]
-        return m
+        mill = self.__class__(xyz=super().cross(other).data, phase=self.phase)
+        mill.coordinate_format = new_fmt[self.coordinate_format]
+        return mill
 
-    def dot(self, other):
-        """Dot product of a vector with another vector.
+    def dot(self, other: Miller) -> np.ndarray:
+        """Return the dot products of the vectors and the other vectors.
 
-        Vectors must have compatible shapes, and be in the same space
-        (direct or reciprocal) and crystal reference frames.
+        Parameters
+        ----------
+        other
+            Other vectors, which must be in the same space (direct or
+            reciprocal) and have the same crystal reference frame.
 
         Returns
         -------
-        numpy.ndarray
+        dot_products
+            Dot products.
         """
         self._compatible_with(other, raise_error=True)
         return super().dot(other)
 
-    def dot_outer(self, other):
-        """Outer dot product of a vector with another vector.
+    def dot_outer(self, other: Miller) -> np.ndarray:
+        """Return the outer dot products of the vectors and the other
+        vectors.
 
-        Vectors must be in the same space (direct or reciprocal) and
-        crystal reference frames.
-
-        The dot product for every combination of vectors in `self` and
-        `other` is computed.
+        Parameters
+        ----------
+        other
+            Other vectors, which must be in the same space (direct or
+            reciprocal) and have the same crystal reference frame.
 
         Returns
         -------
-        numpy.ndarray
+        dot_products
+            Dot products.
         """
         self._compatible_with(other, raise_error=True)
         return super().dot_outer(other)
 
-    def flatten(self):
-        m = self.__class__(xyz=super().flatten().data, phase=self.phase)
-        m.coordinate_format = self.coordinate_format
-        return m
+    def flatten(self) -> Miller:
+        """Return the flattened vectors.
 
-    def transpose(self, *axes):
-        """Returns a new Miller object containing the same data
-        transposed.
+        Returns
+        -------
+        mill
+            Flattened vectors.
+        """
+        mill = self.__class__(xyz=super().flatten().data, phase=self.phase)
+        mill.coordinate_format = self.coordinate_format
+        return mill
 
-        If `self.ndim` is originally 2, then order may be undefined. In
-        this case the first two dimensions will be transposed.
+    def transpose(self, *axes: Optional[int]) -> Miller:
+        """Return a new instance with the data transposed.
+
+        The order may be undefined if :attr:`ndim` is originally 2. In
+        this case the first two dimensions are transposed.
 
         Parameters
         ----------
-        axes : int, optional
-            The transposed axes order. Only navigation axes need to be
+        axes
+            Transposed axes order. Only navigation axes need to be
             defined. May be undefined if self only contains two
             navigation dimensions.
 
         Returns
         -------
-        Miller
+        mill
             New transposed Miller instance of the original instance.
         """
-        m = self.__class__(xyz=super().transpose(*axes).data, phase=self.phase)
-        m.coordinate_format = self.coordinate_format
-        return m
+        mill = self.__class__(xyz=super().transpose(*axes).data, phase=self.phase)
+        mill.coordinate_format = self.coordinate_format
+        return mill
 
-    def get_nearest(self, *args):
+    def get_nearest(self, *args) -> NotImplemented:
         """NotImplemented."""
         return NotImplemented
 
-    def mean(self, use_symmetry=False):
-        """Mean vector of the set of vectors."""
-        # TODO: Allow using symmetry by projecting to fundamental sector
-        if use_symmetry:
-            return NotImplemented
-        m = self.__class__(xyz=super().mean().data, phase=self.phase)
-        m.coordinate_format = self.coordinate_format
-        return m
-
-    def reshape(self, *shape):
-        m = self.__class__(xyz=super().reshape(*shape).data, phase=self.phase)
-        m.coordinate_format = self.coordinate_format
-        return m
-
-    def unique(self, use_symmetry=False, return_index=False):
-        """Unique vectors in `self`.
+    def mean(self, use_symmetry: bool = False) -> Miller:
+        """Return the mean vector of the set of vectors.
 
         Parameters
         ----------
-        use_symmetry : bool, optional
-            Whether to consider equivalent vectors to compute the unique
-            vectors. Default is False.
-        return_index : bool, optional
-            Whether to return the indices of the (flattened) data where
-            the unique entries were found. Default is False.
+        use_symmetry
+            Not implemented yet.
 
         Returns
         -------
-        Miller
+        mill
+            Mean vector.
+        """
+        # TODO: Allow using symmetry by projecting to fundamental sector
+        if use_symmetry:
+            return NotImplemented
+        mill = self.__class__(xyz=super().mean().data, phase=self.phase)
+        mill.coordinate_format = self.coordinate_format
+        return mill
+
+    def reshape(self, *shape: Optional[int]) -> Miller:
+        """Return a new instance with the vectors reshaped.
+
+        Parameters
+        ----------
+        *shape
+            New shape.
+
+        Returns
+        -------
+        mill
+            New instance.
+        """
+        mill = self.__class__(xyz=super().reshape(*shape).data, phase=self.phase)
+        mill.coordinate_format = self.coordinate_format
+        return mill
+
+    def unique(
+        self, use_symmetry: bool = False, return_index: bool = False
+    ) -> Union[Miller, Tuple[Miller, np.ndarray]]:
+        """Unique vectors in ``self``.
+
+        Parameters
+        ----------
+        use_symmetry
+            Whether to consider equivalent vectors to compute the unique
+            vectors. Default is ``False``.
+        return_index
+            Whether to return the indices of the (flattened) data where
+            the unique entries were found. Default is ``False``.
+
+        Returns
+        -------
+        mill
             Flattened unique vectors.
-        idx : numpy.ndarray
+        idx
             Indices of the unique data in the (flattened) array.
         """
         out = super().unique(return_index=return_index)
@@ -679,14 +782,16 @@ class Miller(Vector3d):
             _, idx = np.unique(data_sorted, return_index=True, axis=0)
             v = v[idx[::-1]]
 
-        m = self.__class__(xyz=v.data, phase=self.phase)
-        m.coordinate_format = self.coordinate_format
+        mill = self.__class__(xyz=v.data, phase=self.phase)
+        mill.coordinate_format = self.coordinate_format
         if return_index:
-            return m, idx
+            return mill, idx
         else:
-            return m
+            return mill
 
-    def in_fundamental_sector(self, symmetry=None):
+    def in_fundamental_sector(
+        self, symmetry: Optional["orix.quaternion.Symmetry"] = None
+    ) -> Miller:
         """Project Miller indices to a symmetry's fundamental sector
         (inverse pole figure).
 
@@ -695,26 +800,27 @@ class Miller(Vector3d):
 
         Parameters
         ----------
-        symmetry : ~orix.quaternion.Symmetry, optional
+        symmetry
             Symmetry with a fundamental sector, possibly not equal to
-            `self.phase.point_group`. If not given,
-            `self.phase.point_group` is used if valid, otherwise an
-            error is raised.
+            :attr:`~orix.crystal_map.Phase.point_group`. If not given,
+            ``point_group`` is used if valid, otherwise an error is
+            raised.
 
         Returns
         -------
-        Miller
+        mill
+            Vectors within the fundamental sector.
 
         Examples
         --------
         >>> from orix.crystal_map import Phase
         >>> from orix.quaternion.symmetry import D6h
         >>> from orix.vector import Miller
-        >>> h = Miller(uvw=(-1, 1, 0), phase=Phase(point_group="m-3m"))
-        >>> h.in_fundamental_sector()
+        >>> mill = Miller(uvw=(-1, 1, 0), phase=Phase(point_group="m-3m"))
+        >>> mill.in_fundamental_sector()
         Miller (1,), point group m-3m, uvw
         [[1. 0. 1.]]
-        >>> h.in_fundamental_sector(D6h)
+        >>> mill.in_fundamental_sector(D6h)
         Miller (1,), point group m-3m, uvw
         [[1.366 0.366 0.   ]]
         """
@@ -726,25 +832,27 @@ class Miller(Vector3d):
                     "`Symmetry` with a `Symmetry.fundamental_sector`"
                 )
         v = Vector3d(self.data).in_fundamental_sector(symmetry)
-        m = self.__class__(xyz=v.data, phase=self.phase)
-        m.coordinate_format = self.coordinate_format
-        return m
+        mill = self.__class__(xyz=v.data, phase=self.phase)
+        mill.coordinate_format = self.coordinate_format
+        return mill
 
 
-def _transform_space(v_in, space_in, space_out, lattice):
+def _transform_space(
+    v_in: np.ndarray, space_in: str, space_out: str, lattice: Lattice
+) -> np.ndarray:
     r"""Convert vectors in a unit cell from one space to another.
 
     Parameters
     ----------
-    v_in : numpy.ndarray
+    v_in
         Input vectors.
-    space_in, space_out : str
-        "d" for direct (uvw), "r" for reciprocal (hkl), or "c" for
-        cartesian (xyz).
+    space_in, space_out
+        ``"d"`` for direct (uvw), ``"r"`` for reciprocal (hkl) or
+        ``"c"`` for cartesian (xyz).
 
     Returns
     -------
-    v_out : numpy.ndarray
+    v_out
         Output vectors.
 
     Notes
@@ -795,7 +903,7 @@ def _transform_space(v_in, space_in, space_out, lattice):
     return v_out
 
 
-def _hkl2hkil(hkl):
+def _hkl2hkil(hkl: np.ndarray) -> np.ndarray:
     hkl = np.asarray(hkl)
     hkil = np.zeros(hkl.shape[:-1] + (4,))
     h = hkl[..., 0]
@@ -807,7 +915,7 @@ def _hkl2hkil(hkl):
     return hkil
 
 
-def _hkil2hkl(hkil):
+def _hkil2hkl(hkil: np.ndarray) -> np.ndarray:
     hkil = np.asarray(hkil)
     hkl = np.zeros(hkil.shape[:-1] + (3,))
     hkl[..., :2] = hkil[..., :2]
@@ -815,7 +923,7 @@ def _hkil2hkl(hkil):
     return hkl
 
 
-def _check_hkil(hkil):
+def _check_hkil(hkil: np.ndarray):
     hkil = np.asarray(hkil)
     if not np.allclose(np.sum(hkil[..., :3], axis=-1), 0, atol=1e-4):
         raise ValueError(
@@ -823,7 +931,7 @@ def _check_hkil(hkil):
         )
 
 
-def _uvw2UVTW(uvw, convention=None):
+def _uvw2UVTW(uvw: np.ndarray, convention: Optional[str] = None) -> np.ndarray:
     uvw = np.asarray(uvw)
     UVTW = np.zeros(uvw.shape[:-1] + (4,))
     u = uvw[..., 0]
@@ -839,7 +947,7 @@ def _uvw2UVTW(uvw, convention=None):
     return UVTW
 
 
-def _UVTW2uvw(UVTW, convention=None):
+def _UVTW2uvw(UVTW: np.ndarray, convention: Optional[str] = None) -> np.ndarray:
     UVTW = np.asarray(UVTW)
     uvw = np.zeros(UVTW.shape[:-1] + (3,))
     # DeGraef: u = 2U + V, v = 2V + U, w = W
@@ -854,7 +962,7 @@ def _UVTW2uvw(UVTW, convention=None):
     return uvw
 
 
-def _check_UVTW(UVTW):
+def _check_UVTW(UVTW: np.ndarray):
     UVTW = np.asarray(UVTW)
     if not np.allclose(np.sum(UVTW[..., :3], axis=-1), 0, atol=1e-4):
         raise ValueError(
@@ -862,17 +970,19 @@ def _check_UVTW(UVTW):
         )
 
 
-def _get_indices_from_highest(highest_indices):
+def _get_indices_from_highest(
+    highest_indices: Union[list, tuple, np.ndarray]
+) -> np.ndarray:
     """Return a list of coordinates from a set of highest indices.
 
     Parameters
     ----------
-    highest_indices : list, tuple, or numpy.ndarray
+    highest_indices
         Highest indices to consider.
 
     Returns
     -------
-    indices : numpy.ndarray
+    indices
         An array of indices sorted from positive to negative in the
         first column.
     """
@@ -888,20 +998,20 @@ def _get_indices_from_highest(highest_indices):
     return indices
 
 
-def _get_highest_hkl(lattice, min_dspacing=0.05):
+def _get_highest_hkl(lattice: Lattice, min_dspacing: float = 0.05) -> np.ndarray:
     """Return the highest Miller indices hkl of the plane with a direct
     space interplanar spacing closest to a threshold.
 
     Parameters
     ----------
-    lattice : diffpy.structure.Lattice
+    lattice
         Crystal lattice.
-    min_dspacing : float, optional
+    min_dspacing
         Smallest interplanar spacing to consider. Default is 0.05.
 
     Returns
     -------
-    highest_hkl : numpy.ndarray
+    highest_hkl
         Highest Miller indices.
     """
     highest_hkl = np.ones(3, dtype=int)
@@ -916,7 +1026,9 @@ def _get_highest_hkl(lattice, min_dspacing=0.05):
     return highest_hkl
 
 
-def _round_indices(indices, max_index=12):
+def _round_indices(
+    indices: Union[list, tuple, np.ndarray], max_index: int = 12
+) -> np.ndarray:
     """Round a set of index triplet (Miller) or quartet (Miller-Bravais)
     to the *closest* smallest integers.
 
@@ -924,14 +1036,14 @@ def _round_indices(indices, max_index=12):
 
     Parameters
     ----------
-    indices : list, tuple, or numpy.ndarray
+    indices
         Set of index triplet(s) or quartet(s) to round.
-    max_index : int, optional
+    max_index
         Maximum integer index to round to, by default 12.
 
     Return
     ------
-    new_indices : numpy.ndarray
+    new_indices
         Integer array of rounded set of index triplet(s) or quartet(s).
     """
     # Allow list and tuple input (and don't overwrite `indices`)

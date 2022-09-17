@@ -25,9 +25,12 @@ representation does not scale the angle of rotation, making it easy for direct
 interpretation, whereas the Rodrigues representation applies a scaled tangent
 function, such that any straight lines in Rodrigues space represent rotations
 about a fixed axis.
-
 """
+
+from __future__ import annotations
+
 import abc
+from typing import Union
 
 import numpy as np
 
@@ -39,19 +42,19 @@ class NeoEuler(Vector3d, abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_rotation(cls, rotation):  # pragma: no cover
-        """NeoEuler : Create a new vector from the given rotation."""
+    def from_rotation(cls, rotation: "Rotation"):  # pragma: no cover
+        """Create vectors in neo-Eulerian representation from rotations."""
         pass
 
     @property
     @abc.abstractmethod
-    def angle(self):  # pragma: no cover
-        """numpy.ndarray : the angle of rotation."""
+    def angle(self) -> np.ndarray:  # pragma: no cover
+        """Return the angles of rotation."""
         pass
 
     @property
-    def axis(self):
-        """Vector3d : the axis of rotation."""
+    def axis(self) -> Vector3d:
+        """Return the axes of rotation."""
         return Vector3d(self.unit)
 
 
@@ -65,11 +68,22 @@ class Homochoric(NeoEuler):
     Notes
     -----
     The homochoric transformation has no analytical inverse.
-
     """
 
     @classmethod
-    def from_rotation(cls, rotation):
+    def from_rotation(cls, rotation: "Rotation") -> Homochoric:
+        """Create an homochoric vector from a rotation.
+
+        Parameters
+        ----------
+        rotation
+            Rotation.
+
+        Returns
+        -------
+        vec
+            Homochoric vector.
+        """
         theta = rotation.angle
         n = rotation.axis
         magnitude = (0.75 * (theta - np.sin(theta))) ** (1 / 3)
@@ -77,6 +91,9 @@ class Homochoric(NeoEuler):
 
     @property
     def angle(self):
+        """Calling this attribute raises an error since it cannot be
+        determined analytically.
+        """
         raise AttributeError(
             "The angle of a homochoric vector cannot be determined analytically."
         )
@@ -87,11 +104,22 @@ class Rodrigues(NeoEuler):
 
     The Rodrigues vector representing a rotation with rotation angle
     :math:`\\theta` has magnitude :math:`\\tan\\frac{\\theta}{2}`.
-
     """
 
     @classmethod
-    def from_rotation(cls, rotation):
+    def from_rotation(cls, rotation: "Rotation") -> Rodrigues:
+        """Create a Rodrigues vector from a rotation.
+
+        Parameters
+        ----------
+        rotation
+            Rotation.
+
+        Returns
+        -------
+        vec
+            Rodrigues vector.
+        """
         a = np.float64(rotation.a)
         with np.errstate(divide="ignore", invalid="ignore"):
             data = np.stack((rotation.b / a, rotation.c / a, rotation.d / a), axis=-1)
@@ -100,7 +128,8 @@ class Rodrigues(NeoEuler):
         return r
 
     @property
-    def angle(self):
+    def angle(self) -> np.ndarray:
+        """Return the angle of the Rodrigues vector."""
         return np.arctan(self.norm) * 2
 
 
@@ -109,32 +138,49 @@ class AxAngle(NeoEuler):
 
     The Axis-Angle vector representing a rotation with rotation angle
     :math:`\\theta` has magnitude :math:`\\theta`
-
     """
 
     @classmethod
-    def from_rotation(cls, rotation):
+    def from_rotation(cls, rotation: "Rotation") -> AxAngle:
+        """Create an axis-angle rotation from a rotation.
+
+        Parameters
+        ----------
+        rotation
+            Rotation.
+
+        Returns
+        -------
+        vec
+            Axis-angle representation of ``rotation``.
+        """
         return cls((rotation.axis * rotation.angle).data)
 
     @property
     def angle(self):
+        """Return the angle of the axis-angle rotation."""
         return self.norm
 
     @classmethod
-    def from_axes_angles(cls, axes, angles):
-        """Create new AxAngle object explicitly from the given axes and angles.
+    def from_axes_angles(
+        cls,
+        axes: Union[Vector3d, np.ndarray, list, tuple],
+        angles: Union[np.ndarray, list, tuple],
+    ) -> AxAngle:
+        """Create new AxAngle object explicitly from the given axes and
+        angles.
 
         Parameters
         ----------
-        axes : Vector3d or array_like
-            The axis of rotation.
-        angles : array_like
-            The angle of rotation, in radians.
+        axes
+            The axes of rotation.
+        angles
+            The angles of rotation, in radians.
 
         Returns
         -------
-        AxAngle
-
+        vec
+            Axis-angle instance of the axes and angles.
         """
         axes = Vector3d(axes).unit
         angles = np.array(angles)

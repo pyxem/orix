@@ -21,13 +21,6 @@
 :class:`~orix.quaternion.Orientation`,
 :class:`~orix.quaternion.Misorientation`, and
 :class:`~orix.crystal_map.CrystalMap`.
-
-Example of usage::
-
-    >>> import matplotlib.pyplot as plt
-    >>> from orix import plot, vector
-    >>> fig, ax = plt.subplots(subplot_kw=dict(projections="stereographic"))
-    >>> ax.scatter(vector.Vector3d([[0, 0, 1], [1, 0, 1]]))
 """
 
 from orix.plot.crystal_map_plot import CrystalMapPlot
@@ -38,6 +31,7 @@ from orix.plot.stereographic_plot import StereographicPlot
 
 # Must be imported below StereographicPlot since it imports it
 from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot  # isort: skip
+
 
 # Lists what will be imported when calling "from orix.plot import *"
 __all__ = [

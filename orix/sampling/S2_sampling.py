@@ -42,11 +42,17 @@ def _remove_pole_duplicates(
 
     Parameters
     ----------
-    azimuth, polar
+    azimuth
+        Azimuth angles.
+    polar
+        Polar angles.
 
     Returns
     -------
-    azimuth, polar
+    azimuth
+        Azimuth angles without duplicates.
+    polar
+        Polar angles without duplicates.
     """
     mask_azimuth = azimuth > 0
     mask_polar_0 = np.isclose(polar, 0) * mask_azimuth
@@ -74,18 +80,21 @@ def _sample_S2_uv_mesh_coordinates(
         The resolution of :math:`u` and :math:`v` are rounded up to get
         an integer number of equispaced polar and azimuthal grid lines.
     hemisphere
-        Generate mesh points on either the "upper", "lower" or "both"
-        hemispheres. Default is "both".
+        Generate mesh points on either the ``"upper"``, ``"lower"`` or
+        ``"both"`` hemispheres. Default is ``"both"``.
     offset
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
-    azimuthal_endpoint
-        If True then endpoint of the azimuthal array is included in the
-        calculation. Default is False.
+    azimuth_endpoint
+        If ``True`` then endpoint of the azimuth array is included in
+        the calculation. Default is ``False``.
 
     Returns
     -------
-    azimuth, polar
+    azimuth
+        Azimuth angles.
+    polar
+        Polar angles.
     """
     hemisphere = hemisphere.lower()
     if hemisphere not in ("upper", "lower", "both"):
@@ -127,7 +136,6 @@ def _sample_S2_uv_mesh_coordinates(
         polar_min + offset * step_size_polar,
         polar_max + offset * step_size_polar,
         num=steps_polar,
-        endpoint=True,
     )
     # polar coordinate cannot exceed polar_max
     polar = polar[polar <= polar_max]
@@ -141,7 +149,8 @@ def sample_S2_uv_mesh(
     offset: float = 0,
     remove_pole_duplicates: bool = True,
 ) -> Vector3d:
-    r"""Vectors of a UV mesh on a unit sphere *S2*.
+    r"""Return vectors of a UV mesh on a unit sphere *S2*
+    :cite:`cajaravelli2015four`.
 
     The mesh vertices are defined by the parametrization
 
@@ -157,23 +166,19 @@ def sample_S2_uv_mesh(
         The resolution of :math:`u` and :math:`v` are rounded up to get
         an integer number of equispaced polar and azimuthal grid lines.
     hemisphere
-        Generate mesh points on the "upper", "lower" or "both"
-        hemispheres. Default is "both".
+        Generate mesh points on the ``"upper"``, ``"lower"`` or
+        ``"both"`` hemispheres. Default is ``"both"``.
     offset
         Mesh points are offset in angular space by this fraction of the
         step size, must be in the range [0..1]. Default is 0.
     remove_pole_duplicates
-        If True the duplicate mesh grid points at the North and South
-        pole of the unit sphere are removed. Default is True.
+        If ``True`` the duplicate mesh grid points at the North and
+        South pole of the unit sphere are removed. Default is ``True``.
 
     Returns
     -------
-    Vector3d
+    vec
         Vectors that sample the unit sphere.
-
-    References
-    ----------
-    :cite:`cajaravelli2015four`
     """
     azimuth, polar = _sample_S2_uv_mesh_coordinates(resolution, hemisphere, offset)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
@@ -202,21 +207,23 @@ def _sample_S2_equal_area_coordinates(
     resolution
         The angular resolution in degrees of the azimuthal vectors.
     hemisphere
-        Generate mesh points on the `"upper"`, "`lower"` or `"both"`
-        hemispheres. Default is `"both"`.
+        Generate mesh points on the ``"upper"``, ``"lower"`` or
+        ``"both"`` hemispheres. Default is ``"both"``.
     azimuth_endpoint
-        If `True` then endpoint of the azimuth array is included in the
-        calculation. Default is `False`.
+        If ``True`` then endpoint of the azimuth array is included in
+        the calculation. Default is ``False``.
     azimuth_range, polar_range
         The (min, max) angular range for the azimuthal and polar
         coordinates, respectively, in radians. If provided then the
-        `hemisphere` argument is ignored. Default is `None`.
+        ``hemisphere`` argument is ignored. Default is ``None``.
 
     Returns
     -------
-    azimuth, polar
+    azimuth
+        Azimuth angles.
+    polar
+        Polar angles.
     """
-
     # calculate number of steps and step size angular spacing
     # this parameter D in :cite:`rohrer2004distribution`.
     steps = int(np.ceil(90 / resolution))
@@ -282,7 +289,6 @@ def _sample_S2_equal_area_coordinates(
         polar_min,
         polar_max,
         num=polar_num,
-        endpoint=True,
     )
     polar = np.arccos(polar)
 
@@ -294,25 +300,26 @@ def sample_S2_equal_area_mesh(
     hemisphere: str = "both",
     remove_pole_duplicates: bool = True,
 ) -> Vector3d:
-    """Vectors of a cube mesh on a unit sphere *S2* according to equal
-    area spacing :cite:`rohrer2004distribution`.
+    """Return vectors of a cube mesh on a unit sphere *S2* according to
+    equal area spacing :cite:`rohrer2004distribution`.
 
     Parameters
     ----------
     resolution
         The angular resolution in degrees of the azimuthal vectors.
     hemisphere
-        Generate mesh points on the "upper", "lower" or "both"
-        hemispheres. Default is "both".
+        Generate mesh points on the ``"upper"``, ``"lower"`` or
+        ``"both"`` hemispheres. Default is ``"both"``.
     remove_pole_duplicates
-        If True the duplicate mesh grid points at the North and South
-        pole of the unit sphere are removed. If True then the returned
-        vector has `ndim` = 1, whereas `ndim` = 2 (grid) if False.
-        Default is True.
+        If ``True`` the duplicate mesh grid points at the North and
+        South pole of the unit sphere are removed. If ``True`` then the
+        returned vector has ``ndim = 1``, whereas ``ndim = 2`` (grid) if
+        ``False``. Default is ``True``.
 
     Returns
     -------
-    Vector3d
+    vec
+        Vectors that sample the unit sphere.
     """
     azimuth, polar = _sample_S2_equal_area_coordinates(resolution, hemisphere)
     azimuth_prod, polar_prod = np.meshgrid(azimuth, polar)
@@ -326,7 +333,8 @@ def sample_S2_equal_area_mesh(
 def sample_S2_cube_mesh(
     resolution: float, grid_type: str = "spherified_corner"
 ) -> Vector3d:
-    """Vectors of a cube mesh projected on a unit sphere *S2*.
+    """Return vectors of a cube mesh projected on a unit sphere *S2*
+    :cite:`cajaravelli2015four`.
 
     Parameters
     ----------
@@ -338,7 +346,7 @@ def sample_S2_cube_mesh(
 
     Returns
     -------
-    Vector3d
+    vec
         Vectors that sample the unit sphere.
 
     Notes
@@ -350,10 +358,6 @@ def sample_S2_cube_mesh(
     such that the row of vectors from the [001] to [011] is equiangular.
     ``"spherified_corner"`` corresponds to the case where the row of
     vectors from [001] to [111] is equiangular.
-
-    References
-    ----------
-    :cite:`cajaravelli2015four`
     """
     grid_type = grid_type.lower()
     grid_mapping = {
@@ -389,8 +393,8 @@ def sample_S2_cube_mesh(
 
 
 def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
-    """Vectors of a hexagonal bipyramid mesh projected on a unit sphere
-    *S2*.
+    """Return vectors of a hexagonal bipyramid mesh projected on a unit
+    sphere *S2*.
 
     Parameters
     ----------
@@ -399,7 +403,7 @@ def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
 
     Returns
     -------
-    Vector3d
+    vec
         Vectors that sample the unit sphere.
     """
     number_of_steps = int(np.ceil(2 / np.tan(np.deg2rad(resolution))))
@@ -410,7 +414,6 @@ def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
     grid_1D = _sample_length_equidistant(
         number_of_steps,
         length=1.0,
-        include_start=True,
         include_end=True,
         positive_and_negative=False,
     )
@@ -436,7 +439,7 @@ def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
     points_one_face = np.stack([coordinate[include_points] for coordinate in [x, y, z]])
 
     # repeat 6 times by rotating 60 degrees
-    def rotation(r):
+    def rotation(r: np.ndarray) -> np.ndarray:
         return np.array(
             [[np.cos(r), -np.sin(r), 0], [np.sin(r), np.cos(r), 0], [0, 0, 1]]
         )
@@ -457,7 +460,7 @@ def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
 
 
 def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vector3d:
-    """Vectors of a random mesh on *S2*.
+    """Return vectors of a random mesh on *S2*.
 
     Parameters
     ----------
@@ -470,7 +473,7 @@ def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vect
 
     Returns
     -------
-    Vector3d
+    vec
         Vectors that sample the unit sphere.
 
     References
@@ -485,7 +488,7 @@ def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vect
 
 
 def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
-    """Vectors of an icosahedral mesh on *S2*.
+    """Return vectors of an icosahedral mesh on *S2* :cite:`meshzoo`.
 
     Parameters
     ----------
@@ -494,12 +497,8 @@ def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
 
     Returns
     -------
-    Vector3d
+    vec
         Vectors that sample the unit sphere.
-
-    References
-    ----------
-    :cite:`meshzoo`
     """
     t = (1.0 + np.sqrt(5.0)) / 2.0
     corners = np.array(
@@ -575,7 +574,7 @@ for sampling_name, sampling_method in _sampling_method_registry.items():
     _sampling_method_names.add(f":func:`orix.sampling.{_func.__name__}`")
 
 _s2_sampling_docstring = (
-    """Generate unit vectors that sample S2 with a specific angular
+    """Return unit vectors that sample S2 with a specific angular
     resolution.
 
     Parameters
@@ -584,17 +583,17 @@ _s2_sampling_docstring = (
         Maximum angle between nearest neighbour grid points, in degrees.
     method
         Sphere meshing method. Options are: {}. The default is
-        ``\"spherified_cube_edge\"```.
-    kwargs
+        ``\"spherified_cube_edge\"``.
+    **kwargs
         Keyword arguments passed to the sampling function. For details
-        see the underlying sampling functions.
+        see the sampling functions listed below.
 
     Returns
     -------
-    Vector3d
+    vec
         Vectors that sample the unit sphere.
 
-    See also
+    See Also
     --------
     {}
     """
@@ -607,7 +606,6 @@ _s2_sampling_docstring = (
 def sample_S2(
     resolution: float, method: str = "spherified_cube_edge", **kwargs
 ) -> Vector3d:
-
     try:
         sampling_method = _sampling_method_registry[method]
     except KeyError:

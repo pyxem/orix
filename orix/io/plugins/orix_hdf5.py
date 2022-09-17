@@ -20,12 +20,12 @@
 format.
 """
 
-
 import copy
+from typing import Optional
 from warnings import warn
 
 from diffpy.structure import Atom, Lattice, Structure
-from h5py import File
+from h5py import File, Group
 import numpy as np
 
 from orix.crystal_map import CrystalMap, Phase, PhaseList
@@ -43,20 +43,20 @@ writes_this = CrystalMap
 # TODO: Extend reader/writer to Phase and PhaseList objects
 
 
-def file_reader(filename, **kwargs):
-    """Return a :class:`~orix.crystal_map.crystal_map.CrystalMap` object
-    from a file in orix' HDF5 file format.
+def file_reader(filename: str, **kwargs) -> CrystalMap:
+    """Return a crystal map from a file in orix' HDF5 file format.
 
     Parameters
     ----------
-    filename : str
+    filename
         Path and file name.
-    kwargs
-        Keyword arguments passed to :func:`h5py.File`.
+    **kwargs
+        Keyword arguments passed to :class:`h5py.File`.
 
     Returns
     -------
-    CrystalMap
+    xmap
+        Crystal map.
     """
     mode = kwargs.pop("mode", "r")
     with File(filename, mode=mode, **kwargs) as f:
@@ -64,17 +64,18 @@ def file_reader(filename, **kwargs):
     return dict2crystalmap(file_dict["crystal_map"])
 
 
-def dict2crystalmap(dictionary):
+def dict2crystalmap(dictionary: dict) -> CrystalMap:
     """Get a crystal map from necessary items in a dictionary.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
         Dictionary with crystal map information.
 
     Returns
     -------
-    CrystalMap
+    xmap
+        Crystal map.
     """
     dictionary = copy.deepcopy(dictionary)
 
@@ -105,35 +106,34 @@ def dict2crystalmap(dictionary):
     return CrystalMap(**crystal_map_dict)
 
 
-def dict2phaselist(dictionary):
-    """Get a :class:`~orix.crystal_map.phase_list.PhaseList` object from a
+def dict2phaselist(dictionary: dict) -> PhaseList:
+    """Get a :class:`~orix.crystal_map.PhaseList` object from a
     dictionary.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
         Dictionary with phase list information.
 
     Returns
     -------
-    PhaseList
+    phase_list
     """
     dictionary = copy.deepcopy(dictionary)
     return PhaseList(phases={int(k): dict2phase(v) for k, v in dictionary.items()})
 
 
-def dict2phase(dictionary):
-    """Get a :class:`~orix.crystal_map.phase_list.Phase` object from a
-    dictionary.
+def dict2phase(dictionary: dict) -> Phase:
+    """Get a :class:`~orix.crystal_map.Phase` object from a dictionary.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
         Dictionary with phase information.
 
     Returns
     -------
-    Phase
+    phase
     """
     dictionary = copy.deepcopy(dictionary)
     structure = dict2structure(dictionary["structure"])
@@ -163,17 +163,18 @@ def dict2phase(dictionary):
     )
 
 
-def dict2structure(dictionary):
-    """Get a :class:`diffpy.structure.Structure` object from a dictionary.
+def dict2structure(dictionary: dict) -> Structure:
+    """Get a :class:`~diffpy.structure.Structure` object from a
+    dictionary.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
         Dictionary with structure information.
 
     Returns
     -------
-    Structure
+    structure
     """
     dictionary = copy.deepcopy(dictionary)
     return Structure(
@@ -182,17 +183,18 @@ def dict2structure(dictionary):
     )
 
 
-def dict2lattice(dictionary):
-    """Get a :class:`diffpy.structure.Lattice` object from a dictionary.
+def dict2lattice(dictionary: dict) -> Lattice:
+    """Get a :class:`~diffpy.structure.Lattice` object from a
+    dictionary.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
         Dictionary with lattice information.
 
     Returns
     -------
-    Lattice
+    lattice
     """
     dictionary = copy.deepcopy(dictionary)
     lattice_dict = {
@@ -203,17 +205,17 @@ def dict2lattice(dictionary):
     return Lattice(**lattice_dict)
 
 
-def dict2atom(dictionary):
-    """Get a :class:`diffpy.structure.Atom.atom` object from a dictionary.
+def dict2atom(dictionary: dict) -> Atom:
+    """Get a :class:`~diffpy.structure.Atom` object from a dictionary.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
         Dictionary with atom information.
 
     Returns
     -------
-    Atom
+    atom
     """
     dictionary = copy.deepcopy(dictionary)
     atom_dict = {"atype": dictionary.pop("element")}
@@ -221,18 +223,17 @@ def dict2atom(dictionary):
     return Atom(**atom_dict)
 
 
-def file_writer(filename, crystal_map, **kwargs):
-    """Write a :class:`~orix.crystal_map.crystal_map.CrystalMap` object to
-    an HDF5 file.
+def file_writer(filename: str, crystal_map: CrystalMap, **kwargs):
+    """Write a crystal map to an HDF5 file.
 
     Parameters
     ----------
-    filename : str
+    filename
         Name of file to write to.
-    crystal_map : CrystalMap
+    crystal_map
         Object to write to file.
-    kwargs
-        Keyword arguments passed to :meth:`h5py:Group.require_dataset`.
+    **kwargs
+        Keyword arguments passed to :meth:`h5py.Group.require_dataset`.
     """
     # Open file in correct mode
     try:
@@ -252,22 +253,21 @@ def file_writer(filename, crystal_map, **kwargs):
     f.close()
 
 
-def crystalmap2dict(crystal_map, dictionary=None):
-    """Get a dictionary from a
-    :class:`~orix.crystal_map.crystal_map.CrystalMap` object with `data`
-    and `header` keys with values.
+def crystalmap2dict(crystal_map: CrystalMap, dictionary: Optional[dict] = None) -> dict:
+    """Get a dictionary from a :class:`~orix.crystal_map.CrystalMap`
+    object with ``"data"`` and ``"header"`` keys with values.
 
     Parameters
     ----------
-    crystal_map : CrystalMap
+    crystal_map
         Crystal map.
-    dictionary : dict, optional
-        Dictionary to update with crystal map information. If None
+    dictionary
+        Dictionary to update with crystal map information. If not given
         (default), a new dictionary is created.
 
     Returns
     -------
-    dictionary : dict
+    dictionary
         Dictionary with crystal map information.
     """
     if dictionary is None:
@@ -311,17 +311,17 @@ def crystalmap2dict(crystal_map, dictionary=None):
     return dictionary
 
 
-def dict2hdf5group(dictionary, group, **kwargs):
+def dict2hdf5group(dictionary: dict, group: Group, **kwargs):
     """Write a dictionary to datasets in a new group in an opened HDF5
     file.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
         Dataset names as keys with datasets as values.
-    group : h5py:Group
+    group
         HDF5 group to write dictionary to.
-    kwargs
+    **kwargs
         Keyword arguments passed to :meth:`h5py:Group.require_dataset`.
     """
     for key, val in dictionary.items():
@@ -350,20 +350,20 @@ def dict2hdf5group(dictionary, group, **kwargs):
         group[key][()] = val
 
 
-def phaselist2dict(phases, dictionary=None):
+def phaselist2dict(phases: PhaseList, dictionary: Optional[dict] = None) -> dict:
     """Get a dictionary of phases.
 
     Parameters
     ----------
-    phases : PhaseList
+    phases
         Phases to write to file.
-    dictionary : dict, optional
+    dictionary
         Dictionary to update with information from multiple phases. If
-        None (default), a new dictionary is created.
+        not given (default), a new dictionary is created.
 
     Returns
     -------
-    dictionary : dict
+    dictionary
         Dictionary with information from multiple phases.
     """
     if dictionary is None:
@@ -372,20 +372,20 @@ def phaselist2dict(phases, dictionary=None):
     return dictionary
 
 
-def phase2dict(phase, dictionary=None):
+def phase2dict(phase: Phase, dictionary: Optional[dict] = None) -> dict:
     """Get a dictionary of a phase.
 
     Parameters
     __________
-    phase : Phase
+    phase
         Phase to write to file.
-    dictionary : dict, optional
-        Dictionary to update with information from a single phase. If None
-        (default), a new dictionary is created.
+    dictionary
+        Dictionary to update with information from a single phase. If
+        not given(default), a new dictionary is created.
 
     Returns
     -------
-    dictionary : dict
+    dictionary
         Dictionary with information from a single phase.
     """
     if dictionary is None:
@@ -408,23 +408,23 @@ def phase2dict(phase, dictionary=None):
     return dictionary
 
 
-def structure2dict(structure, dictionary=None):
+def structure2dict(structure: Structure, dictionary: Optional[dict] = None) -> dict:
     """Get a dictionary of a phase's
-    :class:`diffpy.structure.Structure` content.
+    :class:`~diffpy.structure.Structure` content.
 
     Only values necessary to initialize a structure object are returned.
 
     Parameters
     ----------
-    structure : diffpy.structure.Structure
+    structure
         Phase structure with a lattice and atoms.
-    dictionary : dict, optional
-        Dictionary to update with structure information. If None
+    dictionary
+        Dictionary to update with structure information. If not given
         (default), a new dictionary is created.
 
     Returns
     -------
-    dictionary : dict
+    dictionary
         Dictionary with structure information.
     """
     if dictionary is None:
@@ -435,23 +435,23 @@ def structure2dict(structure, dictionary=None):
     return dictionary
 
 
-def lattice2dict(lattice, dictionary=None):
+def lattice2dict(lattice: Lattice, dictionary: Optional[dict] = None) -> dict:
     """Get a dictionary of a structure's
-    :class:`diffpy.structure.Structure.lattice` content.
+    :class:`~diffpy.structure.Structure.lattice` content.
 
     Only values necessary to initialize a lattice object are returned.
 
     Parameters
     ----------
-    lattice : diffpy.structure.Structure.lattice
+    lattice
         Structure lattice.
-    dictionary : dict, optional
-        Dictionary to update with structure lattice information. If None
-        (default), a new dictionary is created.
+    dictionary
+        Dictionary to update with structure lattice information. If not
+        given (default), a new dictionary is created.
 
     Returns
     -------
-    dictionary : dict
+    dictionary
         Dictionary with structure lattice information.
     """
     if dictionary is None:
@@ -461,23 +461,23 @@ def lattice2dict(lattice, dictionary=None):
     return dictionary
 
 
-def atom2dict(atom, dictionary=None):
+def atom2dict(atom: Atom, dictionary: Optional[dict] = None) -> dict:
     """Get a dictionary of one of a structure's
-    :class:`diffpy.structure.Structure.atoms` content.
+    :class:`~diffpy.structure.Structure.atoms` content.
 
     Only values necessary to initialize an atom object are returned.
 
     Parameters
     ----------
-    atom : diffpy.structure.Structure.atom
+    atom
         Atom in a structure.
-    dictionary : dict, optional
-        Dictionary to update with structure atom information. If None
-        (default), a new dictionary is created.
+    dictionary
+        Dictionary to update with structure atom information. If not
+        given (default), a new dictionary is created.
 
     Returns
     -------
-    dictionary : dict
+    dictionary
         Dictionary with structure atoms information.
     """
     if dictionary is None:

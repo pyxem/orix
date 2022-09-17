@@ -28,7 +28,7 @@ Unit quaternions are efficient objects for representing rotations, and hence
 orientations.
 """
 
-from orix.quaternion.quaternion import Quaternion, check_quaternion  # isort: skip
+from orix.quaternion.quaternion import Quaternion  # isort: skip
 from orix.quaternion.orientation import Misorientation, Orientation
 from orix.quaternion.orientation_region import OrientationRegion, get_proper_groups
 from orix.quaternion.rotation import Rotation, von_mises
@@ -36,7 +36,6 @@ from orix.quaternion.symmetry import Symmetry, get_distinguished_points, get_poi
 
 # Lists what will be imported when calling "from orix.quaternion import *"
 __all__ = [
-    "check_quaternion",
     "Quaternion",
     "Rotation",
     "von_mises",

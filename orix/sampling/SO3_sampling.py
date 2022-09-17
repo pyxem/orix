@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Functions (broadly internal ones) supporting grid generation within
-rotation space, *SO(3)*.
+"""Functions supporting grid generation within rotation space, *SO(3)*.
 """
+
+from typing import Optional, Union
 
 import numpy as np
 
@@ -26,46 +27,52 @@ from orix.quaternion import Rotation
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 
-def uniform_SO3_sample(resolution, method="cubochoric", unique=True, **kwargs):
+def uniform_SO3_sample(
+    resolution: Union[int, float],
+    method: str = "cubochoric",
+    unique: bool = True,
+    **kwargs
+) -> Rotation:
     r"""Uniform sampling of *SO(3)* by a number of methods.
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Desired characteristic distance between a rotation and its
         neighbour in degrees.
-    method : str
-        Sampling method, among "cubochoric" (default), "haar_euler", or
-        "quaternion". See *Notes* for details on each method.
-    unique : bool
-        Whether only unique rotations are returned, default is True.
-    kwargs
+    method
+        Sampling method, among ``"cubochoric"`` (default),
+        ``"haar_euler"``, or ``"quaternion"``. See *Notes* for details
+        on each method.
+    unique
+        Whether only unique rotations are returned, default is ``True``.
+    **kwargs
         Keyword arguments passed on to the sampling method.
 
     Returns
     -------
-    q : ~orix.quaternion.Rotation
+    rot
         Grid containing appropriate rotations.
 
     See Also
     --------
-    :func:`orix.sampling.get_sample_local`
-    :func:`orix.sampling.get_sample_fundamental`
+    orix.sampling.get_sample_local
+    orix.sampling.get_sample_fundamental
 
     Notes
     -----
-    The "cubochoric" algorithm is presented in :cite:`rosca2014anew`
+    The ``"cubochoric"`` algorithm is presented in :cite:`rosca2014anew`
     and :cite:`singh2016orientation`. It is used in both EMsoft and
     Dream3D to sample *SO(3)*. The method accepts the parameter
-    `semi_edge_steps` (*N* in EMsoft) as an alternative to
-    `resolution`, which is the number of grid points *N* along the
+    ``semi_edge_steps`` (*N* in EMsoft) as an alternative to
+    ``resolution``, which is the number of grid points *N* along the
     semi-edge of the cubochoric cube.
 
-    The sample from the "haar_euler" algorithm is proportional to
+    The sample from the ``"haar_euler"`` algorithm is proportional to
     :math:`\cos(\beta) d\alpha \: d\beta \: d\gamma`. See for example:
     https://math.stackexchange.com/questions/3316481/.
 
-    The "quaternion" algorithm has a fairly light footprint on the
+    The ``"quaternion"`` algorithm has a fairly light footprint on the
     internet, it's implemented as described in
     :cite:`lavalle2006planning`, the 'gem' on which it is based can be
     found at :cite:`kirk1995graphics` and has a reference
@@ -79,7 +86,9 @@ def uniform_SO3_sample(resolution, method="cubochoric", unique=True, **kwargs):
         return cubochoric_sampling(resolution=resolution, **kwargs)
 
 
-def _three_uniform_samples_method(resolution, unique, max_angle=None):
+def _three_uniform_samples_method(
+    resolution: Union[int, float], unique: bool, max_angle: Optional[float] = None
+) -> Rotation:
     """Returns rotations that are evenly spaced according to the Haar
     measure on *SO(3)*.
 
@@ -90,17 +99,17 @@ def _three_uniform_samples_method(resolution, unique, max_angle=None):
 
     Parameters
     ----------
-    resolution : float
+    resolution
         The characteristic distance between a rotation and its neighbour
         in degrees.
-    unique : bool
+    unique
         Whether only unique rotations should be returned.
-    max_angle : float
+    max_angle
         Only rotations with angles smaller than max_angle are returned.
 
     Returns
     -------
-    q : ~orix.quaternion.Rotation
+    q
         Grid containing appropriate rotations.
 
     Notes
@@ -147,21 +156,21 @@ def _three_uniform_samples_method(resolution, unique, max_angle=None):
     return q
 
 
-def _euler_angles_haar_measure(resolution, unique):
+def _euler_angles_haar_measure(resolution: Union[int, float], unique: bool) -> Rotation:
     """Returns rotations that are evenly spaced according to the Haar
     measure on *SO(3)* using the Euler angle parameterization.
 
     Parameters
     ----------
-    resolution : float
+    resolution
         The characteristic distance between a rotation and its neighbour
         in degrees.
-    unique : bool
+    unique
         Whether only unique rotations should be returned.
 
     Returns
     -------
-    q : orix.quaternion.Rotation
+    q
         Grid containing appropriate rotations.
 
     Notes
@@ -185,23 +194,27 @@ def _euler_angles_haar_measure(resolution, unique):
     return q
 
 
-def _resolution_to_num_steps(resolution, even_only=False, odd_only=False):
-    """Convert a 'resolution' to number of steps when sampling
+def _resolution_to_num_steps(
+    resolution: Union[int, float], even_only: bool = False, odd_only: bool = False
+) -> int:
+    """Convert a ``resolution`` to number of steps when sampling
     orientations on a linear axis.
 
     Parameters
     ----------
-    resolution : float
+    resolution
         Characteristic distance between a rotation and its neighbour in
         degrees.
-    even_only : bool, optional
-        Force the returned `num_steps` to be even, default is False.
-    odd_only : bool, optional
-        Force the returned `num_steps` to be odd, defaults is False.
+    even_only
+        Force the returned ``num_steps`` to be even, default is
+        ``False``.
+    odd_only
+        Force the returned ``num_steps`` to be odd, defaults is
+        ``False``.
 
     Returns
     -------
-    num_steps : int
+    num_steps
         Number of steps to use when sampling a 'full' linear axes.
     """
     num_steps = int(np.ceil(360 / resolution))

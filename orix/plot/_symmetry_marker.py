@@ -20,7 +20,7 @@
 crystallographic point groups.
 
 Meant to be used indirectly in
-:func:`orix.plot.StereographicPlot.symmetry_marker`.
+:func:`~orix.plot.StereographicPlot.symmetry_marker`.
 """
 
 import matplotlib.path as mpath
@@ -31,23 +31,34 @@ from orix.vector import Vector3d
 
 
 class SymmetryMarker:
+    """Symmetry marker for use in plotting.
+
+    Parameters
+    ----------
+    v
+    size
+    """
+
     fold = None
     _marker = None
 
-    def __init__(self, v, size=1):
+    def __init__(self, v: Vector3d, size: int = 1):
         self._vector = Vector3d(v)
         self._size = size
 
     @property
-    def angle_deg(self):
+    def angle_deg(self) -> np.ndarray:
+        """Position in degrees."""
         return np.rad2deg(self._vector.azimuth) + 90
 
     @property
-    def size(self):
+    def size(self) -> np.ndarray:
+        """Multiplicity of each symmetry marker."""
         return np.ones(self.n) * self._size
 
     @property
-    def n(self):
+    def n(self) -> int:
+        """Number of symmetry markers."""
         return self._vector.size
 
     def __iter__(self):
@@ -56,10 +67,13 @@ class SymmetryMarker:
 
 
 class TwoFoldMarker(SymmetryMarker):
+    """Two-fold symmetry marker."""
+
     fold = 2
 
     @property
-    def size(self):
+    def size(self) -> np.ndarray:
+        """Multiplicity of each symmetry marker."""
         # Assuming maximum polar angle is 90 degrees
         radial = np.tan(self._vector.polar / 2)
         radial = np.where(radial == 0, 1, radial)
@@ -81,6 +95,8 @@ class TwoFoldMarker(SymmetryMarker):
 
 
 class ThreeFoldMarker(SymmetryMarker):
+    """Three-fold symmetry marker."""
+
     fold = 3
 
     @property
@@ -89,6 +105,8 @@ class ThreeFoldMarker(SymmetryMarker):
 
 
 class FourFoldMarker(SymmetryMarker):
+    """Four-fold symmetry marker."""
+
     fold = 4
 
     @property
@@ -97,6 +115,8 @@ class FourFoldMarker(SymmetryMarker):
 
 
 class SixFoldMarker(SymmetryMarker):
+    """Six-fold symmetry marker."""
+
     fold = 6
 
     @property

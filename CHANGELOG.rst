@@ -26,11 +26,20 @@ Added
   quantification of orientation and vector data.
 - Plotting the IPF color key on a created ``InversePoleFigurePlot`` is now possible with
   ``plot_ipf_color_key()``.
+- Examples gallery to documentation.
+
+Changed
+-------
+- Moved part of documentation showing plotting of Wulff net and symmetry markers from
+  the tutorials to examples.
+- Renamed user guide notebooks to tutorials in documentation.
 
 Removed
 -------
 - Support for Python 3.6 has been removed. The minimum supported version in ``orix`` is
   now Python 3.7.
+- ``Object3d.check()``, ``Quaternion.check_quaternion()`` and
+  ``Vector3d.check_vector()``, as these methods were not used internally.
 
 2022-05-16 - version 0.9.0
 ==========================
