@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-from itertools import combinations_with_replacement as icombinations
 from itertools import product as iproduct
 from typing import List, Optional, Tuple, Union
 import warnings
@@ -31,67 +30,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
-from orix._util import deprecated
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
 from orix.vector import AxAngle, NeoEuler, Vector3d
-
-
-def _distance(misorientation, verbose, split_size=100):
-    """Private function to find the symmetry reduced distance between
-    all pairs of (mis)orientations
-
-    Parameters
-    ----------
-    misorientation : orix.quaternion.Misorientation
-        The misorientation to be considered.
-    verbose : bool
-        Output progress bar while computing.
-    split_size : int
-        Size of block to compute at a time.
-
-    Returns
-    -------
-    distance : numpy.ndarray
-        2D matrix containing the angular distance between every
-        orientation, considering symmetries.
-    """
-    num_orientations = misorientation.shape[0]
-    S_1, S_2 = misorientation._symmetry
-    distance = np.full(misorientation.shape + misorientation.shape, np.infty)
-    split_size = split_size // S_1.shape[0]
-    outer_range = range(0, num_orientations, split_size)
-    if verbose:
-        outer_range = tqdm(outer_range, total=np.ceil(num_orientations / split_size))
-
-    S_1_outer_S_1 = S_1.outer(S_1)
-
-    # Calculate the upper half of the distance matrix block by block
-    for start_index_b in outer_range:
-        # we use slice object for compactness
-        index_slice_b = slice(
-            start_index_b, min(num_orientations, start_index_b + split_size)
-        )
-        o_sub_b = misorientation[index_slice_b]
-        for start_index_a in range(0, start_index_b + split_size, split_size):
-            index_slice_a = slice(
-                start_index_a, min(num_orientations, start_index_a + split_size)
-            )
-            o_sub_a = misorientation[index_slice_a]
-            axis = (len(o_sub_a.shape), len(o_sub_a.shape) + 1)
-            mis2orientation = (~o_sub_a).outer(S_1_outer_S_1).outer(o_sub_b)
-            # This works through all the identity rotations
-            for s_2_1, s_2_2 in icombinations(S_2, 2):
-                m = s_2_1 * mis2orientation * s_2_2
-                angle = m.angle.min(axis=axis)
-                distance[index_slice_a, index_slice_b] = np.minimum(
-                    distance[index_slice_a, index_slice_b], angle
-                )
-    # Symmetrize the matrix for convenience
-    i_lower = np.tril_indices(distance.shape[0], -1)
-    distance[i_lower] = distance.T[i_lower]
-    return distance
 
 
 class Misorientation(Rotation):
@@ -236,44 +178,6 @@ class Misorientation(Rotation):
                 break
         o_inside._symmetry = (Gl, Gr)
         return o_inside
-
-    @deprecated(
-        since="0.9",
-        alternative="orix.quaternion.Misorientation.get_distance_matrix",
-        removal="0.10",
-    )
-    def distance(self, verbose: bool = False, split_size: int = 100) -> np.ndarray:
-        """Return the symmetry reduced distance.
-
-        Compute the shortest distance between all orientations
-        considering symmetries.
-
-        Parameters
-        ----------
-        verbose
-            Output progress bar while computing. Default is ``False``.
-        split_size
-            Size of block to compute at a time. Default is 100.
-
-        Returns
-        -------
-        distance
-            2D matrix containing the angular distance between every
-            orientation, considering symmetries.
-
-        Examples
-        --------
-        >>> from orix.quaternion import Misorientation, symmetry
-        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> m = Misorientation(data)
-        >>> m.symmetry = (symmetry.C4, symmetry.C2)
-        >>> m = m.map_into_symmetry_reduced_zone()
-        >>> m.distance()
-        array([[0.        , 1.57079633],
-               [1.57079633, 0.        ]])
-        """
-        distance = _distance(self, verbose, split_size)
-        return distance.reshape(self.shape + self.shape)
 
     def __repr__(self):
         """String representation."""
@@ -885,15 +789,6 @@ class Orientation(Misorientation):
             range(self.ndim)
         )
         return highest_dot_products.transpose(*order)
-
-    @deprecated(
-        since="0.7",
-        alternative="orix.quaternion.Orientation.get_distance_matrix",
-        removal="0.8",
-    )
-    def distance(self, verbose=False, split_size=100):
-        """Return the orientation distance."""
-        return super().distance(verbose=verbose, split_size=split_size)
 
     def plot_unit_cell(
         self,

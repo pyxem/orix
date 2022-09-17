@@ -40,6 +40,8 @@ Removed
   now Python 3.7.
 - ``Object3d.check()``, ``Quaternion.check_quaternion()`` and
   ``Vector3d.check_vector()``, as these methods were not used internally.
+- Deprecated method ``distance()`` of ``Misorientation`` and ``Orientation`` classes,
+  use ``get_distance_matrix()`` instead.
 
 2022-05-16 - version 0.9.0
 ==========================
