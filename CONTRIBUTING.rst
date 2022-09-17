@@ -204,7 +204,7 @@ Then, build the documentation from the ``doc`` directory::
     cd doc
     make html
 
-The documentation's HTML pages are built in the ``doc/build/html`` directory from files
+The documentation's HTML pages are built in the ``doc/_build/html`` directory from files
 in the `reStructuredText (reST)
 <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`__
 plaintext markup language. They should be accessible in the browser by typing
