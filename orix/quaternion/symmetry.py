@@ -507,7 +507,7 @@ class Symmetry(Rotation):
 
         figure = v.scatter(
             return_figure=True,
-            axes_labels=("a", "b", None),
+            axes_labels=[r"$e_1$", r"$e_2$", None],
             label="upper",
             reproject=True,
             reproject_scatter_kwargs=reproject_scatter_kwargs,
