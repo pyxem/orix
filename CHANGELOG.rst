@@ -32,6 +32,11 @@ Removed
 - Support for Python 3.6 has been removed. The minimum supported version in ``orix`` is
   now Python 3.7.
 
+Fixed
+-----
+- Plotting of unit cells works with Matplotlib v3.6, at the expense of a warning raised
+  with earlier versions.
+
 2022-05-16 - version 0.9.0
 ==========================
 
