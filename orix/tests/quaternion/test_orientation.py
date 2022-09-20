@@ -97,36 +97,6 @@ def test_orientation_persistence(symmetry, vector):
     assert v1._tuples == v2._tuples
 
 
-# TODO: Remove in 0.10
-@pytest.mark.parametrize(
-    "orientation, symmetry, expected",
-    [
-        ((1, 0, 0, 0), C1, [0]),
-        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
-        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
-        ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
-        (
-            [
-                [(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)],
-                [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
-            ],
-            C4,
-            [
-                [[[0, 0], [0, np.pi / 4]], [[0, 0], [0, np.pi / 4]]],
-                [[[0, 0], [0, np.pi / 4]], [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]],
-            ],
-        ),
-    ],
-    indirect=["orientation"],
-)
-def test_distance(orientation, symmetry, expected):
-    orientation.symmetry = symmetry
-    orientation = orientation.map_into_symmetry_reduced_zone(verbose=True)
-    with pytest.warns(np.VisibleDeprecationWarning, match="Function "):
-        distance = orientation.distance(verbose=True)
-    assert np.allclose(distance, expected, atol=1e-3)
-
-
 @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
 def test_getitem(orientation, symmetry):
     orientation.symmetry = symmetry
@@ -383,22 +353,6 @@ class TestMisorientation:
         p12 = p1.outer(p2)
         angle2 = p12.angle.min(axis=(0, 2, 3, 5))
         assert np.allclose(angle1, angle2)
-
-    # TODO: Remove in 0.10
-    @pytest.mark.parametrize("symmetry", _groups[:-1])
-    def test_get_distance_matrix_equal_distance(self, symmetry):
-        # do not test Oh, as this takes ~4 GB
-        shape = (3, 2)
-        n = np.prod(shape)
-        m = Misorientation.random(shape)
-        m.symmetry = (symmetry, symmetry)
-        angle1 = m.get_distance_matrix().reshape(n, n, order="F")
-        m1 = m.flatten()
-        angle2 = m1.get_distance_matrix()
-        assert np.allclose(angle1, angle2)
-        with pytest.warns(np.VisibleDeprecationWarning, match="Function "):
-            angle3 = m1.distance()
-        assert np.allclose(angle1, angle3)
 
 
 def test_orientation_equality():
