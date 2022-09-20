@@ -41,6 +41,11 @@ Removed
 - ``Object3d.check()``, ``Quaternion.check_quaternion()`` and
   ``Vector3d.check_vector()``, as these methods were not used internally.
 
+Fixed
+-----
+- Plotting of unit cells works with Matplotlib v3.6, at the expense of a warning raised
+  with earlier versions.
+
 2022-05-16 - version 0.9.0
 ==========================
 
