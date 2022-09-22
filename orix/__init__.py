@@ -7,8 +7,8 @@ __description__ = "orix is an open-source Python library for handling crystal or
 __credits__ = [
     "Håkon Wiik Ånes",
     "Ben Martineau",
-    "Phillip Crout",
     "Paddy Harrison",
+    "Phillip Crout",
     "Duncan Johnstone",
     "Niels Cautaerts",
     "Austin Gerlt",
