@@ -526,8 +526,8 @@ def test_symmetry_plot(symmetry):
         assert len(c1.get_offsets()) == np.count_nonzero(symmetry.improper)
         assert c1.get_label().lower() == "lower"
     assert len(ax.texts) == 2
-    assert ax.texts[0].get_text() == "a"
-    assert ax.texts[1].get_text() == "b"
+    assert ax.texts[0].get_text() == "$e_1$"
+    assert ax.texts[1].get_text() == "$e_2$"
     plt.close("all")
 
 

@@ -3,11 +3,12 @@ How to make a new release of ``orix``
 
 After version 0.9.0, orix' branching model changed to one similar to the Gitflow
 Workflow (`original blog post
-<https://nvie.com/posts/a-successful-git-branching-model/>`_).
+<https://nvie.com/posts/a-successful-git-branching-model/>`__).
 
-orix versioning adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
-See the `Python Enhancement Proposal (PEP) 440 <https://peps.python.org/pep-0440/>`_ for
-supported version identifiers.
+orix versioning adheres to `Semantic Versioning
+<https://semver.org/spec/v2.0.0.html>`__.
+See the `Python Enhancement Proposal (PEP) 440 <https://peps.python.org/pep-0440/>`__
+for supported version identifiers.
 
 Preparation
 -----------
@@ -17,17 +18,18 @@ Preparation
   in ``main``. Therefore, it might be best to do the release updates directly on the bug
   fix branch, so that no separate patch release branch has to be made.
 
-- Run user guide notebooks locally and confirm that they produce expected results.
+- Run tutorial notebooks examples in the documentation locally and confirm that they
+  produce expected results.
 
 - Review the contributors ``__credits__`` in ``orix/__init__.py`` to ensure everyone is
   included and sorted correctly. Use the same ordering in the ``.zenodo.json`` file.
-  Take care to format the Zenodo metadata file correctly.
+  Take care to format the Zenodo metadata file correctly (e.g. no trailing commas).
 
 - Increment ``__version__`` in ``orix/__init__.py``, e.g. from "0.9.0" to "0.9.1" for a
   patch release. If downstream packages should test their use of the next version of
   orix in CI before it is released, or we want to ensure that the below release steps
-  work as expected, a release candidate with version e.g. "0.9.1rc1" should be made.
-  Update the changelog ``CHANGELOG.rst`` accordingly.
+  work as expected, a release candidate with version e.g. "0.9.1rc1" can be made. Update
+  ``CHANGELOG.rst`` accordingly.
 
 - Make a PR of the release branch to ``main``. Discuss the release and changelog with
   others. Merge.
@@ -45,21 +47,21 @@ Tag and release
 
 Post-release action
 -------------------
-- Monitor the `documentation build <https://readthedocs.org/projects/orix/builds>`_ to
+- Monitor the `documentation build <https://readthedocs.org/projects/orix/builds>`__ to
   ensure that the new stable documentation is successfully built from the release.
 
-- Ensure that `Zenodo <https://doi.org/10.5281/zenodo.3459662>`_ displays the new
+- Ensure that `Zenodo <https://doi.org/10.5281/zenodo.3459662>`__ displays the new
   release.
 
-- Ensure that Binder can run the user guide notebooks by clicking the Binder badges in
-  the top banner of one of the user guide notebooks via the `documentation
-  <https://orix.readthedocs.io/en/stable>`_.
+- Ensure that Binder can run the tutorial notebooks by clicking the Binder badges in the
+  top banner of one of the tutorials via the `documentation
+  <https://orix.readthedocs.io/en/stable>`__.
 
 - Bring changes in ``main`` into ``develop`` by branching from ``main``, merge
-  ``develop`` into the new branch, fix conflicts, make a PR to ``develop``, and merge.
+  ``develop`` into the new branch, fix conflicts, make a PR to ``develop`` and merge.
 
 - Make a post-release PR to ``develop`` with ``__version__`` updated (or reverted), e.g.
-  to "0.9.dev0" and any updates to this guide if necessary.
+  to "0.9.dev0", and any updates to this guide if necessary.
 
 - Tidy up GitHub issues and close the corresponding milestone.
 

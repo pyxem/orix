@@ -7,14 +7,14 @@ All notable changes to the ``orix`` project are documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
-Unreleased
-==========
+2022-09-22 - version 0.10.0
+===========================
 
 Added
 -----
 - Support for type hints has been introduced and a section on this topic has been added
   to the contributing guide.
-- ``Vector3d.pole_density_function()`` has been implemented which allows for calculation 
+- ``Vector3d.pole_density_function()`` has been implemented which allows for calculation
   of the Pole Density Function (PDF) and quantification of poles in the stereographic
   projection.
 - Seven methods for sampling unit vectors from regular grids on *S2* via
@@ -33,6 +33,11 @@ Changed
 - Moved part of documentation showing plotting of Wulff net and symmetry markers from
   the tutorials to examples.
 - Renamed user guide notebooks to tutorials in documentation.
+- Reference frame labels of stereographic projection of ``Symmetry.plot()`` from (a, b)
+  to (e1, e2), signifying the standard Cartesian reference frame attached to a crystal.
+- Tighten distribution of random orientation clusters in tutorial showing clustering
+  across fundamental region boundaries, to avoid clustering sometimes giving two
+  clusters instead of three.
 
 Removed
 -------
