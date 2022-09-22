@@ -25,7 +25,7 @@ import pytest
 
 from orix.crystal_map import Phase, PhaseList
 from orix.crystal_map.phase_list import _new_structure_matrix_from_alignment
-from orix.quaternion.symmetry import Symmetry, O
+from orix.quaternion.symmetry import O, Symmetry
 
 
 class TestPhase:

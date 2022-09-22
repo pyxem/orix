@@ -22,14 +22,21 @@
 rotated by orientations.
 """
 
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import matplotlib.axes as maxes
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.patches import PathPatch
 import matplotlib.projections as mprojections
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map import Phase
-from orix.plot import StereographicPlot
-from orix.quaternion.symmetry import C1
+from orix.measure import pole_density_function
+from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
+from orix.plot.stereographic_plot import ZORDER, StereographicPlot
+from orix.quaternion import Orientation
+from orix.quaternion.symmetry import C1, Symmetry
 from orix.vector import Miller, Vector3d
 
 
@@ -38,43 +45,37 @@ class InversePoleFigurePlot(StereographicPlot):
     is a stereographic plot for showing sample directions with respect
     to a crystal reference frame.
 
-    Inherits from :class:`~orix.plot.StereographicPlot`.
+    Parameters
+    ----------
+    *args
+        Arguments passed to :class:`~orix.plot.StereographicPlot`.
+    symmetry
+        Laue group symmetry of crystal to plot directions with. If not
+        given, point group C1 (only identity rotation) is used.
+    direction
+        Sample direction to plot with respect to crystal directions. If
+        not given, the out of plane direction, sample Z, is used.
+    hemisphere
+        Which hemisphere(s) to plot the vectors in. If not given,
+        ``"upper"`` is used. Options are ``"upper"``, ``"lower"`` and
+        ``"both"``, which plots two projections side by side.
+    **kwargs
+        Keyword arguments passed to
+        :class:`~orix.plot.StereographicPlot`.
     """
 
     name = "ipf"
 
     def __init__(
         self,
-        *args,
-        symmetry=None,
-        direction=None,
-        hemisphere=None,
-        **kwargs,
-    ):
+        *args: Any,
+        symmetry: Optional[Symmetry] = None,
+        direction: Optional[Vector3d] = None,
+        hemisphere: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
         """Create an inverse pole figure axis for plotting
         :class:`~orix.vector.Vector3d`.
-
-        Parameters
-        ----------
-        args
-            Arguments passed to
-            :meth:`orix.plot.StereographicPlot.__init__`.
-        symmetry : ~orix.quaternion.Symmetry, optional
-            Laue group symmetry of crystal to plot directions with. If
-            not given, point group C1 (only identity rotation) is used.
-        direction : ~orix.vector.Vector3d, optional
-            Sample direction to plot with respect to crystal directions.
-            If not given, the out of plane direction, sample Z, is used.
-        hemisphere : str, optional
-            Which hemisphere(s) to plot the vectors in. If not given,
-            "upper" is used. Options are "upper", "lower", and "both",
-            which plots two projections side by side.
-        hemisphere : str, optional
-            Which hemisphere to plot vectors in, either "upper"
-            (default) or "lower".
-        kwargs
-            Keyword arguments passed to
-            :meth:`orix.plot.StereographicPlot.__init__`.
         """
         super().__init__(*args, **kwargs)
 
@@ -94,25 +95,100 @@ class InversePoleFigurePlot(StereographicPlot):
         self._add_crystal_direction_labels()
 
     @property
-    def _edge_patch(self):
+    def _edge_patch(self) -> PathPatch:
         """Easy access to the fundamental sector border patch."""
         patches = self.patches
         return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
 
-    def scatter(self, *args, **kwargs):
+    def pole_density_function(
+        self,
+        *args: Union[np.ndarray, Vector3d],
+        resolution: float = 0.25,
+        sigma: float = 5,
+        log: bool = False,
+        colorbar: bool = True,
+        weights: Optional[np.ndarray] = None,
+        **kwargs: Any,
+    ):
+        """Compute the Inverse Pole Density Function (IPDF) of vectors
+        in the stereographic projection.
+
+        The PDF is computed within the fundamental sector of the point
+        group symmetry. See :cite:`rohrer2004distribution`.
+
+        Parameters
+        ----------
+        *args
+            Vector(s), or azimuth and polar angles of the vectors, the
+            latter passed as two separate arguments.
+        resolution
+            The angular resolution of the sampling grid in degrees.
+            Default value is 0.25.
+        sigma
+            The angular resolution of the applied broadening in degrees.
+            Default value is 5.
+        log
+            If ``True`` the log(IPDF) is calculated. Default is
+            ``True``.
+        colorbar
+            If ``True`` a colorbar is shown alongside the IPDF plot.
+            Default is ``True``.
+        weights
+            The weights for the individual vectors. If not given, each
+            vector is 1.
+        **kwargs
+            Keyword arguments passed to
+            :meth:`matplotlib.axes.Axes.pcolormesh`.
+
+        See Also
+        --------
+        measure.pole_density_function
+        StereographicPlot.pole_density_function
+        Vector3d.pole_density_function
+        """
+        hist, (x, y) = pole_density_function(
+            *args,
+            resolution=resolution,
+            sigma=sigma,
+            log=log,
+            hemisphere=self.hemisphere,
+            symmetry=self._symmetry,
+            mrd=True,
+            weights=weights,
+        )
+
+        new_kwargs = dict(zorder=ZORDER["mesh"], clip_on=True)
+        updated_kwargs = {**kwargs, **new_kwargs}
+
+        # plot mesh
+        updated_kwargs.setdefault("cmap", "magma")
+        # mpl.QuadMesh handles masked values by default
+        pc = self.pcolormesh(x, y, hist, **updated_kwargs)
+
+        if colorbar:
+            label = "MRD"
+            if log:
+                label = f"log({label})"
+            plt.colorbar(pc, label=label, ax=self)
+
+    def scatter(
+        self,
+        *args: Union[Tuple[np.ndarray, np.ndarray], Orientation, Vector3d],
+        **kwargs: Any,
+    ) -> None:
         """A scatter plot of sample directions rotated by orientations,
         or orientations to rotate sample directions with.
 
         Parameters
         ----------
-        args : tuple of numpy.ndarray, Orientation, or Vector3d
+        *args
             Spherical coordinates (azimuth, polar), orientations, or
             vectors. If spherical coordinates are given, they are
             assumed to describe unit vectors. Vectors will be made into
             unit vectors if they aren't already. If orientations are
             passed, the crystal directions returned are the sample
             :attr:`direction` rotated by the orientations.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.scatter`.
 
@@ -123,13 +199,13 @@ class InversePoleFigurePlot(StereographicPlot):
         crystal_directions = self._pretransform_input_ipf(args)
         super().scatter(crystal_directions, **kwargs)
 
-    def show_hemisphere_label(self, **kwargs):
-        """Add a hemisphere label ("upper"/"lower") to the upper left
-        outside the inverse pole figure.
+    def show_hemisphere_label(self, **kwargs: Any) -> None:
+        """Add a hemisphere label (``"upper"``/``"lower"``) to the upper
+        left outside the inverse pole figure.
 
         Parameters
         ----------
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.text`.
 
@@ -145,7 +221,7 @@ class InversePoleFigurePlot(StereographicPlot):
         v = self._inverse_projection.xy2vector(np.min(x), np.max(y))
         self.text(v, s=self.hemisphere, **new_kwargs)
 
-    def _add_crystal_direction_labels(self):
+    def _add_crystal_direction_labels(self) -> None:
         """Add appropriately placed and nicely formatted crystal
         direction labels [uvw] or [UVTW] to the sector corners.
         """
@@ -192,7 +268,9 @@ class InversePoleFigurePlot(StereographicPlot):
 
                 maxes.Axes.text(self, xi, yi, s=label, va=va, ha=ha, **text_kw)
 
-    def _pretransform_input_ipf(self, values):
+    def _pretransform_input_ipf(
+        self, values: Union[Tuple[np.ndarray, np.ndarray], Orientation, Vector3d]
+    ) -> Vector3d:
         """Return unit vectors within the inverse pole figure from input
         data.
 
@@ -203,7 +281,7 @@ class InversePoleFigurePlot(StereographicPlot):
 
         Parameters
         ----------
-        values : tuple of numpy.ndarray, Orientation, or Vector3d
+        values
             Spherical coordinates (azimuth, polar), orientations, or
             vectors. If spherical coordinates are given, they are
             assumed to describe unit vectors. Vectors will be made into
@@ -213,7 +291,7 @@ class InversePoleFigurePlot(StereographicPlot):
 
         Returns
         -------
-        v : Vector3d
+        v
             Crystal directions.
         """
         if len(values) == 2:  # (Azimuth, polar)
@@ -224,37 +302,79 @@ class InversePoleFigurePlot(StereographicPlot):
             v = values[0] * self._direction
         return v.in_fundamental_sector(self._symmetry)
 
+    def plot_ipf_color_key(self, show_title: bool = True) -> None:
+        """Plot an IPF color key code on this axis.
+
+        Parameters
+        ----------
+        show_title
+            Whether to display the Laue group name as the axes title.
+            Default is ``True``.
+
+        Notes
+        -----
+        This function may be used to plot the IPF color key alongside
+        another plot where the same key was used to color
+        :class:`~orix.quaternion.Orientation` or
+        :class:`~orix.vector.Vector3d`.
+        """
+        symmetry = self._symmetry
+        direction_color_key = DirectionColorKeyTSL(symmetry)
+
+        rgba_grid, (x_lim, y_lim) = direction_color_key._create_rgba_grid(
+            return_extent=True
+        )
+
+        if show_title:
+            label_xy = np.column_stack(
+                self._projection.vector2xy(symmetry.fundamental_sector.vertices)
+            )
+            loc = None
+            if label_xy.size != 0:
+                # Expected title position
+                expected_xy = np.array(
+                    [np.diff(self.get_xlim())[0] / 2, np.max(self.get_ylim())]
+                )
+                is_close = np.isclose(label_xy, expected_xy, atol=0.1).all(axis=1)
+                if any(is_close) and plt.rcParams["axes.titley"] is None:
+                    loc = "left"
+            self.set_title(symmetry.name, loc=loc, fontweight="bold")
+
+        self.stereographic_grid(False)
+        self._edge_patch.set_linewidth(1.5)
+        self.imshow(rgba_grid, extent=x_lim + y_lim, zorder=0)
+
 
 mprojections.register_projection(InversePoleFigurePlot)
 
 
 def _setup_inverse_pole_figure_plot(
-    symmetry,
-    direction=None,
-    hemisphere=None,
-    figure_kwargs=None,
-):
+    symmetry: Symmetry,
+    direction: Optional[Vector3d] = None,
+    hemisphere: Optional[str] = None,
+    figure_kwargs: Optional[Dict] = None,
+) -> Tuple[Figure, maxes.Axes]:
     """Set up an inverse pole figure plot.
 
     Parameters
     ----------
-    symmetry : ~orix.quaternion.Symmetry
+    symmetry
         Laue group symmetry of crystal to plot directions with.
-    direction : ~orix.vector.Vector3d, optional
+    direction
         Sample direction to plot with respect to crystal directions. If
         not given, the out of plane direction, sample Z, is used.
-    hemisphere : str, optional
+    hemisphere
         Which hemisphere(s) to plot the vectors in. If not given,
-        "upper" is used. Options are "upper", "lower", and "both", which
-        plots two projections side by side.
-    figure_kwargs : dict, optional
+        ``"upper"`` is used. Options are ``"upper"``, ``"lower"``, and
+        ``"both"``, which plots two projections side by side.
+    figure_kwargs
         Dictionary of keyword arguments passed to
         :func:`matplotlib.pyplot.figure`.
 
     Returns
     -------
-    figure : matplotlib.figure.Figure
-    axes : matplotlib.axes.Axes
+    figure
+    axes
     """
     if direction is None:
         direction = Vector3d.zvector()
@@ -313,13 +433,13 @@ def _setup_inverse_pole_figure_plot(
     return figure, np.asarray(axes)
 
 
-def _get_ipf_title(direction):
+def _get_ipf_title(direction: Vector3d) -> str:
     """Get a nicely formatted sample direction string from vector
     coordinates.
 
     Parameters
     ----------
-    direction : ~orix.vector.Vector3d
+    direction
         Single vector denoting the sample direction.
 
     Returns
@@ -334,14 +454,14 @@ def _get_ipf_title(direction):
         return np.array_str(direction.data.squeeze()).strip("[]")
 
 
-def _get_ipf_axes_labels(vertices, symmetry):
+def _get_ipf_axes_labels(vertices: Vector3d, symmetry: Symmetry) -> List[str]:
     r"""Get nicely formatted crystal direction strings from vector
     coordinates.
 
     Parameters
     ----------
-    vertices : ~orix.vector.Vector3d
-    symmetry : ~orix.quaternion.Symmetry
+    vertices
+    symmetry
         Symmetry to determine which crystal directions `vertices`
         represent.
 

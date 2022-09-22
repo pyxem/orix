@@ -24,7 +24,6 @@ import numpy as np
 
 from orix.vector import SphericalRegion, Vector3d
 
-
 _EDGE_STEPS = 1000
 
 
@@ -43,7 +42,8 @@ class FundamentalSector(SphericalRegion):
     _pole = -1
 
     @property
-    def vertices(self):
+    def vertices(self) -> Vector3d:
+        """Return the sector vertices."""
         n = self.size
         if n == 0:
             return Vector3d.empty()
@@ -53,8 +53,8 @@ class FundamentalSector(SphericalRegion):
             return Vector3d(u[u <= self]).unique().unit
 
     @property
-    def center(self):
-        """Center vector of the fundamental sector.
+    def center(self) -> Vector3d:
+        """Return the center vector of the fundamental sector.
 
         Taken from MTEX' :code:`sphericalRegion.center`.
         """
@@ -77,18 +77,18 @@ class FundamentalSector(SphericalRegion):
             center = self._center
         else:
             # Avoid circular import
-            from orix.sampling import sample_S2_cube_mesh
+            from orix.sampling import sample_S2
 
-            v_all = sample_S2_cube_mesh(resolution=1)
+            v_all = sample_S2(resolution=1, method="spherified_cube_corner")
             v = v_all[v_all < self]
             center = v.mean()
 
         return Vector3d(center)
 
     @property
-    def edges(self):
-        """Unit vectors which delineates the region in the stereographic
-        projection.
+    def edges(self) -> Vector3d:
+        """Return the unit vectors which delineates the region in the
+        stereographic projection.
 
         They are sorted in the counter-clockwise direction around the
         sector center in the stereographic projection.
@@ -127,7 +127,9 @@ class FundamentalSector(SphericalRegion):
         return sorted_edges.squeeze()
 
 
-def _order_to_sort_around_center(v, center, pole=-1):
+def _order_to_sort_around_center(
+    v: Vector3d, center: Vector3d, pole: int = -1
+) -> np.ndarray:
     vz = Vector3d.zvector()
     if pole == 1:
         vz = -vz
@@ -142,7 +144,9 @@ def _order_to_sort_around_center(v, center, pole=-1):
     return order2
 
 
-def _closed_edges_in_hemisphere(edges, sector, pole=-1):
+def _closed_edges_in_hemisphere(
+    edges: Vector3d, sector: FundamentalSector, pole: int = -1
+) -> Vector3d:
     if pole == -1:
         is_outside = edges.polar >= np.pi / 2
     else:  # pole == 1

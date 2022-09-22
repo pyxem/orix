@@ -16,32 +16,39 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Optional
+
 from h5py import File, Group
 import numpy as np
 
 from orix.crystal_map import CrystalMap
 
 
-def hdf5group2dict(group, dictionary=None, recursive=False, dont_read=None):
+def hdf5group2dict(
+    group: Group,
+    dictionary: Optional[dict] = None,
+    recursive: bool = False,
+    dont_read: Optional[list] = None,
+) -> dict:
     """Return a dictionary with values from datasets in a group in an
     opened HDF5 file.
 
     Parameters
     ----------
-    group : h5py:Group
+    group
         HDF5 group object.
-    dictionary : dict, optional
-        To fill dataset values into. If None (default), a new dictionary
-        is created.
-    recursive : bool, optional
-        Whether to add subgroups to dictionary. Default is False.
-    dont_read : list of str, optional
+    dictionary
+        To fill dataset values into. If not given, a new dictionary is
+        created.
+    recursive
+        Whether to add subgroups to dictionary. Default is ``False``.
+    dont_read
         List of strings of names of HDF data sets to not read.
 
     Returns
     -------
-    dictionary : dict
-        Dataset values in group (and subgroups if recursive=True).
+    dictionary
+        Dataset values in group (and subgroups if ``recursive=True``).
     """
     if dictionary is None:
         dictionary = {}
@@ -71,6 +78,11 @@ def hdf5group2dict(group, dictionary=None, recursive=False, dont_read=None):
 class H5ebsdFile:
     """Base class for HDF5 files in the h5ebsd format containing
     orientation data to be returned as a crystal map.
+
+    Parameters
+    ----------
+    filename
+        File name.
     """
 
     file = None
@@ -87,16 +99,22 @@ class H5ebsdFile:
     phase_list = None
     scan_unit = None
 
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         self.filename = filename
 
     @property
-    def map_size(self):
+    def map_size(self) -> int:
         """Number of map points."""
-        return np.prod(self.map_shape)
+        return int(np.prod(self.map_shape))
 
     def open(self, **kwargs):
-        """Open the HDF5 file."""
+        """Open the HDF5 file.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments passed to :class:`h5py.File`.
+        """
         mode = kwargs.pop("mode", "r")
         self.file = File(self.filename, mode=mode, **kwargs)
 
@@ -104,21 +122,22 @@ class H5ebsdFile:
         """Close the HDF5 file."""
         self.file.close()
 
-    def get_dictionary(self, group_name, **kwargs):
+    def get_dictionary(self, group_name: str, **kwargs) -> dict:
         """Return a dictionary with values from datasets in a group
         within the file.
 
         Parameters
         ----------
-        group_name : str
+        group_name
             Name of the group.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :func:`~orix.io.plugins._h5ebsd.hdf5group2dict`.
 
         Returns
         -------
-        dict
+        dictionary
+            Dictionary.
 
         See Also
         --------
@@ -126,12 +145,13 @@ class H5ebsdFile:
         """
         return hdf5group2dict(self.file[group_name], **kwargs)
 
-    def get_crystal_map(self):
+    def get_crystal_map(self) -> CrystalMap:
         """Return a crystal map from instance properties.
 
         Returns
         -------
-        CrystalMap
+        xmap
+            Crystal map.
         """
         return CrystalMap(
             rotations=self.rotations,

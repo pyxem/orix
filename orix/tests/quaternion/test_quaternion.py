@@ -21,7 +21,7 @@ import numpy as np
 import pytest
 
 from orix.base import DimensionError
-from orix.quaternion import Quaternion, check_quaternion
+from orix.quaternion import Quaternion
 from orix.vector import Vector3d
 
 # fmt: off
@@ -156,11 +156,6 @@ class TestQuaternion:
         v = Vector3d(vector)
         v_new = q * v
         assert np.allclose(v_new.data, expected)
-
-    def test_check_quat(self):
-        """Check is an oddly named function."""
-        quat = Quaternion([2, 2, 2, 2])
-        assert np.allclose(quat.data, check_quaternion(quat).data)
 
     def test_abcd_properties(self):
         quat = Quaternion([2, 2, 2, 2])

@@ -16,14 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-
 import numpy as np
+import pytest
 
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C2, C6, D6, get_point_group
-from orix.sampling.SO3_sampling import uniform_SO3_sample, _resolution_to_num_steps
 from orix.sampling import get_sample_fundamental, get_sample_local
+from orix.sampling.SO3_sampling import _resolution_to_num_steps, uniform_SO3_sample
+from orix.sampling._polyhedral_sampling import (
+    _get_angles_between_nn_gridpoints,
+    _get_first_nearest_neighbors,
+    _get_max_grid_angle,
+    _get_start_and_end_index,
+)
 
 
 @pytest.fixture(scope="session")
@@ -35,6 +40,59 @@ def sample():
 def fixed_rotation():
     """A fixed rotation."""
     return Rotation([0.5, 0.5, 0, 0])
+
+
+class TestPolyhedralSamplingUtils:
+    @pytest.mark.parametrize(
+        "number_of_steps, include_start, include_end, positive_and_negative, expected",
+        [
+            (5, False, False, False, (1, 5)),
+            (5, True, False, False, (0, 5)),
+            (6, False, True, False, (1, 7)),
+            (7, True, True, True, (-7, 8)),
+        ],
+    )
+    def test_get_start_and_end_index(
+        self,
+        number_of_steps,
+        include_start,
+        include_end,
+        positive_and_negative,
+        expected,
+    ):
+        assert (
+            _get_start_and_end_index(
+                number_of_steps=number_of_steps,
+                include_start=include_start,
+                include_end=include_end,
+                positive_and_negative=positive_and_negative,
+            )
+            == expected
+        )
+
+    def test_first_nearest_neighbors(self):
+        grid = np.array(
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 1, 1],
+                [1, 0, 1],
+            ]
+        )
+        fnn = np.array(
+            [
+                [1, 0, 1],
+                [0, 1, 1],
+                [0, 1, 0],
+                [1, 0, 0],
+            ]
+        )
+        angles = np.array([45, 45, 45, 45])
+        fnn_test = _get_first_nearest_neighbors(grid)
+        angles_test = _get_angles_between_nn_gridpoints(grid)
+        assert np.allclose(fnn, fnn_test)
+        assert np.allclose(angles, angles_test)
+        assert abs(_get_max_grid_angle(grid) - 45.0) < 1e-7
 
 
 class TestSamplingUtils:

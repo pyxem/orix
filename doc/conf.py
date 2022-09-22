@@ -1,17 +1,18 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
+# Configuration file for the Sphinx documentation app.
+# See the documentation for a full list of configuration options:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 from datetime import datetime
 import inspect
 import os
-from os.path import relpath, dirname
+from os.path import dirname, relpath
 import re
 import sys
 
+from numpydoc.docscrape_sphinx import SphinxDocString
+
 import orix
+from orix import data
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -29,16 +30,20 @@ release = orix.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "matplotlib.sphinxext.plot_directive",
+    "nbsphinx",
+    "numpydoc",
     "sphinxcontrib.bibtex",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
     "sphinx.ext.linkcode",
+    "sphinx_codeautolink",
     "sphinx_copybutton",
-    "sphinx_gallery.load_style",
-    "nbsphinx",
+    "sphinx_design",
+    "sphinx_gallery.gen_gallery",
+    "sphinx_last_updated_by_git",
 ]
 
 # Create links to references within orix's documentation to these packages
@@ -50,6 +55,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable", None),
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
+    "sklearn": ("https://scikit-learn.org/stable", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -60,14 +66,15 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
+# HTML theme: furo
+# https://pradyunsg.me/furo/
 html_theme = "furo"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 
 # Syntax highlighting
 pygments_style = "friendly"
@@ -76,19 +83,20 @@ pygments_style = "friendly"
 html_logo = "_static/img/orix_logo.png"
 html_favicon = "_static/img/orix_logo.png"
 
-# nbsphinx configuration
+# -- nbsphinx
+# https://nbsphinx.readthedocs.io
 # Taken from nbsphinx' own nbsphinx configuration file, with slight
-# modification to point nbviewer and Binder to the GitHub master links
-# when the documentation is launched from a orix version with "dev" in
-# the version
+# modifications to point nbviewer and Binder to the GitHub develop
+# branch links when the documentation is launched from a kikuchipy
+# version with "dev" in the version
 if "dev" in orix.__version__:
-    release_version = "master"
+    release_version = "develop"
 else:
     release_version = "v" + orix.__version__
 # This is processed by Jinja2 and inserted before each notebook
 nbsphinx_prolog = (
     r"""
-{% set docname = 'doc/' + env.doc2path(env.docname, base=None) %}
+{% set docname = 'doc/' + env.doc2path(env.docname, base=None)[:-6] + '.ipynb' %}
 
 .. raw:: html
 
@@ -126,20 +134,28 @@ nbsphinx_prolog = (
 )
 # https://nbsphinx.readthedocs.io/en/0.8.0/never-execute.html
 nbsphinx_execute = "auto"  # auto, always, never
+nbsphinx_allow_errors = True
 nbsphinx_execute_arguments = [
     "--InlineBackend.rc=figure.facecolor='w'",
     "--InlineBackend.rc=font.size=15",
 ]
 
-# sphinxcontrib-bibtex configuration
+# -- sphinxcontrib-bibtex
+# https://sphinxcontrib-bibtex.readthedocs.io
 bibtex_bibfiles = ["bibliography.bib"]
+bibtex_reference_style = "author_year"
+
+# -- sphinx-codeautolink
+codeautolink_custom_blocks = {
+    "python3": None,
+    "pycon3": "sphinx_codeautolink.clean_pycon",
+}
 
 
 def linkcode_resolve(domain, info):
     """Determine the URL corresponding to Python object.
-
-    This is taken from SciPy's ``conf.py``:
-    https://github.com/scipy/scipy/blob/main/doc/source/conf.py.
+    This is taken from SciPy's conf.py:
+    https://github.com/scipy/scipy/blob/develop/doc/source/conf.py.
     """
     if domain != "py":
         return None
@@ -192,8 +208,104 @@ def linkcode_resolve(domain, info):
         if m:
             return pre_link + "%s/%s%s" % (m.group(1), fn, linespec)
         elif "dev" in orix.__version__:
-            return pre_link + "master/%s%s" % (fn, linespec)
+            return pre_link + "develop/%s%s" % (fn, linespec)
         else:
             return pre_link + "v%s/%s%s" % (orix.__version__, fn, linespec)
     else:
         return None
+
+
+# -- Copy button customization (taken from PyVista)
+# Exclude traditional Python prompts from the copied code
+copybutton_prompt_text = r">>> ?|\.\.\. "
+copybutton_prompt_is_regexp = True
+
+
+# -- sphinx.ext.autodoc
+# https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+autosummary_ignore_module_all = False
+autosummary_imported_members = True
+autodoc_typehints_format = "short"
+autodoc_default_options = {
+    "show-inheritance": True,
+}
+
+
+# -- numpydoc
+# https://numpydoc.readthedocs.io
+numpydoc_show_class_members = False
+numpydoc_use_plots = True
+numpydoc_xref_param_type = True
+# fmt: off
+numpydoc_validation_checks = {
+    "all",   # All but the following:
+    "ES01",  # Not all docstrings need an extend summary
+    "EX01",  # Examples: Will eventually enforce
+    "GL01",  # Contradicts numpydoc examples
+    "GL02",  # Appears to be broken?
+    "GL07",  # Appears to be broken?
+    "GL08",  # Methods can be documented in super class
+    "PR01",  # Parameters can be documented in super class
+    "PR02",  # Properties with setters might have docstrings w/"Returns"
+    "PR04",  # Doesn't seem to work with type hints?
+    "RT01",  # Abstract classes might not have return sections
+    "SA01",  # Not all docstrings need a "See Also"
+    "SA04",  # "See Also" section does not need descriptions
+    "SS06",  # Not possible to make all summaries one line
+    "YD01",  # Yields: No plan to enforce
+}
+# fmt: on
+
+
+# -- matplotlib.sphinxext.plot_directive
+# https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
+plot_formats = ["png"]
+plot_html_show_source_link = False
+plot_html_show_formats = False
+plot_include_source = True
+
+
+def _str_examples(self):
+    examples_str = "\n".join(self["Examples"])
+    if (
+        self.use_plots
+        and (
+            re.search(r"\b(.plot)\b", examples_str)
+            or re.search(r"\b(.plot_map)\b", examples_str)
+            or re.search(r"\b(.imshow)\b", examples_str)
+        )
+        and "plot::" not in examples_str
+    ):
+        out = []
+        out += self._str_header("Examples")
+        out += [".. plot::", ""]
+        out += self._str_indent(self["Examples"])
+        out += [""]
+        return out
+    else:
+        return self._str_section("Examples")
+
+
+SphinxDocString._str_examples = _str_examples
+
+
+# -- Sphinx-Gallery
+# https://sphinx-gallery.github.io
+sphinx_gallery_conf = {
+    "backreferences_dir": "reference/generated",
+    "doc_module": ("orix",),
+    "examples_dirs": "../examples",
+    "filename_pattern": "^((?!sgskip).)*$",
+    "gallery_dirs": "examples",
+    "reference_url": {"orix": None},
+    "run_stale_examples": True,
+    "show_memory": True,
+}
+autosummary_generate = True
+
+
+# Download example datasets prior to building the docs
+print("[orix] Downloading example datasets")
+_ = data.sdss_ferrite_austenite(allow_download=True)
+_ = data.sdss_austenite(allow_download=True)
+_ = data.ti_orientations(allow_download=True)

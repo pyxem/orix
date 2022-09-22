@@ -16,22 +16,38 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from packaging import version
+from typing import Optional, Tuple, Union
 
-from matplotlib import projections, __version__
-from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import __version__, projections
+from matplotlib.gridspec import SubplotSpec
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from packaging import version
 
 from orix.vector import AxAngle, Rodrigues
 
 
 class RotationPlot(Axes3D):
+    """Plot of a (mis)orientation region, extending Matplotlib."""
 
     name = None
     transformation_class = None
 
-    def transform(self, xs, fundamental_zone=None):
-        from orix.quaternion import Rotation, Misorientation, OrientationRegion
+    def transform(
+        self,
+        xs: Union["Misorientation", "OrientationRegion", "Rotation"],
+        fundamental_zone: Optional["OrientationRegion"] = None,
+    ):
+        """Prepare (mis)orientations or rotations for plotting.
+
+        Parameters
+        ----------
+        xs
+            Object to transform.
+        fundamental_zone
+            Orientation region to add to the plot as a wireframe.
+        """
+        from orix.quaternion import Misorientation, OrientationRegion, Rotation
 
         # Project rotations into fundamental zone if necessary
         if isinstance(xs, Misorientation):
@@ -49,13 +65,29 @@ class RotationPlot(Axes3D):
                 xs = xs.map_into_symmetry_reduced_zone()
 
         if isinstance(xs, Rotation):
-            transformed = self.transformation_class.from_rotation(xs.get_plot_data())
+            if isinstance(xs, OrientationRegion):
+                xs = xs.get_plot_data()
+            transformed = self.transformation_class.from_rotation(xs)
         else:
             transformed = self.transformation_class(xs)
         x, y, z = transformed.xyz
         return x, y, z
 
-    def scatter(self, xs, fundamental_zone=None, **kwargs):
+    def scatter(
+        self, xs: Union["Misorientation", "Rotation"], fundamental_zone=None, **kwargs
+    ):
+        """Create a scatter plot.
+
+        Parameters
+        ----------
+        xs
+            Rotations.
+        fundamental_zone
+            Orientation region to add to the plot as a wireframe.
+        **kwargs
+            Keyword arguments passed to
+            :meth:`mpl_toolkits.mplot3d.Axes3D.scatter`.
+        """
         x, y, z = self.transform(xs, fundamental_zone=fundamental_zone)
         return super().scatter(x, y, z, **kwargs)
 
@@ -70,13 +102,15 @@ class RotationPlot(Axes3D):
         x, y, z = self.transform(xs)
         return super().plot_wireframe(x, y, z, **kwargs)
 
-    def _get_region_extent(self, fundamental_region):
+    def _get_region_extent(
+        self, fundamental_region: "OrientationRegion"
+    ) -> Tuple[float, float, float]:
         """Return the maximum angles in x, y, z of the fundamental
         region.
 
         Parameters
         ----------
-        fundamental_region : OrientationRegion
+        fundamental_region
 
         Returns
         -------
@@ -123,11 +157,11 @@ projections.register_projection(AxAnglePlot)
 
 
 def _setup_rotation_plot(
-    figure=None,
-    projection="axangle",
-    position=None,
-    figure_kwargs=None,
-):
+    figure: Optional[plt.Figure] = None,
+    projection: str = "axangle",
+    position: Union[int, tuple, SubplotSpec, None] = None,
+    figure_kwargs: Optional[dict] = None,
+) -> Tuple[plt.Figure, Union[AxAnglePlot, RodriguesPlot]]:
     """Return a figure and rotation plot axis of the correct type.
 
     This is a convenience method used in e.g.
@@ -135,29 +169,29 @@ def _setup_rotation_plot(
 
     Parameters
     ----------
-    figure : matplotlib.figure.Figure
+    figure
         If given, a new plot axis :class:`orix.plot.AxAnglePlot` or
         :class:`orix.plot.RodriguesPlot` is added to the figure in
         the position specified by `position`. If not given, a new
         figure is created.
-    projection : str, optional
+    projection
         Which orientation space to plot orientations in, either
         "axangle" (default) or "rodrigues".
-    position : int, tuple of int, matplotlib.gridspec.SubplotSpec,
-            optional
+    position
         Where to add the new plot axis. 121 or (1, 2, 1) places it
         in the first of two positions in a grid of 1 row and 2
         columns. See :meth:`matplotlib.figure.Figure.add_subplot`
         for further details. Default is (1, 1, 1).
-    figure_kwargs : dict, optional
+    figure_kwargs
         Dictionary of keyword arguments passed to
         :func:`matplotlib.pyplot.figure` if `figure` is not given.
 
     Returns
     -------
-    figure : matplotlib.figure.Figure
+    figure
         Figure with the added plot axis.
-    ax : AxAnglePlot or RodriguesPlot
+    ax
+        The axis-angle or Rodrigues plot axis.
     """
     # Create figure if not already created, then add axis to figure
     if figure is None:

@@ -19,6 +19,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from orix.quaternion import Orientation, Symmetry
+
 
 class EulerColorKey:
     r"""Assign colors to crystal orientations from their Euler angle
@@ -32,21 +34,21 @@ class EulerColorKey:
     :meth:`~orix.quaternion.Orientation.in_euler_fundamental_region`.
     """
 
-    def __init__(self, symmetry):
+    def __init__(self, symmetry: Symmetry):
         """Create a Euler color key to color orientations according
         their Euler angle triplet in the fundamental Euler region of the
         proper subgroup.
 
         Parameters
         ----------
-        symmetry : orix.quaternion.Symmetry
+        symmetry
             Proper point group of the crystal. If an improper point
             group is given, the proper point group is derived from it
             if possible.
         """
         self.symmetry = symmetry
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         sym = self.symmetry
         phi1, Phi, phi2 = sym.euler_fundamental_region
         return (
@@ -54,7 +56,7 @@ class EulerColorKey:
             f"\nMax (phi1, Phi, phi2): ({phi1}, {Phi}, {phi2})"
         )
 
-    def orientation2color(self, orientation):
+    def orientation2color(self, orientation: Orientation) -> np.ndarray:
         """Return an RGB color per orientation given a proper point
         group symmetry.
 
@@ -62,28 +64,28 @@ class EulerColorKey:
 
         Parameters
         ----------
-        orientation : orix.quaternion.Orientation
+        orientation
             Orientations to color.
 
         Returns
         -------
-        rgb : numpy.ndarray
-            Color array of shape `orientation.shape` + (3,).
+        rgb
+            Color array of shape ``orientation.shape + (3,)``.
         """
         return self._euler2color(orientation.in_euler_fundamental_region())
 
-    def plot(self, return_figure=False):
+    def plot(self, return_figure: bool = False) -> plt.Figure:
         """Plot the color key.
 
         Parameters
         ----------
-        return_figure : bool, optional
+        return_figure
             Whether to return the figure. Default is False.
 
         Returns
         -------
-        figure : matplotlib.figure.Figure
-            Color key figure, returned if `return_figure` is True.
+        figure
+            Color key figure, returned if ``return_figure=True``.
         """
         eulers_max = self.symmetry.euler_fundamental_region
 
@@ -121,8 +123,8 @@ class EulerColorKey:
                 ha="left",
                 **text_kwargs,
             )
-            ax.set_xticks([], [])
-            ax.set_yticks([], [])
+            ax.set_xticks([])
+            ax.set_yticks([])
 
         fig.axes[0].set_title(
             self.symmetry.proper_subgroup.name, ha="center", fontweight="bold"
@@ -132,7 +134,7 @@ class EulerColorKey:
         if return_figure:
             return fig
 
-    def _euler2color(self, euler):
+    def _euler2color(self, euler: np.ndarray) -> np.ndarray:
         max_angles = np.radians(self.symmetry.euler_fundamental_region)
         rgb = euler / max_angles[np.newaxis, :]
         return rgb.clip(0, 1)

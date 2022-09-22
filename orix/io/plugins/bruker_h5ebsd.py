@@ -25,7 +25,6 @@ from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.io.plugins._h5ebsd import H5ebsdFile
 from orix.quaternion import Rotation
 
-
 __all__ = ["file_reader"]
 
 # Plugin description
@@ -36,20 +35,21 @@ writes = False
 writes_this = CrystalMap
 
 
-def file_reader(filename, **kwargs):
-    """Return a :class:`~orix.crystal_map.CrystalMap` from a file in
-    Bruker Nano's dot product file format.
+def file_reader(filename: str, **kwargs) -> CrystalMap:
+    """Return a crystal map from a file in Bruker Nano's dot product
+    file format.
 
     Parameters
     ----------
-    filename : str
+    filename
         Path and file name.
-    kwargs
-        Keyword arguments passed to :func:`h5py.File`.
+    **kwargs
+        Keyword arguments passed to :class:`h5py.File`.
 
     Returns
     -------
-    CrystalMap
+    xmap
+        Crystal map.
     """
     f = BrukerH5ebsdFile(filename)
     f.open(**kwargs)
@@ -106,8 +106,13 @@ class BrukerH5ebsdFile(H5ebsdFile):
     map_rows = None
     scan_unit = "um"
 
-    def can_read(self):
-        """Return whether the file can be read."""
+    def can_read(self) -> bool:
+        """Return whether the file can be read.
+
+        Returns
+        -------
+        can_read
+        """
         square_grid = self.header_dict["Grid Type"] == "isometric"
         return self.is_rectangular * square_grid
 
@@ -243,18 +248,18 @@ class BrukerH5ebsdFile(H5ebsdFile):
         self.rotations = Rotation.from_euler(euler)
 
 
-def _roi_is_rectangular(map_rows, map_cols):
+def _roi_is_rectangular(map_rows: np.ndarray, map_cols: np.ndarray) -> bool:
     """Return whether points in a map from Bruker Nano's h5ebsd file
     are in a rectangle.
 
     Parameters
     ----------
-    map_rows : numpy.ndarray
-    map_cols : numpy.ndarray
+    map_rows
+    map_cols
 
     Returns
     -------
-    bool
+    is_rectangular
     """
     map_rows_unique, map_rows_unique_counts = np.unique(map_rows, return_counts=True)
     map_cols_unique, map_cols_unique_counts = np.unique(map_cols, return_counts=True)
@@ -266,32 +271,32 @@ def _roi_is_rectangular(map_rows, map_cols):
     )
 
 
-def dict2phaselist(dictionary):
+def dict2phaselist(dictionary: dict) -> PhaseList:
     """Return a list of phases from a dictionary with keys and values
     from a Bruker Nano h5ebsd file.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
 
     Returns
     -------
-    PhaseList
+    phase_list
     """
     return PhaseList(phases={int(k): dict2phase(v) for k, v in dictionary.items()})
 
 
-def dict2phase(dictionary):
+def dict2phase(dictionary: dict) -> Phase:
     """Return a phase from a dictionary with keys and values from a
     Bruker Nano h5ebsd file.
 
     Parameters
     ----------
-    dictionary : dict
+    dictionary
 
     Returns
     -------
-    Phase
+    phase
     """
     lattice_dict = dict(
         zip(["a", "b", "c", "alpha", "beta", "gamma"], dictionary["LatticeConstants"])
@@ -305,17 +310,17 @@ def dict2phase(dictionary):
     )
 
 
-def str2atom(atom_positions):
+def str2atom(atom_positions: str) -> Atom:
     """Return an atom from a string in the format used by Bruker Nano
     in their h5ebsd file.
 
     Parameters
     ----------
-    atom_positions : str
+    atom_positions
 
     Returns
     -------
-    diffpy.structure.Atom
+    atom
     """
     atom_positions = atom_positions.split(",")
     return Atom(

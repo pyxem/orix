@@ -18,6 +18,9 @@
 
 import abc
 
+from orix.quaternion import Symmetry
+from orix.vector import Vector3d
+
 
 class DirectionColorKey(abc.ABC):
     """Assign colors to crystal directions projected into an inverse
@@ -25,16 +28,20 @@ class DirectionColorKey(abc.ABC):
 
     This is an abstract class defining properties and methods required
     in derived classes.
+
+    Parameters
+    ----------
+    symmetry
     """
 
-    def __init__(self, symmetry):
+    def __init__(self, symmetry: Symmetry):
         self.symmetry = symmetry
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}, symmetry {self.symmetry.name}"
 
     @abc.abstractmethod
-    def direction2color(self, direction):
+    def direction2color(self, direction: Vector3d):
         return NotImplemented  # pragma: no cover
 
     @abc.abstractmethod

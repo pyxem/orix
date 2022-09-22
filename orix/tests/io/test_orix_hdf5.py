@@ -18,26 +18,26 @@
 
 from diffpy.structure.spacegroups import GetSpaceGroup
 from h5py import File
-import pytest
 import numpy as np
+import pytest
 
 from orix import __version__ as orix_version
 from orix.crystal_map import CrystalMap, Phase
 from orix.io import load, save
 from orix.io.plugins.orix_hdf5 import (
-    dict2crystalmap,
-    dict2phaselist,
-    dict2phase,
-    dict2structure,
-    dict2lattice,
-    dict2atom,
-    dict2hdf5group,
-    crystalmap2dict,
-    phaselist2dict,
-    phase2dict,
-    structure2dict,
-    lattice2dict,
     atom2dict,
+    crystalmap2dict,
+    dict2atom,
+    dict2crystalmap,
+    dict2hdf5group,
+    dict2lattice,
+    dict2phase,
+    dict2phaselist,
+    dict2structure,
+    lattice2dict,
+    phase2dict,
+    phaselist2dict,
+    structure2dict,
 )
 from orix.tests.io.test_io import assert_dictionaries_are_equal
 

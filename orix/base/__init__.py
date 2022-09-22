@@ -18,54 +18,56 @@
 
 """Base class for 3d objects.
 
-Note that this class is not meant to be used directly.
+.. note::
+
+    Contents of this module are not meant to be used directly.
 """
+
+from __future__ import annotations
+
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-
-# Lists what will be imported when calling "from orix.base import *"
-__all__ = [
-    "check",
-    "DimensionError",
-    "Object3d",
-]
-
-
-def check(obj, cls):
-    if not isinstance(obj, cls):
-        try:
-            obj = cls(obj)
-        except BaseException:
-            raise ValueError(
-                "Could not turn {} (type {}) into {}".format(
-                    obj, obj.__class__.__name__, cls.__name__
-                )
-            )
-    return obj
+__all__ = ["DimensionError", "Object3d"]
 
 
 class DimensionError(Exception):
-    def __init__(self, this, data):
-        class_name = this.__class__.__name__
-        required_dimension = this.dim
-        received_dimension = data.shape[-1]
+    """Error raised when an array passed to a class constructor has an
+    incompatible shape.
+
+    Parameters
+    ----------
+    this
+        An orix class with attributes ``dim`` and ``shape``.
+    data
+        Array.
+    """
+
+    def __init__(self, this: Object3d, data: np.ndarray):
         super().__init__(
-            "{} requires data of dimension {} "
-            "but received dimension {}.".format(
-                class_name, required_dimension, received_dimension
-            )
+            f"{this.__class__.__name__} requires data of dimension {this.dim} but "
+            f"received dimension {data.shape[-1]}"
         )
 
 
 class Object3d:
-    """Base class for 3d objects."""
+    """Base class for 3d objects.
+
+    .. note::
+
+        This class is not meant to be used directly.
+
+    Parameters
+    ----------
+    data
+        Object data.
+    """
 
     dim = None
-    """int : The number of dimensions for this object."""  # pragma: no cover
+    """Return the number of dimensions for this object."""  # pragma: no cover
 
     _data = None
-    """numpy.ndarray : Array holding this object's numerical data."""  # pragma: no cover
 
     __array_ufunc__ = None
 
@@ -83,53 +85,66 @@ class Object3d:
         pass
 
     @property
-    def data(self):
+    def data(self) -> np.ndarray:
+        """Return the object data."""
         return self._data[..., : self.dim]
 
     @data.setter
-    def data(self, data):
+    def data(self, data: np.ndarray):
+        """Set the object data."""
         self._data[..., : self.dim] = data
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return a string representation of the data."""
         name = self.__class__.__name__
         shape = str(self.shape)
         data = np.array_str(self.data, precision=4, suppress_small=True)
         return "\n".join([name + " " + shape, data])
 
     def __getitem__(self, key):
+        """Return a slice of the object."""
         data = np.atleast_2d(self.data[key])
         obj = self.__class__(data)
         return obj
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value: np.ndarray):
+        """Set a slice of the data."""
         self.data[key] = value.data
 
     @classmethod
     def empty(cls):
-        """An empty object with the appropriate dimensions."""
+        """Return an empty object with the appropriate dimensions."""
         return cls(np.zeros((0, cls.dim)))
 
     @property
-    def shape(self):
-        """tuple : Shape of the object."""
+    def shape(self) -> tuple:
+        """Return the shape of the object."""
         return self.data.shape[:-1]
 
     @property
-    def ndim(self):
-        """int : The number of navigation dimensions of the instance.
+    def ndim(self) -> int:
+        """Return the number of navigation dimensions of the instance.
 
-        For example, if `data` has shape (4, 5, 6), `ndim` is 3.
-
+        For example, if :attr:`data` has shape (4, 5, 6), :attr:`ndim`
+        is 3.
         """
         return len(self.shape)
 
     @property
-    def size(self):
-        """int : Total number of entries in this object."""
-        return np.prod(self.shape)
+    def size(self) -> int:
+        """Return the total number of entries in this object."""
+        return int(np.prod(self.shape))
 
     @classmethod
-    def stack(cls, sequence):
+    def stack(cls, sequence: Any):
+        """Return a stacked object from the sequence.
+
+        Parameters
+        ----------
+        sequence
+            A sequence of instances of a class inheriting from
+            ``Object3d`` to stack.
+        """
         sequence = [s._data for s in sequence]
         stack = np.stack(sequence, axis=-2)
         obj = cls(stack[..., : cls.dim])
@@ -137,14 +152,20 @@ class Object3d:
         return obj
 
     def flatten(self):
-        """Returns a new object with the same data in a single column."""
+        """Return a new object with the same data in a single column."""
         obj = self.__class__(self.data.T.reshape(self.dim, -1).T)
         real_dim = self._data.shape[-1]
         obj._data = self._data.T.reshape(real_dim, -1).T
         return obj
 
-    def unique(self, return_index=False, return_inverse=False):
-        """Returns a new object containing only this object's unique
+    def unique(
+        self, return_index: bool = False, return_inverse: bool = False
+    ) -> Union[
+        Tuple[Object3d, np.ndarray, np.ndarray],
+        Tuple[Object3d, np.ndarray],
+        Object3d,
+    ]:
+        """Return a new object containing only this object's unique
         entries.
 
         Unless overridden, this method returns the numerically unique
@@ -153,22 +174,23 @@ class Object3d:
 
         Parameters
         ----------
-        return_index : bool, optional
-            If True, will also return the indices of the (flattened)
+        return_index
+            If ``True``, will also return the indices of the (flattened)
             data where the unique entries were found.
-        return_inverse : bool, optional
-            If True, will also return the indices to reconstruct the
+        return_inverse
+            If ``True``, will also return the indices to reconstruct the
             (flattened) data from the unique data.
 
         Returns
         -------
-        dat : Object3d
+        dat
             The numerically unique entries.
-        idx : numpy.ndarray, optional
-            The indices of the unique data in the (flattened) array.
-        inv : numpy.ndarray, optional
-            The indices of the (flattened) data in the unique array.
-
+        idx
+            The indices of the unique data in the (flattened) array if
+            ``return_index=True``.
+        inv
+            The indices of the (flattened) data in the unique array if
+            ``return_inverse=True``.
         """
         data = self.flatten()._data.round(12)
         data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
@@ -185,45 +207,64 @@ class Object3d:
             return obj
 
     @property
-    def norm(self):
+    def norm(self) -> np.ndarray:
+        """Return the norm of the data."""
         return np.sqrt(np.sum(np.square(self.data), axis=-1))
 
     @property
-    def unit(self):
+    def unit(self) -> Object3d:
+        """Return the unit object."""
         with np.errstate(divide="ignore", invalid="ignore"):
             obj = self.__class__(np.nan_to_num(self.data / self.norm[..., np.newaxis]))
             return obj
 
-    def squeeze(self):
-        """Returns a new object with length one dimensions removed."""
+    def squeeze(self) -> Object3d:
+        """Return a new object with length one dimensions removed.
+
+        Returns
+        -------
+        obj
+            New object with no 1-dimensions.
+        """
         obj = self.__class__(self)
         obj._data = np.atleast_2d(np.squeeze(self._data))
         return obj
 
-    def reshape(self, *shape):
-        """Returns a new object containing the same data with a new shape."""
+    def reshape(self, *shape: int) -> Object3d:
+        """Return a new object containing the same data with a new
+        shape.
+
+        Parameters
+        ----------
+        shape
+            New shape of object.
+
+        Returns
+        -------
+        obj
+            New object with new shape.
+        """
         obj = self.__class__(self.data.reshape(*shape, self.dim))
         obj._data = self._data.reshape(*shape, -1)
         return obj
 
-    def transpose(self, *axes):
-        """Returns a new object containing the same data transposed.
+    def transpose(self, *axes: Optional[int]) -> Object3d:
+        """Return a new object containing the same data transposed.
 
-        If ndim is originally 2, then order may be undefined.
-        In this case the first two dimensions will be transposed.
+        If :attr:`ndim` is originally 2, then order may be undefined. In
+        this case the first two dimensions will be transposed.
 
         Parameters
         ----------
-        axes : int, optional
+        axes
             The transposed axes order. Only navigation axes need to be
             defined. May be undefined if self only contains two
             navigation dimensions.
 
         Returns
         -------
-        obj :
-            A transposed instance of the object.
-
+        obj
+            The object transposed.
         """
         # 1d object should not be transposed
         if len(self.shape) == 1:
@@ -245,21 +286,20 @@ class Object3d:
 
         return self.__class__(self.data.transpose(*axes, -1))
 
-    def get_plot_data(self):
-        return self
-
-    def get_random_sample(self, size=1, replace=False, shuffle=False):
+    def get_random_sample(
+        self, size: Optional[int] = 1, replace: bool = False, shuffle: bool = False
+    ):
         """Return a random sample of a given size in a flattened
         instance.
 
         Parameters
         ----------
-        size : int, optional
+        size
             Number of samples to draw. Cannot be greater than the size
             of this instance. If not given, a single sample is drawn.
-        replace : bool, optional
+        replace
             See :meth:`numpy.random.Generator.choice`.
-        shuffle : bool, optional
+        shuffle
             See :meth:`numpy.random.Generator.choice`.
 
         Returns

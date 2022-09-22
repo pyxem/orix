@@ -16,18 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+# fmt: off
+# isort: off
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
 from orix.quaternion.symmetry import (
     C1,
     C2,
-    C3,
-    C4,
     D2,
+    C4,
+    C3,
     D3,
     D6,
     T,
@@ -37,6 +41,8 @@ from orix.quaternion.symmetry import (
     _proper_groups,
 )
 from orix.vector import AxAngle, Vector3d
+# isort: on
+# fmt: on
 
 
 @pytest.fixture
@@ -89,36 +95,6 @@ def test_orientation_persistence(symmetry, vector):
     v2 = oc * v
     v2 = Vector3d(v2.data.round(4))
     assert v1._tuples == v2._tuples
-
-
-# TODO: Remove in 0.10
-@pytest.mark.parametrize(
-    "orientation, symmetry, expected",
-    [
-        ((1, 0, 0, 0), C1, [0]),
-        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C1, [[0, np.pi / 2], [np.pi / 2, 0]]),
-        ([(1, 0, 0, 0), (0.7071, 0.7071, 0, 0)], C4, [[0, np.pi / 2], [np.pi / 2, 0]]),
-        ([(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)], C4, [[0, 0], [0, 0]]),
-        (
-            [
-                [(1, 0, 0, 0), (0.7071, 0, 0, 0.7071)],
-                [(0, 0, 0, 1), (0.9239, 0, 0, 0.3827)],
-            ],
-            C4,
-            [
-                [[[0, 0], [0, np.pi / 4]], [[0, 0], [0, np.pi / 4]]],
-                [[[0, 0], [0, np.pi / 4]], [[np.pi / 4, np.pi / 4], [np.pi / 4, 0]]],
-            ],
-        ),
-    ],
-    indirect=["orientation"],
-)
-def test_distance(orientation, symmetry, expected):
-    orientation.symmetry = symmetry
-    orientation = orientation.map_into_symmetry_reduced_zone(verbose=True)
-    with pytest.warns(np.VisibleDeprecationWarning, match="Function "):
-        distance = orientation.distance(verbose=True)
-    assert np.allclose(distance, expected, atol=1e-3)
 
 
 @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
@@ -378,22 +354,6 @@ class TestMisorientation:
         angle2 = p12.angle.min(axis=(0, 2, 3, 5))
         assert np.allclose(angle1, angle2)
 
-    # TODO: Remove in 0.10
-    @pytest.mark.parametrize("symmetry", _groups[:-1])
-    def test_get_distance_matrix_equal_distance(self, symmetry):
-        # do not test Oh, as this takes ~4 GB
-        shape = (3, 2)
-        n = np.prod(shape)
-        m = Misorientation.random(shape)
-        m.symmetry = (symmetry, symmetry)
-        angle1 = m.get_distance_matrix().reshape(n, n, order="F")
-        m1 = m.flatten()
-        angle2 = m1.get_distance_matrix()
-        assert np.allclose(angle1, angle2)
-        with pytest.warns(np.VisibleDeprecationWarning, match="Function "):
-            angle3 = m1.distance()
-        assert np.allclose(angle1, angle3)
-
 
 def test_orientation_equality():
     # symmetries must also be the same to be equal
@@ -492,9 +452,9 @@ class TestOrientationInitialization:
         """
         euler = np.random.rand(10, 3)
 
-        with pytest.warns(None) as record1:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
             _ = Orientation.from_euler(euler)
-        assert len(record1) == 0
 
         msg = (
             r"Argument `convention` is deprecated and will be removed in version 1.0. "
@@ -524,9 +484,9 @@ class TestOrientationInitialization:
         """
         ori1 = Orientation.from_euler(np.random.rand(10, 3))
 
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
             ori2 = ori1.to_euler()
-        assert len(record) == 0
 
         msg = (
             r"Argument `convention` is deprecated and will be removed in version 1.0. "

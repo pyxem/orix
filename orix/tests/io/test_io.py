@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
 from collections import OrderedDict
+from contextlib import contextmanager
 from io import StringIO
 from numbers import Number
 import os
@@ -25,17 +25,11 @@ import sys
 
 from diffpy.structure import Structure
 from h5py import File
-import pytest
 import numpy as np
+import pytest
 
 from orix.crystal_map import Phase, PhaseList
-from orix.io import (
-    load,
-    save,
-    loadctf,
-    _plugin_from_manufacturer,
-    _overwrite_or_not,
-)
+from orix.io import _overwrite_or_not, _plugin_from_manufacturer, load, loadctf, save
 from orix.io.plugins import bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
 from orix.quaternion.rotation import Rotation
 

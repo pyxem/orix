@@ -7,6 +7,52 @@ All notable changes to the ``orix`` project are documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+2022-09-22 - version 0.10.0
+===========================
+
+Added
+-----
+- Support for type hints has been introduced and a section on this topic has been added
+  to the contributing guide.
+- ``Vector3d.pole_density_function()`` has been implemented which allows for calculation
+  of the Pole Density Function (PDF) and quantification of poles in the stereographic
+  projection.
+- Seven methods for sampling unit vectors from regular grids on *S2* via
+  ``orix.sampling.sample_S2()``.
+- Calculation of the Inverse Pole Density Function (IPDF), ie. pole density in the
+  crystal point group fundamental sector, through 
+  ``InversePoleFigurePlot.pole_density_function()``.
+- The ``orix.measure`` module has been introduced. The ``measure`` module is related to
+  quantification of orientation and vector data.
+- Plotting the IPF color key on a created ``InversePoleFigurePlot`` is now possible with
+  ``plot_ipf_color_key()``.
+- Examples gallery to documentation.
+
+Changed
+-------
+- Moved part of documentation showing plotting of Wulff net and symmetry markers from
+  the tutorials to examples.
+- Renamed user guide notebooks to tutorials in documentation.
+- Reference frame labels of stereographic projection of ``Symmetry.plot()`` from (a, b)
+  to (e1, e2), signifying the standard Cartesian reference frame attached to a crystal.
+- Tighten distribution of random orientation clusters in tutorial showing clustering
+  across fundamental region boundaries, to avoid clustering sometimes giving two
+  clusters instead of three.
+
+Removed
+-------
+- Support for Python 3.6 has been removed. The minimum supported version in ``orix`` is
+  now Python 3.7.
+- ``Object3d.check()``, ``Quaternion.check_quaternion()`` and
+  ``Vector3d.check_vector()``, as these methods were not used internally.
+- Deprecated method ``distance()`` of ``Misorientation`` and ``Orientation`` classes,
+  use ``get_distance_matrix()`` instead.
+
+Fixed
+-----
+- Plotting of unit cells works with Matplotlib v3.6, at the expense of a warning raised
+  with earlier versions.
+
 2022-05-16 - version 0.9.0
 ==========================
 

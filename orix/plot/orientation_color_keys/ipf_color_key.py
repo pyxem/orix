@@ -17,7 +17,9 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import abc
+from typing import Optional
 
+from orix.quaternion import Symmetry
 from orix.vector import Vector3d
 
 
@@ -27,15 +29,20 @@ class IPFColorKey(abc.ABC):
 
     This is an abstract class defining properties and methods required
     in derived classes.
+
+    Parameters
+    ----------
+    symmetry
+    direction
     """
 
-    def __init__(self, symmetry, direction=None):
+    def __init__(self, symmetry: Symmetry, direction: Optional[Vector3d] = None):
         self.symmetry = symmetry
         if direction is None:
             direction = Vector3d.zvector()
         self.direction = direction
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}, symmetry: {self.symmetry.name}, "
             f"direction: {self.direction.data.squeeze()}"

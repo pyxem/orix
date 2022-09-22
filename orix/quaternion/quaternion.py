@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
+from typing import Union
 import warnings
 
 import dask.array as da
@@ -23,19 +26,14 @@ from dask.diagnostics import ProgressBar
 import numpy as np
 import quaternion
 
-from orix.base import check, Object3d
+from orix.base import Object3d
 from orix.vector import Miller, Vector3d
-
-
-def check_quaternion(obj):
-    return check(obj, Quaternion)
 
 
 class Quaternion(Object3d):
     r"""Basic quaternion object.
 
     Quaternions support the following mathematical operations:
-
     - Unary negation.
     - Inversion.
     - Multiplication with other quaternions and vectors.
@@ -43,85 +41,112 @@ class Quaternion(Object3d):
     Quaternion-quaternion multiplication for two quaternions
     :math:`q_1 = (a_1, b_1, c_1, d_1)`
     and :math:`q_2 = (a_2, b_2, c_2, d_2)`
-    with :math:`q_3 = (a_3, b_3, c_3, d_3) = q_1 * q_2` follows as:
+    with :math:`q_3 = (a_3, b_3, c_3, d_3) = q_1 \cdot q_2` follows as:
 
     .. math::
-       a_3 = (a_1 * a_2 - b_1 * b_2 - c_1 * c_2 - d_1 * d_2)
+       a_3 = (a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2)
 
-       b_3 = (a_1 * b_2 + b_1 * a_2 + c_1 * d_2 - d_1 * c_2)
+       b_3 = (a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2)
 
-       c_3 = (a_1 * c_2 - b_1 * d_2 + c_1 * a_2 + d_1 * b_2)
+       c_3 = (a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2)
 
-       d_3 = (a_1 * d_2 + b_1 * c_2 - c_1 * b_2 + d_1 * a_2)
+       d_3 = (a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2)
 
     Quaternion-vector multiplication with a three-dimensional vector
     :math:`v = (x, y, z)` calculates a rotated vector
-    :math:`v' = q * v * q^{-1}` and follows as:
+    :math:`v' = q \cdot v \cdot q^{-1}` and follows as:
 
     .. math::
-       v'_x = x(a^2 + b^2 - c^2 - d^2) + 2(z(a * c + b * d) + y(b * c - a * d))
+       v'_x = x(a^2 + b^2 - c^2 - d^2) + 2(z(a \cdot c + b \cdot d) + y(b \cdot c - a \cdot d))
 
-       v'_y = y(a^2 - b^2 + c^2 - d^2) + 2(x(a * d + b * c) + z(c * d - a * b))
+       v'_y = y(a^2 - b^2 + c^2 - d^2) + 2(x(a \cdot d + b \cdot c) + z(c \cdot d - a \cdot b))
 
-       v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a * b + c * d) + x(b * d - a * c))
-
-    Attributes
-    ----------
-    data : numpy.ndarray
-        The numpy array containing the quaternion data.
-    a, b, c, d : numpy.ndarray
-        The individual elements of each vector.
-    conj : Quaternion
-        The conjugate of this quaternion :math:`q^* = a - bi - cj - dk`.
+       v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c))
     """
 
     dim = 4
 
     @property
-    def a(self):
+    def a(self) -> np.ndarray:
+        """Return or set the scalar quaternion component.
+
+        Parameters
+        ----------
+        value : numpy.ndarray
+            Scalar quaternion component.
+        """
         return self.data[..., 0]
 
     @a.setter
-    def a(self, value):
+    def a(self, value: np.ndarray):
+        """Set the scalar quaternion component."""
         self.data[..., 0] = value
 
     @property
-    def b(self):
+    def b(self) -> np.ndarray:
+        """Return or set the first vector quaternion component.
+
+        Parameters
+        ----------
+        value : numpy.ndarray
+            First vector quaternion component.
+        """
         return self.data[..., 1]
 
     @b.setter
-    def b(self, value):
+    def b(self, value: np.ndarray):
+        """Set the first vector quaternion component."""
         self.data[..., 1] = value
 
     @property
-    def c(self):
+    def c(self) -> np.ndarray:
+        """Return or set the second vector quaternion component.
+
+        Parameters
+        ----------
+        value : numpy.ndarray
+            Second vector quaternion component.
+        """
         return self.data[..., 2]
 
     @c.setter
-    def c(self, value):
+    def c(self, value: np.ndarray):
+        """Set the second vector quaternion component."""
         self.data[..., 2] = value
 
     @property
-    def d(self):
+    def d(self) -> np.ndarray:
+        """Return or set the third vector quaternion component.
+
+        Parameters
+        ----------
+        value : numpy.ndarray
+            Third vector quaternion component.
+        """
         return self.data[..., 3]
 
     @d.setter
-    def d(self, value):
+    def d(self, value: np.ndarray):
+        """Set the third vector quaternion component."""
         self.data[..., 3] = value
 
     @property
-    def antipodal(self):
-        return self.__class__(np.stack([self.data, -self.data], axis=0))
+    def antipodal(self) -> Quaternion:
+        """Return the quaternions and the antipodal ones."""
+        return self.__class__(np.stack([self.data, -self.data]))
 
     @property
-    def conj(self):
+    def conj(self) -> Quaternion:
+        r"""Return the conjugate of this quaternion
+        :math:`q^* = a - bi - cj - dk`.
+        """
         q = quaternion.from_float_array(self.data).conj()
         return Quaternion(quaternion.as_float_array(q))
 
-    def __invert__(self):
+    def __invert__(self) -> Quaternion:
         return self.__class__(self.conj.data / (self.norm**2)[..., np.newaxis])
 
-    def __mul__(self, other):
+    def __mul__(self, other: Union[Quaternion, Vector3d]):
         if isinstance(other, Quaternion):
             q1 = quaternion.from_float_array(self.data)
             q2 = quaternion.from_float_array(other.data)
@@ -142,27 +167,33 @@ class Quaternion(Object3d):
                 return other.__class__(v)
         return NotImplemented
 
-    def __neg__(self):
+    def __neg__(self) -> Quaternion:
         return self.__class__(-self.data)
 
     @classmethod
-    def triple_cross(cls, q1, q2, q3):
+    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
         """Pointwise cross product of three quaternions.
 
         Parameters
         ----------
-        q1, q2, q3 : orix.quaternion.Quaternion
-            Three quaternions for which to find the "triple cross".
+        q1
+            First quaternions.
+        q2
+            Second quaternions.
+        q3
+            Third quaternions.
 
         Returns
         -------
-        q : orix.quaternion.Quaternion
+        quat
+            Quaternions resulting from the triple cross product.
         """
         q1a, q1b, q1c, q1d = q1.a, q1.b, q1.c, q1.d
         q2a, q2b, q2c, q2d = q2.a, q2.b, q2.c, q2.d
         q3a, q3b, q3c, q3d = q3.a, q3.b, q3.c, q3.d
+        # fmt: off
         a = (
-            +q1b * q2c * q3d
+            + q1b * q2c * q3d
             - q1b * q3c * q2d
             - q2b * q1c * q3d
             + q2b * q3c * q1d
@@ -170,7 +201,7 @@ class Quaternion(Object3d):
             - q3b * q2c * q1d
         )
         b = (
-            +q1a * q3c * q2d
+            + q1a * q3c * q2d
             - q1a * q2c * q3d
             + q2a * q1c * q3d
             - q2a * q3c * q1d
@@ -178,7 +209,7 @@ class Quaternion(Object3d):
             + q3a * q2c * q1d
         )
         c = (
-            +q1a * q2b * q3d
+            + q1a * q2b * q3d
             - q1a * q3b * q2d
             - q2a * q1b * q3d
             + q2a * q3b * q1d
@@ -186,31 +217,84 @@ class Quaternion(Object3d):
             - q3a * q2b * q1d
         )
         d = (
-            +q1a * q3b * q2c
+            + q1a * q3b * q2c
             - q1a * q2b * q3c
             + q2a * q1b * q3c
             - q2a * q3b * q1c
             - q3a * q1b * q2c
             + q3a * q2b * q1c
         )
-        q = cls(np.vstack((a, b, c, d)).T)
-        return q
+        # fmt: on
+        quat = cls(np.vstack((a, b, c, d)).T)
+        return quat
 
-    def dot(self, other):
-        """Dot product of this quaternion and the other as a
-        numpy.ndarray.
+    def dot(self, other: Quaternion) -> np.ndarray:
+        """Return the dot products of the quaternions and the other
+        quaternions.
+
+        Parameters
+        ----------
+        other
+            Other quaternions.
+
+        Returns
+        -------
+        dot_products
+            Dot products.
+
+        See Also
+        --------
+        Rotation.dot
+        Orientation.dot
+
+        Examples
+        --------
+        >>> from orix.quaternion import Quaternion
+        >>> quat1 = Quaternion([[1, 0, 0, 0], [0.9239, 0, 0, 0.3827]])
+        >>> quat2 = Quaternion([[0.9239, 0, 0, 0.3827], [0.7071, 0, 0, 0.7071]])
+        >>> quat1.dot(quat2)
+        array([0.9239    , 0.92389686])
         """
         return np.sum(self.data * other.data, axis=-1)
 
-    def dot_outer(self, other):
-        """Outer dot product of this quaternion and the other as a
-        numpy.ndarray.
+    def dot_outer(self, other: Quaternion) -> np.ndarray:
+        """Return the dot products of all quaternions to all the other
+        quaternions.
+
+        Parameters
+        ----------
+        other
+            Other quaternions.
+
+        Returns
+        -------
+        dot_products
+            Dot products.
+
+        See Also
+        --------
+        Rotation.dot_outer
+        Orientation.dot_outer
+
+        Examples
+        --------
+        >>> from orix.quaternion import Quaternion
+        >>> quat1 = Quaternion([[1, 0, 0, 0], [0.9239, 0, 0, 0.3827]])
+        >>> quat2 = Quaternion([[0.9239, 0, 0, 0.3827], [0.7071, 0, 0, 0.7071]])
+        >>> quat1.dot_outer(quat2)
+        array([[0.9239    , 0.7071    ],
+               [1.0000505 , 0.92389686]])
         """
         dots = np.tensordot(self.data, other.data, axes=(-1, -1))
         return dots
 
-    def mean(self):
-        """Calculates the mean quaternion with unitary weights.
+    def mean(self) -> Quaternion:
+        """Return the mean quaternion with unitary weights.
+
+        Returns
+        -------
+        quat_mean
+            Mean quaternion.
 
         Notes
         -----
@@ -223,30 +307,43 @@ class Quaternion(Object3d):
         w_max = np.argmax(w)
         return self.__class__(v[:, w_max])
 
-    def outer(self, other, lazy=False, chunk_size=20, progressbar=True):
-        """Compute the outer product of this quaternion and the other
-        quaternion or vector.
+    def outer(
+        self,
+        other: Union[Quaternion, Vector3d],
+        lazy: bool = False,
+        chunk_size: int = 20,
+        progressbar: bool = True,
+    ) -> Union[Quaternion, Vector3d]:
+        """Return the outer products of the quaternions and the other
+        quaternions or vectors.
 
         Parameters
         ----------
-        other : orix.quaternion.Quaternion or orix.vector.Vector3d
-        lazy : bool, optional
+        other
+            Another orientation or vector.
+        lazy
             Whether to computer this computation using Dask. This option
             can be used to reduce memory usage when working with large
-            arrays. Default is False.
-        chunk_size : int, optional
-            When using `lazy` computation, `chunk_size` represents the
-            number of objects per axis for each input to include in each
-            iteration of the computation. Default is 20.
-        progressbar : bool, optional
-            Whether to show a progressbar during computation if `lazy`
-            is True. Default is True.
+            arrays. Default is ``False``.
+        chunk_size
+            When using ``lazy`` computation, ``chunk_size`` represents
+            the number of objects per axis for each input to include in
+            each iteration of the computation. Default is 20.
+        progressbar
+            Whether to show a progressbar during computation if
+            ``lazy=True``. Default is ``True``.
 
         Returns
         -------
-        orix.quaternion.Quaternion or orix.vector.Vector3d
-        """
+        out
+            Outer products.
 
+        Raises
+        ------
+        NotImplementedError
+            If ``other`` is not a quaternion, 3D vector, or a Miller
+            index.
+        """
         if isinstance(other, Quaternion):
             if lazy:
                 darr = self._outer_dask(other, chunk_size=chunk_size)
@@ -287,7 +384,9 @@ class Quaternion(Object3d):
                 "with `other` of type `Quaternion` or `Vector3d`"
             )
 
-    def _outer_dask(self, other, chunk_size=20):
+    def _outer_dask(
+        self, other: Union[Quaternion, Vector3d], chunk_size: int = 20
+    ) -> da.Array:
         """Compute the product of every quaternion in this instance to
         every quaternion or vector in another instance, returned as a
         Dask array.
@@ -297,22 +396,28 @@ class Quaternion(Object3d):
 
         Parameters
         ----------
-        other : orix.quaternion.Quaternion or orix.vector.Vector3d
-        chunk_size : int, optional
+        other
+            Another orientation or vector.
+        chunk_size
             Number of objects per axis for each input to include in each
             iteration of the computation. Default is 20.
 
         Returns
         -------
-        dask.array.Array
+        out
+
+        Raises
+        ------
+        TypeError
+            If ``other`` is not a quaternion or a vector.
 
         Notes
         -----
         For quaternion-quaternion multiplication, to create a new
-        quaternion from the returned array `arr`, do
-        `q = Quaternion(arr.compute())`. Likewise for quaternion-vector
-        multiplication, to create a new vector from the returned array
-        do `v = Vector3d(arr.compute())`.
+        quaternion from the returned array ``out``, do
+        ``q = Quaternion(out.compute())``. Likewise for
+        quaternion-vector multiplication, to create a new vector from
+        the returned array do ``v = Vector3d(out.compute())``.
         """
         if not isinstance(other, (Quaternion, Vector3d)):
             raise TypeError("Other must be Quaternion or Vector3d.")
@@ -368,7 +473,7 @@ class Quaternion(Object3d):
                 + da.einsum(sum_over, a1, d2)
             )
             # fmt: on
-            out = da.stack((a, b, c, d), axis=-1)
+            out = da.stack([a, b, c, d], axis=-1)
         else:  # Vector3d
             v2 = da.from_array(other.data, chunks=chunks2)
             x2, y2, z2 = v2[..., 0], v2[..., 1], v2[..., 2]
@@ -389,7 +494,7 @@ class Quaternion(Object3d):
                 + da.einsum(sum_over, b1 * d1 - a1 * c1, x2) * 2
             )
             # fmt: on
-            out = da.stack((x, y, z), axis=-1)
+            out = da.stack([x, y, z], axis=-1)
 
         new_chunks = tuple(chunks1[:-1]) + tuple(chunks2[:-1]) + (-1,)
         return out.rechunk(new_chunks)

@@ -18,34 +18,38 @@
 
 """Private tools for coloring crystal directions.
 
-These functions are adopted from MTEX.
+These functions are adapted from MTEX.
 """
+
+from typing import Tuple, Union
 
 import matplotlib.colors as mcolors
 import numpy as np
 
 from orix.quaternion import Rotation
-from orix.vector import Vector3d
+from orix.vector import FundamentalSector, Vector3d
 
 
-def polar_coordinates_in_sector(sector, v):
+def polar_coordinates_in_sector(
+    sector: FundamentalSector, v: Vector3d
+) -> Tuple[np.ndarray, np.ndarray]:
     r"""Calculate the polar coordinates of crystal direction(s)
-    :class:`Vector3d` relative to the (bary)center of a
-    :class:`FundamentalSector` of a Laue group.
+    relative to the (bary)center of a fundamental sector of a Laue
+    group.
 
     Parameters
     ----------
-    sector : FundamentalSector
+    sector
         A fundamental sector of a Laue group, described by a set of
         normal vectors, a center, and vertices.
-    v : Vector3d
+    v
         Crystal direction(s) to get polar coordinates for.
 
     Returns
     -------
-    azimuth : numpy.ndarray
+    azimuth
         Azimuthal polar coordinate(s).
-    polar : numpy.ndarray
+    polar
         Polar polar coordinate(s).
 
     Notes
@@ -92,19 +96,19 @@ def polar_coordinates_in_sector(sector, v):
     return azimuth, polar
 
 
-def rgb_from_polar_coordinates(azimuth, polar):
+def rgb_from_polar_coordinates(azimuth: np.ndarray, polar: np.ndarray) -> np.ndarray:
     """Calculate RGB colors from polar coordinates.
 
     Parameters
     ----------
-    azimuth : numpy.ndarray
+    azimuth
         Azimuthal coordinate(s).
-    polar : numpy.ndarray
+    polar
         Polar coordinate(s).
 
     Returns
     -------
-    rgb : numpy.ndarray
+    rgb
         Color(s).
     """
     angle = np.mod(azimuth / (2 * np.pi), 1)
@@ -112,7 +116,13 @@ def rgb_from_polar_coordinates(azimuth, polar):
     return mcolors.hsv_to_rgb(np.stack((h, s, v), axis=-1))
 
 
-def hsl_to_hsv(hue, saturation, lightness):
+def hsl_to_hsv(
+    hue: Union[np.ndarray, float],
+    saturation: Union[np.ndarray, float],
+    lightness: Union[np.ndarray, float],
+) -> Tuple[
+    Union[np.ndarray, float], Union[np.ndarray, float], Union[np.ndarray, float]
+]:
     """Convert color described by HSL (hue, saturation and lightness) to
     HSV (hue, saturation and value).
 
@@ -120,21 +130,21 @@ def hsl_to_hsv(hue, saturation, lightness):
 
     Parameters
     ----------
-    hue : numpy.ndarray or float
+    hue
         Hue(s). Not changed by the function, but included in input and
         output for convenience.
-    saturation : numpy.ndarray or float
+    saturation
         Saturation value(s).
-    lightness : numpy.ndarray or float
+    lightness
         Lightness value(s).
 
     Returns
     -------
-    hue : numpy.ndarray or float
+    hue
         The same copy of hue(s) as input.
-    saturation2 : numpy.ndarray or float
+    saturation2
         Adjusted saturation value(s).
-    value : numpy.ndarray or float
+    value
         Value(s).
     """
     l2 = 2 * lightness
@@ -145,7 +155,7 @@ def hsl_to_hsv(hue, saturation, lightness):
     return hue, saturation2, value
 
 
-def _calculate_azimuth(center, rx, v):
+def _calculate_azimuth(center: Vector3d, rx: Vector3d, v: Vector3d) -> np.ndarray:
     """Calculate the azimuthal coordinate of the polar coordinates of a
     fundamental sector (inverse pole figure).
 
@@ -153,13 +163,13 @@ def _calculate_azimuth(center, rx, v):
 
     Parameters
     ----------
-    center : ~orix.vector.Vector3d
-    rx : ~orix.vector.Vector3d
-    v : ~orix.vector.Vector3d
+    center
+    rx
+    v
 
     Returns
     -------
-    azimuth : numpy.ndarray
+    azimuth
     """
     rx = (rx - rx.dot(center) * center).unit  # Orthogonal to center
     ry = center.cross(rx).unit  # Perpendicular to rx
@@ -170,7 +180,9 @@ def _calculate_azimuth(center, rx, v):
     return azimuth
 
 
-def _correct_azimuth(azimuth, sector, rx):
+def _correct_azimuth(
+    azimuth: np.ndarray, sector: FundamentalSector, rx: Vector3d
+) -> np.ndarray:
     """Correct the azimuthal coordinate of the polar coordinates of a
     fundamental sector (inverse pole figure) when vertices are not
     an equal distance from each other.
@@ -184,13 +196,13 @@ def _correct_azimuth(azimuth, sector, rx):
 
     Parameters
     ----------
-    azimuth : numpy.ndarray
-    sector : ~orix.vector.FundamentalSector
-    rx : ~orix.vector.Vector3d
+    azimuth
+    sector
+    rx
 
     Returns
     -------
-    azimuth : numpy.ndarray
+    azimuth
         Corrected azimuthal coordinates.
     """
     center = sector.center.unit

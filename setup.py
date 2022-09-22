@@ -1,27 +1,46 @@
 from itertools import chain
-from setuptools import setup, find_packages
-from orix import __name__, __version__, __author__, __author_email__, __description__
+
+from setuptools import find_packages, setup
+
+from orix import __author__, __author_email__, __description__, __name__, __version__
 
 # Projects with optional features for building the documentation and running
 # tests. From setuptools:
 # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
+# fmt: off
 extra_feature_requirements = {
     "doc": [
         "furo",
-        "ipykernel",  # https://github.com/spatialaudio/nbsphinx/issues/121
-        "nbsphinx >= 0.7",
-        "sphinx >= 3.0.2",
-        "sphinx-copybutton >= 0.2.5",
-        "sphinx-gallery >= 0.6",
-        "sphinxcontrib-bibtex >= 1.0",
+        "ipykernel",  # Used by nbsphinx to execute notebooks
+        "memory_profiler",
+        "nbsphinx                       >= 0.7",
+        "numpydoc",
+        "sphinx                         >= 3.0.2",
+        "sphinx-codeautolink[ipython]",
+        "sphinx-copybutton              >= 0.2.5",
+        "sphinx-design",
+        "sphinx-gallery                 < 0.11",
+        "sphinx-last-updated-by-git",
+        "sphinxcontrib-bibtex           >= 1.0",
         "scikit-image",
         "scikit-learn",
     ],
-    "tests": ["pytest >= 5.4", "pytest-cov >= 2.8.1", "coverage >= 5.0"],
+    "tests": [
+        "coverage                       >= 5.0",
+        "numpydoc",
+        "pytest                         >= 5.4",
+        "pytest-cov                     >= 2.8.1",
+        "pytest-xdist",
+    ],
 }
-extra_feature_requirements["dev"] = ["black", "manifix", "pre-commit >= 1.16"] + list(
-    chain(*list(extra_feature_requirements.values()))
-)
+extra_feature_requirements["dev"] = [
+    "black[jupyter]",
+    "isort                              >= 5.10",
+    "manifix",
+    "outdated",
+    "pre-commit                         >= 1.16",
+] + list(chain(*list(extra_feature_requirements.values())))
+# fmt: on
 
 # Remove the "raw" ReStructuredText directive from the README so we can
 # use it as the long_description on PyPI
@@ -44,7 +63,6 @@ setup(
     long_description_content_type="text/x-rst",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -74,5 +92,5 @@ setup(
         "tqdm",
     ],
     # fmt: on
-    package_data={"": ["LICENSE", "README.rst", "readthedocs.yml"], "orix": ["*.py"]},
+    package_data={"": ["LICENSE", "README.rst", "readthedocs.yaml"], "orix": ["*.py"]},
 )

@@ -2,7 +2,7 @@
 
     <p>
       <h1>
-        <a href="https://orix.readthedocs.io"><img valign="middle" src="https://raw.githubusercontent.com/pyxem/orix/master/doc/_static/img/orix_logo.png" width="50" alt="orix logo"/></a>
+        <a href="https://orix.readthedocs.io"><img valign="middle" src="https://raw.githubusercontent.com/pyxem/orix/develop/doc/_static/img/orix_logo.png" width="50" alt="orix logo"/></a>
         orix
       </h1>
     </p>
@@ -19,8 +19,8 @@
 .. |build_status| image:: https://github.com/pyxem/orix/workflows/build/badge.svg
 .. _build_status: https://github.com/pyxem/orix/actions
 
-.. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=master
-.. _Coveralls: https://coveralls.io/github/pyxem/orix?branch=master
+.. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=develop
+.. _Coveralls: https://coveralls.io/github/pyxem/orix?branch=develop
 
 .. |docs| image:: https://readthedocs.org/projects/orix/badge/?version=latest
 .. _docs: https://orix.readthedocs.io/en/latest
@@ -45,16 +45,37 @@ builds primarily on `NumPy <https://www.numpy.org>`_ and `Matplotlib
 <https://matplotlib.org>`_ and is heavily inspired by the MATLAB package `MTEX
 <https://mtex-toolbox.github.io>`_.
 
+orix is released under the GPL v3 license.
+
+Documentation
+-------------
+
+Refer to the `documentation <https://orix.readthedocs.io>`__ for detailed installation
+instructions, a user guide, and the `changelog
+<https://orix.readthedocs.io/en/latest/changelog.html>`_.
+
+Installation
+------------
+
+orix can be installed with ``pip``::
+
+    pip install orix
+
+or ``conda``::
+
+    conda install orix -c conda-forge
+
+You can also visit `PyPI <https://pypi.org/project/orix>`_, `Anaconda
+<https://anaconda.org/conda-forge/orix>`_ or `GitHub <https://github.com/pyxem/orix>`_
+to download the source.
+
+Further details are available in the `installation guide
+<https://orix.readthedocs.io/en/latest/installation.html>`_.
+
+Citing orix
+-----------
+
 If analysis using orix forms a part of published work please cite the paper (`journal
 <https://doi.org/10.1107/S1600576720011103>`_, `arXiv
-<https://arxiv.org/abs/2001.02716>`_).
-
-`Documentation <https://orix.readthedocs.io>`_ is hosted on Read the Docs with a
-complete reference for functions and classes, as well as a user guide in the form of
-Jupyter notebooks. These notebooks can be inspected statically on the web page or via
-`nbviewer <https://nbviewer.org/github/pyxem/orix/tree/master/doc>`_,
-interactively in the browser by clicking the Binder link above and navigating to the
-``doc/`` directory, or on your own computer by downloading them and the corresponding
-data. We hope you find them useful!
-
-orix is released under the GPL v3 license.
+<https://arxiv.org/abs/2001.02716>`_) and/or `the software
+<https://doi.org/10.5281/zenodo.3459662>`_.

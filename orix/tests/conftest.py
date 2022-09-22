@@ -22,10 +22,11 @@ from tempfile import TemporaryDirectory
 
 from diffpy.structure import Atom, Lattice, Structure
 from h5py import File
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.crystal_map import CrystalMap, create_coordinate_arrays, PhaseList
+from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
 from orix.quaternion import Rotation
 
 
@@ -714,3 +715,14 @@ loop_
     f.close()
     yield f.name
     gc.collect()
+
+
+@pytest.fixture(autouse=True)
+def import_to_namespace(doctest_namespace):
+    """Make :mod:`numpy` and :mod:`matplotlib.pyplot` available in
+    docstring examples without having to import them.
+
+    See https://docs.pytest.org/en/stable/how-to/doctest.html#doctest-namespace-fixture.
+    """
+    doctest_namespace["plt"] = plt
+    doctest_namespace["np"] = np

@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+from matplotlib.collections import QuadMesh
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
 from orix.quaternion import Orientation, symmetry
@@ -122,5 +124,39 @@ class TestInversePoleFigurePlot:
         for a, hemi, title in zip(axes4, hemispheres, titles):
             assert a.hemisphere == hemi
             assert a.title.get_text() == title
+
+    def test_inverse_pole_density_function(self):
+        fig, axes = _setup_inverse_pole_figure_plot(symmetry=symmetry.C6h)
+        v = Vector3d(np.random.randn(10_000, 3)).unit
+        axes[0].pole_density_function(v, colorbar=True, log=True)
+        assert len(fig.axes) == 2
+        assert any(isinstance(c, QuadMesh) for c in fig.axes[0].collections)
+        assert fig.axes[1].get_label() == "<colorbar>"
+        assert fig.axes[1].get_ylabel() == "log(MRD)"
+
+        plt.close("all")
+
+    @pytest.mark.parametrize("symmetry", [symmetry.D3d, symmetry.C6h, symmetry.Oh])
+    def test_plot_ipf_color_key(self, symmetry):
+        fig, ax = plt.subplots(subplot_kw=dict(projection="ipf", symmetry=symmetry))
+        ax.plot_ipf_color_key(show_title=True)
+        assert len(ax.images) == 1
+        assert len(ax.texts) == 3
+        assert all(t.get_text().startswith("[") for t in ax.texts)
+        assert all(t.get_text().endswith("]") for t in ax.texts)
+
+        plt.close("all")
+
+    @pytest.mark.parametrize(
+        "symmetry, loc", [(symmetry.C6h, "left"), (symmetry.Oh, "center")]
+    )
+    def test_plot_ipf_color_key_show_title(self, symmetry, loc):
+        fig, ax = plt.subplots(
+            ncols=2, subplot_kw=dict(projection="ipf", symmetry=symmetry)
+        )
+        ax[0].plot_ipf_color_key(show_title=True)
+        assert ax[0].get_title(loc=loc)
+        ax[1].plot_ipf_color_key(show_title=False)
+        assert not ax[1].get_title(loc=loc)
 
         plt.close("all")

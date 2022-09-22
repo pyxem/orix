@@ -16,28 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Collections of transformations representing a symmetry group.
+from __future__ import annotations
 
-An object's symmetry can be characterized by the transformations relating
-symmetrically-equivalent views on that object. Consider the following shape.
-
-.. image:: /_static/img/triad-object.png
-   :width: 200px
-   :alt: Image of an object with three-fold symmetry.
-   :align: center
-
-This obviously has three-fold symmetry. If we rotated it by
-:math:`\\frac{2}{3}\\pi` or :math:`\\frac{4}{3}\\pi`, the image would be unchanged.
-These angles, as well as :math:`0`, or the identity, expressed as quaternions,
-form a group. Applying any operation in the group to any other results in
-another member of the group.
-
-Symmetries can consist of rotations or inversions, expressed as
-improper rotations. A mirror symmetry is equivalent to a 2-fold rotation
-combined with inversion.
-"""
+from typing import Dict, List, Optional, Tuple, Union
 
 from diffpy.structure.spacegroups import GetSpaceGroup
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
@@ -45,52 +29,67 @@ from orix.vector import AxAngle, Vector3d
 
 
 class Symmetry(Rotation):
-    """The set of rotations comprising a point group."""
+    r"""The set of rotations comprising a point group.
+
+    An object's symmetry can be characterized by the transformations
+    relating symmetrically-equivalent views on that object. Consider
+    the following shape.
+
+    .. image:: /_static/img/triad-object.png
+       :width: 200px
+       :alt: Image of an object with three-fold symmetry.
+       :align: center
+
+    This obviously has three-fold symmetry. If we rotated it by
+    :math:`\frac{2}{3}\pi` or :math:`\frac{4}{3}\pi`, the image
+    would be unchanged. These angles, as well as :math:`0`, or the
+    identity, expressed as quaternions, form a group. Applying any
+    operation in the group to any other results in another member of the
+    group.
+
+    Symmetries can consist of rotations or inversions, expressed as
+    improper rotations. A mirror symmetry is equivalent to a 2-fold
+    rotation combined with inversion.
+    """
 
     name = ""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         data = np.array_str(self.data, precision=4, suppress_small=True)
         return f"{self.__class__.__name__} {self.shape} {self.name}\n{data}"
 
-    def __and__(self, other):
+    def __and__(self, other: Symmetry) -> Symmetry:
         generators = [g for g in self.subgroups if g in other.subgroups]
         return Symmetry.from_generators(*generators)
 
-    def __hash__(self):
+    def __hash__(self) -> hash:
         return hash(self.name.encode() + self.data.tobytes() + self.improper.tobytes())
 
     @property
-    def order(self):
-        """Number of elements of the group as :class:`int`."""
+    def order(self) -> int:
+        """Return the number of elements of the group."""
         return self.size
 
     @property
-    def is_proper(self):
-        """Whether this group contains only proper rotations as
-        :class:`bool`.
-        """
+    def is_proper(self) -> bool:
+        """Return whether this group contains only proper rotations."""
         return np.all(np.equal(self.improper, 0))
 
     @property
-    def subgroups(self):
-        """List groups that are subgroups of this group as a
-        :class:`list` of :class:`Symmetry`.
-        """
+    def subgroups(self) -> List[Symmetry]:
+        """Return the list groups that are subgroups of this group."""
         return [g for g in _groups if g._tuples <= self._tuples]
 
     @property
-    def proper_subgroups(self):
-        """List of proper groups that are subgroups of this group as a
-        :class:`list` of :class:`Symmetry`.
+    def proper_subgroups(self) -> List[Symmetry]:
+        """Return the list of proper groups that are subgroups of this
+        group.
         """
         return [g for g in self.subgroups if g.is_proper]
 
     @property
-    def proper_subgroup(self):
-        """The largest proper group of this subgroup as a
-        :class:`Symmetry`.
-        """
+    def proper_subgroup(self) -> Union[List[Symmetry], Symmetry]:
+        """Return the largest proper group of this subgroup."""
         subgroups = self.proper_subgroups
         if len(subgroups) == 0:
             return Symmetry(self)
@@ -99,29 +98,25 @@ class Symmetry(Rotation):
             return subgroups_sorted[-1]
 
     @property
-    def laue(self):
-        """This group plus inversion as a :class:`Symmetry`."""
+    def laue(self) -> Symmetry:
+        """Return this group plus inversion."""
         laue = Symmetry.from_generators(self, Ci)
         laue.name = _get_laue_group_name(self.name)
         return laue
 
     @property
-    def laue_proper_subgroup(self):
-        """The proper subgroup of this group plus inversion as a
-        :class:`Symmetry`.
-        """
+    def laue_proper_subgroup(self) -> Symmetry:
+        """Return the proper subgroup of this group plus inversion."""
         return self.laue.proper_subgroup
 
     @property
-    def contains_inversion(self):
-        """Whether this group contains inversion as a :class:`bool`."""
+    def contains_inversion(self) -> bool:
+        """Return whether this group contains inversion."""
         return Ci._tuples <= self._tuples
 
     @property
-    def diads(self):
-        """Diads of this symmetry as a set of
-        :class:`~orix.vector.Vector3d`.
-        """
+    def diads(self) -> Vector3d:
+        """Return the diads of this symmetry."""
         axis_orders = self.get_axis_orders()
         diads = [ao for ao in axis_orders if axis_orders[ao] == 2]
         if len(diads) == 0:
@@ -130,12 +125,13 @@ class Symmetry(Rotation):
             return Vector3d.stack(diads).flatten()
 
     @property
-    def euler_fundamental_region(self):
-        r"""Fundamental Euler angle region of the proper subgroup.
+    def euler_fundamental_region(self) -> tuple:
+        r"""Return the fundamental Euler angle region of the proper
+        subgroup.
 
         Returns
         -------
-        region : tuple
+        region
             Maximum Euler angles :math:`(\phi_{1, max}, \Phi_{max},
             \phi_{2, max})` in degrees. No symmetry is assumed if the
             proper subgroup name is not recognized.
@@ -166,13 +162,14 @@ class Symmetry(Rotation):
         return region
 
     @property
-    def system(self):
-        """Which of the seven crystal systems this symmetry belongs to.
+    def system(self) -> Union[str, None]:
+        """Return which of the seven crystal systems this symmetry
+        belongs to.
 
         Returns
         -------
-        str or None
-            None is returned if the symmetry name is not recognized.
+        system
+            ``None`` is returned if the symmetry name is not recognized.
         """
         name = self.name
         if name in ["1", "-1"]:
@@ -193,16 +190,16 @@ class Symmetry(Rotation):
             return None
 
     @property
-    def _tuples(self):
-        """Set of tuple : the differentiators of this group."""
+    def _tuples(self) -> set:
+        """Return the differentiators of this group."""
         s = Rotation(self.flatten())
         tuples = set([tuple(d) for d in s._differentiators()])
         return tuples
 
     @property
-    def fundamental_sector(self):
-        """:class:`~orix.vector.FundamentalSector` describing the
-        inverse pole figure given by the point group name.
+    def fundamental_sector(self) -> "orix.vector.FundamentalSector":
+        """Return the fundamental sector describing the inverse pole
+        figure given by the point group name.
 
         These sectors are taken from MTEX'
         :code:`crystalSymmetry.fundamentalSector`.
@@ -271,16 +268,17 @@ class Symmetry(Rotation):
         return fs
 
     @property
-    def _primary_axis_order(self):
-        """Order of primary rotation axis for the proper subgroup.
+    def _primary_axis_order(self) -> Union[int, None]:
+        """Return the order of primary rotation axis for the proper
+        subgroup.
 
         Used in to map Euler angles into the fundamental region in
         :meth:`~orix.quaternion.Orientation.in_euler_fundamental_region`.
 
-         Returns
-         -------
-         int or None
-            None is returned if the proper subgroup name is not
+        Returns
+        -------
+        order
+            ``None`` is returned if the proper subgroup name is not
             recognized.
         """
         # TODO: Find this dynamically
@@ -299,7 +297,7 @@ class Symmetry(Rotation):
             return None
 
     @property
-    def _special_rotation(self):
+    def _special_rotation(self) -> Rotation:
         """Symmetry operations of the proper subgroup different from
         rotation about the c-axis.
 
@@ -311,12 +309,12 @@ class Symmetry(Rotation):
 
         Returns
         -------
-        rot : Rotation
+        rot
             The identity rotation is returned if the proper subgroup
             name is not recognized.
         """
 
-        def symmetry_axis(v, n):
+        def symmetry_axis(v: Vector3d, n: int) -> Rotation:
             angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
             return Rotation.from_neo_euler(AxAngle.from_axes_angles(v, angles))
 
@@ -354,24 +352,25 @@ class Symmetry(Rotation):
         return rot.flatten()
 
     @classmethod
-    def from_generators(cls, *generators):
+    def from_generators(cls, *generators: Rotation) -> Symmetry:
         """Create a Symmetry from a minimum list of generating
         transformations.
 
         Parameters
         ----------
-        generators : Rotation
+        *generators
             An arbitrary list of constituent transformations.
 
         Returns
         -------
-        Symmetry
+        sym
 
         Examples
         --------
         Combining a 180° rotation about [1, -1, 0] with a 4-fold
         rotoinversion axis along [0, 0, 1]
 
+        >>> from orix.quaternion import Symmetry
         >>> myC2 = Symmetry([(1, 0, 0, 0), (0, 0.75**0.5, -0.75**0.5, 0)])
         >>> myS4 = Symmetry([(1, 0, 0, 0), (0.5**0.5, 0, 0, 0.5**0.5)])
         >>> myS4.improper = [0, 1]
@@ -398,7 +397,7 @@ class Symmetry(Rotation):
             size_new = generator.size
         return generator
 
-    def get_axis_orders(self):
+    def get_axis_orders(self) -> Dict[Vector3d, int]:
         s = self[self.angle > 0]
         if s.size == 0:
             return {}
@@ -407,7 +406,7 @@ class Symmetry(Rotation):
             for a, b in zip(*np.unique(s.axis.data, axis=0, return_counts=True))
         }
 
-    def get_highest_order_axis(self):
+    def get_highest_order_axis(self) -> Tuple[Vector3d, np.ndarray]:
         axis_orders = self.get_axis_orders()
         if len(axis_orders) == 0:
             return Vector3d.zvector(), np.infty
@@ -417,7 +416,7 @@ class Symmetry(Rotation):
         ).flatten()
         return axes, highest_order
 
-    def fundamental_zone(self):
+    def fundamental_zone(self) -> Vector3d:
         from orix.vector import AxAngle, SphericalRegion
 
         symmetry = self.antipodal
@@ -453,10 +452,10 @@ class Symmetry(Rotation):
 
     def plot(
         self,
-        orientation=None,
-        reproject_scatter_kwargs=None,
+        orientation: "orix.quaternion.Orientation" = None,
+        reproject_scatter_kwargs: Optional[dict] = None,
         **kwargs,
-    ):
+    ) -> plt.Figure:
         """Stereographic projection of symmetry operations.
 
         The upper hemisphere of the stereographic projection is shown.
@@ -465,11 +464,11 @@ class Symmetry(Rotation):
 
         Parameters
         ----------
-        orientation : Orientation, optional
+        orientation
             The symmetry operations are applied to this orientation
             before plotting. The default value uses an orientation
             optimized to show symmetry elements.
-        reproject_scatter_kwargs: dict, optional
+        reproject_scatter_kwargs
             Dictionary of keyword arguments for the reprojected scatter
             points which is passed to
             :meth:`~orix.plot.StereographicPlot.scatter`, which passes
@@ -477,16 +476,16 @@ class Symmetry(Rotation):
             default marker style for reprojected vectors is "+". Values
             used for vector(s) on the visible hemisphere are used unless
             another value is passed here.
-        kwargs : dict, optional
+        kwargs
             Keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.scatter`, which passes
             these on to :meth:`matplotlib.axes.Axes.scatter`.
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            The created figure, returned if `return_figure` is supplied
-            as a keyword argument and is True.
+        fig
+            The created figure, returned if ``return_figure=True`` is
+            passed as a keyword argument.
         """
         if orientation is None:
             # orientation chosen to mimic stereographic projections as
@@ -508,7 +507,7 @@ class Symmetry(Rotation):
 
         figure = v.scatter(
             return_figure=True,
-            axes_labels=("a", "b", None),
+            axes_labels=[r"$e_1$", r"$e_2$", None],
             label="upper",
             reproject=True,
             reproject_scatter_kwargs=reproject_scatter_kwargs,
@@ -707,17 +706,21 @@ _groups = [
 _proper_groups = [C1, C2, C2x, C2y, C2z, D2, C4, D4, C3, D3x, D3y, D3, C6, D6, T, O]
 
 
-def get_distinguished_points(s1, s2=C1):
-    """Points symmetrically equivalent to identity with respect to `s1`
-    and `s2`.
+def get_distinguished_points(s1: Symmetry, s2: Symmetry = C1) -> Rotation:
+    """Return points symmetrically equivalent to identity with respect
+    to ``s1`` and ``s2``.
 
     Parameters
     ----------
-    s1, s2 : Symmetry
+    s1
+        First symmetry.
+    s2
+        Second symmetry.
 
     Returns
     -------
-    Rotation
+    distinguished_points
+        Distinguished points.
     """
     distinguished_points = s1.outer(s2).antipodal.unique(antipodal=False)
     return distinguished_points[distinguished_points.angle > 0]
@@ -766,20 +769,21 @@ spacegroup2pointgroup_dict = {
 }
 
 
-def get_point_group(space_group_number, proper=False):
-    """Maps a space group number to its (proper) point group.
+def get_point_group(space_group_number: int, proper: bool = False) -> Symmetry:
+    """Map a space group number to its (proper) point group.
 
     Parameters
     ----------
-    space_group_number : int
+    space_group_number
         Between 1 and 231.
-    proper : bool, optional
+    proper
         Whether to return the point group with proper rotations only
-        (True), or just the point group (False). Default is False.
+        (``True``), or just the point group (``False``). Default is
+        ``False``.
 
     Returns
     -------
-    point_group : orix.quaternion.symmetry.Symmetry
+    point_group
         One of the 11 proper or 32 point groups.
 
     Examples
@@ -813,7 +817,7 @@ point_group_aliases = {
 }
 
 
-def _get_laue_group_name(name):
+def _get_laue_group_name(name: str) -> Union[str, None]:
     if name in ["1", "-1"]:
         return "-1"
     elif name in ["2", "211", "121", "112", "m11", "1m1", "11m", "2/m"]:
@@ -840,18 +844,21 @@ def _get_laue_group_name(name):
         return None
 
 
-def _get_unique_symmetry_elements(sym1, sym2, check_subgroups=False):
-    """Compute the unique symmetry elements between two `Symmetry`
-    instances, defined as `sym1.outer(sym2).unique()`.
+def _get_unique_symmetry_elements(
+    sym1: Symmetry, sym2: Symmetry, check_subgroups: bool = False
+) -> Symmetry:
+    """Compute the unique symmetry elements between two symmetries,
+    defined as ``sym1.outer(sym2).unique()``.
 
     To improve computation speed some checks are performed prior to
-    explicit computation of the unique elements. If `sym1 == sym2`
+    explicit computation of the unique elements. If ``sym1 == sym2``
     then the unique elements are just the symmetries themselves, and so
-    are returned. If `sym2` is a `subgroup` of `sym1` then the unique
-    symmetry elements will be identical to `sym1`, in this case `sym1`
-    is returned. This check is made if `check_subgroups` is True. As the
-    symmetry order matters, this may not be the case if `sym1` is a
-    subgroup of `sym2`, so this is not checked here.
+    are returned. If ``sym2`` is a :attr:`Symmetry.subgroup`` of
+    ``sym1`` then the unique symmetry elements will be identical to
+    ``sym1``, in this case ``sym1`` is returned. This check is made if
+    ``check_subgroups=True``. As the symmetry order matters, this may
+    not be the case if ``sym1`` is a subgroup of ``sym2``, so this is
+    not checked here.
 
     If no relationship is determined between the symmetries then the
     unique symmetry elements are explicitly computed, as described
@@ -859,14 +866,15 @@ def _get_unique_symmetry_elements(sym1, sym2, check_subgroups=False):
 
     Parameters
     ----------
-    sym1, sym2 : Symmetry
-    check_subgroups : bool
-        Whether to check if `sym2` is a subgroup of `sym1`. Default
-        value is False.
+    sym1
+    sym2
+    check_subgroups
+        Whether to check if ``sym2`` is a subgroup of ``sym1``. Default
+        is ``False``.
 
     Returns
     -------
-    unique : Symmetry
+    unique
         The unique symmetry elements.
     """
     if sym1 == sym2:

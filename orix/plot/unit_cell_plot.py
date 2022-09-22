@@ -21,8 +21,9 @@ orientation.
 """
 
 from itertools import combinations, product
+from typing import Optional
 
-from diffpy.structure import Structure, Lattice
+from diffpy.structure import Lattice, Structure
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -30,7 +31,7 @@ from orix.plot._util import Arrow3D
 from orix.vector import Vector3d
 
 
-def _calculate_basic_unit_cell_vertices(vectors):
+def _calculate_basic_unit_cell_vertices(vectors: np.ndarray) -> np.ndarray:
     """Calculate cell vertices for unit cells."""
     vectors = np.asarray(vectors)
     if vectors.shape != (3, 3):
@@ -42,7 +43,9 @@ def _calculate_basic_unit_cell_vertices(vectors):
     return verts - center  # center on (0, 0, 0)
 
 
-def _calculate_basic_unit_cell_edges(verts, vectors):
+def _calculate_basic_unit_cell_edges(
+    verts: np.ndarray, vectors: np.ndarray
+) -> np.ndarray:
     """Calculate valid unit cell edges for unit cells."""
     vectors = np.asarray(vectors)
     if vectors.shape != (3, 3):
@@ -66,39 +69,39 @@ def _calculate_basic_unit_cell_edges(verts, vectors):
 
 
 def _plot_unit_cell(
-    rotation,
-    c="tab:blue",
-    axes_length=0.5,
-    structure=None,
-    crystal_axes_loc="origin",
+    rotation: "Rotation",
+    c: str = "tab:blue",
+    axes_length: float = 0.5,
+    structure: Optional[Structure] = None,
+    crystal_axes_loc: str = "origin",
     **arrow_kwargs,
-):
+) -> plt.Figure:
     """Plot the unit cell orientation, showing the sample and crystal
     reference frames.
 
     Parameters
     ----------
-    rotation : orix.quaternion.Rotation
+    rotation
         Rotation of the unit cell.
-    c : str, optional
+    c
         Unit cell edge color.
-    axes_length : float, optional
+    axes_length
         Length of the reference axes in Angstroms, by default 0.5.
-    structure : diffpy.structure.Structure or None, optional
+    structure
         Structure of the unit cell, only orthorhombic lattices are
         currently supported. If not given, a cubic unit cell with a
         lattice parameter of 2 Angstroms will be plotted.
-    crystal_axes_loc : str, optional
-        Plot the crystal reference frame axes at the "origin" (default)
-        or "center" of the plotted cell.
-    arrow_kwargs : dict, optional
+    crystal_axes_loc
+        Plot the crystal reference frame axes at the ``"origin"``
+        (default) or ``"center"`` of the plotted cell.
+    **arrow_kwargs
         Keyword arguments passed to
         :class:`matplotlib.patches.FancyArrowPatch`, for example
-        `arrowstyle`.
+        ``arrowstyle``.
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
+    fig
         The plotted figure.
     """
     # active rotation of the lattice in the sample reference frame
