@@ -429,7 +429,7 @@ class TestCrystalMapGetItem:
         # This also tests `phase_id`
         xmap = CrystalMap(**crystal_map_input)
         if raises:
-            with pytest.raises(IndexError, match=f".* is out of bounds for"):
+            with pytest.raises(IndexError, match=".* is out of bounds for"):
                 _ = xmap[integer_slices]
         else:
             point = xmap[integer_slices]
@@ -437,6 +437,29 @@ class TestCrystalMapGetItem:
 
             assert np.allclose(point.rotations.data, expected_point.rotations.data)
             assert point._coordinates == expected_point._coordinates
+
+    def test_get_twice(self):
+        """Indexing into a CrystalMap cropped twice returns the desired
+        part of the map.
+        """
+        xmap = CrystalMap.empty()
+        xmap2 = xmap[1:4, 4:9]
+
+        assert np.allclose(xmap.id, np.arange(xmap.size))
+        # fmt: off
+        assert np.allclose(
+            xmap2.id,
+            [
+                14, 15, 16, 17, 18,
+                24, 25, 26, 27, 28,
+                34, 35, 36, 37, 38,
+            ]
+        )
+        # fmt: on
+        assert np.allclose(xmap2[1:, 1:4].id, [25, 26, 27, 35, 36, 37])
+        assert np.allclose(xmap2[1, 2].id, 26)
+        assert np.allclose(xmap2[1, 3].id, 27)
+        assert np.allclose(xmap2[2, 2].id, 36)
 
 
 class TestCrystalMapSetAttributes:
