@@ -24,6 +24,9 @@ Removed
 
 Fixed
 -----
+- Indexing/slicing into an already indexed/sliced ``CrystalMap`` now correctly returns
+  the index/slice according to ``CrystalMap.shape`` and not the original shape of the
+  un-sliced map.
 
 Security
 --------
