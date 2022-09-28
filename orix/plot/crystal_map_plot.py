@@ -29,11 +29,11 @@ from matplotlib_scalebar.scalebar import ScaleBar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
+from orix._util import deprecated_argument
+
 
 class CrystalMapPlot(Axes):
-    """2D plotting of :class:`~orix.crystal_map.crystal_map.CrystalMap`
-    objects.
-    """
+    """Plotting of a :class:`~orix.crystal_map.crystal_map.CrystalMap`."""
 
     name = "plot_map"
     _data_axes = None
@@ -42,6 +42,7 @@ class CrystalMapPlot(Axes):
     colorbar = None
     scalebar = None
 
+    @deprecated_argument(name="depth", since="0.10.1", removal="0.11.0")
     def plot_map(
         self,
         crystal_map: "orix.crystal_map.CrystalMap",
@@ -89,6 +90,15 @@ class CrystalMapPlot(Axes):
             Which layer along the third axis to plot if data has more
             than two dimensions. If ``None`` (default), data in the
             first index (layer) is plotted.
+
+            .. deprecated:: 0.10.1
+
+                Will be removed in 0.11.0. Support for 3D crystal maps
+                is minimal and brittle, and it was therefore decided to
+                remove it altogether. If you rely on this functionality,
+                please report it in an issue at
+                https://github.com/pyxem/orix/issues.
+
         override_status_bar
             Whether to display Euler angles and any overlay values in
             the status bar when hovering over the map (default is
@@ -392,6 +402,7 @@ class CrystalMapPlot(Axes):
             right = 1
         self.figure.subplots_adjust(top=1, bottom=0, right=right, left=0)
 
+    # TODO: Remove depth argument after (any) one release after 0.10.0
     def _set_plot_shape(
         self,
         crystal_map: "orix.crystal_map.CrystalMap",

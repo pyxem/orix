@@ -98,7 +98,7 @@ class Phase:
         self,
         name: Optional[str] = None,
         space_group: Union[int, SpaceGroup, None] = None,
-        point_group: Union[str, Symmetry, None] = None,
+        point_group: Union[int, str, Symmetry, None] = None,
         structure: Optional[Structure] = None,
         color: Optional[str] = None,
     ):
