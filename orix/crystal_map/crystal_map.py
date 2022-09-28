@@ -257,17 +257,6 @@ class CrystalMap:
         self._y = y
         self._z = z
 
-        #        # TODO: Remove after (any) one release after 0.10.1
-        #        if z is not None:
-        #            warn(
-        #                "The CrystalMap.z attribute is deprecated and will be removed in "
-        #                "0.11.0. Support for 3D crystal maps is minimal and brittle, and it was"
-        #                " therefore decided to remove it altogether. If you rely on this "
-        #                "functionality, please report it in an issue at "
-        #                "https://github.com/pyxem/orix/issues",
-        #                np.VisibleDeprecationWarning
-        #            )
-
         # Create phase list
         # Sorted in ascending order
         unique_phase_ids = np.unique(phase_id)
