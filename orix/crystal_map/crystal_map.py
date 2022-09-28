@@ -18,10 +18,12 @@
 
 import copy
 from typing import Optional, Tuple, Union
+from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from orix._util import deprecated, deprecated_argument
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
 from orix.crystal_map.phase_list import Phase, PhaseList
 from orix.quaternion import Orientation, Rotation
@@ -53,6 +55,15 @@ class CrystalMap:
     z
         Map z coordinate of each data point. If not given, the map is
         assumed to be 2D or 1D, and it is set to ``None``.
+
+        .. deprecated:: 0.10.1
+
+            Will be removed in 0.11.0. Support for 3D crystal maps is
+            minimal and brittle, and it was therefore decided to remove
+            it altogether. If you rely on this functionality, please
+            report it in an issue at
+            https://github.com/pyxem/orix/issues.
+
     phase_list
         A list of phases in the data with their with names, space
         groups, point groups, and structures. The order in which the
@@ -206,6 +217,7 @@ class CrystalMap:
     Scan unit: um
     """
 
+    @deprecated_argument(name="z", since="0.10.1", removal="0.11.0")
     def __init__(
         self,
         rotations: Rotation,
@@ -244,6 +256,17 @@ class CrystalMap:
         self._x = x
         self._y = y
         self._z = z
+
+        #        # TODO: Remove after (any) one release after 0.10.1
+        #        if z is not None:
+        #            warn(
+        #                "The CrystalMap.z attribute is deprecated and will be removed in "
+        #                "0.11.0. Support for 3D crystal maps is minimal and brittle, and it was"
+        #                " therefore decided to remove it altogether. If you rely on this "
+        #                "functionality, please report it in an issue at "
+        #                "https://github.com/pyxem/orix/issues",
+        #                np.VisibleDeprecationWarning
+        #            )
 
         # Create phase list
         # Sorted in ascending order
@@ -348,6 +371,7 @@ class CrystalMap:
             return self._y[self.is_in_data]
 
     @property
+    @deprecated(since="0.10.1", removal="0.11.0", object_type="property")
     def z(self) -> Union[None, np.ndarray]:
         """Return the z coordinates of points in data."""
         if self._z is None or len(np.unique(self._z)) == 1:
@@ -366,6 +390,7 @@ class CrystalMap:
         return self._step_size_from_coordinates(self._y)
 
     @property
+    @deprecated(since="0.10.1", removal="0.11.0", object_type="property")
     def dz(self) -> float:
         """Return the z coordiante step size."""
         return self._step_size_from_coordinates(self._z)
@@ -736,9 +761,28 @@ class CrystalMap:
         shape
             Map shape. Default is a 2D map of shape (5, 10), i.e. with
             five rows and ten columns.
+
+            .. deprecated:: 0.10.1
+
+            Returning coordinates for a 3D map is deprecated, and this
+            method will only support 1D or 2D maps in 0.11.0. Support
+            for 3D crystal maps is minimal and brittle, and it was
+            therefore decided to remove it altogether. If you rely on
+            this functionality, please report it in an issue at
+            https://github.com/pyxem/orix/issues.
+
         step_sizes
             Map step sizes. If not given, it is set to 1 px in each map
             direction given by ``shape``.
+
+            .. deprecated:: 0.10.1
+
+            Returning coordinates for a 3D map is deprecated, and this
+            method will only support 1D or 2D maps in 0.11.0. Support
+            for 3D crystal maps is minimal and brittle, and it was
+            therefore decided to remove it altogether. If you rely on
+            this functionality, please report it in an issue at
+            https://github.com/pyxem/orix/issues.
 
         Returns
         -------
@@ -819,9 +863,6 @@ class CrystalMap:
         >>> iq.shape
         (100, 117)
         """
-        # TODO: Consider an `axes` argument along which to get map data
-        #  if > 2D
-
         # Get full map shape
         map_shape = self._original_shape
 
@@ -1100,23 +1141,42 @@ def create_coordinate_arrays(
 ) -> Tuple[dict, int]:
     """Create flattened coordinate arrays from a given map shape and
     step sizes, suitable for initializing a
-    :class:`~orix.crystal_map.CrystalMap`. Arrays for 1D, 2D, or 3D maps
-    can be returned.
+    :class:`~orix.crystal_map.CrystalMap`. Arrays for 1D or 2D maps can
+    be returned.
 
     Parameters
     ----------
     shape
         Map shape. Default is a 2D map of shape (5, 10) with five rows
-        and ten columns. Can be up to 3D.
+        and ten columns.
+
+        .. deprecated:: 0.10.1
+
+            Returning coordinates for a 3D map is deprecated, and this
+            method will only support 1D or 2D maps in 0.11.0. Support
+            for 3D crystal maps is minimal and brittle, and it was
+            therefore decided to remove it altogether. If you rely on
+            this functionality, please report it in an issue at
+            https://github.com/pyxem/orix/issues.
+
     step_sizes
         Map step sizes. If not given, it is set to 1 px in each map
         direction given by ``shape``.
 
+        .. deprecated:: 0.10.1
+
+            Returning coordinates for a 3D map is deprecated, and this
+            method will only support 1D or 2D maps in 0.11.0. Support
+            for 3D crystal maps is minimal and brittle, and it was
+            therefore decided to remove it altogether. If you rely on
+            this functionality, please report it in an issue at
+            https://github.com/pyxem/orix/issues.
+
     Returns
     -------
     d
-        Dictionary with keys ``"z"``, ``"y"``, and ``"x"``, depending on
-        the length of ``shape``, with coordinate arrays.
+        Dictionary with keys ``"y"`` and ``"x"``, depending on the
+        length of ``shape``, with coordinate arrays.
     map_size
         Number of map points.
 
@@ -1135,6 +1195,17 @@ def create_coordinate_arrays(
     ndim = len(shape)
     if step_sizes is None:
         step_sizes = (1,) * ndim
+
+    # TODO: Remove after (any) one release after 0.10.1
+    if ndim == 3:
+        warn(
+            "Returning coordinates for a 3D map is deprecated, and this function will "
+            "only support 1D or 2D maps in 0.11.0. Support for 3D crystal maps is "
+            "minimal and brittle, and it was therefore decided to remove it altogether."
+            " If you rely on this functionality, please report it in an issue at "
+            "https://github.com/pyxem/orix/issues",
+            np.VisibleDeprecationWarning,
+        )
 
     # Set up as if a 3D map is to be returned
     dz, dy, dx = (1,) * (3 - ndim) + step_sizes

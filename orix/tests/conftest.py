@@ -553,7 +553,7 @@ def temp_bruker_h5ebsd_file(tmpdir, request):
         rng = np.random.default_rng()
         # Only shuffle within rows (rows are not shuffled)
         map_cols = map_cols.reshape(map_shape)
-        rng.shuffle(map_cols, axis=0)
+        rng.shuffle(map_cols)
         map_cols = map_cols.ravel()
     sem_group.create_dataset("IY", data=map_rows)
     sem_group.create_dataset("IX", data=map_cols)
