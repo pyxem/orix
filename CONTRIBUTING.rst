@@ -238,9 +238,10 @@ Here are some tips for writing tutorial notebooks:
   ``[Vector3d.zvector()](../reference/generated/orix.vector.Vector3d.zvector.rst)``.
   Remember to add the parentheses ``()`` if the reference points to a function or
   method.
-- Reference sections in other tutorial notebooks using this MD
+- Refer to to the examples section with ``[Examples section](../examples/index.rst)``.
+- Refer to sections in other tutorial notebooks using this MD
   ``[plotting](../tutorials/crystal_map.ipynb#Plotting)``.
-- Reference external APIs via standard MD like
+- Refer to external APIs via standard MD like
   ``[Lattice](https://www.diffpy.org/diffpy.structure/mod_lattice.html#diffpy.structure.lattice.Lattice)``.
 - The Sphinx gallery thumbnail used for a notebook is set by adding the
   ``nbsphinx-thumbnail`` tag to a code cell with an image output. The notebook must be
