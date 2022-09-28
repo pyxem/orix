@@ -12,6 +12,8 @@ Unreleased
 
 Added
 -----
+- ``row`` and ``col`` properties to ``CrystalMap`` giving the row and column coordinate
+  of each map point given by ``CrystalMap.shape``.
 
 Changed
 -------

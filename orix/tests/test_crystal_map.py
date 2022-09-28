@@ -467,6 +467,80 @@ class TestCrystalMapGetItem:
         assert np.allclose(xmap2[1, 3].id, 27)
         assert np.allclose(xmap2[2, 2].id, 36)
 
+    def test_row_col(self):
+        """Map points are assigned correct row and column coordinates."""
+        # Not implemented for when xmap.z is not None
+        xmap = CrystalMap.empty((3, 4, 5))
+        assert xmap.row is None
+        assert xmap.col is None
+
+        xmap2 = CrystalMap.empty()
+        xmap2.phases[0].name = "a"
+        xmap2.phases.add(Phase("b"))
+        xmap2[1:4, 5:9].phase_id = 1
+        xmap2[1, 1].phase_id = 1
+
+        rows, cols = np.indices(xmap2.shape)
+        assert np.allclose(xmap2.row, rows.flatten())
+        assert np.allclose(xmap2.col, cols.flatten())
+
+        # Sliced (weird formatting to increase readability of 2D map)
+        # fmt: off
+        assert np.allclose(
+            xmap2["a"].row,
+            np.array([
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                1,    1, 1, 1,             1,
+                2, 2, 2, 2, 2,             2,
+                3, 3, 3, 3, 3,             3,
+                4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+            ])
+        )
+        assert np.allclose(
+            xmap2["b"].row,
+            np.array([
+
+                   0,          0, 0, 0, 0,
+                               1, 1, 1, 1,
+                               2, 2, 2, 2,
+
+            ])
+        )
+        assert np.allclose(
+            xmap2["a"].col,
+            np.array([
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                0,    2, 3, 4,             9,
+                0, 1, 2, 3, 4,             9,
+                0, 1, 2, 3, 4,             9,
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+            ])
+        )
+        assert np.allclose(
+            xmap2["b"].col,
+            np.array([
+
+                   0,          4, 5, 6, 7,
+                               4, 5, 6, 7,
+                               4, 5, 6, 7,
+
+            ])
+        )
+        # fmt: on
+
+        # 1D without 1-dimension
+        xmap3 = CrystalMap.empty((5,))
+        assert np.allclose(xmap3.row, np.zeros(xmap3.size))
+        assert np.allclose(xmap3.col, np.arange(xmap3.size))
+
+        # 1D with 1-dimension
+        xmap4 = CrystalMap.empty((1, 5))
+        assert np.allclose(xmap4.row, np.zeros(xmap4.size))
+        assert np.allclose(xmap4.col, np.arange(xmap4.size))
+        xmap5 = CrystalMap.empty((5, 1))
+        assert np.allclose(xmap5.row, np.arange(xmap5.size))
+        assert np.allclose(xmap5.col, np.zeros(xmap5.size))
+
 
 class TestCrystalMapSetAttributes:
     def test_set_scan_unit(self, crystal_map):

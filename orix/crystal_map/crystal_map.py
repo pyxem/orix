@@ -347,7 +347,7 @@ class CrystalMap:
     def x(self) -> Union[None, np.ndarray]:
         """Return the x coordinates of points in data."""
         if self._x is None or len(np.unique(self._x)) == 1:
-            return None
+            return
         else:
             return self._x[self.is_in_data]
 
@@ -355,7 +355,7 @@ class CrystalMap:
     def y(self) -> Union[None, np.ndarray]:
         """Return the y coordinates of points in data."""
         if self._y is None or len(np.unique(self._y)) == 1:
-            return None
+            return
         else:
             return self._y[self.is_in_data]
 
@@ -364,7 +364,7 @@ class CrystalMap:
     def z(self) -> Union[None, np.ndarray]:
         """Return the z coordinates of points in data."""
         if self._z is None or len(np.unique(self._z)) == 1:
-            return None
+            return
         else:
             return self._z[self.is_in_data]
 
@@ -383,6 +383,62 @@ class CrystalMap:
     def dz(self) -> float:
         """Return the z coordiante step size."""
         return self._step_size_from_coordinates(self._z)
+
+    @property
+    def row(self) -> Union[None, np.ndarray]:
+        """Return the row coordinate of each point in the data.
+
+        Returns ``None`` if :attr:`z` is not ``None``.
+
+        Examples
+        --------
+        >>> from orix.crystal_map import CrystalMap
+        >>> xmap = CrystalMap.empty((3, 4))
+        >>> xmap.row
+        array([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
+        >>> xmap[1:3, 1:3].row
+        array([0, 0, 1, 1])
+        """
+        if self.z is not None:
+            return
+        orig_shape = self._original_shape
+        if len(orig_shape) == 1:
+            if self.x is None:
+                orig_shape += (1,)
+            else:
+                orig_shape = (1,) + orig_shape
+        rows, _ = np.indices(orig_shape)
+        rows = rows.flatten()[self.is_in_data]
+        rows -= rows.min()
+        return rows
+
+    @property
+    def col(self) -> Union[None, np.ndarray]:
+        """Return the column coordinate of each point in the data.
+
+        Returns ``None`` if :attr:`z` is not ``None``.
+
+        Examples
+        --------
+        >>> from orix.crystal_map import CrystalMap
+        >>> xmap = CrystalMap.empty((3, 4))
+        >>> xmap.col
+        array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3])
+        >>> xmap[1:3, 1:3].col
+        array([0, 1, 0, 1])
+        """
+        if self.z is not None:
+            return
+        shape = self._original_shape
+        if len(shape) == 1:
+            if self.x is None:
+                shape += (1,)
+            else:
+                shape = (1,) + shape
+        _, cols = np.indices(shape)
+        cols = cols.flatten()[self.is_in_data]
+        cols -= cols.min()
+        return cols
 
     @property
     def phase_id(self) -> np.ndarray:
