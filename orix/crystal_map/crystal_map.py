@@ -18,7 +18,7 @@
 
 import copy
 from typing import Optional, Tuple, Union
-from warnings import warn
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -545,7 +545,11 @@ class CrystalMap:
         """Return the coordinates of points in the data."""
         # TODO: Make this "dynamic"/dependable when enabling specimen
         #  reference frame
-        return {"z": self.z, "y": self.y, "x": self.x}
+
+        # TODO: Remove after (any) one release after 0.10.1
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Property ", np.VisibleDeprecationWarning)
+            return {"z": self.z, "y": self.y, "x": self.x}
 
     @property
     def _all_coordinates(self) -> dict:
@@ -559,7 +563,11 @@ class CrystalMap:
         """Return the step sizes of dimensions in the data."""
         # TODO: Make this "dynamic"/dependable when enabling specimen
         #  reference frame
-        return {"z": self.dz, "y": self.dy, "x": self.dx}
+
+        # TODO: Remove after (any) one release after 0.10.1
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Property ", np.VisibleDeprecationWarning)
+            return {"z": self.dz, "y": self.dy, "x": self.dx}
 
     @property
     def _coordinate_axes(self) -> dict:
@@ -1187,7 +1195,7 @@ def create_coordinate_arrays(
 
     # TODO: Remove after (any) one release after 0.10.1
     if ndim == 3:
-        warn(
+        warnings.warn(
             "Returning coordinates for a 3D map is deprecated, and this function will "
             "only support 1D or 2D maps in 0.11.0. Support for 3D crystal maps is "
             "minimal and brittle, and it was therefore decided to remove it altogether."
