@@ -10,6 +10,16 @@ this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.htm
 2022-09-30 - version 0.10.1
 ===========================
 
+Deprecated
+----------
+- Parameter ``z`` when creating a ``CrystalMap`` and the ``z`` and ``dz`` attributes of
+  the class are deprecated and will be removed in 0.11.0. Support for 3D crystal maps is
+  minimal and brittle, and it was therefore decided to remove it altogether.
+- Passing ``shape`` or ``step_sizes`` of three values to ``create_coordinate_arrays()``
+  is depreacted and will be removed in 0.11.0. See the previous point for the reason.
+- Parameter ``depth`` in ``CrystalMapPlot.plot_map()`` is depreacted and will be removed
+  in 0.11.0. See the top point for the reason.
+
 Fixed
 -----
 - ``StereographicPlot.scatter()`` now accepts both ``c``/``color`` and ``s``/``sizes``
