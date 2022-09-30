@@ -75,6 +75,7 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
     ],
+    python_requires=">=3.7",
     packages=find_packages(exclude=["orix/tests"]),
     extras_require=extra_feature_requirements,
     # fmt: off

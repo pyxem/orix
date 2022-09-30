@@ -202,10 +202,20 @@ class StereographicPlot(maxes.Axes):
         if x.size == 0:
             return
 
-        # Color(s) and size(s)
-        c = updated_kwargs.pop("c", "C0")
+        # Color(s)
+        if "color" in updated_kwargs.keys():
+            key_color = "color"
+        else:
+            key_color = "c"
+        c = updated_kwargs.pop(key_color, "C0")
         c = _get_array_of_values(value=c, visible=visible)
-        s = updated_kwargs.pop("s", None)
+
+        # Size(s)
+        if "sizes" in updated_kwargs.keys():
+            key_size = "sizes"
+        else:
+            key_size = "s"
+        s = updated_kwargs.pop(key_size, None)
         if s is not None:
             s = _get_array_of_values(value=s, visible=visible)
 
@@ -333,8 +343,6 @@ class StereographicPlot(maxes.Axes):
             sigma=sigma,
             log=log,
             hemisphere=self.hemisphere,
-            symmetry=None,
-            mrd=True,
             weights=weights,
         )
 
@@ -758,7 +766,9 @@ class StereographicPlot(maxes.Axes):
         return x, y, visible, updated_kwargs
 
     def _pretransform_input(
-        self, values: Union[Vector3d, Tuple[np.ndarray, np.ndarray]], sort: bool = False
+        self,
+        values: Union[Vector3d, Tuple[Vector3d], Tuple[np.ndarray, np.ndarray]],
+        sort: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Return arrays of (x, y) from input data.
 

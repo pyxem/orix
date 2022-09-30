@@ -41,12 +41,16 @@ from orix.io.plugins.orix_hdf5 import (
 )
 from orix.tests.io.test_io import assert_dictionaries_are_equal
 
+# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
 
+
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
+@pytest.mark.filterwarnings("ignore:Property `dz` is deprecated and will be removed in")
 class TestOrixHDF5Plugin:
     def test_file_writer(self, crystal_map, temp_file_path):
         save(filename=temp_file_path, object2write=crystal_map)
 
-        with File(temp_file_path, mode="r") as f:
+        with File(temp_file_path) as f:
             assert f["manufacturer"][()][0].decode() == "orix"
             assert f["version"][()][0].decode() == orix_version
 
@@ -258,7 +262,7 @@ class TestOrixHDF5Plugin:
     def test_write_read_2d(self, temp_file_path, crystal_map_input):
         crystal_map_input["z"] = None
         xmap = CrystalMap(**crystal_map_input)
-        assert xmap._coordinates["z"] == None
+        assert xmap._coordinates["z"] is None
         save(filename=temp_file_path, object2write=xmap)
         xmap2 = load(temp_file_path)
-        assert xmap2._coordinates["z"] == None
+        assert xmap2._coordinates["z"] is None
