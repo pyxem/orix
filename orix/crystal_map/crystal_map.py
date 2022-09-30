@@ -607,11 +607,8 @@ class CrystalMap:
             If ``str``, it must be a valid phase or ``"not_indexed"`` or
             ``"indexed"``. If ``slice`` or ``tuple``, it must be within
             the map shape. If ``int``, it must be a valid
-            :attr`self.id`. If boolean array, it must be of map shape.
+            :attr:`self.id`. If boolean array, it must be of map shape.
         """
-        # TODO: Crop new map to the extremal spatial values (e.g. if all values in first
-        #  or last row/column are masked out by the key), i.e. not just mask the values
-
         # Initiate a mask to be added to the returned copy of the
         # CrystalMap instance, to ensure that only the unmasked values
         # are in the data of the copy (True in `is_in_data`). First, no
@@ -619,8 +616,8 @@ class CrystalMap:
         # condition in the input key.
         is_in_data = np.zeros(self.size, dtype=bool)
 
-        # The original instance might already have set some points to
-        # not be in the data. If so, `is_in_data` is used to update the
+        # The original mask might already have set some points to not be
+        # in the data. If so, `is_in_data` is used to update the
         # original `is_in_data`. Since `new_is_in_data` is not initiated
         # for all key types, we declare it here and check for it later.
         new_is_in_data = None
@@ -652,12 +649,13 @@ class CrystalMap:
             for i, k in enumerate(key):
                 slices[i] = k
 
-            new_is_in_data = np.zeros(self._original_shape, dtype=bool)  # > 1D
-            new_is_in_data[tuple(slices)] = True
-            # Note that although all points within slice(s) was sought,
-            # points within the slice(s) which are already removed from
-            # the data are still kept out by this boolean multiplication
-            new_is_in_data = new_is_in_data.flatten() * self.is_in_data
+            new_is_in_data_slice = np.zeros(self.shape, dtype=bool)  # > 1D
+            new_is_in_data_slice[tuple(slices)] = True
+
+            # Insert new (sub)mask into old full mask
+            new_is_in_data = self.is_in_data.reshape(self._original_shape).copy()
+            new_is_in_data[self._data_slices_from_coordinates()] = new_is_in_data_slice
+            new_is_in_data = new_is_in_data.ravel()
 
         # Insert the mask into a mask with the full map shape, if not
         # done already
