@@ -13,4 +13,5 @@ __credits__ = [
     "Niels Cautaerts",
     "Austin Gerlt",
     "Simon Høgås",
+    "Alexander Clausen",
 ]
