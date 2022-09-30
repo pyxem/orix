@@ -7,6 +7,15 @@ All notable changes to the ``orix`` project are documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
 this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+2022-09-30 - version 0.10.1
+===========================
+
+Fixed
+-----
+- ``StereographicPlot.scatter()`` now accepts both ``c``/``color`` and ``s``/``sizes``
+  to set the color and sizes of scatter points, in line with
+  ``matplotlib.axes.Axes.scatter()``.
+
 2022-09-22 - version 0.10.0
 ===========================
 

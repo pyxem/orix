@@ -245,6 +245,30 @@ class TestStereographicPlot:
 
         plt.close("all")
 
+    def test_color_parameter(self):
+        """Pass either ``color`` or ``c`` to color scatter points."""
+        v = Vector3d([[1, 0, 0], [1, 1, 0], [1, 1, 1]])
+
+        colors = [f"C{i}" for i in range(v.size)]
+        colors_rgba = np.array([mcolors.to_rgba(c) for c in colors])
+
+        fig = v.scatter(color=colors, return_figure=True)
+        assert np.allclose(fig.axes[0].collections[0].get_facecolors(), colors_rgba)
+
+        fig2 = v.scatter(c=colors, return_figure=True)
+        assert np.allclose(fig2.axes[0].collections[0].get_facecolors(), colors_rgba)
+
+    def test_size_parameter(self):
+        """Pass either ``sizes`` or ``s`` to set scatter points sizes."""
+        v = Vector3d([[1, 0, 0], [1, 1, 0], [1, 1, 1]])
+        sizes = np.arange(v.size)
+
+        fig = v.scatter(sizes=sizes, return_figure=True)
+        assert np.allclose(fig.axes[0].collections[0].get_sizes(), sizes)
+
+        fig2 = v.scatter(s=sizes, return_figure=True)
+        assert np.allclose(fig2.axes[0].collections[0].get_sizes(), sizes)
+
 
 class TestSymmetryMarker:
     def test_properties(self):
