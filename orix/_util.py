@@ -98,7 +98,7 @@ class deprecated:
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
             warnings.simplefilter(
-                action="always", category=np.VisibleDeprecationWarning
+                action="always", category=np.VisibleDeprecationWarning, append=True
             )
             func_code = func.__code__
             warnings.warn_explicit(
@@ -151,7 +151,7 @@ class deprecated_argument:
                     msg += f"Use `{self.alternative}` instead. "
                 msg += f"See the documentation of `{func.__name__}()` for more details."
                 warnings.simplefilter(
-                    action="always", category=np.VisibleDeprecationWarning
+                    action="always", category=np.VisibleDeprecationWarning, append=True
                 )
                 func_code = func.__code__
                 warnings.warn_explicit(

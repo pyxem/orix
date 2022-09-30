@@ -22,6 +22,7 @@ format.
 
 import copy
 from typing import Optional
+import warnings
 from warnings import warn
 
 from diffpy.structure import Atom, Lattice, Structure
@@ -279,32 +280,34 @@ def crystalmap2dict(crystal_map: CrystalMap, dictionary: Optional[dict] = None) 
     ]
     # Get euler angles phi1, Phi, phi2
     eulers = crystal_map._rotations.to_euler()
-    dictionary.update(
-        {
-            "data": {
-                "z": z,
-                "y": y,
-                "x": x,
-                "phi1": eulers[..., 0],
-                "Phi": eulers[..., 1],
-                "phi2": eulers[..., 2],
-                "phase_id": crystal_map._phase_id,
-                "id": crystal_map._id,
-                "is_in_data": crystal_map.is_in_data,
-            },
-            "header": {
-                "grid_type": "square",
-                "nz": z.size if isinstance(z, np.ndarray) else 1,
-                "ny": y.size if isinstance(y, np.ndarray) else 1,
-                "nx": x.size if isinstance(x, np.ndarray) else 1,
-                "z_step": crystal_map.dz,
-                "y_step": crystal_map.dy,
-                "x_step": crystal_map.dx,
-                "rotations_per_point": crystal_map.rotations_per_point,
-                "scan_unit": crystal_map.scan_unit,
-            },
-        }
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "Property `dz`", np.VisibleDeprecationWarning)
+        dictionary.update(
+            {
+                "data": {
+                    "z": z,
+                    "y": y,
+                    "x": x,
+                    "phi1": eulers[..., 0],
+                    "Phi": eulers[..., 1],
+                    "phi2": eulers[..., 2],
+                    "phase_id": crystal_map._phase_id,
+                    "id": crystal_map._id,
+                    "is_in_data": crystal_map.is_in_data,
+                },
+                "header": {
+                    "grid_type": "square",
+                    "nz": z.size if isinstance(z, np.ndarray) else 1,
+                    "ny": y.size if isinstance(y, np.ndarray) else 1,
+                    "nx": x.size if isinstance(x, np.ndarray) else 1,
+                    "z_step": crystal_map.dz,
+                    "y_step": crystal_map.dy,
+                    "x_step": crystal_map.dx,
+                    "rotations_per_point": crystal_map.rotations_per_point,
+                    "scan_unit": crystal_map.scan_unit,
+                },
+            }
+        )
     dictionary["data"].update(crystal_map.prop)
     dictionary["header"].update({"phases": phaselist2dict(crystal_map.phases)})
 

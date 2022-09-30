@@ -30,7 +30,8 @@
 """
 
 import os
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 from warnings import warn
 
 from h5py import File, is_hdf5
@@ -91,7 +92,7 @@ def loadctf(file_string: str) -> Rotation:
     return Rotation.from_euler(euler)
 
 
-def load(filename: str, **kwargs) -> CrystalMap:
+def load(filename: Union[str, Path], **kwargs) -> CrystalMap:
     """Load data from a supported file format listed in
     :doc:`orix.io.plugins`.
 
@@ -168,7 +169,10 @@ def _plugin_from_manufacturer(filename: str, plugins: list):
 
 
 def save(
-    filename: str, object2write: CrystalMap, overwrite: Optional[bool] = None, **kwargs
+    filename: Union[str, Path],
+    object2write: CrystalMap,
+    overwrite: Optional[bool] = None,
+    **kwargs,
 ):
     """Write data to a supported file format listed in
     :doc:`orix.io.plugins`.
