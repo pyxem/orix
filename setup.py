@@ -38,6 +38,7 @@ extra_feature_requirements["dev"] = [
     "isort                              >= 5.10",
     "manifix",
     "outdated",
+    "packaging",
     "pre-commit                         >= 1.16",
 ] + list(chain(*list(extra_feature_requirements.values())))
 # fmt: on
