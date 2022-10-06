@@ -34,6 +34,8 @@ from orix.tests.conftest import (
     ANGFILE_TSL_HEADER,
 )
 
+# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
+
 
 @pytest.mark.parametrize(
     "angfile_astar, expected_data",
@@ -81,6 +83,7 @@ def test_loadang(angfile_astar, expected_data):
     assert np.allclose(loaded_data.data, expected_data)
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
 class TestAngReader:
     @pytest.mark.parametrize(
         "angfile_tsl, map_shape, step_sizes, phase_id, example_rot",
@@ -510,6 +513,7 @@ class TestAngReader:
         assert np.allclose(ids, expected_phase_id)
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
 class TestAngWriter:
     def test_write_read_loop(self, crystal_map, tmp_path):
         fname = tmp_path / "test_write_read_loop.ang"

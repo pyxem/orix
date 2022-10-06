@@ -19,6 +19,7 @@
 import gc
 import os
 from tempfile import TemporaryDirectory
+import warnings
 
 from diffpy.structure import Atom, Lattice, Structure
 from h5py import File
@@ -553,7 +554,7 @@ def temp_bruker_h5ebsd_file(tmpdir, request):
         rng = np.random.default_rng()
         # Only shuffle within rows (rows are not shuffled)
         map_cols = map_cols.reshape(map_shape)
-        rng.shuffle(map_cols, axis=0)
+        rng.shuffle(map_cols)
         map_cols = map_cols.ravel()
     sem_group.create_dataset("IY", data=map_rows)
     sem_group.create_dataset("IX", data=map_cols)
@@ -638,7 +639,10 @@ def phase_list(request):
 def crystal_map_input(request, rotations):
     # Unpack parameters
     (nz, ny, nx), (dz, dy, dx), rotations_per_point, unique_phase_ids = request.param
-    d, map_size = create_coordinate_arrays((nz, ny, nx), (dz, dy, dx))
+    # TODO: Remove after (any) one release after 0.10.1
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "Returning coo", np.VisibleDeprecationWarning)
+        d, map_size = create_coordinate_arrays((nz, ny, nx), (dz, dy, dx))
     rot_idx = np.random.choice(
         np.arange(rotations.size), map_size * rotations_per_point
     )
@@ -655,7 +659,10 @@ def crystal_map_input(request, rotations):
 
 @pytest.fixture
 def crystal_map(crystal_map_input):
-    return CrystalMap(**crystal_map_input)
+    # TODO: Remove after (any) one release after 0.10.1
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "Argument `z` ", np.VisibleDeprecationWarning)
+        return CrystalMap(**crystal_map_input)
 
 
 @pytest.fixture

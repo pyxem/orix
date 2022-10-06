@@ -31,6 +31,11 @@ from orix.plot import CrystalMapPlot
 PLOT_MAP = "plot_map"
 
 
+# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
+
+
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
+@pytest.mark.filterwarnings("ignore:Argument `depth` is deprecated and will be removed")
 class TestCrystalMapPlot:
     @pytest.mark.parametrize(
         "crystal_map_input, expected_data_shape",
@@ -171,6 +176,8 @@ class TestCrystalMapPlot:
         plt.close("all")
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
+@pytest.mark.filterwarnings("ignore:Argument `depth` is deprecated and will be removed")
 class TestCrystalMapPlotUtilities:
     def test_init_projection(self):
         # Option 1
@@ -444,6 +451,7 @@ class TestStatusBar:
         plt.close("all")
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestScalebar:
     @pytest.mark.parametrize(
         "crystal_map_input, scalebar_properties",

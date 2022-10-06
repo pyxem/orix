@@ -28,6 +28,28 @@ Fixed
 Security
 --------
 
+2022-10-03 - version 0.10.1
+===========================
+
+Deprecated
+----------
+- Parameter ``z`` when creating a ``CrystalMap`` and the ``z`` and ``dz`` attributes of
+  the class are deprecated and will be removed in 0.11.0. Support for 3D crystal maps is
+  minimal and brittle, and it was therefore decided to remove it altogether.
+- Passing ``shape`` or ``step_sizes`` with three values to ``create_coordinate_arrays()``
+  is depreacted and will raise an error in 0.11.0. See the previous point for the reason.
+- Parameter ``depth`` in ``CrystalMapPlot.plot_map()`` is depreacted and will be removed
+  in 0.11.0. See the top point for the reason.
+
+Fixed
+-----
+- ``StereographicPlot.scatter()`` now accepts both ``c``/``color`` and ``s``/``sizes``
+  to set the color and sizes of scatter points, in line with
+  ``matplotlib.axes.Axes.scatter()``.
+- Indexing/slicing into an already indexed/sliced ``CrystalMap`` now correctly returns
+  the index/slice according to ``CrystalMap.shape`` and not the original shape of the
+  un-sliced map.
+
 2022-09-22 - version 0.10.0
 ===========================
 

@@ -30,6 +30,11 @@ from orix.quaternion.symmetry import C2, C3, C4, O
 # testing IO and the Phase() and PhaseList() classes
 
 
+# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
+
+
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed")
+@pytest.mark.filterwarnings("ignore:Returning coordinates for a 3D map is deprecated")
 class TestCrystalMap:
     def test_minimal_init(self, rotations):
         map_size = 2
@@ -306,6 +311,7 @@ class TestCrystalMap:
             xmap.phases = phase_list
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapGetItem:
     @pytest.mark.parametrize(
         "crystal_map_input, slice_tuple, expected_shape",
@@ -429,7 +435,7 @@ class TestCrystalMapGetItem:
         # This also tests `phase_id`
         xmap = CrystalMap(**crystal_map_input)
         if raises:
-            with pytest.raises(IndexError, match=f".* is out of bounds for"):
+            with pytest.raises(IndexError, match=".* is out of bounds for"):
                 _ = xmap[integer_slices]
         else:
             point = xmap[integer_slices]
@@ -437,6 +443,29 @@ class TestCrystalMapGetItem:
 
             assert np.allclose(point.rotations.data, expected_point.rotations.data)
             assert point._coordinates == expected_point._coordinates
+
+    def test_get_twice(self):
+        """Indexing into a CrystalMap cropped twice returns the desired
+        part of the map.
+        """
+        xmap = CrystalMap.empty()
+        xmap2 = xmap[1:4, 4:9]
+
+        assert np.allclose(xmap.id, np.arange(xmap.size))
+        # fmt: off
+        assert np.allclose(
+            xmap2.id,
+            [
+                14, 15, 16, 17, 18,
+                24, 25, 26, 27, 28,
+                34, 35, 36, 37, 38,
+            ]
+        )
+        # fmt: on
+        assert np.allclose(xmap2[1:, 1:4].id, [25, 26, 27, 35, 36, 37])
+        assert np.allclose(xmap2[1, 2].id, 26)
+        assert np.allclose(xmap2[1, 3].id, 27)
+        assert np.allclose(xmap2[2, 2].id, 36)
 
 
 class TestCrystalMapSetAttributes:
@@ -507,6 +536,7 @@ class TestCrystalMapSetAttributes:
         assert xmap.phases_in_data.names == xmap.phases.names
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapOrientations:
     def test_orientations(self, crystal_map_input, phase_list):
         x = crystal_map_input["x"]
@@ -614,6 +644,7 @@ class TestCrystalMapProp:
         assert np.allclose(xmap.prop[prop_name], np.ones(xmap.size) * new_prop_value)
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapMasking:
     def test_getitem_with_masking(self, crystal_map_input):
         x = crystal_map_input["x"]
@@ -626,6 +657,8 @@ class TestCrystalMapMasking:
         assert np.allclose(xmap2.prop.is_in_data, xmap2.is_in_data)
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
+@pytest.mark.filterwarnings("ignore:Property `z` is deprecated and will be removed in")
 class TestCrystalMapGetMapData:
     @pytest.mark.parametrize(
         "crystal_map_input, to_get, expected_array",
@@ -643,7 +676,7 @@ class TestCrystalMapGetMapData:
             (
                 ((2, 4, 4), (0.28, 0.5, 1), 2, [0]),
                 "z",
-                np.stack((np.zeros((4, 4)), np.ones((4, 4)) * 0.28), axis=0),
+                np.stack((np.zeros((4, 4)), np.ones((4, 4)) * 0.28)),
             ),
         ],
         indirect=["crystal_map_input"],
@@ -875,6 +908,7 @@ class TestCrystalMapCopying:
         assert np.may_share_memory(xmap2._phase_id, crystal_map._phase_id) is False
 
 
+@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapShape:
     @pytest.mark.parametrize(
         "crystal_map_input, expected_slices",
