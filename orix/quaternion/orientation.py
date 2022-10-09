@@ -375,6 +375,65 @@ class Misorientation(Rotation):
 
         return angles
 
+    @classmethod
+    def from_align_vectors(
+        cls,
+        a: Vector3d,
+        b: Vector3d,
+        symmetry: Optional[Symmetry] = None,
+        return_rmsd=False,
+        return_sensitivity_matrix=False,
+        weights=None,
+    ) -> Misorientation:
+        """Return Misorientation for aligning one set of vectors, b, to another set of vectors, a.
+        This method wraps scipy.spacial.transform.Rotation.align_vectors
+
+        Parameters
+        ----------
+        a : Vector3d
+            Vectors in the initial reference frame
+        b : Vector3d
+            Vectors in the other reference frame
+        symmetry : Symmetry (Optional)
+            Symmetry of orientation. If not given (default), no
+            symmetry is set.
+        return_rmsd : Boolean (Optional)
+            Boolen determining if the rmsd of the vectors after alignment should be returned or not.
+        return_sensitivity_matrix : Boolean (Optional)
+            Boolean determining if the sensitivity matrix described in the documentation of scipy.spacial.transform.Rotation.align_vectors should be returned or not.
+        weights (Optional)
+            The relative importance of the different vectors
+
+
+        Returns
+        -------
+        estimated Missorientation: Missorientation
+            Best estimate of the rotation that transforms b to a.
+
+        rmsd : float (Optional)
+            Root mean square distance (weighted) between the given set of vectors after alignment. It is equal to sqrt(2 * minimum_loss), where minimum_loss is the loss function evaluated for the found optimal rotation. Returned only if kw return_rmsd=True is passed.
+
+        sensitivity_matrix: ndarray, shape (3, 3) (Optional)
+            Sensitivity matrix of the estimated rotation estimate as explained in Notes of scipy.spatial.transform.Rotation.align_vectors(). Returned only when keyword return_sensitivity_matrix = True.
+
+        """
+
+        ori, *optional_ret = super().from_align_vectors(
+            a=a,
+            b=b,
+            weights=weights,
+            return_rmsd=return_rmsd,
+            return_sensitivity_matrix=return_sensitivity_matrix,
+        )
+
+        if symmetry:
+            ori.symmetry = symmetry
+
+        if return_sensitivity_matrix or return_rmsd:
+            return ori, *optional_ret
+
+        return ori
+
 
 class Orientation(Misorientation):
     r"""Orientations represent misorientations away from a reference of
@@ -472,6 +531,63 @@ class Orientation(Misorientation):
         ori = super().from_euler(euler=euler, direction=direction, **kwargs)
         if symmetry:
             ori.symmetry = symmetry
+        return ori
+
+    @classmethod
+    def from_align_vectors(
+        cls,
+        a: Vector3d,
+        b: Vector3d,
+        symmetry: Optional[Symmetry] = None,
+        return_rmsd=False,
+        return_sensitivity_matrix=False,
+        weights=None,
+    ) -> Orientation:
+        """Return Orientation for aligning one set of vectors, b, to another set of vectors, a.
+        This method wraps scipy.spacial.transform.Rotation.align_vectors
+
+        Parameters
+        ----------
+        a : Vector3d
+            Vectors in the initial reference frame
+        b : Vector3d
+            Vectors in the other reference frame
+        symmetry : Symmetry (Optional)
+            Symmetry of orientation. If not given (default), no
+            symmetry is set.
+        return_rmsd : Boolean (Optional)
+            Boolen determining if the rmsd of the vectors after alignment should be returned or not.
+        return_sensitivity_matrix : Boolean (Optional)
+            Boolean determining if the sensitivity matrix described in the documentation of scipy.spacial.transform.Rotation.align_vectors should be returned or not.
+        weights (Optional)
+            The relative importance of the different vectors.
+
+
+        Returns
+        -------
+        estimated orientation: Orientation
+            Best estimate of the rotation that transforms b to a.
+
+        rmsd : float (Optional)
+            Root mean square distance (weighted) between the given set of vectors after alignment. It is equal to sqrt(2 * minimum_loss), where minimum_loss is the loss function evaluated for the found optimal rotation. Returned only if kw return_rmsd=True is passed.
+
+        sensitivity_matrix: ndarray, shape (3, 3) (Optional)
+            Sensitivity matrix of the estimated rotation estimate as explained in Notes of scipy.spatial.transform.Rotation.align_vectors(). Returned only when keyword return_sensitivity_matrix = True.
+
+        """
+
+        ori, *optional_ret = super().from_align_vectors(
+            a=a,
+            b=b,
+            return_rmsd=return_rmsd,
+            return_sensitivity_matrix=return_sensitivity_matrix,
+            weights=weights,
+        )
+        if symmetry:
+            ori.symmetry = symmetry
+        if return_sensitivity_matrix or return_rmsd:
+            return ori, *optional_ret
+
         return ori
 
     @classmethod
