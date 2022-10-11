@@ -18,14 +18,14 @@
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Optional, Union
 import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
 import numpy as np
 import quaternion
-from scipy.spatial.transform import Rotation as R
+from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix.base import Object3d
 from orix.vector import Miller, Vector3d
@@ -501,64 +501,55 @@ class Quaternion(Object3d):
         return out.rechunk(new_chunks)
 
     @classmethod
-    def from_scipy_rotation(cls, scipy_rotation: R) -> Quaternion:
-        x, y, z, w = scipy_rotation.as_quat()
+    def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
+        r"""Return quaternion from :class:`scipy.spacial.transform.Rotation` object."""
+        b, c, d, a = rotation.as_quat()
 
-        return cls([w, x, y, z])
+        return cls([a, b, c, d])
 
     @classmethod
     def from_align_vectors(
         cls,
         a: Vector3d,
         b: Vector3d,
-        return_rmsd=False,
-        return_sensitivity_matrix=False,
-        weights=None,
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
     ) -> Quaternion:
-
-        """Return quaternion for aligning one set of vectors, b, to another set of vectors, a.
-        This method wraps scipy.spacial.transform.Rotation.align_vectors
+        """Return an estimated quaternion to optimally align two sets of vectors.
+        This method wraps :meth:`scipy.spacial.transform.Rotation.align_vectors`.
 
         Parameters
         ----------
-        a : Vector3d
-            Vectors in the initial reference frame
-        b : Vector3d
-            Vectors in the other reference frame
-        return_rmsd : Boolean (Optional)
-            Boolen determining if the rmsd of the vectors after alignment should be returned or not.
-        return_sensitivity_matrix : Boolean Optional
-            Boolean determining if the sensitivity matrix described in the documentation of scipy.spacial.transform.Rotation.align_vectors should be returned or not.
-        weights (Optional)
-            The relative importance of the different vectors
-
+        a
+            Vectors in the initial reference frame.
+        b
+            Vectors in the other reference frame.
+        weights
+            The relative importance of the different vectors.
+        return_rmsd
+            Whether to return the root mean square distance (weighted) between the given set of vectors after alignment. See :meth:`scipy.spatial.transform.Rotation.align_vectors`.
+        return_sensitivity
+            Whether to return the sensitivity matrix or not. See :meth:`scipy.spacial.transform.Rotation.align_vectors`.
 
         Returns
         -------
-        estimated_quaternion: Quaternion
-            Best estimate of the rotation that transforms b to a.
-
-        rmsd : float (Optional)
-            Root mean square distance (weighted) between the given set of vectors after alignment. It is equal to sqrt(2 * minimum_loss), where minimum_loss is the loss function evaluated for the found optimal rotation. Returned only when return_rmsd = True.
-
-        sensitivity_matrix: ndarray, shape (3, 3) (Optional)
-            Sensitivity matrix of the estimated rotation estimate as explained in Notes of scipy.spatial.transform.Rotation.align_vectors(). Returned only when return_sensitivity_matrix = True.
-
+        estimated quaternion
+            Best estimate of the quaternion that transforms b to a.
+        rmsd
+            See :meth:`scipy.spatial.transform.Rotation.align_vectors`. Returned when ``return_rmsd=True``.
+        sensitivity
+            See :meth:`scipy.spatial.transform.Rotation.align_vectors`. Returned when ``return_sensitivity=True``.
         """
-
         vec1 = a.unit.data
         vec2 = b.unit.data
 
-        scipy_rotation, rmsd, *sensitivity = R.align_vectors(
-            vec1, vec2, weights, return_sensitivity_matrix
+        out = SciPyRotation.align_vectors(
+            vec1, vec2, weights=weights, return_sensitivity=return_sensitivity
         )
+        out = list(out)
+        out[0] = cls.from_scipy_rotation(out[0])
 
-        if (not return_rmsd) and (not return_sensitivity_matrix):
-            return cls.from_scipy_rotation(scipy_rotation)
-        if not return_sensitivity_matrix:
-            return cls.from_scipy_rotation(scipy_rotation), rmsd
-        else:
-            if return_rmsd:
-                return cls.from_scipy_rotation(scipy_rotation), rmsd, sensitivity
-            else:
-                return cls.from_scipy_rotation(scipy_rotation), sensitivity
+        if not return_rmsd:
+            del out[1]
+        return out[0] if len(out) == 1 else out
