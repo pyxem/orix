@@ -399,8 +399,11 @@ class CrystalMap:
         >>> xmap[1:3, 1:3].row
         array([0, 0, 1, 1])
         """
-        if self.z is not None:
-            return
+        # TODO: Remove after (any) one release after 0.10.1
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Property ", np.VisibleDeprecationWarning)
+            if self.z is not None:
+                return
         orig_shape = self._original_shape
         if len(orig_shape) == 1:
             if self.x is None:
@@ -427,8 +430,11 @@ class CrystalMap:
         >>> xmap[1:3, 1:3].col
         array([0, 1, 0, 1])
         """
-        if self.z is not None:
-            return
+        # TODO: Remove after (any) one release after 0.10.1
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Property ", np.VisibleDeprecationWarning)
+            if self.z is not None:
+                return
         shape = self._original_shape
         if len(shape) == 1:
             if self.x is None:
