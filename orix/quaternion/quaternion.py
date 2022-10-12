@@ -502,7 +502,18 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
-        r"""Return quaternion from :class:`scipy.spacial.transform.Rotation` object."""
+        """Return quaternion(s) from :class:`scipy.spatial.transform.Rotation`(s).
+
+        Parameters
+        ----------
+        rotation
+            rotation of type :class:`scipy.spatial.transform.Rotation.
+
+        Returns
+        ----------
+        quaternion
+            Quaternion(s).
+        """
         b, c, d, a = rotation.as_quat()
 
         return cls([a, b, c, d])
@@ -517,7 +528,9 @@ class Quaternion(Object3d):
         return_sensitivity: bool = False,
     ) -> Quaternion:
         """Return an estimated quaternion to optimally align two sets of vectors.
-        This method wraps :meth:`scipy.spacial.transform.Rotation.align_vectors`.
+
+        This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
+        see that method for further explanations of parameters and returns.
 
         Parameters
         ----------
@@ -528,18 +541,19 @@ class Quaternion(Object3d):
         weights
             The relative importance of the different vectors.
         return_rmsd
-            Whether to return the root mean square distance (weighted) between the given set of vectors after alignment. See :meth:`scipy.spatial.transform.Rotation.align_vectors`.
+            Whether to return the root mean square distance (weighted)
+            between a and b after alignment.
         return_sensitivity
-            Whether to return the sensitivity matrix or not. See :meth:`scipy.spacial.transform.Rotation.align_vectors`.
+            Whether to return the sensitivity matrix.
 
         Returns
         -------
         estimated quaternion
             Best estimate of the quaternion that transforms b to a.
         rmsd
-            See :meth:`scipy.spatial.transform.Rotation.align_vectors`. Returned when ``return_rmsd=True``.
+            Returned when ``return_rmsd=True``.
         sensitivity
-            See :meth:`scipy.spatial.transform.Rotation.align_vectors`. Returned when ``return_sensitivity=True``.
+            Returned when ``return_sensitivity=True``.
         """
         vec1 = a.unit.data
         vec2 = b.unit.data
@@ -552,4 +566,5 @@ class Quaternion(Object3d):
 
         if not return_rmsd:
             del out[1]
+
         return out[0] if len(out) == 1 else out

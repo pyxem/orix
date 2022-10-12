@@ -380,13 +380,15 @@ class Misorientation(Rotation):
         cls,
         a: Vector3d,
         b: Vector3d,
-        weights: Optional[np.ndarray] = None,
         symmetry: Optional[Symmetry] = None,
+        weights: Optional[np.ndarray] = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
     ) -> Misorientation:
         """Return an estimated misorientation to optimally align two sets of vectors.
-        This method wraps :meth:`scipy.spacial.transform.Rotation.align_vectors`.
+
+        This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
+        see that method for further explanations of parameters and returns.
 
         Parameters
         ----------
@@ -394,21 +396,25 @@ class Misorientation(Rotation):
             Vectors in the initial reference frame.
         b
             Vectors in the other reference frame.
+        symmetry
+            Symmetry of misorientation. If not given (default), no
+            symmetry is set.
         weights
             The relative importance of the different vectors.
         return_rmsd
-            Whether to return the root mean square distance (weighted) between the given set of vectors after alignment. See :meth:`scipy.spatial.transform.Rotation.align_vectors`.
+            Whether to return the root mean square distance (weighted)
+            between a and b after alignment.
         return_sensitivity
-            Whether to return the sensitivity matrix or not. See :meth:`scipy.spacial.transform.Rotation.align_vectors`.
+            Whether to return the sensitivity matrix.
 
         Returns
         -------
         estimated misorientation
             Best estimate of the misorientation that transforms b to a.
         rmsd
-            See :meth:`scipy.spatial.transform.Rotation.align_vectors`. Returned when ``return_rmsd=True``.
+            Returned when ``return_rmsd=True``.
         sensitivity
-            See :meth:`scipy.spatial.transform.Rotation.align_vectors`. Returned when ``return_sensitivity=True``.
+            Returned when ``return_sensitivity=True``.
         """
         out = super().from_align_vectors(
             a=a,
@@ -529,12 +535,14 @@ class Orientation(Misorientation):
         a: Vector3d,
         b: Vector3d,
         symmetry: Optional[Symmetry] = None,
-        return_rmsd=False,
-        return_sensitivity=False,
-        weights=None,
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
     ) -> Orientation:
-        r"""Return an estimated orientation to optimally align two sets of vectors.
-        This method wraps :meth:`scipy.spacial.transform.Rotation.align_vectors`.
+        """Return an estimated orientation to optimally align two sets of vectors.
+
+        This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
+        see that method for further explanations of parameters and returns.
 
         Parameters
         ----------
@@ -542,28 +550,32 @@ class Orientation(Misorientation):
             Vectors in the initial reference frame.
         b
             Vectors in the other reference frame.
+        symmetry
+            Symmetry of orientation. If not given (default), no
+            symmetry is set.
         weights
             The relative importance of the different vectors.
         return_rmsd
-            Whether to return the root mean square distance (weighted) between the given set of vectors after alignment. See :meth:`scipy.spatial.transform.Rotation.align_vectors`.
+            Whether to return the root mean square distance (weighted)
+            between a and b after alignment.
         return_sensitivity
-            Whether to return the sensitivity matrix or not. See :meth:`scipy.spacial.transform.Rotation.align_vectors`.
+            Whether to return the sensitivity matrix.
 
         Returns
         -------
         estimated orientation
             Best estimate of the orientation that transforms b to a.
         rmsd
-            See :meth:`scipy.spatial.transform.Rotation.align_vectors`. Returned when ``return_rmsd=True``.
+            Returned when ``return_rmsd=True``.
         sensitivity
-            See :meth:`scipy.spatial.transform.Rotation.align_vectors`. Returned when ``return_sensitivity=True``.
+            Returned when ``return_sensitivity=True``.
         """
         out = super().from_align_vectors(
             a=a,
             b=b,
+            weights=weights,
             return_rmsd=return_rmsd,
             return_sensitivity=return_sensitivity,
-            weights=weights,
         )
         out = list(out)
 
