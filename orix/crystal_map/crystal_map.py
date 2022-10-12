@@ -663,6 +663,8 @@ class CrystalMap:
             new_is_in_data = np.zeros_like(self.is_in_data, dtype=bool)  # 1D
             new_is_in_data[self.id] = is_in_data
 
+        # Crop data to extremal values
+
         # Return a copy with all attributes shallow except for the mask
         new_map = copy.copy(self)
         new_map.is_in_data = new_is_in_data
