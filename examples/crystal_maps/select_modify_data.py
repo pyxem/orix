@@ -4,7 +4,7 @@ Select and modify data
 ======================
 
 This example shows how to select data in a :class:`~orix.crystal_map.CrystalMap`, obtain
-a new map from part of the data and modify data inplace.
+a new map from parts of the data and modify data inplace.
 
 There are five ways to select data:
     1. NumPy slice(s)
@@ -83,10 +83,10 @@ print(xmap2[:, 1].id)
 # giving some points in the data the new phase ID by modifying the phase IDs inplace
 
 xmap.phases.add(Phase("b"))
-print(xmap)
 
 xmap[1, 1].phase_id = 1
 xmap[1:4, 5:9].phase_id = 1
+print(xmap)
 
 plot_id([xmap["a"], xmap["b"], xmap["a", "b"]], ["a", "b", "a and b"])
 
@@ -115,7 +115,7 @@ plot_id(
 # When obtaining a new map from part of another map, the new map is a shallow copy of
 # the initial map. This means that changes to the new map also changes the initial map.
 # When this is undesirable, we make a deep copy by calling
-# :meth:`~orix.crystal_map.CrystalMap.deepcopy`
+# :meth:`~orix.crystal_map.CrystalMap.deepcopy`.
 
 xmap3_shallow = xmap["b"]
 xmap3_deep = xmap["b"].deepcopy()
