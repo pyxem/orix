@@ -513,7 +513,7 @@ class Rotation(Quaternion):
     @classmethod
     @deprecated_argument("convention", "0.9", "1.0", "direction")
     def from_euler(
-        cls, euler: np.ndarray, direction: str = "lab2crystal", **kwargs
+        cls, euler: Union[list, np.ndarray], direction: str = "lab2crystal", **kwargs
     ) -> Rotation:
         """Create a rotation from an array of Euler angles in radians.
 

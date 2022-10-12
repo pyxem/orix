@@ -311,6 +311,7 @@ class TestCrystalMap:
             xmap.phases = phase_list
 
 
+@pytest.mark.filterwarnings("ignore:Returning coordinates for a 3D map is deprecated ")
 @pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapGetItem:
     @pytest.mark.parametrize(
