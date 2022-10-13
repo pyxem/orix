@@ -131,7 +131,7 @@ class CrystalMap:
     :mod:`~orix.data` module
 
     >>> from orix import data
-    >>> xmap = data.sdss_ferrite_austenite()
+    >>> xmap = data.sdss_ferrite_austenite(allow_download=True)
     >>> xmap
     Phase   Orientations       Name  Space group  Point group  Proper point group       Color
         1   5657 (48.4%)  austenite         None          432                 432    tab:blue
@@ -549,7 +549,7 @@ class CrystalMap:
         Examples
         --------
         >>> from orix import data
-        >>> xmap = data.sdss_ferrite_austenite()
+        >>> xmap = data.sdss_ferrite_austenite(allow_download=True)
         >>> xmap
         Phase   Orientations       Name  Space group  Point group  Proper point group       Color
             1   5657 (48.4%)  austenite         None          432                 432    tab:blue
@@ -901,7 +901,7 @@ class CrystalMap:
         Examples
         --------
         >>> from orix import data
-        >>> xmap = data.sdss_ferrite_austenite()
+        >>> xmap = data.sdss_ferrite_austenite(allow_download=True)
         >>> xmap
         Phase   Orientations       Name  Space group  Point group  Proper point group       Color
             1   5657 (48.4%)  austenite         None          432                 432    tab:blue
@@ -1075,7 +1075,7 @@ class CrystalMap:
         Examples
         --------
         >>> from orix import data
-        >>> xmap = data.sdss_ferrite_austenite()
+        >>> xmap = data.sdss_ferrite_austenite(allow_download=True)
         >>> xmap
         Phase   Orientations       Name  Space group  Point group  Proper point group       Color
             1   5657 (48.4%)  austenite         None          432                 432    tab:blue
