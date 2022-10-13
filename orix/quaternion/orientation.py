@@ -33,8 +33,7 @@ from tqdm import tqdm
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import AxAngle, NeoEuler, Vector3d
-from orix.vector.miller import Miller
+from orix.vector import AxAngle, Miller, NeoEuler, Vector3d
 
 
 class Misorientation(Rotation):
