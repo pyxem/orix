@@ -502,7 +502,7 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
-        """Return quaternion(s) from :class:`scipy.spatial.transform.Rotation`(s).
+        """Return quaternion(s) from :class:`scipy.spatial.transform.Rotation`.
 
         Parameters
         ----------
@@ -513,6 +513,16 @@ class Quaternion(Object3d):
         ----------
         quaternion
             Quaternion(s).
+
+        Examples
+        -------
+        >>> from orix.quaternion import Quaternion
+        >>> from scipy.spatial.transform import Rotation as SciPyRotation
+        >>> scipy_rot = SciPyRotation.random(random_state = 1)
+        >>> ori = Quaternion.from_scipy_rotation(scipy_rot)
+        >>> ori
+        Quaternion (1,)
+        [[-0.509   0.7706 -0.2902 -0.2506]]
         """
         b, c, d, a = rotation.as_quat()
 
@@ -521,8 +531,8 @@ class Quaternion(Object3d):
     @classmethod
     def from_align_vectors(
         cls,
-        a: Vector3d,
-        b: Vector3d,
+        to_: Vector3d,
+        from_: Vector3d,
         weights: Optional[np.ndarray] = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
@@ -534,29 +544,39 @@ class Quaternion(Object3d):
 
         Parameters
         ----------
-        a
-            Vectors in the initial reference frame.
-        b
+        to_
             Vectors in the other reference frame.
+        from_
+            Vectors in the initial reference frame.
         weights
             The relative importance of the different vectors.
         return_rmsd
             Whether to return the root mean square distance (weighted)
-            between a and b after alignment.
+            between `to_` and `from_` after alignment.
         return_sensitivity
             Whether to return the sensitivity matrix.
 
         Returns
         -------
         estimated quaternion
-            Best estimate of the quaternion that transforms b to a.
+            Best estimate of the quaternion that transforms `from_` to `from_`.
         rmsd
             Returned when ``return_rmsd=True``.
         sensitivity
             Returned when ``return_sensitivity=True``.
+
+        Examples
+        -------
+        >>> from orix.quaternion import Quaternion
+        >>> from orix.vector import Vector3d
+        >>> vecs1 = Vector3d([[2, -1, 0], [0, 0, 1]])
+        >>> vecs2 = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        >>> ori = Quaternion.from_align_vectors(vecs1, vecs2)
+        >>> np.allclose(vecs1.unit.data, (ori * vecs2.unit).data)
+        True
         """
-        vec1 = a.unit.data
-        vec2 = b.unit.data
+        vec1 = to_.unit.data
+        vec2 = from_.unit.data
 
         out = SciPyRotation.align_vectors(
             vec1, vec2, weights=weights, return_sensitivity=return_sensitivity

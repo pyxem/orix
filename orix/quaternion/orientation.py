@@ -378,57 +378,67 @@ class Misorientation(Rotation):
     @classmethod
     def from_align_vectors(
         cls,
-        a: Miller,
-        b: Miller,
+        to_: Miller,
+        from_: Miller,
         weights: Optional[np.ndarray] = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
     ) -> Misorientation:
-        """Return an estimated misorientation to optimally align two sets of vectors.
+        """ "Return an estimated misorientation to optimally align two sets of vectors, one in each crystal."
 
         This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
         see that method for further explanations of parameters and returns.
 
-        The symmetry of the misorientation is inferred from the phase of a and b, if given.
-
         Parameters
         ----------
-        a
-            Crystal directions in the initial reference frame.
-        b
-            Crystal directions in the other reference frame.
+        to_
+            Directions in the other crystal.
+        from_
+            Directions in the initial crystal.
         weights
             The relative importance of the different vectors.
         return_rmsd
             Whether to return the root mean square distance (weighted)
-            between a and b after alignment.
+            between ``to_`` and ``from_`` after alignment.
         return_sensitivity
             Whether to return the sensitivity matrix.
 
         Returns
         -------
         estimated misorientation
-            Best estimate of the misorientation that transforms b to a.
+            Best estimate of the ``misorientation`` that transforms ``from_`` to ``to_``.
+            The symmetry of the ``misorientation`` is inferred from the phase of ``to_`` and ``from_``, if given.
         rmsd
             Returned when ``return_rmsd=True``.
         sensitivity
             Returned when ``return_sensitivity=True``.
+
+        Examples
+        -------
+        >>> from orix.quaternion import Misorientation
+        >>> from orix.vector import Vector3d, Miller
+        >>> crystal1 = Miller([[1, 0, 0], [0, 1, 0]])
+        >>> crystal2 = Miller([[1, 0, 0], [0, 0, 1]])
+        >>> Misorientation.from_align_vectors(crystal1, crystal2)
+        Misorientation (1,) 1
+        [[-0.7071  0.7071  0.      0.    ]]
         """
-        if not isinstance(a, Miller) or not isinstance(b, Miller):
+        if not isinstance(to_, Miller) or not isinstance(from_, Miller):
             raise ValueError(
-                f"Arguments a and b must both be of type Miller, but are of type {type(a)} and {type(b)}."
+                "Arguments to_ and from_ must both be of type Miller, "
+                f"but are of type {type(to_)} and {type(from_)}."
             )
 
         out = super().from_align_vectors(
-            a=a,
-            b=b,
+            to_=to_,
+            from_=from_,
             weights=weights,
             return_rmsd=return_rmsd,
             return_sensitivity=return_sensitivity,
         )
         out = list(out)
-        if a.phase and b.phase:
-            out[0].symmetry = (b.phase.point_group, a.phase.point_group)
+        if hasattr(to_.phase, "point_group") and hasattr(from_.phase, "point_group"):
+            out[0].symmetry = (from_.phase.point_group, to_.phase.point_group)
 
         return out[0] if len(out) == 1 else out
 
@@ -534,50 +544,59 @@ class Orientation(Misorientation):
     @classmethod
     def from_align_vectors(
         cls,
-        a: Miller,
-        b: Vector3d,
+        to_: Miller,
+        from_: Vector3d,
         weights: Optional[np.ndarray] = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
     ) -> Orientation:
-        """Return an estimated orientation to optimally align two sets of vectors.
+        """Return an estimated orientation to optimally align vectors in the crystal and sample reference frames.
 
         This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
         see that method for further explanations of parameters and returns.
 
-        The symmetry of the orientaiton is inferred form the point group of the phase of a, if given.
-
         Parameters
         ----------
-        a
-            Cryatal directions in the initial reference frame.
-        b
-            Vectors in the other reference frame.
+        to_
+            Directions in the other crystal.
+        from_
+            Directions in the initial crystal.
         weights
             The relative importance of the different vectors.
         return_rmsd
             Whether to return the root mean square distance (weighted)
-            between a and b after alignment.
+            between ``to_`` and ``from_`` after alignment.
         return_sensitivity
             Whether to return the sensitivity matrix.
 
         Returns
         -------
         estimated orientation
-            Best estimate of the orientation that transforms b to a.
+            Best estimate of the ``orientation`` that transforms ``from_`` to ``to_``.
+            The symmetry of the ``orientaiton`` is inferred form the point group of the phase of ``to_``, if given.
         rmsd
             Returned when ``return_rmsd=True``.
         sensitivity
             Returned when ``return_sensitivity=True``.
+
+        Examples
+        -------
+        >>> from orix.quaternion import Orientation
+        >>> from orix.vector import Vector3d, Miller
+        >>> crystal_millers = Miller([[2, -1 ,0], [0, 0, 1]])
+        >>> sample_vectors = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        >>> ori = Orientation.from_align_vectors(crystal_millers, sample_vectors)
+        >>> np.allclose(crystal_millers.data, (ori * sample_vectors.unit * crystal_millers.length).data)
+        True
         """
-        if not isinstance(a, Miller):
+        if not isinstance(to_, Miller):
             raise ValueError(
-                f"Argument a must be of type Miller, but has type {type(a)}"
+                f"Argument to_ must be of type Miller, but has type {type(to_)}"
             )
 
         out = Rotation.from_align_vectors(
-            a=a,
-            b=b,
+            to_=to_,
+            from_=from_,
             weights=weights,
             return_rmsd=return_rmsd,
             return_sensitivity=return_sensitivity,
@@ -585,8 +604,8 @@ class Orientation(Misorientation):
         out = list(out)
         out[0] = cls(out[0].data)
 
-        if a.phase:
-            out[0].symmetry = a.phase.point_group
+        if hasattr(to_.phase, "point_group"):
+            out[0].symmetry = to_.phase.point_group
 
         return out[0] if len(out) == 1 else out
 
