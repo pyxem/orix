@@ -34,6 +34,7 @@ from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
 from orix.vector import AxAngle, NeoEuler, Vector3d
+from orix.vector.miller import Miller
 
 
 class Misorientation(Rotation):
@@ -378,9 +379,8 @@ class Misorientation(Rotation):
     @classmethod
     def from_align_vectors(
         cls,
-        a: Vector3d,
-        b: Vector3d,
-        symmetry: Optional[Symmetry] = None,
+        a: Miller,
+        b: Miller,
         weights: Optional[np.ndarray] = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
@@ -390,15 +390,14 @@ class Misorientation(Rotation):
         This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
         see that method for further explanations of parameters and returns.
 
+        The symmetry of the misorientation is inferred from the phase of a and b, if given.
+
         Parameters
         ----------
         a
-            Vectors in the initial reference frame.
+            Crystal directions in the initial reference frame.
         b
-            Vectors in the other reference frame.
-        symmetry
-            Symmetry of misorientation. If not given (default), no
-            symmetry is set.
+            Crystal directions in the other reference frame.
         weights
             The relative importance of the different vectors.
         return_rmsd
@@ -416,6 +415,11 @@ class Misorientation(Rotation):
         sensitivity
             Returned when ``return_sensitivity=True``.
         """
+        if not isinstance(a, Miller) or not isinstance(b, Miller):
+            raise ValueError(
+                f"Arguments a and b must both be of type Miller, but are of type {type(a)} and {type(b)}."
+            )
+
         out = super().from_align_vectors(
             a=a,
             b=b,
@@ -424,9 +428,8 @@ class Misorientation(Rotation):
             return_sensitivity=return_sensitivity,
         )
         out = list(out)
-
-        if symmetry:
-            out[0].symmetry = symmetry
+        if a.phase and b.phase:
+            out[0].symmetry = (b.phase.point_group, a.phase.point_group)
 
         return out[0] if len(out) == 1 else out
 
@@ -532,9 +535,8 @@ class Orientation(Misorientation):
     @classmethod
     def from_align_vectors(
         cls,
-        a: Vector3d,
+        a: Miller,
         b: Vector3d,
-        symmetry: Optional[Symmetry] = None,
         weights: Optional[np.ndarray] = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
@@ -544,15 +546,14 @@ class Orientation(Misorientation):
         This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
         see that method for further explanations of parameters and returns.
 
+        The symmetry of the orientaiton is inferred form the point group of the phase of a, if given.
+
         Parameters
         ----------
         a
-            Vectors in the initial reference frame.
+            Cryatal directions in the initial reference frame.
         b
             Vectors in the other reference frame.
-        symmetry
-            Symmetry of orientation. If not given (default), no
-            symmetry is set.
         weights
             The relative importance of the different vectors.
         return_rmsd
@@ -570,7 +571,12 @@ class Orientation(Misorientation):
         sensitivity
             Returned when ``return_sensitivity=True``.
         """
-        out = super().from_align_vectors(
+        if not isinstance(a, Miller):
+            raise ValueError(
+                f"Argument a must be of type Miller, but has type {type(a)}"
+            )
+
+        out = Rotation.from_align_vectors(
             a=a,
             b=b,
             weights=weights,
@@ -578,9 +584,10 @@ class Orientation(Misorientation):
             return_sensitivity=return_sensitivity,
         )
         out = list(out)
+        out[0] = cls(out[0].data)
 
-        if symmetry:
-            out[0].symmetry = symmetry
+        if a.phase:
+            out[0].symmetry = a.phase.point_group
 
         return out[0] if len(out) == 1 else out
 
