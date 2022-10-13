@@ -19,9 +19,10 @@
 import dask.array as da
 import numpy as np
 import pytest
+from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix.base import DimensionError
-from orix.quaternion import Quaternion
+from orix.quaternion import Orientation, Quaternion
 from orix.vector import Vector3d
 
 # fmt: off
@@ -282,3 +283,31 @@ class TestQuaternion:
         other = np.random.rand(7, 3)
         with pytest.raises(TypeError, match="Other must be Quaternion or Vector3d"):
             q._outer_dask(other)
+
+    def test_from_align_vectors(self):
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        ori = Quaternion.from_align_vectors(a, b)
+        assert type(ori) == Quaternion
+        assert np.allclose(
+            ori.data, np.array([[0.65328148, 0.70532785, -0.05012611, -0.27059805]])
+        )
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        _, e = Quaternion.from_align_vectors(a, b, return_rmsd=True)
+        assert type(e) == np.float64
+        _, m = Quaternion.from_align_vectors(a, b, return_sensitivity=True)
+        assert type(m) == np.ndarray
+        assert m.shape == (3, 3)
+        out = Quaternion.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+
+    def test_from_scipy_rotation(self):
+        euler = np.array([15, 32, 41]) * np.pi / 180
+        reference_rot = Orientation.from_euler(euler)
+        scipy_rot = SciPyRotation.from_euler("zxz", euler)  # bunge convention
+        quat = Quaternion.from_scipy_rotation(scipy_rot)
+        assert np.allclose(
+            reference_rot.data, quat.data
+        )  # This fails, but I feel it should be correct :/
