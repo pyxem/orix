@@ -40,7 +40,9 @@ from orix.quaternion.symmetry import (
     _groups,
     _proper_groups,
 )
-from orix.vector import AxAngle, Vector3d
+from orix.vector import AxAngle, Vector3d, Miller
+from orix.crystal_map import Phase
+from diffpy.structure import Lattice, Structure
 # isort: on
 # fmt: on
 
@@ -354,6 +356,36 @@ class TestMisorientation:
         angle2 = p12.angle.min(axis=(0, 2, 3, 5))
         assert np.allclose(angle1, angle2)
 
+    def test_from_align_vectors(self):
+        TETRAGONAL_LATTICE = Lattice(0.5, 0.5, 1, 90, 90, 90)
+        TETRAGONAL_PHASE = Phase(
+            point_group="4", structure=Structure(lattice=TETRAGONAL_LATTICE)
+        )
+        a = Miller([[2, -1, 0], [0, 0, 1]], phase=TETRAGONAL_PHASE)
+        b = Miller([[3, 1, 0], [-1, 3, 0]], phase=TETRAGONAL_PHASE)
+        ori = Misorientation.from_align_vectors(a, b)
+        assert type(ori) == Misorientation
+        assert ori.symmetry == (
+            TETRAGONAL_PHASE.point_group,
+            TETRAGONAL_PHASE.point_group,
+        )
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        _, e = Misorientation.from_align_vectors(a, b, return_rmsd=True)
+        assert type(e) == np.float64
+        _, m = Misorientation.from_align_vectors(a, b, return_sensitivity=True)
+        assert type(m) == np.ndarray
+        assert m.shape == (3, 3)
+        out = Misorientation.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        with pytest.raises(
+            ValueError,
+            match="Arguments to_ and from_ must both be of type Miller, but are of type <class 'orix.vector.vector3d.Vector3d'> and <class 'orix.vector.miller.Miller'>.",
+        ):
+            _ = Misorientation.from_align_vectors(a, b)
+
 
 def test_orientation_equality():
     # symmetries must also be the same to be equal
@@ -403,6 +435,34 @@ class TestOrientationInitialization:
         o3 = Orientation(o1.data, symmetry=Oh)
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
+
+    def test_from_align_vectors(self):
+
+        TETRAGONAL_LATTICE = Lattice(0.5, 0.5, 1, 90, 90, 90)
+        TETRAGONAL_PHASE = Phase(
+            point_group="4", structure=Structure(lattice=TETRAGONAL_LATTICE)
+        )
+        a = Miller([[2, -1, 0], [0, 0, 1]], phase=TETRAGONAL_PHASE)
+        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        ori = Orientation.from_align_vectors(a, b)
+        assert type(ori) == Orientation
+        assert ori.symmetry.name == "4"
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        _, e = Orientation.from_align_vectors(a, b, return_rmsd=True)
+        assert type(e) == np.float64
+        _, m = Orientation.from_align_vectors(a, b, return_sensitivity=True)
+        assert type(m) == np.ndarray
+        assert m.shape == (3, 3)
+        out = Orientation.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        with pytest.raises(
+            ValueError,
+            match="Argument to_ must be of type Miller, but has type <class 'orix.vector.vector3d.Vector3d'>",
+        ):
+            _ = Orientation.from_align_vectors(a, b)
 
     def test_from_neo_euler_symmetry(self):
         v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
