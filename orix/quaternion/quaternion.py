@@ -507,7 +507,7 @@ class Quaternion(Object3d):
         Parameters
         ----------
         rotation
-            A SciPy type rotation object.
+            SciPy rotation(s).
 
         Returns
         -------
