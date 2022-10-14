@@ -59,7 +59,8 @@ globally (in the ``conda`` environment)::
     pip install --editable .[dev]
 
 This installs all necessary development dependencies, including those for running tests
-and building documentation.
+and building documentation. If you get an error message running the above in a ``zsh``
+shell, try wrapping the last part in a string, like ``'.[dev]'``.
 
 Code style
 ==========
@@ -199,6 +200,9 @@ Install necessary dependencies to build the documentation::
     :mod:`orix.data` module upon building the documentation. See the section on the
     :ref:`data module <adding-data-to-data-module>` for more details.
 
+If you get an error message running the above in a ``zsh`` shell, try wrapping the last
+part in a string, like ``'.[doc]'``.
+
 Then, build the documentation from the ``doc`` directory::
 
     cd doc
@@ -316,6 +320,9 @@ and compare resulting output values with known answers. Install necessary depend
 to run the tests::
 
    pip install --editable .[tests]
+
+If you get an error message running the above in a ``zsh`` shell, try wrapping the last
+part in a string, like ``'.[tests]'``.
 
 Some useful `fixtures <https://docs.pytest.org/en/latest/fixture.html>`__ are available
 in the ``conftest.py`` file.
