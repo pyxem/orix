@@ -507,22 +507,26 @@ class Quaternion(Object3d):
         Parameters
         ----------
         rotation
-            rotation of type :class:`scipy.spatial.transform.Rotation.
+            A SciPy type rotation object.
 
         Returns
-        ----------
+        -------
         quaternion
             Quaternion(s).
 
         Examples
-        -------
-        >>> from orix.quaternion import Quaternion
+        --------
+        >>> from orix.quaternion import Quaternion, Rotation
         >>> from scipy.spatial.transform import Rotation as SciPyRotation
-        >>> scipy_rot = SciPyRotation.random(random_state = 1)
+        >>> euler = np.array([90, 0, 0]) * np.pi / 180
+        >>> scipy_rot = SciPyRotation.from_euler("ZXZ", euler)
         >>> ori = Quaternion.from_scipy_rotation(scipy_rot)
         >>> ori
         Quaternion (1,)
-        [[-0.509   0.7706 -0.2902 -0.2506]]
+        [[0.7071 0.     0.     0.7071]]
+        >>> Rotation.from_euler(euler, direction="crystal2lab")
+        Rotation (1,)
+        [[0.7071 0.     0.     0.7071]]
         """
         b, c, d, a = rotation.as_quat()
 
@@ -531,52 +535,65 @@ class Quaternion(Object3d):
     @classmethod
     def from_align_vectors(
         cls,
-        to_: Vector3d,
-        from_: Vector3d,
+        other: Union[Vector3d, tuple, list],
+        initial: Union[Vector3d, tuple, list],
         weights: Optional[np.ndarray] = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
     ) -> Quaternion:
-        """Return an estimated quaternion to optimally align two sets of vectors.
+        """Return an estimated quaternion to optimally align two sets of
+        vectors.
 
         This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
-        see that method for further explanations of parameters and returns.
+        see that method for further explanations of parameters and
+        returns.
 
         Parameters
         ----------
-        to_
+        other
             Vectors in the other reference frame.
-        from_
+        initial
             Vectors in the initial reference frame.
         weights
             The relative importance of the different vectors.
         return_rmsd
             Whether to return the root mean square distance (weighted)
-            between `to_` and `from_` after alignment.
+            between `other` and `initial` after alignment.
         return_sensitivity
             Whether to return the sensitivity matrix.
 
         Returns
         -------
         estimated quaternion
-            Best estimate of the quaternion that transforms `from_` to `from_`.
+            Best estimate of the quaternion
+            that transforms ``initial`` to ``other``.
         rmsd
             Returned when ``return_rmsd=True``.
         sensitivity
             Returned when ``return_sensitivity=True``.
 
         Examples
-        -------
+        --------
         >>> from orix.quaternion import Quaternion
         >>> from orix.vector import Vector3d
-        >>> vecs1 = Vector3d([[2, -1, 0], [0, 0, 1]])
-        >>> vecs2 = Vector3d([[3, 1, 0], [-1, 3, 0]])
-        >>> ori = Quaternion.from_align_vectors(vecs1, vecs2)
-        >>> np.allclose(vecs1.unit.data, (ori * vecs2.unit).data)
-        True
+        >>> vecs1 = Vector3d([[1, 0, 0], [0, 1, 0]])
+        >>> vecs2 = Vector3d([[0, -1, 0], [0,0, 1]])
+        >>> quat12 = Quaternion.from_align_vectors(vecs2, vecs1)
+        >>> quat12 * vecs1
+        Vector3d (2,)
+        [[ 0. -1.  0.]
+         [ 0.  0.  1.]]
         """
-        vec1 = to_.unit.data
-        vec2 = from_.unit.data
+        if isinstance(other, Vector3d):
+            vec1 = other.unit.data
+        else:
+            vec1 = np.asarray(other, dtype="float")
+            vec1 /= np.linalg.norm(vec1, axis=-1).reshape(vec1.shape[0], 1)
+        if isinstance(initial, Vector3d):
+            vec2 = initial.unit.data
+        else:
+            vec2 = np.asarray(initial, dtype="float")
+            vec2 /= np.linalg.norm(vec2, axis=-1).reshape(vec1.shape[0], 1)
 
         out = SciPyRotation.align_vectors(
             vec1, vec2, weights=weights, return_sensitivity=return_sensitivity
