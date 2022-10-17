@@ -551,14 +551,14 @@ class Quaternion(Object3d):
         Parameters
         ----------
         other
-            Vectors in the other reference frame.
+            Vectors of shape ``(N,)`` in the other reference frame.
         initial
-            Vectors in the initial reference frame.
+            Vectors of shape ``(N,)`` in the initial reference frame.
         weights
             The relative importance of the different vectors.
         return_rmsd
             Whether to return the root mean square distance (weighted)
-            between `other` and `initial` after alignment.
+            between ``other`` and ``initial`` after alignment.
         return_sensitivity
             Whether to return the sensitivity matrix.
 
@@ -584,16 +584,12 @@ class Quaternion(Object3d):
         [[ 0. -1.  0.]
          [ 0.  0.  1.]]
         """
-        if isinstance(other, Vector3d):
-            vec1 = other.unit.data
-        else:
-            vec1 = np.asarray(other, dtype="float")
-            vec1 /= np.linalg.norm(vec1, axis=-1).reshape(vec1.shape[0], 1)
-        if isinstance(initial, Vector3d):
-            vec2 = initial.unit.data
-        else:
-            vec2 = np.asarray(initial, dtype="float")
-            vec2 /= np.linalg.norm(vec2, axis=-1).reshape(vec1.shape[0], 1)
+        if not isinstance(other, Vector3d):
+            other = Vector3d(other)
+        if not isinstance(initial, Vector3d):
+            initial = Vector3d(initial)
+        vec1 = other.unit.data
+        vec2 = initial.unit.data
 
         out = SciPyRotation.align_vectors(
             vec1, vec2, weights=weights, return_sensitivity=return_sensitivity

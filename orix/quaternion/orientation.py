@@ -394,9 +394,9 @@ class Misorientation(Rotation):
         Parameters
         ----------
         other
-            Directions in the other crystal.
+            Directions of shape ``(N,)`` in the other crystal.
         initial
-            Directions in the initial crystal.
+            Directions of shape ``(N,)`` in the initial crystal.
         weights
             The relative importance of the different vectors.
         return_rmsd
@@ -579,9 +579,9 @@ class Orientation(Misorientation):
         Parameters
         ----------
         other
-            Directions in the other crystal.
+            Directions of shape ``(N,)`` in the other crystal.
         initial
-            Directions in the initial crystal.
+            Directions of shape ``(N,)`` in the initial crystal.
         weights
             The relative importance of the different vectors.
         return_rmsd
