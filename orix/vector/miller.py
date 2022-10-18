@@ -773,7 +773,7 @@ class Miller(Vector3d):
             operations = self.phase.point_group
             n_v = v.size
             v2 = operations.outer(v).flatten().reshape(*(n_v, operations.size))
-            data = v2.data.round(12)
+            data = v2.data.round(10)
             data_sorted = np.zeros_like(data)
             for i in range(n_v):
                 a = data[i]
