@@ -12,6 +12,12 @@ Unreleased
 
 Added
 -----
+- Creation of ``Quaternion``(s) (or instances of inheriting classes) from SciPy
+  ``Rotation``(s).
+- Creation of one ``Quaternion`` or ``Rotation`` by aligning sets of vectors in two
+  reference frames, one ``Orientation`` by aligning sets of sample vectors and crystal
+  vectors, and one ``Misorientation`` by aligning two sets of crystal vectors in two
+  differente crystals.
 
 Changed
 -------
