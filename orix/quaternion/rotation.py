@@ -21,19 +21,14 @@
 from __future__ import annotations
 
 from typing import Any, Tuple, Union
-import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
 import numpy as np
 from scipy.special import hyp0f1
 
-from orix._util import deprecated_argument
 from orix.quaternion import Quaternion
-from orix.vector import AxAngle, Vector3d
-
-# Used to round values below 1e-16 to zero
-_FLOAT_EPS = np.finfo(float).eps
+from orix.vector import Vector3d
 
 
 class Rotation(Quaternion):
@@ -385,292 +380,6 @@ class Rotation(Quaternion):
         return dot_products
 
     @classmethod
-    def from_neo_euler(cls, neo_euler: "NeoEuler") -> Rotation:
-        """Create rotations from a neo-euler (vector) representation.
-
-        Parameters
-        ----------
-        neo_euler
-            Vector parametrization of rotations.
-
-        Returns
-        -------
-        rot
-            New rotations.
-        """
-        s = np.sin(neo_euler.angle / 2)
-        a = np.cos(neo_euler.angle / 2)
-        b = s * neo_euler.axis.x
-        c = s * neo_euler.axis.y
-        d = s * neo_euler.axis.z
-        rot = cls(np.stack([a, b, c, d], axis=-1))
-        return rot
-
-    @classmethod
-    def from_axes_angles(
-        cls,
-        axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list],
-    ) -> Rotation:
-        """Create rotation(s) from axis-angle pair(s).
-
-        Parameters
-        ----------
-        axes
-            The axis of rotation.
-        angles
-            The angle of rotation, in radians.
-
-        Returns
-        -------
-        rot
-            Rotations.
-
-        Examples
-        --------
-        >>> from orix.quaternion import Rotation
-        >>> rot = Rotation.from_axes_angles((0, 0, -1), np.pi / 2)
-        >>> rot
-        Rotation (1,)
-        [[ 0.7071  0.      0.     -0.7071]]
-
-        See Also
-        --------
-        from_neo_euler
-        """
-        axangle = AxAngle.from_axes_angles(axes, angles)
-        return cls.from_neo_euler(axangle)
-
-    # TODO: Remove decorator and **kwargs in 1.0
-    @deprecated_argument("convention", since="0.9", removal="1.0")
-    def to_euler(self, **kwargs) -> np.ndarray:
-        r"""Return the rotations as Euler angles in the Bunge convention
-        :cite:`rowenhorst2015consistent`.
-
-        Returns
-        -------
-        eu
-            Array of Euler angles in radians, in the ranges
-            :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
-            :math:`\phi_1 \in [0, 2\pi]`.
-        """
-        # A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
-        n = self.data.shape[:-1]
-        eu = np.zeros(n + (3,))
-
-        a, b, c, d = self.a, self.b, self.c, self.d
-
-        q03 = a**2 + d**2
-        q12 = b**2 + c**2
-        chi = np.sqrt(q03 * q12)
-
-        # P = 1
-
-        q12_is_zero = q12 == 0
-        if np.sum(q12_is_zero) > 0:
-            alpha = np.arctan2(-2 * a * d, a**2 - d**2)
-            eu[..., 0] = np.where(q12_is_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(q12_is_zero, 0, eu[..., 1])
-            eu[..., 2] = np.where(q12_is_zero, 0, eu[..., 2])
-
-        q03_is_zero = q03 == 0
-        if np.sum(q03_is_zero) > 0:
-            alpha = np.arctan2(2 * b * c, b**2 - c**2)
-            eu[..., 0] = np.where(q03_is_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(q03_is_zero, np.pi, eu[..., 1])
-            eu[..., 2] = np.where(q03_is_zero, 0, eu[..., 2])
-
-        if np.sum(chi != 0) > 0:
-            not_zero = ~np.isclose(chi, 0)
-            alpha = np.arctan2(
-                np.divide(
-                    b * d - a * c, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-                np.divide(
-                    -a * b - c * d, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-            )
-            beta = np.arctan2(2 * chi, q03 - q12)
-            gamma = np.arctan2(
-                np.divide(
-                    a * c + b * d, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-                np.divide(
-                    c * d - a * b, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-            )
-            eu[..., 0] = np.where(not_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(not_zero, beta, eu[..., 1])
-            eu[..., 2] = np.where(not_zero, gamma, eu[..., 2])
-
-        # Reduce Euler angles to definition range
-        eu[np.abs(eu) < _FLOAT_EPS] = 0
-        eu = np.where(eu < 0, np.mod(eu + 2 * np.pi, (2 * np.pi, np.pi, 2 * np.pi)), eu)
-
-        return eu
-
-    # TODO: Remove decorator, **kwargs, and use of "convention" in 1.0
-    @classmethod
-    @deprecated_argument("convention", "0.9", "1.0", "direction")
-    def from_euler(
-        cls, euler: np.ndarray, direction: str = "lab2crystal", **kwargs
-    ) -> Rotation:
-        """Create a rotation from an array of Euler angles in radians.
-
-        Parameters
-        ----------
-        euler
-            Euler angles in radians in the Bunge convention.
-        direction
-            "lab2crystal" (default) or "crystal2lab". "lab2crystal"
-            is the Bunge convention. If "MTEX" is provided then the
-            direction is "crystal2lab".
-        """
-        direction = direction.lower()
-        if direction == "mtex" or (
-            "convention" in kwargs and kwargs["convention"] == "mtex"
-        ):
-            # MTEX uses bunge but with lab2crystal referencing:
-            # see - https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
-            # and orix issue #215
-            direction = "crystal2lab"
-
-        directions = ["lab2crystal", "crystal2lab"]
-
-        # processing directions
-        if direction not in directions:
-            raise ValueError(
-                f"The chosen direction is not one of the allowed options {directions}"
-            )
-
-        euler = np.asarray(euler)
-        if np.any(np.abs(euler) > 4 * np.pi):
-            warnings.warn(
-                "Angles are assumed to be in radians, but degrees might have been "
-                "passed."
-            )
-        n = euler.shape[:-1]
-        alpha, beta, gamma = euler[..., 0], euler[..., 1], euler[..., 2]
-
-        # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
-        # (2015) 083501
-        sigma = 0.5 * np.add(alpha, gamma)
-        delta = 0.5 * np.subtract(alpha, gamma)
-        c = np.cos(beta / 2)
-        s = np.sin(beta / 2)
-
-        # Using P = 1 from A.6
-        q = np.zeros(n + (4,))
-        q[..., 0] = c * np.cos(sigma)
-        q[..., 1] = -s * np.cos(delta)
-        q[..., 2] = -s * np.sin(delta)
-        q[..., 3] = -c * np.sin(sigma)
-
-        for i in [1, 2, 3, 0]:  # flip the zero element last
-            q[..., i] = np.where(q[..., 0] < 0, -q[..., i], q[..., i])
-
-        data = Quaternion(q)
-
-        if direction == "crystal2lab":
-            data = ~data
-
-        rot = cls(data)
-        rot.improper = np.zeros(n)
-        return rot
-
-    def to_matrix(self) -> np.ndarray:
-        """Return the rotations as orientation matrices
-        :cite:`rowenhorst2015consistent`.
-
-        Returns
-        -------
-        om
-            Array of orientation matrices.
-
-        Examples
-        --------
-        >>> from orix.quaternion import Rotation
-        >>> rot = Rotation([1, 0, 0, 0])
-        >>> np.allclose(rot.to_matrix(), np.eye(3))
-        True
-        >>> rot = Rotation([0, 1, 0, 0])
-        >>> np.allclose(rot.to_matrix(), np.diag([1, -1, -1]))
-        True
-        """
-        a, b, c, d = self.a, self.b, self.c, self.d
-        om = np.zeros(self.shape + (3, 3))
-
-        bb = b**2
-        cc = c**2
-        dd = d**2
-        qq = a**2 - (bb + cc + dd)
-        bc = b * c
-        ad = a * d
-        bd = b * d
-        ac = a * c
-        cd = c * d
-        ab = a * b
-        om[..., 0, 0] = qq + 2 * bb
-        om[..., 0, 1] = 2 * (bc - ad)
-        om[..., 0, 2] = 2 * (bd + ac)
-        om[..., 1, 0] = 2 * (bc + ad)
-        om[..., 1, 1] = qq + 2 * cc
-        om[..., 1, 2] = 2 * (cd - ab)
-        om[..., 2, 0] = 2 * (bd - ac)
-        om[..., 2, 1] = 2 * (cd + ab)
-        om[..., 2, 2] = qq + 2 * dd
-
-        return om
-
-    @classmethod
-    def from_matrix(cls, matrix: np.ndarray) -> Rotation:
-        """Return rotations from the orientation matrices
-        :cite:`rowenhorst2015consistent`.
-
-        Parameters
-        ----------
-        matrix
-            Array of orientation matrices.
-
-        Examples
-        --------
-        >>> from orix.quaternion import Rotation
-        >>> rot = Rotation.from_matrix(np.eye(3))
-        >>> np.allclose(rot.data, [1, 0, 0, 0])
-        True
-        >>> rot = Rotation.from_matrix(np.diag([1, -1, -1]))
-        >>> np.allclose(rot.data, [0, 1, 0, 0])
-        True
-        """
-        om = np.asarray(matrix)
-        # Assuming (3, 3) as last two dims
-        n = (1,) if om.ndim == 2 else om.shape[:-2]
-        quat = np.zeros(n + (4,))
-
-        # Compute quaternion components
-        q0_almost = 1 + om[..., 0, 0] + om[..., 1, 1] + om[..., 2, 2]
-        q1_almost = 1 + om[..., 0, 0] - om[..., 1, 1] - om[..., 2, 2]
-        q2_almost = 1 - om[..., 0, 0] + om[..., 1, 1] - om[..., 2, 2]
-        q3_almost = 1 - om[..., 0, 0] - om[..., 1, 1] + om[..., 2, 2]
-        quat[..., 0] = 0.5 * np.sqrt(np.where(q0_almost < _FLOAT_EPS, 0, q0_almost))
-        quat[..., 1] = 0.5 * np.sqrt(np.where(q1_almost < _FLOAT_EPS, 0, q1_almost))
-        quat[..., 2] = 0.5 * np.sqrt(np.where(q2_almost < _FLOAT_EPS, 0, q2_almost))
-        quat[..., 3] = 0.5 * np.sqrt(np.where(q3_almost < _FLOAT_EPS, 0, q3_almost))
-
-        # Modify component signs if necessary
-        quat[..., 1] = np.where(
-            om[..., 2, 1] < om[..., 1, 2], -quat[..., 1], quat[..., 1]
-        )
-        quat[..., 2] = np.where(
-            om[..., 0, 2] < om[..., 2, 0], -quat[..., 2], quat[..., 2]
-        )
-        quat[..., 3] = np.where(
-            om[..., 1, 0] < om[..., 0, 1], -quat[..., 3], quat[..., 3]
-        )
-
-        return cls(Quaternion(quat)).unit  # Normalized
-
-    @classmethod
     def identity(cls, shape: tuple = (1,)) -> Rotation:
         """Create identity rotations.
 
@@ -688,6 +397,31 @@ class Rotation(Quaternion):
         data[..., 0] = 1
         return cls(data)
 
+    # TODO: Remove **kwargs, and use of "convention" in 1.0.
+    # Deprication decorator is implemented in Quaternion
+    @classmethod
+    def from_euler(
+        cls, euler: np.ndarray, direction: str = "lab2crystal", **kwargs
+    ) -> Rotation:
+        """Create a rotation from an array of Euler angles in radians.
+
+        Parameters
+        ----------
+        euler
+            Euler angles in radians in the Bunge convention.
+        direction
+            "lab2crystal" (default) or "crystal2lab". "lab2crystal"
+            is the Bunge convention. If "MTEX" is provided then the
+            direction is "crystal2lab".
+        """
+        euler = np.asarray(euler)
+        rot = super().from_euler(euler=euler, direction=direction, **kwargs)
+
+        n = euler.shape[:-1]
+        rot.improper = np.zeros(n)
+
+        return rot
+
     @property
     def axis(self) -> Vector3d:
         """Return the axes of rotation."""
@@ -703,30 +437,6 @@ class Rotation(Quaternion):
     def angle(self) -> np.ndarray:
         """Return the angles of rotation."""
         return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
-
-    @classmethod
-    def random(cls, shape: Union[int, tuple] = (1,)) -> Rotation:
-        """Return uniformly distributed rotations.
-
-        Parameters
-        ----------
-        shape
-            The shape of the required object.
-
-        Returns
-        -------
-        rot
-            Rotations.
-        """
-        shape = (shape,) if isinstance(shape, int) else shape
-        n = int(np.prod(shape))
-        rotations = []
-        while len(rotations) < n:
-            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
-            r2 = np.sum(np.square(r), axis=1)
-            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
-            rotations += list(r)
-        return cls(np.array(rotations[:n])).reshape(*shape)
 
     @classmethod
     def random_vonmises(
