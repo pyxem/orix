@@ -193,7 +193,7 @@ class Rotation(Quaternion):
                     rotation.improper,
                 ],
                 axis=-1,
-            ).round(12)
+            ).round(10)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         idx_argsort = np.argsort(idx)
         idx_sort = idx[idx_argsort]
@@ -513,7 +513,10 @@ class Rotation(Quaternion):
     @classmethod
     @deprecated_argument("convention", "0.9", "1.0", "direction")
     def from_euler(
-        cls, euler: np.ndarray, direction: str = "lab2crystal", **kwargs
+        cls,
+        euler: Union[np.ndarray, list, tuple],
+        direction: str = "lab2crystal",
+        **kwargs,
     ) -> Rotation:
         """Create a rotation from an array of Euler angles in radians.
 
@@ -623,7 +626,7 @@ class Rotation(Quaternion):
         return om
 
     @classmethod
-    def from_matrix(cls, matrix: np.ndarray) -> Rotation:
+    def from_matrix(cls, matrix: Union[np.ndarray, list, tuple]) -> Rotation:
         """Return rotations from the orientation matrices
         :cite:`rowenhorst2015consistent`.
 

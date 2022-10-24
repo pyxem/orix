@@ -192,7 +192,7 @@ class Object3d:
             The indices of the (flattened) data in the unique array if
             ``return_inverse=True``.
         """
-        data = self.flatten()._data.round(12)
+        data = self.flatten()._data.round(10)
         data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
         _, idx, inv = np.unique(data, axis=0, return_index=True, return_inverse=True)
         obj = self.__class__(data[np.sort(idx), : self.dim])
@@ -284,7 +284,7 @@ class Object3d:
                 + f"{tuple(axes)} does not fit with {self.shape}."
             )
 
-        return self.__class__(self.data.transpose(*axes, -1))
+        return self.__class__(self.data.transpose(*axes + (-1,)))
 
     def get_random_sample(
         self, size: Optional[int] = 1, replace: bool = False, shuffle: bool = False
