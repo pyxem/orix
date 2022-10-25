@@ -57,11 +57,10 @@ Post-release action
   top banner of one of the tutorials via the `documentation
   <https://orix.readthedocs.io/en/stable>`__.
 
-- Bring changes in ``main`` into ``develop`` by branching from ``main``, merge
-  ``develop`` into the new branch, fix conflicts, make a PR to ``develop`` and merge.
-
-- Make a post-release PR to ``develop`` with ``__version__`` updated (or reverted), e.g.
-  to "0.9.dev0", and any updates to this guide if necessary.
+- Bring changes in ``main`` into ``develop`` by first branching from ``main``, merge
+  ``develop`` into the new branch and fix potential conflicts. After these conflicts are
+  fixed, update or revert ``__version__`` and make any updates to this guide if
+  necessary. Make a PR to ``develop`` and merge.
 
 - Tidy up GitHub issues and close the corresponding milestone.
 
