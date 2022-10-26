@@ -379,25 +379,7 @@ class Rotation(Quaternion):
             dot_products[self.improper] = 0
         return dot_products
 
-    @classmethod
-    def identity(cls, shape: tuple = (1,)) -> Rotation:
-        """Create identity rotations.
-
-        Parameters
-        ----------
-        shape
-            The shape out of which to construct identity quaternions.
-
-        Returns
-        -------
-        rot
-            Identify rotations.
-        """
-        data = np.zeros(shape + (4,))
-        data[..., 0] = 1
-        return cls(data)
-
-    # TODO: Remove **kwargs, and use of "convention" in 1.0.
+    # TODO: Remove **kwargs in 1.0.
     # Deprication decorator is implemented in Quaternion
     @classmethod
     def from_euler(
@@ -417,8 +399,7 @@ class Rotation(Quaternion):
         euler = np.asarray(euler)
         rot = super().from_euler(euler=euler, direction=direction, **kwargs)
 
-        n = euler.shape[:-1]
-        rot.improper = np.zeros(n)
+        rot.improper = np.zeros(euler.shape[:-1])
 
         return rot
 

@@ -632,9 +632,12 @@ class Quaternion(Object3d):
     @classmethod
     @deprecated_argument("convention", "0.9", "1.0", "direction")
     def from_euler(
-        cls, euler: np.ndarray, direction: str = "lab2crystal", **kwargs
+        cls,
+        euler: Union[np.ndarray, tuple, list],
+        direction: str = "lab2crystal",
+        **kwargs,
     ) -> Quaternion:
-        """Create a quaternion from an array of Euler angles in radians.
+        """Create quaternion(s) from Euler angle set(s) in radians.
 
         Parameters
         ----------
@@ -644,6 +647,11 @@ class Quaternion(Object3d):
             "lab2crystal" (default) or "crystal2lab". "lab2crystal"
             is the Bunge convention. If "MTEX" is provided then the
             direction is "crystal2lab".
+
+        Returns
+        -------
+        quat
+            Quaternions.
         """
         direction = direction.lower()
         if direction == "mtex" or (
@@ -740,7 +748,7 @@ class Quaternion(Object3d):
         return om
 
     @classmethod
-    def from_matrix(cls, matrix: np.ndarray) -> Quaternion:
+    def from_matrix(cls, matrix: Union[np.ndarray, tuple, list]) -> Quaternion:
         """Return quaternions from the orientation matrices
         :cite:`rowenhorst2015consistent`.
 
@@ -748,6 +756,11 @@ class Quaternion(Object3d):
         ----------
         matrix
             Array of orientation matrices.
+
+        Returns
+        -------
+        quat
+            Quaternions.
 
         Examples
         --------
@@ -759,10 +772,8 @@ class Quaternion(Object3d):
         >>> np.allclose(rot.data, [0, 1, 0, 0])
         True
         """
-        om = np.asarray(matrix)
-        # Assuming (3, 3) as last two dims
-        n = (1,) if om.ndim == 2 else om.shape[:-2]
-        quat = np.zeros(n + (4,))
+        om = np.atleast_3d(matrix)
+        quat = np.zeros(om.shape[:-2] + (4,))
 
         # Compute quaternion components
         q0_almost = 1 + om[..., 0, 0] + om[..., 1, 1] + om[..., 2, 2]
@@ -798,15 +809,33 @@ class Quaternion(Object3d):
 
         Returns
         -------
-        rot
+        quat
             Quaternions.
         """
         shape = (shape,) if isinstance(shape, int) else shape
         n = int(np.prod(shape))
-        rotations = []
-        while len(rotations) < n:
+        quats = []
+        while len(quats) < n:
             r = np.random.uniform(-1, 1, (3 * n, cls.dim))
             r2 = np.sum(np.square(r), axis=1)
             r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
-            rotations += list(r)
-        return cls(np.array(rotations[:n])).reshape(*shape)
+            quats += list(r)
+        return cls(np.array(quats[:n])).reshape(*shape)
+
+    @classmethod
+    def identity(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
+        """Create identity quaternions.
+
+        Parameters
+        ----------
+        shape
+            The shape out of which to construct identity quaternions.
+
+        Returns
+        -------
+        rot
+            Identity quaternions.
+        """
+        data = np.zeros(shape + (4,))
+        data[..., 0] = 1
+        return cls(data)
