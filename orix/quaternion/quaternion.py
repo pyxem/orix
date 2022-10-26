@@ -528,9 +528,9 @@ class Quaternion(Object3d):
         Rotation (1,)
         [[0.7071 0.     0.     0.7071]]
         """
-        b, c, d, a = rotation.as_quat()
+        b, c, d, a = rotation.inv().as_quat().T
 
-        return cls([a, b, c, d])
+        return cls(np.column_stack([a, b, c, d]))
 
     @classmethod
     def from_align_vectors(
@@ -588,8 +588,8 @@ class Quaternion(Object3d):
             other = Vector3d(other)
         if not isinstance(initial, Vector3d):
             initial = Vector3d(initial)
-        vec1 = other.unit.data
-        vec2 = initial.unit.data
+        vec1 = initial.unit.data
+        vec2 = other.unit.data
 
         out = SciPyRotation.align_vectors(
             vec1, vec2, weights=weights, return_sensitivity=return_sensitivity
