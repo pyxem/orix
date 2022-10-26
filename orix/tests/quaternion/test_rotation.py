@@ -675,7 +675,7 @@ class TestFromScipyRotation:
 
     def test_from_scipy_rotation(self):
         euler = np.array([15, 32, 41]) * np.pi / 180
-        reference_rot = Rotation.from_euler(euler, direction="crystal2lab")
+        reference_rot = Rotation.from_euler(euler)
         scipy_rot = SciPyRotation.from_euler("ZXZ", euler)  # bunge convention
         quat = Rotation.from_scipy_rotation(scipy_rot)
-        assert np.allclose(reference_rot.data, quat.data)
+        assert np.allclose(reference_rot.angle_with(quat), 0)

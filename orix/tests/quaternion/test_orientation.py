@@ -372,7 +372,7 @@ class TestMisorientation:
         _, e = Misorientation.from_align_vectors(a, b, return_rmsd=True)
         assert e == 0
         _, m = Misorientation.from_align_vectors(a, b, return_sensitivity=True)
-        assert np.allclose(m, np.array([[0.9, 0 - 0.2, 0], [-0.2, 0.6, 0], [0, 0, 1]]))
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
         out = Misorientation.from_align_vectors(
             a, b, return_rmsd=True, return_sensitivity=True
         )
@@ -451,7 +451,7 @@ class TestOrientationInitialization:
         _, e = Orientation.from_align_vectors(a, b, return_rmsd=True)
         assert e == 0
         _, m = Orientation.from_align_vectors(a, b, return_sensitivity=True)
-        assert np.allclose(m, np.array([[0.9, 0 - 0.2, 0], [-0.2, 0.6, 0], [0, 0, 1]]))
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
         out = Orientation.from_align_vectors(
             a, b, return_rmsd=True, return_sensitivity=True
         )

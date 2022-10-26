@@ -295,7 +295,7 @@ class TestQuaternion:
         _, e = Quaternion.from_align_vectors(a, b, return_rmsd=True)
         assert e == 0
         _, m = Quaternion.from_align_vectors(a, b, return_sensitivity=True)
-        assert np.allclose(m, np.array([[0.9, 0 - 0.2, 0], [-0.2, 0.6, 0], [0, 0, 1]]))
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
         out = Quaternion.from_align_vectors(
             a, b, return_rmsd=True, return_sensitivity=True
         )
