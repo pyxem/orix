@@ -836,6 +836,7 @@ class Quaternion(Object3d):
         rot
             Identity quaternions.
         """
+        shape = (shape,) if isinstance(shape, int) else shape
         data = np.zeros(shape + (4,))
         data[..., 0] = 1
         return cls(data)
