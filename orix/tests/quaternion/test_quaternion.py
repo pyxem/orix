@@ -70,11 +70,6 @@ def something(request):
     return Quaternion(request.param)
 
 
-@pytest.fixture()
-def eu():
-    return np.random.rand(10, 3)
-
-
 class TestQuaternion:
     @pytest.mark.parametrize("input_length", [1, 2, 3, 5, 6, 8])
     def test_init(self, input_length):
@@ -290,9 +285,8 @@ class TestToFromEuler:
 
     def test_to_from_euler(self, eu):
         """Checks that going euler2quat2euler gives no change."""
-        q = Quaternion.from_euler(eu)
-        e2 = q.to_euler()
-        assert np.allclose(eu, e2.data)
+        eu2 = Quaternion.from_euler(eu).to_euler()
+        assert np.allclose(eu, eu2.data)
 
     def test_mtex(self, eu):
         _ = Quaternion.from_euler(eu, direction="mtex")
