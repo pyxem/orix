@@ -30,6 +30,9 @@ from scipy.special import hyp0f1
 from orix.quaternion import Quaternion
 from orix.vector import Vector3d
 
+# Used to round values below 1e-16 to zero
+_FLOAT_EPS = np.finfo(float).eps
+
 
 class Rotation(Quaternion):
     r"""Transformations of three-dimensional space, leaving the origin in
@@ -74,50 +77,83 @@ class Rotation(Quaternion):
         if isinstance(data, Rotation):
             self.improper = data.improper
         with np.errstate(divide="ignore", invalid="ignore"):
-            self.data = self.data / self.norm[..., np.newaxis]
+            self.data /= self.norm[..., np.newaxis]
+
+    @property
+    def improper(self) -> np.ndarray:
+        """Return ``True`` for improper rotations and ``False``
+        otherwise.
+        """
+        return self._data[..., -1].astype(bool)
+
+    @improper.setter
+    def improper(self, value: np.ndarray):
+        self._data[..., -1] = value
+
+    @property
+    def axis(self) -> Vector3d:
+        """Return the axes of rotation."""
+        axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
+        a_is_zero = self.a < -1e-6
+        axis[a_is_zero] = -axis[a_is_zero]
+        norm_is_zero = axis.norm == 0
+        axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero].data)
+        axis.data /= axis.norm[..., np.newaxis]
+        return axis
+
+    @property
+    def angle(self) -> np.ndarray:
+        """Return the angles of rotation."""
+        return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
+
+    @property
+    def antipodal(self) -> Rotation:
+        """Return this and the antipodally equivalent rotations."""
+        r = self.__class__(np.stack([self.data, -self.data]))
+        r.improper = self.improper
+        return r
 
     def __mul__(
         self, other: Union[Rotation, Quaternion, Vector3d, np.ndarray, int, list]
     ):
         if isinstance(other, Rotation):
-            quat = Quaternion(self) * Quaternion(other)
-            rot = other.__class__(quat)
-            i = np.logical_xor(self.improper, other.improper)
-            rot.improper = i
-            return rot
+            q = Quaternion(self) * Quaternion(other)
+            r = other.__class__(q)
+            r.improper = np.logical_xor(self.improper, other.improper)
+            return r
         if isinstance(other, Quaternion):
-            quat = Quaternion(self) * other
-            return quat
+            q = Quaternion(self) * other
+            return q
         if isinstance(other, Vector3d):
-            vec = Quaternion(self) * other
+            v = Quaternion(self) * other
             improper = (self.improper * np.ones(other.shape)).astype(bool)
-            vec[improper] = -vec[improper]
-            return vec
+            v[improper] = -v[improper]
+            return v
         if isinstance(other, int) or isinstance(other, list):  # has to plus/minus 1
             other = np.atleast_1d(other).astype(int)
         if isinstance(other, np.ndarray):
             assert np.all(
                 abs(other) == 1
             ), "Rotations can only be multiplied by 1 or -1"
-            rot = Rotation(self.data)
-            rot.improper = np.logical_xor(self.improper, other == -1)
-            return rot
+            r = Rotation(self.data)
+            r.improper = np.logical_xor(self.improper, other == -1)
+            return r
         return NotImplemented
 
     def __neg__(self) -> Rotation:
-        rot = self.__class__(self.data)
-        rot.improper = np.logical_not(self.improper)
-        return rot
+        r = self.__class__(self.data)
+        r.improper = np.logical_not(self.improper)
+        return r
 
     def __getitem__(self, key) -> Rotation:
-        rot = super().__getitem__(key)
-        rot.improper = self.improper[key]
-        return rot
+        r = super().__getitem__(key)
+        r.improper = self.improper[key]
+        return r
 
     def __invert__(self) -> Rotation:
-        rot = super().__invert__()
-        rot.improper = self.improper
-        return rot
+        r = super().__invert__()
+        r.improper = self.improper
+        return r
 
     def __eq__(self, other: Union[Any, Rotation]) -> bool:
         """Check if Rotation objects are equal by their shape and values."""
@@ -131,6 +167,184 @@ class Rotation(Quaternion):
             return True
         else:
             return False
+
+    @classmethod
+    def from_neo_euler(cls, neo_euler: "NeoEuler") -> Rotation:
+        """Create rotations(s) from a neo-euler (vector) representation.
+
+        Parameters
+        ----------
+        neo_euler
+            Vector parametrization of quaternions.
+
+        Returns
+        -------
+        r
+            Rotation(s).
+        """
+        return super().from_neo_euler(neo_euler)
+
+    @classmethod
+    def from_axes_angles(
+        cls,
+        axes: Union[np.ndarray, Vector3d, tuple, list],
+        angles: Union[np.ndarray, tuple, list],
+    ) -> Rotation:
+        """Create rotation(s) from axis-angle pair(s).
+
+        Parameters
+        ----------
+        axes
+            Rotation axes.
+        angles
+            Rotation angles in radians.
+
+        Returns
+        -------
+        r
+            Rotation(s).
+
+        Examples
+        --------
+        >>> from orix.quaternion import Rotation
+        >>> r = Rotation.from_axes_angles((0, 0, -1), np.pi / 2)
+        >>> r
+        Rotation (1,)
+        [[ 0.7071  0.      0.     -0.7071]]
+
+        See Also
+        --------
+        from_neo_euler
+        """
+        return super().from_axes_angles(axes, angles)
+
+    # TODO: Remove **kwargs in 1.0.
+    # Deprication decorator is implemented in Quaternion
+    @classmethod
+    def from_euler(
+        cls,
+        euler: Union[np.ndarray, tuple, list],
+        direction: str = "lab2crystal",
+        **kwargs,
+    ) -> Rotation:
+        """Create rotation(s) from Euler angle set(s) in radians
+        :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        euler
+            Euler angles in radians in the Bunge convention.
+        direction
+            Direction of the transformation, either ``"lab2crystal"``
+            (default) or the inverse, ``"crystal2lab"``. The former is
+            the Bunge convention. Passing ``"MTEX"`` equals the latter.
+
+        Returns
+        -------
+        r
+            Rotation(s).
+        """
+        r = super().from_euler(euler=euler, direction=direction, **kwargs)
+        r.improper = np.zeros(euler.shape[:-1])
+        return r
+
+    @classmethod
+    def from_matrix(cls, matrix: Union[np.ndarray, tuple, list]) -> Rotation:
+        """Return rotations from the orientation matrices
+        :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        matrix
+            Sequence of orientation matrices with the last two
+            dimensions of shape ``(3, 3)``.
+
+        Returns
+        -------
+        r
+            Rotations.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Rotation
+        >>> r = Rotation.from_matrix([np.identity(3), np.diag([1, -1, -1])])
+        >>> r
+        Rotation (2,)
+        [[1. 0. 0. 0.]
+         [0. 1. 0. 0.]]
+        """
+        return super().from_matrix(matrix)
+
+    @classmethod
+    def random(cls, shape: Union[int, tuple] = (1,)) -> Rotation:
+        """Return random rotations.
+
+        Parameters
+        ----------
+        shape
+            Shape of the rotation instance.
+
+        Returns
+        -------
+        r
+            Rotations.
+        """
+        return super().random(shape)
+
+    @classmethod
+    def identity(cls, shape: Union[int, tuple] = (1,)) -> Rotation:
+        """Return identity rotations.
+
+        Parameters
+        ----------
+        shape
+            Shape of the rotation instance.
+
+        Returns
+        -------
+        r
+            Identity rotations.
+        """
+        return super().identity(shape)
+
+    @classmethod
+    def random_vonmises(
+        cls,
+        shape: Union[int, tuple] = (1,),
+        alpha: float = 1.0,
+        reference: Union[list, tuple, Rotation] = (1, 0, 0, 0),
+    ) -> Rotation:
+        """Return random rotations with a simplified Von Mises-Fisher
+        distribution.
+
+        Parameters
+        ----------
+        shape
+            The shape of the required object.
+        alpha
+            Parameter for the VM-F distribution. Lower values lead to
+            "looser" distributions.
+        reference
+            The center of the distribution.
+
+        Returns
+        -------
+        r
+            Rotations.
+        """
+        shape = (shape,) if isinstance(shape, int) else shape
+        reference = Rotation(reference)
+        n = int(np.prod(shape))
+        sample_size = int(alpha) * n
+        r = []
+        f_max = von_mises(reference, alpha, reference)
+        while len(r) < n:
+            r_i = cls.random(sample_size)
+            f = von_mises(r_i, alpha, reference)
+            x = np.random.rand(sample_size)
+            r_i = r_i[x * f_max < f]
+            r += list(r_i)
+        return cls.stack(r[:n]).reshape(*shape)
 
     def unique(
         self,
@@ -164,7 +378,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        rot
+        r
             Unique rotations.
         idx_sort
             Indices of the flattened rotations where the unique entries
@@ -175,29 +389,24 @@ class Rotation(Quaternion):
         """
         if len(self.data) == 0:
             return self.__class__(self.data)
-        rotation = self.flatten()
+        r = self.flatten()
+
         if antipodal:
-            abcd = rotation._differentiators()
+            abcd = r._differentiators()
         else:
-            abcd = np.stack(
-                [
-                    rotation.a,
-                    rotation.b,
-                    rotation.c,
-                    rotation.d,
-                    rotation.improper,
-                ],
-                axis=-1,
-            ).round(12)
+            abcd = np.stack([r.a, r.b, r.c, r.d, r.improper], axis=-1).round(12)
+
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         idx_argsort = np.argsort(idx)
         idx_sort = idx[idx_argsort]
-        # build inverse index map
+
+        # Build inverse index map
         inv_map = np.empty_like(idx_argsort)
         inv_map[idx_argsort] = np.arange(idx_argsort.size)
         inv = inv_map[inv]
-        dat = rotation[idx_sort]
-        dat.improper = rotation.improper[idx_sort]
+        dat = r[idx_sort]
+        dat.improper = r.improper[idx_sort]
+
         if return_index and return_inverse:
             return dat, idx_sort, inv
         elif return_index and not return_inverse:
@@ -206,30 +415,6 @@ class Rotation(Quaternion):
             return dat, inv
         else:
             return dat
-
-    def _differentiators(self) -> np.ndarray:
-        a = self.a
-        b = self.b
-        c = self.c
-        d = self.d
-        i = self.improper
-        abcd = np.stack(
-            (
-                a**2,
-                b**2,
-                c**2,
-                d**2,
-                a * b,
-                a * c,
-                a * d,
-                b * c,
-                b * d,
-                c * d,
-                i,
-            ),
-            axis=-1,
-        ).round(12)
-        return abcd
 
     def angle_with(self, other: Rotation) -> np.ndarray:
         """Return the angles of rotation transforming the rotations to
@@ -317,7 +502,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        rot
+        r
             Outer rotation products.
         """
         if lazy:
@@ -328,33 +513,28 @@ class Rotation(Quaternion):
                     da.store(darr, arr)
             else:
                 da.store(darr, arr)
-            rot = other.__class__(arr)
+            r = other.__class__(arr)
         else:
-            rot = super().outer(other)
+            r = super().outer(other)
 
-        if isinstance(rot, Rotation):
-            rot.improper = np.logical_xor.outer(self.improper, other.improper)
-        elif isinstance(rot, Vector3d):
-            rot[self.improper] = -rot[self.improper]
+        if isinstance(r, Rotation):
+            r.improper = np.logical_xor.outer(self.improper, other.improper)
+        elif isinstance(r, Vector3d):
+            r[self.improper] = -r[self.improper]
 
-        return rot
+        return r
 
     def flatten(self) -> Rotation:
-        """A new object with the same data in a single column."""
-        rot = super().flatten()
-        rot.improper = self.improper.T.flatten().T
-        return rot
+        """Return a new rotation instance collapsed into one dimension.
 
-    @property
-    def improper(self) -> np.ndarray:
-        """Return ``True`` for improper rotations and ``False``
-        otherwise.
+        Returns
+        -------
+        r
+            Rotations collapsed into one dimension.
         """
-        return self._data[..., -1].astype(bool)
-
-    @improper.setter
-    def improper(self, value: np.ndarray):
-        self._data[..., -1] = value
+        r = super().flatten()
+        r.improper = self.improper.T.flatten().T
+        return r
 
     def dot_outer(self, other: Rotation) -> np.ndarray:
         """Return the outer dot products of the rotations and the other
@@ -379,91 +559,60 @@ class Rotation(Quaternion):
             dot_products[self.improper] = 0
         return dot_products
 
-    # TODO: Remove **kwargs in 1.0.
-    # Deprication decorator is implemented in Quaternion
-    @classmethod
-    def from_euler(
-        cls, euler: np.ndarray, direction: str = "lab2crystal", **kwargs
-    ) -> Rotation:
-        """Create a rotation from an array of Euler angles in radians.
-
-        Parameters
-        ----------
-        euler
-            Euler angles in radians in the Bunge convention.
-        direction
-            "lab2crystal" (default) or "crystal2lab". "lab2crystal"
-            is the Bunge convention. If "MTEX" is provided then the
-            direction is "crystal2lab".
-        """
-        euler = np.asarray(euler)
-        rot = super().from_euler(euler=euler, direction=direction, **kwargs)
-
-        rot.improper = np.zeros(euler.shape[:-1])
-
-        return rot
-
-    @property
-    def axis(self) -> Vector3d:
-        """Return the axes of rotation."""
-        axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
-        a_is_zero = self.a < -1e-6
-        axis[a_is_zero] = -axis[a_is_zero]
-        norm_is_zero = axis.norm == 0
-        axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero].data)
-        axis.data = axis.data / axis.norm[..., np.newaxis]
-        return axis
-
-    @property
-    def angle(self) -> np.ndarray:
-        """Return the angles of rotation."""
-        return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
-
-    @classmethod
-    def random_vonmises(
-        cls,
-        shape: Union[int, tuple] = (1,),
-        alpha: float = 1.0,
-        reference: Union[list, tuple, Rotation] = (1, 0, 0, 0),
-    ) -> Rotation:
-        """Return random rotations with a simplified Von Mises-Fisher
-        distribution.
-
-        Parameters
-        ----------
-        shape
-            The shape of the required object.
-        alpha
-            Parameter for the VM-F distribution. Lower values lead to
-            "looser" distributions.
-        reference
-            The center of the distribution.
+    def to_matrix(self) -> np.ndarray:
+        """Return the rotations as orientation matrices
+        :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
-        rot
-            Rotations.
-        """
-        shape = (shape,) if isinstance(shape, int) else shape
-        reference = Rotation(reference)
-        n = int(np.prod(shape))
-        sample_size = int(alpha) * n
-        rotations = []
-        f_max = von_mises(reference, alpha, reference)
-        while len(rotations) < n:
-            rotation = cls.random(sample_size)
-            f = von_mises(rotation, alpha, reference)
-            x = np.random.rand(sample_size)
-            rotation = rotation[x * f_max < f]
-            rotations += list(rotation)
-        return cls.stack(rotations[:n]).reshape(*shape)
+        om
+            Array of orientation matrices.
 
-    @property
-    def antipodal(self) -> Rotation:
-        """Return this and the antipodally equivalent rotations."""
-        rot = self.__class__(np.stack([self.data, -self.data]))
-        rot.improper = self.improper
-        return rot
+        Examples
+        --------
+        >>> from orix.quaternion import Rotation
+        >>> r = Rotation([[1, 0, 0, 0], [2, 0, 0, 0]])
+        >>> np.allclose(r.to_matrix(), np.eye(3))
+        True
+        >>> r = Rotation([[0, 1, 0, 0], [0, 2, 0, 0]])
+        >>> np.allclose(r.to_matrix(), np.diag([1, -1, -1]))
+        True
+        """
+        return super().to_matrix()
+
+    # TODO: Remove **kwargs in 1.0
+    def to_euler(self, **kwargs) -> np.ndarray:
+        r"""Return the rotations as Euler angles in the Bunge convention
+        :cite:`rowenhorst2015consistent`.
+
+        Returns
+        -------
+        eu
+            Array of Euler angles in radians, in the ranges
+            :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
+            :math:`\phi_1 \in [0, 2\pi]`.
+        """
+        return super().to_euler(**kwargs)
+
+    def _differentiators(self) -> np.ndarray:
+        a = self.a
+        b = self.b
+        c = self.c
+        d = self.d
+        i = self.improper
+        # fmt: off
+        abcd = np.stack(
+            (
+                a ** 2, b ** 2, c ** 2, d ** 2,
+                a * b, a * c, a * d,
+                b * c, b * d,
+                c * d,
+                i,
+            ),
+            axis=-1,
+        ).round(12)
+        # fmt: on
+        return abcd
 
 
 def von_mises(
@@ -482,7 +631,7 @@ def von_mises(
 
     Returns
     -------
-    rot
+    r
         Rotations.
 
     Notes
