@@ -194,10 +194,6 @@ def test_mul_vector(rotation, i, vector, expected):
         ([0.5, 0.5, 0.5, 0.5], 1, -1, 0),
         ([[0, 1, 0, 0], [0, 0, 1, 0]], [0, 1], [-1, 1], [1, 1]),
         ([[0, 1, 0, 0], [0, 0, 1, 0]], [1, 0], [-1, 1], [0, 0]),
-        pytest.param([0.5, 0.5, 0.5, 0.5], 1, 2, 0, marks=pytest.mark.xfail),
-        pytest.param(
-            [0.545394, 0.358915, 0.569472, 0.499427], 0, -2, 0, marks=pytest.mark.xfail
-        ),
     ],
     indirect=["rotation"],
 )
@@ -208,9 +204,15 @@ def test_mul_number(rotation, i, number, expected_i):
     assert np.allclose(r.improper, expected_i)
 
 
-@pytest.mark.xfail(strict=True, reason=TypeError)
-def test_mul_failing(rotation):
-    _ = rotation * "cant-mult-by-this"
+def test_mul_failing():
+    r = Rotation.random()
+
+    with pytest.raises(TypeError):
+        _ = r * "cant-mult-by-this"
+
+    for i in [0, -2]:
+        with pytest.raises(AssertionError, match="Rotations can only be multiplied by"):
+            _ = r * i
 
 
 @pytest.mark.parametrize(
@@ -522,6 +524,21 @@ class TestFromToMatrix:
         assert isinstance(r, Rotation)
         assert np.allclose(r.data, [[1, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]])
 
+    def test_to_matrix(self):
+        r1 = Rotation(
+            [
+                [0.7071, 0.0, 0.0, 0.7071],
+                [0.5, -0.5, -0.5, 0.5],
+                [0.0, 0.0, 0.0, 1.0],
+                [0.5, 0.5, 0.5, 0.5],
+            ]
+        )
+        om1 = r1.to_matrix()
+        r2 = Rotation.from_matrix(om1)
+        om2 = r2.to_matrix()
+        assert r1 == r2
+        assert np.allclose(om1, om2)
+
 
 class TestFromAxesAngles:
     def test_from_axes_angles(self, rotations):
@@ -530,4 +547,5 @@ class TestFromAxesAngles:
         r2 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
         assert isinstance(r1, Rotation)
         assert isinstance(r2, Rotation)
-        assert np.allclose(r1.data, r2.data)
+        #        assert np.allclose(r1.data, r2.data)
+        assert r1 == r2
