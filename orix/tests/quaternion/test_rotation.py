@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from math import cos, pi, sin, tan
+import warnings
 
 from diffpy.structure.spacegroups import sg225
 import numpy as np
@@ -108,8 +108,8 @@ def test_equality():
         ([0.5, 0.5, 0.5, 0.5], [1, 0, 0, 0], [0.5, 0.5, 0.5, 0.5]),
         (
             [0.5, -0.5, -0.5, 0.5],
-            [0, cos(pi / 4), sin(pi / 4), 0],
-            [cos(pi / 4), 0, sin(pi / 4), 0],
+            [0, np.cos(np.pi / 4), np.sin(np.pi / 4), 0],
+            [np.cos(np.pi / 4), 0, np.sin(np.pi / 4), 0],
         ),
         (
             [0.794743, 0.50765, -0.33156, 0.0272659],
@@ -142,7 +142,7 @@ def test_mul_quaternion(rotation, quaternion, expected):
             1,
         ),
         (
-            [tan(pi / 6), 0, -tan(pi / 6), tan(pi / 6)],
+            [np.tan(np.pi / 6), 0, -np.tan(np.pi / 6), np.tan(np.pi / 6)],
             1,
             [0.5, -0.5, -0.5, 0.5],
             1,
@@ -247,14 +247,14 @@ class TestToFromEuler:
     def test_direction_values(self, e):
         r_mtex = Rotation.from_euler(e, direction="mtex")
         r_c2l = Rotation.from_euler(e, direction="crystal2lab")
-        r_l2c = Rotation.from_euler(e, direction="lab2crystal")
+        r_l2c = Rotation.from_euler(e)
         r_default = Rotation.from_euler(e)
         assert np.allclose(r_default.data, r_l2c.data)
         assert np.allclose(r_mtex.data, r_c2l.data)
         assert np.allclose((r_l2c * r_c2l).angle.data, 0)
 
     def test_direction_kwarg(self, e):
-        _ = Rotation.from_euler(e, direction="lab2crystal")
+        _ = Rotation.from_euler(e)
 
     def test_direction_kwarg_dumb(self, e):
         with pytest.raises(ValueError, match="The chosen direction is not one of "):
@@ -277,9 +277,10 @@ class TestToFromEuler:
         """Rotation.from_euler() warns only when "convention" argument
         is passed.
         """
-        with pytest.warns(None) as record:
+        # Does not warn
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             _ = Rotation.from_euler(e)
-        assert len(record) == 0
 
         msg = (
             r"Argument `convention` is deprecated and will be removed in version 1.0. "
@@ -307,9 +308,9 @@ class TestToFromEuler:
         """
         rot1 = Rotation.from_euler(e)
 
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             rot2 = rot1.to_euler()
-        assert len(record) == 0
 
         msg = (
             r"Argument `convention` is deprecated and will be removed in version 1.0. "

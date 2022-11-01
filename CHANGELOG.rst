@@ -4,14 +4,16 @@ Changelog
 
 All notable changes to the ``orix`` project are documented in this file.
 
-The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_, and
-this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
+The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and
+this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
 Unreleased
 ==========
 
 Added
 -----
+- ``row`` and ``col`` properties to ``CrystalMap`` giving the row and column coordinate
+  of each map point given by ``CrystalMap.shape``.
 
 Changed
 -------
