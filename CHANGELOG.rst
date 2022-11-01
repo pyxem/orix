@@ -34,6 +34,19 @@ Fixed
 Security
 --------
 
+2022-10-25 - version 0.10.2
+===========================
+
+Fixed
+-----
+- ``Miller.symmetrise(unique=True)`` return the correct number of symmetrically
+  equivalent but unique vectors, by rounding to 10 instead of 12 decimals prior to
+  finding the unique vectors with NumPy.
+
+Changed
+-------
+- Unique rotations and vectors are now found by rounding to 10 instead of 12 decimals.
+
 2022-10-03 - version 0.10.1
 ===========================
 

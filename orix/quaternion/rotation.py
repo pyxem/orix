@@ -394,8 +394,7 @@ class Rotation(Quaternion):
         if antipodal:
             abcd = r._differentiators()
         else:
-            abcd = np.stack([r.a, r.b, r.c, r.d, r.improper], axis=-1).round(12)
-
+            abcd = np.stack([r.a, r.b, r.c, r.d, r.improper], axis=-1).round(10)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         idx_argsort = np.argsort(idx)
         idx_sort = idx[idx_argsort]
