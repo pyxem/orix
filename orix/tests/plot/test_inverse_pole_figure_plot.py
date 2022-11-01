@@ -136,9 +136,9 @@ class TestInversePoleFigurePlot:
 
         plt.close("all")
 
-    @pytest.mark.parametrize("symmetry", [symmetry.D3d, symmetry.C6h, symmetry.Oh])
-    def test_plot_ipf_color_key(self, symmetry):
-        fig, ax = plt.subplots(subplot_kw=dict(projection="ipf", symmetry=symmetry))
+    @pytest.mark.parametrize("sym", [symmetry.D3d, symmetry.C6h, symmetry.Oh])
+    def test_plot_ipf_color_key(self, sym):
+        fig, ax = plt.subplots(subplot_kw=dict(projection="ipf", symmetry=sym))
         ax.plot_ipf_color_key(show_title=True)
         assert len(ax.images) == 1
         assert len(ax.texts) == 3
@@ -148,12 +148,10 @@ class TestInversePoleFigurePlot:
         plt.close("all")
 
     @pytest.mark.parametrize(
-        "symmetry, loc", [(symmetry.C6h, "left"), (symmetry.Oh, "center")]
+        "sym, loc", [(symmetry.C6h, "left"), (symmetry.Oh, "center")]
     )
-    def test_plot_ipf_color_key_show_title(self, symmetry, loc):
-        fig, ax = plt.subplots(
-            ncols=2, subplot_kw=dict(projection="ipf", symmetry=symmetry)
-        )
+    def test_plot_ipf_color_key_show_title(self, sym, loc):
+        fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection="ipf", symmetry=sym))
         ax[0].plot_ipf_color_key(show_title=True)
         assert ax[0].get_title(loc=loc)
         ax[1].plot_ipf_color_key(show_title=False)

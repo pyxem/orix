@@ -38,9 +38,9 @@ class Quaternion(Object3d):
     r"""Basic quaternion object.
 
     Quaternions support the following mathematical operations:
-    - Unary negation.
-    - Inversion.
-    - Multiplication with other quaternions and vectors.
+        - Unary negation.
+        - Inversion.
+        - Multiplication with other quaternions and vectors.
 
     Quaternion-quaternion multiplication for two quaternions
     :math:`q_1 = (a_1, b_1, c_1, d_1)`

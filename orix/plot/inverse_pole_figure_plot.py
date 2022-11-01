@@ -153,7 +153,6 @@ class InversePoleFigurePlot(StereographicPlot):
             log=log,
             hemisphere=self.hemisphere,
             symmetry=self._symmetry,
-            mrd=True,
             weights=weights,
         )
 
