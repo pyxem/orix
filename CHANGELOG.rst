@@ -12,6 +12,10 @@ Unreleased
 
 Added
 -----
+- ``Rotation`` class methods ``from_neo_euler()``, ``from_axes_angles()``,
+  ``from_euler()``, ``from_matrix()``, ``random()`` and ``identity()`` and methods
+  ``to_euler()`` and ``to_matrix()`` are now available from the ``Quaternion`` class as
+  well.
 
 Changed
 -------

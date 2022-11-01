@@ -468,7 +468,6 @@ class TestVector3dInversePoleDensityFunction:
                 colorbar=True,
                 hemisphere="test",
             )
-            plt.close(fig)
 
 
 class TestVector3dPoleDensityFunction:
