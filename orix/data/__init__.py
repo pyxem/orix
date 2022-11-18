@@ -170,6 +170,82 @@ def sdss_ferrite_austenite(allow_download: bool = False, **kwargs) -> CrystalMap
     return xmap
 
 
+def af96_martensitic_steels(allow_download=False, dataset="large",
+                            subset='all', **kwargs):
+    """
+    Returns EBSD data taken from a sample of low-alloy, high-performance, AF96
+    Martensitic steel. Details on the processing, properties, and composition
+    of this steel can be found in the following two publications:
+        https://doi.org/10.1016/j.dib.2019.104471
+        https://doi.org/10.1016/j.matchar.2019.109835
+    and the original ang files can be found through Globus:
+        https://doi.org/10.18126/iv89-3293
+    
+    There are three datasets related to this data:
+        "ang" - modified versions of the original ang files with corrected
+                header information.
+        "large" - a set of five CrystalMaps stored using Orix's hdf5 format.
+                Each file is a unique 1048-by-2116 map from the same sample.
+        "small" - a set of ninety CrystalMaps stored using Orix's hdf5 format.
+                Each file is a non-unique 512-by-512 map from the same sample.
+
+    Parameters
+    ----------
+    allow_download : bool
+        Whether to allow downloading the dataset from the internet to
+        the local cache with the pooch Python package. Default is
+        ``False``.
+    dataset : "large" or "small" or "ang"
+        sets whether to use data from the large, small, or ang datasets listed
+        above. In all cases, data is returned as a CrystalMap object. The 
+        default is "large".
+    subset : int or list of ints or 'all'
+        Determines whether all the scans in a dataset or only a subset are
+        returned. If 'all', returns a list of all scans in the set. If an
+        integer, returns only the ith scan in the dataset. Can also pass a list
+        or array of multiple integers, and it will return only that subset of
+        the full set.
+    **kwargs
+        Keyword arguments passed to
+        :func:`~orix.io.plugins.ang.file_reader`.
+
+    Returns
+    -------
+    xmap : orix.CrystalMap
+        either a single or a list of multiple Crystal maps. shape is either
+        (1048, 2116) or (512, 512)
+
+    Notes
+    -----
+    The EBSD data was acquired by Vikas Sinha at the Air Force Research Lab in
+    Dayton, Ohio, USA, and carries the CC BY 4.0 license.
+    """
+    AF96_keys = [x for x in registry_hashes.keys() if x[:4] == 'AF96']
+    if dataset in "Largelarge":
+        sub_keys = [x for x in AF96_keys if 'Large' in x and '.h5' in x]
+    elif dataset in "Smallsmall":
+        sub_keys = [x for x in AF96_keys if 'Small' in x and '.h5' in x]
+    elif dataset in ".ang.Ang":
+        sub_keys = [x for x in AF96_keys if '.ang' in x]
+    else:
+        print('whoopsies')
+        # TODO: put real error here
+    # convert subset into a 1d array of integers
+    if subset == 'all':
+        indices = np.arange(len(sub_keys))
+    else:
+        indices = np.asanyarray([[subset]]).astype(int).flatten()
+    if indices.max() > len(sub_keys):
+        print('whoopsies')
+        # TODO: put real error here
+        indices = indices % len(sub_keys)
+    fnames = [_fetch(sub_keys[x], allow_download) for x in indices]
+    xmaps = [io.load(fname, **kwargs) for fname in fnames]
+    if len(xmaps) == 1:
+        xmaps = xmaps[0]
+    return xmaps
+
+
 def ti_orientations(allow_download: bool = False) -> Orientation:
     """Return orientations in the MTEX orientation convention
     (crystal2lab) from an orientation map produced from Hough indexing
