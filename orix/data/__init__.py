@@ -38,11 +38,13 @@ from orix import __version__, io
 from orix.crystal_map import CrystalMap
 from orix.data._registry import registry_hashes, registry_urls
 from orix.quaternion import Orientation, symmetry
+import gdown
 
 __all__ = [
     "sdss_austenite",
     "sdss_ferrite_austenite",
     "ti_orientations",
+    "AF96",
 ]
 
 
@@ -180,7 +182,7 @@ def af96_martensitic_steels(allow_download=False, dataset="large",
         https://doi.org/10.1016/j.matchar.2019.109835
     and the original ang files can be found through Globus:
         https://doi.org/10.18126/iv89-3293
-    
+
     There are three datasets related to this data:
         "ang" - modified versions of the original ang files with corrected
                 header information.
@@ -197,7 +199,7 @@ def af96_martensitic_steels(allow_download=False, dataset="large",
         ``False``.
     dataset : "large" or "small" or "ang"
         sets whether to use data from the large, small, or ang datasets listed
-        above. In all cases, data is returned as a CrystalMap object. The 
+        above. In all cases, data is returned as a CrystalMap object. The
         default is "large".
     subset : int or list of ints or 'all'
         Determines whether all the scans in a dataset or only a subset are
@@ -219,6 +221,36 @@ def af96_martensitic_steels(allow_download=False, dataset="large",
     -----
     The EBSD data was acquired by Vikas Sinha at the Air Force Research Lab in
     Dayton, Ohio, USA, and carries the CC BY 4.0 license.
+
+    Examples
+    --------
+    Read in multiple files
+
+    >>> from orix import data
+    >>> xmaps = af96_martensitic_steels(dataset='small', subset=np.arange(2))
+    >>> xmaps
+    [
+     Phase     Orientations         Name  Space group  Point group  Proper point group       Color
+        -1         6 (0.0%)  not_indexed         None         None                None           w
+         0      2046 (0.8%)    austenite        Fm-3m         m-3m                 432    tab:blue
+         1   260092 (99.2%)      ferrite        Im-3m         m-3m                 432  tab:orange
+     Properties: ci, fit_parameter, iq
+     Scan unit: px
+     ,
+     Phase     Orientations         Name  Space group  Point group  Proper point group       Color
+        -1         4 (0.0%)  not_indexed         None         None                None           w
+         0      1792 (0.7%)    austenite        Fm-3m         m-3m                 432    tab:blue
+         1   260348 (99.3%)      ferrite        Im-3m         m-3m                 432  tab:orange
+     Properties: ci, fit_parameter, iq
+     Scan unit: px
+     ]
+
+    Read in all 5 large files
+    >>> xmap =af96_martensitic_steels(dataset='large')
+
+    Read in only the fourth file of the large AF96 dataset
+    >>> xmap =af96_martensitic_steels(dataset='large',subset=4)
+
     """
     AF96_keys = [x for x in registry_hashes.keys() if x[:4] == 'AF96']
     if dataset in "Largelarge":
@@ -231,7 +263,7 @@ def af96_martensitic_steels(allow_download=False, dataset="large",
         print('whoopsies')
         # TODO: put real error here
     # convert subset into a 1d array of integers
-    if subset == 'all':
+    if str(subset) == "all":
         indices = np.arange(len(sub_keys))
     else:
         indices = np.asanyarray([[subset]]).astype(int).flatten()
@@ -239,8 +271,13 @@ def af96_martensitic_steels(allow_download=False, dataset="large",
         print('whoopsies')
         # TODO: put real error here
         indices = indices % len(sub_keys)
-    fnames = [_fetch(sub_keys[x], allow_download) for x in indices]
-    xmaps = [io.load(fname, **kwargs) for fname in fnames]
+    xmaps = []
+    for i in indices:
+        path = _fetcher.path/sub_keys[i]
+        md5 = registry_hashes[sub_keys[i]]
+        drive_id = registry_urls[sub_keys[i]].split("/d/")[1]
+        gdown.cached_download(id=drive_id, path=path, md5=md5)
+        xmaps.append(io.load(path, **kwargs))
     if len(xmaps) == 1:
         xmaps = xmaps[0]
     return xmaps
@@ -291,3 +328,5 @@ def ti_orientations(allow_download: bool = False) -> Orientation:
     fname = _fetch("ti_orientations/ti_orientations.ctf", allow_download)
     euler = np.loadtxt(fname, skiprows=1, usecols=(0, 1, 2))
     return Orientation.from_euler(np.deg2rad(euler), symmetry.D6)
+
+xmap =af96_martensitic_steels(dataset='large',subset=4)
