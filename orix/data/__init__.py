@@ -29,17 +29,16 @@ not deleted automatically, and should then be deleted manually if
 desired.
 """
 
+import warnings
 from pathlib import Path
 
+import gdown
 import numpy as np
 import pooch
-import warnings
-
 from orix import __version__, io
 from orix.crystal_map import CrystalMap
 from orix.data._registry import registry_hashes, registry_urls
 from orix.quaternion import Orientation, symmetry
-import gdown
 
 __all__ = [
     "sdss_austenite",
