@@ -33,6 +33,7 @@ from pathlib import Path
 
 import numpy as np
 import pooch
+import warnings
 
 from orix import __version__, io
 from orix.crystal_map import CrystalMap
@@ -172,8 +173,9 @@ def sdss_ferrite_austenite(allow_download: bool = False, **kwargs) -> CrystalMap
     return xmap
 
 
-def af96_martensitic_steels(allow_download=False, dataset="large",
-                            subset='all', **kwargs):
+def af96_martensitic_steels(
+    allow_download=False, dataset="large", subset="all", **kwargs
+):
     """
     Returns EBSD data taken from a sample of low-alloy, high-performance, AF96
     Martensitic steel. Details on the processing, properties, and composition
@@ -252,28 +254,46 @@ def af96_martensitic_steels(allow_download=False, dataset="large",
     >>> xmap =af96_martensitic_steels(dataset='large',subset=4)
 
     """
-    AF96_keys = [x for x in registry_hashes.keys() if x[:4] == 'AF96']
+    # Parse "dataset" to find the subset of AF96 files desired by the user
+    AF96_keys = [x for x in registry_hashes.keys() if x[:4] == "AF96"]
     if dataset in "Largelarge":
-        sub_keys = [x for x in AF96_keys if 'Large' in x and '.h5' in x]
+        sub_keys = [x for x in AF96_keys if "Large" in x and ".h5" in x]
     elif dataset in "Smallsmall":
-        sub_keys = [x for x in AF96_keys if 'Small' in x and '.h5' in x]
+        sub_keys = [x for x in AF96_keys if "Small" in x and ".h5" in x]
     elif dataset in ".ang.Ang":
-        sub_keys = [x for x in AF96_keys if '.ang' in x]
+        sub_keys = [x for x in AF96_keys if ".ang" in x]
     else:
-        print('whoopsies')
-        # TODO: put real error here
-    # convert subset into a 1d array of integers
+        raise ValueError(
+            "AF96 contains 3 subsets of data, 'Large'(1048 by 2116 pixels),"
+            "'small'(512 by 512 pixels), or '.ang',(original .ang text files)."
+            "given choice of {dataset} is invalid"
+        )
+    # convert "subset" into a 1d array of integers
     if str(subset) == "all":
         indices = np.arange(len(sub_keys))
     else:
         indices = np.asanyarray([[subset]]).astype(int).flatten()
     if indices.max() > len(sub_keys):
-        print('whoopsies')
-        # TODO: put real error here
+        warnings.warn(
+            """This AF96 dataset contains only {} scans, but subset
+    has a max value of {}. Floor dividing indices to keep
+    within appropropriate range""".format(
+                len(sub_keys), indices.max()
+            )
+        )
         indices = indices % len(sub_keys)
     xmaps = []
+    # for each item in dataset[subset], either load from cache or download
     for i in indices:
-        path = _fetcher.path/sub_keys[i]
+        path = _fetcher.path / sub_keys[i]
+        if not path.exists() and not allow_download:
+            filename = sub_keys[i][5:]
+            raise ValueError(
+                f"Dataset {filename} must be (re)downloaded from the orix-data "
+                "repository on GitHub (https://github.com/pyxem/orix-data) to your "
+                "local cache with the pooch Python package. Pass `allow_download=True`"
+                " to allow this download."
+            )
         md5 = registry_hashes[sub_keys[i]]
         drive_id = registry_urls[sub_keys[i]].split("/d/")[1]
         gdown.cached_download(id=drive_id, path=path, md5=md5)
@@ -328,5 +348,3 @@ def ti_orientations(allow_download: bool = False) -> Orientation:
     fname = _fetch("ti_orientations/ti_orientations.ctf", allow_download)
     euler = np.loadtxt(fname, skiprows=1, usecols=(0, 1, 2))
     return Orientation.from_euler(np.deg2rad(euler), symmetry.D6)
-
-xmap =af96_martensitic_steels(dataset='large',subset=4)

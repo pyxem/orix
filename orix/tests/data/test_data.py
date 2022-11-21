@@ -41,6 +41,14 @@ class TestData:
         assert xmap_di.rotations_per_point == 50
         assert xmap_ref.rotations_per_point == 1
 
+    def test_load_af96_martensitic_steels(self):
+        """The file can be read."""
+        # Set download to true, and only download 1 small map
+        xmap = data.af96_martensitic_steels(True, "S", 1)
+        assert isinstance(xmap, CrystalMap)
+        assert xmap.phases.names == ["not_indexed", "austenite", "ferrite"]
+        assert xmap.shape == (512, 512)
+
     def test_load_raises(self):
         """Raises desired error message."""
         name = "sdss/sdss_ferrite_austenite.ang"
