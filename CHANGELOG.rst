@@ -21,6 +21,7 @@ Added
 
 Changed
 -------
+- Bumped minimal version of ``diffpy.structure >= 3.0.2``.
 
 Deprecated
 ----------

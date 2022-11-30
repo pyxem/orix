@@ -16,13 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-
 from diffpy.structure import Lattice, Structure
-from diffpy.structure import __version__ as ver_diffpy
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
-from packaging.version import Version
 import pytest
 
 from orix.crystal_map import Phase, PhaseList
@@ -337,11 +333,6 @@ class TestPhase:
         assert np.allclose(br.data, [0, 0.679, 0], atol=1e-3)
         assert np.allclose(cr.data, [0, 0, 0.714], atol=1e-3)
 
-    @pytest.mark.xfail(
-        sys.platform == "win32" and sys.version_info >= (3, 10),
-        reason="CifFile import fails on Windows with Python 3.10",
-        strict=True,
-    )
     def test_from_cif(self, cif_file):
         """CIF files parsed correctly with space group and all."""
         phase = Phase.from_cif(cif_file)
