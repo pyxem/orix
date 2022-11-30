@@ -389,7 +389,7 @@ class Quaternion(Object3d):
         >>> from orix.quaternion import Quaternion
         >>> q = Quaternion.from_matrix([np.eye(3), 2 * np.eye(3), np.diag([1, -1, -1])])
         >>> q
-        Quaternion (2,)
+        Quaternion (3,)
         [[1. 0. 0. 0.]
          [1. 0. 0. 0.]
          [0. 1. 0. 0.]]
