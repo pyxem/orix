@@ -16,9 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import warnings
-
-from diffpy.structure.spacegroups import sg225
 import numpy as np
 import pytest
 
@@ -197,10 +194,6 @@ def test_mul_vector(rotation, i, vector, expected):
         ([0.5, 0.5, 0.5, 0.5], 1, -1, 0),
         ([[0, 1, 0, 0], [0, 0, 1, 0]], [0, 1], [-1, 1], [1, 1]),
         ([[0, 1, 0, 0], [0, 0, 1, 0]], [1, 0], [-1, 1], [0, 0]),
-        pytest.param([0.5, 0.5, 0.5, 0.5], 1, 2, 0, marks=pytest.mark.xfail),
-        pytest.param(
-            [0.545394, 0.358915, 0.569472, 0.499427], 0, -2, 0, marks=pytest.mark.xfail
-        ),
     ],
     indirect=["rotation"],
 )
@@ -211,9 +204,15 @@ def test_mul_number(rotation, i, number, expected_i):
     assert np.allclose(r.improper, expected_i)
 
 
-@pytest.mark.xfail(strict=True, reason=TypeError)
-def test_mul_failing(rotation):
-    _ = rotation * "cant-mult-by-this"
+def test_mul_failing():
+    r = Rotation.random()
+
+    with pytest.raises(TypeError):
+        _ = r * "cant-mult-by-this"
+
+    for i in [0, -2]:
+        with pytest.raises(AssertionError, match="Rotations can only be multiplied by"):
+            _ = r * i
 
 
 @pytest.mark.parametrize(
@@ -225,101 +224,6 @@ def test_neg(rotation, i, expected_i):
     rotation.improper = i
     r = -rotation
     assert np.allclose(r.improper, expected_i)
-
-
-@pytest.fixture()
-def e():
-    return np.random.rand(10, 3)
-
-
-class TestToFromEuler:
-    """These tests address .to_euler() and .from_euler()."""
-
-    def test_to_from_euler(self, e):
-        """Checks that going euler2quat2euler gives no change."""
-        r = Rotation.from_euler(e)
-        e2 = r.to_euler()
-        assert np.allclose(e, e2.data)
-
-    def test_mtex(self, e):
-        _ = Rotation.from_euler(e, direction="mtex")
-
-    def test_direction_values(self, e):
-        r_mtex = Rotation.from_euler(e, direction="mtex")
-        r_c2l = Rotation.from_euler(e, direction="crystal2lab")
-        r_l2c = Rotation.from_euler(e)
-        r_default = Rotation.from_euler(e)
-        assert np.allclose(r_default.data, r_l2c.data)
-        assert np.allclose(r_mtex.data, r_c2l.data)
-        assert np.allclose((r_l2c * r_c2l).angle.data, 0)
-
-    def test_direction_kwarg(self, e):
-        _ = Rotation.from_euler(e)
-
-    def test_direction_kwarg_dumb(self, e):
-        with pytest.raises(ValueError, match="The chosen direction is not one of "):
-            _ = Rotation.from_euler(e, direction="dumb_direction")
-
-    def test_edge_cases_to_euler(self):
-        x = np.sqrt(1 / 2)
-        q = Rotation(np.asarray([x, 0, 0, x]))
-        _ = q.to_euler()
-        q = Rotation(np.asarray([0, x, 0, 0]))
-        _ = q.to_euler()
-
-    def test_passing_degrees_warns(self):
-        with pytest.warns(UserWarning, match="Angles are assumed to be in radians, "):
-            r = Rotation.from_euler([90, 0, 0])
-            assert np.allclose(r.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
-
-    # TODO: Remove in 1.0
-    def test_from_euler_warns(self, e):
-        """Rotation.from_euler() warns only when "convention" argument
-        is passed.
-        """
-        # Does not warn
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            _ = Rotation.from_euler(e)
-
-        msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
-            r"To avoid this warning, please do not use `convention`. "
-            r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
-            "more details."
-        )
-        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
-            _ = Rotation.from_euler(e, convention="whatever")
-
-    # TODO: Remove in 1.0
-    def test_from_euler_convention_mtex(self, e):
-        """Passing convention="mtex" to Rotation.from_euler() works but
-        warns.
-        """
-        rot1 = Rotation.from_euler(e, direction="crystal2lab")
-        with pytest.warns(np.VisibleDeprecationWarning, match=r"Argument `convention`"):
-            rot2 = Rotation.from_euler(e, convention="mtex")
-        assert np.allclose(rot1.data, rot2.data)
-
-    # TODO: Remove in 1.0
-    def test_to_euler_convention_warns(self, e):
-        """Rotation.to_euler() warns only when "convention" argument is
-        passed.
-        """
-        rot1 = Rotation.from_euler(e)
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            rot2 = rot1.to_euler()
-
-        msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
-            r"To avoid this warning, please do not use `convention`. "
-            r"See the documentation of `to_euler\(\)` for more details."
-        )
-        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
-            rot3 = rot1.to_euler(convention="whatever")
-        assert np.allclose(rot2, rot3)
 
 
 @pytest.mark.parametrize(
@@ -606,65 +510,42 @@ def test_random_vonmises(shape, reference):
     assert isinstance(r, Rotation)
 
 
-class TestFromToMatrix:
-    def test_to_matrix(self):
-        r = Rotation([[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]])
-        om = np.array(
-            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
-        )
-        # Shapes are handled correctly
-        assert np.allclose(r.reshape(2, 2).to_matrix(), om.reshape(2, 2, 3, 3))
+class TestToFromEuler:
+    def test_from_euler(self, eu):
+        r = Rotation.from_euler(eu)
+        assert isinstance(r, Rotation)
 
-        r2 = Rotation(
+
+class TestFromToMatrix:
+    def test_from_matrix(self):
+        r = Rotation.from_matrix(
+            [np.identity(3), np.diag([1, -1, -1]), 2 * np.diag([1, -1, -1])]
+        )
+        assert isinstance(r, Rotation)
+        assert np.allclose(r.data, [[1, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]])
+
+    def test_to_matrix(self):
+        r1 = Rotation(
             [
-                [0.1, 0.2, 0.3, 0.4],
-                [0.5, 0.6, 0.7, 0.8],
-                [0.9, 0.91, 0.92, 0.93],
-                [1, 2, 3, 4],
+                [0.7071, 0.0, 0.0, 0.7071],
+                [0.5, -0.5, -0.5, 0.5],
+                [0.0, 0.0, 0.0, 1.0],
+                [0.5, 0.5, 0.5, 0.5],
             ]
         )
-        om_from_r2 = r2.to_matrix()
-        # Inverse equal to transpose
-        assert all(np.allclose(np.linalg.inv(i), i.T) for i in om_from_r2)
-        # Cross product of any two rows gives the third
-        assert all(np.allclose(np.cross(i[:, 0], i[:, 1]), i[:, 2]) for i in om_from_r2)
-        # Sum of squares of any column or row equals unity
-        assert np.allclose(np.sum(np.square(om_from_r2), axis=1), 1)  # Rows
-        assert np.allclose(np.sum(np.square(om_from_r2), axis=2), 1)  # Columns
-
-    def test_from_matrix(self):
-        r = Rotation([[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]])
-        om = np.array(
-            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
-        )
-        assert np.allclose(Rotation.from_matrix(om).data, r.data)
-        assert np.allclose(
-            Rotation.from_matrix(om.reshape((2, 2, 3, 3))).data, r.reshape(2, 2).data
-        )
-
-    def test_from_to_matrix(self):
-        om = np.array(
-            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
-        )
-        assert np.allclose(Rotation.from_matrix(om).to_matrix(), om)
-
-    def test_from_to_matrix2(self, e):
-        r = Rotation.from_euler(e.reshape((5, 2, 3)))
-        assert np.allclose(Rotation.from_matrix(r.to_matrix()).data, r.data)
-
-    def test_get_rotation_matrix_from_diffpy(self):
-        """Checking that getting rotation matrices from diffpy.structure
-        works without issue.
-        """
-        r = Rotation.from_matrix([i.R for i in sg225.symop_list])
-        assert not np.isnan(r.data).any()
+        om1 = r1.to_matrix()
+        r2 = Rotation.from_matrix(om1)
+        om2 = r2.to_matrix()
+        assert r1 == r2
+        assert np.allclose(om1, om2)
 
 
 class TestFromAxesAngles:
-    """These tests address Rotation.from_axes_angles()."""
-
     def test_from_axes_angles(self, rotations):
         axangle = AxAngle.from_rotation(rotations)
-        rotations2 = Rotation.from_neo_euler(axangle)
-        rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
-        assert np.allclose(rotations2.data, rotations3.data)
+        r1 = Rotation.from_neo_euler(axangle)
+        r2 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
+        assert isinstance(r1, Rotation)
+        assert isinstance(r2, Rotation)
+        #        assert np.allclose(r1.data, r2.data)
+        assert r1 == r2

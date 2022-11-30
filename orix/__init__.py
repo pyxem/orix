@@ -12,6 +12,7 @@ __credits__ = [
     "Duncan Johnstone",
     "Niels Cautaerts",
     "Austin Gerlt",
+    "Anders Christian Mathisen",
     "Simon Høgås",
     "Alexander Clausen",
 ]
