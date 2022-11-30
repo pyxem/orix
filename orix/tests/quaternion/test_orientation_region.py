@@ -149,7 +149,7 @@ def test_get_proper_point_groups(Gl, Gr):
     return None
 
 
-@pytest.mark.xfail(raises=NotImplementedError, strict=True)
 def test_get_proper_point_group_not_implemented():
     """Double inversion case not yet implemented"""
-    get_proper_groups(Csz, Csz)
+    with pytest.raises(NotImplementedError):
+        _ = get_proper_groups(Csz, Csz)
