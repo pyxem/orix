@@ -139,6 +139,7 @@ class CrystalMapPlot(Axes):
 
         Plot an arbitrary map property, also changing scalebar location
 
+        >>> _ = plt.figure()
         >>> ax = plt.subplot(projection="plot_map")
         >>> _ = ax.plot_map(xmap, xmap.dp, scalebar_properties={"location": 4})
 
@@ -366,6 +367,9 @@ class CrystalMapPlot(Axes):
         # Add colorbar
         divider = make_axes_locatable(self)
         cax = divider.append_axes(**kwargs)
+        # Suppress warning raised in colorbar(). See
+        # https://github.com/matplotlib/matplotlib/issues/21723.
+        cax.set_axisbelow(True)
         cbar = self.figure.colorbar(self.images[0], cax=cax)
 
         # Set label with padding
