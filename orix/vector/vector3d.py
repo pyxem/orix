@@ -480,7 +480,7 @@ class Vector3d(Object3d):
         angles
             The angle between the vectors, in radians.
         """
-        cosines = np.round(self.dot(other) / self.norm / other.norm, 12)
+        cosines = np.round(self.dot(other) / self.norm / other.norm, 10)
         return np.arccos(cosines)
 
     def rotate(

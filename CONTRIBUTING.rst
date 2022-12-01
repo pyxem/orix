@@ -59,7 +59,8 @@ globally (in the ``conda`` environment)::
     pip install --editable .[dev]
 
 This installs all necessary development dependencies, including those for running tests
-and building documentation.
+and building documentation. If you get an error message running the above in a ``zsh``
+shell, try wrapping the last part in a string, like ``'.[dev]'``.
 
 Code style
 ==========
@@ -199,6 +200,9 @@ Install necessary dependencies to build the documentation::
     :mod:`orix.data` module upon building the documentation. See the section on the
     :ref:`data module <adding-data-to-data-module>` for more details.
 
+If you get an error message running the above in a ``zsh`` shell, try wrapping the last
+part in a string, like ``'.[doc]'``.
+
 Then, build the documentation from the ``doc`` directory::
 
     cd doc
@@ -238,9 +242,10 @@ Here are some tips for writing tutorial notebooks:
   ``[Vector3d.zvector()](../reference/generated/orix.vector.Vector3d.zvector.rst)``.
   Remember to add the parentheses ``()`` if the reference points to a function or
   method.
-- Reference sections in other tutorial notebooks using this MD
+- Refer to to the examples section with ``[Examples section](../examples/index.rst)``.
+- Refer to sections in other tutorial notebooks using this MD
   ``[plotting](../tutorials/crystal_map.ipynb#Plotting)``.
-- Reference external APIs via standard MD like
+- Refer to external APIs via standard MD like
   ``[Lattice](https://www.diffpy.org/diffpy.structure/mod_lattice.html#diffpy.structure.lattice.Lattice)``.
 - The Sphinx gallery thumbnail used for a notebook is set by adding the
   ``nbsphinx-thumbnail`` tag to a code cell with an image output. The notebook must be
@@ -315,6 +320,9 @@ and compare resulting output values with known answers. Install necessary depend
 to run the tests::
 
    pip install --editable .[tests]
+
+If you get an error message running the above in a ``zsh`` shell, try wrapping the last
+part in a string, like ``'.[tests]'``.
 
 Some useful `fixtures <https://docs.pytest.org/en/latest/fixture.html>`__ are available
 in the ``conftest.py`` file.

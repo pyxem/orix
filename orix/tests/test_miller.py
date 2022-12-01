@@ -32,6 +32,10 @@ TETRAGONAL_LATTICE = Lattice(0.5, 0.5, 1, 90, 90, 90)
 TETRAGONAL_PHASE = Phase(
     point_group="4", structure=Structure(lattice=TETRAGONAL_LATTICE)
 )
+HEXAGONAL_PHASE = Phase(
+    point_group="6/mmm",
+    structure=Structure(lattice=Lattice(3.073, 3.073, 10.053, 90, 90, 120)),
+)
 CUBIC_PHASE = Phase(point_group="m-3m")
 
 
@@ -205,6 +209,24 @@ class TestMiller:
             unique=True, return_multiplicity=True, return_index=True
         )
         assert np.allclose(mult2, [6, 12, 8])
+
+        # Test from https://github.com/pyxem/orix/issues/404
+        m3 = Miller(UVTW=[1, -1, 0, 0], phase=HEXAGONAL_PHASE)
+        assert np.allclose(m3.multiplicity, 6)
+        # fmt: off
+        assert np.allclose(
+            m3.symmetrise(unique=True).data,
+            [
+                [ 4.6095, -2.6613, 0],
+                [ 0     ,  5.3226, 0],
+                [-4.6095, -2.6613, 0],
+                [-4.6095,  2.6613, 0],
+                [ 0     , -5.3226, 0],
+                [ 4.6095,  2.6613, 0],
+            ],
+            atol=1e-4,
+        )
+        # fmt: on
 
     def test_unique(self):
         # From the "Crystal geometry" notebook

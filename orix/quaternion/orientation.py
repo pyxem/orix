@@ -55,7 +55,9 @@ class Misorientation(Rotation):
 
     _symmetry = (C1, C1)
 
-    def __init__(self, data: np.ndarray, symmetry: Optional[Symmetry] = None):
+    def __init__(
+        self, data: np.ndarray, symmetry: Optional[Tuple[Symmetry, Symmetry]] = None
+    ):
         super().__init__(data)
         if symmetry:
             self.symmetry = symmetry

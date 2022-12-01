@@ -198,7 +198,7 @@ def ti_orientations(allow_download: bool = False) -> Orientation:
     >>> import matplotlib.pyplot as plt
     >>> from orix import data, plot
     >>> from orix.quaternion.symmetry import D6
-    >>> ori = data.ti_orientations()
+    >>> ori = data.ti_orientations(allow_download=True)
     >>> ori
     Orientation (193167,) 622
     [[ 0.3027  0.0869 -0.5083  0.8015]

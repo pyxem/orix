@@ -190,7 +190,7 @@ class CrystalMapPlot(Axes):
             data = crystal_map.get_map_data(value)
             data = data[self._data_slices]
 
-        # Squeeze 1-dimensions
+        # Remove 1-dimensions
         data = np.squeeze(data)
 
         # Legend
