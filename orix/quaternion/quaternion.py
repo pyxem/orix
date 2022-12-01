@@ -866,6 +866,11 @@ class Quaternion(Object3d):
         quaternion
             Quaternion(s).
 
+        Notes
+        -----
+        The Scipy rotation is inverted to be consistent with the Orix framework of
+        passive rotations.
+
         Examples
         --------
         >>> from orix.quaternion import Quaternion, Rotation
@@ -875,14 +880,14 @@ class Quaternion(Object3d):
         >>> ori = Quaternion.from_scipy_rotation(scipy_rot)
         >>> ori
         Quaternion (1,)
-        [[0.7071 0.     0.     0.7071]]
+        [[ 0.7071  0.      0.     -0.7071]]
         >>> Rotation.from_euler(euler, direction="crystal2lab")
         Rotation (1,)
         [[0.7071 0.     0.     0.7071]]
         """
-        b, c, d, a = rotation.inv().as_quat().T
+        matrix = rotation.inv().as_matrix()
 
-        return cls(np.column_stack([a, b, c, d]))
+        return cls.from_matrix(matrix=matrix)
 
     @classmethod
     def from_align_vectors(
