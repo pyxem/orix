@@ -204,6 +204,10 @@ def test_symmetry(symmetry, vector, expected):
     assert set(vector_calculated) == set(expected)
 
 
+def test_symmetry_repr():
+    assert repr(Oh).split("\n")[0] == "Symmetry (48,) m-3m"
+
+
 def test_same_symmetry_unique(all_symmetries):
     # test unique symmetry elements between two identical symmetries
     # are the symmetry itself
@@ -278,7 +282,6 @@ def test_is_proper(symmetry, expected):
     ],
 )
 def test_subgroups(symmetry, expected):
-    print(len(symmetry.subgroups))
     assert set(symmetry.subgroups) == set(expected)
 
 

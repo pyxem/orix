@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
+import warnings
 
 import dask.array as da
 from diffpy.structure.spacegroups import sg225
@@ -324,9 +325,10 @@ class TestToFromEuler:
         """Quaternion.from_euler() warns only when "convention" argument
         is passed.
         """
-        with pytest.warns(None) as record:
+        # No warning is raised
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             _ = Quaternion.from_euler(eu)
-        assert len(record) == 0
 
         msg = (
             r"Argument `convention` is deprecated and will be removed in version 1.0. "
@@ -342,21 +344,22 @@ class TestToFromEuler:
         """Passing convention="mtex" to Quaternion.from_euler() works but
         warns.
         """
-        quat1 = Quaternion.from_euler(eu, direction="crystal2lab")
+        q1 = Quaternion.from_euler(eu, direction="crystal2lab")
         with pytest.warns(np.VisibleDeprecationWarning, match=r"Argument `convention`"):
-            quat2 = Quaternion.from_euler(eu, convention="mtex")
-        assert np.allclose(quat1.data, quat2.data)
+            q2 = Quaternion.from_euler(eu, convention="mtex")
+        assert np.allclose(q1.data, q2.data)
 
     # TODO: Remove in 1.0
     def test_to_euler_convention_warns(self, eu):
         """Quaternion.to_euler() warns only when "convention" argument is
         passed.
         """
-        quat1 = Quaternion.from_euler(eu)
+        q1 = Quaternion.from_euler(eu)
 
-        with pytest.warns(None) as record:
-            quat2 = quat1.to_euler()
-        assert len(record) == 0
+        # No warning is raised
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            q2 = q1.to_euler()
 
         msg = (
             r"Argument `convention` is deprecated and will be removed in version 1.0. "
@@ -364,8 +367,8 @@ class TestToFromEuler:
             r"See the documentation of `to_euler\(\)` for more details."
         )
         with pytest.warns(np.VisibleDeprecationWarning, match=msg):
-            quat3 = quat1.to_euler(convention="whatever")
-        assert np.allclose(quat2, quat3)
+            q3 = q1.to_euler(convention="whatever")
+        assert np.allclose(q2, q3)
 
 
 class TestFromToMatrix:

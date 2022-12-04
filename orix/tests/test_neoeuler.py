@@ -59,7 +59,7 @@ def test_homochoric_from_rotation(rotation):
 @pytest.mark.parametrize(
     "rotation", [Rotation([1, 0, 0, 0]), Rotation([0.9239, 0.2209, 0.2209, 0.2209])]
 )
-@pytest.mark.xfail(strict=True, reason=AttributeError)
 def test_homochoric_angle(rotation):
     h = Homochoric.from_rotation(rotation)
-    _ = h.angle
+    with pytest.raises(AttributeError):
+        _ = h.angle

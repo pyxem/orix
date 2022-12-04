@@ -31,7 +31,8 @@ from orix.plot import CrystalMapPlot
 PLOT_MAP = "plot_map"
 
 
-# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
+# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1,
+#  after the warnings themselves are removed
 
 
 @pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
@@ -181,12 +182,13 @@ class TestCrystalMapPlot:
 class TestCrystalMapPlotUtilities:
     def test_init_projection(self):
         # Option 1
-        fig = plt.figure()
-        ax1 = fig.add_subplot(projection=PLOT_MAP)
+        _ = plt.figure()
+        ax1 = plt.subplot(projection=PLOT_MAP)
         assert isinstance(ax1, CrystalMapPlot)
 
-        # Option 2 (`label` to suppress warning of non-unique figure objects)
-        ax2 = plt.subplot(projection=PLOT_MAP, label="unique")
+        # Option 2 (recommended)
+        fig = plt.figure()
+        ax2 = fig.add_subplot(projection=PLOT_MAP)
         assert isinstance(ax2, CrystalMapPlot)
 
         plt.close("all")
@@ -416,12 +418,10 @@ class TestStatusBar:
         x, y = ax.transData.transform(data_idx)
 
         # Mock a mouse event
-        plt.matplotlib.backends.backend_agg.FigureCanvasBase.motion_notify_event(
-            f.canvas, x, y
-        )
         cursor_event = plt.matplotlib.backend_bases.MouseEvent(
             "motion_notify_event", f.canvas, x, y
         )
+        f.canvas.callbacks.process(cursor_event.name, cursor_event)
 
         # Call our custom cursor data function
         cursor_data = im.get_cursor_data(cursor_event)

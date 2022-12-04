@@ -83,7 +83,6 @@ def test_neg(vector):
         ([1, 2, 3], 0.5, [1.5, 2.5, 3.5]),
         ([1, 2, 3], [-1, 2], [[0, 1, 2], [3, 4, 5]]),
         ([1, 2, 3], np.array([-1, 1]), [[0, 1, 2], [2, 3, 4]]),
-        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
@@ -95,6 +94,16 @@ def test_add(vector, other, expected):
 
 
 @pytest.mark.parametrize(
+    "vector, other",
+    [([1, 2, 3], "dracula")],
+    indirect=["vector"],
+)
+def test_add_raises(vector, other):
+    with pytest.raises(TypeError):
+        _ = vector + other
+
+
+@pytest.mark.parametrize(
     "vector, other, expected",
     [
         ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[0, 0, 0], [4, 4, 4]]),
@@ -102,7 +111,6 @@ def test_add(vector, other, expected):
         ([1, 2, 3], 0.5, [0.5, 1.5, 2.5]),
         ([1, 2, 3], [-1, 2], [[2, 3, 4], [-1, 0, 1]]),
         ([1, 2, 3], np.array([-1, 1]), [[2, 3, 4], [0, 1, 2]]),
-        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
@@ -114,19 +122,24 @@ def test_sub(vector, other, expected):
 
 
 @pytest.mark.parametrize(
+    "vector, other",
+    [
+        ([1, 2, 3], "dracula"),
+    ],
+    indirect=["vector"],
+)
+def test_sub_raises(vector, other):
+    with pytest.raises(TypeError):
+        _ = vector - other
+
+
+@pytest.mark.parametrize(
     "vector, other, expected",
     [
-        pytest.param(
-            [1, 2, 3],
-            Vector3d([[1, 2, 3], [-3, -2, -1]]),
-            [[0, 0, 0], [4, 4, 4]],
-            marks=pytest.mark.xfail(raises=ValueError),
-        ),
         ([1, 2, 3], [4], [4, 8, 12]),
         ([1, 2, 3], 0.5, [0.5, 1.0, 1.5]),
         ([1, 2, 3], [-1, 2], [[-1, -2, -3], [2, 4, 6]]),
         ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]]),
-        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
@@ -138,14 +151,21 @@ def test_mul(vector, other, expected):
 
 
 @pytest.mark.parametrize(
+    "vector, other, error_type",
+    [
+        ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), ValueError),
+        ([1, 2, 3], "dracula", TypeError),
+    ],
+    indirect=["vector"],
+)
+def test_mul_raises(vector, other, error_type):
+    with pytest.raises(error_type):
+        _ = vector * other
+
+
+@pytest.mark.parametrize(
     "vector, other, expected",
     [
-        pytest.param(
-            [1, 2, 3],
-            Vector3d([[1, 2, 3], [-3, -2, -1]]),
-            [[0, 0, 0], [4, 4, 4]],
-            marks=pytest.mark.xfail(raises=ValueError),
-        ),
         ([4, 8, 12], [4], [1, 2, 3]),
         ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
         (
@@ -158,7 +178,6 @@ def test_mul(vector, other, expected):
             np.array([-1, 1]),
             [[-1, -2, -3], [1, 2, 3]],
         ),
-        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
@@ -167,11 +186,22 @@ def test_div(vector, other, expected):
     assert np.allclose(s1.data, expected)
 
 
-@pytest.mark.xfail
-def test_rdiv():
-    v = Vector3d([1, 2, 3])
-    other = 1
-    _ = other / v
+@pytest.mark.parametrize(
+    "vector, other, error_type",
+    [
+        ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), ValueError),
+        ([1, 2, 3], "dracula", TypeError),
+    ],
+    indirect=["vector"],
+)
+def test_div_raises(vector, other, error_type):
+    with pytest.raises(error_type):
+        _ = vector / other
+
+
+def test_rdiv_raises():
+    with pytest.raises(ValueError):
+        _ = 1 / Vector3d.xvector()
 
 
 def test_dot(vector, something):
@@ -427,22 +457,23 @@ def test_transpose_3d_shape(shape, expected_shape, axes):
     assert v2.shape == tuple(expected_shape)
 
 
-@pytest.mark.xfail(strict=True, reason=ValueError)
 def test_zero_perpendicular():
-    t = Vector3d(np.asarray([0, 0, 0]))
-    _ = t.perpendicular()
+    with pytest.raises(ValueError):
+        _ = Vector3d.zero((1,)).perpendicular
 
 
-@pytest.mark.xfail(strict=True, reason=TypeError)
 class TestSpareNotImplemented:
     def test_radd_notimplemented(self, vector):
-        "cantadd" + vector
+        with pytest.raises(TypeError):
+            _ = "cantadd" + vector
 
     def test_rsub_notimplemented(self, vector):
-        "cantsub" - vector
+        with pytest.raises(TypeError):
+            _ = "cantsub" - vector
 
     def test_rmul_notimplemented(self, vector):
-        "cantmul" * vector
+        with pytest.raises(TypeError):
+            _ = "cantmul" * vector
 
 
 class TestVector3dInversePoleDensityFunction:

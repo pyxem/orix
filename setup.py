@@ -30,7 +30,6 @@ extra_feature_requirements = {
         "numpydoc",
         "pytest                         >= 5.4",
         "pytest-cov                     >= 2.8.1",
-        "pytest-xdist",
     ],
 }
 extra_feature_requirements["dev"] = [
@@ -82,7 +81,7 @@ setup(
     # fmt: off
     install_requires=[
         "dask[array]",
-        "diffpy.structure       >= 3",
+        "diffpy.structure       >= 3.0.2",
         "h5py",
         "matplotlib             >= 3.3",
         "matplotlib-scalebar",

@@ -194,6 +194,6 @@ class TestS2Sampling:
         grid_2 = S2_sampling.sample_S2_hexagonal_mesh(resolution)
         assert np.allclose(grid.data, grid_2.data)
 
-    @pytest.mark.xfail(raises=NotImplementedError)
     def test_sample_s2_nonexistent(self):
-        S2_sampling.sample_S2(10, "batman")
+        with pytest.raises(NotImplementedError):
+            _ = S2_sampling.sample_S2(10, "batman")

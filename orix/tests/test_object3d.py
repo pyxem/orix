@@ -92,24 +92,35 @@ def object3d(request, test_object3d):
         (2, (3, 2)),
         (2, (4, 3, 2)),
         (2, (5, 4, 3, 2)),
-        pytest.param(2, (3,), marks=pytest.mark.xfail(raises=DimensionError)),
-        pytest.param(2, (2, 1), marks=pytest.mark.xfail(raises=DimensionError)),
-        pytest.param(2, (3, 3), marks=pytest.mark.xfail(raises=DimensionError)),
-        pytest.param(2, (3, 3, 3), marks=pytest.mark.xfail(raises=DimensionError)),
         (3, (3,)),
         (3, (4, 3)),
         (3, (5, 4, 3)),
         (3, (2, 5, 4, 3)),
-        pytest.param(3, (2,), marks=pytest.mark.xfail(raises=DimensionError)),
-        pytest.param(3, (3, 1), marks=pytest.mark.xfail(raises=DimensionError)),
-        pytest.param(3, (2, 2), marks=pytest.mark.xfail(raises=DimensionError)),
-        pytest.param(3, (2, 2, 4), marks=pytest.mark.xfail(raises=DimensionError)),
     ],
     indirect=["test_object3d", "data"],
 )
 def test_init(test_object3d, data):
     obj = test_object3d(data)
     assert np.allclose(obj.data, data)
+
+
+@pytest.mark.parametrize(
+    "test_object3d, data",
+    [
+        (2, (3,)),
+        (2, (2, 1)),
+        (2, (3, 3)),
+        (2, (3, 3, 3)),
+        (3, (2,)),
+        (3, (3, 1)),
+        (3, (2, 2)),
+        (3, (2, 2, 4)),
+    ],
+    indirect=["test_object3d", "data"],
+)
+def test_init_fails(test_object3d, data):
+    with pytest.raises(DimensionError):
+        _ = test_object3d(data)
 
 
 @pytest.mark.parametrize(
@@ -121,28 +132,29 @@ def test_init(test_object3d, data):
         (2, (5, 5, 2), 3),
         (2, (5, 5, 2), slice(0, 3)),
         (2, (5, 5, 2), (None, slice(1, 5))),
-        pytest.param(
-            2,
-            (5, 2),
-            (slice(1), slice(1), slice(1)),
-            marks=pytest.mark.xfail(raises=IndexError),
-        ),
-        pytest.param(2, (5, 2), slice(7, 8)),
-        pytest.param(
-            3,
-            (4, 4, 3),
-            (6, 6),
-            marks=pytest.mark.xfail(raises=IndexError, strict=True),
-        ),
+        (2, (5, 2), slice(7, 8)),
     ],
     indirect=["test_object3d", "data"],
 )
 def test_slice(test_object3d, data, key):
     obj = test_object3d(data)
     obj_subset = obj[key]
-    print(key)
     assert isinstance(obj_subset, test_object3d)
     assert np.allclose(obj_subset.data, data[key])
+
+
+@pytest.mark.parametrize(
+    "test_object3d, data, key, error_type",
+    [
+        (2, (5, 2), (slice(1), slice(1), slice(1)), IndexError),
+        (3, (4, 4, 3), (6, 6), IndexError),
+    ],
+    indirect=["test_object3d", "data"],
+)
+def test_slice_raises(test_object3d, data, key, error_type):
+    obj = test_object3d(data)
+    with pytest.raises(error_type):
+        _ = obj[key]
 
 
 def test_shape(object3d):
