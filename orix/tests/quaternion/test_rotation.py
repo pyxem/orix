@@ -18,6 +18,7 @@
 
 import numpy as np
 import pytest
+from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix.quaternion import Quaternion, Rotation
 from orix.vector import AxAngle, Vector3d
@@ -543,9 +544,23 @@ class TestFromToMatrix:
 class TestFromAxesAngles:
     def test_from_axes_angles(self, rotations):
         axangle = AxAngle.from_rotation(rotations)
+        rotations2 = Rotation.from_neo_euler(axangle)
+        rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
+        assert np.allclose(rotations2.data, rotations3.data)
         r1 = Rotation.from_neo_euler(axangle)
         r2 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
         assert isinstance(r1, Rotation)
         assert isinstance(r2, Rotation)
         #        assert np.allclose(r1.data, r2.data)
         assert r1 == r2
+
+
+class TestFromScipyRotation:
+    """These test address the Rotation.from_scipy_rotation()."""
+
+    def test_from_scipy_rotation(self):
+        euler = np.array([15, 32, 41]) * np.pi / 180
+        reference_rot = Rotation.from_euler(euler)
+        scipy_rot = SciPyRotation.from_euler("ZXZ", euler)  # bunge convention
+        quat = Rotation.from_scipy_rotation(scipy_rot)
+        assert np.allclose(reference_rot.angle_with(quat), 0)

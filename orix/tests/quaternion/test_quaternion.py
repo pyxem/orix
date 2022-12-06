@@ -280,6 +280,28 @@ class TestQuaternion:
         with pytest.raises(TypeError, match="Other must be Quaternion or Vector3d"):
             q._outer_dask(other)
 
+    def test_from_align_vectors(self):
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        ori = Quaternion.from_align_vectors(a, b)
+        assert type(ori) == Quaternion
+        assert np.allclose(
+            ori.data, np.array([[0.65328148, 0.70532785, -0.05012611, -0.27059805]])
+        )
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        _, e = Quaternion.from_align_vectors(a, b, return_rmsd=True)
+        assert e == 0
+        _, m = Quaternion.from_align_vectors(a, b, return_sensitivity=True)
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+        out = Quaternion.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+        ori1 = Quaternion.from_align_vectors(
+            [[2, -1, 0], [0, 0, 1]], [[3, 1, 0], [-1, 3, 0]]
+        )
+        assert np.allclose(ori1.data, ori.data)
+
 
 class TestToFromEuler:
     """These tests address .to_euler() and .from_euler()."""

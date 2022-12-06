@@ -12,6 +12,12 @@ Unreleased
 
 Added
 -----
+- Creation of ``Quaternion`` (s) (or instances of inheriting classes) from SciPy
+  ``Rotation`` (s).
+- Creation of one ``Quaternion`` or ``Rotation`` by aligning sets of vectors in two
+  reference frames, one ``Orientation`` by aligning sets of sample vectors and crystal
+  vectors, and one ``Misorientation`` by aligning two sets of crystal vectors in two
+  different crystals.
 - ``row`` and ``col`` properties to ``CrystalMap`` giving the row and column coordinate
   of each map point given by ``CrystalMap.shape``.
 - ``Rotation`` class methods ``from_neo_euler()``, ``from_axes_angles()``,

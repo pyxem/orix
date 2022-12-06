@@ -33,7 +33,7 @@ from tqdm import tqdm
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import AxAngle, NeoEuler, Vector3d
+from orix.vector import AxAngle, Miller, NeoEuler, Vector3d
 
 
 class Misorientation(Rotation):
@@ -377,6 +377,92 @@ class Misorientation(Rotation):
 
         return angles
 
+    @classmethod
+    def from_align_vectors(
+        cls,
+        other: Miller,
+        initial: Miller,
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
+    ) -> Misorientation:
+        """Return an estimated misorientation to optimally align two
+        sets of vectors, one set in each crystal.
+
+        This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
+        see that method for further explanations of parameters and
+        returns.
+
+        Parameters
+        ----------
+        other
+            Directions of shape ``(N,)`` in the other crystal.
+        initial
+            Directions of shape ``(N,)`` in the initial crystal.
+        weights
+            The relative importance of the different vectors.
+        return_rmsd
+            Whether to return the root mean square distance (weighted)
+            between ``other`` and ``initial`` after alignment.
+        return_sensitivity
+            Whether to return the sensitivity matrix.
+
+        Returns
+        -------
+        estimated misorientation
+            Best estimate of the ``misorientation`` that transforms
+            ``initial`` to ``other``. The symmetry of the
+            ``misorientation`` is inferred from the phase of ``other``
+            and ``initial``, if given.
+        rmsd
+            Returned when ``return_rmsd=True``.
+        sensitivity
+            Returned when ``return_sensitivity=True``.
+
+        Raises
+        ------
+        ValueError
+            If ``other`` and ``initial`` are not Miller instances.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Misorientation
+        >>> from orix.vector import Miller
+        >>> from orix.crystal_map.phase_list import Phase
+        >>> uvw1 = Miller(
+        ...    uvw=[[1, 0, 0], [0, 1, 0]], phase=Phase(point_group="m-3m")
+        ... )
+        >>> uvw2 = Miller(
+        ...    uvw=[[1, 0, 0], [0, 0, 1]], phase=Phase(point_group="m-3m")
+        ... )
+        >>> mori12 = Misorientation.from_align_vectors(uvw2, uvw1)
+        >>> mori12 * uvw1
+        Miller (2,), point group m-3m, uvw
+        [[1. 0. 0.]
+         [0. 0. 1.]]
+        """
+        if not isinstance(other, Miller) or not isinstance(initial, Miller):
+            raise ValueError(
+                "Arguments other and initial must both be of type Miller, "
+                f"but are of type {type(other)} and {type(initial)}."
+            )
+
+        out = super().from_align_vectors(
+            other=other,
+            initial=initial,
+            weights=weights,
+            return_rmsd=return_rmsd,
+            return_sensitivity=return_sensitivity,
+        )
+        out = list(out)
+
+        try:
+            out[0].symmetry = (initial.phase.point_group, other.phase.point_group)
+        except (AttributeError, ValueError):
+            pass
+
+        return out[0] if len(out) == 1 else out
+
 
 class Orientation(Misorientation):
     r"""Orientations represent misorientations away from a reference of
@@ -475,6 +561,90 @@ class Orientation(Misorientation):
         if symmetry:
             ori.symmetry = symmetry
         return ori
+
+    @classmethod
+    def from_align_vectors(
+        cls,
+        other: Miller,
+        initial: Vector3d,
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
+    ) -> Orientation:
+        """Return an estimated orientation to optimally align vectors in
+        the crystal and sample reference frames.
+
+        This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
+        see that method for further explanations of parameters and
+        returns.
+
+        Parameters
+        ----------
+        other
+            Directions of shape ``(N,)`` in the other crystal.
+        initial
+            Directions of shape ``(N,)`` in the initial crystal.
+        weights
+            The relative importance of the different vectors.
+        return_rmsd
+            Whether to return the root mean square distance (weighted)
+            between ``other`` and ``initial`` after alignment.
+        return_sensitivity
+            Whether to return the sensitivity matrix.
+
+        Returns
+        -------
+        estimated orientation
+            Best estimate of the ``orientation`` that transforms
+            ``initial`` to ``other``. The symmetry of the ``orientaiton``
+            is inferred form the point group of the phase of ``other``,
+            if given.
+        rmsd
+            Returned when ``return_rmsd=True``.
+        sensitivity
+            Returned when ``return_sensitivity=True``.
+
+        Raises
+        ------
+        ValueError
+            If ``other`` is not a Miller instance.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Orientation
+        >>> from orix.vector import Vector3d, Miller
+        >>> from orix.crystal_map.phase_list import Phase
+        >>> crystal_millers = Miller(
+        ...     uvw=[[0, 1 ,0], [1, 0, 0]], phase=Phase(point_group="m-3m")
+        ... )
+        >>> sample_vectors = Vector3d([[0, -1, 0], [0, 0, 1]])
+        >>> ori = Orientation.from_align_vectors(crystal_millers, sample_vectors)
+        >>> ori * sample_vectors
+        Vector3d (2,)
+        [[0. 1. 0.]
+         [1. 0. 0.]]
+        """
+        if not isinstance(other, Miller):
+            raise ValueError(
+                f"Argument other must be of type Miller, but has type {type(other)}"
+            )
+
+        out = Rotation.from_align_vectors(
+            other=other,
+            initial=initial,
+            weights=weights,
+            return_rmsd=return_rmsd,
+            return_sensitivity=return_sensitivity,
+        )
+        out = list(out)
+        out[0] = cls(out[0].data)
+
+        try:
+            out[0].symmetry = other.phase.point_group
+        except (AttributeError, ValueError):
+            pass
+
+        return out[0] if len(out) == 1 else out
 
     @classmethod
     def from_matrix(

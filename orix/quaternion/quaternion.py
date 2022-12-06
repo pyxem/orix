@@ -18,13 +18,14 @@
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Optional, Union
 import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
 import numpy as np
 import quaternion
+from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix._util import deprecated_argument
 from orix.base import Object3d
@@ -850,3 +851,110 @@ class Quaternion(Object3d):
         new_chunks = tuple(chunks1[:-1]) + tuple(chunks2[:-1]) + (-1,)
 
         return out.rechunk(new_chunks)
+
+    @classmethod
+    def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
+        """Return quaternion(s) from :class:`scipy.spatial.transform.Rotation`.
+
+        Parameters
+        ----------
+        rotation
+            SciPy rotation(s).
+
+        Returns
+        -------
+        quaternion
+            Quaternion(s).
+
+        Notes
+        -----
+        The Scipy rotation is inverted to be consistent with the Orix framework of
+        passive rotations.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Quaternion, Rotation
+        >>> from scipy.spatial.transform import Rotation as SciPyRotation
+        >>> euler = np.array([90, 0, 0]) * np.pi / 180
+        >>> scipy_rot = SciPyRotation.from_euler("ZXZ", euler)
+        >>> ori = Quaternion.from_scipy_rotation(scipy_rot)
+        >>> ori
+        Quaternion (1,)
+        [[ 0.7071  0.      0.     -0.7071]]
+        >>> Rotation.from_euler(euler, direction="crystal2lab")
+        Rotation (1,)
+        [[0.7071 0.     0.     0.7071]]
+        """
+        matrix = rotation.inv().as_matrix()
+
+        return cls.from_matrix(matrix=matrix)
+
+    @classmethod
+    def from_align_vectors(
+        cls,
+        other: Union[Vector3d, tuple, list],
+        initial: Union[Vector3d, tuple, list],
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
+    ) -> Quaternion:
+        """Return an estimated quaternion to optimally align two sets of
+        vectors.
+
+        This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
+        see that method for further explanations of parameters and
+        returns.
+
+        Parameters
+        ----------
+        other
+            Vectors of shape ``(N,)`` in the other reference frame.
+        initial
+            Vectors of shape ``(N,)`` in the initial reference frame.
+        weights
+            The relative importance of the different vectors.
+        return_rmsd
+            Whether to return the root mean square distance (weighted)
+            between ``other`` and ``initial`` after alignment.
+        return_sensitivity
+            Whether to return the sensitivity matrix.
+
+        Returns
+        -------
+        estimated quaternion
+            Best estimate of the quaternion
+            that transforms ``initial`` to ``other``.
+        rmsd
+            Returned when ``return_rmsd=True``.
+        sensitivity
+            Returned when ``return_sensitivity=True``.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Quaternion
+        >>> from orix.vector import Vector3d
+        >>> vecs1 = Vector3d([[1, 0, 0], [0, 1, 0]])
+        >>> vecs2 = Vector3d([[0, -1, 0], [0,0, 1]])
+        >>> quat12 = Quaternion.from_align_vectors(vecs2, vecs1)
+        >>> quat12 * vecs1
+        Vector3d (2,)
+        [[ 0. -1.  0.]
+         [ 0.  0.  1.]]
+        """
+        if not isinstance(other, Vector3d):
+            other = Vector3d(other)
+        if not isinstance(initial, Vector3d):
+            initial = Vector3d(initial)
+        vec1 = initial.unit.data
+        vec2 = other.unit.data
+
+        out = SciPyRotation.align_vectors(
+            vec1, vec2, weights=weights, return_sensitivity=return_sensitivity
+        )
+        out = list(out)
+        out[0] = cls.from_scipy_rotation(out[0])
+
+        if not return_rmsd:
+            del out[1]
+
+        return out[0] if len(out) == 1 else out

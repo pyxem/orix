@@ -18,12 +18,14 @@
 
 import warnings
 
+from diffpy.structure import Lattice, Structure
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
 # fmt: off
 # isort: off
+from orix.crystal_map import Phase
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
 from orix.quaternion.symmetry import (
@@ -40,7 +42,7 @@ from orix.quaternion.symmetry import (
     _groups,
     _proper_groups,
 )
-from orix.vector import AxAngle, Vector3d
+from orix.vector import AxAngle, Miller, Vector3d 
 # isort: on
 # fmt: on
 
@@ -354,6 +356,36 @@ class TestMisorientation:
         angle2 = p12.angle.min(axis=(0, 2, 3, 5))
         assert np.allclose(angle1, angle2)
 
+    def test_from_align_vectors(self):
+        phase = Phase(
+            point_group="4",
+            structure=Structure(lattice=Lattice(0.5, 0.5, 1, 90, 90, 90)),
+        )
+        a = Miller(uvw=[[2, -1, 0], [0, 0, 1]], phase=phase)
+        b = Miller(uvw=[[3, 1, 0], [-1, 3, 0]], phase=phase)
+        ori = Misorientation.from_align_vectors(a, b)
+        assert type(ori) == Misorientation
+        assert ori.symmetry == (phase.point_group,) * 2
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        a = Miller([[2, -1, 0], [0, 0, 1]])
+        b = Miller([[3, 1, 0], [-1, 3, 0]])
+        _, e = Misorientation.from_align_vectors(a, b, return_rmsd=True)
+        assert e == 0
+        _, m = Misorientation.from_align_vectors(a, b, return_sensitivity=True)
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+        out = Misorientation.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        with pytest.raises(
+            ValueError,
+            match="Arguments other and initial must both be of type Miller, "
+            "but are of type <class 'orix.vector.vector3d.Vector3d'> and "
+            "<class 'orix.vector.miller.Miller'>.",
+        ):
+            _ = Misorientation.from_align_vectors(a, b)
+
 
 def test_orientation_equality():
     # symmetries must also be the same to be equal
@@ -403,6 +435,34 @@ class TestOrientationInitialization:
         o3 = Orientation(o1.data, symmetry=Oh)
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
+
+    def test_from_align_vectors(self):
+        phase = Phase(
+            point_group="4",
+            structure=Structure(lattice=Lattice(0.5, 0.5, 1, 90, 90, 90)),
+        )
+        a = Miller(uvw=[[2, -1, 0], [0, 0, 1]], phase=phase)
+        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        ori = Orientation.from_align_vectors(a, b)
+        assert type(ori) == Orientation
+        assert ori.symmetry == phase.point_group
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        a = Miller([[2, -1, 0], [0, 0, 1]])
+        _, e = Orientation.from_align_vectors(a, b, return_rmsd=True)
+        assert e == 0
+        _, m = Orientation.from_align_vectors(a, b, return_sensitivity=True)
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+        out = Orientation.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        with pytest.raises(
+            ValueError,
+            match="Argument other must be of type Miller, but has type "
+            "<class 'orix.vector.vector3d.Vector3d'>",
+        ):
+            _ = Orientation.from_align_vectors(a, b)
 
     def test_from_neo_euler_symmetry(self):
         v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
