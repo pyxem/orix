@@ -48,6 +48,10 @@ Fixed
 -----
 - Reading of EDAX TSL .ang files with ten columns should now work.
 
+Changed
+-------
+- Only ASTAR .ang files return crystal maps with ``"nm"`` as scan unit.
+
 2022-10-25 - version 0.10.2
 ===========================
 
