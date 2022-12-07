@@ -281,26 +281,33 @@ class TestQuaternion:
             q._outer_dask(other)
 
     def test_from_align_vectors(self):
-        a = Vector3d([[2, -1, 0], [0, 0, 1]])
-        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
-        ori = Quaternion.from_align_vectors(a, b)
-        assert type(ori) == Quaternion
+        v1 = Vector3d([[2, -1, 0], [0, 0, 1]])
+        v2 = Vector3d([[3, 1, 0], [-1, 3, 0]])
+
+        q1 = Quaternion.from_align_vectors(v1, v2)
+        assert isinstance(q1, Quaternion)
         assert np.allclose(
-            ori.data, np.array([[0.65328148, 0.70532785, -0.05012611, -0.27059805]])
+            q1.data, np.array([[0.65328148, 0.70532785, -0.05012611, -0.27059805]])
         )
-        assert np.allclose(a.unit.data, (ori * b.unit).data)
-        _, e = Quaternion.from_align_vectors(a, b, return_rmsd=True)
-        assert e == 0
-        _, m = Quaternion.from_align_vectors(a, b, return_sensitivity=True)
-        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+        assert np.allclose(v1.unit.data, (q1 * v2.unit).data)
+
+        out = Quaternion.from_align_vectors(v1, v2, return_rmsd=True)
+        assert isinstance(out, tuple)
+        error = out[1]
+        assert error == 0
+
+        _, sens_mat = Quaternion.from_align_vectors(v1, v2, return_sensitivity=True)
+        assert np.allclose(sens_mat, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+
         out = Quaternion.from_align_vectors(
-            a, b, return_rmsd=True, return_sensitivity=True
+            v1, v2, return_rmsd=True, return_sensitivity=True
         )
         assert len(out) == 3
-        ori1 = Quaternion.from_align_vectors(
+
+        q2 = Quaternion.from_align_vectors(
             [[2, -1, 0], [0, 0, 1]], [[3, 1, 0], [-1, 3, 0]]
         )
-        assert np.allclose(ori1.data, ori.data)
+        assert np.allclose(q2.data, q1.data)
 
 
 class TestToFromEuler:
