@@ -646,9 +646,11 @@ class Orientation(Misorientation):
         Parameters
         ----------
         other
-            Directions of shape ``(n,)`` in the other crystal.
+            Crystal directions of shape ``(n,)`` in the crystal
+            reference frame.
         initial
-            Directions of shape ``(n,)`` in the initial crystal.
+            Sample directions of shape ``(n,)`` in the sample reference
+            frame.
         weights
             Relative importance of the different vectors.
         return_rmsd
