@@ -854,7 +854,8 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
-        """Return quaternion(s) from :class:`scipy.spatial.transform.Rotation`.
+        """Return quaternion(s) from
+        :class:`scipy.spatial.transform.Rotation`.
 
         Parameters
         ----------
@@ -868,25 +869,46 @@ class Quaternion(Object3d):
 
         Notes
         -----
-        The Scipy rotation is inverted to be consistent with the Orix framework of
-        passive rotations.
+        The SciPy rotation is inverted to be consistent with the orix
+        framework of passive rotations.
+
+        While orix represents quaternions with the scalar as the first
+        parameter, SciPy has the scalar as the last parameter.
 
         Examples
         --------
-        >>> from orix.quaternion import Quaternion, Rotation
+        >>> from orix.quaternion import Quaternion
+        >>> from orix.vector import Vector3d
         >>> from scipy.spatial.transform import Rotation as SciPyRotation
-        >>> euler = np.array([90, 0, 0]) * np.pi / 180
-        >>> scipy_rot = SciPyRotation.from_euler("ZXZ", euler)
-        >>> ori = Quaternion.from_scipy_rotation(scipy_rot)
-        >>> ori
+
+        SciPy and orix represent quaternions differently
+
+        >>> eu = np.deg2rad([90, 0, 0])
+        >>> r_scipy = SciPyRotation.from_euler("ZXZ", eu)
+        >>> r_scipy.as_quat()
+        array([0.        , 0.        , 0.70710678, 0.70710678])
+        >>> q1 = Quaternion.from_scipy_rotation(r_scipy)
+        >>> q1
         Quaternion (1,)
         [[ 0.7071  0.      0.     -0.7071]]
-        >>> Rotation.from_euler(euler, direction="crystal2lab")
-        Rotation (1,)
-        [[0.7071 0.     0.     0.7071]]
+        >>> ~q1
+        Quaternion (1,)
+        [[ 0.7071 -0.     -0.      0.7071]]
+
+        SciPy and orix rotate vectors differently since the SciPy
+        rotation is inverted when creating an orix quaternion
+
+        >>> v = [1, 1, 0]
+        >>> r_scipy.apply(v)
+        array([-1.,  1.,  0.])
+        >>> q1 * Vector3d(v)
+        Vector3d (1,)
+        [[ 1. -1.  0.]]
+        >>> ~q1 * Vector3d(v)
+        Vector3d (1,)
+        [[-1.  1.  0.]]
         """
         matrix = rotation.inv().as_matrix()
-
         return cls.from_matrix(matrix=matrix)
 
     @classmethod
