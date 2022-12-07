@@ -41,6 +41,13 @@ Fixed
 Security
 --------
 
+2022-12-08 - version 0.10.3
+===========================
+
+Fixed
+-----
+- Reading of EDAX TSL .ang files with ten columns should now work.
+
 2022-10-25 - version 0.10.2
 ===========================
 
