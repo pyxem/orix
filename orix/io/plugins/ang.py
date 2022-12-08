@@ -35,11 +35,6 @@ from orix.quaternion.symmetry import point_group_aliases
 
 __all__ = ["file_reader", "file_writer"]
 
-# MTEX has this format sorted out, check out their readers when fixing
-# issues and adapting to other versions of this file format in the future:
-# https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ang.m
-# https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ACOM.m
-
 # Plugin description
 format_name = "ang"
 file_extensions = ["ang"]
@@ -174,7 +169,8 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
     Returns
     -------
     vendor
-        Determined vendor (``"tsl"``, ``"astar"``, or ``"emsoft"``).
+        Determined vendor (``"tsl"``, ``"astar"``, ``"emsoft"`` or
+        ``"orix"``).
     column_names
         List of column names.
     """
@@ -207,12 +203,12 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
                 "iq",  # Image quality from Hough transform
                 "ci",  # Confidence index
                 "phase_id",
-                "unknown1",
+                "detector_signal",
                 "fit",  # Pattern fit
+                "unknown1",
                 "unknown2",
                 "unknown3",
                 "unknown4",
-                "unknown5",
             ],
             1: [
                 "euler1",
@@ -223,7 +219,7 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
                 "iq",
                 "ci",
                 "phase_id",
-                "unknown1",
+                "detector_signal",
                 "fit",
             ],
         },

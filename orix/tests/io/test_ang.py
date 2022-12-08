@@ -138,8 +138,8 @@ class TestAngReader:
         assert non_indexed_fraction == np.sum(~xmap.is_indexed)
 
         # Properties
-        prop_names = ["iq", "ci", "unknown1", "fit"]
-        prop_names += [f"unknown{i + 2}" for i in range(n_unknown_cols - 1)]
+        prop_names = ["iq", "ci", "detector_signal", "fit"]
+        prop_names += [f"unknown{i + 1}" for i in range(n_unknown_cols - 1)]
         assert list(xmap.prop.keys()) == prop_names
 
         # Coordinates
@@ -399,12 +399,12 @@ class TestAngReader:
                     "iq",
                     "ci",
                     "phase_id",
-                    "unknown1",
+                    "detector_signal",
                     "fit",
+                    "unknown1",
                     "unknown2",
                     "unknown3",
                     "unknown4",
-                    "unknown5",
                 ],
                 ANGFILE_TSL_HEADER,
             ),
