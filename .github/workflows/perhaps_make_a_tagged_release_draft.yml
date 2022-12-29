@@ -48,7 +48,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         draft: true
-        tag_name: v${{ env.BRANCH_VERSION }}
+        tag_name: orix-${{ env.BRANCH_VERSION }}
         release_name: orix ${{ env.BRANCH_VERSION }}
         commitish: main
         body_path: release_part_in_changelog.md

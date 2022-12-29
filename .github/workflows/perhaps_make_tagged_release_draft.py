@@ -73,7 +73,7 @@ if make_release:
     with open("release_part_in_changelog.rst", mode="w") as f:
         f.write(
             f"orix {branch_version_str} is a {release_type} release of orix, an open-source Python library for handling orientations, rotations and crystal symmetry.\n\n"
-            f"See below, the `changelog <https://orix.readthedocs.io/en/stable/changelog.html>`_ or the `GitHub changelog <https://github.com/pyxem/orix/compare/v{pypi_version_str}...v{branch_version_str}>`_ for all updates from the previous release.\n\n"
+            f"See below, the `changelog <https://orix.readthedocs.io/en/stable/changelog.html>`_ or the `GitHub changelog <https://github.com/pyxem/orix/compare/orix-{pypi_version_str}...orix-{branch_version_str}>`_ for all updates from the previous release.\n\n"
         )
         for line in content[changelog_start:changelog_end]:
             f.write(line)

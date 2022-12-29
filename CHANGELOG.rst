@@ -28,6 +28,9 @@ Added
 Changed
 -------
 - Bumped minimal version of ``diffpy.structure >= 3.0.2``.
+- Release tags on GitHub are now named e.g. ``orix-0.10.3`` instead of ``v0.10.3``. This
+  also changes the name of GitHub release tarballs (and zip archives) to e.g.
+  ``orix-0.10.3.tar.gz``.
 
 Deprecated
 ----------
