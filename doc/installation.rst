@@ -57,12 +57,20 @@ To install a specific version of orix (say version 0.8.1)::
 From source
 ===========
 
-To install orix from source, clone the repository from `GitHub
+The source code is hosted on `GitHub <https://github.com/pyxem/orix>`__. One way to
+install orix from source is to clone the repository from `GitHub
 <https://github.com/pyxem/orix>`__, and install with ``pip``::
 
     git clone https://github.com/pyxem/orix.git
     cd orix
     pip install --editable .
 
+The source can also be downloaded as tarballs or zip archives via links like
+`https://github.com/pyxem/orix/archive/v<major.minor.patch>/orix-<major.minor.patch>.tar.gz`_,
+where the version ``<major.minor.patch>`` can be e.g. ``0.10.2``, and ``tar.gz`` can be
+exchanged with ``zip``.
+
 See the :ref:`contributing guide <set-up-a-development-installation>` for how to set up
 a development installation and keep it up to date.
+
+.. _https://github.com/pyxem/orix/archive/v<major.minor.patch>/orix-<major.minor.patch>.tar.gz: https://github.com/pyxem/orix/archive/v<major.minor.patch>/orix-<major.minor.patch>.tar.gz
