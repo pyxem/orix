@@ -36,12 +36,6 @@ def rotations():
     return Rotation([(2, 4, 6, 8), (-1, -3, -5, -7)])
 
 
-@pytest.fixture()
-def eu():
-    return np.random.rand(10, 3)
-
-
-# TODO: Exchange for a multiphase header (change `phase_id` accordingly)
 ANGFILE_TSL_HEADER = (
     "# TEM_PIXperUM          1.000000\n"
     "# x-star                0.413900\n"
@@ -174,7 +168,7 @@ def temp_file_path(request):
                     [4.48549, 0.95242, 0.79150],
                     [1.34390, 0.27611, 0.82589],
                 ]
-            ),  # rotations as rows of Euler angle triplets
+            ),  # Rotations as rows of Euler angle triplets
         )
     ]
 )
@@ -193,7 +187,7 @@ def angfile_tsl(tmpdir, request):
     phase_id : numpy.ndarray
         Array of map size with phase IDs in header.
     n_unknown_columns : int
-        Number of columns with unknown values.
+        Number of columns with values of unknown nature.
     rotations : numpy.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
@@ -238,7 +232,8 @@ def angfile_tsl(tmpdir, request):
         comments="",
     )
 
-    return f
+    yield f
+    gc.collect()
 
 
 @pytest.fixture(
@@ -302,7 +297,8 @@ def angfile_astar(tmpdir, request):
         comments="",
     )
 
-    return f
+    yield f
+    gc.collect()
 
 
 @pytest.fixture(
@@ -358,7 +354,8 @@ def angfile_emsoft(tmpdir, request):
         comments="",
     )
 
-    return f
+    yield f
+    gc.collect()
 
 
 @pytest.fixture(
