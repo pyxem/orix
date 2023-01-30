@@ -30,6 +30,7 @@ extra_feature_requirements = {
         "numpydoc",
         "pytest                         >= 5.4",
         "pytest-cov                     >= 2.8.1",
+        "pytest-xdist",
     ],
 }
 extra_feature_requirements["dev"] = [

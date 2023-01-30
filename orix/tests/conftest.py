@@ -36,6 +36,11 @@ def rotations():
     return Rotation([(2, 4, 6, 8), (-1, -3, -5, -7)])
 
 
+@pytest.fixture()
+def eu():
+    return np.random.rand(10, 3)
+
+
 ANGFILE_TSL_HEADER = (
     "# TEM_PIXperUM          1.000000\n"
     "# x-star                0.413900\n"
