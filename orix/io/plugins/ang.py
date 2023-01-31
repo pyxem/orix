@@ -35,11 +35,6 @@ from orix.quaternion.symmetry import point_group_aliases
 
 __all__ = ["file_reader", "file_writer"]
 
-# MTEX has this format sorted out, check out their readers when fixing
-# issues and adapting to other versions of this file format in the future:
-# https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ang.m
-# https://github.com/mtex-toolbox/mtex/blob/develop/interfaces/loadEBSD_ACOM.m
-
 # Plugin description
 format_name = "ang"
 file_extensions = ["ang"]
@@ -117,15 +112,16 @@ def file_reader(filename: str) -> CrystalMap:
     )
 
     # Set which data points are not indexed
-    if vendor in ["orix", "tsl"]:
-        data_dict["phase_id"][np.where(data_dict["prop"]["ci"] == -1)] = -1
     # TODO: Add not-indexed convention for INDEX ASTAR
+    if vendor in ["orix", "tsl"]:
+        not_indexed = data_dict["prop"]["ci"] == -1
+        data_dict["phase_id"][not_indexed] = -1
 
     # Set scan unit
-    if vendor in ["tsl", "emsoft"]:
-        scan_unit = "um"
-    else:  # NanoMegas
+    if vendor == "astar":
         scan_unit = "nm"
+    else:
+        scan_unit = "um"
     data_dict["scan_unit"] = scan_unit
 
     # Create rotations
@@ -173,7 +169,8 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
     Returns
     -------
     vendor
-        Determined vendor (``"tsl"``, ``"astar"``, or ``"emsoft"``).
+        Determined vendor (``"tsl"``, ``"astar"``, ``"emsoft"`` or
+        ``"orix"``).
     column_names
         List of column names.
     """
@@ -194,77 +191,101 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
                 footprint_line = line
                 break
 
-    # Vendor column names
+    # Variants of vendor column names encountered in real data sets
     column_names = {
-        "unknown": [
-            "euler1",
-            "euler2",
-            "euler3",
-            "x",
-            "y",
-            "unknown1",
-            "unknown2",
-            "phase_id",
-        ],
-        "tsl": [
-            "euler1",
-            "euler2",
-            "euler3",
-            "x",
-            "y",
-            "iq",  # Image quality from Hough transform
-            "ci",  # Confidence index
-            "phase_id",
-            "unknown1",
-            "fit",  # Pattern fit
-            "unknown2",
-            "unknown3",
-            "unknown4",
-            "unknown5",
-        ],
-        "emsoft": [
-            "euler1",
-            "euler2",
-            "euler3",
-            "x",
-            "y",
-            "iq",  # Image quality from Krieger Lassen's method
-            "dp",  # Dot product
-            "phase_id",
-        ],
-        "astar": [
-            "euler1",
-            "euler2",
-            "euler3",
-            "x",
-            "y",
-            "ind",  # Correlation index
-            "rel",  # Reliability
-            "phase_id",
-            "relx100",  # Reliability x 100
-        ],
-        "orix": [
-            "euler1",
-            "euler2",
-            "euler3",
-            "x",
-            "y",
-            "iq",
-            "ci",
-            "phase_id",
-            "detector_signal",
-            "fit",
-        ],
+        "tsl": {
+            0: [
+                "euler1",
+                "euler2",
+                "euler3",
+                "x",
+                "y",
+                "iq",  # Image quality from Hough transform
+                "ci",  # Confidence index
+                "phase_id",
+                "detector_signal",
+                "fit",  # Pattern fit
+                "unknown1",
+                "unknown2",
+                "unknown3",
+                "unknown4",
+            ],
+            1: [
+                "euler1",
+                "euler2",
+                "euler3",
+                "x",
+                "y",
+                "iq",
+                "ci",
+                "phase_id",
+                "detector_signal",
+                "fit",
+            ],
+        },
+        "emsoft": {
+            0: [
+                "euler1",
+                "euler2",
+                "euler3",
+                "x",
+                "y",
+                "iq",  # Image quality from Krieger Lassen's method
+                "dp",  # Dot product
+                "phase_id",
+            ]
+        },
+        "astar": {
+            0: [
+                "euler1",
+                "euler2",
+                "euler3",
+                "x",
+                "y",
+                "ind",  # Correlation index
+                "rel",  # Reliability
+                "phase_id",
+                "relx100",  # Reliability x 100
+            ],
+        },
+        "orix": {
+            0: [
+                "euler1",
+                "euler2",
+                "euler3",
+                "x",
+                "y",
+                "iq",
+                "ci",
+                "phase_id",
+                "detector_signal",
+                "fit",
+            ],
+        },
+        "unknown": {
+            0: [
+                "euler1",
+                "euler2",
+                "euler3",
+                "x",
+                "y",
+                "unknown1",
+                "unknown2",
+                "phase_id",
+            ]
+        },
     }
 
-    n_cols_expected = len(column_names[vendor])
+    n_variants = len(column_names[vendor])
+    n_cols_expected = [len(column_names[vendor][k]) for k in range(n_variants)]
     if vendor == "orix" and "Column names" in footprint_line:
         # Append names of extra properties found, if any, in the orix
         # .ang file header
-        n_cols = len(column_names[vendor])
+        vendor_column_names = column_names[vendor][0]
+        n_cols = n_cols_expected[0]
         extra_props = footprint_line.split(":")[1].split(",")[n_cols:]
-        column_names[vendor] += [i.lstrip(" ").replace(" ", "_") for i in extra_props]
-    elif n_cols_file != n_cols_expected:
+        vendor_column_names += [i.lstrip(" ").replace(" ", "_") for i in extra_props]
+    elif n_cols_file not in n_cols_expected:
         warnings.warn(
             f"Number of columns, {n_cols_file}, in the file is not equal to "
             f"the expected number of columns, {n_cols_expected}, for the \n"
@@ -273,13 +294,17 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
             "phase_id, unknown3, unknown4, etc."
         )
         vendor = "unknown"
-        n_cols_unknown = len(column_names["unknown"])
-        if n_cols_file > n_cols_unknown:
-            # Add potential extra columns to properties
-            for i in range(n_cols_file - n_cols_unknown):
-                column_names["unknown"].append("unknown" + str(i + 3))
+        vendor_column_names = column_names[vendor][0]
+        n_cols = len(vendor_column_names)
+        if n_cols_file > n_cols:
+            # Add any extra columns as properties
+            for i in range(n_cols_file - n_cols):
+                vendor_column_names.append("unknown" + str(i + 3))
+    else:
+        idx = np.where(np.equal(n_cols_file, n_cols_expected))[0][0]
+        vendor_column_names = column_names[vendor][idx]
 
-    return vendor, column_names[vendor]
+    return vendor, vendor_column_names
 
 
 def _get_phases_from_header(

@@ -28,6 +28,7 @@ Added
 Changed
 -------
 - Bumped minimal version of ``diffpy.structure >= 3.0.2``.
+- Only ASTAR .ang files return crystal maps with ``"nm"`` as scan unit.
 
 Deprecated
 ----------
@@ -37,6 +38,7 @@ Removed
 
 Fixed
 -----
+- Reading of EDAX TSL .ang files with ten columns should now work.
 
 Security
 --------

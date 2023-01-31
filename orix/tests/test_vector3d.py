@@ -493,7 +493,7 @@ class TestVector3dInversePoleDensityFunction:
     def test_ipdf_plot_hemisphere_raises(self):
         with pytest.raises(ValueError, match="Hemisphere must be either "):
             v = Vector3d(np.random.randn(1_000, 3)).unit
-            fig = v.inverse_pole_density_function(
+            _ = v.inverse_pole_density_function(
                 symmetry=symmetry.Th,
                 return_figure=True,
                 colorbar=True,
