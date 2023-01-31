@@ -476,7 +476,7 @@ class Symmetry(Rotation):
             default marker style for reprojected vectors is "+". Values
             used for vector(s) on the visible hemisphere are used unless
             another value is passed here.
-        kwargs
+        **kwargs
             Keyword arguments passed to
             :meth:`~orix.plot.StereographicPlot.scatter`, which passes
             these on to :meth:`matplotlib.axes.Axes.scatter`.

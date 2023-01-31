@@ -513,24 +513,26 @@ def test_hash_persistence():
     assert all(h1a == h2a for h1a, h2a in zip(h1, h2))
 
 
-@pytest.mark.parametrize("symmetry", [C1, C4, Oh])
-def test_symmetry_plot(symmetry):
-    figure = symmetry.plot(return_figure=True)
-    assert isinstance(figure, plt.Figure)
-    assert len(figure.axes) == 1
-    ax = figure.axes[0]
-    num = 1 if symmetry.is_proper else 2
-    assert len(ax.collections) == num
+@pytest.mark.parametrize("pg", [C1, C4, Oh])
+def test_symmetry_plot(pg):
+    fig = pg.plot(return_figure=True)
+
+    assert isinstance(fig, plt.Figure)
+    assert len(fig.axes) == 1
+    ax = fig.axes[0]
+
     c0 = ax.collections[0]
-    assert len(c0.get_offsets()) == np.count_nonzero(~symmetry.improper)
+    assert len(c0.get_offsets()) == np.count_nonzero(~pg.improper)
     assert c0.get_label().lower() == "upper"
-    if num > 1:
+    if not pg.is_proper:
         c1 = ax.collections[1]
-        assert len(c1.get_offsets()) == np.count_nonzero(symmetry.improper)
+        assert len(c1.get_offsets()) == np.count_nonzero(pg.improper)
         assert c1.get_label().lower() == "lower"
+
     assert len(ax.texts) == 2
     assert ax.texts[0].get_text() == "$e_1$"
     assert ax.texts[1].get_text() == "$e_2$"
+
     plt.close("all")
 
 
