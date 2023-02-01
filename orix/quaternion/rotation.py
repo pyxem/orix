@@ -72,7 +72,7 @@ class Rotation(Quaternion):
     neo-Euler representations. See :class:`NeoEuler`.
     """
 
-    def __init__(self, data: Union[np.ndarray, Rotation, Quaternion, list, tuple]):
+    def __init__(self, data: Union[np.ndarray, Rotation, list, tuple]):
         super().__init__(data)
         self._data = np.concatenate((self.data, np.zeros(self.shape + (1,))), axis=-1)
         if isinstance(data, Rotation):
@@ -189,16 +189,21 @@ class Rotation(Quaternion):
     def from_axes_angles(
         cls,
         axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list],
+        angles: Union[np.ndarray, tuple, list, float],
+        degrees: bool = False,
     ) -> Rotation:
-        """Create rotation(s) from axis-angle pair(s).
+        """Initialize from axis-angle pair(s).
 
         Parameters
         ----------
         axes
-            Rotation axes.
+            Axes of rotation.
         angles
-            Rotation angles in radians.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
@@ -208,7 +213,7 @@ class Rotation(Quaternion):
         Examples
         --------
         >>> from orix.quaternion import Rotation
-        >>> r = Rotation.from_axes_angles((0, 0, -1), np.pi / 2)
+        >>> r = Rotation.from_axes_angles((0, 0, -1), 90, degrees=True)
         >>> r
         Rotation (1,)
         [[ 0.7071  0.      0.     -0.7071]]
@@ -217,7 +222,7 @@ class Rotation(Quaternion):
         --------
         from_neo_euler
         """
-        return super().from_axes_angles(axes, angles)
+        return super().from_axes_angles(axes, angles, degrees)
 
     # TODO: Remove **kwargs in 1.0.
     # Deprication decorator is implemented in Quaternion

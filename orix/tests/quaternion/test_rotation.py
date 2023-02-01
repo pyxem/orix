@@ -553,6 +553,11 @@ class TestFromAxesAngles:
         assert isinstance(r2, Rotation)
         assert r1 == r2
 
+        r3 = Rotation.from_axes_angles(
+            axangle.axis.data, np.rad2deg(axangle.angle), degrees=True
+        )
+        assert np.allclose(r3.data, r2.data)
+
 
 class TestFromScipyRotation:
     """These test address the Rotation.from_scipy_rotation()."""
