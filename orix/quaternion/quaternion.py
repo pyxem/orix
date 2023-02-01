@@ -260,16 +260,21 @@ class Quaternion(Object3d):
     def from_axes_angles(
         cls,
         axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list],
+        angles: Union[np.ndarray, tuple, list, float],
+        degrees: bool = False,
     ) -> Quaternion:
-        """Create unit quaternion(s) from axis-angle pair(s).
+        """Initialize from axis-angle pair(s).
 
         Parameters
         ----------
         axes
-            Rotation axes.
+            Axes of rotation.
         angles
-            Rotation angles in radians.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
@@ -279,7 +284,7 @@ class Quaternion(Object3d):
         Examples
         --------
         >>> from orix.quaternion import Quaternion
-        >>> q = Quaternion.from_axes_angles((0, 0, -1), np.pi / 2)
+        >>> q = Quaternion.from_axes_angles((0, 0, -1), 90, degrees=True)
         >>> q
         Quaternion (1,)
         [[ 0.7071  0.      0.     -0.7071]]
@@ -288,7 +293,7 @@ class Quaternion(Object3d):
         --------
         from_neo_euler
         """
-        axangle = AxAngle.from_axes_angles(axes, angles)
+        axangle = AxAngle.from_axes_angles(axes, angles, degrees)
         q = cls.from_neo_euler(axangle).unit
         return q
 
