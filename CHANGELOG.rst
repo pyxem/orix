@@ -24,8 +24,10 @@ Added
   ``from_euler()``, ``from_matrix()``, ``random()`` and ``identity()`` and methods
   ``to_euler()`` and ``to_matrix()`` are now available from the ``Quaternion`` class as
   well.
-- Possibility to pass degrees to the methods ``from_axes_angles()``,  ``from_euler()``
-  and ``to_euler()`` provided that ``degrees=True`` is passed.
+- Possibility to pass degrees to the ``Quaternion`` methods ``from_axes_angles()``,
+  ``from_euler()`` and ``to_euler()`` provided that ``degrees=True`` is passed.
+- Possibility to pass degrees to the ``Vector3d`` methods ``from_polar()`` and
+  ``to_polar()`` provided that ``degrees=True`` is passed.
 
 Changed
 -------

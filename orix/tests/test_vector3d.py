@@ -253,11 +253,12 @@ def test_cross_error(vector, number):
     ],
 )
 def test_polar(azimuth, polar, radial, expected):
-    assert np.allclose(
-        Vector3d.from_polar(azimuth=azimuth, polar=polar, radial=radial).data,
-        expected.data,
-        atol=1e-5,
+    v1 = Vector3d.from_polar(azimuth, polar, radial)
+    v2 = Vector3d.from_polar(
+        np.rad2deg(azimuth), np.rad2deg(polar), radial, degrees=True
     )
+    assert np.allclose(v1.data, expected.data, atol=1e-5)
+    assert np.allclose(v2.data, v1.data, atol=1e-5)
 
 
 @pytest.mark.parametrize(
@@ -597,7 +598,7 @@ class TestVector3dPoleDensityFunction:
     def test_pdf_hemisphere_raises(self):
         v = Vector3d(np.random.randn(100, 3)).unit
         with pytest.raises(ValueError, match=r"Hemisphere must be either "):
-            fig1 = v.pole_density_function(return_figure=True, hemisphere="test")
+            _ = v.pole_density_function(return_figure=True, hemisphere="test")
 
 
 class TestSphericalCoordinates:
@@ -613,6 +614,11 @@ class TestSphericalCoordinates:
         assert np.allclose(polar.data, polar_desired)
         assert np.allclose(azimuth.data, azimuth_desired)
         assert np.allclose(radial.data, radial_desired)
+
+        azimuth2, polar2, radial2 = v.to_polar(degrees=True)
+        assert np.allclose(polar2.data, np.rad2deg(polar_desired))
+        assert np.allclose(azimuth2.data, np.rad2deg(azimuth_desired))
+        assert np.allclose(radial2.data, radial_desired)
 
     def test_polar_loop(self, vector):
         azimuth, polar, radial = vector.to_polar()
@@ -722,10 +728,10 @@ class TestPlotting:
             self.v.scatter(projection="equal_angle")
 
     def test_scatter_reproject(self):
-        o = Orientation.from_axes_angles((-1, 8, 1), np.deg2rad(65))
+        o = Orientation.from_axes_angles((-1, 8, 1), 65, degrees=True)
         v = (symmetry.Oh * o) * Vector3d.zvector()
         # normal scatter: half of the vectors are shown
-        fig1 = v.scatter(hemisphere="upper", reproject=False, return_figure=True)
+        fig1 = v.scatter(hemisphere="upper", return_figure=True)
         assert (
             sum(len(c.get_offsets()) for c in fig1.axes[0].collections) == v.size // 2
         )

@@ -407,20 +407,28 @@ class Vector3d(Object3d):
 
     @classmethod
     def from_polar(
-        cls, azimuth: np.ndarray, polar: np.ndarray, radial: float = 1.0
+        cls,
+        azimuth: Union[np.ndarray, list, tuple, float],
+        polar: Union[np.ndarray, list, tuple, float],
+        radial: float = 1.0,
+        degrees: bool = False,
     ) -> Vector3d:
-        """Create a :class:`Vector3d` from spherical coordinates
-        according to the ISO 31-11 standard
-        :cite:`weisstein2005spherical`.
+        """Initialize from spherical coordinates according to the ISO
+        31-11 standard :cite:`weisstein2005spherical`.
 
         Parameters
         ----------
         azimuth
-            The azimuth angle, in radians.
+            Azimuth angle(s) in radians (``degrees=False``) or degrees
+            (``degrees=True``).
         polar
-            The polar angle, in radians.
+            Polar angle(s) in radians (``degrees=False``) or degrees
+            (``degrees=True``).
         radial
-            The radial distance. Defaults to 1 to produce unit vectors.
+            Radial distance. Defaults to 1 to produce unit vectors.
+        degrees
+            If ``True``, the angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
@@ -428,6 +436,9 @@ class Vector3d(Object3d):
         """
         azimuth = np.atleast_1d(azimuth)
         polar = np.atleast_1d(polar)
+        if degrees:
+            azimuth = np.deg2rad(azimuth)
+            polar = np.deg2rad(polar)
         sin_polar = np.sin(polar)
         x = np.cos(azimuth) * sin_polar
         y = np.sin(azimuth) * sin_polar
@@ -589,22 +600,36 @@ class Vector3d(Object3d):
         axis = tuple(range(self.ndim))
         return self.__class__(self.data.mean(axis=axis))
 
-    def to_polar(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def to_polar(
+        self, degrees: bool = False
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""Return the azimuth :math:`\phi`, polar :math:`\theta`, and
-        radial :math:`r` spherical coordinates, the angles in radians.
-        The coordinates are defined as in the ISO 31-11 standard
-        :cite:`weisstein2005spherical`.
+        radial :math:`r` spherical coordinates defined as in the ISO
+        31-11 standard :cite:`weisstein2005spherical`.
+
+        Parameters
+        ----------
+        degrees
+            If ``True``, the given angles are returned in degrees.
+            Default is ``False``.
 
         Returns
         -------
         azimuth
-            Azimuth angles.
+            Azimuth angles in radians (``degrees=False``) or degrees
+            (``degrees=True``).
         polar
-            Polar angles.
+            Polar angles in radians (``degrees=False``) or degrees
+            (``degrees=True``).
         radial
             Radial values.
         """
-        return self.azimuth, self.polar, self.radial
+        azimuth = self.azimuth
+        polar = self.polar
+        if degrees:
+            azimuth = np.rad2deg(azimuth)
+            polar = np.rad2deg(polar)
+        return azimuth, polar, self.radial
 
     def in_fundamental_sector(self, symmetry: "Symmetry") -> Vector3d:
         """Project vectors to a symmetry's fundamental sector (inverse
