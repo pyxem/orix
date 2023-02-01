@@ -24,6 +24,8 @@ Added
   ``from_euler()``, ``from_matrix()``, ``random()`` and ``identity()`` and methods
   ``to_euler()`` and ``to_matrix()`` are now available from the ``Quaternion`` class as
   well.
+- Possibility to pass degrees to ``from_axes_angles()`` method provided that
+  ``degrees=True`` is passed.
 
 Changed
 -------
