@@ -24,6 +24,9 @@ Added
   ``from_euler()``, ``from_matrix()``, ``random()`` and ``identity()`` and methods
   ``to_euler()`` and ``to_matrix()`` are now available from the ``Quaternion`` class as
   well.
+- ``StereographicPlot.restrict_to_sector()`` allows two new parameters to control the
+  amount of padding (in degrees in stereographic projection) and whether to show the
+  sector edges. Keyword arguments can also be passed on to Matplotlib's ``PathPatch()``.
 
 Changed
 -------
