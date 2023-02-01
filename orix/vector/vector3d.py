@@ -384,7 +384,7 @@ class Vector3d(Object3d):
         return dots
 
     def cross(self, other: Vector3d) -> Vector3d:
-        """The cross product of a vector with another vector.
+        """Return the cross product of a vector with another vector.
 
         Vectors must have compatible shape for broadcasting to work.
 
@@ -407,9 +407,12 @@ class Vector3d(Object3d):
 
     @classmethod
     def from_polar(
-        cls, azimuth: np.ndarray, polar: np.ndarray, radial: float = 1.0
+        cls,
+        azimuth: Union[np.ndarray, list, tuple],
+        polar: [np.ndarray, list, tuple],
+        radial: float = 1.0,
     ) -> Vector3d:
-        """Create a :class:`Vector3d` from spherical coordinates
+        """Return a :class:`Vector3d` from spherical coordinates
         according to the ISO 31-11 standard
         :cite:`weisstein2005spherical`.
 
