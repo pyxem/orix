@@ -12,8 +12,8 @@ Unreleased
 
 Added
 -----
-- Creation of ``Quaternion`` (s) (or instances of inheriting classes) from SciPy
-  ``Rotation`` (s).
+- Creation of one or more ``Quaternion`` (or instances of inheriting classes) from one
+  or more SciPy ``Rotation``.
 - Creation of one ``Quaternion`` or ``Rotation`` by aligning sets of vectors in two
   reference frames, one ``Orientation`` by aligning sets of sample vectors and crystal
   vectors, and one ``Misorientation`` by aligning two sets of crystal vectors in two
@@ -48,7 +48,7 @@ Security
 
 Fixed
 -----
-- ``Miller.symmetrise(unique=True)`` return the correct number of symmetrically
+- ``Miller.symmetrise(unique=True)`` returns the correct number of symmetrically
   equivalent but unique vectors, by rounding to 10 instead of 12 decimals prior to
   finding the unique vectors with NumPy.
 

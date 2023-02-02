@@ -22,6 +22,7 @@ from diffpy.structure import Lattice, Structure
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from scipy.spatial.transform import Rotation as SciPyRotation
 
 # fmt: off
 # isort: off
@@ -386,6 +387,31 @@ class TestMisorientation:
         ):
             _ = Misorientation.from_align_vectors(a, b)
 
+    def test_from_scipy_rotation(self):
+        """Assert correct type and symmetry is returned and that the
+        misorientation rotates crystal directions correctly.
+        """
+        r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+
+        mori1 = Misorientation.from_scipy_rotation(r_scipy)
+        assert isinstance(mori1, Misorientation)
+        assert mori1.symmetry[0].name == "1"
+        assert mori1.symmetry[1].name == "1"
+
+        mori2 = Misorientation.from_scipy_rotation(r_scipy, (Oh, Oh))
+        assert np.allclose(mori2.symmetry[0].data, Oh.data)
+        assert np.allclose(mori2.symmetry[1].data, Oh.data)
+
+        uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
+        uvw2 = mori2 * uvw
+        assert np.allclose(uvw2.data, [1, -1, 0])
+        uvw3 = ~mori2 * uvw
+        assert np.allclose(uvw3.data, [-1, 1, 0])
+
+        # Raises
+        with pytest.raises(TypeError, match="Value must be a 2-tuple of"):
+            _ = Misorientation.from_scipy_rotation(r_scipy, Oh)
+
 
 def test_orientation_equality():
     # symmetries must also be the same to be equal
@@ -504,6 +530,27 @@ class TestOrientationInitialization:
         assert np.allclose(m12_1.data, m12_2.data)
         assert np.allclose(o3_1.data, o3_2.data)
         assert np.allclose(o3_1.data, [1, 0, 0, 0])
+
+    def test_from_scipy_rotation(self):
+        """Assert correct type and symmetry is returned and that the
+        misorientation rotates crystal directions correctly.
+        """
+        r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+
+        ori1 = Orientation.from_scipy_rotation(r_scipy)
+        assert isinstance(ori1, Orientation)
+        assert ori1.symmetry.name == "1"
+
+        ori2 = Orientation.from_scipy_rotation(r_scipy, Oh)
+        assert np.allclose(ori2.symmetry.data, Oh.data)
+
+        uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
+        uvw2 = ori2 * uvw
+        assert np.allclose(uvw2.data, [1, -1, 0])
+
+        # Raises an appropriate error message
+        with pytest.raises(TypeError, match="Value must be an instance of"):
+            _ = Orientation.from_scipy_rotation(r_scipy, (Oh, Oh))
 
     # TODO: Remove in 1.0
     def test_from_euler_warns(self):

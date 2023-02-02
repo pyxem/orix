@@ -551,7 +551,6 @@ class TestFromAxesAngles:
         r2 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
         assert isinstance(r1, Rotation)
         assert isinstance(r2, Rotation)
-        #        assert np.allclose(r1.data, r2.data)
         assert r1 == r2
 
 
@@ -559,8 +558,18 @@ class TestFromScipyRotation:
     """These test address the Rotation.from_scipy_rotation()."""
 
     def test_from_scipy_rotation(self):
-        euler = np.array([15, 32, 41]) * np.pi / 180
+        euler = np.deg2rad([15, 32, 41])
         reference_rot = Rotation.from_euler(euler)
-        scipy_rot = SciPyRotation.from_euler("ZXZ", euler)  # bunge convention
+        scipy_rot = SciPyRotation.from_euler("ZXZ", euler)  # Bunge convention
         quat = Rotation.from_scipy_rotation(scipy_rot)
         assert np.allclose(reference_rot.angle_with(quat), 0)
+
+
+class TestFromAlignVectors:
+    def test_from_align_vectors(self):
+        v1 = Vector3d([[2, -1, 0], [0, 0, 1]])
+        v2 = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        r12 = Rotation.from_align_vectors(v2, v1)
+        assert isinstance(r12, Rotation)
+        assert np.allclose((r12 * v1).unit.data, v2.unit.data)
+        assert np.allclose((~r12 * v2).unit.data, v1.unit.data)
