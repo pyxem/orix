@@ -231,26 +231,32 @@ class Rotation(Quaternion):
         cls,
         euler: Union[np.ndarray, tuple, list],
         direction: str = "lab2crystal",
+        degrees: bool = False,
         **kwargs,
     ) -> Rotation:
-        """Create rotation(s) from Euler angle set(s) in radians
+        """Initialize from Euler angle set(s)
         :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
         euler
-            Euler angles in radians in the Bunge convention.
+            Euler angles in radians (``degrees=False``) or in degrees
+            (``degrees=True``) in the Bunge convention.
         direction
             Direction of the transformation, either ``"lab2crystal"``
             (default) or the inverse, ``"crystal2lab"``. The former is
             the Bunge convention. Passing ``"MTEX"`` equals the latter.
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
         r
             Rotation(s).
         """
-        r = super().from_euler(euler=euler, direction=direction, **kwargs)
+        euler = np.asanyarray(euler)
+        r = super().from_euler(euler, direction=direction, degrees=degrees, **kwargs)
         r.improper = np.zeros(euler.shape[:-1])
         return r
 
@@ -701,18 +707,26 @@ class Rotation(Quaternion):
         return super().to_matrix()
 
     # TODO: Remove **kwargs in 1.0
-    def to_euler(self, **kwargs) -> np.ndarray:
+    def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
         r"""Return the rotations as Euler angles in the Bunge convention
         :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        degrees
+            If ``True``, the given angles are returned in degrees.
+            Default is ``False``.
 
         Returns
         -------
         eu
-            Array of Euler angles in radians, in the ranges
+        eu
+            Array of Euler angles in radians (``degrees=False``) or
+            degrees (``degrees=True``), in the ranges
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
-        return super().to_euler(**kwargs)
+        return super().to_euler(degrees, **kwargs)
 
     def _differentiators(self) -> np.ndarray:
         a = self.a

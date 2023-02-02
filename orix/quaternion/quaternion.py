@@ -304,19 +304,24 @@ class Quaternion(Object3d):
         cls,
         euler: Union[np.ndarray, tuple, list],
         direction: str = "lab2crystal",
+        degrees: bool = False,
         **kwargs,
     ) -> Quaternion:
-        """Create unit quaternion(s) from Euler angle set(s) in radians
+        """Initialize from Euler angle set(s)
         :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
         euler
-            Euler angles in radians in the Bunge convention.
+            Euler angles in radians (``degrees=False``) or in degrees
+            (``degrees=True``) in the Bunge convention.
         direction
             Direction of the transformation, either ``"lab2crystal"``
             (default) or the inverse, ``"crystal2lab"``. The former is
             the Bunge convention. Passing ``"MTEX"`` equals the latter.
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
@@ -341,12 +346,13 @@ class Quaternion(Object3d):
                 f"The chosen direction is not one of the allowed options {directions}"
             )
 
+        if degrees:
+            euler = np.deg2rad(euler)
+
         eu = np.asarray(euler)
         if np.any(np.abs(eu) > 4 * np.pi):
-            warnings.warn(
-                "Angles are assumed to be in radians, but degrees might have been "
-                "passed."
-            )
+            warnings.warn("Angles are quite high, did you forget to set degrees=True?")
+
         n = eu.shape[:-1]
         alpha, beta, gamma = eu[..., 0], eu[..., 1], eu[..., 2]
 
@@ -426,8 +432,7 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
-        """Return quaternion(s) from
-        :class:`scipy.spatial.transform.Rotation`.
+        """Initialize from :class:`scipy.spatial.transform.Rotation`.
 
         Parameters
         ----------
@@ -495,8 +500,8 @@ class Quaternion(Object3d):
         Tuple[Quaternion, np.ndarray],
         Tuple[Quaternion, float, np.ndarray],
     ]:
-        """Return an estimated quaternion to optimally align two sets of
-        vectors.
+        """Initialize an estimated quaternion to optimally align two
+        sets of vectors.
 
         This method wraps
         :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
@@ -769,14 +774,21 @@ class Quaternion(Object3d):
 
     # TODO: Remove decorator and **kwargs in 1.0
     @deprecated_argument("convention", since="0.9", removal="1.0")
-    def to_euler(self, **kwargs) -> np.ndarray:
+    def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
         r"""Return the normalized quaternions as Euler angles in the
         Bunge convention :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        degrees
+            If ``True``, the given angles are returned in degrees.
+            Default is ``False``.
 
         Returns
         -------
         eu
-            Array of Euler angles in radians, in the ranges
+            Array of Euler angles in radians (``degrees=False``) or
+            degrees (``degrees=True``), in the ranges
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
@@ -833,6 +845,9 @@ class Quaternion(Object3d):
         # Reduce Euler angles to definition range
         eu[np.abs(eu) < _FLOAT_EPS] = 0
         eu = np.where(eu < 0, np.mod(eu + 2 * np.pi, (2 * np.pi, np.pi, 2 * np.pi)), eu)
+
+        if degrees:
+            eu = np.rad2deg(eu)
 
         return eu
 

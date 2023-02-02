@@ -596,14 +596,16 @@ class Orientation(Misorientation):
         euler: np.ndarray,
         symmetry: Optional[Symmetry] = None,
         direction: str = "lab2crystal",
+        degrees: bool = False,
         **kwargs,
     ) -> Orientation:
-        """Return orientation(s) from an array of Euler angles.
+        """Initialize from an array of Euler angles.
 
         Parameters
         ----------
         euler
-            Euler angles in the Bunge convention.
+            Euler angles in radians (``degrees=False``) or in degrees
+            (``degrees=True``) in the Bunge convention.
         symmetry
             Symmetry of orientation(s). If not given (default), no
             symmetry is set.
@@ -611,13 +613,16 @@ class Orientation(Misorientation):
             ``"lab2crystal"`` (default) or ``"crystal2lab"``.
             ``"lab2crystal"`` is the Bunge convention. If ``"MTEX"`` is
             provided then the direction is ``"crystal2lab"``.
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
         ori
             Orientations.
         """
-        ori = super().from_euler(euler=euler, direction=direction, **kwargs)
+        ori = super().from_euler(euler, direction=direction, degrees=degrees, **kwargs)
         if symmetry:
             ori.symmetry = symmetry
         return ori

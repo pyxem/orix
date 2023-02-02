@@ -443,6 +443,9 @@ class TestOrientationInitialization:
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
 
+        o4 = Orientation.from_euler(np.rad2deg(euler), degrees=True)
+        assert np.allclose(o4.data, o1.data)
+
     def test_from_matrix_symmetry(self):
         om = np.array(
             [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
@@ -509,7 +512,7 @@ class TestOrientationInitialization:
         axangle = AxAngle.from_axes_angles(axis, angle)
         o1 = Orientation.from_neo_euler(axangle, Oh)
         o2 = Orientation.from_axes_angles(axis, angle, Oh)
-        assert np.allclose(o1.to_euler(), (3 * np.pi / 4, np.pi / 2, 5 * np.pi / 4))
+        assert np.allclose(o1.to_euler(degrees=True), [135, 90, 225])
         assert np.allclose(o1.data, o2.data)
         assert o1.symmetry.name == o2.symmetry.name == "m-3m"
         assert np.allclose(o1.symmetry.data, o2.symmetry.data)
@@ -748,7 +751,7 @@ class TestOrientation:
         vx = Vector3d.xvector()
         vz = Vector3d.zvector()
 
-        ori = Orientation.from_euler(np.radians((325, 48, 163)), symmetry=Oh)
+        ori = Orientation.from_euler((325, 48, 163), symmetry=Oh, degrees=True)
 
         # Returned figure has the expected default properties
         fig_size = (5, 5)
