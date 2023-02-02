@@ -22,17 +22,17 @@ phase = Phase(
 )
 
 # Define a reference orientation (goal)
-ori_ref = Orientation.from_axes_angles([1, 1, 1], np.pi / 4, phase.point_group)
+o_ref = Orientation.from_axes_angles([1, 1, 1], 45, phase.point_group, degrees=True)
 
 # Specify two crystal directions (any will do)
-vec_c = Miller(uvw=[[2, 1, 1], [1, 3, 1]], phase=phase)
+v_c = Miller(uvw=[[2, 1, 1], [1, 3, 1]], phase=phase)
 
 # Find out where these directions in the reference orientation (crystal)
 # point in the sample reference frame
-vec_r = Vector3d(~ori_ref * vec_c)
+v_r = Vector3d(~o_ref * v_c)
 
 # Plot the reference orientation sample directions as empty circles
-fig = vec_r.scatter(
+fig = v_r.scatter(
     ec=["r", "b"],
     s=100,
     fc="none",
@@ -45,17 +45,16 @@ fig.tight_layout()
 # Add some randomness to the sample directions (0 error magnitude gives
 # exact result)
 err_magnitude = 0.1
-vec_err = Vector3d(np.random.normal(0, err_magnitude, 3))
-vec_r_err = vec_r + vec_err
-angle_err = np.rad2deg(vec_r_err.angle_with(vec_r)).mean()
+v_err = Vector3d(np.random.normal(0, err_magnitude, 3))
+v_r_err = v_r + v_err
+angle_err = v_r_err.angle_with(v_r, degrees=True).mean()
 print("Vector angle deviation [deg]: ", angle_err)
 
 # Obtain the orientation which aligns the crystal directions with the
 # sample directions
-ori_new_r2c, err = Orientation.from_align_vectors(vec_c, vec_r_err, return_rmsd=True)
-ori_new_c2r = ~ori_new_r2c
+o_new_r2c, err = Orientation.from_align_vectors(v_c, v_r_err, return_rmsd=True)
 print("Error distance: ", err)
 
 # Plot the crystal directions in the new orientation
-vec_r2 = Vector3d(~ori_new_r2c * vec_c)
-vec_r2.scatter(c=["r", "b"], figure=fig)
+v_r2 = Vector3d(~o_new_r2c * v_c)
+v_r2.scatter(c=["r", "b"], figure=fig)
