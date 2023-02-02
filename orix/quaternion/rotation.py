@@ -732,7 +732,6 @@ class Rotation(Quaternion):
         Returns
         -------
         eu
-        eu
             Array of Euler angles in radians (``degrees=False``) or
             degrees (``degrees=True``), in the ranges
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
