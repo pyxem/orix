@@ -704,6 +704,10 @@ class TestOrientation:
         else:
             assert not is_equal
 
+        ang_rad = (~o).angle_with(o)
+        ang_deg = (~o).angle_with(o, degrees=True)
+        assert np.allclose(np.rad2deg(ang_rad), ang_deg)
+
     def test_negate_orientation(self):
         o = Orientation.identity()
         o.symmetry = Oh

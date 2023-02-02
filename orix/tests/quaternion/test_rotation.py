@@ -581,3 +581,12 @@ class TestFromAlignVectors:
         assert isinstance(r12, Rotation)
         assert np.allclose((r12 * v1).unit.data, v2.unit.data)
         assert np.allclose((~r12 * v2).unit.data, v1.unit.data)
+
+
+class TestAngleWith:
+    def test_angle_with(self):
+        rot1 = Rotation.random((5,))
+        rot2 = Rotation.random((5,))
+        ang_rad = rot1.angle_with(rot2)
+        ang_deg = rot1.angle_with(rot2, degrees=True)
+        assert np.allclose(np.rad2deg(ang_rad), ang_deg)

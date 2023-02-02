@@ -26,8 +26,8 @@ Added
   well.
 - Possibility to pass degrees to the ``Quaternion`` methods ``from_axes_angles()``,
   ``from_euler()`` and ``to_euler()`` provided that ``degrees=True`` is passed.
-- Possibility to pass degrees to the ``Rotation`` methods ``angle_with()`` and
-  ``angle_with_outer()`` provided that ``degrees=True`` is passed.
+- Can get degrees from all ``angle_with()`` and ``angle_with_outer()`` methods provided
+  that ``degrees=True`` is passed.
 - Possibility to pass degrees to the ``(Mis)Orientation`` method
   ``get_distance_matrix()`` provided that ``degrees=True`` is passed.
 - Possibility to pass degrees to the ``Vector3d`` methods ``from_polar()`` and

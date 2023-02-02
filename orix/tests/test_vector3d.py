@@ -276,11 +276,15 @@ def test_zero(shape):
 
 
 def test_angle_with(vector, something):
-    a = vector.angle_with(vector)
-    assert np.allclose(a, 0)
-    a = vector.angle_with(something)
-    assert np.all(a >= 0)
-    assert np.all(a <= np.pi)
+    a1 = vector.angle_with(vector)
+    assert np.allclose(a1, 0)
+
+    a2 = vector.angle_with(something)
+    assert np.all(a2 >= 0)
+    assert np.all(a2 <= np.pi)
+
+    a3 = vector.angle_with(something, degrees=True)
+    assert np.allclose(np.rad2deg(a2), a3)
 
 
 def test_mul_array(vector):

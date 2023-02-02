@@ -476,8 +476,8 @@ class Vector3d(Object3d):
         """Return a unit vector in the z-direction."""
         return cls((0, 0, 1))
 
-    def angle_with(self, other: Vector3d) -> np.ndarray:
-        """Calculate the angles between these vectors in other vectors.
+    def angle_with(self, other: Vector3d, degrees: bool = False) -> np.ndarray:
+        """Return the angles between these vectors in other vectors.
 
         Vectors must have compatible shapes for broadcasting to work.
 
@@ -485,14 +485,21 @@ class Vector3d(Object3d):
         ----------
         other
             Another vector.
+        degrees
+            If ``True``, the given angles are returned in degrees.
+            Default is ``False``.
 
         Returns
         -------
         angles
-            The angle between the vectors, in radians.
+            Angles in radians (``degrees=False``)  or degrees
+            (``degrees=True``).
         """
         cosines = np.round(self.dot(other) / self.norm / other.norm, 10)
-        return np.arccos(cosines)
+        angles = np.arccos(cosines)
+        if degrees:
+            angles = np.rad2deg(angles)
+        return angles
 
     def rotate(
         self,
