@@ -58,7 +58,7 @@ class Misorientation(Rotation):
 
     def __init__(
         self,
-        data: Union[np.ndarray, list, tuple, Misorientation],
+        data: Union[np.ndarray, Misorientation, list, tuple],
         symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
     ):
         super().__init__(data)
@@ -340,7 +340,7 @@ class Misorientation(Rotation):
         Examples
         --------
         >>> from orix.quaternion import Misorientation, symmetry
-        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, np.pi / 2])
+        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, 90], degrees=True)
         >>> m.symmetry = (symmetry.D6, symmetry.D6)
         >>> m.get_distance_matrix(progressbar=False)
         array([[0.        , 1.57079633],
@@ -766,25 +766,30 @@ class Orientation(Misorientation):
     def from_axes_angles(
         cls,
         axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list],
+        angles: Union[np.ndarray, tuple, list, float],
         symmetry: Optional[Symmetry] = None,
+        degrees: bool = False,
     ) -> Orientation:
-        """Return orientations from axis-angle pairs.
+        """Initialize from axis-angle pair(s).
 
         Parameters
         ----------
         axes
-            The axes of rotation.
+            Axes of rotation.
         angles
-            The angles of rotation, in radians.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
         symmetry
             Symmetry of orientations. If not given (default), no
             symmetry is set.
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
         ori
-            Orientations.
+            Orientation(s).
 
         See Also
         --------
@@ -793,12 +798,12 @@ class Orientation(Misorientation):
         Examples
         --------
         >>> from orix.quaternion import Orientation, symmetry
-        >>> ori = Orientation.from_axes_angles((0, 0, -1), np.pi / 2, symmetry.Oh)
+        >>> ori = Orientation.from_axes_angles((0, 0, -1), 90, symmetry.Oh, degrees=True)
         >>> ori
         Orientation (1,) m-3m
         [[ 0.7071  0.      0.     -0.7071]]
         """
-        axangle = AxAngle.from_axes_angles(axes, angles)
+        axangle = AxAngle.from_axes_angles(axes, angles, degrees)
         return cls.from_neo_euler(axangle, symmetry)
 
     @classmethod
@@ -1025,9 +1030,9 @@ class Orientation(Misorientation):
         Examples
         --------
         >>> from orix.quaternion import Orientation, symmetry
-        >>> ori1 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([0, 45]), symmetry.Oh)
-        >>> ori2 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([45, 90]), symmetry.Oh)
-        >>> ori1.dot(ori2)
+        >>> o1 = Orientation.from_axes_angles([0, 0, 1], [0, 45], symmetry.Oh, degrees=True)
+        >>> o2 = Orientation.from_axes_angles([0, 0, 1], [45, 90], symmetry.Oh, degrees=True)
+        >>> o1.dot(o2)
         array([0.92387953, 0.92387953])
         """
         symmetry = _get_unique_symmetry_elements(self.symmetry, other.symmetry)
@@ -1057,9 +1062,9 @@ class Orientation(Misorientation):
         Examples
         --------
         >>> from orix.quaternion import Orientation, symmetry
-        >>> ori1 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([0, 45]), symmetry.Oh)
-        >>> ori2 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([45, 90]), symmetry.Oh)
-        >>> ori1.dot_outer(ori2)
+        >>> o1 = Orientation.from_axes_angles([0, 0, 1], [0, 45], symmetry.Oh, degrees=True)
+        >>> o2 = Orientation.from_axes_angles([0, 0, 1], [45, 90], symmetry.Oh, degrees=True)
+        >>> o1.dot_outer(o2)
         array([[0.92387953, 1.        ],
                [1.        , 0.92387953]])
         """

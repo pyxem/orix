@@ -507,12 +507,15 @@ class TestOrientationInitialization:
         axis = Vector3d.xvector() - Vector3d.yvector()
         angle = np.pi / 2
         axangle = AxAngle.from_axes_angles(axis, angle)
-        ori = Orientation.from_neo_euler(axangle, Oh)
-        ori2 = Orientation.from_axes_angles(axis, angle, Oh)
-        assert np.allclose(ori.to_euler(), (3 * np.pi / 4, np.pi / 2, 5 * np.pi / 4))
-        assert np.allclose(ori.data, ori2.data)
-        assert ori.symmetry.name == ori2.symmetry.name == "m-3m"
-        assert np.allclose(ori.symmetry.data, ori2.symmetry.data)
+        o1 = Orientation.from_neo_euler(axangle, Oh)
+        o2 = Orientation.from_axes_angles(axis, angle, Oh)
+        assert np.allclose(o1.to_euler(), (3 * np.pi / 4, np.pi / 2, 5 * np.pi / 4))
+        assert np.allclose(o1.data, o2.data)
+        assert o1.symmetry.name == o2.symmetry.name == "m-3m"
+        assert np.allclose(o1.symmetry.data, o2.symmetry.data)
+
+        o3 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
+        assert np.allclose(o2.data, o3.data)
 
     def test_get_identity(self):
         """Get the identity orientation via two alternative routes."""
