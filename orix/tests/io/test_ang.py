@@ -34,8 +34,6 @@ from orix.tests.conftest import (
     ANGFILE_TSL_HEADER,
 )
 
-# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
-
 
 @pytest.mark.parametrize(
     "angfile_astar, expected_data",
@@ -83,7 +81,6 @@ def test_loadang(angfile_astar, expected_data):
     assert np.allclose(loaded_data.data, expected_data)
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
 class TestAngReader:
     @pytest.mark.parametrize(
         "angfile_tsl, map_shape, step_sizes, phase_id, n_unknown_cols, example_rot",
@@ -305,8 +302,8 @@ class TestAngReader:
             ),
             (
                 (
-                    (3, 6),  # map_shape
-                    (10, 10),  # step_sizes
+                    (3, 6),
+                    (10, 10),
                     np.concatenate(
                         (
                             np.ones(int(np.ceil((3 * 6) / 2))),
@@ -511,7 +508,6 @@ class TestAngReader:
         assert np.allclose(ids, expected_phase_id)
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
 class TestAngWriter:
     def test_write_read_loop(self, crystal_map, tmp_path):
         fname = tmp_path / "test_write_read_loop.ang"
@@ -527,9 +523,9 @@ class TestAngWriter:
     @pytest.mark.parametrize(
         "crystal_map_input, desired_shape, desired_step_sizes",
         [
-            (((1, 4, 3), (1, 2, 3), 1, [0]), (4, 3), (2, 3)),
-            (((1, 1, 3), (1, 1, 1), 1, [0]), (1, 3), (1, 1)),
-            (((1, 1, 6), (1, 1, 3.14), 1, [0]), (1, 6), (1, 3.14)),
+            (((4, 3), (2, 3), 1, [0]), (4, 3), (2, 3)),
+            (((1, 3), (1, 1), 1, [0]), (1, 3), (1, 1)),
+            (((1, 6), (1, 3.14), 1, [0]), (1, 6), (1, 3.14)),
         ],
         indirect=["crystal_map_input"],
     )
@@ -623,7 +619,7 @@ class TestAngWriter:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((1, 1, 5), (1, 1, 2), 1, [0])],
+        [((1, 5), (1, 2), 1, [0])],
         indirect=["crystal_map_input"],
     )
     def test_1d_map(self, crystal_map_input, tmp_path):
@@ -638,22 +634,11 @@ class TestAngWriter:
         assert np.allclose(xmap.rotations.to_euler(), xmap_reload.rotations.to_euler())
 
     @pytest.mark.parametrize(
-        "crystal_map_input",
-        [((3, 3, 3), (1, 2, 3), 1, [0])],
-        indirect=["crystal_map_input"],
-    )
-    def test_3d_map_raises(self, crystal_map_input, tmp_path):
-        xmap = CrystalMap(**crystal_map_input)
-        fname = tmp_path / "test_3d_raises.ang"
-        with pytest.raises(ValueError, match="Writing a 3D dataset to an .ang file"):
-            save(fname, xmap)
-
-    @pytest.mark.parametrize(
         "crystal_map_input, index",
         [
-            (((1, 4, 3), (1, 2, 3), 5, [0]), 0),
-            (((1, 4, 3), (1, 2, 3), 5, [0]), 1),
-            (((1, 4, 3), (1, 2, 3), 5, [0]), 4),
+            (((4, 3), (2, 3), 5, [0]), 0),
+            (((4, 3), (2, 3), 5, [0]), 1),
+            (((4, 3), (2, 3), 5, [0]), 4),
         ],
         indirect=["crystal_map_input"],
     )
@@ -677,7 +662,7 @@ class TestAngWriter:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((1, 4, 3), (1, 2, 2), 2, [0])],
+        [((4, 3), (2, 2), 2, [0])],
         indirect=["crystal_map_input"],
     )
     def test_write_data_index_none(self, crystal_map_input, tmp_path):

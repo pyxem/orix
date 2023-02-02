@@ -22,7 +22,6 @@ format.
 
 import copy
 from typing import Optional
-import warnings
 from warnings import warn
 
 from diffpy.structure import Atom, Lattice, Structure
