@@ -95,9 +95,9 @@ def dict2crystalmap(dictionary: dict) -> CrystalMap:
         "is_in_data": data.pop("is_in_data"),
     }
     # Add standard items by updating the new dictionary
-    for direction in ["z", "y", "x"]:
+    for direction in ["y", "x"]:
         this_direction = data.pop(direction)
-        if hasattr(this_direction, "__iter__") is False:
+        if hasattr(this_direction, "__iter__") is False:  # pragma: no cover
             this_direction = None
         crystal_map_dict[direction] = this_direction
     _ = [data.pop(i) for i in ["id"]]
@@ -139,20 +139,12 @@ def dict2phase(dictionary: dict) -> Phase:
     dictionary = copy.deepcopy(dictionary)
     structure = dict2structure(dictionary["structure"])
     structure.title = dictionary["name"]
-    # TODO: Remove this check in v0.6.0, since space_group was introduced in v0.4.0
-    try:
-        space_group = dictionary["space_group"]  # Either "None" or int
-    except KeyError:  # v0.3.0
-        space_group = "None"
+    space_group = dictionary["space_group"]  # Either "None" or int
     if space_group == "None":
         space_group = None
     else:
         space_group = int(space_group)
-    # TODO: Remove this check in v0.6.0, since name change was introduced in v0.4.0
-    try:
-        point_group = dictionary["point_group"]
-    except KeyError:  # v0.3.0
-        point_group = dictionary["symmetry"]
+    point_group = dictionary["point_group"]
     if point_group == "None":
         point_group = None
     return Phase(
@@ -275,39 +267,32 @@ def crystalmap2dict(crystal_map: CrystalMap, dictionary: Optional[dict] = None) 
         dictionary = {}
 
     # Get data cube coordinates in step size
-    z, y, x = [
-        0 if i is None else i for i in [crystal_map._z, crystal_map._y, crystal_map._x]
-    ]
+    y, x = [0 if i is None else i for i in [crystal_map._y, crystal_map._x]]
     # Get euler angles phi1, Phi, phi2
     eulers = crystal_map._rotations.to_euler()
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Property `dz`", np.VisibleDeprecationWarning)
-        dictionary.update(
-            {
-                "data": {
-                    "z": z,
-                    "y": y,
-                    "x": x,
-                    "phi1": eulers[..., 0],
-                    "Phi": eulers[..., 1],
-                    "phi2": eulers[..., 2],
-                    "phase_id": crystal_map._phase_id,
-                    "id": crystal_map._id,
-                    "is_in_data": crystal_map.is_in_data,
-                },
-                "header": {
-                    "grid_type": "square",
-                    "nz": z.size if isinstance(z, np.ndarray) else 1,
-                    "ny": y.size if isinstance(y, np.ndarray) else 1,
-                    "nx": x.size if isinstance(x, np.ndarray) else 1,
-                    "z_step": crystal_map.dz,
-                    "y_step": crystal_map.dy,
-                    "x_step": crystal_map.dx,
-                    "rotations_per_point": crystal_map.rotations_per_point,
-                    "scan_unit": crystal_map.scan_unit,
-                },
-            }
-        )
+    dictionary.update(
+        {
+            "data": {
+                "y": y,
+                "x": x,
+                "phi1": eulers[..., 0],
+                "Phi": eulers[..., 1],
+                "phi2": eulers[..., 2],
+                "phase_id": crystal_map._phase_id,
+                "id": crystal_map._id,
+                "is_in_data": crystal_map.is_in_data,
+            },
+            "header": {
+                "grid_type": "square",
+                "ny": y.size if isinstance(y, np.ndarray) else 1,
+                "nx": x.size if isinstance(x, np.ndarray) else 1,
+                "y_step": crystal_map.dy,
+                "x_step": crystal_map.dx,
+                "rotations_per_point": crystal_map.rotations_per_point,
+                "scan_unit": crystal_map.scan_unit,
+            },
+        }
+    )
     dictionary["data"].update(crystal_map.prop)
     dictionary["header"].update({"phases": phaselist2dict(crystal_map.phases)})
 
