@@ -291,6 +291,9 @@ def test_angle_with_outer():
     assert dist2.shape == r2.shape + r.shape
     assert np.allclose(dist, dist2.T)
 
+    dist3 = r2.angle_with_outer(r, degrees=True)
+    assert np.allclose(dist3, np.rad2deg(dist2))
+
 
 @pytest.mark.parametrize(
     "rotation, improper, expected, improper_expected",

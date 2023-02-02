@@ -327,6 +327,9 @@ class TestMisorientation:
         )
         assert np.allclose(distance1, expected, atol=1e-4)
 
+        distance2 = m1.get_distance_matrix(degrees=True)
+        assert np.allclose(np.rad2deg(distance1), distance2)
+
     def test_get_distance_matrix_shape(self):
         shape = (3, 4)
         m2 = Misorientation.random(shape)
@@ -335,7 +338,7 @@ class TestMisorientation:
 
     def test_get_distance_matrix_progressbar_chunksize(self):
         m = Misorientation.random((5, 15, 4))
-        angle1 = m.get_distance_matrix(chunk_size=5, progressbar=True)
+        angle1 = m.get_distance_matrix(chunk_size=5)
         angle2 = m.get_distance_matrix(chunk_size=10, progressbar=False)
         assert np.allclose(angle1, angle2)
 
@@ -625,8 +628,11 @@ class TestOrientation:
         assert isinstance(angles_dask, np.ndarray)
         assert angles_dask.shape == (2, 2)
 
-        assert np.allclose(angles_numpy.data, angles_dask.data)
-        assert np.allclose(np.diag(angles_numpy.data), 0)
+        assert np.allclose(angles_numpy, angles_dask)
+        assert np.allclose(np.diag(angles_numpy), 0)
+
+        angles3 = o.get_distance_matrix(degrees=True)
+        assert np.allclose(np.rad2deg(angles_numpy), angles3)
 
     def test_get_distance_matrix_lazy_parameters(self):
         shape = (5, 15, 4)
@@ -634,7 +640,7 @@ class TestOrientation:
         abcd = rng.normal(size=np.prod(shape)).reshape(shape)
         o = Orientation(abcd)
 
-        angle1 = o.get_distance_matrix(lazy=True, chunk_size=5, progressbar=True)
+        angle1 = o.get_distance_matrix(lazy=True, chunk_size=5)
         angle2 = o.get_distance_matrix(lazy=True, chunk_size=10, progressbar=False)
 
         assert np.allclose(angle1.data, angle2.data)

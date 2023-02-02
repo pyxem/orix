@@ -542,7 +542,7 @@ class Rotation(Quaternion):
         else:
             return dat
 
-    def angle_with(self, other: Rotation) -> np.ndarray:
+    def angle_with(self, other: Rotation, degrees: bool = False) -> np.ndarray:
         """Return the angles of rotation transforming the rotations to
         the other rotations.
 
@@ -550,11 +550,15 @@ class Rotation(Quaternion):
         ----------
         other
             Other rotations.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Angles of rotation.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
 
         See Also
         --------
@@ -566,9 +570,11 @@ class Rotation(Quaternion):
         # Round because some dot products are slightly above 1
         dot_products = np.round(dot_products, np.finfo(dot_products.dtype).precision)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
+        if degrees:
+            angles = np.rad2deg(angles)
         return angles
 
-    def angle_with_outer(self, other: Rotation):
+    def angle_with_outer(self, other: Rotation, degrees: bool = False) -> np.ndarray:
         """Return the angles of rotation transforming the rotations to
         all the other rotations.
 
@@ -576,11 +582,15 @@ class Rotation(Quaternion):
         ----------
         other
             Another rotation.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Angles of rotation.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
 
         Examples
         --------
@@ -598,6 +608,8 @@ class Rotation(Quaternion):
         """
         dot_products = self.unit.dot_outer(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
+        if degrees:
+            angles = np.rad2deg(angles)
         return angles
 
     def outer(

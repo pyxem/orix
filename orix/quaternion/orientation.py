@@ -277,7 +277,7 @@ class Misorientation(Rotation):
         # Correct the aspect ratio of the axes according to the extent
         # of the boundaries of the fundamental region, and also restrict
         # the data limits to these boundaries
-        ax._correct_aspect_ratio(fundamental_zone, set_limits=True)
+        ax._correct_aspect_ratio(fundamental_zone)
 
         ax.axis("off")
         figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
@@ -292,11 +292,14 @@ class Misorientation(Rotation):
             return figure
 
     def get_distance_matrix(
-        self, chunk_size: int = 20, progressbar: bool = True
+        self,
+        chunk_size: int = 20,
+        progressbar: bool = True,
+        degrees: bool = False,
     ) -> np.ndarray:
-        r"""The symmetry reduced smallest angle of rotation transforming
-        every misorientation in this instance to every other
-        misorientation :cite:`johnstone2020density`.
+        r"""Return the symmetry reduced smallest angle of rotation
+        transforming every misorientation in this instance to every
+        other misorientation :cite:`johnstone2020density`.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance` for
@@ -310,11 +313,15 @@ class Misorientation(Rotation):
         progressbar
             Whether to show a progressbar during computation. Default is
             ``True``.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Misorientation angles.
+            Misorientation angles in radians (``degrees=False``) or
+            degrees (``degrees=True``).
 
         Notes
         -----
@@ -342,9 +349,9 @@ class Misorientation(Rotation):
         >>> from orix.quaternion import Misorientation, symmetry
         >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, 90], degrees=True)
         >>> m.symmetry = (symmetry.D6, symmetry.D6)
-        >>> m.get_distance_matrix(progressbar=False)
-        array([[0.        , 1.57079633],
-               [1.57079633, 0.        ]])
+        >>> m.get_distance_matrix(progressbar=False, degrees=True)
+        array([[ 0., 90.],
+               [90.,  0.]])
         """
         # Reduce symmetry operations to the unique ones
         symmetry = _get_unique_symmetry_elements(*self.symmetry)
@@ -377,6 +384,9 @@ class Misorientation(Rotation):
                 da.store(sources=angles_dask, targets=angles)
         else:
             da.store(sources=angles_dask, targets=angles)
+
+        if degrees:
+            angles = np.rad2deg(angles)
 
         return angles
 
@@ -856,7 +866,7 @@ class Orientation(Misorientation):
             ori.symmetry = symmetry
         return ori
 
-    def angle_with(self, other: Orientation) -> np.ndarray:
+    def angle_with(self, other: Orientation, degrees: bool = False) -> np.ndarray:
         """Return the smallest symmetry reduced angles of rotation
         transforming the orientations to the other orientations.
 
@@ -864,11 +874,15 @@ class Orientation(Misorientation):
         ----------
         other
             Another orientation.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Smallest symmetry reduced angles.
+            Smallest symmetry reduced angles in radians
+            (``degrees=False``) or degrees (``degrees=True``).
 
         See Also
         --------
@@ -877,6 +891,8 @@ class Orientation(Misorientation):
         """
         dot_products = self.unit.dot(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
+        if degrees:
+            angles = np.rad2deg(angles)
         return angles
 
     def angle_with_outer(
@@ -885,10 +901,11 @@ class Orientation(Misorientation):
         lazy: bool = False,
         chunk_size: int = 20,
         progressbar: bool = True,
+        degrees: bool = False,
     ) -> np.ndarray:
-        r"""The symmetry reduced smallest angle of rotation transforming
-        every orientation in this instance to every orientation in
-        another instance.
+        r"""Return the symmetry reduced smallest angle of rotation
+        transforming every orientation in this instance to every
+        orientation in another instance.
 
         This is an alternative implementation of
         :meth:`~orix.quaternion.Misorientation.distance` for
@@ -900,7 +917,7 @@ class Orientation(Misorientation):
             Another orientation.
         lazy
             Whether to perform the computation lazily with Dask. Default
-            is False.
+            is ``False``.
         chunk_size
             Number of orientations per axis to include in each iteration
             of the computation. Default is 20. Only applies when
@@ -908,11 +925,15 @@ class Orientation(Misorientation):
         progressbar
             Whether to show a progressbar during computation if
             ``lazy=True``. Default is ``True``.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Smallest symmetry reduced angles.
+            Smallest symmetry reduced angles in radians
+            (``degrees=False``) or degrees (``degrees=True``).
 
         See Also
         --------
@@ -966,10 +987,17 @@ class Orientation(Misorientation):
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
+        if degrees:
+            angles = np.rad2deg(angles)
+
         return angles
 
     def get_distance_matrix(
-        self, lazy: bool = False, chunk_size: int = 20, progressbar: bool = True
+        self,
+        lazy: bool = False,
+        chunk_size: int = 20,
+        progressbar: bool = True,
+        degrees: bool = False,
     ) -> np.ndarray:
         r"""Return the symmetry reduced smallest angle of rotation
         transforming all these orientations to all the other
@@ -991,11 +1019,15 @@ class Orientation(Misorientation):
         progressbar
             Whether to show a progressbar during computation if
             ``lazy=True``. Default is ``True``.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Symmetry reduced angles.
+            Symmetry reduced angles in radians (``degrees=False``) or
+            degrees (``degrees=True``).
 
         Notes
         -----
@@ -1010,7 +1042,11 @@ class Orientation(Misorientation):
         symmetrically equivalent orientations to :math:`g_{i,j}`.
         """
         angles = self.angle_with_outer(
-            self, lazy=lazy, chunk_size=chunk_size, progressbar=progressbar
+            self,
+            lazy=lazy,
+            chunk_size=chunk_size,
+            progressbar=progressbar,
+            degrees=degrees,
         )
         return angles
 
