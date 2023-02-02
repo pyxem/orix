@@ -18,14 +18,12 @@
 
 import pytest
 
-from orix.quaternion.orientation import Orientation
+from orix.quaternion import Orientation, OrientationRegion
 from orix.quaternion.orientation_region import (
-    OrientationRegion,
     _get_large_cell_normals,
     get_proper_groups,
 )
 from orix.quaternion.symmetry import *
-from orix.quaternion.symmetry import get_distinguished_points
 
 
 @pytest.mark.parametrize(
