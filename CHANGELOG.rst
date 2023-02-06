@@ -24,6 +24,9 @@ Added
   ``from_euler()``, ``from_matrix()``, ``random()`` and ``identity()`` and methods
   ``to_euler()`` and ``to_matrix()`` are now available from the ``Quaternion`` class as
   well.
+- ``StereographicPlot.restrict_to_sector()`` allows two new parameters to control the
+  amount of padding (in degrees in stereographic projection) and whether to show the
+  sector edges. Keyword arguments can also be passed on to Matplotlib's ``PathPatch()``.
 - Option to pass degrees to the ``Quaternion`` methods ``from_axes_angles()``,
   ``from_euler()`` and ``to_euler()`` by passing ``degrees=True``.
 - Option to get degrees from all ``angle_with()`` and ``angle_with_outer()`` methods
@@ -36,6 +39,7 @@ Added
   ``InverseStereographicProjection.xy2spherical()`` in degrees or pass them as degrees
   to ``StereographicProjection`` methods ``spherical2xy()`` and ``spherical2xy_split()``
   by passing ``degrees=True``.
+
 
 Changed
 -------

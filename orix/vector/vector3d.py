@@ -384,7 +384,7 @@ class Vector3d(Object3d):
         return dots
 
     def cross(self, other: Vector3d) -> Vector3d:
-        """The cross product of a vector with another vector.
+        """Return the cross product of a vector with another vector.
 
         Vectors must have compatible shape for broadcasting to work.
 

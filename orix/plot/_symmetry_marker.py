@@ -23,6 +23,8 @@ Meant to be used indirectly in
 :func:`~orix.plot.StereographicPlot.symmetry_marker`.
 """
 
+from typing import Union
+
 import matplotlib.path as mpath
 import matplotlib.transforms as mtransforms
 import numpy as np
@@ -42,7 +44,7 @@ class SymmetryMarker:
     fold = None
     _marker = None
 
-    def __init__(self, v: Vector3d, size: int = 1):
+    def __init__(self, v: Union[Vector3d, np.ndarray, list, tuple], size: int = 1):
         self._vector = Vector3d(v)
         self._size = size
 

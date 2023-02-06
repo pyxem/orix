@@ -446,7 +446,13 @@ class StereographicPlot(maxes.Axes):
                 self.plot(c.azimuth, c.polar, color=color2[i], **reproject_plot_kwargs)
             self._hemisphere = other_hemisphere[self._hemisphere]
 
-    def restrict_to_sector(self, sector: FundamentalSector):
+    def restrict_to_sector(
+        self,
+        sector: FundamentalSector,
+        pad: float = 1.3,
+        show_edges: bool = True,
+        **kwargs,
+    ):
         """Restrict the stereographic axis to a
         :class:`~orix.vector.FundamentalSector`, typically obtained from
         :attr:`~orix.quaternion.Symmetry.fundamental_sector`.
@@ -456,6 +462,15 @@ class StereographicPlot(maxes.Axes):
         sector
             Fundamental sector with edges delineating a fundamental
             sector.
+        pad
+            Padding outside the sector in the stereographic projection
+            in degrees. Default is 1.3 degrees.
+        show_edges
+            Whether to draw the sector edges. Default is ``True``.
+        **kwargs
+            Keyword arguments passed to
+            :class:`matplotlib.patches.PathPatch` if
+            ``show_edges=True``.
         """
         original_pole = deepcopy(sector._pole)
         sector._pole = self.pole
@@ -468,24 +483,34 @@ class StereographicPlot(maxes.Axes):
             return
         x, y, _ = self._pretransform_input((edges,))
 
-        pad = 0.01
-        self.set_xlim(np.min(x) - pad, np.max(x) + pad)
-        self.set_ylim(np.min(y) - pad, np.max(y) + pad)
-        self.margins(0, 0)
+        pad_angle = np.deg2rad(pad)
+        verts = sector.vertices
+        center = sector.center
+        verts_normal = center.cross(verts)
+        verts_rot = verts.rotate(verts_normal, pad_angle)
+        x_pad, y_pad = self._projection.vector2xy(verts_rot)
+        x_min = min([np.min(x), np.min(x_pad)])
+        x_max = max([np.max(x), np.max(x_pad)])
+        y_min = min([np.min(y), np.min(y_pad)])
+        y_max = max([np.max(y), np.max(y_pad)])
+        self.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
+
         self.patches[0].set_visible(False)
-        patch = mpatches.PathPatch(
-            mpath.Path(np.column_stack([x, y]), closed=True),
-            facecolor="none",
-            edgecolor="k",
-            linewidth=1,
-            label="sa_sector",
-        )
-        self.add_patch(patch)
-        self.set_clip_path(patch)
-        labels = ["sa_azimuth_grid", "sa_polar_grid"]
-        for c in self.collections:
-            if c.get_label() in labels:
-                c.set_clip_path(patch)
+
+        if show_edges:
+            for k, v in [("facecolor", "none"), ("edgecolor", "k"), ("linewidth", 1)]:
+                kwargs.setdefault(k, v)
+            patch = mpatches.PathPatch(
+                mpath.Path(np.column_stack([x, y]), closed=True),
+                label="sa_sector",
+                **kwargs,
+            )
+            self.add_patch(patch)
+            self.set_clip_path(patch)
+            labels = ["sa_azimuth_grid", "sa_polar_grid"]
+            for c in self.collections:
+                if c.get_label() in labels:
+                    c.set_clip_path(patch)
 
     def show_hemisphere_label(self, **kwargs):
         """Add a hemisphere label (``"upper"``/``"lower"``) to the upper

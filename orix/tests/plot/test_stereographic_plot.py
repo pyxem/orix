@@ -515,3 +515,33 @@ class TestRestrictToFundamentalSector:
         assert len(ax5.lines) == 0
 
         plt.close("all")
+
+    def test_restrict_to_sector_pad(self):
+        v = Vector3d.zvector()
+
+        fig = v.scatter(return_figure=True)
+        ax = fig.axes[0]
+        assert np.allclose(ax.get_xlim(), [-1.05, 1.05])
+
+        # No change since the sector is the equator
+        ax.restrict_to_sector(C1.fundamental_sector)
+        assert np.allclose(ax.get_xlim(), [-1.05, 1.05])
+
+        # Default
+        fs_m3m = Oh.fundamental_sector
+        ax.restrict_to_sector(fs_m3m)
+        assert np.allclose(ax.get_xlim(), [-0.0103, 0.4245], atol=1e-4)
+
+        # Slightly wider
+        ax.restrict_to_sector(fs_m3m, pad=2)
+        assert np.allclose(ax.get_xlim(), [-0.0159, 0.4301], atol=1e-4)
+
+    def test_restrict_to_sector_edges(self):
+        v = Vector3d.zvector()
+
+        fig = v.scatter(return_figure=True)
+        ax = fig.axes[0]
+
+        ax.restrict_to_sector(Oh.fundamental_sector, show_edges=False)
+        assert len(ax.patches) == 1
+        assert ax.patches[0].get_label() == "sa_circle"
