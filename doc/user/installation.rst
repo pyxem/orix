@@ -70,7 +70,7 @@ The source can also be downloaded as tarballs or zip archives via links like
 where the version ``<major.minor.patch>`` can be e.g. ``0.10.2``, and ``tar.gz`` can be
 exchanged with ``zip``.
 
-See the :ref:`contributing guide <set-up-a-development-installation>` for how to set up
-a development installation and keep it up to date.
+See the :ref:`contributing guide <setting-up-a-development-installation>` for how to set
+up a development installation and keep it up to date.
 
 .. _https://github.com/pyxem/orix/archive/v<major.minor.patch>/orix-<major.minor.patch>.tar.gz: https://github.com/pyxem/orix/archive/v<major.minor.patch>/orix-<major.minor.patch>.tar.gz
