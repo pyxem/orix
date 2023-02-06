@@ -11,7 +11,6 @@ Matplotlib example
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
-import numpy as np
 
 from orix import plot, projections, sampling
 from orix.vector import Vector3d
@@ -19,7 +18,7 @@ from orix.vector import Vector3d
 # Sample some orientations
 v = sampling.sample_S2(2)
 v_ref = Vector3d([1, 1, 1])
-v2 = v[v_ref.angle_with(v) < np.deg2rad(10)]
+v2 = v[v_ref.angle_with(v, degrees=True) < 10]
 
 # Plot them in the stereographic projection with a grid resolution of 10
 # degrees
@@ -32,7 +31,7 @@ ax.scatter(v_ref, c="r")
 
 # Define some vectors describing the x/y extent of the zoomed inset
 # region and get their stereographic coordinates (X, Y)
-v_inset = Vector3d.from_polar(azimuth=np.deg2rad([45, 45]), polar=np.deg2rad([36, 71]))
+v_inset = Vector3d.from_polar(azimuth=[45, 45], polar=[36, 71], degrees=True)
 stereo = projections.StereographicProjection()
 x_inset, y_inset = stereo.vector2xy(v_inset)
 

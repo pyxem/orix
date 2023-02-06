@@ -291,6 +291,9 @@ def test_angle_with_outer():
     assert dist2.shape == r2.shape + r.shape
     assert np.allclose(dist, dist2.T)
 
+    dist3 = r2.angle_with_outer(r, degrees=True)
+    assert np.allclose(dist3, np.rad2deg(dist2))
+
 
 @pytest.mark.parametrize(
     "rotation, improper, expected, improper_expected",
@@ -553,6 +556,11 @@ class TestFromAxesAngles:
         assert isinstance(r2, Rotation)
         assert r1 == r2
 
+        r3 = Rotation.from_axes_angles(
+            axangle.axis.data, np.rad2deg(axangle.angle), degrees=True
+        )
+        assert np.allclose(r3.data, r2.data)
+
 
 class TestFromScipyRotation:
     """These test address the Rotation.from_scipy_rotation()."""
@@ -573,3 +581,12 @@ class TestFromAlignVectors:
         assert isinstance(r12, Rotation)
         assert np.allclose((r12 * v1).unit.data, v2.unit.data)
         assert np.allclose((~r12 * v2).unit.data, v1.unit.data)
+
+
+class TestAngleWith:
+    def test_angle_with(self):
+        rot1 = Rotation.random((5,))
+        rot2 = Rotation.random((5,))
+        ang_rad = rot1.angle_with(rot2)
+        ang_deg = rot1.angle_with(rot2, degrees=True)
+        assert np.allclose(np.rad2deg(ang_rad), ang_deg)

@@ -327,6 +327,9 @@ class TestMisorientation:
         )
         assert np.allclose(distance1, expected, atol=1e-4)
 
+        distance2 = m1.get_distance_matrix(degrees=True)
+        assert np.allclose(np.rad2deg(distance1), distance2)
+
     def test_get_distance_matrix_shape(self):
         shape = (3, 4)
         m2 = Misorientation.random(shape)
@@ -335,7 +338,7 @@ class TestMisorientation:
 
     def test_get_distance_matrix_progressbar_chunksize(self):
         m = Misorientation.random((5, 15, 4))
-        angle1 = m.get_distance_matrix(chunk_size=5, progressbar=True)
+        angle1 = m.get_distance_matrix(chunk_size=5)
         angle2 = m.get_distance_matrix(chunk_size=10, progressbar=False)
         assert np.allclose(angle1, angle2)
 
@@ -443,6 +446,9 @@ class TestOrientationInitialization:
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
 
+        o4 = Orientation.from_euler(np.rad2deg(euler), degrees=True)
+        assert np.allclose(o4.data, o1.data)
+
     def test_from_matrix_symmetry(self):
         om = np.array(
             [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
@@ -507,12 +513,15 @@ class TestOrientationInitialization:
         axis = Vector3d.xvector() - Vector3d.yvector()
         angle = np.pi / 2
         axangle = AxAngle.from_axes_angles(axis, angle)
-        ori = Orientation.from_neo_euler(axangle, Oh)
-        ori2 = Orientation.from_axes_angles(axis, angle, Oh)
-        assert np.allclose(ori.to_euler(), (3 * np.pi / 4, np.pi / 2, 5 * np.pi / 4))
-        assert np.allclose(ori.data, ori2.data)
-        assert ori.symmetry.name == ori2.symmetry.name == "m-3m"
-        assert np.allclose(ori.symmetry.data, ori2.symmetry.data)
+        o1 = Orientation.from_neo_euler(axangle, Oh)
+        o2 = Orientation.from_axes_angles(axis, angle, Oh)
+        assert np.allclose(o1.to_euler(degrees=True), [135, 90, 225])
+        assert np.allclose(o1.data, o2.data)
+        assert o1.symmetry.name == o2.symmetry.name == "m-3m"
+        assert np.allclose(o1.symmetry.data, o2.symmetry.data)
+
+        o3 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
+        assert np.allclose(o2.data, o3.data)
 
     def test_get_identity(self):
         """Get the identity orientation via two alternative routes."""
@@ -619,8 +628,11 @@ class TestOrientation:
         assert isinstance(angles_dask, np.ndarray)
         assert angles_dask.shape == (2, 2)
 
-        assert np.allclose(angles_numpy.data, angles_dask.data)
-        assert np.allclose(np.diag(angles_numpy.data), 0)
+        assert np.allclose(angles_numpy, angles_dask)
+        assert np.allclose(np.diag(angles_numpy), 0)
+
+        angles3 = o.get_distance_matrix(degrees=True)
+        assert np.allclose(np.rad2deg(angles_numpy), angles3)
 
     def test_get_distance_matrix_lazy_parameters(self):
         shape = (5, 15, 4)
@@ -628,7 +640,7 @@ class TestOrientation:
         abcd = rng.normal(size=np.prod(shape)).reshape(shape)
         o = Orientation(abcd)
 
-        angle1 = o.get_distance_matrix(lazy=True, chunk_size=5, progressbar=True)
+        angle1 = o.get_distance_matrix(lazy=True, chunk_size=5)
         angle2 = o.get_distance_matrix(lazy=True, chunk_size=10, progressbar=False)
 
         assert np.allclose(angle1.data, angle2.data)
@@ -692,6 +704,10 @@ class TestOrientation:
         else:
             assert not is_equal
 
+        ang_rad = (~o).angle_with(o)
+        ang_deg = (~o).angle_with(o, degrees=True)
+        assert np.allclose(np.rad2deg(ang_rad), ang_deg)
+
     def test_negate_orientation(self):
         o = Orientation.identity()
         o.symmetry = Oh
@@ -745,7 +761,7 @@ class TestOrientation:
         vx = Vector3d.xvector()
         vz = Vector3d.zvector()
 
-        ori = Orientation.from_euler(np.radians((325, 48, 163)), symmetry=Oh)
+        ori = Orientation.from_euler((325, 48, 163), symmetry=Oh, degrees=True)
 
         # Returned figure has the expected default properties
         fig_size = (5, 5)

@@ -24,6 +24,18 @@ Added
   ``from_euler()``, ``from_matrix()``, ``random()`` and ``identity()`` and methods
   ``to_euler()`` and ``to_matrix()`` are now available from the ``Quaternion`` class as
   well.
+- Option to pass degrees to the ``Quaternion`` methods ``from_axes_angles()``,
+  ``from_euler()`` and ``to_euler()`` by passing ``degrees=True``.
+- Option to get degrees from all ``angle_with()`` and ``angle_with_outer()`` methods
+  by passing ``degrees=True``.
+- Option to pass degrees to the ``(Mis)Orientation`` method ``get_distance_matrix()``
+  by passing ``degrees=True``.
+- Option to pass degrees to the ``Vector3d`` methods ``from_polar()`` and ``to_polar()``
+  by passing ``degrees=True``.
+- Option to get spherical coordinates from
+  ``InverseStereographicProjection.xy2spherical()`` in degrees or pass them as degrees
+  to ``StereographicProjection`` methods ``spherical2xy()`` and ``spherical2xy_split()``
+  by passing ``degrees=True``.
 
 Changed
 -------
