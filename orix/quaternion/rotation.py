@@ -20,11 +20,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
 import numpy as np
+from scipy.spatial.transform import Rotation as SciPyRotation
 from scipy.special import hyp0f1
 
 from orix.quaternion import Quaternion
@@ -71,7 +72,7 @@ class Rotation(Quaternion):
     neo-Euler representations. See :class:`NeoEuler`.
     """
 
-    def __init__(self, data: Union[np.ndarray, Rotation, Quaternion, list, tuple]):
+    def __init__(self, data: Union[np.ndarray, Rotation, list, tuple]):
         super().__init__(data)
         self._data = np.concatenate((self.data, np.zeros(self.shape + (1,))), axis=-1)
         if isinstance(data, Rotation):
@@ -188,16 +189,21 @@ class Rotation(Quaternion):
     def from_axes_angles(
         cls,
         axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list],
+        angles: Union[np.ndarray, tuple, list, float],
+        degrees: bool = False,
     ) -> Rotation:
-        """Create rotation(s) from axis-angle pair(s).
+        """Initialize from axis-angle pair(s).
 
         Parameters
         ----------
         axes
-            Rotation axes.
+            Axes of rotation.
         angles
-            Rotation angles in radians.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
@@ -207,7 +213,7 @@ class Rotation(Quaternion):
         Examples
         --------
         >>> from orix.quaternion import Rotation
-        >>> r = Rotation.from_axes_angles((0, 0, -1), np.pi / 2)
+        >>> r = Rotation.from_axes_angles((0, 0, -1), 90, degrees=True)
         >>> r
         Rotation (1,)
         [[ 0.7071  0.      0.     -0.7071]]
@@ -216,7 +222,7 @@ class Rotation(Quaternion):
         --------
         from_neo_euler
         """
-        return super().from_axes_angles(axes, angles)
+        return super().from_axes_angles(axes, angles, degrees)
 
     # TODO: Remove **kwargs in 1.0.
     # Deprication decorator is implemented in Quaternion
@@ -225,26 +231,32 @@ class Rotation(Quaternion):
         cls,
         euler: Union[np.ndarray, tuple, list],
         direction: str = "lab2crystal",
+        degrees: bool = False,
         **kwargs,
     ) -> Rotation:
-        """Create rotation(s) from Euler angle set(s) in radians
+        """Initialize from Euler angle set(s)
         :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
         euler
-            Euler angles in radians in the Bunge convention.
+            Euler angles in radians (``degrees=False``) or in degrees
+            (``degrees=True``) in the Bunge convention.
         direction
             Direction of the transformation, either ``"lab2crystal"``
             (default) or the inverse, ``"crystal2lab"``. The former is
             the Bunge convention. Passing ``"MTEX"`` equals the latter.
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
         r
             Rotation(s).
         """
-        r = super().from_euler(euler=euler, direction=direction, **kwargs)
+        euler = np.asanyarray(euler)
+        r = super().from_euler(euler, direction=direction, degrees=degrees, **kwargs)
         r.improper = np.zeros(euler.shape[:-1])
         return r
 
@@ -274,6 +286,121 @@ class Rotation(Quaternion):
          [0. 1. 0. 0.]]
         """
         return super().from_matrix(matrix)
+
+    @classmethod
+    def from_scipy_rotation(cls, rotation: SciPyRotation) -> Rotation:
+        """Return rotations(s) from
+        :class:`scipy.spatial.transform.Rotation`.
+
+        Parameters
+        ----------
+        rotation
+            SciPy rotation(s).
+
+        Returns
+        -------
+        rotation_out
+            Rotation(s).
+
+        Notes
+        -----
+        The SciPy rotation is inverted to be consistent with the orix
+        framework of passive rotations.
+
+        While orix represents quaternions with the scalar as the first
+        parameter, SciPy has the scalar as the last parameter.
+
+        Examples
+        --------
+        SciPy and orix rotate vectors differently since the SciPy
+        rotation is inverted when creating an orix rotation
+
+        >>> from orix.quaternion import Rotation
+        >>> from orix.vector import Vector3d
+        >>> from scipy.spatial.transform import Rotation as SciPyRotation
+        >>> r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+        >>> r_orix = Rotation.from_scipy_rotation(r_scipy)
+        >>> v = [1, 1, 0]
+        >>> r_scipy.apply(v)
+        array([-1.,  1.,  0.])
+        >>> r_orix * Vector3d(v)
+        Vector3d (1,)
+        [[ 1. -1.  0.]]
+        >>> ~r_orix * Vector3d(v)
+        Vector3d (1,)
+        [[-1.  1.  0.]]
+        """
+        return super().from_scipy_rotation(rotation)
+
+    @classmethod
+    def from_align_vectors(
+        cls,
+        other: Union[Vector3d, tuple, list],
+        initial: Union[Vector3d, tuple, list],
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
+    ) -> Union[
+        Quaternion,
+        Tuple[Quaternion, float],
+        Tuple[Quaternion, np.ndarray],
+        Tuple[Quaternion, float, np.ndarray],
+    ]:
+        """Return an estimated rotation to optimally align two sets of
+        vectors.
+
+        This method wraps
+        :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
+        that method for further explanations of parameters and returns.
+
+        Parameters
+        ----------
+        other
+            Vectors of shape ``(n,)`` in the other reference frame.
+        initial
+            Vectors of shape ``(n,)`` in the initial reference frame.
+        weights
+            Relative importance of the different vectors.
+        return_rmsd
+            Whether to return the (weighted) root mean square distance
+            between ``other`` and ``initial`` after alignment. Default
+            is ``False``.
+        return_sensitivity
+            Whether to return the sensitivity matrix. Default is
+            ``False``.
+
+        Returns
+        -------
+        estimated_rotation
+            Best estimate of the rotation that transforms ``initial`` to
+            ``other``.
+        rmsd
+            Returned when ``return_rmsd=True``.
+        sensitivity
+            Returned when ``return_sensitivity=True``.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Rotation
+        >>> from orix.vector import Vector3d
+        >>> v1 = Vector3d([[1, 0, 0], [0, 1, 0]])
+        >>> v2 = Vector3d([[0, -1, 0], [0, 0, 1]])
+        >>> r12 = Rotation.from_align_vectors(v2, v1)
+        >>> r12 * v1
+        Vector3d (2,)
+        [[ 0. -1.  0.]
+         [ 0.  0.  1.]]
+        >>> r21, dist = Rotation.from_align_vectors(v1, v2, return_rmsd=True)
+        >>> dist
+        0.0
+        >>> r21 * v2
+        Vector3d (2,)
+        [[1. 0. 0.]
+         [0. 1. 0.]]
+        """
+        return super().from_align_vectors(
+            other, initial, weights, return_rmsd, return_sensitivity
+        )
 
     @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Rotation:
@@ -415,7 +542,7 @@ class Rotation(Quaternion):
         else:
             return dat
 
-    def angle_with(self, other: Rotation) -> np.ndarray:
+    def angle_with(self, other: Rotation, degrees: bool = False) -> np.ndarray:
         """Return the angles of rotation transforming the rotations to
         the other rotations.
 
@@ -423,11 +550,15 @@ class Rotation(Quaternion):
         ----------
         other
             Other rotations.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Angles of rotation.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
 
         See Also
         --------
@@ -439,9 +570,11 @@ class Rotation(Quaternion):
         # Round because some dot products are slightly above 1
         dot_products = np.round(dot_products, np.finfo(dot_products.dtype).precision)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
+        if degrees:
+            angles = np.rad2deg(angles)
         return angles
 
-    def angle_with_outer(self, other: Rotation):
+    def angle_with_outer(self, other: Rotation, degrees: bool = False) -> np.ndarray:
         """Return the angles of rotation transforming the rotations to
         all the other rotations.
 
@@ -449,11 +582,15 @@ class Rotation(Quaternion):
         ----------
         other
             Another rotation.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Angles of rotation.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
 
         Examples
         --------
@@ -471,6 +608,8 @@ class Rotation(Quaternion):
         """
         dot_products = self.unit.dot_outer(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
+        if degrees:
+            angles = np.rad2deg(angles)
         return angles
 
     def outer(
@@ -580,18 +719,25 @@ class Rotation(Quaternion):
         return super().to_matrix()
 
     # TODO: Remove **kwargs in 1.0
-    def to_euler(self, **kwargs) -> np.ndarray:
+    def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
         r"""Return the rotations as Euler angles in the Bunge convention
         :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        degrees
+            If ``True``, the given angles are returned in degrees.
+            Default is ``False``.
 
         Returns
         -------
         eu
-            Array of Euler angles in radians, in the ranges
+            Array of Euler angles in radians (``degrees=False``) or
+            degrees (``degrees=True``), in the ranges
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
-        return super().to_euler(**kwargs)
+        return super().to_euler(degrees, **kwargs)
 
     def _differentiators(self) -> np.ndarray:
         a = self.a

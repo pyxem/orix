@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 import warnings
 
 import dask.array as da
@@ -260,16 +260,21 @@ class Quaternion(Object3d):
     def from_axes_angles(
         cls,
         axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list],
+        angles: Union[np.ndarray, tuple, list, float],
+        degrees: bool = False,
     ) -> Quaternion:
-        """Create unit quaternion(s) from axis-angle pair(s).
+        """Initialize from axis-angle pair(s).
 
         Parameters
         ----------
         axes
-            Rotation axes.
+            Axes of rotation.
         angles
-            Rotation angles in radians.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
@@ -279,7 +284,7 @@ class Quaternion(Object3d):
         Examples
         --------
         >>> from orix.quaternion import Quaternion
-        >>> q = Quaternion.from_axes_angles((0, 0, -1), np.pi / 2)
+        >>> q = Quaternion.from_axes_angles((0, 0, -1), 90, degrees=True)
         >>> q
         Quaternion (1,)
         [[ 0.7071  0.      0.     -0.7071]]
@@ -288,7 +293,7 @@ class Quaternion(Object3d):
         --------
         from_neo_euler
         """
-        axangle = AxAngle.from_axes_angles(axes, angles)
+        axangle = AxAngle.from_axes_angles(axes, angles, degrees)
         q = cls.from_neo_euler(axangle).unit
         return q
 
@@ -299,19 +304,24 @@ class Quaternion(Object3d):
         cls,
         euler: Union[np.ndarray, tuple, list],
         direction: str = "lab2crystal",
+        degrees: bool = False,
         **kwargs,
     ) -> Quaternion:
-        """Create unit quaternion(s) from Euler angle set(s) in radians
+        """Initialize from Euler angle set(s)
         :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
         euler
-            Euler angles in radians in the Bunge convention.
+            Euler angles in radians (``degrees=False``) or in degrees
+            (``degrees=True``) in the Bunge convention.
         direction
             Direction of the transformation, either ``"lab2crystal"``
             (default) or the inverse, ``"crystal2lab"``. The former is
             the Bunge convention. Passing ``"MTEX"`` equals the latter.
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
@@ -336,12 +346,13 @@ class Quaternion(Object3d):
                 f"The chosen direction is not one of the allowed options {directions}"
             )
 
+        if degrees:
+            euler = np.deg2rad(euler)
+
         eu = np.asarray(euler)
         if np.any(np.abs(eu) > 4 * np.pi):
-            warnings.warn(
-                "Angles are assumed to be in radians, but degrees might have been "
-                "passed."
-            )
+            warnings.warn("Angles are quite high, did you forget to set degrees=True?")
+
         n = eu.shape[:-1]
         alpha, beta, gamma = eu[..., 0], eu[..., 1], eu[..., 2]
 
@@ -418,6 +429,146 @@ class Quaternion(Object3d):
         q = cls(q).unit
 
         return q
+
+    @classmethod
+    def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
+        """Initialize from :class:`scipy.spatial.transform.Rotation`.
+
+        Parameters
+        ----------
+        rotation
+            SciPy rotation(s).
+
+        Returns
+        -------
+        quaternion
+            Quaternion(s).
+
+        Notes
+        -----
+        The SciPy rotation is inverted to be consistent with the orix
+        framework of passive rotations.
+
+        While orix represents quaternions with the scalar as the first
+        parameter, SciPy has the scalar as the last parameter.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Quaternion
+        >>> from orix.vector import Vector3d
+        >>> from scipy.spatial.transform import Rotation as SciPyRotation
+
+        SciPy and orix represent quaternions differently
+
+        >>> r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+        >>> r_scipy.as_quat()
+        array([0.        , 0.        , 0.70710678, 0.70710678])
+        >>> q = Quaternion.from_scipy_rotation(r_scipy)
+        >>> q
+        Quaternion (1,)
+        [[ 0.7071  0.      0.     -0.7071]]
+        >>> ~q
+        Quaternion (1,)
+        [[ 0.7071 -0.     -0.      0.7071]]
+
+        SciPy and orix rotate vectors differently
+
+        >>> v = [1, 1, 0]
+        >>> r_scipy.apply(v)
+        array([-1.,  1.,  0.])
+        >>> q * Vector3d(v)
+        Vector3d (1,)
+        [[ 1. -1.  0.]]
+        >>> ~q * Vector3d(v)
+        Vector3d (1,)
+        [[-1.  1.  0.]]
+        """
+        matrix = rotation.inv().as_matrix()
+        return cls.from_matrix(matrix=matrix)
+
+    @classmethod
+    def from_align_vectors(
+        cls,
+        other: Union[Vector3d, tuple, list],
+        initial: Union[Vector3d, tuple, list],
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
+    ) -> Union[
+        Quaternion,
+        Tuple[Quaternion, float],
+        Tuple[Quaternion, np.ndarray],
+        Tuple[Quaternion, float, np.ndarray],
+    ]:
+        """Initialize an estimated quaternion to optimally align two
+        sets of vectors.
+
+        This method wraps
+        :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
+        that method for further explanations of parameters and returns.
+
+        Parameters
+        ----------
+        other
+            Vectors of shape ``(n,)`` in the other reference frame.
+        initial
+            Vectors of shape ``(n,)`` in the initial reference frame.
+        weights
+            Relative importance of the different vectors.
+        return_rmsd
+            Whether to return the (weighted) root mean square distance
+            between ``other`` and ``initial`` after alignment. Default
+            is ``False``.
+        return_sensitivity
+            Whether to return the sensitivity matrix. Default is
+            ``False``.
+
+        Returns
+        -------
+        estimated_quaternion
+            Best estimate of the quaternion that transforms ``initial``
+            to ``other``.
+        rmsd
+            Returned when ``return_rmsd=True``.
+        sensitivity
+            Returned when ``return_sensitivity=True``.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Quaternion
+        >>> from orix.vector import Vector3d
+        >>> v1 = Vector3d([[1, 0, 0], [0, 1, 0]])
+        >>> v2 = Vector3d([[0, -1, 0], [0, 0, 1]])
+        >>> q12 = Quaternion.from_align_vectors(v2, v1)
+        >>> q12 * v1
+        Vector3d (2,)
+        [[ 0. -1.  0.]
+         [ 0.  0.  1.]]
+        >>> q21, dist = Quaternion.from_align_vectors(v1, v2, return_rmsd=True)
+        >>> dist
+        0.0
+        >>> q21 * v2
+        Vector3d (2,)
+        [[1. 0. 0.]
+         [0. 1. 0.]]
+        """
+        if not isinstance(other, Vector3d):
+            other = Vector3d(other)
+        if not isinstance(initial, Vector3d):
+            initial = Vector3d(initial)
+        vec1 = initial.unit.data
+        vec2 = other.unit.data
+
+        out = SciPyRotation.align_vectors(
+            vec1, vec2, weights=weights, return_sensitivity=return_sensitivity
+        )
+        out = list(out)
+        out[0] = cls.from_scipy_rotation(out[0])
+
+        if not return_rmsd:
+            del out[1]
+
+        return out[0] if len(out) == 1 else tuple(out)
 
     @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
@@ -623,14 +774,21 @@ class Quaternion(Object3d):
 
     # TODO: Remove decorator and **kwargs in 1.0
     @deprecated_argument("convention", since="0.9", removal="1.0")
-    def to_euler(self, **kwargs) -> np.ndarray:
+    def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
         r"""Return the normalized quaternions as Euler angles in the
         Bunge convention :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        degrees
+            If ``True``, the given angles are returned in degrees.
+            Default is ``False``.
 
         Returns
         -------
         eu
-            Array of Euler angles in radians, in the ranges
+            Array of Euler angles in radians (``degrees=False``) or
+            degrees (``degrees=True``), in the ranges
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
@@ -687,6 +845,9 @@ class Quaternion(Object3d):
         # Reduce Euler angles to definition range
         eu[np.abs(eu) < _FLOAT_EPS] = 0
         eu = np.where(eu < 0, np.mod(eu + 2 * np.pi, (2 * np.pi, np.pi, 2 * np.pi)), eu)
+
+        if degrees:
+            eu = np.rad2deg(eu)
 
         return eu
 
@@ -851,110 +1012,3 @@ class Quaternion(Object3d):
         new_chunks = tuple(chunks1[:-1]) + tuple(chunks2[:-1]) + (-1,)
 
         return out.rechunk(new_chunks)
-
-    @classmethod
-    def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
-        """Return quaternion(s) from :class:`scipy.spatial.transform.Rotation`.
-
-        Parameters
-        ----------
-        rotation
-            SciPy rotation(s).
-
-        Returns
-        -------
-        quaternion
-            Quaternion(s).
-
-        Notes
-        -----
-        The Scipy rotation is inverted to be consistent with the Orix framework of
-        passive rotations.
-
-        Examples
-        --------
-        >>> from orix.quaternion import Quaternion, Rotation
-        >>> from scipy.spatial.transform import Rotation as SciPyRotation
-        >>> euler = np.array([90, 0, 0]) * np.pi / 180
-        >>> scipy_rot = SciPyRotation.from_euler("ZXZ", euler)
-        >>> ori = Quaternion.from_scipy_rotation(scipy_rot)
-        >>> ori
-        Quaternion (1,)
-        [[ 0.7071  0.      0.     -0.7071]]
-        >>> Rotation.from_euler(euler, direction="crystal2lab")
-        Rotation (1,)
-        [[0.7071 0.     0.     0.7071]]
-        """
-        matrix = rotation.inv().as_matrix()
-
-        return cls.from_matrix(matrix=matrix)
-
-    @classmethod
-    def from_align_vectors(
-        cls,
-        other: Union[Vector3d, tuple, list],
-        initial: Union[Vector3d, tuple, list],
-        weights: Optional[np.ndarray] = None,
-        return_rmsd: bool = False,
-        return_sensitivity: bool = False,
-    ) -> Quaternion:
-        """Return an estimated quaternion to optimally align two sets of
-        vectors.
-
-        This method wraps :meth:`scipy.spatial.transform.Rotation.align_vectors`,
-        see that method for further explanations of parameters and
-        returns.
-
-        Parameters
-        ----------
-        other
-            Vectors of shape ``(N,)`` in the other reference frame.
-        initial
-            Vectors of shape ``(N,)`` in the initial reference frame.
-        weights
-            The relative importance of the different vectors.
-        return_rmsd
-            Whether to return the root mean square distance (weighted)
-            between ``other`` and ``initial`` after alignment.
-        return_sensitivity
-            Whether to return the sensitivity matrix.
-
-        Returns
-        -------
-        estimated quaternion
-            Best estimate of the quaternion
-            that transforms ``initial`` to ``other``.
-        rmsd
-            Returned when ``return_rmsd=True``.
-        sensitivity
-            Returned when ``return_sensitivity=True``.
-
-        Examples
-        --------
-        >>> from orix.quaternion import Quaternion
-        >>> from orix.vector import Vector3d
-        >>> vecs1 = Vector3d([[1, 0, 0], [0, 1, 0]])
-        >>> vecs2 = Vector3d([[0, -1, 0], [0,0, 1]])
-        >>> quat12 = Quaternion.from_align_vectors(vecs2, vecs1)
-        >>> quat12 * vecs1
-        Vector3d (2,)
-        [[ 0. -1.  0.]
-         [ 0.  0.  1.]]
-        """
-        if not isinstance(other, Vector3d):
-            other = Vector3d(other)
-        if not isinstance(initial, Vector3d):
-            initial = Vector3d(initial)
-        vec1 = initial.unit.data
-        vec2 = other.unit.data
-
-        out = SciPyRotation.align_vectors(
-            vec1, vec2, weights=weights, return_sensitivity=return_sensitivity
-        )
-        out = list(out)
-        out[0] = cls.from_scipy_rotation(out[0])
-
-        if not return_rmsd:
-            del out[1]
-
-        return out[0] if len(out) == 1 else out

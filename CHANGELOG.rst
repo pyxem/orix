@@ -12,8 +12,8 @@ Unreleased
 
 Added
 -----
-- Creation of ``Quaternion`` (s) (or instances of inheriting classes) from SciPy
-  ``Rotation`` (s).
+- Creation of one or more ``Quaternion`` (or instances of inheriting classes) from one
+  or more SciPy ``Rotation``.
 - Creation of one ``Quaternion`` or ``Rotation`` by aligning sets of vectors in two
   reference frames, one ``Orientation`` by aligning sets of sample vectors and crystal
   vectors, and one ``Misorientation`` by aligning two sets of crystal vectors in two
@@ -27,6 +27,19 @@ Added
 - ``StereographicPlot.restrict_to_sector()`` allows two new parameters to control the
   amount of padding (in degrees in stereographic projection) and whether to show the
   sector edges. Keyword arguments can also be passed on to Matplotlib's ``PathPatch()``.
+- Option to pass degrees to the ``Quaternion`` methods ``from_axes_angles()``,
+  ``from_euler()`` and ``to_euler()`` by passing ``degrees=True``.
+- Option to get degrees from all ``angle_with()`` and ``angle_with_outer()`` methods
+  by passing ``degrees=True``.
+- Option to pass degrees to the ``(Mis)Orientation`` method ``get_distance_matrix()``
+  by passing ``degrees=True``.
+- Option to pass degrees to the ``Vector3d`` methods ``from_polar()`` and ``to_polar()``
+  by passing ``degrees=True``.
+- Option to get spherical coordinates from
+  ``InverseStereographicProjection.xy2spherical()`` in degrees or pass them as degrees
+  to ``StereographicProjection`` methods ``spherical2xy()`` and ``spherical2xy_split()``
+  by passing ``degrees=True``.
+
 
 Changed
 -------
@@ -38,6 +51,14 @@ Deprecated
 
 Removed
 -------
+- Parameter ``z`` when creating a ``CrystalMap`` and the ``z`` and ``dz`` attributes of
+  the class were deprecated in 0.10.1 and are now removed.
+- Passing ``shape`` or ``step_sizes`` with three values to
+  ``create_coordinate_arrays()`` was depreacted in 0.10. and will now raise an error.
+- Parameter ``depth`` (and ``axes``) in ``CrystalMapPlot.plot_map()`` was depreacted in
+  0.10.1 and will now raise an error if passed.
+- The ``z`` and ``dz`` datasets are not present in new orix HDF5 files. They are not
+  read if present in older files.
 
 Fixed
 -----
@@ -51,7 +72,7 @@ Security
 
 Fixed
 -----
-- ``Miller.symmetrise(unique=True)`` return the correct number of symmetrically
+- ``Miller.symmetrise(unique=True)`` returns the correct number of symmetrically
   equivalent but unique vectors, by rounding to 10 instead of 12 decimals prior to
   finding the unique vectors with NumPy.
 

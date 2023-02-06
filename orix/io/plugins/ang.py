@@ -451,8 +451,6 @@ def file_writer(
         value per point and ``index`` is not given, only the first value
         is used.
     """
-    if xmap.ndim > 2:
-        raise ValueError("Writing a 3D dataset to an .ang file is not supported")
     header = _get_header_from_phases(xmap)
 
     # Number of decimals to round to

@@ -30,18 +30,18 @@ from orix.vector import AxAngle, Vector3d
 @pytest.fixture(
     params=[
         # fmt: off
-    (0.707,  0.0,  0.0, 0.707),
-    (0.5  , -0.5, -0.5,   0.5),
-    (0.0  ,  0.0,  0.0,   1.0),
-    (1.0  ,  1.0,  1.0,   1.0),
-    ((0.5, -0.5, -0.5, 0.5), (0.0,  0.0,  0.0, 1.0)),
-    Quaternion(
-        [
-            [(0.0, 0.0, 0.0, 1.0), (0.707, 0.0, 0.0, 0.707)],
-            [(1.0, 1.0, 1.0, 1.0), (0.707, 0.0, 0.0, 0.707)],
-        ]
-    ),
-    np.array((4, 3, 2, 1)),
+        (0.707,  0.0,  0.0, 0.707),
+        (0.5  , -0.5, -0.5,   0.5),
+        (0.0  ,  0.0,  0.0,   1.0),
+        (1.0  ,  1.0,  1.0,   1.0),
+        ((0.5, -0.5, -0.5, 0.5), (0.0,  0.0,  0.0, 1.0)),
+        Quaternion(
+            [
+                [(0.0, 0.0, 0.0, 1.0), (0.707, 0.0, 0.0, 0.707)],
+                [(1.0, 1.0, 1.0, 1.0), (0.707, 0.0, 0.0, 0.707)],
+            ]
+        ),
+        np.array((4, 3, 2, 1)),
         # fmt: on
     ]
 )
@@ -281,26 +281,33 @@ class TestQuaternion:
             q._outer_dask(other)
 
     def test_from_align_vectors(self):
-        a = Vector3d([[2, -1, 0], [0, 0, 1]])
-        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
-        ori = Quaternion.from_align_vectors(a, b)
-        assert type(ori) == Quaternion
+        v1 = Vector3d([[2, -1, 0], [0, 0, 1]])
+        v2 = Vector3d([[3, 1, 0], [-1, 3, 0]])
+
+        q1 = Quaternion.from_align_vectors(v1, v2)
+        assert isinstance(q1, Quaternion)
         assert np.allclose(
-            ori.data, np.array([[0.65328148, 0.70532785, -0.05012611, -0.27059805]])
+            q1.data, np.array([[0.65328148, 0.70532785, -0.05012611, -0.27059805]])
         )
-        assert np.allclose(a.unit.data, (ori * b.unit).data)
-        _, e = Quaternion.from_align_vectors(a, b, return_rmsd=True)
-        assert e == 0
-        _, m = Quaternion.from_align_vectors(a, b, return_sensitivity=True)
-        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+        assert np.allclose(v1.unit.data, (q1 * v2.unit).data)
+
+        out = Quaternion.from_align_vectors(v1, v2, return_rmsd=True)
+        assert isinstance(out, tuple)
+        error = out[1]
+        assert error == 0
+
+        _, sens_mat = Quaternion.from_align_vectors(v1, v2, return_sensitivity=True)
+        assert np.allclose(sens_mat, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+
         out = Quaternion.from_align_vectors(
-            a, b, return_rmsd=True, return_sensitivity=True
+            v1, v2, return_rmsd=True, return_sensitivity=True
         )
         assert len(out) == 3
-        ori1 = Quaternion.from_align_vectors(
+
+        q2 = Quaternion.from_align_vectors(
             [[2, -1, 0], [0, 0, 1]], [[3, 1, 0], [-1, 3, 0]]
         )
-        assert np.allclose(ori1.data, ori.data)
+        assert np.allclose(q2.data, q1.data)
 
 
 class TestToFromEuler:
@@ -309,7 +316,13 @@ class TestToFromEuler:
     def test_to_from_euler(self, eu):
         """Checks that going euler2quat2euler gives no change."""
         eu2 = Quaternion.from_euler(eu).to_euler()
-        assert np.allclose(eu, eu2.data)
+        assert np.allclose(eu, eu2)
+
+        eu3 = Quaternion.from_euler(np.rad2deg(eu), degrees=True).to_euler()
+        assert np.allclose(eu, eu3)
+
+        eu4 = Quaternion.from_euler(eu).to_euler(degrees=True)
+        assert np.allclose(np.rad2deg(eu), eu4)
 
     def test_mtex(self, eu):
         _ = Quaternion.from_euler(eu, direction="mtex")
@@ -317,14 +330,14 @@ class TestToFromEuler:
     def test_direction_values(self, eu):
         q_mtex = Quaternion.from_euler(eu, direction="mtex")
         q_c2l = Quaternion.from_euler(eu, direction="crystal2lab")
-        q_l2c = Quaternion.from_euler(eu, direction="lab2crystal")
+        q_l2c = Quaternion.from_euler(eu)
         q_default = Quaternion.from_euler(eu)
         assert np.allclose(q_default.data, q_l2c.data)
         assert np.allclose(q_mtex.data, q_c2l.data)
         assert np.allclose((q_l2c * q_c2l).data, [1, 0, 0, 0])
 
     def test_direction_kwarg(self, eu):
-        _ = Quaternion.from_euler(eu, direction="lab2crystal")
+        _ = Quaternion.from_euler(eu)
 
     def test_direction_kwarg_dumb(self, eu):
         with pytest.raises(ValueError, match="The chosen direction is not one of "):
@@ -338,7 +351,7 @@ class TestToFromEuler:
         _ = q.to_euler()
 
     def test_passing_degrees_warns(self):
-        with pytest.warns(UserWarning, match="Angles are assumed to be in radians, "):
+        with pytest.warns(UserWarning, match="Angles are quite high, did you forget "):
             q = Quaternion.from_euler([90, 0, 0])
             assert np.allclose(q.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
 
@@ -472,3 +485,8 @@ class TestFromAxesAngles:
         quat2 = Quaternion.from_neo_euler(axangle)
         quat3 = Quaternion.from_axes_angles(axangle.axis.data, axangle.angle)
         assert np.allclose(quat2.data, quat3.data)
+
+        quat4 = Quaternion.from_axes_angles(
+            axangle.axis.data, np.rad2deg(axangle.angle), degrees=True
+        )
+        assert np.allclose(quat4.data, quat3.data)

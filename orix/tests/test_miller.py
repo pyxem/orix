@@ -504,8 +504,8 @@ class TestMillerBravais:
         m6 = Miller(hkil=[1, 1, -2, 0], phase=TRIGONAL_PHASE)
         m7 = Miller(hkil=[-1, -1, 2, 0], phase=TRIGONAL_PHASE)
 
-        assert np.allclose(np.rad2deg(m6.angle_with(m7)[0]), 180)
-        assert np.allclose(np.rad2deg(m6.angle_with(m7, use_symmetry=True)[0]), 60)
+        assert np.allclose(m6.angle_with(m7, degrees=True)[0], 180)
+        assert np.allclose(m6.angle_with(m7, use_symmetry=True, degrees=True)[0], 60)
 
     def test_convention_not_met(self):
         with pytest.raises(ValueError, match="The Miller-Bravais indices convention"):
@@ -536,7 +536,7 @@ class TestDeGraefExamples:
         m2 = Miller(uvw=[1, 2, 0], phase=TETRAGONAL_PHASE)
         m3 = Miller(uvw=[3, 1, 1], phase=TETRAGONAL_PHASE)
         assert np.allclose(m2.dot(m3), 5 / 4)  # nm^2
-        assert np.allclose(np.rad2deg(m2.angle_with(m3)[0]), 53.30, atol=0.01)
+        assert np.allclose(m2.angle_with(m3, degrees=True)[0], 53.30, atol=0.01)
 
         # Example 1.5: Reciprocal metric tensor
         lattice_recip = lattice.reciprocal()
@@ -545,7 +545,7 @@ class TestDeGraefExamples:
         # Example 1.6, 1.7: Angle between two plane normals
         m4 = Miller(hkl=[1, 2, 0], phase=TETRAGONAL_PHASE)
         m5 = Miller(hkl=[3, 1, 1], phase=TETRAGONAL_PHASE)
-        assert np.allclose(np.rad2deg(m4.angle_with(m5)[0]), 45.7, atol=0.1)
+        assert np.allclose(m4.angle_with(m5, degrees=True)[0], 45.7, atol=0.1)
 
         # Example 1.8: Reciprocal components of a lattice vector
         m6 = Miller(uvw=[1, 1, 4], phase=TETRAGONAL_PHASE)

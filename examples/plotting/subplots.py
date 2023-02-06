@@ -21,21 +21,21 @@ xmap = data.sdss_ferrite_austenite(allow_download=True)
 print(xmap)
 
 pg_laue = xmap.phases[1].point_group.laue
-ori_au = xmap["austenite"].orientations
-ori_fe = xmap["ferrite"].orientations
+o_au = xmap["austenite"].orientations
+o_fe = xmap["ferrite"].orientations
 
 # Orientation colors
 ipf_key = plot.IPFColorKeyTSL(pg_laue)
-rgb_au = ipf_key.orientation2color(ori_au)
-rgb_fe = ipf_key.orientation2color(ori_fe)
+rgb_au = ipf_key.orientation2color(o_au)
+rgb_fe = ipf_key.orientation2color(o_fe)
 
 # Austenite <111> poles in the sample reference frame
 uvw_au = Miller(uvw=[1, 1, 1], phase=xmap.phases["austenite"]).symmetrise(unique=True)
-uvw_au_all = (~ori_au).outer(uvw_au)
+uvw_au_all = (~o_au).outer(uvw_au)
 
 # Ferrite <111> poles in the sample reference frame
 uvw_fe = Miller(uvw=[1, 1, 1], phase=xmap.phases["ferrite"]).symmetrise(unique=True)
-uvw_fe_all = (~ori_fe).outer(uvw_fe)
+uvw_fe_all = (~o_fe).outer(uvw_fe)
 
 # Create figure
 fig = plt.figure(figsize=(8, 8))
