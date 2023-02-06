@@ -10,7 +10,6 @@ from orix import __author__, __author_email__, __description__, __name__, __vers
 # fmt: off
 extra_feature_requirements = {
     "doc": [
-        "furo",
         "ipykernel",  # Used by nbsphinx to execute notebooks
         "memory_profiler",
         "nbsphinx                       >= 0.7",
@@ -21,6 +20,7 @@ extra_feature_requirements = {
         "sphinx-design",
         "sphinx-gallery                 < 0.11",
         "sphinx-last-updated-by-git",
+        "pydata-sphinx-theme",
         "sphinxcontrib-bibtex           >= 1.0",
         "scikit-image",
         "scikit-learn",
