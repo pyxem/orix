@@ -19,7 +19,6 @@
 import gc
 import os
 from tempfile import TemporaryDirectory
-import warnings
 
 from diffpy.structure import Atom, Lattice, Structure
 from h5py import File
@@ -636,8 +635,8 @@ def phase_list(request):
         (
             # Tuple with default values for parameters: map_shape, step_sizes,
             # and n_rotations_per_point
-            (1, 4, 3),  # map_shape
-            (0, 1.5, 1.5),  # step_sizes
+            (4, 3),  # map_shape
+            (1.5, 1.5),  # step_sizes
             1,  # rotations_per_point
             [0],  # unique phase IDs
         )
@@ -645,11 +644,8 @@ def phase_list(request):
 )
 def crystal_map_input(request, rotations):
     # Unpack parameters
-    (nz, ny, nx), (dz, dy, dx), rotations_per_point, unique_phase_ids = request.param
-    # TODO: Remove after (any) one release after 0.10.1
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Returning coo", np.VisibleDeprecationWarning)
-        d, map_size = create_coordinate_arrays((nz, ny, nx), (dz, dy, dx))
+    (ny, nx), (dy, dx), rotations_per_point, unique_phase_ids = request.param
+    d, map_size = create_coordinate_arrays((ny, nx), (dy, dx))
     rot_idx = np.random.choice(
         np.arange(rotations.size), map_size * rotations_per_point
     )
@@ -666,10 +662,7 @@ def crystal_map_input(request, rotations):
 
 @pytest.fixture
 def crystal_map(crystal_map_input):
-    # TODO: Remove after (any) one release after 0.10.1
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Argument `z` ", np.VisibleDeprecationWarning)
-        return CrystalMap(**crystal_map_input)
+    return CrystalMap(**crystal_map_input)
 
 
 @pytest.fixture

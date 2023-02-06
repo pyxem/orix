@@ -35,6 +35,14 @@ Deprecated
 
 Removed
 -------
+- Parameter ``z`` when creating a ``CrystalMap`` and the ``z`` and ``dz`` attributes of
+  the class were deprecated in 0.10.1 and are now removed.
+- Passing ``shape`` or ``step_sizes`` with three values to
+  ``create_coordinate_arrays()`` was depreacted in 0.10. and will now raise an error.
+- Parameter ``depth`` (and ``axes``) in ``CrystalMapPlot.plot_map()`` was depreacted in
+  0.10.1 and will now raise an error if passed.
+- The ``z`` and ``dz`` datasets are not present in new orix HDF5 files. They are not
+  read if present in older files.
 
 Fixed
 -----

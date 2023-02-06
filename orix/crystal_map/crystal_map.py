@@ -18,12 +18,10 @@
 
 import copy
 from typing import Optional, Tuple, Union
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix._util import deprecated, deprecated_argument
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
 from orix.crystal_map.phase_list import Phase, PhaseList
 from orix.quaternion import Orientation, Rotation
@@ -52,18 +50,6 @@ class CrystalMap:
     y
         Map y coordinate of each data point. If not given, the map is
         assumed to be 1D, and it is set to ``None``.
-    z
-        Map z coordinate of each data point. If not given, the map is
-        assumed to be 2D or 1D, and it is set to ``None``.
-
-        .. deprecated:: 0.10.1
-
-            Will be removed in 0.11.0. Support for 3D crystal maps is
-            minimal and brittle, and it was therefore decided to remove
-            it altogether. If you rely on this functionality, please
-            report it in an issue at
-            https://github.com/pyxem/orix/issues.
-
     phase_list
         A list of phases in the data with their with names, space
         groups, point groups, and structures. The order in which the
@@ -217,14 +203,12 @@ class CrystalMap:
     Scan unit: um
     """
 
-    @deprecated_argument(name="z", since="0.10.1", removal="0.11.0")
     def __init__(
         self,
         rotations: Rotation,
         phase_id: Optional[np.ndarray] = None,
         x: Optional[np.ndarray] = None,
         y: Optional[np.ndarray] = None,
-        z: Optional[np.ndarray] = None,
         phase_list: Optional[PhaseList] = None,
         prop: Optional[dict] = None,
         scan_unit: Optional[str] = "px",
@@ -251,11 +235,10 @@ class CrystalMap:
         self._id = point_id
 
         # Set spatial coordinates
-        if x is None and y is None and z is None:
+        if x is None and y is None:
             x = np.arange(data_size)
         self._x = x
         self._y = y
-        self._z = z
 
         # Create phase list
         # Sorted in ascending order
@@ -360,15 +343,6 @@ class CrystalMap:
             return self._y[self.is_in_data]
 
     @property
-    @deprecated(since="0.10.1", removal="0.11.0", object_type="property")
-    def z(self) -> Union[None, np.ndarray]:
-        """Return the z coordinates of points in data."""
-        if self._z is None or len(np.unique(self._z)) == 1:
-            return
-        else:
-            return self._z[self.is_in_data]
-
-    @property
     def dx(self) -> float:
         """Return the x coordinate step size."""
         return self._step_size_from_coordinates(self._x)
@@ -377,12 +351,6 @@ class CrystalMap:
     def dy(self) -> float:
         """Return the y coordinate step size."""
         return self._step_size_from_coordinates(self._y)
-
-    @property
-    @deprecated(since="0.10.1", removal="0.11.0", object_type="property")
-    def dz(self) -> float:
-        """Return the z coordiante step size."""
-        return self._step_size_from_coordinates(self._z)
 
     @property
     def row(self) -> Union[None, np.ndarray]:
@@ -399,11 +367,6 @@ class CrystalMap:
         >>> xmap[1:3, 1:3].row
         array([0, 0, 1, 1])
         """
-        # TODO: Remove after (any) one release after 0.10.1
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "Property ", np.VisibleDeprecationWarning)
-            if self.z is not None:
-                return
         orig_shape = self._original_shape
         if len(orig_shape) == 1:
             if self.x is None:
@@ -430,11 +393,6 @@ class CrystalMap:
         >>> xmap[1:3, 1:3].col
         array([0, 1, 0, 1])
         """
-        # TODO: Remove after (any) one release after 0.10.1
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "Property ", np.VisibleDeprecationWarning)
-            if self.z is not None:
-                return
         shape = self._original_shape
         if len(shape) == 1:
             if self.x is None:
@@ -605,31 +563,17 @@ class CrystalMap:
     @property
     def _coordinates(self) -> dict:
         """Return the coordinates of points in the data."""
-        # TODO: Make this "dynamic"/dependable when enabling specimen
-        #  reference frame
-
-        # TODO: Remove after (any) one release after 0.10.1
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "Property ", np.VisibleDeprecationWarning)
-            return {"z": self.z, "y": self.y, "x": self.x}
+        return {"y": self.y, "x": self.x}
 
     @property
     def _all_coordinates(self) -> dict:
         """Return the coordinates of all points."""
-        # TODO: Make this "dynamic"/dependable when enabling specimen
-        #  reference frame
-        return {"z": self._z, "y": self._y, "x": self._x}
+        return {"y": self._y, "x": self._x}
 
     @property
     def _step_sizes(self) -> dict:
         """Return the step sizes of dimensions in the data."""
-        # TODO: Make this "dynamic"/dependable when enabling specimen
-        #  reference frame
-
-        # TODO: Remove after (any) one release after 0.10.1
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "Property ", np.VisibleDeprecationWarning)
-            return {"z": self.dz, "y": self.dy, "x": self.dx}
+        return {"y": self.dy, "x": self.dx}
 
     @property
     def _coordinate_axes(self) -> dict:
@@ -810,7 +754,7 @@ class CrystalMap:
         shape: Union[None, int, tuple] = None,
         step_sizes: Union[None, int, tuple] = None,
     ) -> "CrystalMap":
-        """Return a crystal map of a given shape and step sizes with
+        """Return a crystal map of a given 2D shape and step sizes with
         identity rotations.
 
         Parameters
@@ -818,28 +762,9 @@ class CrystalMap:
         shape
             Map shape. Default is a 2D map of shape (5, 10), i.e. with
             five rows and ten columns.
-
-            .. deprecated:: 0.10.1
-
-            Returning coordinates for a 3D map is deprecated, and this
-            method will only support 1D or 2D maps in 0.11.0. Support
-            for 3D crystal maps is minimal and brittle, and it was
-            therefore decided to remove it altogether. If you rely on
-            this functionality, please report it in an issue at
-            https://github.com/pyxem/orix/issues.
-
         step_sizes
             Map step sizes. If not given, it is set to 1 px in each map
             direction given by ``shape``.
-
-            .. deprecated:: 0.10.1
-
-            Returning coordinates for a 3D map is deprecated, and this
-            method will only support 1D or 2D maps in 0.11.0. Support
-            for 3D crystal maps is minimal and brittle, and it was
-            therefore decided to remove it altogether. If you rely on
-            this functionality, please report it in an issue at
-            https://github.com/pyxem/orix/issues.
 
         Returns
         -------
@@ -954,8 +879,6 @@ class CrystalMap:
                 array[self.is_in_data] = rotations.to_euler()
             else:  # item == "orientations"
                 # Fill in orientations per phase
-                # TODO: Consider whether orientations should be calculated
-                #  upon loading
                 for i, _ in self.phases_in_data:
                     phase_mask = (self._phase_id == i) * self.is_in_data
                     phase_mask_in_data = self.phase_id == i
@@ -1206,28 +1129,9 @@ def create_coordinate_arrays(
     shape
         Map shape. Default is a 2D map of shape (5, 10) with five rows
         and ten columns.
-
-        .. deprecated:: 0.10.1
-
-            Returning coordinates for a 3D map is deprecated, and this
-            method will only support 1D or 2D maps in 0.11.0. Support
-            for 3D crystal maps is minimal and brittle, and it was
-            therefore decided to remove it altogether. If you rely on
-            this functionality, please report it in an issue at
-            https://github.com/pyxem/orix/issues.
-
     step_sizes
         Map step sizes. If not given, it is set to 1 px in each map
         direction given by ``shape``.
-
-        .. deprecated:: 0.10.1
-
-            Returning coordinates for a 3D map is deprecated, and this
-            method will only support 1D or 2D maps in 0.11.0. Support
-            for 3D crystal maps is minimal and brittle, and it was
-            therefore decided to remove it altogether. If you rely on
-            this functionality, please report it in an issue at
-            https://github.com/pyxem/orix/issues.
 
     Returns
     -------
@@ -1253,30 +1157,19 @@ def create_coordinate_arrays(
     if step_sizes is None:
         step_sizes = (1,) * ndim
 
-    # TODO: Remove after (any) one release after 0.10.1
-    if ndim == 3:
-        warnings.warn(
-            "Returning coordinates for a 3D map is deprecated, and this function will "
-            "only support 1D or 2D maps in 0.11.0. Support for 3D crystal maps is "
-            "minimal and brittle, and it was therefore decided to remove it altogether."
-            " If you rely on this functionality, please report it in an issue at "
-            "https://github.com/pyxem/orix/issues",
-            np.VisibleDeprecationWarning,
-        )
+    if ndim == 3 or len(step_sizes) > 2:
+        raise ValueError("Can only create coordinate arrays for 2D maps")
 
-    # Set up as if a 3D map is to be returned
-    dz, dy, dx = (1,) * (3 - ndim) + step_sizes
-    nz, ny, nx = (1,) * (3 - ndim) + shape
+    # Set up as if a 2D map is to be returned
+    dy, dx = (1,) * (2 - ndim) + step_sizes
+    ny, nx = (1,) * (2 - ndim) + shape
     d = dict()
 
     # Add coordinate arrays depending on the number of map dimensions
-    d["x"] = np.tile(np.arange(nx) * dx, ny * nz).flatten()
+    d["x"] = np.tile(np.arange(nx) * dx, ny).flatten()
     map_size = nx
     if ndim > 1:
-        d["y"] = np.tile(np.sort(np.tile(np.arange(ny) * dy, nx)), nz).flatten()
+        d["y"] = np.sort(np.tile(np.arange(ny) * dy, nx)).flatten()
         map_size *= ny
-    if ndim > 2:
-        d["z"] = np.array([np.ones(ny * nx) * i * dz for i in range(nz)]).flatten()
-        map_size *= nz
 
     return d, map_size
