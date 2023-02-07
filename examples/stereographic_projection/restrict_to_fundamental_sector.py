@@ -6,7 +6,7 @@ Restrict to fundamental sector
 This example shows how to restrict the stereographic plot to only the fundamental sector
 of a point group using :meth:`~orix.plot.StereographicPlot.restrict_to_sector`. The
 sector is typically obtained from :attr:`orix.quaternion.Symmetry.fundamental_sector`,
-and is often called the `fundamental triangle'.
+and is often called the 'fundamental triangle'.
 
 We demonstrate this functionality by drawing (near) great circles about some typically
 strongly reflecting low-index reciprocal lattice vectors :math:`\{hkl\}` in crystals of
