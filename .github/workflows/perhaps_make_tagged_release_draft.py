@@ -1,4 +1,4 @@
-# Copyright 2019-2022 The orix developers
+# Copyright 2018-2023 The orix developers
 #
 # This file is part of orix.
 #
