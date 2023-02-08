@@ -489,10 +489,15 @@ class StereographicPlot(maxes.Axes):
         verts_normal = center.cross(verts)
         verts_rot = verts.rotate(verts_normal, pad_angle)
         x_pad, y_pad = self._projection.vector2xy(verts_rot)
-        x_min = min([np.min(x), np.min(x_pad)])
-        x_max = max([np.max(x), np.max(x_pad)])
-        y_min = min([np.min(y), np.min(y_pad)])
-        y_max = max([np.max(y), np.max(y_pad)])
+        pad_min = 0.01
+        if x_pad.size == 0:
+            x_min, x_max = np.min(x) - pad_min, np.max(x) + pad_min
+            y_min, y_max = np.min(y) - pad_min, np.max(y) + pad_min
+        else:
+            x_min = min([np.min(x) - pad_min, np.min(x_pad)])
+            x_max = max([np.max(x) + pad_min, np.max(x_pad)])
+            y_min = min([np.min(y) - pad_min, np.min(y_pad)])
+            y_max = max([np.max(y) + pad_min, np.max(y_pad)])
         self.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 
         self.patches[0].set_visible(False)
