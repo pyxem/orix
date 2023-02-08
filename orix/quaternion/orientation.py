@@ -301,15 +301,13 @@ class Misorientation(Rotation):
         transforming every misorientation in this instance to every
         other misorientation :cite:`johnstone2020density`.
 
-        This is an alternative implementation of
-        :meth:`~orix.quaternion.Misorientation.distance` for
-        a single :class:`Misorientation` instance, using :mod:`dask`.
-
         Parameters
         ----------
         chunk_size
             Number of misorientations per axis to include in each
-            iteration of the computation. Default is 20.
+            iteration of the computation. Default is 20. Increasing this
+            might reduce the computation time at the cost of increased
+            memory use.
         progressbar
             Whether to show a progressbar during computation. Default is
             ``True``.
@@ -907,10 +905,6 @@ class Orientation(Misorientation):
         transforming every orientation in this instance to every
         orientation in another instance.
 
-        This is an alternative implementation of
-        :meth:`~orix.quaternion.Misorientation.distance` for
-        a single :class:`Orientation` instance, using :mod:`dask`.
-
         Parameters
         ----------
         other
@@ -921,7 +915,8 @@ class Orientation(Misorientation):
         chunk_size
             Number of orientations per axis to include in each iteration
             of the computation. Default is 20. Only applies when
-            ``lazy=True``.
+            ``lazy=True``. Increasing this might reduce the computation
+            time at the cost of increased memory use.
         progressbar
             Whether to show a progressbar during computation if
             ``lazy=True``. Default is ``True``.
@@ -1003,10 +998,6 @@ class Orientation(Misorientation):
         transforming all these orientations to all the other
         orientations :cite:`johnstone2020density`.
 
-        This is an alternative implementation of
-        :meth:`~orix.quaternion.Misorientation.distance` for
-        a single :class:`Orientation` instance, using :mod:`dask`.
-
         Parameters
         ----------
         lazy
@@ -1015,7 +1006,8 @@ class Orientation(Misorientation):
         chunk_size
             Number of orientations per axis to include in each iteration
             of the computation. Default is 20. Only applies when
-            ``lazy=True``.
+            ``lazy=True``. Increasing this might reduce the computation
+            time at the cost of increased memory use.
         progressbar
             Whether to show a progressbar during computation if
             ``lazy=True``. Default is ``True``.
@@ -1332,9 +1324,10 @@ class Orientation(Misorientation):
         ----------
         other
         chunk_size
-            Number of orientations per axis in each orientation instance
-            to include in each iteration of the computation. Default is
-            20.
+            Number of orientations per axis to include in each iteration
+            of the computation. Default is 20. Increasing this might
+            reduce the computation time at the cost of increased memory
+            use.
 
         Returns
         -------
