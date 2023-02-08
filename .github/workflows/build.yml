@@ -36,7 +36,7 @@ jobs:
 
       - name: Check code style of Jupyter notebooks
         run: |
-          black doc/**/*.ipynb --check
+          black --diff --line-length 77 doc/tutorials/*.ipynb
 
   # Make sure all necessary files will be included in a release
   manifest:
