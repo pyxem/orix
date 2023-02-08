@@ -1,8 +1,10 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 23.1.0
     hooks:
+      - id: black
       - id: black-jupyter
+        args: ["--line-length", "77"]
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
     hooks:
