@@ -18,7 +18,8 @@ from orix.vector import Miller, Vector3d
 
 # Specify a crystal structure and symmetry
 phase = Phase(
-    point_group="6/mmm", structure=Structure(lattice=Lattice(1, 1, 2, 90, 90, 120))
+    point_group="6/mmm",
+    structure=Structure(lattice=Lattice(1, 1, 2, 90, 90, 120)),
 )
 
 # Define a reference orientation (goal)

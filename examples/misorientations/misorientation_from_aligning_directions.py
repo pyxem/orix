@@ -17,10 +17,12 @@ from orix.vector import Miller
 
 # Specify two crystal structures and symmetries
 phase1 = Phase(
-    point_group="m-3m", structure=Structure(lattice=Lattice(1, 1, 1, 90, 90, 90))
+    point_group="m-3m",
+    structure=Structure(lattice=Lattice(1, 1, 1, 90, 90, 90)),
 )
 phase2 = Phase(
-    point_group="6/mmm", structure=Structure(lattice=Lattice(1, 1, 2, 90, 90, 120))
+    point_group="6/mmm",
+    structure=Structure(lattice=Lattice(1, 1, 2, 90, 90, 120)),
 )
 
 # Specify one orientation per crystal
