@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -72,9 +72,12 @@ def test_axis(axangle):
     ],
 )
 def test_from_axes_angles(axis, angle, expected_axis):
-    ax = AxAngle.from_axes_angles(axis, angle)
-    assert np.allclose(ax.axis.data, expected_axis)
-    assert np.allclose(ax.angle, abs(angle))
+    ax1 = AxAngle.from_axes_angles(axis, angle)
+    assert np.allclose(ax1.axis.data, expected_axis)
+    assert np.allclose(ax1.angle, abs(angle))
+
+    ax2 = AxAngle.from_axes_angles(axis, np.rad2deg(angle), degrees=True)
+    assert np.allclose(ax1.data, ax2.data)
 
 
 @pytest.mark.parametrize(

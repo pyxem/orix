@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -21,7 +21,7 @@ from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 import pytest
 
-from orix.crystal_map import CrystalMap, Phase, PhaseList
+from orix.crystal_map import CrystalMap, Phase, PhaseList, create_coordinate_arrays
 from orix.plot import CrystalMapPlot
 from orix.quaternion import Orientation, Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
@@ -30,11 +30,6 @@ from orix.quaternion.symmetry import C2, C3, C4, O
 # testing IO and the Phase() and PhaseList() classes
 
 
-# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
-
-
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed")
-@pytest.mark.filterwarnings("ignore:Returning coordinates for a 3D map is deprecated")
 class TestCrystalMap:
     def test_minimal_init(self, rotations):
         map_size = 2
@@ -62,28 +57,28 @@ class TestCrystalMap:
         ),
         [
             (
-                ((1, 5, 5), (0, 1.5, 1.5), 3, [0]),
+                ((5, 5), (1.5, 1.5), 3, [0]),
                 (5, 5),
                 25,
-                {"z": 0, "y": 1.5, "x": 1.5},
+                {"y": 1.5, "x": 1.5},
                 3,
-                (True, False, False),
+                (False, False),
             ),
             (
-                ((1, 1, 10), (0, 0.1, 0.1), 1, [0]),
+                ((1, 10), (0.1, 0.1), 1, [0]),
                 (10,),
                 10,
-                {"z": 0, "y": 0, "x": 0.1},
+                {"y": 0, "x": 0.1},
                 1,
-                (True, True, False),
+                (True, False),
             ),
             (
-                ((1, 10, 1), (0, 1e-3, 0), 2, [0]),
+                ((10, 1), (1e-3, 0), 2, [0]),
                 (10,),
                 10,
-                {"z": 0, "y": 1e-3, "x": 0},
+                {"y": 1e-3, "x": 0},
                 2,
-                (True, False, True),
+                (False, True),
             ),
         ],
         indirect=["crystal_map_input"],
@@ -98,11 +93,7 @@ class TestCrystalMap:
         expected_coords_nan,
     ):
         xmap = CrystalMap(**crystal_map_input)
-        coordinate_arrays = [
-            crystal_map_input["z"],
-            crystal_map_input["y"],
-            crystal_map_input["x"],
-        ]
+        coordinate_arrays = [crystal_map_input["y"], crystal_map_input["x"]]
 
         assert xmap.shape == expected_shape
         assert xmap.size == expected_size
@@ -129,8 +120,8 @@ class TestCrystalMap:
     @pytest.mark.parametrize(
         "crystal_map_input",
         [
-            ((1, 4, 3), (0, 1.5, 1.5), 1, [0, 1]),
-            ((1, 4, 3), (0, 1.5, 1.5), 1, [1, -1]),
+            ((4, 3), (1.5, 1.5), 1, [0, 1]),
+            ((4, 3), (1.5, 1.5), 1, [1, -1]),
         ],
         indirect=["crystal_map_input"],
     )
@@ -148,15 +139,15 @@ class TestCrystalMap:
             assert -1 not in xmap.phases.ids
 
     @pytest.mark.parametrize(
-        "crystal_map_input",
+        "crystal_map_input, expected_presence",
         [
-            ((1, 4, 3), (0, 1.5, 1.5), 1, [0, 1, 2]),
-            ((1, 4, 3), (0, 1.5, 1.5), 1, [0, 1, 2, 3]),
-            ((1, 4, 3), (0, 1.5, 1.5), 1, [2, 42]),
+            (((4, 3), (1.5, 1.5), 1, [0, 1, 2]), [True, True, True]),
+            (((4, 3), (1.5, 1.5), 1, [0, 1, 2, 3]), [True, True, True, True]),
+            (((4, 3), (1.5, 1.5), 1, [2, 42]), [True, False]),
         ],
         indirect=["crystal_map_input"],
     )
-    def test_init_with_phase_list(self, crystal_map_input):
+    def test_init_with_phase_list(self, crystal_map_input, expected_presence):
         point_groups = [C2, C3, C4]
         phase_list = PhaseList(point_groups=point_groups)
         xmap = CrystalMap(phase_list=phase_list, **crystal_map_input)
@@ -166,9 +157,11 @@ class TestCrystalMap:
         n_different = n_point_groups - n_phase_ids
         if n_different < 0:
             point_groups += [None] * abs(n_different)
-        assert [
-            xmap.phases.point_groups[i] == point_groups[i] for i in range(n_phase_ids)
-        ]
+
+        for p1, p2, expected in zip(
+            xmap.phases.point_groups, point_groups, expected_presence
+        ):
+            assert (p1 == p2) == expected
 
         unique_phase_ids = list(np.unique(crystal_map_input["phase_id"]).astype(int))
         assert xmap.phases.ids == unique_phase_ids
@@ -182,10 +175,10 @@ class TestCrystalMap:
     @pytest.mark.parametrize(
         "crystal_map_input, phase_names, phase_ids, desired_phase_names",
         [
-            (((1, 7, 4), (0, 1, 1), 1, [0]), ["a", "b", "c"], [0, 1, 2], ["a"]),
-            (((1, 7, 4), (0, 1, 1), 1, [0, 1]), ["a", "b", "c"], [0, 2, 1], ["a", "c"]),
-            (((1, 7, 4), (0, 1, 1), 1, [0, 2]), ["a", "b", "c"], [0, 2, 1], ["a", "b"]),
-            (((1, 7, 4), (0, 1, 1), 1, [3]), ["a", "b", "c"], [0, 2, 1], ["a"]),
+            (((7, 4), (1, 1), 1, [0]), ["a", "b", "c"], [0, 1, 2], ["a"]),
+            (((7, 4), (1, 1), 1, [0, 1]), ["a", "b", "c"], [0, 2, 1], ["a", "c"]),
+            (((7, 4), (1, 1), 1, [0, 2]), ["a", "b", "c"], [0, 2, 1], ["a", "b"]),
+            (((7, 4), (1, 1), 1, [3]), ["a", "b", "c"], [0, 2, 1], ["a"]),
         ],
         indirect=["crystal_map_input"],
     )
@@ -205,31 +198,34 @@ class TestCrystalMap:
                 (5, 5),
                 None,
                 dict(
-                    z=None,
-                    y=np.tile(np.sort(np.tile(np.arange(5) * 1, 5)), 1).flatten(),
-                    x=np.tile(np.arange(5) * 1, 5 * 1).flatten(),
+                    y=np.sort(np.tile(np.arange(5) * 1, 5)).flatten(),
+                    x=np.tile(np.arange(5), 5).flatten(),
                 ),
-                dict(z=0, y=1, x=1),
+                dict(y=1, x=1),
             ),
             (
-                (2, 2, 3),
-                (2, 3, 4),
+                (2, 3),
+                (3, 4),
                 dict(
-                    z=np.array([np.ones(2 * 3) * i * 2 for i in range(2)]).flatten(),
-                    y=np.tile(np.sort(np.tile(np.arange(2) * 3, 3)), 2).flatten(),
-                    x=np.tile(np.arange(3) * 4, 2 * 2).flatten(),
+                    y=np.sort(np.tile(np.arange(2) * 3, 3)).flatten(),
+                    x=np.tile(np.arange(3) * 4, 2).flatten(),
                 ),
-                dict(z=2, y=3, x=4),
+                dict(y=3, x=4),
             ),
             (
                 None,  # Default (5, 10)
                 None,  # Default (1, 1)
                 dict(
-                    z=None,
-                    y=np.tile(np.sort(np.tile(np.arange(5) * 1, 10)), 1).flatten(),
-                    x=np.tile(np.arange(10) * 1, 5 * 1).flatten(),
+                    y=np.sort(np.tile(np.arange(5), 10)).flatten(),
+                    x=np.tile(np.arange(10), 5).flatten(),
                 ),
-                dict(z=0, y=1, x=1),
+                dict(y=1, x=1),
+            ),
+            (
+                (5,),
+                (1,),
+                dict(y=None, x=np.tile(np.arange(5), 1).flatten()),
+                dict(y=0, x=1),
             ),
         ],
     )
@@ -246,7 +242,7 @@ class TestCrystalMap:
             np.array([1, 0, 0, 0] * desired_size).reshape((desired_size, 4)),
         )
         assert xmap.shape == shape
-        for i in ["z", "y", "x"]:
+        for i in ["y", "x"]:
             assert xmap._step_sizes[i] == desired_step_sizes[i]
             coords = xmap._coordinates[i]
             desired_coords = desired_coordinates[i]
@@ -311,31 +307,30 @@ class TestCrystalMap:
             xmap.phases = phase_list
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapGetItem:
     @pytest.mark.parametrize(
         "crystal_map_input, slice_tuple, expected_shape",
         [
-            (((5, 5, 5), (1, 1, 1), 1, [0]), slice(None, None, None), (5, 5, 5)),
+            (((5, 5), (1, 1), 1, [0]), slice(None, None, None), (5, 5)),
             (
-                ((5, 5, 5), (1, 1, 1), 1, [0]),
+                ((5, 5), (1, 1), 1, [0]),
                 (slice(1, 2, None), slice(None, None, None)),
-                (1, 5, 5),
+                (1, 5),
             ),
             (
-                ((2, 5, 5), (1, 1, 1), 1, [0]),
-                (slice(0, 2, None), slice(None, None, None), slice(1, 4, None)),
-                (2, 5, 3),
+                ((5, 5), (1, 1), 1, [0]),
+                (slice(None, None, None), slice(1, 4, None)),
+                (5, 3),
             ),
             (
-                ((3, 10, 10), (1, 0.5, 0.1), 2, [0]),
-                (1, slice(5, 10, None), slice(None, None, None)),
-                (1, 5, 10),
+                ((10, 10), (0.5, 0.1), 2, [0]),
+                (slice(5, 10, None), slice(None, None, None)),
+                (5, 10),
             ),
             (
-                ((3, 10, 10), (1, 0.5, 0.1), 2, [0]),
-                (slice(None, 10, None), slice(2, 4, None), slice(None, 3, None)),
-                (3, 2, 3),
+                ((10, 10), (0.5, 0.1), 2, [0]),
+                (slice(2, 4, None), slice(None, 3, None)),
+                (2, 3),
             ),
         ],
         indirect=["crystal_map_input"],
@@ -386,7 +381,7 @@ class TestCrystalMapGetItem:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((1, 4, 3), (1, 1, 1), 1, [0])],
+        [((4, 3), (1, 1), 1, [0])],
         indirect=["crystal_map_input"],
     )
     def test_get_by_condition(self, crystal_map_input):
@@ -421,11 +416,11 @@ class TestCrystalMapGetItem:
     @pytest.mark.parametrize(
         "crystal_map_input, integer_slices, expected_id, raises",
         [
-            (((3, 4, 4), (1, 1, 1), 1, [0]), (0, 0, 2), 2, False),
-            (((3, 4, 4), (1, 1, 1), 3, [0]), (0, 2, 0), 8, False),
-            (((3, 4, 4), (1, 1, 1), 3, [0]), (2, 0, 0), 32, False),
-            (((1, 4, 1), (0, 1, 0), 2, [0]), 1, 1, False),
-            (((3, 4, 4), (1, 1, 1), 3, [0]), (1000, 0, 0), None, True),
+            (((4, 4), (1, 1), 1, [0]), (0, 2), 2, False),
+            (((4, 4), (1, 1), 3, [0]), (2, 0), 8, False),
+            (((4, 4), (1, 1), 3, [0]), (2, 3), 11, False),
+            (((4, 1), (1, 0), 2, [0]), 1, 1, False),
+            (((4, 4), (1, 1), 3, [0]), (1000, 0, 0), None, True),
         ],
         indirect=["crystal_map_input"],
     )
@@ -435,7 +430,7 @@ class TestCrystalMapGetItem:
         # This also tests `phase_id`
         xmap = CrystalMap(**crystal_map_input)
         if raises:
-            with pytest.raises(IndexError, match=".* is out of bounds for"):
+            with pytest.raises(IndexError):
                 _ = xmap[integer_slices]
         else:
             point = xmap[integer_slices]
@@ -466,6 +461,75 @@ class TestCrystalMapGetItem:
         assert np.allclose(xmap2[1, 2].id, 26)
         assert np.allclose(xmap2[1, 3].id, 27)
         assert np.allclose(xmap2[2, 2].id, 36)
+
+    def test_row_col(self):
+        """Map points are assigned correct row and column coordinates."""
+        xmap1 = CrystalMap.empty()
+        xmap1.phases[0].name = "a"
+        xmap1.phases.add(Phase("b"))
+        xmap1[1:4, 5:9].phase_id = 1
+        xmap1[1, 1].phase_id = 1
+
+        rows, cols = np.indices(xmap1.shape)
+        assert np.allclose(xmap1.row, rows.flatten())
+        assert np.allclose(xmap1.col, cols.flatten())
+
+        # Sliced (weird formatting to increase readability of 2D map)
+        # fmt: off
+        assert np.allclose(
+            xmap1["a"].row,
+            np.array([
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                1,    1, 1, 1,             1,
+                2, 2, 2, 2, 2,             2,
+                3, 3, 3, 3, 3,             3,
+                4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+            ])
+        )
+        assert np.allclose(
+            xmap1["b"].row,
+            np.array([
+
+                   0,          0, 0, 0, 0,
+                               1, 1, 1, 1,
+                               2, 2, 2, 2,
+
+            ])
+        )
+        assert np.allclose(
+            xmap1["a"].col,
+            np.array([
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                0,    2, 3, 4,             9,
+                0, 1, 2, 3, 4,             9,
+                0, 1, 2, 3, 4,             9,
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+            ])
+        )
+        assert np.allclose(
+            xmap1["b"].col,
+            np.array([
+
+                   0,          4, 5, 6, 7,
+                               4, 5, 6, 7,
+                               4, 5, 6, 7,
+
+            ])
+        )
+        # fmt: on
+
+        # 1D without 1-dimension
+        xmap2 = CrystalMap.empty((5,))
+        assert np.allclose(xmap2.row, np.zeros(xmap2.size))
+        assert np.allclose(xmap2.col, np.arange(xmap2.size))
+
+        # 1D with 1-dimension
+        xmap3 = CrystalMap.empty((1, 5))
+        assert np.allclose(xmap3.row, np.zeros(xmap3.size))
+        assert np.allclose(xmap3.col, np.arange(xmap3.size))
+        xmap4 = CrystalMap.empty((5, 1))
+        assert np.allclose(xmap4.row, np.arange(xmap4.size))
+        assert np.allclose(xmap4.col, np.zeros(xmap4.size))
 
 
 class TestCrystalMapSetAttributes:
@@ -536,7 +600,6 @@ class TestCrystalMapSetAttributes:
         assert xmap.phases_in_data.names == xmap.phases.names
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapOrientations:
     def test_orientations(self, crystal_map_input, phase_list):
         x = crystal_map_input["x"]
@@ -603,7 +666,7 @@ class TestCrystalMapOrientations:
 
     @pytest.mark.parametrize(
         "crystal_map_input, rotations_per_point",
-        [(((1, 5, 5), (0, 1.5, 1.5), 3, [0]), 3)],
+        [(((5, 5), (1.5, 1.5), 3, [0]), 3)],
         indirect=["crystal_map_input"],
     )
     def test_multiple_orientations_per_point(
@@ -644,7 +707,6 @@ class TestCrystalMapProp:
         assert np.allclose(xmap.prop[prop_name], np.ones(xmap.size) * new_prop_value)
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapMasking:
     def test_getitem_with_masking(self, crystal_map_input):
         x = crystal_map_input["x"]
@@ -657,26 +719,19 @@ class TestCrystalMapMasking:
         assert np.allclose(xmap2.prop.is_in_data, xmap2.is_in_data)
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
-@pytest.mark.filterwarnings("ignore:Property `z` is deprecated and will be removed in")
 class TestCrystalMapGetMapData:
     @pytest.mark.parametrize(
         "crystal_map_input, to_get, expected_array",
         [
             (
-                ((1, 4, 4), (0, 0.5, 1), 2, [0]),
+                ((4, 4), (0.5, 1), 2, [0]),
                 "x",
                 np.array([0, 1, 2, 3] * 4).reshape((4, 4)),
             ),
             (
-                ((1, 4, 4), (0, 0.5, 1), 2, [0]),
+                ((4, 4), (0.5, 1), 2, [0]),
                 "y",
                 np.array([[i * 0.5] * 4 for i in range(4)]),  # [0, 0, 0, 0, 0.5, ...]
-            ),
-            (
-                ((2, 4, 4), (0.28, 0.5, 1), 2, [0]),
-                "z",
-                np.stack((np.zeros((4, 4)), np.ones((4, 4)) * 0.28)),
             ),
         ],
         indirect=["crystal_map_input"],
@@ -691,10 +746,8 @@ class TestCrystalMapGetMapData:
         # Get via numpy array
         if to_get == "x":
             data_via_array = xmap.get_map_data(xmap.x)
-        elif to_get == "y":
+        else:
             data_via_array = xmap.get_map_data(xmap.y)
-        else:  # to_get == "z"
-            data_via_array = xmap.get_map_data(xmap.z)
         assert np.allclose(data_via_array, expected_array)
 
         # Make sure they are the same
@@ -713,7 +766,7 @@ class TestCrystalMapGetMapData:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((1, 3, 2), (0, 1, 1), 3, [0]), ((3, 1, 2), (1, 1, 1), 1, [0])],
+        [((3, 2), (1, 1), 3, [0]), ((3, 2), (1, 1), 1, [0])],
         indirect=["crystal_map_input"],
     )
     def test_get_orientations_array(self, crystal_map_input, phase_list):
@@ -767,7 +820,7 @@ class TestCrystalMapGetMapData:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((1, 2, 2), (0, 1, 1), 2, [0]), ((3, 2, 2), (1, 1, 1), 1, [0])],
+        [((2, 2), (1, 1), 2, [0]), ((2, 2), (1, 1), 1, [0])],
         indirect=["crystal_map_input"],
     )
     def test_get_rotations_array(self, crystal_map_input):
@@ -790,7 +843,7 @@ class TestCrystalMapGetMapData:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((3, 9, 3), (1, 1.5, 1.5), 2, [0]), ((2, 10, 5), (1, 0.1, 0.1), 3, [0])],
+        [((9, 3), (1.5, 1.5), 2, [0]), ((10, 5), (0.1, 0.1), 3, [0])],
         indirect=["crystal_map_input"],
     )
     def test_get_phase_id_array_from_3d_data(self, crystal_map_input):
@@ -800,9 +853,8 @@ class TestCrystalMapGetMapData:
     @pytest.mark.parametrize(
         "crystal_map_input, to_get",
         [
-            (((1, 4, 3), (1, 1, 1), 1, [0]), "z"),
-            (((4, 1, 3), (1, 1, 1), 1, [0]), "y"),
-            (((4, 3, 1), (1, 1, 1), 1, [0]), "x"),
+            (((1, 3), (1, 1), 1, [0]), "y"),
+            (((3, 1), (1, 1), 1, [0]), "x"),
         ],
         indirect=["crystal_map_input"],
     )
@@ -908,26 +960,25 @@ class TestCrystalMapCopying:
         assert np.may_share_memory(xmap2._phase_id, crystal_map._phase_id) is False
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestCrystalMapShape:
     @pytest.mark.parametrize(
         "crystal_map_input, expected_slices",
         [
             (
-                ((1, 10, 30), (0, 0.1, 0.1), 2, [0]),
+                ((10, 30), (0.1, 0.1), 2, [0]),
                 (slice(0, 10, None), slice(0, 30, None)),
             ),
             (
-                ((2, 13, 27), (0.3, 0.7, 0.9), 3, [0]),
-                (slice(0, 2, None), slice(0, 13, None), slice(0, 27, None)),
+                ((13, 27), (0.7, 0.9), 3, [0]),
+                (slice(0, 13, None), slice(0, 27, None)),
             ),
             (
-                ((1, 4, 3), (0, 1.5, 1.5), 1, [0]),
+                ((4, 3), (1.5, 1.5), 1, [0]),
                 (slice(0, 4, None), slice(0, 3, None)),
             ),
             # Testing rounding 15 / 2 = 7.5 and 45 / 2 = 22.5
             (
-                ((1, 15, 45), (0, 2, 2), 1, [0]),
+                ((15, 45), (2, 2), 1, [0]),
                 (slice(0, 15, None), slice(0, 45, None)),
             ),
         ],
@@ -940,38 +991,21 @@ class TestCrystalMapShape:
     @pytest.mark.parametrize(
         "crystal_map_input, slices, expected_size, expected_shape, expected_slices",
         [
-            # Slice 3D data with an index in all axes
+            # Slice 2D data with an index in all axes
             (
-                ((2, 3, 4), (1, 1, 1), 1, [0]),
-                (1, 2, 3),
+                ((3, 4), (1, 1), 1, [0]),
+                (2, 3),
                 1,
-                (1, 1, 1),
-                (slice(1, 2, None), slice(2, 3, None), slice(3, 4, None)),
+                (1, 1),
+                (slice(2, 3, None), slice(3, 4, None)),
             ),
-            # Slice 3D data with indices in only two axes
+            # Slice 2D data with an index in only one axis
             (
-                ((2, 3, 4), (0.1, 0.1, 0.1), 1, [0]),
-                (1, 2),
-                4,
-                (1, 1, 4),
-                (slice(1, 2, None), slice(2, 3, None), slice(0, 4, None)),
-            ),
-            # Slice 3D data with indices in only two axes (same as above, to make sure
-            # slice determination is unaffected by step size)
-            (
-                ((2, 3, 4), (1, 1, 1), 1, [0]),
-                (1, 2),
-                4,
-                (1, 1, 4),
-                (slice(1, 2, None), slice(2, 3, None), slice(0, 4, None)),
-            ),
-            # Slice 3D data with an index in only one axis
-            (
-                ((2, 3, 4), (0.1, 0.1, 0.1), 1, [0]),
+                ((3, 4), (0.1, 0.1), 1, [0]),
                 (1,),
-                12,
-                (1, 3, 4),
-                (slice(1, 2, None), slice(0, 3, None), slice(0, 4, None)),
+                4,
+                (1, 4),
+                (slice(1, 2, None), slice(0, 4, None)),
             ),
         ],
         indirect=["crystal_map_input"],
@@ -991,10 +1025,10 @@ class TestCrystalMapShape:
     @pytest.mark.parametrize(
         "crystal_map_input, expected_shape",
         [
-            (((1, 10, 30), (0, 0.1, 0.1), 2, [0]), (10, 30)),
-            (((2, 13, 27), (0.3, 0.7, 0.9), 3, [0]), (2, 13, 27)),
-            (((1, 4, 3), (0, 1.5, 1.5), 1, [0]), (4, 3)),
-            (((1, 15, 45), (0, 2, 2), 2, [0]), (15, 45)),
+            (((10, 30), (0.1, 0.1), 2, [0]), (10, 30)),
+            (((13, 27), (0.7, 0.9), 3, [0]), (13, 27)),
+            (((4, 3), (1.5, 1.5), 1, [0]), (4, 3)),
+            (((15, 45), (2, 2), 2, [0]), (15, 45)),
         ],
         indirect=["crystal_map_input"],
     )
@@ -1005,10 +1039,10 @@ class TestCrystalMapShape:
     @pytest.mark.parametrize(
         "crystal_map_input, expected_shape",
         [
-            (((1, 10, 30), (0, 0.1, 0.1), 2, [0]), (10, 30, 2)),
-            (((2, 13, 27), (0.3, 0.7, 0.9), 3, [0]), (2, 13, 27, 3)),
-            (((1, 4, 3), (0, 1.5, 1.5), 5, [0]), (4, 3, 5)),
-            (((1, 15, 45), (0, 2, 2), 2, [0]), (15, 45, 2)),
+            (((10, 30), (0.1, 0.1), 2, [0]), (10, 30, 2)),
+            (((13, 27), (0.7, 0.9), 3, [0]), (13, 27, 3)),
+            (((4, 3), (1.5, 1.5), 5, [0]), (4, 3, 5)),
+            (((15, 45), (2, 2), 2, [0]), (15, 45, 2)),
         ],
         indirect=["crystal_map_input"],
     )
@@ -1019,11 +1053,11 @@ class TestCrystalMapShape:
     @pytest.mark.parametrize(
         "crystal_map_input, expected_coordinate_axes",
         [
-            (((1, 10, 30), (0, 0.1, 0.1), 1, [0]), {0: "y", 1: "x"}),
-            (((2, 13, 27), (0.3, 0.7, 0.9), 1, [0]), {0: "z", 1: "y", 2: "x"}),
-            (((1, 13, 27), (0, 1.5, 1.5), 1, [0]), {0: "y", 1: "x"}),
-            (((2, 13, 1), (1, 2, 1), 2, [0]), {0: "z", 1: "y"}),
-            (((2, 1, 13), (1, 0, 2), 1, [0]), {0: "z", 1: "x"}),
+            (((10, 30), (0.1, 0.1), 1, [0]), {0: "y", 1: "x"}),
+            (((13, 27), (0.7, 0.9), 1, [0]), {0: "y", 1: "x"}),
+            (((13, 27), (1.5, 1.5), 1, [0]), {0: "y", 1: "x"}),
+            (((13, 1), (2, 1), 2, [0]), {0: "y"}),
+            (((1, 13), (0, 2), 1, [0]), {0: "x"}),
         ],
         indirect=["crystal_map_input"],
     )
@@ -1061,3 +1095,9 @@ class TestCrystalMapPlotMethod:
         assert sbar2.location == 1  # "upper right"
 
         plt.close("all")
+
+
+class TestCreateCoordinateArrays:
+    def test_create_coordinate_arrays_raises(self):
+        with pytest.raises(ValueError, match="Can only create coordinate arrays for "):
+            _ = create_coordinate_arrays((1, 2, 3))

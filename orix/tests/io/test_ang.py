@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -33,8 +33,6 @@ from orix.tests.conftest import (
     ANGFILE_EMSOFT_HEADER,
     ANGFILE_TSL_HEADER,
 )
-
-# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
 
 
 @pytest.mark.parametrize(
@@ -83,10 +81,9 @@ def test_loadang(angfile_astar, expected_data):
     assert np.allclose(loaded_data.data, expected_data)
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
 class TestAngReader:
     @pytest.mark.parametrize(
-        "angfile_tsl, map_shape, step_sizes, phase_id, example_rot",
+        "angfile_tsl, map_shape, step_sizes, phase_id, n_unknown_cols, example_rot",
         [
             (
                 # Read by angfile_tsl() via request.param (passed via `indirect` below)
@@ -102,6 +99,7 @@ class TestAngReader:
                 (5, 3),
                 (0.1, 0.1),
                 np.zeros(5 * 3, dtype=int),
+                5,
                 np.array(
                     [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628]]
                 ),  # rotations as rows of Euler angle triplets
@@ -111,7 +109,7 @@ class TestAngReader:
                     (8, 4),  # map_shape
                     (1.5, 1.5),  # step_sizes
                     np.zeros(8 * 4, dtype=int),  # phase_id
-                    5,  # n_unknown_columns
+                    1,  # n_unknown_columns
                     np.array(
                         [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702]]
                     ),  # rotations as rows of Euler angle triplets
@@ -119,6 +117,7 @@ class TestAngReader:
                 (8, 4),
                 (1.5, 1.5),
                 np.zeros(8 * 4, dtype=int),
+                1,
                 np.array(
                     [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702]]
                 ),  # rotations as rows of Euler angle triplets
@@ -127,7 +126,7 @@ class TestAngReader:
         indirect=["angfile_tsl"],
     )
     def test_load_ang_tsl(
-        self, angfile_tsl, map_shape, step_sizes, phase_id, example_rot
+        self, angfile_tsl, map_shape, step_sizes, phase_id, n_unknown_cols, example_rot
     ):
         xmap = load(angfile_tsl)
 
@@ -136,22 +135,16 @@ class TestAngReader:
         assert non_indexed_fraction == np.sum(~xmap.is_indexed)
 
         # Properties
-        assert list(xmap.prop.keys()) == [
-            "iq",
-            "ci",
-            "unknown1",
-            "fit",
-            "unknown2",
-            "unknown3",
-            "unknown4",
-            "unknown5",
-        ]
+        prop_names = ["iq", "ci", "detector_signal", "fit"]
+        prop_names += [f"unknown{i + 1}" for i in range(n_unknown_cols - 1)]
+        assert list(xmap.prop.keys()) == prop_names
 
         # Coordinates
         ny, nx = map_shape
         dy, dx = step_sizes
         assert np.allclose(xmap.x, np.tile(np.arange(nx) * dx, ny))
         assert np.allclose(xmap.y, np.sort(np.tile(np.arange(ny) * dy, nx)))
+        assert xmap.scan_unit == "um"
 
         # Map shape and size
         assert xmap.shape == map_shape
@@ -234,41 +227,42 @@ class TestAngReader:
     def test_load_ang_astar(
         self, angfile_astar, map_shape, step_sizes, phase_id, example_rot
     ):
-        cm = load(angfile_astar)
+        xmap = load(angfile_astar)
 
         # Properties
-        assert list(cm.prop.keys()) == ["ind", "rel", "relx100"]
+        assert list(xmap.prop.keys()) == ["ind", "rel", "relx100"]
 
         # Coordinates
         ny, nx = map_shape
         dy, dx = step_sizes
-        assert np.allclose(cm.x, np.tile(np.arange(nx) * dx, ny))
-        assert np.allclose(cm.y, np.sort(np.tile(np.arange(ny) * dy, nx)))
+        assert np.allclose(xmap.x, np.tile(np.arange(nx) * dx, ny))
+        assert np.allclose(xmap.y, np.sort(np.tile(np.arange(ny) * dy, nx)))
+        assert xmap.scan_unit == "nm"
 
         # Map shape and size
-        assert cm.shape == map_shape
-        assert cm.size == np.prod(map_shape)
+        assert xmap.shape == map_shape
+        assert xmap.size == np.prod(map_shape)
 
         # Attributes are within expected ranges or have a certain value
-        assert cm.prop["ind"].max() <= 100
-        assert cm.prop["rel"].max() <= 1
-        assert cm.prop["relx100"].max() <= 100
-        relx100 = (cm.prop["rel"] * 100).astype(int)
-        assert np.allclose(cm.prop["relx100"], relx100)
+        assert xmap.prop["ind"].max() <= 100
+        assert xmap.prop["rel"].max() <= 1
+        assert xmap.prop["relx100"].max() <= 100
+        relx100 = (xmap.prop["rel"] * 100).astype(int)
+        assert np.allclose(xmap.prop["relx100"], relx100)
 
         # Phase IDs
-        assert np.allclose(cm.phase_id, phase_id)
+        assert np.allclose(xmap.phase_id, phase_id)
 
         # Rotations
-        rot_unique = np.unique(cm.rotations.to_euler(), axis=0)
+        rot_unique = np.unique(xmap.rotations.to_euler(), axis=0)
         assert np.allclose(
             np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-6
         )
 
         # Phases
-        assert cm.phases.size == 1
-        assert cm.phases.ids == [1]
-        phase = cm.phases[1]
+        assert xmap.phases.size == 1
+        assert xmap.phases.ids == [1]
+        phase = xmap.phases[1]
         assert phase.name == "Nickel"
         assert phase.point_group.name == "432"
 
@@ -308,8 +302,8 @@ class TestAngReader:
             ),
             (
                 (
-                    (3, 6),  # map_shape
-                    (10, 10),  # step_sizes
+                    (3, 6),
+                    (10, 10),
                     np.concatenate(
                         (
                             np.ones(int(np.ceil((3 * 6) / 2))),
@@ -336,36 +330,37 @@ class TestAngReader:
     def test_load_ang_emsoft(
         self, angfile_emsoft, map_shape, step_sizes, phase_id, example_rot
     ):
-        cm = load(angfile_emsoft)
+        xmap = load(angfile_emsoft)
 
         # Properties
-        assert list(cm.prop.keys()) == ["iq", "dp"]
+        assert list(xmap.prop.keys()) == ["iq", "dp"]
 
         # Coordinates
         ny, nx = map_shape
         dy, dx = step_sizes
-        assert np.allclose(cm.x, np.tile(np.arange(nx) * dx, ny))
-        assert np.allclose(cm.y, np.sort(np.tile(np.arange(ny) * dy, nx)))
+        assert np.allclose(xmap.x, np.tile(np.arange(nx) * dx, ny))
+        assert np.allclose(xmap.y, np.sort(np.tile(np.arange(ny) * dy, nx)))
+        assert xmap.scan_unit == "um"
 
         # Map shape and size
-        assert cm.shape == map_shape
-        assert cm.size == np.prod(map_shape)
+        assert xmap.shape == map_shape
+        assert xmap.size == np.prod(map_shape)
 
         # Attributes are within expected ranges or have a certain value
-        assert cm.prop["iq"].max() <= 100
-        assert cm.prop["dp"].max() <= 1
+        assert xmap.prop["iq"].max() <= 100
+        assert xmap.prop["dp"].max() <= 1
 
         # Phase IDs
-        assert np.allclose(cm.phase_id, phase_id)
+        assert np.allclose(xmap.phase_id, phase_id)
 
         # Rotations
-        rot_unique = np.unique(cm.rotations.to_euler(), axis=0)
+        rot_unique = np.unique(xmap.rotations.to_euler(), axis=0)
         assert np.allclose(
             np.sort(rot_unique, axis=0), np.sort(example_rot, axis=0), atol=1e-5
         )
 
         # Phases (change if file header is changed!)
-        phases_in_data = cm["indexed"].phases_in_data
+        phases_in_data = xmap["indexed"].phases_in_data
         assert phases_in_data.size == 2
         assert phases_in_data.ids == [1, 2]
         assert phases_in_data.names == ["austenite", "ferrite/ferrite"]
@@ -401,12 +396,12 @@ class TestAngReader:
                     "iq",
                     "ci",
                     "phase_id",
-                    "unknown1",
+                    "detector_signal",
                     "fit",
+                    "unknown1",
                     "unknown2",
                     "unknown3",
                     "unknown4",
-                    "unknown5",
                 ],
                 ANGFILE_TSL_HEADER,
             ),
@@ -513,7 +508,6 @@ class TestAngReader:
         assert np.allclose(ids, expected_phase_id)
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
 class TestAngWriter:
     def test_write_read_loop(self, crystal_map, tmp_path):
         fname = tmp_path / "test_write_read_loop.ang"
@@ -524,13 +518,14 @@ class TestAngWriter:
             xmap_reload.rotations.to_euler(), crystal_map.rotations.to_euler()
         )
         assert np.allclose(xmap_reload.phase_id - 1, crystal_map.phase_id)
+        assert xmap_reload.scan_unit == "um"
 
     @pytest.mark.parametrize(
         "crystal_map_input, desired_shape, desired_step_sizes",
         [
-            (((1, 4, 3), (1, 2, 3), 1, [0]), (4, 3), (2, 3)),
-            (((1, 1, 3), (1, 1, 1), 1, [0]), (1, 3), (1, 1)),
-            (((1, 1, 6), (1, 1, 3.14), 1, [0]), (1, 6), (1, 3.14)),
+            (((4, 3), (2, 3), 1, [0]), (4, 3), (2, 3)),
+            (((1, 3), (1, 1), 1, [0]), (1, 3), (1, 1)),
+            (((1, 6), (1, 3.14), 1, [0]), (1, 6), (1, 3.14)),
         ],
         indirect=["crystal_map_input"],
     )
@@ -624,7 +619,7 @@ class TestAngWriter:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((1, 1, 5), (1, 1, 2), 1, [0])],
+        [((1, 5), (1, 2), 1, [0])],
         indirect=["crystal_map_input"],
     )
     def test_1d_map(self, crystal_map_input, tmp_path):
@@ -639,22 +634,11 @@ class TestAngWriter:
         assert np.allclose(xmap.rotations.to_euler(), xmap_reload.rotations.to_euler())
 
     @pytest.mark.parametrize(
-        "crystal_map_input",
-        [((3, 3, 3), (1, 2, 3), 1, [0])],
-        indirect=["crystal_map_input"],
-    )
-    def test_3d_map_raises(self, crystal_map_input, tmp_path):
-        xmap = CrystalMap(**crystal_map_input)
-        fname = tmp_path / "test_3d_raises.ang"
-        with pytest.raises(ValueError, match="Writing a 3D dataset to an .ang file"):
-            save(fname, xmap)
-
-    @pytest.mark.parametrize(
         "crystal_map_input, index",
         [
-            (((1, 4, 3), (1, 2, 3), 5, [0]), 0),
-            (((1, 4, 3), (1, 2, 3), 5, [0]), 1),
-            (((1, 4, 3), (1, 2, 3), 5, [0]), 4),
+            (((4, 3), (2, 3), 5, [0]), 0),
+            (((4, 3), (2, 3), 5, [0]), 1),
+            (((4, 3), (2, 3), 5, [0]), 4),
         ],
         indirect=["crystal_map_input"],
     )
@@ -678,7 +662,7 @@ class TestAngWriter:
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((1, 4, 3), (1, 2, 2), 2, [0])],
+        [((4, 3), (2, 2), 2, [0])],
         indirect=["crystal_map_input"],
     )
     def test_write_data_index_none(self, crystal_map_input, tmp_path):

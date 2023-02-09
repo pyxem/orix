@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from matplotlib.axes import Axes
 import matplotlib.colorbar as mbar
@@ -29,20 +29,16 @@ from matplotlib_scalebar.scalebar import ScaleBar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-from orix._util import deprecated_argument
-
 
 class CrystalMapPlot(Axes):
     """Plotting of a :class:`~orix.crystal_map.crystal_map.CrystalMap`."""
 
     name = "plot_map"
     _data_axes = None
-    _data_slices = None
     _data_shape = None
     colorbar = None
     scalebar = None
 
-    @deprecated_argument(name="depth", since="0.10.1", removal="0.11.0")
     def plot_map(
         self,
         crystal_map: "orix.crystal_map.CrystalMap",
@@ -51,8 +47,6 @@ class CrystalMapPlot(Axes):
         scalebar_properties: Optional[dict] = None,
         legend: bool = True,
         legend_properties: Optional[dict] = None,
-        axes: Tuple[int] = None,
-        depth: Optional[int] = None,
         override_status_bar: bool = False,
         **kwargs,
     ) -> AxesImage:
@@ -81,24 +75,6 @@ class CrystalMapPlot(Axes):
         legend_properties
             Dictionary of keyword arguments passed to
             :meth:`matplotlib.axes.Axes.legend`.
-        axes
-            Which data axes to plot if data has more than two
-            dimensions. The index of data to plot in the final dimension
-            is determined by ``depth``. If ``None`` (default), data
-            along the two last axes is plotted.
-        depth
-            Which layer along the third axis to plot if data has more
-            than two dimensions. If ``None`` (default), data in the
-            first index (layer) is plotted.
-
-            .. deprecated:: 0.10.1
-
-                Will be removed in 0.11.0. Support for 3D crystal maps
-                is minimal and brittle, and it was therefore decided to
-                remove it altogether. If you rely on this functionality,
-                please report it in an issue at
-                https://github.com/pyxem/orix/issues.
-
         override_status_bar
             Whether to display Euler angles and any overlay values in
             the status bar when hovering over the map (default is
@@ -139,6 +115,7 @@ class CrystalMapPlot(Axes):
 
         Plot an arbitrary map property, also changing scalebar location
 
+        >>> _ = plt.figure()
         >>> ax = plt.subplot(projection="plot_map")
         >>> _ = ax.plot_map(xmap, xmap.dp, scalebar_properties={"location": 4})
 
@@ -167,13 +144,12 @@ class CrystalMapPlot(Axes):
 
         >>> #plt.imsave("image2.png", im.get_array())
         """
-        self._set_plot_shape(crystal_map=crystal_map, axes=axes, depth=depth)
+        self._data_shape = crystal_map._original_shape
 
         patches = None
         if value is None:  # Phase map
             # Color each map pixel with corresponding phase color RGB tuple
             phase_id = crystal_map.get_map_data("phase_id")
-            phase_id = phase_id[self._data_slices]
             unique_phase_ids = np.unique(phase_id[~np.isnan(phase_id)])
             data = np.ones(phase_id.shape + (3,))
             for i, color in zip(
@@ -188,9 +164,8 @@ class CrystalMapPlot(Axes):
                 patches.append(mpatches.Patch(color=p.color_rgb, label=p.name))
         else:  # Create masked array of correct shape
             data = crystal_map.get_map_data(value)
-            data = data[self._data_slices]
 
-        # Squeeze 1-dimensions
+        # Remove 1-dimensions
         data = np.squeeze(data)
 
         # Legend
@@ -366,6 +341,9 @@ class CrystalMapPlot(Axes):
         # Add colorbar
         divider = make_axes_locatable(self)
         cax = divider.append_axes(**kwargs)
+        # Suppress warning raised in colorbar(). See
+        # https://github.com/matplotlib/matplotlib/issues/21723.
+        cax.set_axisbelow(True)
         cbar = self.figure.colorbar(self.images[0], cax=cax)
 
         # Set label with padding
@@ -401,55 +379,6 @@ class CrystalMapPlot(Axes):
         else:
             right = 1
         self.figure.subplots_adjust(top=1, bottom=0, right=right, left=0)
-
-    # TODO: Remove depth argument after (any) one release after 0.10.0
-    def _set_plot_shape(
-        self,
-        crystal_map: "orix.crystal_map.CrystalMap",
-        axes: Optional[List[int]] = None,
-        depth: Optional[int] = None,
-    ):
-        """Set `CrystalMapPlot` attributes describing which data axes to
-        plot.
-
-        Parameters
-        ----------
-        crystal_map
-            Map to determine plotting axes and slices from.
-        axes
-            Data axes to plot. If ``None``, the last two data axes are
-            plotted (default).
-        depth
-            Which data layer to plot along the final axis not in `axes`
-            if data is 3D. If ``None``, this is set to zero, i.e. the
-            first layer (default).
-        """
-        ndim = crystal_map.ndim
-
-        # Get data axes to plot
-        if axes is None:
-            axes = [ndim - 2, ndim - 1]
-        axes = list(axes)
-        axes.sort()
-        self._data_axes = axes[:2]  # Can only plot two axes!
-
-        if depth is None:  # Plot first layer
-            depth = 0
-
-        # Get data slices to plot
-        slices = []
-        data_shape = []
-        for data_axis, axis_size in zip(
-            crystal_map._coordinate_axes.keys(), crystal_map._original_shape
-        ):
-            data_slice = slice(depth, depth + 1, None)
-            for plot_axis in self._data_axes:
-                if data_axis == plot_axis:
-                    data_slice = slice(None, None, None)
-                    data_shape.append(axis_size)
-            slices.append(data_slice)
-        self._data_slices = tuple(slices)
-        self._data_shape = tuple(data_shape)
 
     def _add_legend(self, patches: List[mpatches.Patch], **kwargs):
         """Add a legend to the axes object.
@@ -502,7 +431,6 @@ class CrystalMapPlot(Axes):
         # TODO: Show orientations in Euler angles (computationally
         #  intensive...)
         r = crystal_map.get_map_data("rotations", decimals=3)
-        r = r[self._data_slices].squeeze()
 
         # Get image data, overwriting potentially masked regions set to 0.0
         image_data = image.get_array()  # numpy.masked.MaskedArray

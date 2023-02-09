@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -165,17 +165,21 @@ class AxAngle(NeoEuler):
     def from_axes_angles(
         cls,
         axes: Union[Vector3d, np.ndarray, list, tuple],
-        angles: Union[np.ndarray, list, tuple],
+        angles: Union[np.ndarray, list, tuple, float],
+        degrees: bool = False,
     ) -> AxAngle:
-        """Create new AxAngle object explicitly from the given axes and
-        angles.
+        """Initialize from axes and angles.
 
         Parameters
         ----------
         axes
-            The axes of rotation.
+            Axes of rotation.
         angles
-            The angles of rotation, in radians.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
@@ -183,6 +187,8 @@ class AxAngle(NeoEuler):
             Axis-angle instance of the axes and angles.
         """
         axes = Vector3d(axes).unit
+        if degrees:
+            angles = np.deg2rad(angles)
         angles = np.array(angles)
         axangle_data = angles[..., np.newaxis] * axes.data
         return cls(axangle_data)

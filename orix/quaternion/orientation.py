@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -28,12 +28,13 @@ from diffpy.structure import Structure
 from matplotlib.gridspec import SubplotSpec
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.spatial.transform import Rotation as SciPyRotation
 from tqdm import tqdm
 
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import AxAngle, NeoEuler, Vector3d
+from orix.vector import AxAngle, Miller, NeoEuler, Vector3d
 
 
 class Misorientation(Rotation):
@@ -55,7 +56,11 @@ class Misorientation(Rotation):
 
     _symmetry = (C1, C1)
 
-    def __init__(self, data: np.ndarray, symmetry: Optional[Symmetry] = None):
+    def __init__(
+        self,
+        data: Union[np.ndarray, Misorientation, list, tuple],
+        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
+    ):
         super().__init__(data)
         if symmetry:
             self.symmetry = symmetry
@@ -272,7 +277,7 @@ class Misorientation(Rotation):
         # Correct the aspect ratio of the axes according to the extent
         # of the boundaries of the fundamental region, and also restrict
         # the data limits to these boundaries
-        ax._correct_aspect_ratio(fundamental_zone, set_limits=True)
+        ax._correct_aspect_ratio(fundamental_zone)
 
         ax.axis("off")
         figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
@@ -287,29 +292,34 @@ class Misorientation(Rotation):
             return figure
 
     def get_distance_matrix(
-        self, chunk_size: int = 20, progressbar: bool = True
+        self,
+        chunk_size: int = 20,
+        progressbar: bool = True,
+        degrees: bool = False,
     ) -> np.ndarray:
-        r"""The symmetry reduced smallest angle of rotation transforming
-        every misorientation in this instance to every other
-        misorientation :cite:`johnstone2020density`.
-
-        This is an alternative implementation of
-        :meth:`~orix.quaternion.Misorientation.distance` for
-        a single :class:`Misorientation` instance, using :mod:`dask`.
+        r"""Return the symmetry reduced smallest angle of rotation
+        transforming every misorientation in this instance to every
+        other misorientation :cite:`johnstone2020density`.
 
         Parameters
         ----------
         chunk_size
             Number of misorientations per axis to include in each
-            iteration of the computation. Default is 20.
+            iteration of the computation. Default is 20. Increasing this
+            might reduce the computation time at the cost of increased
+            memory use.
         progressbar
             Whether to show a progressbar during computation. Default is
             ``True``.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Misorientation angles.
+            Misorientation angles in radians (``degrees=False``) or
+            degrees (``degrees=True``).
 
         Notes
         -----
@@ -335,11 +345,11 @@ class Misorientation(Rotation):
         Examples
         --------
         >>> from orix.quaternion import Misorientation, symmetry
-        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, np.pi / 2])
+        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, 90], degrees=True)
         >>> m.symmetry = (symmetry.D6, symmetry.D6)
-        >>> m.get_distance_matrix(progressbar=False)
-        array([[0.        , 1.57079633],
-               [1.57079633, 0.        ]])
+        >>> m.get_distance_matrix(progressbar=False, degrees=True)
+        array([[ 0., 90.],
+               [90.,  0.]])
         """
         # Reduce symmetry operations to the unique ones
         symmetry = _get_unique_symmetry_elements(*self.symmetry)
@@ -373,7 +383,153 @@ class Misorientation(Rotation):
         else:
             da.store(sources=angles_dask, targets=angles)
 
+        if degrees:
+            angles = np.rad2deg(angles)
+
         return angles
+
+    @classmethod
+    def from_align_vectors(
+        cls,
+        other: Miller,
+        initial: Miller,
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
+    ) -> Union[
+        Misorientation,
+        Tuple[Misorientation, float],
+        Tuple[Misorientation, np.ndarray],
+        Tuple[Misorientation, float, np.ndarray],
+    ]:
+        """Return an estimated misorientation to optimally align two
+        sets of vectors, one set in each crystal.
+
+        This method wraps
+        :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
+        that method for further explanations of parameters and returns.
+
+        Parameters
+        ----------
+        other
+            Directions of shape ``(n,)`` in the other crystal.
+        initial
+            Directions of shape ``(n,)`` in the initial crystal.
+        weights
+            Relative importance of the different vectors.
+        return_rmsd
+            Whether to return the (weighted) root mean square distance
+            between ``other`` and ``initial`` after alignment. Default
+            is ``False``.
+        return_sensitivity
+            Whether to return the sensitivity matrix. Default is
+            ``False``.
+
+        Returns
+        -------
+        estimated_misorientation
+            Best estimate of the misorientation that transforms
+            ``initial`` to ``other``. The symmetry of the misorientation
+            is inferred from the phase of ``other`` and ``initial``, if
+            given.
+        rmsd
+            Returned when ``return_rmsd=True``.
+        sensitivity
+            Returned when ``return_sensitivity=True``.
+
+        Raises
+        ------
+        ValueError
+            If ``other`` and ``initial`` are not Miller instances.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Misorientation
+        >>> from orix.vector import Miller
+        >>> from orix.crystal_map import Phase
+        >>> uvw1 = Miller(uvw=[[1, 0, 0], [0, 1, 0]], phase=Phase(point_group="m-3m"))
+        >>> uvw2 = Miller(uvw=[[1, 0, 0], [0, 0, 1]], phase=Phase(point_group="m-3m"))
+        >>> mori12 = Misorientation.from_align_vectors(uvw2, uvw1)
+        >>> mori12 * uvw1
+        Miller (2,), point group m-3m, uvw
+        [[1. 0. 0.]
+         [0. 0. 1.]]
+        """
+        if not isinstance(other, Miller) or not isinstance(initial, Miller):
+            raise ValueError(
+                "Arguments other and initial must both be of type Miller, "
+                f"but are of type {type(other)} and {type(initial)}."
+            )
+
+        out = super().from_align_vectors(
+            other=other,
+            initial=initial,
+            weights=weights,
+            return_rmsd=return_rmsd,
+            return_sensitivity=return_sensitivity,
+        )
+        out = list(out)
+
+        try:
+            out[0].symmetry = (initial.phase.point_group, other.phase.point_group)
+        except (AttributeError, ValueError):
+            pass
+
+        return out[0] if len(out) == 1 else tuple(out)
+
+    @classmethod
+    def from_scipy_rotation(
+        cls,
+        rotation: SciPyRotation,
+        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
+    ) -> Misorientation:
+        """Return misorientations(s) from
+        :class:`scipy.spatial.transform.Rotation`.
+
+        Parameters
+        ----------
+        rotation
+            SciPy rotation(s).
+        symmetry
+            Tuple of two sets of crystal symmetries. If not given, the
+            returned misorientation(s) is assumed to be transformation
+            between crystals with only the identity operation, *1*
+            (*C1*).
+
+        Returns
+        -------
+        misorientation
+            Misorientation(s).
+
+        Notes
+        -----
+        The SciPy rotation is inverted to be consistent with the orix
+        framework of passive rotations.
+
+        Examples
+        --------
+        >>> from orix.crystal_map import Phase
+        >>> from orix.quaternion import Misorientation, symmetry
+        >>> from orix.vector import Miller
+        >>> from scipy.spatial.transform import Rotation as SciPyRotation
+        >>> r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+        >>> mori = Misorientation.from_scipy_rotation(
+        ...     r_scipy, (symmetry.Oh, symmetry.Oh)
+        ... )
+        >>> uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
+        >>> r_scipy.apply(uvw.data)
+        array([[-1.,  1.,  0.]])
+        >>> mori * uvw
+        Miller (1,), point group m-3m, uvw
+        [[ 1. -1.  0.]]
+        >>> ~mori * uvw
+        Miller (1,), point group m-3m, uvw
+        [[-1.  1.  0.]]
+        """
+        mori = super().from_scipy_rotation(rotation)
+        if symmetry:
+            mori.symmetry = symmetry
+        return mori
 
 
 class Orientation(Misorientation):
@@ -448,14 +604,16 @@ class Orientation(Misorientation):
         euler: np.ndarray,
         symmetry: Optional[Symmetry] = None,
         direction: str = "lab2crystal",
+        degrees: bool = False,
         **kwargs,
     ) -> Orientation:
-        """Return orientation(s) from an array of Euler angles.
+        """Initialize from an array of Euler angles.
 
         Parameters
         ----------
         euler
-            Euler angles in the Bunge convention.
+            Euler angles in radians (``degrees=False``) or in degrees
+            (``degrees=True``) in the Bunge convention.
         symmetry
             Symmetry of orientation(s). If not given (default), no
             symmetry is set.
@@ -463,16 +621,109 @@ class Orientation(Misorientation):
             ``"lab2crystal"`` (default) or ``"crystal2lab"``.
             ``"lab2crystal"`` is the Bunge convention. If ``"MTEX"`` is
             provided then the direction is ``"crystal2lab"``.
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
         ori
             Orientations.
         """
-        ori = super().from_euler(euler=euler, direction=direction, **kwargs)
+        ori = super().from_euler(euler, direction=direction, degrees=degrees, **kwargs)
         if symmetry:
             ori.symmetry = symmetry
         return ori
+
+    @classmethod
+    def from_align_vectors(
+        cls,
+        other: Miller,
+        initial: Vector3d,
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
+    ) -> Union[
+        Orientation,
+        Tuple[Orientation, float],
+        Tuple[Orientation, np.ndarray],
+        Tuple[Orientation, float, np.ndarray],
+    ]:
+        """Return an estimated orientation to optimally align vectors in
+        the crystal and sample reference frames.
+
+        This method wraps
+        :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
+        that method for further explanations of parameters and returns.
+
+        Parameters
+        ----------
+        other
+            Crystal directions of shape ``(n,)`` in the crystal
+            reference frame.
+        initial
+            Sample directions of shape ``(n,)`` in the sample reference
+            frame.
+        weights
+            Relative importance of the different vectors.
+        return_rmsd
+            Whether to return the (weighted) root mean square distance
+            between ``other`` and ``initial`` after alignment. Default
+            is ``False``.
+        return_sensitivity
+            Whether to return the sensitivity matrix. Default is
+            ``False``.
+
+        Returns
+        -------
+        estimated_orientation
+            Best estimate of the orientation that transforms ``initial``
+            to ``other``. The symmetry of the orientation is inferred
+            from the point group of the phase of ``other``, if given.
+        rmsd
+            Returned when ``return_rmsd=True``.
+        sensitivity
+            Returned when ``return_sensitivity=True``.
+
+        Raises
+        ------
+        ValueError
+            If ``other`` is not a Miller instance.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Orientation
+        >>> from orix.vector import Vector3d, Miller
+        >>> from orix.crystal_map import Phase
+        >>> uvw = Miller(uvw=[[0, 1, 0], [1, 0, 0]], phase=Phase(point_group="m-3m"))
+        >>> v_sample = Vector3d([[0, -1, 0], [0, 0, 1]])
+        >>> ori = Orientation.from_align_vectors(uvw, v_sample)
+        >>> ori * v_sample
+        Vector3d (2,)
+        [[0. 1. 0.]
+         [1. 0. 0.]]
+        """
+        if not isinstance(other, Miller):
+            raise ValueError(
+                f"Argument other must be of type Miller, but has type {type(other)}"
+            )
+
+        out = Rotation.from_align_vectors(
+            other=other,
+            initial=initial,
+            weights=weights,
+            return_rmsd=return_rmsd,
+            return_sensitivity=return_sensitivity,
+        )
+        out = list(out)
+        out[0] = cls(out[0].data)
+
+        try:
+            out[0].symmetry = other.phase.point_group
+        except (AttributeError, ValueError):
+            pass
+
+        return out[0] if len(out) == 1 else tuple(out)
 
     @classmethod
     def from_matrix(
@@ -528,25 +779,30 @@ class Orientation(Misorientation):
     def from_axes_angles(
         cls,
         axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list],
+        angles: Union[np.ndarray, tuple, list, float],
         symmetry: Optional[Symmetry] = None,
+        degrees: bool = False,
     ) -> Orientation:
-        """Return orientations from axis-angle pairs.
+        """Initialize from axis-angle pair(s).
 
         Parameters
         ----------
         axes
-            The axes of rotation.
+            Axes of rotation.
         angles
-            The angles of rotation, in radians.
+            Angles of rotation in radians (``degrees=False``) or degrees
+            (``degrees=True``).
         symmetry
             Symmetry of orientations. If not given (default), no
             symmetry is set.
+        degrees
+            If ``True``, the given angles are assumed to be in degrees.
+            Default is ``False``.
 
         Returns
         -------
         ori
-            Orientations.
+            Orientation(s).
 
         See Also
         --------
@@ -555,15 +811,60 @@ class Orientation(Misorientation):
         Examples
         --------
         >>> from orix.quaternion import Orientation, symmetry
-        >>> ori = Orientation.from_axes_angles((0, 0, -1), np.pi / 2, symmetry.Oh)
+        >>> ori = Orientation.from_axes_angles((0, 0, -1), 90, symmetry.Oh, degrees=True)
         >>> ori
         Orientation (1,) m-3m
         [[ 0.7071  0.      0.     -0.7071]]
         """
-        axangle = AxAngle.from_axes_angles(axes, angles)
+        axangle = AxAngle.from_axes_angles(axes, angles, degrees)
         return cls.from_neo_euler(axangle, symmetry)
 
-    def angle_with(self, other: Orientation) -> np.ndarray:
+    @classmethod
+    def from_scipy_rotation(
+        cls, rotation: SciPyRotation, symmetry: Optional[Symmetry] = None
+    ) -> Orientation:
+        """Return orientation(s) from
+        :class:`scipy.spatial.transform.Rotation`.
+
+        Parameters
+        ----------
+        rotation
+            SciPy rotation(s).
+
+        symmetry
+            Crystal symmetry. If not given, the returned orientation(s)
+            is given only the identity symmetry operation, *1* (*C1*).
+
+        Returns
+        -------
+        orientation
+            Orientation(s).
+
+        Notes
+        -----
+        The SciPy rotation is inverted to be consistent with the orix
+        framework of passive rotations.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Orientation, symmetry
+        >>> from orix.vector import Vector3d
+        >>> from scipy.spatial.transform import Rotation as SciPyRotation
+        >>> r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+        >>> ori = Orientation.from_scipy_rotation(r_scipy, symmetry.Oh)
+        >>> v = [1, 1, 0]
+        >>> r_scipy.apply(v)
+        array([-1.,  1.,  0.])
+        >>> ori * Vector3d(v)
+        Vector3d (1,)
+        [[ 1. -1.  0.]]
+        """
+        ori = super().from_scipy_rotation(rotation)
+        if symmetry:
+            ori.symmetry = symmetry
+        return ori
+
+    def angle_with(self, other: Orientation, degrees: bool = False) -> np.ndarray:
         """Return the smallest symmetry reduced angles of rotation
         transforming the orientations to the other orientations.
 
@@ -571,11 +872,15 @@ class Orientation(Misorientation):
         ----------
         other
             Another orientation.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Smallest symmetry reduced angles.
+            Smallest symmetry reduced angles in radians
+            (``degrees=False``) or degrees (``degrees=True``).
 
         See Also
         --------
@@ -584,6 +889,8 @@ class Orientation(Misorientation):
         """
         dot_products = self.unit.dot(other.unit)
         angles = np.nan_to_num(np.arccos(2 * dot_products**2 - 1))
+        if degrees:
+            angles = np.rad2deg(angles)
         return angles
 
     def angle_with_outer(
@@ -592,14 +899,11 @@ class Orientation(Misorientation):
         lazy: bool = False,
         chunk_size: int = 20,
         progressbar: bool = True,
+        degrees: bool = False,
     ) -> np.ndarray:
-        r"""The symmetry reduced smallest angle of rotation transforming
-        every orientation in this instance to every orientation in
-        another instance.
-
-        This is an alternative implementation of
-        :meth:`~orix.quaternion.Misorientation.distance` for
-        a single :class:`Orientation` instance, using :mod:`dask`.
+        r"""Return the symmetry reduced smallest angle of rotation
+        transforming every orientation in this instance to every
+        orientation in another instance.
 
         Parameters
         ----------
@@ -607,19 +911,24 @@ class Orientation(Misorientation):
             Another orientation.
         lazy
             Whether to perform the computation lazily with Dask. Default
-            is False.
+            is ``False``.
         chunk_size
             Number of orientations per axis to include in each iteration
             of the computation. Default is 20. Only applies when
-            ``lazy=True``.
+            ``lazy=True``. Increasing this might reduce the computation
+            time at the cost of increased memory use.
         progressbar
             Whether to show a progressbar during computation if
             ``lazy=True``. Default is ``True``.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Smallest symmetry reduced angles.
+            Smallest symmetry reduced angles in radians
+            (``degrees=False``) or degrees (``degrees=True``).
 
         See Also
         --------
@@ -673,18 +982,21 @@ class Orientation(Misorientation):
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
+        if degrees:
+            angles = np.rad2deg(angles)
+
         return angles
 
     def get_distance_matrix(
-        self, lazy: bool = False, chunk_size: int = 20, progressbar: bool = True
+        self,
+        lazy: bool = False,
+        chunk_size: int = 20,
+        progressbar: bool = True,
+        degrees: bool = False,
     ) -> np.ndarray:
         r"""Return the symmetry reduced smallest angle of rotation
         transforming all these orientations to all the other
         orientations :cite:`johnstone2020density`.
-
-        This is an alternative implementation of
-        :meth:`~orix.quaternion.Misorientation.distance` for
-        a single :class:`Orientation` instance, using :mod:`dask`.
 
         Parameters
         ----------
@@ -694,15 +1006,20 @@ class Orientation(Misorientation):
         chunk_size
             Number of orientations per axis to include in each iteration
             of the computation. Default is 20. Only applies when
-            ``lazy=True``.
+            ``lazy=True``. Increasing this might reduce the computation
+            time at the cost of increased memory use.
         progressbar
             Whether to show a progressbar during computation if
             ``lazy=True``. Default is ``True``.
+        degrees
+            If ``True``, the angles are returned in degrees. Default is
+            ``False``.
 
         Returns
         -------
         angles
-            Symmetry reduced angles.
+            Symmetry reduced angles in radians (``degrees=False``) or
+            degrees (``degrees=True``).
 
         Notes
         -----
@@ -717,7 +1034,11 @@ class Orientation(Misorientation):
         symmetrically equivalent orientations to :math:`g_{i,j}`.
         """
         angles = self.angle_with_outer(
-            self, lazy=lazy, chunk_size=chunk_size, progressbar=progressbar
+            self,
+            lazy=lazy,
+            chunk_size=chunk_size,
+            progressbar=progressbar,
+            degrees=degrees,
         )
         return angles
 
@@ -742,9 +1063,9 @@ class Orientation(Misorientation):
         Examples
         --------
         >>> from orix.quaternion import Orientation, symmetry
-        >>> ori1 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([0, 45]), symmetry.Oh)
-        >>> ori2 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([45, 90]), symmetry.Oh)
-        >>> ori1.dot(ori2)
+        >>> o1 = Orientation.from_axes_angles([0, 0, 1], [0, 45], symmetry.Oh, degrees=True)
+        >>> o2 = Orientation.from_axes_angles([0, 0, 1], [45, 90], symmetry.Oh, degrees=True)
+        >>> o1.dot(o2)
         array([0.92387953, 0.92387953])
         """
         symmetry = _get_unique_symmetry_elements(self.symmetry, other.symmetry)
@@ -774,9 +1095,9 @@ class Orientation(Misorientation):
         Examples
         --------
         >>> from orix.quaternion import Orientation, symmetry
-        >>> ori1 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([0, 45]), symmetry.Oh)
-        >>> ori2 = Orientation.from_axes_angles([0, 0, 1], np.deg2rad([45, 90]), symmetry.Oh)
-        >>> ori1.dot_outer(ori2)
+        >>> o1 = Orientation.from_axes_angles([0, 0, 1], [0, 45], symmetry.Oh, degrees=True)
+        >>> o2 = Orientation.from_axes_angles([0, 0, 1], [45, 90], symmetry.Oh, degrees=True)
+        >>> o1.dot_outer(o2)
         array([[0.92387953, 1.        ],
                [1.        , 0.92387953]])
         """
@@ -1003,9 +1324,10 @@ class Orientation(Misorientation):
         ----------
         other
         chunk_size
-            Number of orientations per axis in each orientation instance
-            to include in each iteration of the computation. Default is
-            20.
+            Number of orientations per axis to include in each iteration
+            of the computation. Default is 20. Increasing this might
+            reduce the computation time at the cost of increased memory
+            use.
 
         Returns
         -------

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -19,7 +19,6 @@
 import gc
 import os
 from tempfile import TemporaryDirectory
-import warnings
 
 from diffpy.structure import Atom, Lattice, Structure
 from h5py import File
@@ -36,7 +35,11 @@ def rotations():
     return Rotation([(2, 4, 6, 8), (-1, -3, -5, -7)])
 
 
-# TODO: Exchange for a multiphase header (change `phase_id` accordingly)
+@pytest.fixture()
+def eu():
+    return np.random.rand(10, 3)
+
+
 ANGFILE_TSL_HEADER = (
     "# TEM_PIXperUM          1.000000\n"
     "# x-star                0.413900\n"
@@ -169,7 +172,7 @@ def temp_file_path(request):
                     [4.48549, 0.95242, 0.79150],
                     [1.34390, 0.27611, 0.82589],
                 ]
-            ),  # rotations as rows of Euler angle triplets
+            ),  # Rotations as rows of Euler angle triplets
         )
     ]
 )
@@ -188,7 +191,7 @@ def angfile_tsl(tmpdir, request):
     phase_id : numpy.ndarray
         Array of map size with phase IDs in header.
     n_unknown_columns : int
-        Number of columns with unknown values.
+        Number of columns with values of unknown nature.
     rotations : numpy.ndarray
         A sample, smaller than the map size, of example rotations as
         rows of Euler angle triplets.
@@ -233,7 +236,8 @@ def angfile_tsl(tmpdir, request):
         comments="",
     )
 
-    return f
+    yield f
+    gc.collect()
 
 
 @pytest.fixture(
@@ -297,7 +301,8 @@ def angfile_astar(tmpdir, request):
         comments="",
     )
 
-    return f
+    yield f
+    gc.collect()
 
 
 @pytest.fixture(
@@ -353,7 +358,8 @@ def angfile_emsoft(tmpdir, request):
         comments="",
     )
 
-    return f
+    yield f
+    gc.collect()
 
 
 @pytest.fixture(
@@ -629,8 +635,8 @@ def phase_list(request):
         (
             # Tuple with default values for parameters: map_shape, step_sizes,
             # and n_rotations_per_point
-            (1, 4, 3),  # map_shape
-            (0, 1.5, 1.5),  # step_sizes
+            (4, 3),  # map_shape
+            (1.5, 1.5),  # step_sizes
             1,  # rotations_per_point
             [0],  # unique phase IDs
         )
@@ -638,11 +644,8 @@ def phase_list(request):
 )
 def crystal_map_input(request, rotations):
     # Unpack parameters
-    (nz, ny, nx), (dz, dy, dx), rotations_per_point, unique_phase_ids = request.param
-    # TODO: Remove after (any) one release after 0.10.1
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Returning coo", np.VisibleDeprecationWarning)
-        d, map_size = create_coordinate_arrays((nz, ny, nx), (dz, dy, dx))
+    (ny, nx), (dy, dx), rotations_per_point, unique_phase_ids = request.param
+    d, map_size = create_coordinate_arrays((ny, nx), (dy, dx))
     rot_idx = np.random.choice(
         np.arange(rotations.size), map_size * rotations_per_point
     )
@@ -659,10 +662,7 @@ def crystal_map_input(request, rotations):
 
 @pytest.fixture
 def crystal_map(crystal_map_input):
-    # TODO: Remove after (any) one release after 0.10.1
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Argument `z` ", np.VisibleDeprecationWarning)
-        return CrystalMap(**crystal_map_input)
+    return CrystalMap(**crystal_map_input)
 
 
 @pytest.fixture

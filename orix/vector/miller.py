@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -577,8 +577,13 @@ class Miller(Vector3d):
 
     # ------------- Overwritten Vector3d/Object3d methods ------------ #
 
-    def angle_with(self, other: Miller, use_symmetry: bool = False) -> np.ndarray:
-        """Calculate angles between these vectors and the other vectors
+    def angle_with(
+        self,
+        other: Miller,
+        use_symmetry: bool = False,
+        degrees: bool = False,
+    ) -> np.ndarray:
+        """Return the angles between these vectors and the other vectors
         possibly using symmetrically equivalent vectors to find the
         smallest angle under symmetry.
 
@@ -592,13 +597,18 @@ class Miller(Vector3d):
         use_symmetry
             Whether to consider equivalent vectors to find the smallest
             angle under symmetry. Default is ``False``.
+        degrees
+            If ``True``, the given angles are returned in degrees.
+            Default is ``False``.
 
         Returns
         -------
         angles
-            The angle between the vectors, in radians.
+            Angles in radians (``degrees=False``)  or degrees
+            (``degrees=True``).
         """
         self._compatible_with(other, raise_error=True)
+
         if use_symmetry:
             other2 = other.symmetrise(unique=True)
             cosines = self.dot_outer(other2) / (
@@ -606,9 +616,13 @@ class Miller(Vector3d):
             )
             cosines = np.round(cosines, 12)
             angles = np.min(np.arccos(cosines), axis=-1)
-            return angles
         else:
-            return super().angle_with(other)
+            angles = super().angle_with(other)
+
+        if degrees:
+            angles = np.rad2deg(angles)
+
+        return angles
 
     def cross(self, other: Miller):
         """Return the cross products of the vectors with the other

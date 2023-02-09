@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -128,7 +128,8 @@ class TestInversePoleFigurePlot:
     def test_inverse_pole_density_function(self):
         fig, axes = _setup_inverse_pole_figure_plot(symmetry=symmetry.C6h)
         v = Vector3d(np.random.randn(10_000, 3)).unit
-        axes[0].pole_density_function(v, colorbar=True, log=True)
+        with np.errstate(divide="ignore"):
+            axes[0].pole_density_function(v, colorbar=True, log=True)
         assert len(fig.axes) == 2
         assert any(isinstance(c, QuadMesh) for c in fig.axes[0].collections)
         assert fig.axes[1].get_label() == "<colorbar>"
@@ -136,9 +137,9 @@ class TestInversePoleFigurePlot:
 
         plt.close("all")
 
-    @pytest.mark.parametrize("symmetry", [symmetry.D3d, symmetry.C6h, symmetry.Oh])
-    def test_plot_ipf_color_key(self, symmetry):
-        fig, ax = plt.subplots(subplot_kw=dict(projection="ipf", symmetry=symmetry))
+    @pytest.mark.parametrize("sym", [symmetry.D3d, symmetry.C6h, symmetry.Oh])
+    def test_plot_ipf_color_key(self, sym):
+        fig, ax = plt.subplots(subplot_kw=dict(projection="ipf", symmetry=sym))
         ax.plot_ipf_color_key(show_title=True)
         assert len(ax.images) == 1
         assert len(ax.texts) == 3
@@ -148,12 +149,10 @@ class TestInversePoleFigurePlot:
         plt.close("all")
 
     @pytest.mark.parametrize(
-        "symmetry, loc", [(symmetry.C6h, "left"), (symmetry.Oh, "center")]
+        "sym, loc", [(symmetry.C6h, "left"), (symmetry.Oh, "center")]
     )
-    def test_plot_ipf_color_key_show_title(self, symmetry, loc):
-        fig, ax = plt.subplots(
-            ncols=2, subplot_kw=dict(projection="ipf", symmetry=symmetry)
-        )
+    def test_plot_ipf_color_key_show_title(self, sym, loc):
+        fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection="ipf", symmetry=sym))
         ax[0].plot_ipf_color_key(show_title=True)
         assert ax[0].get_title(loc=loc)
         ax[1].plot_ipf_color_key(show_title=False)

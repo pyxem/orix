@@ -48,14 +48,28 @@ extensions = [
 
 # Create links to references within orix's documentation to these packages
 intersphinx_mapping = {
+    "black": ("https://black.readthedocs.io/en/stable", None),
+    "coverage": ("https://coverage.readthedocs.io/en/latest", None),
     "dask": ("https://docs.dask.org/en/latest", None),
+    "defdap": ("https://defdap.readthedocs.io/en/latest", None),
     "diffpy.structure": ("https://www.diffpy.org/diffpy.structure", None),
+    "diffsims": ("https://diffsims.readthedocs.io/en/latest", None),
     "h5py": ("https://docs.h5py.org/en/stable", None),
+    "kikuchipy": ("https://kikuchipy.org/en/latest", None),
     "matplotlib": ("https://matplotlib.org/stable", None),
+    "nbsphinx": ("https://nbsphinx.readthedocs.io/en/latest", None),
+    "nbval": ("https://nbval.readthedocs.io/en/latest", None),
     "numpy": ("https://numpy.org/doc/stable", None),
+    "numpydoc": ("https://numpydoc.readthedocs.io/en/latest", None),
+    "pymicro": ("https://pymicro.readthedocs.io/projects/pymicro/en/latest", None),
+    "pytest": ("https://docs.pytest.org/en/stable", None),
     "python": ("https://docs.python.org/3", None),
+    "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
+    "readthedocs": ("https://docs.readthedocs.io/en/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
+    "sphinx": ("https://www.sphinx-doc.org/en/master", None),
+    "sphinx-gallery": ("https://sphinx-gallery.github.io/stable", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -64,15 +78,25 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["build", "Thumbs.db", ".DS_Store"]
 
-# HTML theme: furo
-# https://pradyunsg.me/furo/
-html_theme = "furo"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+# HTML theming: pydata-sphinx-theme
+# https://pydata-sphinx-theme.readthedocs.io
+html_theme = "pydata_sphinx_theme"
+html_theme_options = {
+    "github_url": "https://github.com/pyxem/orix",
+    "header_links_before_dropdown": 6,
+    "logo": {"alt_text": project, "text": project},
+    "navigation_with_keys": False,
+    "show_toc_level": 2,
+    "use_edit_page_button": True,
+}
+html_context = {
+    "github_user": "pyxem",
+    "github_repo": "orix",
+    "github_version": "develop",
+    "doc_path": "doc",
+}
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 
@@ -142,7 +166,7 @@ nbsphinx_execute_arguments = [
 
 # -- sphinxcontrib-bibtex
 # https://sphinxcontrib-bibtex.readthedocs.io
-bibtex_bibfiles = ["bibliography.bib"]
+bibtex_bibfiles = ["user/bibliography.bib"]
 bibtex_reference_style = "author_year"
 
 # -- sphinx-codeautolink

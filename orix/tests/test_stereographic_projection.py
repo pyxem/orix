@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -63,7 +63,7 @@ class TestStereographicProjection:
         x_desired = [1, 0, -1, 0, 0]
         y_desired = [0, 1, 0, -1, 0]
 
-        sp_up = StereographicProjection(pole=-1)
+        sp_up = StereographicProjection()
         x_up, y_up = sp_up.vector2xy(v)
         assert x_up.size == y_up.size == 5
         assert np.allclose(x_up, x_desired)
@@ -77,7 +77,7 @@ class TestStereographicProjection:
         assert np.allclose(y_down, y_desired[:-1])
 
     def test_vector2xy(self, vectors):
-        sp_up = StereographicProjection(pole=-1)
+        sp_up = StereographicProjection()
         x_up, y_up, x_down, y_down = sp_up.vector2xy_split(v=vectors)
         x1, y1 = sp_up.vector2xy(v=vectors)
         sp_down = StereographicProjection(pole=1)
@@ -89,27 +89,40 @@ class TestStereographicProjection:
         assert np.allclose(y2, y_down)
 
     def test_spherical2xy(self, vectors):
-        sp_up = StereographicProjection(pole=-1)
+        sp_up = StereographicProjection()
         azimuth = vectors.azimuth
         polar = vectors.polar
-        x_up, y_up, x_down, y_down = sp_up.spherical2xy_split(
-            azimuth=azimuth, polar=polar
-        )
-        x1, y1 = sp_up.spherical2xy(azimuth=azimuth, polar=polar)
+        x_up, y_up, x_down, y_down = sp_up.spherical2xy_split(azimuth, polar)
+        x1, y1 = sp_up.spherical2xy(azimuth, polar)
         sp_down = StereographicProjection(pole=1)
-        x2, y2 = sp_down.spherical2xy(azimuth=azimuth, polar=polar)
+        x2, y2 = sp_down.spherical2xy(azimuth, polar)
 
         assert np.allclose(x1, x_up)
         assert np.allclose(y1, y_up)
         assert np.allclose(x2, x_down)
         assert np.allclose(y2, y_down)
 
+        # Degrees
+        azimuth_deg = np.rad2deg(azimuth)
+        polar_deg = np.rad2deg(polar)
+        x_up3, y_up3, x_down3, y_down3 = sp_up.spherical2xy_split(
+            azimuth_deg, polar_deg, degrees=True
+        )
+        x3, y3 = sp_up.spherical2xy(azimuth_deg, polar_deg, degrees=True)
+        sp_down = StereographicProjection(pole=1)
+        x4, y4 = sp_down.spherical2xy(azimuth_deg, polar_deg, degrees=True)
+
+        assert np.allclose(x_up3, x3)
+        assert np.allclose(y_up3, y3)
+        assert np.allclose(x4, x_down3)
+        assert np.allclose(y4, y_down3)
+
     def test_project_loop_xy(self, vectors):
         is_up = vectors.z >= 0
         v_up_in = vectors[is_up]
         v_down_in = vectors[~is_up]
 
-        sp_up = StereographicProjection(pole=-1)
+        sp_up = StereographicProjection()
         sp_down = StereographicProjection(pole=1)
 
         x_up, y_up = sp_up.vector2xy(v_up_in)
@@ -129,19 +142,22 @@ class TestStereographicProjection:
         azimuth_down_in = v_down.azimuth
         polar_down_in = v_down.polar
 
-        sp_up = StereographicProjection(pole=-1)
+        sp_up = StereographicProjection()
         sp_down = StereographicProjection(pole=1)
 
-        x_up, y_up = sp_up.spherical2xy(azimuth=azimuth_up_in, polar=polar_up_in)
-        x_down, y_down = sp_down.spherical2xy(
-            azimuth=azimuth_down_in, polar=polar_down_in
-        )
-        azimuth_up_out, polar_up_out = sp_up.inverse.xy2spherical(x=x_up, y=y_up)
-        azimuth_down_out, polar_down_out = sp_down.inverse.xy2spherical(
-            x=x_down, y=y_down
-        )
+        x_up, y_up = sp_up.spherical2xy(azimuth_up_in, polar_up_in)
+        x_down, y_down = sp_down.spherical2xy(azimuth_down_in, polar_down_in)
+        azimuth_up_out, polar_up_out = sp_up.inverse.xy2spherical(x_up, y_up)
+        azimuth_down_out, polar_down_out = sp_down.inverse.xy2spherical(x_down, y_down)
 
         assert np.allclose(azimuth_up_in, azimuth_up_out)
         assert np.allclose(polar_up_in, polar_up_out)
         assert np.allclose(azimuth_down_in, azimuth_down_out)
         assert np.allclose(polar_down_in, polar_down_out)
+
+        # Degrees
+        azimuth_up_deg, polar_up_deg = sp_up.inverse.xy2spherical(
+            x_up, y_up, degrees=True
+        )
+        assert np.allclose(np.rad2deg(azimuth_up_out), azimuth_up_deg)
+        assert np.allclose(np.rad2deg(polar_up_out), polar_up_deg)

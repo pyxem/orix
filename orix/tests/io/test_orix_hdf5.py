@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -41,11 +41,7 @@ from orix.io.plugins.orix_hdf5 import (
 )
 from orix.tests.io.test_io import assert_dictionaries_are_equal
 
-# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
 
-
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
-@pytest.mark.filterwarnings("ignore:Property `dz` is deprecated and will be removed in")
 class TestOrixHDF5Plugin:
     def test_file_writer(self, crystal_map, temp_file_path):
         save(filename=temp_file_path, object2write=crystal_map)
@@ -57,23 +53,23 @@ class TestOrixHDF5Plugin:
     @pytest.mark.parametrize(
         "crystal_map_input",
         [
-            ((4, 4, 3), (1, 1.5, 1.5), 1, [0, 1]),
-            ((2, 4, 3), (1, 1.5, 1.5), 2, [0, 1, 2]),
+            ((4, 3), (1.5, 1.5), 1, [0, 1]),
+            ((4, 3), (1.5, 1.5), 2, [0, 1, 2]),
         ],
         indirect=["crystal_map_input"],
     )
     def test_write_read_masked(self, crystal_map_input, temp_file_path):
-        cm = CrystalMap(**crystal_map_input)
-        save(filename=temp_file_path, object2write=cm[cm.x > 2])
-        cm2 = load(temp_file_path)
+        xmap = CrystalMap(**crystal_map_input)
+        save(filename=temp_file_path, object2write=xmap[xmap.x > 2])
+        xmap2 = load(temp_file_path)
 
-        assert cm2.size != cm.size
+        assert xmap2.size != xmap.size
         with pytest.raises(ValueError, match="operands could not be broadcast"):
-            _ = np.allclose(cm2.x, cm.x)
+            _ = np.allclose(xmap2.x, xmap.x)
 
-        cm2.is_in_data = cm.is_in_data
-        assert cm2.size == cm.size
-        assert np.allclose(cm2.x, cm.x)
+        xmap2.is_in_data = xmap.is_in_data
+        assert xmap2.size == xmap.size
+        assert np.allclose(xmap2.x, xmap.x)
 
     def test_file_writer_raises(self, temp_file_path, crystal_map):
         with pytest.raises(OSError, match="Cannot write to the already open file "):
@@ -89,17 +85,17 @@ class TestOrixHDF5Plugin:
                 )
 
     def test_crystalmap2dict(self, crystal_map_input):
-        cm = CrystalMap(**crystal_map_input)
-        cm_dict = crystalmap2dict(cm)
+        xmap = CrystalMap(**crystal_map_input)
+        xmap_dict = crystalmap2dict(xmap)
 
         this_dict = {"hello": "there"}
-        cm_dict2 = crystalmap2dict(cm, dictionary=this_dict)
+        cm_dict2 = crystalmap2dict(xmap, dictionary=this_dict)
 
         cm_dict2.pop("hello")
-        assert_dictionaries_are_equal(cm_dict, cm_dict2)
+        assert_dictionaries_are_equal(xmap_dict, cm_dict2)
 
-        assert np.allclose(cm_dict["data"]["x"], crystal_map_input["x"])
-        assert cm_dict["header"]["z_step"] == cm.dz
+        assert np.allclose(xmap_dict["data"]["x"], crystal_map_input["x"])
+        assert xmap_dict["header"]["y_step"] == xmap.dy
 
     def test_phaselist2dict(self, phase_list):
         pl_dict = phaselist2dict(phase_list)
@@ -148,12 +144,12 @@ class TestOrixHDF5Plugin:
 
     def test_file_reader(self, crystal_map, temp_file_path):
         save(filename=temp_file_path, object2write=crystal_map)
-        cm2 = load(filename=temp_file_path)
-        assert_dictionaries_are_equal(crystal_map.__dict__, cm2.__dict__)
+        xmap2 = load(filename=temp_file_path)
+        assert_dictionaries_are_equal(crystal_map.__dict__, xmap2.__dict__)
 
     def test_dict2crystalmap(self, crystal_map):
-        cm2 = dict2crystalmap(crystalmap2dict(crystal_map))
-        assert_dictionaries_are_equal(crystal_map.__dict__, cm2.__dict__)
+        xmap2 = dict2crystalmap(crystalmap2dict(crystal_map))
+        assert_dictionaries_are_equal(crystal_map.__dict__, xmap2.__dict__)
 
     def test_dict2phaselist(self, phase_list):
         phase_list2 = dict2phaselist(phaselist2dict(phase_list))
@@ -162,10 +158,12 @@ class TestOrixHDF5Plugin:
         assert phase_list.ids == phase_list2.ids
         assert phase_list.names == phase_list2.names
         assert phase_list.colors == phase_list2.colors
-        assert [
-            s1.name == s2.name
-            for s1, s2 in zip(phase_list.point_groups, phase_list2.point_groups)
-        ]
+        assert all(
+            [
+                s1.name == s2.name
+                for s1, s2 in zip(phase_list.point_groups, phase_list2.point_groups)
+            ]
+        )
 
     def test_dict2phase(self, phase_list):
         phase1 = phase_list[0]
@@ -183,10 +181,6 @@ class TestOrixHDF5Plugin:
         phase_dict = phase2dict(phase1)
         phase2 = dict2phase(phase_dict)
         assert phase1.space_group.number == phase2.space_group.number
-
-        phase_dict.pop("space_group")
-        phase3 = dict2phase(phase_dict)
-        assert phase3.space_group is None
 
     def test_dict2structure(self, phase_list):
         structure1 = phase_list[0].structure
@@ -214,25 +208,6 @@ class TestOrixHDF5Plugin:
         assert str(atom.element) == str(atom2.element)
         assert np.allclose(atom.xyz, atom2.xyz)
 
-    def test_read_point_group_from_v0_3_x(self, temp_file_path, crystal_map):
-        crystal_map.phases[0].point_group = "1"
-        save(filename=temp_file_path, object2write=crystal_map)
-
-        # First, ensure point group data set name is named "symmetry", as in v0.3.0
-        with File(temp_file_path, mode="r+") as f:
-            for phase in f["crystal_map/header/phases"].values():
-                phase["symmetry"] = phase["point_group"]
-                del phase["point_group"]
-
-        # Then, make sure it can still be read
-        cm2 = load(filename=temp_file_path)
-        # And that the symmetry operations are the same, for good measure
-        print(crystal_map)
-        print(cm2)
-        assert np.allclose(
-            crystal_map.phases[0].point_group.data, cm2.phases[0].point_group.data
-        )
-
     def test_write_read_nd_crystalmap_properties(self, temp_file_path, crystal_map):
         """Crystal map properties with more than one value in each point
         (e.g. top matching scores from dictionary indexing) can be written
@@ -258,11 +233,3 @@ class TestOrixHDF5Plugin:
         assert np.allclose(xmap2.prop[prop3d_name], xmap.prop[prop3d_name])
         assert np.allclose(xmap2.prop[prop2d_name].reshape(prop2d_shape), prop2d)
         assert np.allclose(xmap2.prop[prop3d_name].reshape(prop3d_shape), prop3d)
-
-    def test_write_read_2d(self, temp_file_path, crystal_map_input):
-        crystal_map_input["z"] = None
-        xmap = CrystalMap(**crystal_map_input)
-        assert xmap._coordinates["z"] is None
-        save(filename=temp_file_path, object2write=xmap)
-        xmap2 = load(temp_file_path)
-        assert xmap2._coordinates["z"] is None

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -18,12 +18,15 @@
 
 import warnings
 
+from diffpy.structure import Lattice, Structure
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from scipy.spatial.transform import Rotation as SciPyRotation
 
 # fmt: off
 # isort: off
+from orix.crystal_map import Phase
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Rotation
 from orix.quaternion.symmetry import (
@@ -40,7 +43,7 @@ from orix.quaternion.symmetry import (
     _groups,
     _proper_groups,
 )
-from orix.vector import AxAngle, Vector3d
+from orix.vector import AxAngle, Miller, Vector3d 
 # isort: on
 # fmt: on
 
@@ -324,6 +327,9 @@ class TestMisorientation:
         )
         assert np.allclose(distance1, expected, atol=1e-4)
 
+        distance2 = m1.get_distance_matrix(degrees=True)
+        assert np.allclose(np.rad2deg(distance1), distance2)
+
     def test_get_distance_matrix_shape(self):
         shape = (3, 4)
         m2 = Misorientation.random(shape)
@@ -332,7 +338,7 @@ class TestMisorientation:
 
     def test_get_distance_matrix_progressbar_chunksize(self):
         m = Misorientation.random((5, 15, 4))
-        angle1 = m.get_distance_matrix(chunk_size=5, progressbar=True)
+        angle1 = m.get_distance_matrix(chunk_size=5)
         angle2 = m.get_distance_matrix(chunk_size=10, progressbar=False)
         assert np.allclose(angle1, angle2)
 
@@ -353,6 +359,61 @@ class TestMisorientation:
         p12 = p1.outer(p2)
         angle2 = p12.angle.min(axis=(0, 2, 3, 5))
         assert np.allclose(angle1, angle2)
+
+    def test_from_align_vectors(self):
+        phase = Phase(
+            point_group="4",
+            structure=Structure(lattice=Lattice(0.5, 0.5, 1, 90, 90, 90)),
+        )
+        a = Miller(uvw=[[2, -1, 0], [0, 0, 1]], phase=phase)
+        b = Miller(uvw=[[3, 1, 0], [-1, 3, 0]], phase=phase)
+        ori = Misorientation.from_align_vectors(a, b)
+        assert type(ori) == Misorientation
+        assert ori.symmetry == (phase.point_group,) * 2
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        a = Miller([[2, -1, 0], [0, 0, 1]])
+        b = Miller([[3, 1, 0], [-1, 3, 0]])
+        _, e = Misorientation.from_align_vectors(a, b, return_rmsd=True)
+        assert e == 0
+        _, m = Misorientation.from_align_vectors(a, b, return_sensitivity=True)
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+        out = Misorientation.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        with pytest.raises(
+            ValueError,
+            match="Arguments other and initial must both be of type Miller, "
+            "but are of type <class 'orix.vector.vector3d.Vector3d'> and "
+            "<class 'orix.vector.miller.Miller'>.",
+        ):
+            _ = Misorientation.from_align_vectors(a, b)
+
+    def test_from_scipy_rotation(self):
+        """Assert correct type and symmetry is returned and that the
+        misorientation rotates crystal directions correctly.
+        """
+        r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+
+        mori1 = Misorientation.from_scipy_rotation(r_scipy)
+        assert isinstance(mori1, Misorientation)
+        assert mori1.symmetry[0].name == "1"
+        assert mori1.symmetry[1].name == "1"
+
+        mori2 = Misorientation.from_scipy_rotation(r_scipy, (Oh, Oh))
+        assert np.allclose(mori2.symmetry[0].data, Oh.data)
+        assert np.allclose(mori2.symmetry[1].data, Oh.data)
+
+        uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
+        uvw2 = mori2 * uvw
+        assert np.allclose(uvw2.data, [1, -1, 0])
+        uvw3 = ~mori2 * uvw
+        assert np.allclose(uvw3.data, [-1, 1, 0])
+
+        # Raises
+        with pytest.raises(TypeError, match="Value must be a 2-tuple of"):
+            _ = Misorientation.from_scipy_rotation(r_scipy, Oh)
 
 
 def test_orientation_equality():
@@ -385,6 +446,9 @@ class TestOrientationInitialization:
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
 
+        o4 = Orientation.from_euler(np.rad2deg(euler), degrees=True)
+        assert np.allclose(o4.data, o1.data)
+
     def test_from_matrix_symmetry(self):
         om = np.array(
             [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
@@ -404,6 +468,34 @@ class TestOrientationInitialization:
         o3 = o3.map_into_symmetry_reduced_zone()
         assert np.allclose(o3.data, o2.data)
 
+    def test_from_align_vectors(self):
+        phase = Phase(
+            point_group="4",
+            structure=Structure(lattice=Lattice(0.5, 0.5, 1, 90, 90, 90)),
+        )
+        a = Miller(uvw=[[2, -1, 0], [0, 0, 1]], phase=phase)
+        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        ori = Orientation.from_align_vectors(a, b)
+        assert type(ori) == Orientation
+        assert ori.symmetry == phase.point_group
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        a = Miller([[2, -1, 0], [0, 0, 1]])
+        _, e = Orientation.from_align_vectors(a, b, return_rmsd=True)
+        assert e == 0
+        _, m = Orientation.from_align_vectors(a, b, return_sensitivity=True)
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+        out = Orientation.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        with pytest.raises(
+            ValueError,
+            match="Argument other must be of type Miller, but has type "
+            "<class 'orix.vector.vector3d.Vector3d'>",
+        ):
+            _ = Orientation.from_align_vectors(a, b)
+
     def test_from_neo_euler_symmetry(self):
         v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
         o1 = Orientation.from_neo_euler(v)
@@ -421,12 +513,15 @@ class TestOrientationInitialization:
         axis = Vector3d.xvector() - Vector3d.yvector()
         angle = np.pi / 2
         axangle = AxAngle.from_axes_angles(axis, angle)
-        ori = Orientation.from_neo_euler(axangle, Oh)
-        ori2 = Orientation.from_axes_angles(axis, angle, Oh)
-        assert np.allclose(ori.to_euler(), (3 * np.pi / 4, np.pi / 2, 5 * np.pi / 4))
-        assert np.allclose(ori.data, ori2.data)
-        assert ori.symmetry.name == ori2.symmetry.name == "m-3m"
-        assert np.allclose(ori.symmetry.data, ori2.symmetry.data)
+        o1 = Orientation.from_neo_euler(axangle, Oh)
+        o2 = Orientation.from_axes_angles(axis, angle, Oh)
+        assert np.allclose(o1.to_euler(degrees=True), [135, 90, 225])
+        assert np.allclose(o1.data, o2.data)
+        assert o1.symmetry.name == o2.symmetry.name == "m-3m"
+        assert np.allclose(o1.symmetry.data, o2.symmetry.data)
+
+        o3 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
+        assert np.allclose(o2.data, o3.data)
 
     def test_get_identity(self):
         """Get the identity orientation via two alternative routes."""
@@ -444,6 +539,27 @@ class TestOrientationInitialization:
         assert np.allclose(m12_1.data, m12_2.data)
         assert np.allclose(o3_1.data, o3_2.data)
         assert np.allclose(o3_1.data, [1, 0, 0, 0])
+
+    def test_from_scipy_rotation(self):
+        """Assert correct type and symmetry is returned and that the
+        misorientation rotates crystal directions correctly.
+        """
+        r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+
+        ori1 = Orientation.from_scipy_rotation(r_scipy)
+        assert isinstance(ori1, Orientation)
+        assert ori1.symmetry.name == "1"
+
+        ori2 = Orientation.from_scipy_rotation(r_scipy, Oh)
+        assert np.allclose(ori2.symmetry.data, Oh.data)
+
+        uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
+        uvw2 = ori2 * uvw
+        assert np.allclose(uvw2.data, [1, -1, 0])
+
+        # Raises an appropriate error message
+        with pytest.raises(TypeError, match="Value must be an instance of"):
+            _ = Orientation.from_scipy_rotation(r_scipy, (Oh, Oh))
 
     # TODO: Remove in 1.0
     def test_from_euler_warns(self):
@@ -512,8 +628,11 @@ class TestOrientation:
         assert isinstance(angles_dask, np.ndarray)
         assert angles_dask.shape == (2, 2)
 
-        assert np.allclose(angles_numpy.data, angles_dask.data)
-        assert np.allclose(np.diag(angles_numpy.data), 0)
+        assert np.allclose(angles_numpy, angles_dask)
+        assert np.allclose(np.diag(angles_numpy), 0)
+
+        angles3 = o.get_distance_matrix(degrees=True)
+        assert np.allclose(np.rad2deg(angles_numpy), angles3)
 
     def test_get_distance_matrix_lazy_parameters(self):
         shape = (5, 15, 4)
@@ -521,7 +640,7 @@ class TestOrientation:
         abcd = rng.normal(size=np.prod(shape)).reshape(shape)
         o = Orientation(abcd)
 
-        angle1 = o.get_distance_matrix(lazy=True, chunk_size=5, progressbar=True)
+        angle1 = o.get_distance_matrix(lazy=True, chunk_size=5)
         angle2 = o.get_distance_matrix(lazy=True, chunk_size=10, progressbar=False)
 
         assert np.allclose(angle1.data, angle2.data)
@@ -585,6 +704,10 @@ class TestOrientation:
         else:
             assert not is_equal
 
+        ang_rad = (~o).angle_with(o)
+        ang_deg = (~o).angle_with(o, degrees=True)
+        assert np.allclose(np.rad2deg(ang_rad), ang_deg)
+
     def test_negate_orientation(self):
         o = Orientation.identity()
         o.symmetry = Oh
@@ -638,7 +761,7 @@ class TestOrientation:
         vx = Vector3d.xvector()
         vz = Vector3d.zvector()
 
-        ori = Orientation.from_euler(np.radians((325, 48, 163)), symmetry=Oh)
+        ori = Orientation.from_euler((325, 48, 163), symmetry=Oh, degrees=True)
 
         # Returned figure has the expected default properties
         fig_size = (5, 5)

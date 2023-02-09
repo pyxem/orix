@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -31,9 +31,7 @@ import pytest
 from orix.crystal_map import Phase, PhaseList
 from orix.io import _overwrite_or_not, _plugin_from_manufacturer, load, loadctf, save
 from orix.io.plugins import bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
-from orix.quaternion.rotation import Rotation
-
-# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
+from orix.quaternion import Rotation
 
 
 @contextmanager
@@ -69,7 +67,6 @@ def assert_dictionaries_are_equal(input_dict, output_dict):
                 assert input_value == output_value
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in")
 class TestGeneralIO:
     def test_load_no_filename_match(self):
         fname = "what_is_hip.ang"

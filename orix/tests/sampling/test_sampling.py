@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -19,10 +19,10 @@
 import numpy as np
 import pytest
 
-from orix.quaternion.rotation import Rotation
+from orix.quaternion import Rotation
 from orix.quaternion.symmetry import C2, C6, D6, get_point_group
-from orix.sampling import get_sample_fundamental, get_sample_local
-from orix.sampling.SO3_sampling import _resolution_to_num_steps, uniform_SO3_sample
+from orix.sampling import get_sample_fundamental, get_sample_local, uniform_SO3_sample
+from orix.sampling.SO3_sampling import _resolution_to_num_steps
 from orix.sampling._polyhedral_sampling import (
     _get_angles_between_nn_gridpoints,
     _get_first_nearest_neighbors,

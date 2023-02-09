@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -83,7 +83,6 @@ def test_neg(vector):
         ([1, 2, 3], 0.5, [1.5, 2.5, 3.5]),
         ([1, 2, 3], [-1, 2], [[0, 1, 2], [3, 4, 5]]),
         ([1, 2, 3], np.array([-1, 1]), [[0, 1, 2], [2, 3, 4]]),
-        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
@@ -95,6 +94,16 @@ def test_add(vector, other, expected):
 
 
 @pytest.mark.parametrize(
+    "vector, other",
+    [([1, 2, 3], "dracula")],
+    indirect=["vector"],
+)
+def test_add_raises(vector, other):
+    with pytest.raises(TypeError):
+        _ = vector + other
+
+
+@pytest.mark.parametrize(
     "vector, other, expected",
     [
         ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[0, 0, 0], [4, 4, 4]]),
@@ -102,7 +111,6 @@ def test_add(vector, other, expected):
         ([1, 2, 3], 0.5, [0.5, 1.5, 2.5]),
         ([1, 2, 3], [-1, 2], [[2, 3, 4], [-1, 0, 1]]),
         ([1, 2, 3], np.array([-1, 1]), [[2, 3, 4], [0, 1, 2]]),
-        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
@@ -114,19 +122,24 @@ def test_sub(vector, other, expected):
 
 
 @pytest.mark.parametrize(
+    "vector, other",
+    [
+        ([1, 2, 3], "dracula"),
+    ],
+    indirect=["vector"],
+)
+def test_sub_raises(vector, other):
+    with pytest.raises(TypeError):
+        _ = vector - other
+
+
+@pytest.mark.parametrize(
     "vector, other, expected",
     [
-        pytest.param(
-            [1, 2, 3],
-            Vector3d([[1, 2, 3], [-3, -2, -1]]),
-            [[0, 0, 0], [4, 4, 4]],
-            marks=pytest.mark.xfail(raises=ValueError),
-        ),
         ([1, 2, 3], [4], [4, 8, 12]),
         ([1, 2, 3], 0.5, [0.5, 1.0, 1.5]),
         ([1, 2, 3], [-1, 2], [[-1, -2, -3], [2, 4, 6]]),
         ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]]),
-        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
@@ -138,14 +151,21 @@ def test_mul(vector, other, expected):
 
 
 @pytest.mark.parametrize(
+    "vector, other, error_type",
+    [
+        ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), ValueError),
+        ([1, 2, 3], "dracula", TypeError),
+    ],
+    indirect=["vector"],
+)
+def test_mul_raises(vector, other, error_type):
+    with pytest.raises(error_type):
+        _ = vector * other
+
+
+@pytest.mark.parametrize(
     "vector, other, expected",
     [
-        pytest.param(
-            [1, 2, 3],
-            Vector3d([[1, 2, 3], [-3, -2, -1]]),
-            [[0, 0, 0], [4, 4, 4]],
-            marks=pytest.mark.xfail(raises=ValueError),
-        ),
         ([4, 8, 12], [4], [1, 2, 3]),
         ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
         (
@@ -158,7 +178,6 @@ def test_mul(vector, other, expected):
             np.array([-1, 1]),
             [[-1, -2, -3], [1, 2, 3]],
         ),
-        pytest.param([1, 2, 3], "dracula", None, marks=pytest.mark.xfail),
     ],
     indirect=["vector"],
 )
@@ -167,11 +186,22 @@ def test_div(vector, other, expected):
     assert np.allclose(s1.data, expected)
 
 
-@pytest.mark.xfail
-def test_rdiv():
-    v = Vector3d([1, 2, 3])
-    other = 1
-    _ = other / v
+@pytest.mark.parametrize(
+    "vector, other, error_type",
+    [
+        ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), ValueError),
+        ([1, 2, 3], "dracula", TypeError),
+    ],
+    indirect=["vector"],
+)
+def test_div_raises(vector, other, error_type):
+    with pytest.raises(error_type):
+        _ = vector / other
+
+
+def test_rdiv_raises():
+    with pytest.raises(ValueError):
+        _ = 1 / Vector3d.xvector()
 
 
 def test_dot(vector, something):
@@ -223,11 +253,12 @@ def test_cross_error(vector, number):
     ],
 )
 def test_polar(azimuth, polar, radial, expected):
-    assert np.allclose(
-        Vector3d.from_polar(azimuth=azimuth, polar=polar, radial=radial).data,
-        expected.data,
-        atol=1e-5,
+    v1 = Vector3d.from_polar(azimuth, polar, radial)
+    v2 = Vector3d.from_polar(
+        np.rad2deg(azimuth), np.rad2deg(polar), radial, degrees=True
     )
+    assert np.allclose(v1.data, expected.data, atol=1e-5)
+    assert np.allclose(v2.data, v1.data, atol=1e-5)
 
 
 @pytest.mark.parametrize(
@@ -245,11 +276,15 @@ def test_zero(shape):
 
 
 def test_angle_with(vector, something):
-    a = vector.angle_with(vector)
-    assert np.allclose(a, 0)
-    a = vector.angle_with(something)
-    assert np.all(a >= 0)
-    assert np.all(a <= np.pi)
+    a1 = vector.angle_with(vector)
+    assert np.allclose(a1, 0)
+
+    a2 = vector.angle_with(something)
+    assert np.all(a2 >= 0)
+    assert np.all(a2 <= np.pi)
+
+    a3 = vector.angle_with(something, degrees=True)
+    assert np.allclose(np.rad2deg(a2), a3)
 
 
 def test_mul_array(vector):
@@ -427,22 +462,23 @@ def test_transpose_3d_shape(shape, expected_shape, axes):
     assert v2.shape == tuple(expected_shape)
 
 
-@pytest.mark.xfail(strict=True, reason=ValueError)
 def test_zero_perpendicular():
-    t = Vector3d(np.asarray([0, 0, 0]))
-    _ = t.perpendicular()
+    with pytest.raises(ValueError):
+        _ = Vector3d.zero((1,)).perpendicular
 
 
-@pytest.mark.xfail(strict=True, reason=TypeError)
 class TestSpareNotImplemented:
     def test_radd_notimplemented(self, vector):
-        "cantadd" + vector
+        with pytest.raises(TypeError):
+            _ = "cantadd" + vector
 
     def test_rsub_notimplemented(self, vector):
-        "cantsub" - vector
+        with pytest.raises(TypeError):
+            _ = "cantsub" - vector
 
     def test_rmul_notimplemented(self, vector):
-        "cantmul" * vector
+        with pytest.raises(TypeError):
+            _ = "cantmul" * vector
 
 
 class TestVector3dInversePoleDensityFunction:
@@ -462,13 +498,12 @@ class TestVector3dInversePoleDensityFunction:
     def test_ipdf_plot_hemisphere_raises(self):
         with pytest.raises(ValueError, match="Hemisphere must be either "):
             v = Vector3d(np.random.randn(1_000, 3)).unit
-            fig = v.inverse_pole_density_function(
+            _ = v.inverse_pole_density_function(
                 symmetry=symmetry.Th,
                 return_figure=True,
                 colorbar=True,
                 hemisphere="test",
             )
-            plt.close(fig)
 
 
 class TestVector3dPoleDensityFunction:
@@ -567,7 +602,7 @@ class TestVector3dPoleDensityFunction:
     def test_pdf_hemisphere_raises(self):
         v = Vector3d(np.random.randn(100, 3)).unit
         with pytest.raises(ValueError, match=r"Hemisphere must be either "):
-            fig1 = v.pole_density_function(return_figure=True, hemisphere="test")
+            _ = v.pole_density_function(return_figure=True, hemisphere="test")
 
 
 class TestSphericalCoordinates:
@@ -583,6 +618,11 @@ class TestSphericalCoordinates:
         assert np.allclose(polar.data, polar_desired)
         assert np.allclose(azimuth.data, azimuth_desired)
         assert np.allclose(radial.data, radial_desired)
+
+        azimuth2, polar2, radial2 = v.to_polar(degrees=True)
+        assert np.allclose(polar2.data, np.rad2deg(polar_desired))
+        assert np.allclose(azimuth2.data, np.rad2deg(azimuth_desired))
+        assert np.allclose(radial2.data, radial_desired)
 
     def test_polar_loop(self, vector):
         azimuth, polar, radial = vector.to_polar()
@@ -692,10 +732,10 @@ class TestPlotting:
             self.v.scatter(projection="equal_angle")
 
     def test_scatter_reproject(self):
-        o = Orientation.from_axes_angles((-1, 8, 1), np.deg2rad(65))
+        o = Orientation.from_axes_angles((-1, 8, 1), 65, degrees=True)
         v = (symmetry.Oh * o) * Vector3d.zvector()
         # normal scatter: half of the vectors are shown
-        fig1 = v.scatter(hemisphere="upper", reproject=False, return_figure=True)
+        fig1 = v.scatter(hemisphere="upper", return_figure=True)
         assert (
             sum(len(c.get_offsets()) for c in fig1.axes[0].collections) == v.size // 2
         )

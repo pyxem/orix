@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -35,7 +35,7 @@ from orix.plot.stereographic_plot import (
 )
 # isort: on
 # fmt: on
-from orix.quaternion.symmetry import C1, C6, Oh
+from orix.quaternion import symmetry
 from orix.vector import Vector3d
 
 plt.rcParams["axes.grid"] = True
@@ -475,13 +475,13 @@ class TestRestrictToFundamentalSector:
         # C1's has no fundamental sector, so the circle marking the
         # edge of the axis region should be unchanged
         fig2, ax2 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        ax2.restrict_to_sector(C1.fundamental_sector)
+        ax2.restrict_to_sector(symmetry.C1.fundamental_sector)
         assert np.allclose(vertices, ax2.patches[0].get_verts())
 
         # C6's fundamental sector is 1 / 6 of the unit sphere, with
         # half of it in the upper hemisphere
         fig3, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
-        ax3[0].restrict_to_sector(C6.fundamental_sector)
+        ax3[0].restrict_to_sector(symmetry.C6.fundamental_sector)
         assert not np.allclose(vertices, ax3[0].patches[0].get_verts())
         assert ax3[0].patches[1].get_label() == "sa_sector"
 
@@ -491,7 +491,7 @@ class TestRestrictToFundamentalSector:
 
         # Oh's fundamental sector is only in the upper hemisphere,
         # so the same as C1's sector applies for the lower hemisphere
-        fs = Oh.fundamental_sector
+        fs = symmetry.Oh.fundamental_sector
         fig4, ax4 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax4.restrict_to_sector(fs)
         upper_patches4 = ax4.patches
@@ -513,5 +513,59 @@ class TestRestrictToFundamentalSector:
         ax5.plot(fs.edges)
         assert len(ax4.lines) == 1
         assert len(ax5.lines) == 0
+
+        plt.close("all")
+
+    def test_restrict_to_sector_pad(self):
+        v = Vector3d.zvector()
+
+        fig = v.scatter(return_figure=True)
+        ax = fig.axes[0]
+        assert np.allclose(ax.get_xlim(), [-1.05, 1.05])
+
+        # No change since the sector is the equator
+        ax.restrict_to_sector(symmetry.C1.fundamental_sector)
+        assert np.allclose(ax.get_xlim(), [-1.05, 1.05])
+
+        # Default
+        fs_m3m = symmetry.Oh.fundamental_sector
+        ax.restrict_to_sector(fs_m3m)
+        assert np.allclose(ax.get_xlim(), [-0.0103, 0.4245], atol=1e-4)
+
+        # Slightly wider
+        ax.restrict_to_sector(fs_m3m, pad=2)
+        assert np.allclose(ax.get_xlim(), [-0.0159, 0.4301], atol=1e-4)
+
+        plt.close("all")
+
+    def test_restrict_to_sector_edges(self):
+        v = Vector3d.zvector()
+
+        fig = v.scatter(return_figure=True)
+        ax = fig.axes[0]
+
+        ax.restrict_to_sector(symmetry.Oh.fundamental_sector, show_edges=False)
+        assert len(ax.patches) == 1
+        assert ax.patches[0].get_label() == "sa_circle"
+
+        plt.close("all")
+
+    def test_restrict_to_sector_full_projection(self):
+        v = Vector3d.zvector()
+
+        fig = v.scatter(return_figure=True)
+        ax = fig.axes[0]
+        xmin, xmax = ax.get_xlim()
+        assert (xmin, xmax) == (-1.05, 1.05)
+
+        # Ensure padding changes little (ideally to +/- 1.01, but it
+        # does not on Windows...)
+        ax.restrict_to_sector(symmetry.Ci.fundamental_sector)
+        xmin2, xmax2 = ax.get_xlim()
+        assert all([(xmin + xmin2) <= 0.05, (xmax - xmax2) <= 0.05])
+
+        # Upper part of projection, azimuthal in [0, 180]
+        ax.restrict_to_sector(symmetry.C2h.fundamental_sector)
+        assert np.allclose(ax.get_ylim(), [-0.01, 1.01], atol=1e-3)
 
         plt.close("all")

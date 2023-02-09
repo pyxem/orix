@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -18,14 +18,12 @@
 
 import pytest
 
-from orix.quaternion.orientation import Orientation
+from orix.quaternion import Orientation, OrientationRegion
 from orix.quaternion.orientation_region import (
-    OrientationRegion,
     _get_large_cell_normals,
     get_proper_groups,
 )
 from orix.quaternion.symmetry import *
-from orix.quaternion.symmetry import get_distinguished_points
 
 
 @pytest.mark.parametrize(
@@ -149,7 +147,7 @@ def test_get_proper_point_groups(Gl, Gr):
     return None
 
 
-@pytest.mark.xfail(raises=NotImplementedError, strict=True)
 def test_get_proper_point_group_not_implemented():
     """Double inversion case not yet implemented"""
-    get_proper_groups(Csz, Csz)
+    with pytest.raises(NotImplementedError):
+        _ = get_proper_groups(Csz, Csz)

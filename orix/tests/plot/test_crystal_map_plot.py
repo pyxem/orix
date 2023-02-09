@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2022 the orix developers
+# Copyright 2018-2023 the orix developers
 #
 # This file is part of orix.
 #
@@ -31,40 +31,35 @@ from orix.plot import CrystalMapPlot
 PLOT_MAP = "plot_map"
 
 
-# TODO: Remove all pytest.mark.filterwarnings after (any) one release after 0.10.1
-
-
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
-@pytest.mark.filterwarnings("ignore:Argument `depth` is deprecated and will be removed")
 class TestCrystalMapPlot:
     @pytest.mark.parametrize(
         "crystal_map_input, expected_data_shape",
         [
-            (((1, 10, 20), (0, 1.5, 1.5), 1, [0]), (10, 20, 3)),
-            (((1, 4, 3), (0, 0.1, 0.1), 1, [0]), (4, 3, 3)),
+            (((10, 20), (1.5, 1.5), 1, [0]), (10, 20, 3)),
+            (((4, 3), (0.1, 0.1), 1, [0]), (4, 3, 3)),
         ],
         indirect=["crystal_map_input"],
     )
     def test_plot_phase(self, crystal_map_input, phase_list, expected_data_shape):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        assert np.unique(cm.phase_id) == np.array([0])  # Test code assumption
+        assert np.unique(xmap.phase_id) == np.array([0])  # Test code assumption
         assert phase_list.ids == [0, 1, 2]
-        cm.phases = phase_list
-        cm[0, 0].phase_id = 0
-        cm[1, 1].phase_id = 2
+        xmap.phases = phase_list
+        xmap[0, 0].phase_id = 0
+        xmap[1, 1].phase_id = 2
 
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
-        im = ax.plot_map(cm)
+        im = ax.plot_map(xmap)
 
         # Expected image data
-        phase_id = cm.get_map_data("phase_id")
+        phase_id = xmap.get_map_data("phase_id")
         unique_phase_ids = np.unique(phase_id[~np.isnan(phase_id)])
         expected_data = np.ones(phase_id.shape + (3,))
-        for i, color in zip(unique_phase_ids, cm.phases_in_data.colors_rgb):
+        for i, color in zip(unique_phase_ids, xmap.phases_in_data.colors_rgb):
             mask = phase_id == int(i)
-            expected_data[mask] = expected_data[mask] * color
+            expected_data[mask] *= color
 
         image_data = im.get_array()
         assert np.allclose(image_data.shape, expected_data_shape)
@@ -73,94 +68,87 @@ class TestCrystalMapPlot:
         plt.close("all")
 
     def test_plot_property(self, crystal_map):
-        cm = crystal_map
+        xmap = crystal_map
 
         prop_name = "iq"
-        prop_data = np.arange(cm.size)
-        cm.prop[prop_name] = prop_data
+        prop_data = np.arange(xmap.size)
+        xmap.prop[prop_name] = prop_data
 
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
-        im = ax.plot_map(cm, cm.iq)
+        im = ax.plot_map(xmap, xmap.iq)
 
-        assert np.allclose(im.get_array(), prop_data.reshape(cm.shape))
+        assert np.allclose(im.get_array(), prop_data.reshape(xmap.shape))
 
         plt.close("all")
 
     def test_plot_scalar(self, crystal_map):
-        cm = crystal_map
+        xmap = crystal_map
 
-        angles = cm.rotations.angle
+        angles = xmap.rotations.angle
 
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(projection=PLOT_MAP)
         # Test use of `vmax` as well
-        im1 = ax1.plot_map(cm, angles, vmax=angles.max() - 10)
+        im1 = ax1.plot_map(xmap, angles, vmax=angles.max() - 10)
 
-        assert np.allclose(im1.get_array(), angles.reshape(cm.shape), atol=1e-3)
+        assert np.allclose(im1.get_array(), angles.reshape(xmap.shape), atol=1e-3)
 
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(projection=PLOT_MAP)
-        im2 = ax2.plot_map(cm, cm.rotations.angle)
+        im2 = ax2.plot_map(xmap, xmap.rotations.angle)
 
-        assert np.allclose(im2.get_array(), angles.reshape(cm.shape), atol=1e-3)
+        assert np.allclose(im2.get_array(), angles.reshape(xmap.shape), atol=1e-3)
 
         plt.close("all")
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((2, 9, 3), (1, 1.5, 1.5), 1, [0]), ((2, 10, 5), (1, 0.1, 0.1), 1, [0])],
+        [((9, 3), (1.5, 1.5), 1, [0]), ((10, 5), (0.1, 0.1), 1, [0])],
         indirect=["crystal_map_input"],
     )
     def test_plot_masked_phase(self, crystal_map_input, phase_list):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
         # Test code assumptions
-        assert np.unique(cm.phase_id) == np.array([0])
+        assert np.unique(xmap.phase_id) == np.array([0])
         assert phase_list.ids == [0, 1, 2]
-        assert cm.ndim == 3
+        assert xmap.ndim == 2
 
-        cm.phases = phase_list
+        xmap.phases = phase_list
 
-        cm[0, :2, :1].phase_id = 1
-        cm[1, 2:4, :1].phase_id = 2
-        assert np.allclose(np.unique(cm.phase_id), np.array([0, 1, 2]))
+        xmap[:2, :1].phase_id = 1
+        xmap[2:4, :1].phase_id = 2
+        assert np.allclose(np.unique(xmap.phase_id), np.array([0, 1, 2]))
 
         # One phase plot per masked map
         for i, phase in phase_list:
             fig = plt.figure()
             ax = fig.add_subplot(projection=PLOT_MAP)
-            _ = ax.plot_map(cm[cm.phase_id == i])
+            _ = ax.plot_map(xmap[xmap.phase_id == i])
 
         plt.close("all")
 
     @pytest.mark.parametrize(
         "crystal_map_input",
-        [((2, 9, 6), (1, 1.5, 1.5), 2, [0]), ((2, 10, 5), (1, 0.1, 0.1), 1, [0])],
+        [((9, 6), (1.5, 1.5), 2, [0]), ((10, 5), (0.1, 0.1), 1, [0])],
         indirect=["crystal_map_input"],
     )
     def test_plot_masked_scalar(self, crystal_map_input):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        cm.prop["test"] = np.zeros(cm.size)
-        cm[1, 5, 4].test = 1
+        xmap.prop["test"] = np.zeros(xmap.size)
+        xmap[5, 4].test = 1
 
-        fig1 = plt.figure()
-        ax1 = fig1.add_subplot(projection=PLOT_MAP)
-        im1 = ax1.plot_map(cm, cm.test)
+        fig = plt.figure()
+        ax = fig.add_subplot(projection=PLOT_MAP)
+        im = ax.plot_map(xmap, xmap.test)
 
-        fig2 = plt.figure()
-        ax2 = fig2.add_subplot(projection=PLOT_MAP)
-        im2 = ax2.plot_map(cm, cm.test, depth=1)
+        expected_data_im = np.zeros(ax._data_shape)
+        expected_data_im[5, 4] = 1
 
-        expected_data_im1 = np.zeros(ax1._data_shape)
-        expected_data_im2 = np.zeros(ax2._data_shape)
-        expected_data_im2[5, 4] = 1
-
-        im1_data = im1.get_array()
-        im2_data = im2.get_array()
-        assert np.allclose(im1_data, expected_data_im1)
-        assert np.allclose(im2_data, expected_data_im2)
+        im_data = im.get_array()
+        assert np.allclose(im_data, expected_data_im)
 
         plt.close("all")
 
@@ -176,41 +164,40 @@ class TestCrystalMapPlot:
         plt.close("all")
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
-@pytest.mark.filterwarnings("ignore:Argument `depth` is deprecated and will be removed")
 class TestCrystalMapPlotUtilities:
     def test_init_projection(self):
         # Option 1
-        fig = plt.figure()
-        ax1 = fig.add_subplot(projection=PLOT_MAP)
+        _ = plt.figure()
+        ax1 = plt.subplot(projection=PLOT_MAP)
         assert isinstance(ax1, CrystalMapPlot)
 
-        # Option 2 (`label` to suppress warning of non-unique figure objects)
-        ax2 = plt.subplot(projection=PLOT_MAP, label="unique")
+        # Option 2 (recommended)
+        fig = plt.figure()
+        ax2 = fig.add_subplot(projection=PLOT_MAP)
         assert isinstance(ax2, CrystalMapPlot)
 
         plt.close("all")
 
     @pytest.mark.parametrize(
-        "crystal_map_input, idx_to_change, axes, depth, expected_plot_shape",
+        "crystal_map_input, idx_to_change, expected_plot_shape",
         [
-            (((2, 10, 20), (1, 1.5, 1.5), 1, [0]), (1, 5, 4), (1, 2), 1, (10, 20)),
-            (((4, 4, 3), (0.1, 0.1, 0.1), 1, [0]), (0, 0, 2), (0, 1), 2, (4, 4)),
-            (((10, 10, 10), (1, 1, 1), 2, [0]), (-1, 8, -1), (0, 2), 8, (10, 10)),
+            (((10, 20), (1.5, 1.5), 1, [0]), (5, 4), (10, 20)),
+            (((4, 3), (0.1, 0.1), 1, [0]), (0, 2), (4, 3)),
+            (((10, 10), (1, 1), 2, [0]), (8, -1), (10, 10)),
         ],
         indirect=["crystal_map_input"],
     )
     def test_get_plot_shape(
-        self, crystal_map_input, idx_to_change, axes, depth, expected_plot_shape
+        self, crystal_map_input, idx_to_change, expected_plot_shape
     ):
-        cm = CrystalMap(**crystal_map_input)
+        xmap = CrystalMap(**crystal_map_input)
 
-        cm.prop["test"] = np.zeros(cm.size)
-        cm[idx_to_change].test = 1
+        xmap.prop["test"] = np.zeros(xmap.size)
+        xmap[idx_to_change].test = 1
 
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
-        im = ax.plot_map(cm, cm.test, axes=axes, depth=depth)
+        im = ax.plot_map(xmap, xmap.test)
 
         assert ax._data_shape == expected_plot_shape
         assert np.allclose(np.unique(im.get_array()), np.array([0, 1]))
@@ -219,28 +206,28 @@ class TestCrystalMapPlotUtilities:
 
     @pytest.mark.parametrize("to_plot", ["scalar", "rgb"])
     def test_add_overlay(self, crystal_map, to_plot):
-        cm = crystal_map
+        xmap = crystal_map
 
-        assert np.allclose(cm.phase_id, np.zeros(cm.size))  # Assumption
+        assert np.allclose(xmap.phase_id, np.zeros(xmap.size))  # Assumption
 
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
         if to_plot == "scalar":
-            im = ax.plot_map(cm, cm.y)
+            im = ax.plot_map(xmap, xmap.y)
             im_data = im.get_array()
             assert im_data.ndim == 2
             im_data = im.to_rgba(im_data)[:, :, :3]
         else:  # rgb
-            im = ax.plot_map(cm)
+            im = ax.plot_map(xmap)
             im_data = copy.deepcopy(im.get_array())
 
-        to_overlay = cm.id
-        ax.add_overlay(cm, to_overlay)
+        to_overlay = xmap.id
+        ax.add_overlay(xmap, to_overlay)
         im_data2 = ax.images[0].get_array()
 
         assert np.allclose(im_data, im_data2) is False
 
-        overlay = cm.get_map_data(to_overlay)
+        overlay = xmap.get_map_data(to_overlay)
         overlay_min = np.nanmin(overlay)
         rescaled_overlay = (overlay - overlay_min) / (np.nanmax(overlay) - overlay_min)
 
@@ -270,9 +257,9 @@ class TestCrystalMapPlotUtilities:
     def test_phase_legend(
         self, crystal_map, phase_names, phase_colors, legend_properties
     ):
-        cm = crystal_map
-        cm[0, 0].phase_id = 1
-        cm.phases = PhaseList(
+        xmap = crystal_map
+        xmap[0, 0].phase_id = 1
+        xmap.phases = PhaseList(
             names=phase_names, point_groups=[3, 3], colors=phase_colors
         )
 
@@ -281,7 +268,7 @@ class TestCrystalMapPlotUtilities:
 
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
-        _ = ax.plot_map(cm, legend_properties=legend_properties)
+        _ = ax.plot_map(xmap, legend_properties=legend_properties)
 
         legend = ax.legend_
 
@@ -416,12 +403,10 @@ class TestStatusBar:
         x, y = ax.transData.transform(data_idx)
 
         # Mock a mouse event
-        plt.matplotlib.backends.backend_agg.FigureCanvasBase.motion_notify_event(
-            f.canvas, x, y
-        )
         cursor_event = plt.matplotlib.backend_bases.MouseEvent(
             "motion_notify_event", f.canvas, x, y
         )
+        f.canvas.callbacks.process(cursor_event.name, cursor_event)
 
         # Call our custom cursor data function
         cursor_data = im.get_cursor_data(cursor_event)
@@ -451,14 +436,13 @@ class TestStatusBar:
         plt.close("all")
 
 
-@pytest.mark.filterwarnings("ignore:Argument `z` is deprecated and will be removed in ")
 class TestScalebar:
     @pytest.mark.parametrize(
         "crystal_map_input, scalebar_properties",
         [
-            (((1, 10, 30), (0, 1, 1), 1, [0]), {}),  # Default
+            (((10, 30), (1, 1), 1, [0]), {}),  # Default
             (
-                ((1, 10, 30), (0, 1, 1), 1, [0]),
+                ((10, 30), (1, 1), 1, [0]),
                 {"location": 4, "sep": 6, "box_alpha": 0.8},
             ),
         ],
