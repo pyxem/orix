@@ -2,13 +2,12 @@
 Changelog
 =========
 
-All notable changes to the ``orix`` project are documented in this file.
+All user facing changes to this project are documented in this file. The format is based
+on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
+its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
-The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and
-this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
-
-Unreleased
-==========
+2023-02-09 - version 0.11.0
+===========================
 
 Added
 -----
@@ -46,9 +45,6 @@ Changed
 - Bumped minimal version of ``diffpy.structure >= 3.0.2``.
 - Only ASTAR .ang files return crystal maps with ``"nm"`` as scan unit.
 
-Deprecated
-----------
-
 Removed
 -------
 - Parameter ``z`` when creating a ``CrystalMap`` and the ``z`` and ``dz`` attributes of
@@ -63,9 +59,6 @@ Removed
 Fixed
 -----
 - Reading of EDAX TSL .ang files with ten columns should now work.
-
-Security
---------
 
 2022-10-25 - version 0.10.2
 ===========================

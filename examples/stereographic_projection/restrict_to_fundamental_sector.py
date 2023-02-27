@@ -37,20 +37,25 @@ theta = theta[idx]
 fig = hkl.draw_circle(opening_angle=np.pi / 2 + theta, return_figure=True)
 hkl.draw_circle(opening_angle=np.pi / 2 - theta, figure=fig)
 
-# Restrict to fundamental sector of m-3m
+# Restrict to fundamental sector of m-3m (with some padding outside sector)
 ax = fig.axes[0]
-ax.restrict_to_sector(hkl.phase.point_group.fundamental_sector, edgecolor="r", lw=2)
+ax.restrict_to_sector(
+    hkl.phase.point_group.fundamental_sector, edgecolor="r", lw=2, pad=5
+)
 
-# Get symmetrically equivalent set of zone axes <uvw> within fundamental
-# sector and round to lowest possible integer
+# Get symmetrically equivalent set of zone axes <uvw>
 uvw = hkl.reshape(hkl.size, 1).cross(hkl.reshape(1, hkl.size)).flatten()
 uvw = uvw.in_fundamental_sector()
 uvw = uvw.unique(use_symmetry=True)
 uvw = uvw.round()
 
-# Plot zone axes
 for uvw_i in uvw:
     uvw_idx = str(uvw_i.coordinates[0].astype(int)).replace(" ", "")
-    ax.text(uvw_i, s=uvw_idx, va="bottom", bbox=dict(facecolor="w", pad=1, alpha=0.75))
+    ax.text(
+        uvw_i,
+        s=uvw_idx,
+        va="bottom",
+        bbox=dict(facecolor="w", pad=1, alpha=0.75),
+    )
 
 _ = ax.set_title(r"Low-index $[uvw]$ in fundamental sector of $m\bar{3}m$", pad=10)

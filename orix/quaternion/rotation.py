@@ -631,9 +631,10 @@ class Rotation(Quaternion):
             This option can be used to reduce memory usage when working
             with large arrays. Default is ``False``.
         chunk_size
-            When ``lazy=True``, ``chunk_size`` represents the number of
-            rotations per axis for each input to include in each
-            iteration of the computation. Default is 20.
+            Number of rotations per axis to include in each iteration of
+            the computation. Default is 20. Only applies when
+            ``lazy=True``. Increasing this might reduce the computation
+            time at the cost of increased memory use.
         progressbar
             Whether to show a progressbar during computation if
             ``lazy=True``. Default is ``True``.
