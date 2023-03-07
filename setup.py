@@ -20,7 +20,7 @@ extra_feature_requirements = {
         "sphinx-design",
         "sphinx-gallery                 < 0.11",
         "sphinx-last-updated-by-git",
-        "pydata-sphinx-theme",
+        "pydata-sphinx-theme            >= 0.13.1",
         "sphinxcontrib-bibtex           >= 1.0",
         "scikit-image",
         "scikit-learn",

@@ -86,7 +86,6 @@ html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "github_url": "https://github.com/pyxem/orix",
     "header_links_before_dropdown": 6,
-    "icon_links": [],  # Workaround for pydata/pydata-sphinx-theme#1220
     "logo": {"alt_text": project, "text": project},
     "navigation_with_keys": False,
     "show_toc_level": 2,
