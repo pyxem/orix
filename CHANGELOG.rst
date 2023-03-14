@@ -6,6 +6,24 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
+Unreleased
+==========
+
+Added
+-----
+
+Changed
+-------
+
+Deprecated
+----------
+
+Removed
+-------
+
+Fixed
+-----
+
 2023-03-14 - version 0.11.1
 ===========================
 
