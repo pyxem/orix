@@ -166,6 +166,31 @@ class TestCrystalMap:
         unique_phase_ids = list(np.unique(crystal_map_input["phase_id"]).astype(int))
         assert xmap.phases.ids == unique_phase_ids
 
+    def test_init_with_sparse_phase_list(self):
+        """Initialize a map with a sparse phase list only containing one
+        of the phase IDs passed in the phase list.
+        """
+        pl = PhaseList(ids=[1], names=["b"], space_groups=[225])
+        phase_id = np.array([0, 0, 1, 1, 1, 3])
+        xmap = CrystalMap(
+            rotations=Rotation.identity(phase_id.size),
+            is_in_data=phase_id == 1,
+            phase_list=pl,
+            phase_id=phase_id,
+        )
+        for i, name, color, sg_name in zip(
+            [0, 1, 3],
+            ["", "b", ""],
+            ["tab:orange", "tab:blue", "tab:green"],
+            [None, "Fm-3m", None],
+        ):
+            assert xmap.phases[i].name == name
+            assert xmap.phases[i].color == color
+            if sg_name is None:
+                assert xmap.phases[i].space_group is None
+            else:
+                assert xmap.phases[i].space_group.short_name == sg_name
+
     def test_init_with_single_point_group(self, crystal_map_input):
         point_group = O
         phase_list = PhaseList(point_groups=point_group)

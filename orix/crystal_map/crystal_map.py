@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
-from orix.crystal_map.phase_list import Phase, PhaseList
+from orix.crystal_map.phase_list import ALL_COLORS, Phase, PhaseList
 from orix.quaternion import Orientation, Rotation
 
 
@@ -251,7 +251,7 @@ class CrystalMap:
         if phase_list is None:
             self._phases = PhaseList(ids=unique_phase_ids)
         else:
-            phase_list = copy.deepcopy(phase_list)
+            phase_list = phase_list.deepcopy()
             phase_ids = phase_list.ids
             n_different = len(phase_ids) - len(unique_phase_ids)
             if n_different > 0:
@@ -265,15 +265,20 @@ class CrystalMap:
                         break
             elif n_different < 0:
                 # Create new phase list adding the missing phases with
-                # default initial values
-                phase_list = PhaseList(
-                    names=phase_list.names,
-                    space_groups=phase_list.space_groups,
-                    point_groups=phase_list.point_groups,
-                    colors=phase_list.colors,
-                    structures=phase_list.structures,
-                    ids=unique_phase_ids,
+                # default initial values (but unique colors)
+                phase_dict = {}
+                all_colors = list(ALL_COLORS.keys())
+                all_unique_colors = np.delete(
+                    all_colors, np.isin(all_colors, phase_list.colors)
                 )
+                ci = 0
+                for i in unique_phase_ids:
+                    if i in phase_ids:
+                        phase_dict[i] = phase_list[i]
+                    else:
+                        phase_dict[i] = Phase(color=all_unique_colors[ci])
+                        ci += 1
+                phase_list = PhaseList(phase_dict)
             # Ensure phase list IDs correspond to IDs in phase_id array
             new_ids = list(unique_phase_ids.astype(int))
             phase_list._dict = dict(zip(new_ids, phase_list._dict.values()))
