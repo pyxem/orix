@@ -40,7 +40,6 @@ from orix.quaternion.symmetry import (
     T,
     O,
     Oh,
-    _groups,
     _proper_groups,
 )
 from orix.vector import AxAngle, Miller, Vector3d 
@@ -58,563 +57,160 @@ def orientation(request):
     return Orientation(request.param)
 
 
-@pytest.mark.parametrize(
-    "orientation, symmetry, expected",
-    [
-        ([(1, 0, 0, 0)], C1, [(1, 0, 0, 0)]),
-        ([(1, 0, 0, 0)], C4, [(1, 0, 0, 0)]),
-        ([(1, 0, 0, 0)], D3, [(1, 0, 0, 0)]),
-        ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
-        ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
-        # 7pi/12 -C2-> # 7pi/12
-        ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
-        # 7pi/12 -C3-> # 7pi/12
-        ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
-        # 7pi/12 -C4-> # pi/12
-        ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
-        # 7pi/12 -O-> # pi/12
-        ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
-    ],
-    indirect=["orientation"],
-)
-def test_set_symmetry(orientation, symmetry, expected):
-    o = Orientation(orientation.data, symmetry=symmetry)
-    o = o.map_into_symmetry_reduced_zone()
-    assert np.allclose(o.data, expected, atol=1e-3)
-
-
-@pytest.mark.parametrize(
-    "symmetry, vector",
-    [(C1, (1, 2, 3)), (C2, (1, -1, 3)), (C3, (1, 1, 1)), (O, (0, 1, 0))],
-    indirect=["vector"],
-)
-def test_orientation_persistence(symmetry, vector):
-    v = symmetry.outer(vector).flatten()
-    o = Orientation.random()
-    oc = Orientation(o.data, symmetry=symmetry)
-    oc = oc.map_into_symmetry_reduced_zone()
-    v1 = o * v
-    v1 = Vector3d(v1.data.round(4))
-    v2 = oc * v
-    v2 = Vector3d(v2.data.round(4))
-    assert v1._tuples == v2._tuples
-
-
-@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
-def test_getitem(orientation, symmetry):
-    orientation.symmetry = symmetry
-    assert orientation[0].symmetry._tuples == symmetry._tuples
-
-
-@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
-def test_reshape_maintains_symmetry_misorientation(symmetry):
-    m = Misorientation.random((4, 5))
-    m.symmetry = symmetry
-    m1 = m.reshape(5, 4)
-    for s1, s2 in zip(m1.symmetry, symmetry):
-        assert s1._tuples == s2._tuples
-
-
-@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
-def test_reshape_maintains_symmetry_orientation(symmetry):
-    o = Orientation.random((4, 5))
-    o.symmetry = symmetry
-    o1 = o.reshape(5, 4)
-    assert o1.symmetry._tuples == symmetry._tuples
-
-
-@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
-def test_transpose_maintains_symmetry_misorientation(symmetry):
-    m = Misorientation.random((4, 5))
-    m.symmetry = symmetry
-    m1 = m.transpose()
-    for s1, s2 in zip(m1.symmetry, symmetry):
-        assert s1._tuples == s2._tuples
-
-
-@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
-def test_transpose_maintains_symmetry_orientation(symmetry):
-    o = Orientation.random((4, 5))
-    o.symmetry = symmetry
-    o1 = o.transpose()
-    assert o1.symmetry._tuples == symmetry._tuples
-
-
-@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
-def test_flatten_maintains_symmetry_misorientation(symmetry):
-    m = Misorientation.random((4, 5))
-    m.symmetry = symmetry
-    m1 = m.flatten()
-    for s1, s2 in zip(m1.symmetry, symmetry):
-        assert s1._tuples == s2._tuples
-
-
-@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
-def test_flatten_maintains_symmetry_orientation(symmetry):
-    o = Orientation.random((4, 5))
-    o.symmetry = symmetry
-    o1 = o.flatten()
-    assert o1.symmetry._tuples == symmetry._tuples
-
-
-@pytest.mark.parametrize("symmetry", ([C2, C3], [Oh, C2], [O, D3]))
-def test_squeeze_maintains_symmetry_misorientation(symmetry):
-    m = Misorientation.random((4, 5, 1))
-    m.symmetry = symmetry
-    m1 = m.squeeze()
-    for s1, s2 in zip(m1.symmetry, symmetry):
-        assert s1._tuples == s2._tuples
-
-
-@pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
-def test_squeeze_maintains_symmetry_orientation(symmetry):
-    o = Orientation.random((4, 5))
-    o.symmetry = symmetry
-    o1 = o.squeeze()
-    assert o1.symmetry._tuples == symmetry._tuples
-
-
-@pytest.mark.parametrize("Gl", [C4, C2])
-def test_equivalent(Gl):
-    """Tests that the property Misorientation.equivalent runs without error,
-    use grain_exchange=True as this falls back to grain_exchange=False when
-    Gl!=Gr:
-
-    Gl == C4 is grain exchange
-    Gl == C2 is no grain exchange
-    """
-    m = Misorientation([1, 1, 1, 1])  # any will do
-    m_new = Misorientation(m.data, symmetry=(Gl, C4))
-    m_new = m_new.map_into_symmetry_reduced_zone()
-    _ = m_new.equivalent(grain_exchange=True)
-
-
-def test_repr():
-    m = Misorientation([1, 1, 1, 1])  # any will do
-    _ = repr(m)
-
-
-def test_repr_ori():
-    shape = (2, 3)
-    o = Orientation.identity(shape)
-    o.symmetry = O
-    o = o.map_into_symmetry_reduced_zone()
-    assert repr(o).split("\n")[0] == f"Orientation {shape} {O.name}"
-
-
-def test_sub():
-    o = Orientation([1, 1, 1, 1], symmetry=C4)  # any will do
-    o = o.map_into_symmetry_reduced_zone()
-    m = o - o
-    assert np.allclose(m.data, [1, 0, 0, 0])
-
-
-def test_sub_orientation_and_other():
-    m = Orientation([1, 1, 1, 1])  # any will do
-    with pytest.raises(TypeError):
-        _ = m - 3
-
-
-def test_transpose_2d():
-    o1 = Orientation.random_vonmises((11, 3))
-    o2 = o1.transpose()
-    assert o1.shape == o2.shape[::-1]
-
-
-def test_map_into_reduced_symmetry_zone_verbose():
-    o = Orientation.random()
-    o.symmetry = Oh
-    o1 = o.map_into_symmetry_reduced_zone()
-    o2 = o.map_into_symmetry_reduced_zone(verbose=True)
-    assert np.allclose(o1.data, o2.data)
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape, axes",
-    [((11, 3, 5), (11, 5, 3), (0, 2, 1)), ((11, 3, 5), (3, 5, 11), (1, 2, 0))],
-)
-def test_transpose_3d(shape, expected_shape, axes):
-    o1 = Orientation.random_vonmises(shape)
-    o2 = o1.transpose(*axes)
-    assert o2.shape == tuple(expected_shape)
-
-
-def test_transpose_symmetry():
-    o1 = Orientation.random_vonmises((11, 3))
-    o1.symmetry = Oh
-    o1 = o1.map_into_symmetry_reduced_zone()
-    o2 = o1.transpose()
-    assert o1.symmetry == o2.symmetry
-
-
-def test_symmetry_property_orientation():
-    o = Orientation.random((3, 2))
-    sym = Oh
-    o.symmetry = sym
-    assert o.symmetry == sym
-    assert o._symmetry == (C1, sym)
-
-
-def test_symmetry_property_orientation_data():
-    """Test that data remains unchanged after setting symmetry property."""
-    o = Orientation.random((3, 2))
-    d1 = o.data.copy()
-    o.symmetry = Oh
-    assert np.allclose(o.data, d1)
-
-
-def test_symmetry_property_misorientation():
-    m = Misorientation.random((3, 2))
-    m.symmetry = (Oh, C3)
-    assert m.symmetry == (Oh, C3)
-    assert m._symmetry == (Oh, C3)
-
-
-def test_symmetry_property_wrong_type_orientation():
-    o = Orientation.random((3, 2))
-    with pytest.raises(TypeError, match="Value must be an instance of"):
-        o.symmetry = 1
-
-
-@pytest.mark.parametrize(
-    "error_type, value", [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)]
-)
-def test_symmetry_property_wrong_type_misorientation(error_type, value):
-    mori = Misorientation.random((3, 2))
-    with pytest.raises(error_type, match="Value must be a 2-tuple"):
-        mori.symmetry = value
-
-
-@pytest.mark.parametrize(
-    "error_type, value",
-    [(ValueError, (C1,)), (ValueError, (C1, C2, C1))],
-)
-def test_symmetry_property_wrong_number_of_values_misorientation(error_type, value):
-    o = Misorientation.random((3, 2))
-    with pytest.raises(error_type, match="Value must be a 2-tuple"):
-        # less than 2 Symmetry
-        o.symmetry = value
-
-
-class TestMisorientation:
-    def test_get_distance_matrix(self):
-        """Compute distance between every misorientation in an instance
-        with every other misorientation in the same instance.
-
-        Misorientations are taken from the misorientation clustering
-        user guide.
-        """
-        m1 = Misorientation(
-            [
-                [-0.8541, -0.5201, -0.0053, -0.0002],
-                [-0.8486, -0.5291, -0.0019, -0.0018],
-                [-0.7851, -0.6194, -0.0043, -0.0004],
-                [-0.7802, -0.3136, -0.5413, -0.0029],
-                [-0.8518, -0.5237, -0.0004, -0.0102],
-            ],
-            symmetry=(D6, D6),
-        )
-        distance1 = m1.get_distance_matrix()
-        assert np.allclose(np.diag(distance1), 0)
-        expected = np.array(
-            [
-                [0, 0.0224, 0.2420, 0.2580, 0.0239],
-                [0.0224, 0, 0.2210, 0.2367, 0.0212],
-                [0.2419, 0.2209, 0, 0.0184, 0.2343],
-                [0.2579, 0.2367, 0.0184, 0, 0.2496],
-                [0.0239, 0.0212, 0.2343, 0.2497, 0],
-            ]
-        )
-        assert np.allclose(distance1, expected, atol=1e-4)
-
-        distance2 = m1.get_distance_matrix(degrees=True)
-        assert np.allclose(np.rad2deg(distance1), distance2)
-
-    def test_get_distance_matrix_shape(self):
-        shape = (3, 4)
-        m2 = Misorientation.random(shape)
-        distance2 = m2.get_distance_matrix()
-        assert distance2.shape == 2 * shape
-
-    def test_get_distance_matrix_progressbar_chunksize(self):
-        m = Misorientation.random((5, 15, 4))
-        angle1 = m.get_distance_matrix(chunk_size=5)
-        angle2 = m.get_distance_matrix(chunk_size=10, progressbar=False)
-        assert np.allclose(angle1, angle2)
-
-    @pytest.mark.parametrize("symmetry", _groups[:-1])
-    def test_get_distance_matrix_equal_explicit_calculation(self, symmetry):
-        # do not test Oh, as this takes ~4 GB
-        m = Misorientation.random((5,))
-        m.symmetry = (symmetry, symmetry)
-        angle1 = m.get_distance_matrix()
-        s1, s2 = m.symmetry
-        # computation of mismisorientation
-        # eq 6 in Johnstone et al. 2020
-        p1 = s1.outer(m).outer(s2)
-        p2 = s1.outer(~m).outer(s2)
-        # for identical symmetries this is equivalent to the old
-        # distance function:
-        # d = s2.outer(~m).outer(s1.outer(s1)).outer(m).outer(s2)
-        p12 = p1.outer(p2)
-        angle2 = p12.angle.min(axis=(0, 2, 3, 5))
-        assert np.allclose(angle1, angle2)
-
-    def test_from_align_vectors(self):
-        phase = Phase(
-            point_group="4",
-            structure=Structure(lattice=Lattice(0.5, 0.5, 1, 90, 90, 90)),
-        )
-        a = Miller(uvw=[[2, -1, 0], [0, 0, 1]], phase=phase)
-        b = Miller(uvw=[[3, 1, 0], [-1, 3, 0]], phase=phase)
-        ori = Misorientation.from_align_vectors(a, b)
-        assert type(ori) == Misorientation
-        assert ori.symmetry == (phase.point_group,) * 2
-        assert np.allclose(a.unit.data, (ori * b.unit).data)
-        a = Miller([[2, -1, 0], [0, 0, 1]])
-        b = Miller([[3, 1, 0], [-1, 3, 0]])
-        _, e = Misorientation.from_align_vectors(a, b, return_rmsd=True)
-        assert e == 0
-        _, m = Misorientation.from_align_vectors(a, b, return_sensitivity=True)
-        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
-        out = Misorientation.from_align_vectors(
-            a, b, return_rmsd=True, return_sensitivity=True
-        )
-        assert len(out) == 3
-        a = Vector3d([[2, -1, 0], [0, 0, 1]])
-        with pytest.raises(
-            ValueError,
-            match="Arguments other and initial must both be of type Miller, "
-            "but are of type <class 'orix.vector.vector3d.Vector3d'> and "
-            "<class 'orix.vector.miller.Miller'>.",
-        ):
-            _ = Misorientation.from_align_vectors(a, b)
-
-    def test_from_scipy_rotation(self):
-        """Assert correct type and symmetry is returned and that the
-        misorientation rotates crystal directions correctly.
-        """
-        r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
-
-        mori1 = Misorientation.from_scipy_rotation(r_scipy)
-        assert isinstance(mori1, Misorientation)
-        assert mori1.symmetry[0].name == "1"
-        assert mori1.symmetry[1].name == "1"
-
-        mori2 = Misorientation.from_scipy_rotation(r_scipy, (Oh, Oh))
-        assert np.allclose(mori2.symmetry[0].data, Oh.data)
-        assert np.allclose(mori2.symmetry[1].data, Oh.data)
-
-        uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
-        uvw2 = mori2 * uvw
-        assert np.allclose(uvw2.data, [1, -1, 0])
-        uvw3 = ~mori2 * uvw
-        assert np.allclose(uvw3.data, [-1, 1, 0])
-
-        # Raises
-        with pytest.raises(TypeError, match="Value must be a 2-tuple of"):
-            _ = Misorientation.from_scipy_rotation(r_scipy, Oh)
-
-
-def test_orientation_equality():
-    # symmetries must also be the same to be equal
-    o1 = Orientation.random((6, 5))
-    o2 = Orientation(o1)
-    assert o1 == o2
-    o1.symmetry = C4
-    o2.symmetry = o1.symmetry
-    assert o1 == o2
-    o2.symmetry = C3
-    assert o1 != o2
-    o3 = Orientation.random((6,))
-    assert o1 != o3
-    o3.symmetry = o1.symmetry
-    assert o1 != o3
-
-
-class TestOrientationInitialization:
-    def test_from_euler_symmetry(self):
-        euler = np.deg2rad([90, 45, 90])
-        o1 = Orientation.from_euler(euler)
-        assert np.allclose(o1.data, [0, -0.3827, 0, -0.9239], atol=1e-4)
-        assert o1.symmetry.name == "1"
-        o2 = Orientation.from_euler(euler, symmetry=Oh)
-        o2 = o2.map_into_symmetry_reduced_zone()
-        assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
-        assert o2.symmetry.name == "m-3m"
-        o3 = Orientation(o1.data, symmetry=Oh)
-        o3 = o3.map_into_symmetry_reduced_zone()
-        assert np.allclose(o3.data, o2.data)
-
-        o4 = Orientation.from_euler(np.rad2deg(euler), degrees=True)
-        assert np.allclose(o4.data, o1.data)
-
-    def test_from_matrix_symmetry(self):
-        om = np.array(
-            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
-        )
-        o1 = Orientation.from_matrix(om)
-        assert np.allclose(
-            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape((4, 4))
-        )
-        assert o1.symmetry.name == "1"
-        o2 = Orientation.from_matrix(om, symmetry=Oh)
-        o2 = o2.map_into_symmetry_reduced_zone()
-        assert np.allclose(
-            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape((4, 4))
-        )
-        assert o2.symmetry.name == "m-3m"
-        o3 = Orientation(o1.data, symmetry=Oh)
-        o3 = o3.map_into_symmetry_reduced_zone()
-        assert np.allclose(o3.data, o2.data)
-
-    def test_from_align_vectors(self):
-        phase = Phase(
-            point_group="4",
-            structure=Structure(lattice=Lattice(0.5, 0.5, 1, 90, 90, 90)),
-        )
-        a = Miller(uvw=[[2, -1, 0], [0, 0, 1]], phase=phase)
-        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
-        ori = Orientation.from_align_vectors(a, b)
-        assert type(ori) == Orientation
-        assert ori.symmetry == phase.point_group
-        assert np.allclose(a.unit.data, (ori * b.unit).data)
-        a = Miller([[2, -1, 0], [0, 0, 1]])
-        _, e = Orientation.from_align_vectors(a, b, return_rmsd=True)
-        assert e == 0
-        _, m = Orientation.from_align_vectors(a, b, return_sensitivity=True)
-        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
-        out = Orientation.from_align_vectors(
-            a, b, return_rmsd=True, return_sensitivity=True
-        )
-        assert len(out) == 3
-        a = Vector3d([[2, -1, 0], [0, 0, 1]])
-        with pytest.raises(
-            ValueError,
-            match="Argument other must be of type Miller, but has type "
-            "<class 'orix.vector.vector3d.Vector3d'>",
-        ):
-            _ = Orientation.from_align_vectors(a, b)
-
-    def test_from_neo_euler_symmetry(self):
-        v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
-        o1 = Orientation.from_neo_euler(v)
-        assert np.allclose(o1.data, [0.7071, 0, 0, 0.7071])
-        assert o1.symmetry.name == "1"
-        o2 = Orientation.from_neo_euler(v, symmetry=Oh)
-        o2 = o2.map_into_symmetry_reduced_zone()
-        assert np.allclose(o2.data, [-1, 0, 0, 0])
-        assert o2.symmetry.name == "m-3m"
-        o3 = Orientation(o1.data, symmetry=Oh)
-        o3 = o3.map_into_symmetry_reduced_zone()
-        assert np.allclose(o3.data, o2.data)
-
-    def test_from_axes_angles(self, rotations):
-        axis = Vector3d.xvector() - Vector3d.yvector()
-        angle = np.pi / 2
-        axangle = AxAngle.from_axes_angles(axis, angle)
-        o1 = Orientation.from_neo_euler(axangle, Oh)
-        o2 = Orientation.from_axes_angles(axis, angle, Oh)
-        assert np.allclose(o1.to_euler(degrees=True), [135, 90, 225])
-        assert np.allclose(o1.data, o2.data)
-        assert o1.symmetry.name == o2.symmetry.name == "m-3m"
-        assert np.allclose(o1.symmetry.data, o2.symmetry.data)
-
-        o3 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
-        assert np.allclose(o2.data, o3.data)
-
-    def test_get_identity(self):
-        """Get the identity orientation via two alternative routes."""
-        o1 = Orientation([0.4884, 0.1728, 0.2661, 0.8129])
-        o2 = Orientation([0.8171, -0.2734, 0.161, -0.4813])
-
-        # Route 1 from a Misorientation instance
-        m12_1 = o2 - o1
-        o3_1 = (m12_1 * o1) * ~o2
-
-        # Route 2 from a third Orientation instance
-        m12_2 = o2 * ~o1
-        o3_2 = (m12_2 * o1) * ~o2
-
-        assert np.allclose(m12_1.data, m12_2.data)
-        assert np.allclose(o3_1.data, o3_2.data)
-        assert np.allclose(o3_1.data, [1, 0, 0, 0])
-
-    def test_from_scipy_rotation(self):
-        """Assert correct type and symmetry is returned and that the
-        misorientation rotates crystal directions correctly.
-        """
-        r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
-
-        ori1 = Orientation.from_scipy_rotation(r_scipy)
-        assert isinstance(ori1, Orientation)
-        assert ori1.symmetry.name == "1"
-
-        ori2 = Orientation.from_scipy_rotation(r_scipy, Oh)
-        assert np.allclose(ori2.symmetry.data, Oh.data)
-
-        uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
-        uvw2 = ori2 * uvw
-        assert np.allclose(uvw2.data, [1, -1, 0])
-
-        # Raises an appropriate error message
-        with pytest.raises(TypeError, match="Value must be an instance of"):
-            _ = Orientation.from_scipy_rotation(r_scipy, (Oh, Oh))
-
-    # TODO: Remove in 1.0
-    def test_from_euler_warns(self):
-        """Orientation.from_euler() warns only once when "convention"
-        argument is passed.
-        """
-        euler = np.random.rand(10, 3)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error")
-            _ = Orientation.from_euler(euler)
-
-        msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
-            r"To avoid this warning, please do not use `convention`. "
-            r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
-            "more details."
-        )
-        with pytest.warns(np.VisibleDeprecationWarning, match=msg) as record2:
-            _ = Orientation.from_euler(euler, convention="whatever")
-        assert len(record2) == 1
-
-    # TODO: Remove in 1.0
-    def test_from_euler_convention_mtex(self):
-        """Passing convention="mtex" to Orientation.from_euler() works
-        but warns once.
-        """
-        euler = np.random.rand(10, 3)
-        ori1 = Orientation.from_euler(euler, direction="crystal2lab")
-        with pytest.warns(np.VisibleDeprecationWarning, match=r"Argument `convention`"):
-            ori2 = Orientation.from_euler(euler, convention="mtex")
-        assert np.allclose(ori1.data, ori2.data)
-
-    # TODO: Remove in 1.0
-    def test_to_euler_convention_warns(self):
-        """Orientation.to_euler() warns only once when "convention"
-        argument is passed.
-        """
-        ori1 = Orientation.from_euler(np.random.rand(10, 3))
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error")
-            ori2 = ori1.to_euler()
-
-        msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
-            r"To avoid this warning, please do not use `convention`. "
-            r"See the documentation of `to_euler\(\)` for more details."
-        )
-        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
-            ori3 = ori1.to_euler(convention="whatever")
-        assert np.allclose(ori2, ori3)
-
-
 class TestOrientation:
+    @pytest.mark.parametrize(
+        "orientation, symmetry, expected",
+        [
+            ([(1, 0, 0, 0)], C1, [(1, 0, 0, 0)]),
+            ([(1, 0, 0, 0)], C4, [(1, 0, 0, 0)]),
+            ([(1, 0, 0, 0)], D3, [(1, 0, 0, 0)]),
+            ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
+            ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
+            # 7pi/12 -C2-> # 7pi/12
+            ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
+            # 7pi/12 -C3-> # 7pi/12
+            ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
+            # 7pi/12 -C4-> # pi/12
+            ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
+            # 7pi/12 -O-> # pi/12
+            ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
+        ],
+        indirect=["orientation"],
+    )
+    def test_set_symmetry(self, orientation, symmetry, expected):
+        o = Orientation(orientation.data, symmetry=symmetry)
+        o = o.map_into_symmetry_reduced_zone()
+        assert np.allclose(o.data, expected, atol=1e-3)
+
+    @pytest.mark.parametrize(
+        "symmetry, vector",
+        [(C1, (1, 2, 3)), (C2, (1, -1, 3)), (C3, (1, 1, 1)), (O, (0, 1, 0))],
+        indirect=["vector"],
+    )
+    def test_persistence(self, symmetry, vector):
+        v = symmetry.outer(vector).flatten()
+        o = Orientation.random()
+        oc = Orientation(o.data, symmetry=symmetry)
+        oc = oc.map_into_symmetry_reduced_zone()
+        v1 = o * v
+        v1 = Vector3d(v1.data.round(4))
+        v2 = oc * v
+        v2 = Vector3d(v2.data.round(4))
+        assert v1._tuples == v2._tuples
+
+    @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+    def test_getitem(self, orientation, symmetry):
+        orientation.symmetry = symmetry
+        assert orientation[0].symmetry._tuples == symmetry._tuples
+
+    @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+    def test_reshape_maintains_symmetry(self, symmetry):
+        o = Orientation.random((4, 5))
+        o.symmetry = symmetry
+        o1 = o.reshape(5, 4)
+        assert o1.symmetry._tuples == symmetry._tuples
+
+    @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+    def test_transpose_maintains_symmetry(self, symmetry):
+        o = Orientation.random((4, 5))
+        o.symmetry = symmetry
+        o1 = o.transpose()
+        assert o1.symmetry._tuples == symmetry._tuples
+
+    @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+    def test_flatten_maintains_symmetry(self, symmetry):
+        o = Orientation.random((4, 5))
+        o.symmetry = symmetry
+        o1 = o.flatten()
+        assert o1.symmetry._tuples == symmetry._tuples
+
+    @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
+    def test_squeeze_maintains_symmetry(self, symmetry):
+        o = Orientation.random((4, 5))
+        o.symmetry = symmetry
+        o1 = o.squeeze()
+        assert o1.symmetry._tuples == symmetry._tuples
+
+    def test_string_representation(self):
+        shape = (2, 3)
+        o = Orientation.identity(shape)
+        o.symmetry = O
+        o = o.map_into_symmetry_reduced_zone()
+        assert repr(o).split("\n")[0] == f"Orientation {shape} {O.name}"
+
+    def test_subtract(self):
+        o = Orientation([1, 1, 1, 1], symmetry=C4)  # any will do
+        o = o.map_into_symmetry_reduced_zone()
+        m = o - o
+        assert np.allclose(m.data, [1, 0, 0, 0])
+
+    def test_subtraction_error(self):
+        o = Orientation([1, 1, 1, 1])  # any will do
+        with pytest.raises(TypeError):
+            _ = o - 3
+
+    def test_transpose_2d(self):
+        o1 = Orientation.random_vonmises((11, 3))
+        o2 = o1.transpose()
+        assert o1.shape == o2.shape[::-1]
+
+    def test_map_into_reduced_symmetry_zone_verbose(self):
+        o = Orientation.random()
+        o.symmetry = Oh
+        o1 = o.map_into_symmetry_reduced_zone()
+        o2 = o.map_into_symmetry_reduced_zone(verbose=True)
+        assert np.allclose(o1.data, o2.data)
+
+    @pytest.mark.parametrize(
+        "shape, expected_shape, axes",
+        [((11, 3, 5), (11, 5, 3), (0, 2, 1)), ((11, 3, 5), (3, 5, 11), (1, 2, 0))],
+    )
+    def test_transpose_3d(self, shape, expected_shape, axes):
+        o1 = Orientation.random_vonmises(shape)
+        o2 = o1.transpose(*axes)
+        assert o2.shape == tuple(expected_shape)
+
+    def test_transpose_symmetry(self):
+        o1 = Orientation.random_vonmises((11, 3))
+        o1.symmetry = Oh
+        o1 = o1.map_into_symmetry_reduced_zone()
+        o2 = o1.transpose()
+        assert o1.symmetry == o2.symmetry
+
+    def test_symmetry_property(self):
+        o = Orientation.random((3, 2))
+        sym = Oh
+        o.symmetry = sym
+        assert o.symmetry == sym
+        assert o._symmetry == (C1, sym)
+
+    def test_symmetry_property_data(self):
+        """Test that data remains unchanged after setting symmetry property."""
+        o = Orientation.random((3, 2))
+        d1 = o.data.copy()
+        o.symmetry = Oh
+        assert np.allclose(o.data, d1)
+
+    def test_symmetry_property_wrong_type_orientation(self):
+        o = Orientation.random((3, 2))
+        with pytest.raises(TypeError, match="Value must be an instance of"):
+            o.symmetry = 1
+
+    def test_equality(self):
+        # symmetries must also be the same to be equal
+        o1 = Orientation.random((6, 5))
+        o2 = Orientation(o1)
+        assert o1 == o2
+        o1.symmetry = C4
+        o2.symmetry = o1.symmetry
+        assert o1 == o2
+        o2.symmetry = C3
+        assert o1 != o2
+        o3 = Orientation.random((6,))
+        assert o1 != o3
+        o3.symmetry = o1.symmetry
+        assert o1 != o3
+
     @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
     def test_get_distance_matrix(self, symmetry):
         q = [(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)]
@@ -821,3 +417,185 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+
+
+class TestOrientationInitialization:
+    def test_from_euler_symmetry(self):
+        euler = np.deg2rad([90, 45, 90])
+        o1 = Orientation.from_euler(euler)
+        assert np.allclose(o1.data, [0, -0.3827, 0, -0.9239], atol=1e-4)
+        assert o1.symmetry.name == "1"
+        o2 = Orientation.from_euler(euler, symmetry=Oh)
+        o2 = o2.map_into_symmetry_reduced_zone()
+        assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
+        assert o2.symmetry.name == "m-3m"
+        o3 = Orientation(o1.data, symmetry=Oh)
+        o3 = o3.map_into_symmetry_reduced_zone()
+        assert np.allclose(o3.data, o2.data)
+
+        o4 = Orientation.from_euler(np.rad2deg(euler), degrees=True)
+        assert np.allclose(o4.data, o1.data)
+
+    def test_from_matrix_symmetry(self):
+        om = np.array(
+            [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
+        )
+        o1 = Orientation.from_matrix(om)
+        assert np.allclose(
+            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape((4, 4))
+        )
+        assert o1.symmetry.name == "1"
+        o2 = Orientation.from_matrix(om, symmetry=Oh)
+        o2 = o2.map_into_symmetry_reduced_zone()
+        assert np.allclose(
+            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape((4, 4))
+        )
+        assert o2.symmetry.name == "m-3m"
+        o3 = Orientation(o1.data, symmetry=Oh)
+        o3 = o3.map_into_symmetry_reduced_zone()
+        assert np.allclose(o3.data, o2.data)
+
+    def test_from_align_vectors(self):
+        phase = Phase(
+            point_group="4",
+            structure=Structure(lattice=Lattice(0.5, 0.5, 1, 90, 90, 90)),
+        )
+        a = Miller(uvw=[[2, -1, 0], [0, 0, 1]], phase=phase)
+        b = Vector3d([[3, 1, 0], [-1, 3, 0]])
+        ori = Orientation.from_align_vectors(a, b)
+        assert type(ori) == Orientation
+        assert ori.symmetry == phase.point_group
+        assert np.allclose(a.unit.data, (ori * b.unit).data)
+        a = Miller([[2, -1, 0], [0, 0, 1]])
+        _, e = Orientation.from_align_vectors(a, b, return_rmsd=True)
+        assert e == 0
+        _, m = Orientation.from_align_vectors(a, b, return_sensitivity=True)
+        assert np.allclose(m, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
+        out = Orientation.from_align_vectors(
+            a, b, return_rmsd=True, return_sensitivity=True
+        )
+        assert len(out) == 3
+        a = Vector3d([[2, -1, 0], [0, 0, 1]])
+        with pytest.raises(
+            ValueError,
+            match="Argument other must be of type Miller, but has type "
+            "<class 'orix.vector.vector3d.Vector3d'>",
+        ):
+            _ = Orientation.from_align_vectors(a, b)
+
+    def test_from_neo_euler_symmetry(self):
+        v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
+        o1 = Orientation.from_neo_euler(v)
+        assert np.allclose(o1.data, [0.7071, 0, 0, 0.7071])
+        assert o1.symmetry.name == "1"
+        o2 = Orientation.from_neo_euler(v, symmetry=Oh)
+        o2 = o2.map_into_symmetry_reduced_zone()
+        assert np.allclose(o2.data, [-1, 0, 0, 0])
+        assert o2.symmetry.name == "m-3m"
+        o3 = Orientation(o1.data, symmetry=Oh)
+        o3 = o3.map_into_symmetry_reduced_zone()
+        assert np.allclose(o3.data, o2.data)
+
+    def test_from_axes_angles(self, rotations):
+        axis = Vector3d.xvector() - Vector3d.yvector()
+        angle = np.pi / 2
+        axangle = AxAngle.from_axes_angles(axis, angle)
+        o1 = Orientation.from_neo_euler(axangle, Oh)
+        o2 = Orientation.from_axes_angles(axis, angle, Oh)
+        assert np.allclose(o1.to_euler(degrees=True), [135, 90, 225])
+        assert np.allclose(o1.data, o2.data)
+        assert o1.symmetry.name == o2.symmetry.name == "m-3m"
+        assert np.allclose(o1.symmetry.data, o2.symmetry.data)
+
+        o3 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
+        assert np.allclose(o2.data, o3.data)
+
+    def test_get_identity(self):
+        """Get the identity orientation via two alternative routes."""
+        o1 = Orientation([0.4884, 0.1728, 0.2661, 0.8129])
+        o2 = Orientation([0.8171, -0.2734, 0.161, -0.4813])
+
+        # Route 1 from a Misorientation instance
+        m12_1 = o2 - o1
+        o3_1 = (m12_1 * o1) * ~o2
+
+        # Route 2 from a third Orientation instance
+        m12_2 = o2 * ~o1
+        o3_2 = (m12_2 * o1) * ~o2
+
+        assert np.allclose(m12_1.data, m12_2.data)
+        assert np.allclose(o3_1.data, o3_2.data)
+        assert np.allclose(o3_1.data, [1, 0, 0, 0])
+
+    def test_from_scipy_rotation(self):
+        """Assert correct type and symmetry is returned and that the
+        misorientation rotates crystal directions correctly.
+        """
+        r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+
+        ori1 = Orientation.from_scipy_rotation(r_scipy)
+        assert isinstance(ori1, Orientation)
+        assert ori1.symmetry.name == "1"
+
+        ori2 = Orientation.from_scipy_rotation(r_scipy, Oh)
+        assert np.allclose(ori2.symmetry.data, Oh.data)
+
+        uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
+        uvw2 = ori2 * uvw
+        assert np.allclose(uvw2.data, [1, -1, 0])
+
+        # Raises an appropriate error message
+        with pytest.raises(TypeError, match="Value must be an instance of"):
+            _ = Orientation.from_scipy_rotation(r_scipy, (Oh, Oh))
+
+    # TODO: Remove in 1.0
+    def test_from_euler_warns(self):
+        """Orientation.from_euler() warns only once when "convention"
+        argument is passed.
+        """
+        euler = np.random.rand(10, 3)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
+            _ = Orientation.from_euler(euler)
+
+        msg = (
+            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"To avoid this warning, please do not use `convention`. "
+            r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
+            "more details."
+        )
+        with pytest.warns(np.VisibleDeprecationWarning, match=msg) as record2:
+            _ = Orientation.from_euler(euler, convention="whatever")
+        assert len(record2) == 1
+
+    # TODO: Remove in 1.0
+    def test_from_euler_convention_mtex(self):
+        """Passing convention="mtex" to Orientation.from_euler() works
+        but warns once.
+        """
+        euler = np.random.rand(10, 3)
+        ori1 = Orientation.from_euler(euler, direction="crystal2lab")
+        with pytest.warns(np.VisibleDeprecationWarning, match=r"Argument `convention`"):
+            ori2 = Orientation.from_euler(euler, convention="mtex")
+        assert np.allclose(ori1.data, ori2.data)
+
+    # TODO: Remove in 1.0
+    def test_to_euler_convention_warns(self):
+        """Orientation.to_euler() warns only once when "convention"
+        argument is passed.
+        """
+        ori1 = Orientation.from_euler(np.random.rand(10, 3))
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
+            ori2 = ori1.to_euler()
+
+        msg = (
+            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"To avoid this warning, please do not use `convention`. "
+            r"See the documentation of `to_euler\(\)` for more details."
+        )
+        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
+            ori3 = ori1.to_euler(convention="whatever")
+        assert np.allclose(ori2, ori3)
