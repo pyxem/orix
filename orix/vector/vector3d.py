@@ -539,11 +539,10 @@ class Vector3d(Object3d):
         """
         # Import here to avoid circular import
         from orix.quaternion import Rotation
-        from orix.vector.neo_euler import AxAngle
 
         axis = Vector3d.zvector() if axis is None else axis
         angle = 0 if angle is None else angle
-        q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
+        q = Rotation.from_axes_angles(axis, angle)
         return q * self
 
     def get_nearest(
