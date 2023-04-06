@@ -85,7 +85,7 @@ class TestMisorientation:
         """
         m = Misorientation([1, 1, 1, 1])  # any will do
         m_new = Misorientation(m.data, symmetry=(Gl, C4))
-        m_new = m_new.map_into_symmetry_reduced_zone()
+        m_new = m_new.reduce()
         _ = m_new.equivalent(grain_exchange=True)
 
     def test_string_representation(self):

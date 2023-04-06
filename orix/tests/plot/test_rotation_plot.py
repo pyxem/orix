@@ -75,13 +75,13 @@ def test_RotationPlot_transform_fundamental_zone_raises():
         _ = rp.transform(Orientation.random(), fundamental_zone=1)
 
 
-def test_RotationPlot_map_into_symmetry_reduced_zone():
+def test_RotationPlot_reduce():
     # orientations are (in, out) of D6 fundamental zone
     ori = Orientation(((1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)))
     ori.symmetry = D6
     fz = OrientationRegion.from_symmetry(ori.symmetry)
     assert np.allclose(ori < fz, (True, False))
-    # test map_into_symmetry_reduced_zone in RotationPlot.transform
+    # test reduce() in RotationPlot.transform
     fig = ori.scatter(return_figure=True)
     xyz_symmetry = fig.axes[0].collections[1]._offsets3d
     # compute same plot again but with C1 symmetry where both orientations are in C1 FZ
