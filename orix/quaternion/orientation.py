@@ -661,7 +661,7 @@ class Orientation(Misorientation):
             return misorientation.reduce()
         return NotImplemented
 
-    # TODO: Remove use of **kwargs in 1.0
+    # TODO: Remove use of **kwargs in 0.13
     @classmethod
     def from_euler(
         cls,

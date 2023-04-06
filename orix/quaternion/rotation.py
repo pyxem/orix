@@ -224,7 +224,7 @@ class Rotation(Quaternion):
         """
         return super().from_axes_angles(axes, angles, degrees)
 
-    # TODO: Remove **kwargs in 1.0.
+    # TODO: Remove **kwargs in 0.13
     # Deprication decorator is implemented in Quaternion
     @classmethod
     def from_euler(
@@ -719,7 +719,7 @@ class Rotation(Quaternion):
         """
         return super().to_matrix()
 
-    # TODO: Remove **kwargs in 1.0
+    # TODO: Remove **kwargs in 0.13
     def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
         r"""Return the rotations as Euler angles in the Bunge convention
         :cite:`rowenhorst2015consistent`.

@@ -555,7 +555,7 @@ class TestOrientationInitialization:
         with pytest.raises(TypeError, match="Value must be an instance of"):
             _ = Orientation.from_scipy_rotation(r_scipy, (Oh, Oh))
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_from_euler_warns(self):
         """Orientation.from_euler() warns only once when "convention"
         argument is passed.
@@ -567,7 +567,7 @@ class TestOrientationInitialization:
             _ = Orientation.from_euler(euler)
 
         msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"Argument `convention` is deprecated and will be removed in version 0.13. "
             r"To avoid this warning, please do not use `convention`. "
             r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
             "more details."
@@ -576,7 +576,7 @@ class TestOrientationInitialization:
             _ = Orientation.from_euler(euler, convention="whatever")
         assert len(record2) == 1
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_from_euler_convention_mtex(self):
         """Passing convention="mtex" to Orientation.from_euler() works
         but warns once.
@@ -587,7 +587,7 @@ class TestOrientationInitialization:
             ori2 = Orientation.from_euler(euler, convention="mtex")
         assert np.allclose(ori1.data, ori2.data)
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_to_euler_convention_warns(self):
         """Orientation.to_euler() warns only once when "convention"
         argument is passed.
@@ -599,7 +599,7 @@ class TestOrientationInitialization:
             ori2 = ori1.to_euler()
 
         msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"Argument `convention` is deprecated and will be removed in version 0.13. "
             r"To avoid this warning, please do not use `convention`. "
             r"See the documentation of `to_euler\(\)` for more details."
         )

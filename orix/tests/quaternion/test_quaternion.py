@@ -355,7 +355,7 @@ class TestToFromEuler:
             q = Quaternion.from_euler([90, 0, 0])
             assert np.allclose(q.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_from_euler_warns(self, eu):
         """Quaternion.from_euler() warns only when "convention" argument
         is passed.
@@ -366,7 +366,7 @@ class TestToFromEuler:
             _ = Quaternion.from_euler(eu)
 
         msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"Argument `convention` is deprecated and will be removed in version 0.13. "
             r"To avoid this warning, please do not use `convention`. "
             r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
             "more details."
@@ -374,7 +374,7 @@ class TestToFromEuler:
         with pytest.warns(np.VisibleDeprecationWarning, match=msg):
             _ = Quaternion.from_euler(eu, convention="whatever")
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_from_euler_convention_mtex(self, eu):
         """Passing convention="mtex" to Quaternion.from_euler() works but
         warns.
@@ -384,7 +384,7 @@ class TestToFromEuler:
             q2 = Quaternion.from_euler(eu, convention="mtex")
         assert np.allclose(q1.data, q2.data)
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_to_euler_convention_warns(self, eu):
         """Quaternion.to_euler() warns only when "convention" argument is
         passed.
@@ -397,7 +397,7 @@ class TestToFromEuler:
             q2 = q1.to_euler()
 
         msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"Argument `convention` is deprecated and will be removed in version 0.13. "
             r"To avoid this warning, please do not use `convention`. "
             r"See the documentation of `to_euler\(\)` for more details."
         )
