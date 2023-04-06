@@ -746,6 +746,7 @@ class StereographicPlot(maxes.Axes):
             label=label,
             edgecolors=kwargs["ec"],
             facecolors=kwargs["fc"],
+            alpha=kwargs["alpha"],
         )
         has_collection, index = self._has_collection(label, self.collections)
         if has_collection:
