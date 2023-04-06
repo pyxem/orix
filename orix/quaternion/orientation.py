@@ -177,13 +177,13 @@ class Misorientation(Rotation):
         # Find the (mis)orientations which lie inside the Rodrigues
         # (orientation) or MacKenzie (misorientation) fundamental zone
         # (FZ), given by the symmetry elements. We loop over all
-        # symmetry pairs and rotate all (mis)orientations all are inside
-        # the FZ.
+        # symmetry pairs and rotate all (mis)orientations until all are
+        # inside the FZ.
         fz = OrientationRegion.from_symmetry(start, end)
         reduced = self.__class__.identity(self.shape)
         is_outside = np.ones(self.shape, dtype=bool)
-        for sym_from, sym_to in symmetry_pairs:
-            rotated = sym_to * self[is_outside] * sym_from
+        for sym_start, sym_end in symmetry_pairs:
+            rotated = sym_end * self[is_outside] * sym_start
             reduced[is_outside] = rotated
             is_outside = ~(reduced < fz)
             if not is_outside.any():
