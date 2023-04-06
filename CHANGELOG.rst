@@ -15,9 +15,14 @@ Added
 
 Changed
 -------
+- The ``reduce()`` method (replacing ``map_into_symmetry_reduced_zone()``) for
+  the ``Misorientation`` and ``Orientation`` classes now apply symmetry operators in the
+  opposite order of what was done previously.
 
 Deprecated
 ----------
+- ``map_into_symmetry_reduced_zone()`` is deprecated since 0.12 and will be removed in
+  0.13. Use ``reduce()`` instead.
 
 Removed
 -------

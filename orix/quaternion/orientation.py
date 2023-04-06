@@ -31,6 +31,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 from tqdm import tqdm
 
+from orix._util import deprecated
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
@@ -142,6 +143,7 @@ class Misorientation(Rotation):
         equivalent = Gr.outer(orientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
+    @deprecated(since="0.12", removal="0.13", alternative="reduce")
     def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> Misorientation:
         """Return equivalent transformations which have the smallest
         angle of rotation as a new misorientation.
@@ -179,6 +181,60 @@ class Misorientation(Rotation):
         # (FZ), given by the symmetry elements. We loop over all
         # symmetry pairs and rotate all (mis)orientations until all are
         # inside the FZ.
+        fz = OrientationRegion.from_symmetry(start, end)
+        reduced = self.__class__.identity(self.shape)
+        is_outside = np.ones(self.shape, dtype=bool)
+        for sym_start, sym_end in symmetry_pairs:
+            rotated = sym_end * self[is_outside] * sym_start
+            reduced[is_outside] = rotated
+            is_outside = ~(reduced < fz)
+            if not is_outside.any():
+                break
+        reduced._symmetry = (start, end)
+
+        return reduced
+
+    def reduce(self) -> Misorientation:
+        """Return the reduced misorientations with the smallest
+        rotation angles.
+
+        Returns
+        -------
+        reduced
+            Reduced misorientations.
+
+        Notes
+        -----
+        The misorientation with the smallest rotation angle is the one
+        inside the misorientation fundamental zone (FZ, asymmetric
+        domain) given by the proper point groups of :attr:`symmetry`.
+        The definition of the FZ follows the procedure in section 5.3.1
+        in :cite:`martineau2020multivariate`.
+
+        An alternative description of finding the Rodrigues FZ is given
+        in :cite:`morawiec1996rodrigues`, which is the basis for
+        reduction of (mis)orientations in EMsoft.
+
+        Examples
+        --------
+        >>> from orix.quaternion.symmetry import C4, C2
+        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
+        >>> m = Misorientation(data)
+        >>> m.symmetry = (C4, C2)
+        >>> m.map_into_symmetry_reduced_zone()
+        Misorientation (2,) 4, 2
+        [[-0.7071 0.     -0.7071  0.    ]
+        [ 0.      1.      0.      0.    ]]
+        """
+        # Combine symmetry elements of start and end of transformation
+        # given by the misorientations
+        start, end = self._symmetry
+        symmetry_pairs = iproduct(start, end)
+
+        # Find the misorientations which lie inside the
+        # misorientation fundamental zone (FZ), given by the symmetry
+        # elements. We loop over all symmetry pairs and rotate
+        # misorientations until all are inside the FZ.
         fz = OrientationRegion.from_symmetry(start, end)
         reduced = self.__class__.identity(self.shape)
         is_outside = np.ones(self.shape, dtype=bool)
@@ -602,7 +658,7 @@ class Orientation(Misorientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             misorientation = Misorientation(self * ~other).squeeze()
             misorientation.symmetry = (self.symmetry, other.symmetry)
-            return misorientation.map_into_symmetry_reduced_zone()
+            return misorientation.reduce()
         return NotImplemented
 
     # TODO: Remove use of **kwargs in 1.0
@@ -1216,6 +1272,29 @@ class Orientation(Misorientation):
         )
 
         return euler_in_region
+
+    def reduce(self) -> Orientation:
+        """Return the reduced orientations with the smallest rotation
+        angles.
+
+        Returns
+        -------
+        reduced
+            Reduced orientations.
+
+        Notes
+        -----
+        The orientation with the smallest rotation angle is the one
+        inside the Rodrigues fundamental zone (FZ, asymmetric domain)
+        given by the proper point group of :attr:`symmetry`. The
+        definition of the FZ follows the procedure in section 5.3.1 in
+        :cite:`martineau2020multivariate`.
+
+        An alternative description of finding the Rodrigues FZ is given
+        in :cite:`morawiec1996rodrigues`, which is the basis for
+        reduction of orientations in EMsoft.
+        """
+        return super().reduce()
 
     def scatter(
         self,
