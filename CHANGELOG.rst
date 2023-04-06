@@ -18,6 +18,8 @@ Changed
 - The ``reduce()`` method (replacing ``map_into_symmetry_reduced_zone()``) for
   the ``Misorientation`` and ``Orientation`` classes now apply symmetry operators in the
   opposite order of what was done previously.
+- The ``convention`` parameter in ``from_euler()`` and ``to_euler()`` will be removed in
+  the next minor release, 0.13, instead of release 1.0 as previously stated.
 
 Deprecated
 ----------
@@ -26,6 +28,8 @@ Deprecated
 
 Removed
 -------
+- ``verbose`` parameter in ``reduce()``
+  (replacing ``map_into_symmetry_reduced_zone()``).
 
 Fixed
 -----
