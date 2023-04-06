@@ -61,7 +61,6 @@ intersphinx_mapping = {
     "nbval": ("https://nbval.readthedocs.io/en/latest", None),
     "numpy": ("https://numpy.org/doc/stable", None),
     "numpydoc": ("https://numpydoc.readthedocs.io/en/latest", None),
-    "pymicro": ("https://pymicro.readthedocs.io/projects/pymicro/en/latest", None),
     "pytest": ("https://docs.pytest.org/en/stable", None),
     "python": ("https://docs.python.org/3", None),
     "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
