@@ -87,16 +87,20 @@ class TestOrientation:
         [(C1, (1, 2, 3)), (C2, (1, -1, 3)), (C3, (1, 1, 1)), (O, (0, 1, 0))],
         indirect=["vector"],
     )
-    def test_persistence(self, symmetry, vector):
+    def test_rotate_vector_after_reduction(self, symmetry, vector):
+        """Ensure that a set of vectors rotated before and after
+        reduction of an orientation to the Rodrigues fundamental zone
+        are equivalent in the orientation's fundamental sector on S2.
+        """
         v = symmetry.outer(vector).flatten()
         o = Orientation.random()
         oc = Orientation(o.data, symmetry=symmetry)
         oc = oc.map_into_symmetry_reduced_zone()
         v1 = o * v
-        v1 = Vector3d(v1.data.round(4))
+        v1r = v1.in_fundamental_sector(oc.symmetry)
         v2 = oc * v
-        v2 = Vector3d(v2.data.round(4))
-        assert v1._tuples == v2._tuples
+        v2r = v2.in_fundamental_sector(oc.symmetry)
+        assert np.allclose(v1r.data, v2r.data, atol=1e-4)
 
     @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
     def test_getitem(self, orientation, symmetry):
@@ -329,7 +333,7 @@ class TestOrientation:
         # Add multiple axes to figure, one at a time
         fig_multiple = plt.figure(figsize=(10, 5))
         assert len(fig_multiple.axes) == 0
-        orientation.scatter(figure=fig_multiple, position=(1, 2, 1))
+        orientation.scatter(figure=fig_multiple, position=121)
 
         # Figure is updated inplace
         assert len(fig_multiple.axes) == 1
@@ -427,7 +431,7 @@ class TestOrientationInitialization:
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_euler(euler, symmetry=Oh)
         o2 = o2.map_into_symmetry_reduced_zone()
-        assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
+        assert np.allclose(o2.data, [0.9239, 0, -0.3827, 0], atol=1e-4)
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
         o3 = o3.map_into_symmetry_reduced_zone()

@@ -164,25 +164,33 @@ class Misorientation(Rotation):
         >>> m.symmetry = (C4, C2)
         >>> m.map_into_symmetry_reduced_zone()
         Misorientation (2,) 4, 2
-        [[-0.7071  0.7071  0.      0.    ]
+        [[-0.7071 0.     -0.7071  0.    ]
         [ 0.      1.      0.      0.    ]]
         """
-        Gl, Gr = self._symmetry
-        symmetry_pairs = iproduct(Gl, Gr)
+        # Combine symmetry elements of start and end of transformation
+        # given by the (mis)orientation
+        start, end = self._symmetry
+        symmetry_pairs = iproduct(start, end)
         if verbose:
-            symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
+            symmetry_pairs = tqdm(symmetry_pairs, total=start.size * end.size)
 
-        orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
-        o_inside = self.__class__.identity(self.shape)
-        outside = np.ones(self.shape, dtype=bool)
-        for gl, gr in symmetry_pairs:
-            o_transformed = gl * self[outside] * gr
-            o_inside[outside] = o_transformed
-            outside = ~(o_inside < orientation_region)
-            if not np.any(outside):
+        # Find the (mis)orientations which lie inside the Rodrigues
+        # (orientation) or MacKenzie (misorientation) fundamental zone
+        # (FZ), given by the symmetry elements. We loop over all
+        # symmetry pairs and rotate all (mis)orientations all are inside
+        # the FZ.
+        fz = OrientationRegion.from_symmetry(start, end)
+        reduced = self.__class__.identity(self.shape)
+        is_outside = np.ones(self.shape, dtype=bool)
+        for sym_from, sym_to in symmetry_pairs:
+            rotated = sym_to * self[is_outside] * sym_from
+            reduced[is_outside] = rotated
+            is_outside = ~(reduced < fz)
+            if not is_outside.any():
                 break
-        o_inside._symmetry = (Gl, Gr)
-        return o_inside
+        reduced._symmetry = (start, end)
+
+        return reduced
 
     def __repr__(self):
         """String representation."""

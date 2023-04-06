@@ -642,6 +642,23 @@ class TestGetCircle:
         assert np.allclose(c.mean().data, [0, 0, 0], atol=1e-2)
         assert np.allclose(v.cross(c[0, 0]).data, [1, 0, 0])
 
+    def test_get_path(self):
+        vx = Vector3d.xvector()
+        vy = Vector3d.yvector()
+
+        v_xy = Vector3d.get_path(Vector3d.stack((vx, vy)))
+        assert v_xy.size == 27
+        assert np.allclose(v_xy.polar, np.pi / 2)
+        assert np.allclose(v_xy[-1].data, vy.data)
+
+        vz = Vector3d.zvector()
+        v_xyz = Vector3d.get_path(Vector3d.stack((vx, vy, vz)), steps=150, close=True)
+        assert v_xyz.size == 115
+        assert np.allclose(v_xyz[-1].data, vx.data)
+
+        with pytest.raises(ValueError, match="No vectors are perpendicular"):
+            _ = Vector3d.get_path(Vector3d.stack((vx, -vx)))
+
 
 class TestPlotting:
     v = Vector3d(

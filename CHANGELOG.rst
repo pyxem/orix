@@ -11,6 +11,7 @@ Unreleased
 
 Added
 -----
+- ``Vector3d.get_path()`` class method to get vectors
 
 Changed
 -------
