@@ -58,50 +58,6 @@ def orientation(request):
 
 
 class TestOrientation:
-    @pytest.mark.parametrize(
-        "orientation, symmetry, expected",
-        [
-            ([(1, 0, 0, 0)], C1, [(1, 0, 0, 0)]),
-            ([(1, 0, 0, 0)], C4, [(1, 0, 0, 0)]),
-            ([(1, 0, 0, 0)], D3, [(1, 0, 0, 0)]),
-            ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
-            ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
-            # 7pi/12 -C2-> # 7pi/12
-            ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
-            # 7pi/12 -C3-> # 7pi/12
-            ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
-            # 7pi/12 -C4-> # pi/12
-            ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
-            # 7pi/12 -O-> # pi/12
-            ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
-        ],
-        indirect=["orientation"],
-    )
-    def test_set_symmetry(self, orientation, symmetry, expected):
-        o = Orientation(orientation.data, symmetry=symmetry)
-        o = o.reduce()
-        assert np.allclose(o.data, expected, atol=1e-3)
-
-    @pytest.mark.parametrize(
-        "symmetry, vector",
-        [(C1, (1, 2, 3)), (C2, (1, -1, 3)), (C3, (1, 1, 1)), (O, (0, 1, 0))],
-        indirect=["vector"],
-    )
-    def test_rotate_vector_after_reduction(self, symmetry, vector):
-        """Ensure that a set of vectors rotated before and after
-        reduction of an orientation to the Rodrigues fundamental zone
-        are equivalent in the orientation's fundamental sector on S2.
-        """
-        v = symmetry.outer(vector).flatten()
-        o = Orientation.random()
-        oc = Orientation(o.data, symmetry=symmetry)
-        oc = oc.reduce()
-        v1 = o * v
-        v1r = v1.in_fundamental_sector(oc.symmetry)
-        v2 = oc * v
-        v2r = v2.in_fundamental_sector(oc.symmetry)
-        assert np.allclose(v1r.data, v2r.data, atol=1e-4)
-
     @pytest.mark.parametrize("symmetry", [C1, C2, C4, D2, D6, T, O])
     def test_getitem(self, orientation, symmetry):
         orientation.symmetry = symmetry
@@ -156,14 +112,6 @@ class TestOrientation:
         o1 = Orientation.random_vonmises((11, 3))
         o2 = o1.transpose()
         assert o1.shape == o2.shape[::-1]
-
-    def test_map_into_reduced_symmetry_zone_verbose(self):
-        o = Orientation.random()
-        o.symmetry = Oh
-        with pytest.warns(np.VisibleDeprecationWarning):
-            o1 = o.map_into_symmetry_reduced_zone()
-            o2 = o.map_into_symmetry_reduced_zone(verbose=True)
-        assert np.allclose(o1.data, o2.data)
 
     @pytest.mark.parametrize(
         "shape, expected_shape, axes",
@@ -605,3 +553,85 @@ class TestOrientationInitialization:
         with pytest.warns(np.VisibleDeprecationWarning, match=msg):
             ori3 = ori1.to_euler(convention="whatever")
         assert np.allclose(ori2, ori3)
+
+
+class TestReduceFundamentalZone:
+    @pytest.mark.parametrize(
+        "orientation, symmetry, expected",
+        [
+            ([(1, 0, 0, 0)], C1, [(1, 0, 0, 0)]),
+            ([(1, 0, 0, 0)], C4, [(1, 0, 0, 0)]),
+            ([(1, 0, 0, 0)], D3, [(1, 0, 0, 0)]),
+            ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
+            ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
+            # 7pi/12 -C2-> # 7pi/12
+            ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
+            # 7pi/12 -C3-> # 7pi/12
+            ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
+            # 7pi/12 -C4-> # pi/12
+            ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
+            # 7pi/12 -O-> # pi/12
+            ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
+        ],
+        indirect=["orientation"],
+    )
+    def test_reduce(self, orientation, symmetry, expected):
+        o = Orientation(orientation.data, symmetry=symmetry)
+        o = o.reduce()
+        assert np.allclose(o.data, expected, atol=1e-3)
+
+    @pytest.mark.parametrize(
+        "symmetry, vector",
+        [(C1, (1, 2, 3)), (C2, (1, -1, 3)), (C3, (1, 1, 1)), (O, (0, 1, 0))],
+        indirect=["vector"],
+    )
+    def test_rotate_vector_after_reduction(self, symmetry, vector):
+        """Ensure that a set of vectors rotated before and after
+        reduction of an orientation to the Rodrigues fundamental zone
+        are equivalent in the orientation's fundamental sector on S2.
+        """
+        v = symmetry.outer(vector).flatten()
+        o = Orientation.random()
+        oc = Orientation(o.data, symmetry=symmetry)
+        oc = oc.reduce()
+        v1 = o * v
+        v1r = v1.in_fundamental_sector(oc.symmetry)
+        v2 = oc * v
+        v2r = v2.in_fundamental_sector(oc.symmetry)
+        assert np.allclose(v1r.data, v2r.data, atol=1e-4)
+
+    # TODO: Remove after v0.12 is released
+    def test_map_into_reduced_symmetry_zone_verbose(self):
+        o = Orientation.random()
+        o.symmetry = Oh
+        with pytest.warns(np.VisibleDeprecationWarning):
+            o1 = o.map_into_symmetry_reduced_zone()
+            o2 = o.map_into_symmetry_reduced_zone(verbose=True)
+        assert np.allclose(o1.data, o2.data)
+
+    @pytest.mark.parametrize("proper_group", _proper_groups)
+    def test_reduce_mean_consistency(self, proper_group):
+        """Ensure that a single orientation reduced to the Rodrigues
+        fundamental zone and its mean are equivalent.
+
+        This test was motivated by
+        https://github.com/pyxem/orix/issues/434#issuecomment-1492180192.
+        """
+        o = Orientation.random((1,))
+        o.symmetry = proper_group
+        o_reduced = o.reduce()
+        o_reduced_mean = o_reduced.mean()
+        assert np.isclose(o_reduced.angle_with(o_reduced_mean), 0)
+
+    @pytest.mark.parametrize("proper_group", _proper_groups)
+    def test_reduce_finds_smaller_angles(self, proper_group):
+        """Ensure that orientations after reduction to the Rodrigues
+        fundamental zone actually have the smaller angles than the
+        original orientations.
+        """
+        o = Orientation.random((30,))
+        o.symmetry = proper_group
+        o_reduced = o.reduce()
+        angles = o.angle.round(6)
+        reduced_angles = o_reduced.angle.round(6)
+        assert np.all(reduced_angles <= angles)
