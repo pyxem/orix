@@ -139,7 +139,6 @@ class TestOrientation:
         shape = (2, 3)
         o = Orientation.identity(shape)
         o.symmetry = O
-        o = o.reduce()
         assert repr(o).split("\n")[0] == f"Orientation {shape} {O.name}"
 
     def test_subtract(self):
@@ -178,7 +177,6 @@ class TestOrientation:
     def test_transpose_symmetry(self):
         o1 = Orientation.random_vonmises((11, 3))
         o1.symmetry = Oh
-        o1 = o1.reduce()
         o2 = o1.transpose()
         assert o1.symmetry == o2.symmetry
 
@@ -435,6 +433,7 @@ class TestOrientationInitialization:
         o2 = Orientation.from_euler(euler, symmetry=Oh)
         o2 = o2.reduce()
         assert np.allclose(o2.data, [0.9239, 0, -0.3827, 0], atol=1e-4)
+        assert o2.angle < o1.angle
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
         o3 = o3.reduce()
