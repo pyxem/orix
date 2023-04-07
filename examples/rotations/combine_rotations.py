@@ -20,6 +20,11 @@ rotations: rotation :math:`A` by :math:`120^{\circ}` around
 :math:`[1 1 1]`, and rotation :math:`B` by :math:`180^{\circ}` around
 :math:`[1 1 0]`; rotation :math:`A` will be carried out first, followed
 by rotation :math:`B`.
+
+Note that a negative angle when *defining* a rotation in the axis-angle
+representation is necessary for consistent transformations between
+rotation representations. The rotation still rotates a vector
+intuitively.
 """
 
 import matplotlib.pyplot as plt
