@@ -16,28 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""An orientation region is some subset of the complete space of orientations.
-
-The complete orientation space represents every possible orientation of an
-object. The whole space is not always needed, for example if the orientation
-of an object is constrained or (most commonly) if the object is symmetrical. In
-this case, the space can be segmented using sets of Rotations representing
-boundaries in the space. This is clearest in the Rodrigues parametrisation,
-where the boundaries are planes, such as the example here: the asymmetric
-domain of an adjusted 432 symmetry.
-
-.. image:: _static/img/orientation-region-Oq.png
-   :width: 300px
-   :alt: Boundaries of an orientation region in Rodrigues space.
-   :align: center
-
-Rotations or orientations can be inside or outside of an orientation region.
-"""
-
 from __future__ import annotations
 
 import itertools
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 
@@ -49,7 +31,7 @@ from orix.vector import Rodrigues
 _EPSILON = 1e-9  # small number to avoid round off problems
 
 
-def _get_large_cell_normals(s1, s2):
+def _get_large_cell_normals(s1: Symmetry, s2: Symmetry) -> Rotation:
     dp = get_distinguished_points(s1, s2)
     normals = Rodrigues.zero(dp.shape + (2,))
     planes1 = dp.axis * np.tan(dp.angle / 4)
@@ -120,6 +102,28 @@ def get_proper_groups(Gl: Symmetry, Gr: Symmetry) -> Tuple[Symmetry, Symmetry]:
 class OrientationRegion(Rotation):
     """A set of :class:`~orix.quaternion.Rotation` which are the normals
     of an orientation region.
+
+    Notes
+    -----
+    An orientation region is some subset of the complete space of
+    orientations.
+
+    The complete orientation space represents every possible orientation
+    of an object. The whole space is not always needed, for example if
+    the orientation of an object is constrained or (most commonly) if
+    the object is symmetrical. In this case, the space can be segmented
+    using sets of Rotations representing boundaries in the space. This
+    is clearest in the Rodrigues parametrisation, where the boundaries
+    are planes, such as the example here: the asymmetric domain of an
+    adjusted 432 symmetry.
+
+    .. image:: /_static/img/orientation-region-Oq.png
+       :width: 300px
+       :alt: Boundaries of an orientation region in Rodrigues space.
+       :align: center
+
+    Rotations or orientations can be inside or outside of an orientation
+    region.
     """
 
     @classmethod
@@ -174,7 +178,7 @@ class OrientationRegion(Rotation):
         surface = np.any(np.isclose(rot.dot_outer(self), 0), axis=1)
         return rot[surface]
 
-    def faces(self) -> list:
+    def faces(self) -> List[Rotation]:
         """Return the faces of the orientation region.
 
         Returns
@@ -191,7 +195,7 @@ class OrientationRegion(Rotation):
         faces = [f for f in faces if f.size > 2]
         return faces
 
-    def __gt__(self, other: OrientationRegion) -> np.ndarray:
+    def __gt__(self, other: Quaternion) -> np.ndarray:
         """Overridden greater than method. Applying this to an
         Orientation will return only those orientations that lie within
         the orientation region.
