@@ -485,12 +485,10 @@ class Vector3d(Object3d):
             order to close the paths when more than two vectors are
             passed. Default is False.
         steps
-            Number of vectors in the great circle including each two
-            vectors before restricting the circle to the path between
-            the vectors. Default is 100. More steps provide a smoother
-            part of a great circle in the stereographic projection when
-            plotting returned vectors with
-            :meth:`orix.plot.StereographicPlot.plot`.
+            Number of vectors in the great circle about the normal
+            vector between each two vectors *before* restricting the
+            circle to the path between the two. Default is 100. More
+            steps give a smoother path on the sphere.
 
         Returns
         -------
@@ -507,9 +505,9 @@ class Vector3d(Object3d):
         satisfy these two conditions
 
         .. math::
-            v_1 \cross v_i \cdot v_1 \cross v_2 \geq 0,
+            (v_1 \times v_i) \cdot (v_1 \times v_2) \geq 0,
 
-            v_2 \cross v_i \cdot v_2 \cross v_1 \geq 0.
+            (v_2 \times v_i) \cdot (v_2 \times v_1) \geq 0.
         """
         vectors = vectors.flatten()
 
