@@ -660,16 +660,16 @@ class TestCrystalMapOrientations:
         ],
     )
     def test_orientations_symmetry(self, point_group, rotation, expected_orientation):
-        r = Rotation(rotation)
-        xmap = CrystalMap(rotations=r, phase_id=np.array([0]))
+        g = Rotation(rotation)
+        xmap = CrystalMap(rotations=g, phase_id=np.array([0]))
         xmap.phases = PhaseList(Phase("a", point_group=point_group))
 
         o = xmap.orientations
-        o = o.map_into_symmetry_reduced_zone()
+        o = o.reduce()
 
-        o1 = Orientation(r)
+        o1 = Orientation(g)
         o1.symmetry = point_group
-        o1 = o1.map_into_symmetry_reduced_zone()
+        o1 = o1.reduce()
 
         assert np.allclose(o.data, o1.data, atol=1e-3)
         assert np.allclose(o.data, expected_orientation, atol=1e-3)

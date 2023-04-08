@@ -16,100 +16,155 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from matplotlib import __version__ as _MPL_VERSION
+from matplotlib import __version__ as mpl_version
 from matplotlib import pyplot as plt
 import numpy as np
 from packaging import version
 import pytest
 
-from orix.plot import AxAnglePlot, RodriguesPlot, RotationPlot
+from orix.plot import AxAnglePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, OrientationRegion
-from orix.quaternion.symmetry import C1, D6
+from orix.quaternion.symmetry import C1, D6, _proper_groups
+from orix.vector import AxAngle, Rodrigues
 
 # TODO: Remove when the oldest supported version of Matplotlib
-# increases from 3.3 to 3.4.
+#  increases from 3.3 to 3.4.
 # See: https://matplotlib.org/stable/api/_as_gen/mpl_toolkits.mplot3d.axes3d.Axes3D.html#mpl_toolkits.mplot3d.axes3d.Axes3D
-_SUBPLOT_KWARGS = dict()
-if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
-    _SUBPLOT_KWARGS["auto_add_to_figure"] = False
+subplot_kw = dict()
+if version.parse(mpl_version) >= version.parse("3.4"):  # pragma: no cover
+    subplot_kw["auto_add_to_figure"] = False
 
 
-def test_init_rodrigues_plot():
-    fig = plt.figure(figsize=(3, 3))
-    ax = fig.add_subplot(projection="rodrigues", **_SUBPLOT_KWARGS)
-    assert isinstance(ax, RodriguesPlot)
+class TestRotationPlot:
+    def test_RotationPlot_methods(self):
+        """This code is lifted from demo-3-v0.1."""
+        misori = Misorientation([1, 1, 1, 1])  # any will do
+        ori = Orientation.random()
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="axangle", proj_type="ortho", **subplot_kw)
+        ax.scatter(misori)
+        ax.scatter(ori)
+        ax.plot(misori)
+        ax.plot(ori)
+        ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
+        plt.close("all")
+
+        # Clear the edge case
+        ax.transform(np.asarray([1, 1, 1]))
+
+        plt.close("all")
+
+    def test_full_region_plot(self):
+        empty = OrientationRegion.from_symmetry(C1, C1)
+        _ = empty.get_plot_data()
+
+    def test_transform_fundamental_zone_raises(self):
+        fig = plt.figure()
+        rp = fig.add_subplot(projection="axangle")
+        with pytest.raises(
+            TypeError, match="fundamental_zone is not an OrientationRegion"
+        ):
+            _ = rp.transform(Orientation.random(), fundamental_zone=1)
+
+        plt.close("all")
+
+    def test_reduce(self):
+        # Orientations are (in, out) of D6 fundamental zone
+        ori = Orientation(((1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)), symmetry=D6)
+        fz = OrientationRegion.from_symmetry(ori.symmetry)
+        assert np.allclose(ori < fz, (True, False))
+
+        # Test reduce() in RotationPlot.transform
+        fig = ori.scatter(return_figure=True)
+        xyz_symmetry = fig.axes[0].collections[1]._offsets3d
+
+        # Compute same plot again but with C1 symmetry where both
+        # orientations are in C1 FZ
+        ori.symmetry = C1
+        fig2 = ori.scatter(return_figure=True)
+        xyz = fig2.axes[0].collections[1]._offsets3d
+        assert not np.allclose(xyz_symmetry, xyz)
+
+        plt.close("all")
+
+    def test_correct_aspect_ratio(self):
+        # Set up figure the "old" way
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="axangle", proj_type="ortho", **subplot_kw)
+
+        # Check aspect ratio
+        x_old, _, z_old = ax.get_box_aspect()
+        assert np.allclose(x_old / z_old, 1.334, atol=1e-3)
+
+        fz = OrientationRegion.from_symmetry(D6)
+        ax._correct_aspect_ratio(fz, set_limits=False)
+
+        x_new, _, z_new = ax.get_box_aspect()
+        assert np.allclose(x_new / z_new, 3, atol=1e-3)
+
+        # Check data limits
+        assert np.allclose(ax.get_xlim(), [0, 1])
+        ax._correct_aspect_ratio(fz)  # set_limits=True is default
+        assert np.allclose(ax.get_xlim(), [-np.pi / 2, np.pi / 2])
+
+        plt.close("all")
 
 
-def test_init_axangle_plot():
-    fig = plt.figure(figsize=(3, 3))
-    ax = fig.add_subplot(projection="axangle", **_SUBPLOT_KWARGS)
-    assert isinstance(ax, AxAnglePlot)
+class TestRodriguesPlot:
+    def test_initialize_plot(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="rodrigues", **subplot_kw)
+        assert isinstance(ax, RodriguesPlot)
+
+        plt.close("all")
+
+    @pytest.mark.parametrize("sym", _proper_groups)
+    def test_vector_coordinates(self, sym):
+        """Coordinate transformation method returns Rodrigues vectors
+        with expected coordinates.
+        """
+        o = Orientation.random((30,))
+        o.symmetry = sym
+        rod = Rodrigues.from_rotation(o.reduce())
+
+        fig = o.scatter("rodrigues", return_figure=True)
+        ax = fig.axes[0]
+        xyz = ax.transform(o)
+        rod2 = np.stack(xyz, axis=1)
+        assert np.allclose(rod.data, rod2.data)
+
+        xyz = ax.collections[1]._offsets3d
+        rod3 = np.stack(xyz, axis=1)
+        assert np.allclose(rod.data, rod3.data)
+
+        plt.close("all")
 
 
-def test_RotationPlot_methods():
-    """This code is lifted from demo-3-v0.1."""
-    misori = Misorientation([1, 1, 1, 1])  # any will do
-    ori = Orientation.random()
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="axangle", proj_type="ortho", **_SUBPLOT_KWARGS)
-    ax.scatter(misori)
-    ax.scatter(ori)
-    ax.plot(misori)
-    ax.plot(ori)
-    ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
-    plt.close("all")
+class TestAxAnglePlot:
+    def test_initialize_plot(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="axangle", **subplot_kw)
+        assert isinstance(ax, AxAnglePlot)
 
-    # Clear the edge case
-    ax.transform(np.asarray([1, 1, 1]))
+        plt.close("all")
 
+    @pytest.mark.parametrize("sym", _proper_groups)
+    def test_vector_coordinates(self, sym):
+        """Coordinate transformation method returns axis-angle vectors
+        with expected coordinates.
+        """
+        o = Orientation.random((30,))
+        o.symmetry = sym
+        rod = AxAngle.from_rotation(o.reduce())
 
-def test_full_region_plot():
-    empty = OrientationRegion.from_symmetry(C1, C1)
-    _ = empty.get_plot_data()
+        fig = o.scatter(return_figure=True)
+        ax = fig.axes[0]
+        xyz = ax.transform(o)
+        rod2 = np.stack(xyz, axis=1)
+        assert np.allclose(rod.data, rod2.data)
 
+        xyz = ax.collections[1]._offsets3d
+        rod3 = np.stack(xyz, axis=1)
+        assert np.allclose(rod.data, rod3.data)
 
-def test_RotationPlot_transform_fundamental_zone_raises():
-    fig = plt.figure()
-    rp = RotationPlot(fig)
-    with pytest.raises(
-        TypeError, match="fundamental_zone is not an OrientationRegion object"
-    ):
-        rp.transform(Orientation.random(), fundamental_zone=1)
-
-
-def test_RotationPlot_map_into_symmetry_reduced_zone():
-    # orientations are (in, out) of D6 fundamental zone
-    ori = Orientation(((1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)))
-    ori.symmetry = D6
-    fz = OrientationRegion.from_symmetry(ori.symmetry)
-    assert np.allclose(ori < fz, (True, False))
-    # test map_into_symmetry_reduced_zone in RotationPlot.transform
-    fig = ori.scatter(return_figure=True)
-    xyz_symmetry = fig.axes[0].collections[1]._offsets3d
-    # compute same plot again but with C1 symmetry where both orientations are in C1 FZ
-    ori.symmetry = C1
-    fig2 = ori.scatter(return_figure=True)
-    xyz = fig2.axes[0].collections[1]._offsets3d
-    # test that the plotted points are not the same
-    assert not np.allclose(xyz_symmetry, xyz)
-
-
-def test_correct_aspect_ratio():
-    # Set up figure the "old" way
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="axangle", proj_type="ortho", **_SUBPLOT_KWARGS)
-
-    # Check aspect ratio
-    x_old, _, z_old = ax.get_box_aspect()
-    assert np.allclose(x_old / z_old, 1.334, atol=1e-3)
-
-    fr = OrientationRegion.from_symmetry(D6)
-    ax._correct_aspect_ratio(fr, set_limits=False)
-
-    x_new, _, z_new = ax.get_box_aspect()
-    assert np.allclose(x_new / z_new, 3, atol=1e-3)
-
-    # Check data limits
-    assert np.allclose(ax.get_xlim(), [0, 1])
-    ax._correct_aspect_ratio(fr)  # set_limits=True is default
-    assert np.allclose(ax.get_xlim(), [-np.pi / 2, np.pi / 2])
+        plt.close("all")

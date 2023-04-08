@@ -134,13 +134,6 @@ class Vector3d(Object3d):
         return self.x, self.y, self.z
 
     @property
-    def _tuples(self) -> Set:
-        """Return the set of comparable vectors."""
-        s = self.flatten()
-        tuples = set([tuple(d) for d in s.data])
-        return tuples
-
-    @property
     def perpendicular(self) -> Vector3d:
         """Return the perpendicular vectors."""
         if np.any(self.x == 0) and np.any(self.y == 0):
@@ -476,6 +469,74 @@ class Vector3d(Object3d):
         """Return a unit vector in the z-direction."""
         return cls((0, 0, 1))
 
+    @classmethod
+    def get_path(
+        cls, vectors: Vector3d, close: bool = False, steps: int = 100
+    ) -> Vector3d:
+        r"""Return vectors along the shortest path on the sphere between
+        two or more consectutive vectors.
+
+        Parameters
+        ----------
+        vectors
+            Two or more vectors to get paths between.
+        close
+            Whether to append the first to the end of ``vectors`` in
+            order to close the paths when more than two vectors are
+            passed. Default is False.
+        steps
+            Number of vectors in the great circle about the normal
+            vector between each two vectors *before* restricting the
+            circle to the path between the two. Default is 100. More
+            steps give a smoother path on the sphere.
+
+        Returns
+        -------
+        paths
+            Vectors along the shortest path(s) between given vectors.
+
+        Notes
+        -----
+        The vectors along the shortest path on the sphere between two
+        vectors :math:`v_1` and :math:`v_2` are found by first getting
+        the vectors :math:`v_i` along the great circle about the vector
+        normal to these two vectors, and then only keeping the part of
+        the circle between the two vectors. Vectors within this part
+        satisfy these two conditions
+
+        .. math::
+            (v_1 \times v_i) \cdot (v_1 \times v_2) \geq 0,
+
+            (v_2 \times v_i) \cdot (v_2 \times v_1) \geq 0.
+        """
+        vectors = vectors.flatten()
+
+        if close:
+            vectors = Vector3d(np.concatenate((vectors.data, vectors[0].data)))
+
+        paths_list = []
+
+        n = vectors.size - 1
+        for i in range(n):
+            v1, v2 = vectors[i : i + 2]
+            v_normal = v1.cross(v2)
+            v_circle = v_normal.get_circle(steps=steps)
+
+            cond1 = v1.cross(v_circle).dot(v1.cross(v2)) >= 0
+            cond2 = v2.cross(v_circle).dot(v2.cross(v1)) >= 0
+
+            v_path = v_circle[cond1 & cond2]
+
+            to_concatenate = (v1.data, v_path.data)
+            if i == n - 1:
+                to_concatenate += (v2.data,)
+            paths_list.append(np.concatenate(to_concatenate, axis=0))
+
+        paths_data = np.concatenate(paths_list, axis=0)
+        paths = Vector3d(paths_data)
+
+        return paths
+
     def angle_with(self, other: Vector3d, degrees: bool = False) -> np.ndarray:
         """Return the angles between these vectors in other vectors.
 
@@ -539,11 +600,10 @@ class Vector3d(Object3d):
         """
         # Import here to avoid circular import
         from orix.quaternion import Rotation
-        from orix.vector.neo_euler import AxAngle
 
         axis = Vector3d.zvector() if axis is None else axis
         angle = 0 if angle is None else angle
-        q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
+        q = Rotation.from_axes_angles(axis, angle)
         return q * self
 
     def get_nearest(

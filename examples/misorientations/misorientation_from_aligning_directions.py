@@ -35,7 +35,7 @@ o2 = Orientation.from_axes_angles(
 
 # Get the reference misorientation (goal). Transformations are composed
 # from the right, so: crystal 1 -> sample -> crystal 2
-m_ref = Misorientation(o2 * (~o1), symmetry=(o1.symmetry, o2.symmetry))
+m_ref = Misorientation(o2 * ~o1, symmetry=(o1.symmetry, o2.symmetry))
 
 # Specify two directions in the first crystal
 v_c1 = Miller(uvw=[[1, 1, 1], [0, 0, 1]], phase=phase1)

@@ -22,6 +22,7 @@ from matplotlib import __version__, projections
 from matplotlib.gridspec import SubplotSpec
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 from packaging import version
 
 from orix.vector import AxAngle, Rodrigues
@@ -37,7 +38,7 @@ class RotationPlot(Axes3D):
         self,
         xs: Union["Misorientation", "OrientationRegion", "Rotation"],
         fundamental_zone: Optional["OrientationRegion"] = None,
-    ):
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Prepare (mis)orientations or rotations for plotting.
 
         Parameters
@@ -52,17 +53,14 @@ class RotationPlot(Axes3D):
         # Project rotations into fundamental zone if necessary
         if isinstance(xs, Misorientation):
             if fundamental_zone is None:
-                symmetry = xs.symmetry
-                # Orientation.symmetry returns a Symmetry object not a tuple, so pack
-                if not isinstance(symmetry, tuple):
-                    symmetry = (symmetry,)
+                symmetry = xs._symmetry
                 fundamental_zone = OrientationRegion.from_symmetry(*symmetry)
             # check fundamental_zone is properly defined
             if not isinstance(fundamental_zone, OrientationRegion):
-                raise TypeError("fundamental_zone is not an OrientationRegion object.")
+                raise TypeError("fundamental_zone is not an OrientationRegion")
             # if any in xs are out of fundamental_zone, calculate symmetry reduction
             if not (xs < fundamental_zone).all():
-                xs = xs.map_into_symmetry_reduced_zone()
+                xs = xs.reduce()
 
         if isinstance(xs, Rotation):
             if isinstance(xs, OrientationRegion):
@@ -71,6 +69,7 @@ class RotationPlot(Axes3D):
         else:
             transformed = self.transformation_class(xs)
         x, y, z = transformed.xyz
+
         return x, y, z
 
     def scatter(
@@ -119,23 +118,23 @@ class RotationPlot(Axes3D):
         x, y, z = self.transform(fundamental_region)
         return x.max(), y.max(), z.max()
 
-    def _correct_aspect_ratio(self, fundamental_region, set_limits=True):
+    def _correct_aspect_ratio(
+        self, fundamental_region: "OrientationRegion", set_limits: bool = True
+    ):
         """Correct the aspect ratio of the axis according to the
         extent of the boundaries of the fundamental region.
 
         Parameters
         ----------
-        fundamental_region : OrientationRegion
-        set_limits : bool, optional
+        fundamental_region
+        set_limits
             Whether to also restrict the data limits to the boundary
             extents. Default is True.
         """
         xlim, ylim, zlim = self._get_region_extent(fundamental_region)
         self.set_box_aspect((xlim, ylim, zlim))
         if set_limits:
-            self.set_xlim(-xlim, xlim)
-            self.set_ylim(-ylim, ylim)
-            self.set_zlim(-zlim, zlim)
+            self.set(xlim=(-xlim, xlim), ylim=(-ylim, ylim), zlim=(-zlim, zlim))
 
 
 class RodriguesPlot(RotationPlot):

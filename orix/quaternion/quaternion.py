@@ -49,13 +49,13 @@ class Quaternion(Object3d):
     with :math:`q_3 = (a_3, b_3, c_3, d_3) = q_1 \cdot q_2` follows as:
 
     .. math::
-       a_3 = (a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2)
+       a_3 = a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2
 
-       b_3 = (a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2)
+       b_3 = a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2
 
-       c_3 = (a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2)
+       c_3 = a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2
 
-       d_3 = (a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2)
+       d_3 = a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2
 
     Quaternion-vector multiplication with a three-dimensional vector
     :math:`v = (x, y, z)` calculates a rotated vector
@@ -297,9 +297,9 @@ class Quaternion(Object3d):
         q = cls.from_neo_euler(axangle).unit
         return q
 
-    # TODO: Remove decorator, **kwargs, and use of "convention" in 1.0
+    # TODO: Remove decorator, **kwargs, and use of "convention" in 0.13
     @classmethod
-    @deprecated_argument("convention", "0.9", "1.0", "direction")
+    @deprecated_argument("convention", "0.9", "0.13", "direction")
     def from_euler(
         cls,
         euler: Union[np.ndarray, tuple, list],
@@ -772,8 +772,8 @@ class Quaternion(Object3d):
                 "with `other` of type `Quaternion` or `Vector3d`"
             )
 
-    # TODO: Remove decorator and **kwargs in 1.0
-    @deprecated_argument("convention", since="0.9", removal="1.0")
+    # TODO: Remove decorator and **kwargs in 0.13
+    @deprecated_argument("convention", since="0.9", removal="0.13")
     def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
         r"""Return the normalized quaternions as Euler angles in the
         Bunge convention :cite:`rowenhorst2015consistent`.
