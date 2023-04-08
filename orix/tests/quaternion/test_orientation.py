@@ -586,9 +586,9 @@ class TestReduceFundamentalZone:
         indirect=["vector"],
     )
     def test_rotate_vector_after_reduction(self, symmetry, vector):
-        """Ensure that a set of vectors rotated before and after
-        reduction of an orientation to the Rodrigues fundamental zone
-        are equivalent in the orientation's fundamental sector on S2.
+        """A set of vectors rotated before and after reduction of an
+        orientation to the Rodrigues fundamental zone are equivalent in
+        the orientation's fundamental sector on S2.
         """
         v = symmetry.outer(vector).flatten()
         o = Orientation.random()
@@ -611,8 +611,8 @@ class TestReduceFundamentalZone:
 
     @pytest.mark.parametrize("proper_group", _proper_groups)
     def test_reduce_mean_consistency(self, proper_group):
-        """Ensure that a single orientation reduced to the Rodrigues
-        fundamental zone and its mean are equivalent.
+        """A single orientation reduced to the Rodrigues fundamental
+        zone and its mean are equivalent.
 
         This test was motivated by
         https://github.com/pyxem/orix/issues/434#issuecomment-1492180192.
@@ -625,9 +625,8 @@ class TestReduceFundamentalZone:
 
     @pytest.mark.parametrize("proper_group", _proper_groups)
     def test_reduce_finds_smaller_angles(self, proper_group):
-        """Ensure that orientations after reduction to the Rodrigues
-        fundamental zone actually have the smaller angles than the
-        original orientations.
+        """Orientations after reduction to the Rodrigues fundamental
+        zone have the smaller angles than the original orientations.
         """
         o = Orientation.random((30,))
         o.symmetry = proper_group

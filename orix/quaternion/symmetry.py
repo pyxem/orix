@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.vector import AxAngle, Vector3d
+from orix.vector import Vector3d
 
 
 class Symmetry(Rotation):

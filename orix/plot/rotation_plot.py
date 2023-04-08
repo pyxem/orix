@@ -22,6 +22,7 @@ from matplotlib import __version__, projections
 from matplotlib.gridspec import SubplotSpec
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 from packaging import version
 
 from orix.vector import AxAngle, Rodrigues
@@ -37,7 +38,7 @@ class RotationPlot(Axes3D):
         self,
         xs: Union["Misorientation", "OrientationRegion", "Rotation"],
         fundamental_zone: Optional["OrientationRegion"] = None,
-    ):
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Prepare (mis)orientations or rotations for plotting.
 
         Parameters
