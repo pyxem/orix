@@ -1120,7 +1120,9 @@ class Vector3d(Object3d):
             Reference frame axes labels, defaults to
             ``[None, None, None]``.
         vector_labels
-            Vector text labels, which by default are not added.
+            Labels for each vector. None are added if not given. Their
+            offsets in stereographic coordinates (X, Y) can be
+            controlled by passing ``offset`` to ``text_kwargs``.
         hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
             ``None``, which means ``"upper"`` if a new figure is
