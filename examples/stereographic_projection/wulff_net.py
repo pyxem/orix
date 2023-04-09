@@ -24,13 +24,19 @@ v010 = Vector3d.zero(shape=(n,))
 v010.y = 1
 v010_opposite = -v010
 
-fig, ax = plt.subplots(figsize=(5, 5), subplot_kw=dict(projection="stereographic"))
+fig, ax = plt.subplots(
+    figsize=(5, 5), subplot_kw=dict(projection="stereographic"), layout="tight"
+)
 ax.stereographic_grid(False)
 ax.draw_circle(v_right, steps=steps, **kwargs)
 ax.draw_circle(v_left, steps=steps, **kwargs)
 ax.draw_circle(v010, opening_angle=polar, steps=steps, **kwargs)
 ax.draw_circle(v010_opposite, opening_angle=polar, steps=steps, **kwargs)
-for label, azimuth in zip(["B", "M''", "A", "M'"], np.array([0, 0.5, 1, 1.5]) * np.pi):
-    ax.text(azimuth, 0.5 * np.pi, s=label, c="C1")
-
-fig.tight_layout()
+for label, azimuth, va, ha, offset in zip(
+    ["B", "M''", "A", "M'"],
+    np.array([0, 0.5, 1, 1.5]) * np.pi,
+    ["center", "bottom", "center", "top"],
+    ["left", "center", "right", "center"],
+    [(0.02, 0), (0, 0.02), (-0.02, 0), (0, -0.02)],
+):
+    ax.text(azimuth, 0.5 * np.pi, s=label, offset=offset, c="r", va=va, ha=ha)

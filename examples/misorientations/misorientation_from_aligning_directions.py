@@ -9,11 +9,14 @@ from two sets of aligned crystal directions, one set in each crystal reference f
 """
 
 from diffpy.structure import Lattice, Structure
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map import Phase
 from orix.quaternion import Misorientation, Orientation
 from orix.vector import Miller
+
+plt.rcParams.update({"figure.figsize": (5, 5), "lines.markersize": 8})
 
 # Specify two crystal structures and symmetries
 phase1 = Phase(
@@ -60,13 +63,12 @@ print("Error distance: ", err)
 # frame as open circles
 fig = v_c1.scatter(
     ec=["r", "b"],
-    s=100,
     fc="none",
     grid=True,
     axes_labels=["e1", "e2"],
     return_figure=True,
+    figure_kwargs={"layout": "tight"},
 )
-fig.tight_layout()
 
 # Plot the two directions in the second crystal with respect to the
 # first crystal's axes

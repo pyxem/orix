@@ -10,11 +10,14 @@ in the crystal reference frame.
 """
 
 from diffpy.structure import Lattice, Structure
+import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map import Phase
 from orix.quaternion import Orientation
 from orix.vector import Miller, Vector3d
+
+plt.rcParams.update({"figure.figsize": (5, 5), "lines.markersize": 8})
 
 # Specify a crystal structure and symmetry
 phase = Phase(
@@ -35,13 +38,12 @@ v_r = Vector3d(~o_ref * v_c)
 # Plot the reference orientation sample directions as empty circles
 fig = v_r.scatter(
     ec=["r", "b"],
-    s=100,
     fc="none",
     grid=True,
     axes_labels=["X", "Y"],
     return_figure=True,
+    figure_kwargs={"layout": "tight", "figsize": (5, 5)},
 )
-fig.tight_layout()
 
 # Add some randomness to the sample directions (0 error magnitude gives
 # exact result)
