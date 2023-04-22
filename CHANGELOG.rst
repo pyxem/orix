@@ -24,6 +24,8 @@ Removed
 
 Fixed
 -----
+- Transparency of polar stereographic grid lines can now be controlled by Matplotlib's
+  ``grid.alpha``, just like the azimuth grid lines.
 
 2023-03-14 - version 0.11.1
 ===========================
