@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import numpy as np
 import pytest
 
 from orix import plot
@@ -61,3 +62,9 @@ class TestFormatVectorLabels:
         labels = plot.format_labels(v.data, **kwargs)
         assert labels.shape == (2, 2)
         assert labels.flatten().tolist() == desired
+
+    def test_format_vector_labels_4(self):
+        assert all(
+            plot.format_labels([[1, 2, 3, 4], [1.1, 2.2, 3.3, 4.51]])
+            == np.array(["$1234$", "$1235$"], dtype="U6")
+        )

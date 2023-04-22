@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Tuple
+from typing import Tuple, Union
 
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
@@ -42,7 +42,7 @@ class Arrow3D(FancyArrowPatch):
 
 
 def format_labels(
-    v: np.ndarray,
+    v: Union[list, tuple, np.ndarray],
     brackets: Tuple[str, str] = ("", ""),
     use_latex: bool = True,
 ) -> np.ndarray:
@@ -56,8 +56,8 @@ def format_labels(
     Parameters
     ----------
     v
-        Vector labels in an array with the last dimension having a size
-        of 3. The labels are rounded to 0 decimals and cast to integers
+        Vector labels in an array-like with the last dimension having a
+        size of 3 or 4. The labels are rounded to the closets integers
         before being formatted.
     brackets
         Left and right parentheses. These are typically () or [] when
@@ -103,8 +103,9 @@ def format_labels(
     else:
         start = end = ""
 
-    shape = v.shape[:-1]
-    v = v.round().astype(int).reshape(-1, 3)
+    v = np.asanyarray(v)
+    shape = v.shape
+    v = v.round().astype(int).reshape(-1, shape[-1])
 
     new_labels = []
     for label in v:
@@ -117,4 +118,4 @@ def format_labels(
         new_label += brackets[1] + end
         new_labels.append(new_label)
 
-    return np.asarray(new_labels).reshape(shape)
+    return np.asarray(new_labels).reshape(shape[:-1])
