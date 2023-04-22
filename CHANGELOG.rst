@@ -11,6 +11,7 @@ Unreleased
 
 Added
 -----
+- ``Vector3d.from_path_ends()`` class method to get vectors between two vectors.
 
 Changed
 -------
