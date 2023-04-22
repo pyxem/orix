@@ -14,6 +14,8 @@ Added
 
 Changed
 -------
+- The ``convention`` parameter in ``from_euler()`` and ``to_euler()`` will be removed in
+  the next minor release, 0.13, instead of release 1.0 as previously stated.
 
 Deprecated
 ----------
