@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from orix import plot
 from orix.quaternion import Orientation, symmetry
 from orix.vector import Vector3d
 
@@ -487,7 +488,6 @@ class TestVector3dInversePoleDensityFunction:
         fig = v.inverse_pole_density_function(
             symmetry=symmetry.Th,
             return_figure=True,
-            colorbar=True,
             show_hemisphere_label=True,
         )
         assert len(fig.axes) == 2  # plot and colorbar
@@ -501,7 +501,6 @@ class TestVector3dInversePoleDensityFunction:
             _ = v.inverse_pole_density_function(
                 symmetry=symmetry.Th,
                 return_figure=True,
-                colorbar=True,
                 hemisphere="test",
             )
 
@@ -527,9 +526,7 @@ class TestVector3dPoleDensityFunction:
         assert fig3.axes[1].hemisphere == "lower"
         plt.close(fig3)
 
-        fig4 = v.pole_density_function(
-            return_figure=True, hemisphere="both", colorbar=True
-        )
+        fig4 = v.pole_density_function(return_figure=True, hemisphere="both")
         assert len(fig4.axes) == 4
         plt.close(fig4)
 
@@ -567,7 +564,7 @@ class TestVector3dPoleDensityFunction:
 
     def test_pdf_plot_sigma(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
-        fig1 = v.pole_density_function(return_figure=True, sigma=5)
+        fig1 = v.pole_density_function(return_figure=True)
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
         assert any(qm1)
         qmesh1 = fig1.axes[0].collections[qm1.index(True)].get_array().data
@@ -584,7 +581,7 @@ class TestVector3dPoleDensityFunction:
 
     def test_pdf_plot_log(self):
         v = Vector3d(np.random.randn(10_000, 3)).unit
-        fig1 = v.pole_density_function(return_figure=True, log=False)
+        fig1 = v.pole_density_function(return_figure=True)
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
         assert any(qm1)
         qmesh1 = fig1.axes[0].collections[qm1.index(True)].get_array().data
@@ -667,6 +664,9 @@ class TestPlotting:
     )
 
     def test_scatter(self):
+        """Test almost everything about the convenience method for
+        scatter plots of 3D vectors.
+        """
         plt.rcParams["axes.grid"] = False
         v = self.v
 
@@ -682,27 +682,36 @@ class TestPlotting:
         fig_size = (5, 10)
         text_size = 20
         scatter_colors = ["C0", "C1", "C2"] * 2
-        vector_labels = [str(vi).replace(" ", "") for vi in v.data]
+        labels = plot.format_labels(v.data)
+        offset = (-0.02, 0.05)
         fig2 = v.scatter(
             hemisphere="both",
             grid=True,
             grid_resolution=(azimuth_res, polar_res),
-            vector_labels=vector_labels,
+            vector_labels=labels,
             figure_kwargs=dict(figsize=fig_size),
-            text_kwargs=dict(size=text_size),
+            text_kwargs=dict(size=text_size, offset=offset),
             c=scatter_colors,
             return_figure=True,
         )
         assert fig2 != fig1  # New figure
         assert fig2.get_figwidth() == fig_size[0]
         assert fig2.get_figheight() == fig_size[1]
-        assert len(fig2.axes) == 2
-        assert fig2.axes[0]._azimuth_resolution == azimuth_res
-        assert fig2.axes[1]._polar_resolution == polar_res
-        assert fig2.axes[0].texts[0].get_text() == "upper"
-        assert fig2.axes[1].texts[0].get_text() == "lower"
-        assert fig2.axes[0].texts[1].get_text() == vector_labels[0]
-        assert fig2.axes[1].texts[1].get_size() == text_size
+        ax2 = fig2.axes
+        assert len(ax2) == 2
+        assert ax2[0]._azimuth_resolution == azimuth_res
+        assert ax2[1]._polar_resolution == polar_res
+        assert ax2[0].texts[0].get_text() == "upper"
+        assert ax2[1].texts[0].get_text() == "lower"
+        assert ax2[0].texts[1].get_text() == labels[0]
+        assert ax2[1].texts[1].get_size() == text_size
+
+        # Given offset in text_kwargs propagated to
+        # StereographicPlot.text()
+        text0 = ax2[0].texts[1]
+        x, y = ax2[0]._projection.vector2xy(v[0])
+        assert np.isclose(text0._x, x + offset[0])
+        assert np.isclose(text0._y, y + offset[1])
 
         fig3 = v.scatter(figure=fig1, return_figure=True)
         assert fig3 == fig1

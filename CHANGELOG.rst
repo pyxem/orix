@@ -12,6 +12,10 @@ Unreleased
 Added
 -----
 - ``Vector3d.from_path_ends()`` class method to get vectors between two vectors.
+- Convenience function ``plot.format_labels()`` to get nicely formatted vector labels to
+  use when plotting vectors.
+- Two offsets in the stereographic coordinates (X, Y) can be given to
+  ``StereographicPlot.text()`` to offset text coordinates.
 
 Changed
 -------

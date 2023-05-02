@@ -61,18 +61,39 @@ class TestStereographicPlot:
 
         plt.close("all")
 
-    def test_annotate(self):
+    def test_text(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
         ax.scatter(v)
-        format_vector = lambda v: str(v.data[0]).replace(" ", "")
-        for vi in v:
-            ax.text(vi, s=format_vector(vi))
+        labels = plot.format_labels(v.data, ("[", "]"), use_latex=False)
+        for i in range(v.size):
+            ax.text(v[i], s=labels[i])
 
         assert len(ax.texts) == 3
         assert ax.texts[0].get_text() == "[001]"
         assert ax.texts[1].get_text() == "[-101]"
         assert ax.texts[2].get_text() == "[111]"
+
+        plt.close("all")
+
+    def test_text_offset(self):
+        _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
+        ax.scatter(v)
+        labels = plot.format_labels(v.data)
+        offset = (-0.02, 0.05)
+        for i in range(v.size):
+            ax.text(v[i], s=labels[i], offset=offset)
+
+        x, y = ax._projection.vector2xy(v)
+        x += offset[0]
+        y += offset[1]
+
+        assert len(ax.texts) == 3
+        for i in range(v.size):
+            assert ax.texts[i].get_text() == labels[i]
+            assert np.isclose(ax.texts[i]._x, x[i])
+            assert np.isclose(ax.texts[i]._y, y[i])
 
         plt.close("all")
 

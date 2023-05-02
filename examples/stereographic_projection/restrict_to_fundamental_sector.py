@@ -15,11 +15,15 @@ kinematically calculated width of a Kikuchi band scattered from these vectors as
 lattice parameter of 4.04 Å (Aluminium) and an accelerating voltage of 20 keV.
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 
+from orix import plot
 from orix.crystal_map import Phase
 from orix.quaternion import symmetry
 from orix.vector import Miller
+
+plt.rcParams.update({"font.size": 15})
 
 # Symmetrically equivalent set of hkl
 hkl1 = Miller(
@@ -47,15 +51,12 @@ ax.restrict_to_sector(
 uvw = hkl.reshape(hkl.size, 1).cross(hkl.reshape(1, hkl.size)).flatten()
 uvw = uvw.in_fundamental_sector()
 uvw = uvw.unique(use_symmetry=True)
-uvw = uvw.round()
-
-for uvw_i in uvw:
-    uvw_idx = str(uvw_i.coordinates[0].astype(int)).replace(" ", "")
-    ax.text(
-        uvw_i,
-        s=uvw_idx,
-        va="bottom",
-        bbox=dict(facecolor="w", pad=1, alpha=0.75),
-    )
+uvw = uvw.round().unique()
+uvw.scatter(
+    figure=fig,
+    c="none",
+    vector_labels=plot.format_labels(uvw.coordinates),
+    text_kwargs=dict(va="center", bbox=dict(fc="w", pad=1, alpha=0.75)),
+)
 
 _ = ax.set_title(r"Low-index $[uvw]$ in fundamental sector of $m\bar{3}m$", pad=10)

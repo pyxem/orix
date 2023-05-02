@@ -47,7 +47,16 @@ from orix.projections import InverseStereographicProjection, StereographicProjec
 from orix.vector import FundamentalSector, Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
 
-ZORDER = dict(text=6, scatter=5, symmetry_marker=4, draw_circle=3, mesh=0)
+# This order determines which parts are plotted over other parts
+ZORDER = dict(
+    text=6,
+    scatter=5,
+    symmetry_marker=4,
+    draw_circle=3,
+    border=2,
+    grid=1,
+    mesh=0,
+)
 
 
 class StereographicPlot(maxes.Axes):
@@ -118,6 +127,7 @@ class StereographicPlot(maxes.Axes):
                 facecolor="none",
                 edgecolor="k",
                 label="sa_circle",
+                zorder=ZORDER["border"],
             )
         )
 
@@ -224,6 +234,7 @@ class StereographicPlot(maxes.Axes):
     def text(
         self,
         *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        offset: Optional[Tuple[float, float]] = None,
         **kwargs,
     ):
         """Add text to the axes.
@@ -236,6 +247,9 @@ class StereographicPlot(maxes.Axes):
         *args
             Vector(s), or azimuth and polar angles, the latter two
             passed as separate arguments (not keyword arguments).
+        offset
+            Tuple of offsets in stereographic coordinates (X, Y). No
+            offset is applied if not given.
         **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.text`.
@@ -245,7 +259,9 @@ class StereographicPlot(maxes.Axes):
         matplotlib.axes.Axes.text
         """
         new_kwargs = dict(va="bottom", ha="center", zorder=ZORDER["text"])
-        out = self._prepare_to_call_inherited_method(args, kwargs, new_kwargs)
+        out = self._prepare_to_call_inherited_method(
+            args, kwargs, new_kwargs, offset=offset
+        )
         x, y, _, updated_kwargs = out
         if x.size == 0:
             return
@@ -681,6 +697,7 @@ class StereographicPlot(maxes.Axes):
             alpha=rcParams["grid.alpha"],
             color=rcParams["grid.color"],
             antialiased=True,
+            zorder=ZORDER["grid"],
         )
 
         label = "sa_azimuth_grid"
@@ -735,6 +752,7 @@ class StereographicPlot(maxes.Axes):
             ec=ec,
             fc="none",
             antialiased=True,
+            zorder=ZORDER["grid"],
         )
 
         circles = []
@@ -759,9 +777,10 @@ class StereographicPlot(maxes.Axes):
     def _prepare_to_call_inherited_method(
         self,
         args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
-        kwargs,
+        kwargs: dict,
         new_kwargs: Optional[dict] = None,
         sort: bool = False,
+        offset: Tuple[float, float] = None,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
         """Prepare arguments and keyword arguments passed to methods in
         :class:`StereographicPlot` inherited from
@@ -781,6 +800,9 @@ class StereographicPlot(maxes.Axes):
         sort
             Whether to sort vectors before passing them to Matplotlib.
             Default is ``False``.
+        offset
+            Tuple of offsets in (X, Y). No offset is applied if not
+            given.
 
         Returns
         -------
@@ -793,15 +815,16 @@ class StereographicPlot(maxes.Axes):
         if new_kwargs is not None:
             for k, v in new_kwargs.items():
                 updated_kwargs.setdefault(k, v)
-        x, y, visible = self._pretransform_input(args, sort=sort)
+        x, y, visible = self._pretransform_input(args, sort=sort, offset=offset)
         return x, y, visible, updated_kwargs
 
     def _pretransform_input(
         self,
-        values: Union[Vector3d, Tuple[Vector3d], Tuple[np.ndarray, np.ndarray]],
+        values: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
         sort: bool = False,
+        offset: Optional[Tuple[float, float]] = None,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Return arrays of (x, y) from input data.
+        """Return arrays of (X, Y) from input data.
 
         Parameters
         ----------
@@ -813,13 +836,16 @@ class StereographicPlot(maxes.Axes):
         sort
             Whether to sort vectors before passing them to Matplotlib.
             Default is ``False``.
+        offset
+            Tuple of offsets in (X, Y). No offset is applied if not
+            given.
 
         Returns
         -------
-        x
-            Stereographic x coordinates of unit vectors.
-        y
-            Stereographic y coordinates of unit vectors.
+        X
+            Stereographic X coordinates of unit vectors.
+        Y
+            Stereographic Y coordinates of unit vectors.
         visible
             Whether these values are visible on the axes.
         """
@@ -844,7 +870,13 @@ class StereographicPlot(maxes.Axes):
                     "Accepts only one (Vector3d) or two (azimuth, polar) input "
                     "arguments."
                 )
+
         visible = v <= self._projection.region
+
+        if offset is not None:
+            x += offset[0]
+            y += offset[1]
+
         return x, y, visible
 
     def _set_label(self, x: float, y: float, label: str, **kwargs):
