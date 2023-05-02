@@ -682,7 +682,7 @@ class TestPlotting:
         fig_size = (5, 10)
         text_size = 20
         scatter_colors = ["C0", "C1", "C2"] * 2
-        labels = plot.format_vector_labels(v.data)
+        labels = plot.format_labels(v.data)
         offset = (-0.02, 0.05)
         fig2 = v.scatter(
             hemisphere="both",

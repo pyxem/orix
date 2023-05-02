@@ -58,4 +58,4 @@ class TestFormatVectorLabels:
     def test_format_vector_labels(self, kwargs, desired):
         v = Vector3d([[1, 1, 1], [-2, 0, 1], [4, 0, 0], [-4, 0, 0]])
         v = v.reshape(2, 2)  # Test reshaping
-        assert plot.format_vector_labels(v.data, **kwargs) == desired
+        assert plot.format_labels(v.data, **kwargs) == desired

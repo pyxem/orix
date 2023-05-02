@@ -65,7 +65,7 @@ class TestStereographicPlot:
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
         ax.scatter(v)
-        labels = plot.format_vector_labels(v.data, ("[", "]"), use_latex=False)
+        labels = plot.format_labels(v.data, ("[", "]"), use_latex=False)
         for i in range(v.size):
             ax.text(v[i], s=labels[i])
 
@@ -80,7 +80,7 @@ class TestStereographicPlot:
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
         ax.scatter(v)
-        labels = plot.format_vector_labels(v.data)
+        labels = plot.format_labels(v.data)
         offset = (-0.02, 0.05)
         for i in range(v.size):
             ax.text(v[i], s=labels[i], offset=offset)
