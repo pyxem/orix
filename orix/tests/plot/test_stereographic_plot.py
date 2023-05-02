@@ -102,9 +102,14 @@ class TestStereographicPlot:
         assert ax._azimuth_resolution == azimuth_res
         assert ax._polar_resolution == polar_res
 
-        ax.stereographic_grid(azimuth_resolution=30, polar_resolution=45)
+        alpha = 0.5
+        with plt.rc_context({"grid.alpha": alpha}):
+            ax.stereographic_grid(azimuth_resolution=30, polar_resolution=45)
         assert ax._azimuth_resolution == 30
         assert ax._polar_resolution == 45
+
+        assert len(ax.collections) == 2
+        assert all([coll.get_alpha() for coll in ax.collections])
 
         plt.close("all")
 

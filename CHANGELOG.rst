@@ -11,6 +11,7 @@ Unreleased
 
 Added
 -----
+- ``Vector3d.from_path_ends()`` class method to get vectors between two vectors.
 
 Changed
 -------
@@ -25,6 +26,8 @@ Removed
 
 Fixed
 -----
+- Transparency of polar stereographic grid lines can now be controlled by Matplotlib's
+  ``grid.alpha``, just like the azimuth grid lines.
 
 2023-03-14 - version 0.11.1
 ===========================
