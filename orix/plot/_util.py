@@ -42,11 +42,11 @@ class Arrow3D(FancyArrowPatch):
 
 
 def format_labels(
-    labels: np.ndarray,
+    v: np.ndarray,
     brackets: Tuple[str, str] = ("", ""),
     use_latex: bool = True,
-) -> List[str]:
-    """Return formatted vector labels.
+) -> np.ndarray:
+    r"""Return formatted vector integer labels.
 
     This function is a convenient way to get nice labels when plotting
     vectors in the stereographic projection via
@@ -55,7 +55,7 @@ def format_labels(
 
     Parameters
     ----------
-    labels
+    v
         Vector labels in an array with the last dimension having a size
         of 3. The labels are rounded to 0 decimals and cast to integers
         before being formatted.
@@ -72,23 +72,23 @@ def format_labels(
     Returns
     -------
     new_labels
-        List of string labels.
+        Array of string labels.
 
     Examples
     --------
     >>> from orix import plot
     >>> from orix.vector import Vector3d
     >>> v = Vector3d([[1, 1, 1], [-2, 0, 1], [4, 0, 0], [-4, 0, 0]])
-    >>> v = v.reshape((2, 2))
-    >>> plot.format_labels(v.data)
-    ['$111$', '$\\bar{2}01$', '$400$', '$\\bar{4}00$']
-    >>> plot.format_labels(v.data, ("[", "]"), use_latex=False)
+    >>> plot.format_labels(v.reshape(2, 2).data)
+    array([['$111$', '$\\bar{2}01$'],
+           ['$400$', '$\\bar{4}00$']], dtype='<U11')
+    >>> plot.format_labels(v.data, ("[", "]"), use_latex=False).tolist()
     ['[111]', '[-201]', '[400]', '[-400]']
-    >>> plot.format_labels(v.data, ("{", "}"))
+    >>> plot.format_labels(v.data, ("{", "}")).tolist()
     ['$\\{111\\}$', '$\\{\\bar{2}01\\}$', '$\\{400\\}$', '$\\{\\bar{4}00\\}$']
-    >>> plot.format_labels(v.data, ("{", "}"), use_latex=False)
+    >>> plot.format_labels(v.data, ("{", "}"), use_latex=False).tolist()
     ['{111}', '{-201}', '{400}', '{-400}']
-    >>> plot.format_labels(v.data, ("<", ">"))
+    >>> plot.format_labels(v.data, ("<", ">")).tolist()
     ['$\\left<111\\right>$',
      '$\\left<\\bar{2}01\\right>$',
      '$\\left<400\\right>$',
@@ -103,10 +103,11 @@ def format_labels(
     else:
         start = end = ""
 
-    labels = labels.round().astype(int).reshape(-1, 3)
+    shape = v.shape[:-1]
+    v = v.round().astype(int).reshape(-1, 3)
 
     new_labels = []
-    for label in labels:
+    for label in v:
         new_label = start + brackets[0]
         for i in label:
             if i < 0 and use_latex:
@@ -116,4 +117,4 @@ def format_labels(
         new_label += brackets[1] + end
         new_labels.append(new_label)
 
-    return new_labels
+    return np.asarray(new_labels).reshape(shape)

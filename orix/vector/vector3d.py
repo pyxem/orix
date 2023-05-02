@@ -1094,7 +1094,7 @@ class Vector3d(Object3d):
         projection: str = "stereographic",
         figure: Optional[Figure] = None,
         axes_labels: Optional[List[str]] = None,
-        vector_labels: Optional[List[str]] = None,
+        vector_labels: Union[np.ndarray, List[str], None] = None,
         hemisphere: Optional[str] = None,
         reproject: bool = False,
         show_hemisphere_label: Optional[bool] = None,
