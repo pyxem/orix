@@ -30,6 +30,7 @@ from scipy.spatial.transform import Rotation as SciPyRotation
 from orix._util import deprecated_argument
 from orix.base import Object3d
 from orix.vector import AxAngle, Miller, Vector3d
+from orix.quaternion import _conversions
 
 # Used to round values below 1e-16 to zero
 _FLOAT_EPS = np.finfo(float).eps
@@ -69,6 +70,9 @@ class Quaternion(Object3d):
        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c))
     """
 
+    ########################################
+    ## Setters and Properties             ##
+    ########################################
     dim = 4
 
     @property
@@ -233,6 +237,10 @@ class Quaternion(Object3d):
         q = cls(np.vstack((a, b, c, d)).T)
         return q
 
+    ########################################
+    ##  "from_*" Class methods            ##
+    ########################################
+
     @classmethod
     def from_neo_euler(cls, neo_euler: "NeoEuler") -> Quaternion:
         """Create unit quaternion(s) from a neo-euler (vector)
@@ -293,9 +301,33 @@ class Quaternion(Object3d):
         --------
         from_neo_euler
         """
-        axangle = AxAngle.from_axes_angles(axes, angles, degrees)
-        q = cls.from_neo_euler(axangle).unit
-        return q
+        # convert all possible tuple, numpy, and/list combinations into
+        # the numpy array of shape (..,4) expected by
+        # quaternions._conversions.ax2qu()
+        axes = Vector3d(axes).unit
+        if degrees:
+            angles = np.deg2rad(angles)
+        angles = np.array(angles)
+        if angles.shape == ():
+            angles = angles.reshape(
+                1,
+            )
+        # case of n-dimensional axis and single angle
+        if angles.shape == (1,):
+            angles = np.ones(axes.shape + (1,)) * angles
+        # case of single axis and n-dimensional angle
+        elif axes.shape == (1,):
+            axes = Vector3d(axes.data * np.ones(angles.shape + (1,)))
+            angles = angles.reshape(angles.shape + (1,))
+        # case of n-dimensional axis and n-1 dimensional angle array
+        elif angles.shape == axes.shape:
+            angles = angles.reshape(axes.shape + (1,))
+        else:
+            assert (angles.shape == axes.shape + (1,), "oopsies")
+        axis_angle = np.concatenate([axes.data, angles], axis=-1)
+        # convert to quaternion with _conversions.ax2qu
+        quat = cls(_conversions.ax2qu(axis_angle))
+        return quat.unit
 
     # TODO: Remove decorator, **kwargs, and use of "convention" in 0.13
     @classmethod
@@ -353,26 +385,9 @@ class Quaternion(Object3d):
         if np.any(np.abs(eu) > 4 * np.pi):
             warnings.warn("Angles are quite high, did you forget to set degrees=True?")
 
-        n = eu.shape[:-1]
-        alpha, beta, gamma = eu[..., 0], eu[..., 1], eu[..., 2]
-
-        # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
-        # (2015) 083501
-        sigma = 0.5 * np.add(alpha, gamma)
-        delta = 0.5 * np.subtract(alpha, gamma)
-        c = np.cos(beta / 2)
-        s = np.sin(beta / 2)
-
-        # Using P = 1 from A.6
-        q = np.zeros(n + (4,))
-        q[..., 0] = c * np.cos(sigma)
-        q[..., 1] = -s * np.cos(delta)
-        q[..., 2] = -s * np.sin(delta)
-        q[..., 3] = -c * np.sin(sigma)
-
-        for i in [1, 2, 3, 0]:  # Flip the zero element last
-            q[..., i] = np.where(q[..., 0] < 0, -q[..., i], q[..., i])
-
+        if eu.shape == (3,):
+            eu = eu.reshape([1, 3])
+        q = _conversions.eu2qu(eu)
         q = cls(q).unit
 
         if direction == "crystal2lab":
@@ -407,7 +422,11 @@ class Quaternion(Object3d):
          [0. 1. 0. 0.]]
         """
         om = np.asarray(matrix)
-        # Assuming (3, 3) as last two dims
+        # Assert input can be interpreted as an array of (3, 3) arrays
+        assert om.ndim >= 2
+        assert om.shape[-2:] == (3, 3)
+        # TODO: pick up here
+        #        q = _conversions.
         n = (1,) if om.ndim == 2 else om.shape[:-2]
         q = np.zeros(n + (4,))
 
