@@ -31,6 +31,7 @@ from orix._util import deprecated, deprecated_argument
 from orix.base import Object3d
 from orix.quaternion import _conversions
 from orix.vector import AxAngle, Miller, Vector3d
+from orix.quaternion import _conversions
 
 # Used to round values below 1e-16 to zero
 _FLOAT_EPS = np.finfo(float).eps
