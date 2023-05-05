@@ -31,11 +31,12 @@ import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 from tqdm import tqdm
 
-from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.misorientation import Misorientation
+from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
 from orix.vector import AxAngle, Miller, NeoEuler, Vector3d
+
 
 class Orientation(Misorientation):
     r"""Orientations represent misorientations away from a reference of

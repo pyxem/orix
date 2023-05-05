@@ -135,11 +135,11 @@ class Misorientation(Rotation):
         Gl, Gr = self._symmetry
 
         if grain_exchange and (Gl._tuples == Gr._tuples):
-            orientations = Orientation.stack([self, ~self]).flatten()
+            misorientations = Misorientation.stack([self, ~self]).flatten()
         else:
-            orientations = Orientation(self)
+            misorientations = Misorientation(self)
 
-        equivalent = Gr.outer(orientations.outer(Gl))
+        equivalent = Gr.outer(misorientations.outer(Gl))
         return self.__class__(equivalent).flatten()
 
     def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> Misorientation:
