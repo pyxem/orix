@@ -316,7 +316,7 @@ class Symmetry(Rotation):
 
         def symmetry_axis(v: Vector3d, n: int) -> Rotation:
             angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
-            return Rotation.from_neo_euler(AxAngle.from_axes_angles(v, angles))
+            return Rotation.from_axes_angles(v, angles)
 
         # Symmetry axes
         vx = Vector3d.xvector()
@@ -425,7 +425,7 @@ class Symmetry(Rotation):
         if order > 6:
             return Vector3d.empty()
         axis = Vector3d.zvector().get_nearest(axes, inclusive=True)
-        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2 * np.pi / order))
+        r = Rotation.from_axes_angles(axis, 2 * np.pi / order)
 
         diads = symmetry.diads
         nearest_diad = axis.get_nearest(diads)
@@ -442,7 +442,7 @@ class Symmetry(Rotation):
             return sr
         axes, order = inside.get_highest_order_axis()
         axis = axis.get_nearest(axes)
-        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2 * np.pi / order))
+        r = Rotation.from_axes_angles(axis, 2 * np.pi / order)
         nearest_diad = next_diad
         n1 = axis.cross(nearest_diad).unit
         n2 = -(r * n1)

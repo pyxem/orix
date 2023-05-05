@@ -57,8 +57,10 @@ def _get_large_cell_normals(s1, s2):
     planes2.data[np.isnan(planes2.data)] = 0
     normals[:, 0] = planes1
     normals[:, 1] = planes2
+    ax = normals.axis
+    ang = normals.angle
     normals: Rotation = (
-        Rotation.from_neo_euler(normals).flatten().unique(antipodal=False)
+        Rotation.from_axes_angles(ax, ang).flatten().unique(antipodal=False)
     )
     if not normals.size:
         return normals
@@ -69,9 +71,7 @@ def _get_large_cell_normals(s1, s2):
         n = normals[inv == i]
         axes_unique.append(n.axis.data[0])
         angles_unique.append(n.angle.max())
-    normals = Rotation.from_neo_euler(
-        AxAngle.from_axes_angles(np.array(axes_unique), angles_unique)
-    )
+    normals = Rotation.from_axes_angles(np.array(axes_unique), angles_unique)
     return normals
 
 
@@ -141,7 +141,7 @@ class OrientationRegion(Rotation):
         large_cell_normals = _get_large_cell_normals(s1, s2)
         disjoint = s1 & s2
         fz = disjoint.fundamental_zone()
-        fz_normals = Rotation.from_neo_euler(AxAngle.from_axes_angles(fz, np.pi))
+        fz_normals = Rotation.from_axes_angles(fz, np.pi)
         normals = Rotation(np.concatenate([large_cell_normals.data, fz_normals.data]))
         orientation_region = cls(normals)
         vertices = orientation_region.vertices()
@@ -208,7 +208,7 @@ class OrientationRegion(Rotation):
         # Get the cell vector normal norms
         n = Rodrigues.from_rotation(self).norm[:, np.newaxis, np.newaxis]
         if n.size == 0:
-            return Rotation.from_neo_euler(AxAngle.from_axes_angles(g, np.pi))
+            return Rotation.from_axes_angles(g, np.pi)
 
         d = (-self.axis).dot_outer(g.unit)
         x = n * d
@@ -218,6 +218,6 @@ class OrientationRegion(Rotation):
         # Keep the smallest allowed angle
         omega[omega < 0] = np.pi
         omega = np.min(omega, axis=0)
-        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(g.unit, omega))
+        r = Rotation.from_axes_angles(g.unit, omega)
 
         return r

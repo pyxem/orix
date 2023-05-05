@@ -257,31 +257,6 @@ class Orientation(Misorientation):
         return ori
 
     @classmethod
-    def from_neo_euler(
-        cls, neo_euler: NeoEuler, symmetry: Optional[Symmetry] = None
-    ) -> Orientation:
-        """Return orientation(s) from a neo-euler (vector)
-        representation.
-
-        Parameters
-        ----------
-        neo_euler
-            Vector parametrization of orientation(s).
-        symmetry
-            Symmetry of orientation(s). If not given (default), no
-            symmetry is set.
-
-        Returns
-        -------
-        ori
-            Orientations.
-        """
-        ori = super().from_neo_euler(neo_euler)
-        if symmetry:
-            ori.symmetry = symmetry
-        return ori
-
-    @classmethod
     def from_axes_angles(
         cls,
         axes: Union[np.ndarray, Vector3d, tuple, list],
@@ -322,8 +297,10 @@ class Orientation(Misorientation):
         Orientation (1,) m-3m
         [[ 0.7071  0.      0.     -0.7071]]
         """
-        axangle = AxAngle.from_axes_angles(axes, angles, degrees)
-        return cls.from_neo_euler(axangle, symmetry)
+        ori = super().from_axes_angles(axes, angles, degrees)
+        if symmetry:
+            ori.symmetry = symmetry
+        return ori
 
     @classmethod
     def from_scipy_rotation(

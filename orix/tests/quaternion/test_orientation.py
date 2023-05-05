@@ -496,32 +496,14 @@ class TestOrientationInitialization:
         ):
             _ = Orientation.from_align_vectors(a, b)
 
-    def test_from_neo_euler_symmetry(self):
-        v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
-        o1 = Orientation.from_neo_euler(v)
-        assert np.allclose(o1.data, [0.7071, 0, 0, 0.7071])
-        assert o1.symmetry.name == "1"
-        o2 = Orientation.from_neo_euler(v, symmetry=Oh)
-        o2 = o2.map_into_symmetry_reduced_zone()
-        assert np.allclose(o2.data, [-1, 0, 0, 0])
-        assert o2.symmetry.name == "m-3m"
-        o3 = Orientation(o1.data, symmetry=Oh)
-        o3 = o3.map_into_symmetry_reduced_zone()
-        assert np.allclose(o3.data, o2.data)
-
     def test_from_axes_angles(self, rotations):
         axis = Vector3d.xvector() - Vector3d.yvector()
         angle = np.pi / 2
-        axangle = AxAngle.from_axes_angles(axis, angle)
-        o1 = Orientation.from_neo_euler(axangle, Oh)
-        o2 = Orientation.from_axes_angles(axis, angle, Oh)
+        o1 = Orientation.from_axes_angles(axis, angle, Oh)
         assert np.allclose(o1.to_euler(degrees=True), [135, 90, 225])
+        assert o1.symmetry.name == "m-3m"
+        o2 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
         assert np.allclose(o1.data, o2.data)
-        assert o1.symmetry.name == o2.symmetry.name == "m-3m"
-        assert np.allclose(o1.symmetry.data, o2.symmetry.data)
-
-        o3 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
-        assert np.allclose(o2.data, o3.data)
 
     def test_get_identity(self):
         """Get the identity orientation via two alternative routes."""

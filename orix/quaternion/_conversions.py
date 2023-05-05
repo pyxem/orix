@@ -706,3 +706,101 @@ def eu2qu(eu: np.ndarray) -> np.ndarray:
     eu2d = eu.astype(np.float64).reshape(n_eu, 3)
     qu = eu2qu_2d(eu2d).reshape(eu.shape[:-1] + (4,))
     return qu
+
+
+@nb.jit("float64[:](float64[:, :])", cache=True, nogil=True, nopython=True)
+def om2qu_single(om: np.ndarray) -> np.ndarray:
+    """Convert a single (3,3) rotation matrix into a unit quaternion
+
+    Parameters
+    ----------
+    ma
+        (3, 3) rotation matrix stored as a 3D nupy array as 64-bit floats.
+
+    Returns
+    -------
+    qu
+        1D unit quaternion (a, b, c, d) as 64-bit floats.
+
+    Notes
+    -----
+    Uses Eqs. A.11 :cite:`rowenhorst2015consistent`.
+
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+
+    q0_almost = 1 + om[0, 0] + om[1, 1] + om[2, 2]
+    q1_almost = 1 + om[0, 0] - om[1, 1] - om[2, 2]
+    q2_almost = 1 - om[0, 0] + om[1, 1] - om[2, 2]
+    q3_almost = 1 - om[0, 0] - om[1, 1] + om[2, 2]
+
+    qu = np.zeros(4, dtype=np.float64)
+    eps = np.finfo(np.float64).eps
+
+    if q0_almost < eps:
+        qu[0] = 0
+    else:
+        qu[0] = 0.5 * np.sqrt(q0_almost)
+
+    if q1_almost < eps:
+        qu[1] = 0
+    elif om[2, 1] < om[1, 2]:
+        qu[1] = -0.5 * np.sqrt(q1_almost)
+    else:
+        qu[1] = 0.5 * np.sqrt(q1_almost)
+
+    if q2_almost < eps:
+        qu[2] = 0
+    elif om[0, 2] < om[2, 0]:
+        qu[2] = -0.5 * np.sqrt(q2_almost)
+    else:
+        qu[2] = 0.5 * np.sqrt(q2_almost)
+
+    if q3_almost < eps:
+        qu[3] = 0
+    elif om[1, 0] < om[0, 1]:
+        qu[3] = -0.5 * np.sqrt(q3_almost)
+    else:
+        qu[3] = 0.5 * np.sqrt(q3_almost)
+
+    return qu
+
+
+@nb.jit("float64[:, :](float64[:, :, :])", cache=True, nogil=True, nopython=True)
+def om2qu_3d(om: np.ndarray) -> np.ndarray:
+    """Conversion from multiple rotation matrices to unit quaternions
+
+    Parameters
+    ----------
+    om
+        3D array of n (3, 3) rotation matrices as 64-bit floats.
+
+    Returns
+    -------
+    qu
+        2D array of n (q0, q1, q2, q3) quaternions as 64-bit floats.
+
+    Notes
+    -----
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    n_vectors = om.shape[0]
+    qu = np.zeros((n_vectors, 4), dtype=np.float64)
+    for i in nb.prange(n_vectors):
+        qu[i] = om2qu_single(om[i])
+    return qu
+
+
+def om2qu(om: np.ndarray) -> np.ndarray:
+    """N-dimensional wrapper for om2qu_3d, see the docstring of that
+    function.
+    """
+    if om.shape == (3, 3):
+        n_om = 1
+    else:
+        n_om = np.prod(om.shape[:-2])
+    om3d = om.astype(np.float64).reshape(n_om, 3, 3)
+    qu = om2qu_3d(om3d).reshape(om.shape[:-2] + (4,))
+    return qu

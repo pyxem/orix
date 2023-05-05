@@ -544,22 +544,22 @@ class TestFromToMatrix:
         assert np.allclose(om1, om2)
 
 
-class TestFromAxesAngles:
-    def test_from_axes_angles(self, rotations):
-        axangle = AxAngle.from_rotation(rotations)
-        rotations2 = Rotation.from_neo_euler(axangle)
-        rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
-        assert np.allclose(rotations2.data, rotations3.data)
-        r1 = Rotation.from_neo_euler(axangle)
-        r2 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
-        assert isinstance(r1, Rotation)
-        assert isinstance(r2, Rotation)
-        assert r1 == r2
+# class TestFromAxesAngles:
+#     def test_from_axes_angles(self, rotations):
+#         axangle = AxAngle.from_rotation(rotations)
+#         rotations2 = Rotation.from_neo_euler(axangle)
+#         rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
+#         assert np.allclose(rotations2.data, rotations3.data)
+#         r1 = Rotation.from_neo_euler(axangle)
+#         r2 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
+#         assert isinstance(r1, Rotation)
+#         assert isinstance(r2, Rotation)
+#         assert r1 == r2
 
-        r3 = Rotation.from_axes_angles(
-            axangle.axis.data, np.rad2deg(axangle.angle), degrees=True
-        )
-        assert np.allclose(r3.data, r2.data)
+#         r3 = Rotation.from_axes_angles(
+#             axangle.axis.data, np.rad2deg(axangle.angle), degrees=True
+#         )
+#         assert np.allclose(r3.data, r2.data)
 
 
 class TestFromScipyRotation:

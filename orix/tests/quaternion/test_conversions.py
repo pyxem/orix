@@ -45,6 +45,9 @@ from orix.quaternion._conversions import (
     ho2ro,
     ho2ro_2d,
     ho2ro_single,
+    om2qu,
+    om2qu_3d,
+    om2qu_single,
     ro2ax,
     ro2ax_2d,
     ro2ax_single,
@@ -120,6 +123,51 @@ def rodrigues_vectors():
             [0.2903, -0.9476, 0.1333, 0.7406],
         ],
         dtype=np.float64,
+    )
+
+
+@pytest.fixture
+def orthogonal_matrices():
+    return np.array(
+        [
+            [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            [
+                [-0.95541973, -0.29525098, 0.0],
+                [0.29525098, -0.95541973, 0.0],
+                [0.0, 0.0, 1.0],
+            ],
+            [
+                [0.89058527, -0.41522874, 0.18558817],
+                [0.43956613, 0.89058527, -0.11678825],
+                [-0.11678825, 0.18558817, 0.97566261],
+            ],
+            [
+                [0.89058527, 0.43956613, 0.11678825],
+                [-0.41522874, 0.89058527, -0.18558817],
+                [-0.18558817, 0.11678825, 0.97566261],
+            ],
+            [
+                [0.92770459, 0.06746627, 0.36716821],
+                [0.32236379, 0.35124224, -0.87903952],
+                [-0.1882705, 0.93385073, 0.30410035],
+            ],
+            [
+                [0.92770459, 0.06746627, -0.36716821],
+                [0.32236379, 0.35124224, 0.87903952],
+                [0.1882705, -0.93385073, 0.30410035],
+            ],
+            [
+                [0.35124224, 0.06746627, 0.93385073],
+                [0.32236379, 0.92770459, -0.1882705],
+                [-0.87903952, 0.36716821, 0.30410035],
+            ],
+            [
+                [0.35124224, -0.32236379, -0.87903952],
+                [-0.06746627, 0.92770459, -0.36716821],
+                [0.93385073, 0.1882705, 0.30410035],
+            ],
+        ]
     )
 
 
@@ -276,3 +324,25 @@ class TestRotationConversions:
         cub_32 = cubochoric_coordinates.astype(np.float32)
         rod_32 = rodrigues_vectors.astype(np.float32)
         assert np.allclose(cu2ro(cub_32), rod_32, atol=1e-4)
+
+    def test_om2qu(self, orthogonal_matrices, quaternions_conversions):
+        # single
+        for om, qu in zip(orthogonal_matrices, quaternions_conversions):
+            assert np.allclose(om2qu_single.py_func(om), qu, atol=1e-4)
+        # test edge cases where q[0] is at or near zero
+        rot_pi_111 = np.array([[-1, 2, 2], [2, -1, 2], [2, 2, -1]]) / 3
+        qu_from_om = om2qu_single.py_func(rot_pi_111)
+        qu_actual = np.array([0, np.sqrt(1 / 3), np.sqrt(1 / 3), np.sqrt(1 / 3)])
+        assert np.allclose(qu_from_om, qu_actual)
+        # 2d
+        assert np.allclose(
+            om2qu_3d.py_func(orthogonal_matrices), quaternions_conversions, atol=1e-4
+        )
+        # nd
+        assert np.allclose(
+            om2qu(orthogonal_matrices), quaternions_conversions, atol=1e-4
+        )
+        # nd_float32
+        om_32 = orthogonal_matrices.astype(np.float32)
+        qu_32 = quaternions_conversions.astype(np.float32)
+        assert np.allclose(om2qu(om_32), qu_32, atol=1e-4)

@@ -92,22 +92,6 @@ class Rotation(Quaternion):
         self._data[..., -1] = value
 
     @property
-    def axis(self) -> Vector3d:
-        """Return the axes of rotation."""
-        axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
-        a_is_zero = self.a < -1e-6
-        axis[a_is_zero] = -axis[a_is_zero]
-        norm_is_zero = axis.norm == 0
-        axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero].data)
-        axis.data /= axis.norm[..., np.newaxis]
-        return axis
-
-    @property
-    def angle(self) -> np.ndarray:
-        """Return the angles of rotation."""
-        return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
-
-    @property
     def antipodal(self) -> Rotation:
         """Return this and the antipodally equivalent rotations."""
         r = self.__class__(np.stack([self.data, -self.data]))
@@ -168,22 +152,6 @@ class Rotation(Quaternion):
             return True
         else:
             return False
-
-    @classmethod
-    def from_neo_euler(cls, neo_euler: "NeoEuler") -> Rotation:
-        """Create rotations(s) from a neo-euler (vector) representation.
-
-        Parameters
-        ----------
-        neo_euler
-            Vector parametrization of quaternions.
-
-        Returns
-        -------
-        r
-            Rotation(s).
-        """
-        return super().from_neo_euler(neo_euler)
 
     @classmethod
     def from_axes_angles(
