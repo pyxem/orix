@@ -207,21 +207,38 @@ class Quaternion(Object3d):
 
         Parameters
         ----------
-        neo_euler
-            Vector parametrization of quaternions.
+        rf
+            Rodrigues-Frank vector parametrization of quaternion(s).
+
+        ignore_warnings = False
+            Silences warnings related to large errors or large vectors
 
         Returns
         -------
         q
             Unit quaternion(s).
         """
-        s = np.sin(neo_euler.angle / 2)
-        a = np.cos(neo_euler.angle / 2)
-        b = s * neo_euler.axis.x
-        c = s * neo_euler.axis.y
-        d = s * neo_euler.axis.z
-        q = cls(np.stack([a, b, c, d], axis=-1)).unit
-        return q
+        axes = Vector3d(axes)
+        norms = axes.norm
+        angles = np.arctan(norms) * 2
+
+        if ignore_warnings == False:
+            if np.max(angles) > 179.999:
+                raise UserWarning(
+                    "Maximum angle is greater than 179.999. Rodrigues "
+                    + "Vectors cannot paramaterize 2-fold rotations. "
+                    + "Consider an alternative import method."
+                )
+            if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
+                raise UserWarning(
+                    "Maximum estimated error is greater than 0.1%."
+                    + "Rodriguez vectors have increaing associated errors"
+                    + " for small angle rotations. Consider an alternative "
+                    + "import method."
+                )
+
+        qu = cls.from_axes_angles(axes, angles)
+        return qu.unit
 
     @classmethod
     def from_axes_angles(
@@ -722,6 +739,68 @@ class Quaternion(Object3d):
         # fmt: on
         q = cls(np.vstack((a, b, c, d)).T)
         return q
+
+    @classmethod
+    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
+        """Pointwise cross product of three quaternions.
+
+        Parameters
+        ----------
+        q1
+            First quaternions.
+        q2
+            Second quaternions.
+        q3
+            Third quaternions.
+
+        Returns
+        -------
+        q
+            Quaternions resulting from the triple cross product.
+        """
+        q1a, q1b, q1c, q1d = q1.a, q1.b, q1.c, q1.d
+        q2a, q2b, q2c, q2d = q2.a, q2.b, q2.c, q2.d
+        q3a, q3b, q3c, q3d = q3.a, q3.b, q3.c, q3.d
+        # fmt: off
+        a = (
+            + q1b * q2c * q3d
+            - q1b * q3c * q2d
+            - q2b * q1c * q3d
+            + q2b * q3c * q1d
+            + q3b * q1c * q2d
+            - q3b * q2c * q1d
+        )
+        b = (
+            + q1a * q3c * q2d
+            - q1a * q2c * q3d
+            + q2a * q1c * q3d
+            - q2a * q3c * q1d
+            - q3a * q1c * q2d
+            + q3a * q2c * q1d
+        )
+        c = (
+            + q1a * q2b * q3d
+            - q1a * q3b * q2d
+            - q2a * q1b * q3d
+            + q2a * q3b * q1d
+            + q3a * q1b * q2d
+            - q3a * q2b * q1d
+        )
+        d = (
+            + q1a * q3b * q2c
+            - q1a * q2b * q3c
+            + q2a * q1b * q3c
+            - q2a * q3b * q1c
+            - q3a * q1b * q2c
+            + q3a * q2b * q1c
+        )
+        # fmt: on
+        q = cls(np.vstack((a, b, c, d)).T)
+        return q
+
+    ########################################
+    ##  All other Class methods           ##
+    ########################################
 
     @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
