@@ -821,3 +821,38 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+
+    def test_mean(self):
+        oris = Orientation(
+            [
+                [0.215, 0.9696, -0.1001, -0.0602],
+                [0.2132, 0.97, -0.0977, -0.0643],
+                [0.2154, 0.9693, -0.098, -0.067],
+                [0.2157, 0.9692, -0.0989, -0.0659],
+                [0.2141, 0.9693, -0.1012, -0.0668],
+                [0.2132, 0.9696, -0.1001, -0.0659],
+                [0.2083, 0.9715, -0.0952, -0.0605],
+                [0.1558, 0.7913, -0.569, -0.1608],
+                [0.1495, 0.79, -0.5704, -0.1681],
+                [0.1537, 0.7908, -0.5686, -0.1663],
+                [0.1552, 0.7918, -0.5677, -0.1634],
+                [0.1518, 0.792, -0.5679, -0.165],
+                [0.0484, 0.3993, -0.8886, -0.2203],
+                [0.0459, 0.4007, -0.888, -0.2209],
+            ],
+            symmetry=D6,
+        )
+        mean_not_fund_region = oris.mean()
+        mean_fund_region = oris.mean(mean_in_euler_fundamental_region=True)
+
+        assert np.allclose(
+            mean_not_fund_region.data,
+            Orientation([0.1835, 0.8938, -0.3888, -0.1277], symmetry=D6).data,
+            atol=0.0001,
+        )
+
+        assert np.allclose(
+            mean_fund_region.data,
+            Orientation([0.8887, -0.2184, 0.0502, -0.4], symmetry=D6).data,
+            atol=0.0001,
+        )

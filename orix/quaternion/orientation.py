@@ -31,6 +31,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 from tqdm import tqdm
 
+from orix.quaternion import Quaternion
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
@@ -1110,6 +1111,39 @@ class Orientation(Misorientation):
             range(self.ndim)
         )
         return highest_dot_products.transpose(*order)
+
+    def mean(self, mean_in_euler_fundamental_region=False) -> Orientation:
+        """Return the mean orientation with unitary weights.
+
+        Returns
+        -------
+        ori_mean
+            Mean orientation.
+
+        mean_in_euler_fundamental_region
+            Calculate mean orientation in euler fundamental region.
+
+        Notes
+        -----
+        The method used here corresponds to Equation (13) in
+        https://arc.aiaa.org/doi/pdf/10.2514/1.28949.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Orientation, symmetry
+        >>> oris = Orientation.from_axes_angles([1, 0, 0], np.deg2rad([0, 45]), symmetry.Oh)
+        >>> oris.mean(mean_in_euler_fundamental_region=True)
+        Orientation (1,) m-3m
+        [[0.2469 0.     0.3708 0.8953]]
+        """
+        if mean_in_euler_fundamental_region:
+            quat = Quaternion.from_euler(self.in_euler_fundamental_region())
+        else:
+            quat = Quaternion(self)
+
+        mean = quat.mean()
+
+        return Orientation(mean, symmetry=self.symmetry)
 
     def plot_unit_cell(
         self,
