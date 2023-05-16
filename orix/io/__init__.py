@@ -81,13 +81,19 @@ def loadctf(file_string: str) -> Rotation:
     file_string
         Path to the ``.ctf`` file. This file is assumed to list the
         Euler angles in the Bunge convention in the columns 5, 6, and 7.
+        The starting row for the data that contains Euler angles is relevant
+        to the number of inlcuded phases.
 
     Returns
     -------
     rotation
         Rotations in the file.
     """
-    data = np.loadtxt(file_string, skiprows=17)[:, 5:8]
+    with open(file_string, "r") as file:
+        all_data = [line.strip() for line in file.readlines()]
+        phase_num = int(all_data[12].split("\t")[1])
+
+    data = np.loadtxt(file_string, skiprows=(14 + phase_num))[:, 5:8]
     euler = np.radians(data)
     return Rotation.from_euler(euler)
 
