@@ -135,34 +135,14 @@ def _get_header(file: TextIOWrapper) -> List[str]:
     """
     all_data = [line.rstrip() for line in file.readlines()]
 
-    phase_num_row = 0
-    phases_num_line = str()
-    for line in all_data:
-        if "Phases" in line:
-            phases_num_line = line
-            break
-        phase_num_row += 1
-    if phases_num_line:
-        try:
-            phase_num = int(phases_num_line.split("\t")[1])
-            header = all_data[: (phase_num_row + phase_num + 1)]
-            data_starting_row = phase_num_row + phase_num + 2
-        except:
-            header = None
-            data_starting_row = None
-            warnings.warn(
-                f"Total number of phases has to be defined in the .ctf file."
-                f"No such information can be found. Incompatible file format."
-            )
-    else:
-        header = None
-        data_starting_row = None
-        warnings.warn(
-            f"Total number of phases has to be defined in the .ctf file."
-            f"No such information can be found. Incompatible file format."
-        )
-
-    return header, data_starting_row
+    header = []
+    line = file.readline()
+    i = 0
+    while not line.startswith("Phase\tX\tY"):
+        header.append(line.rstrip())
+        i += 1
+        line = file.readline()
+    return header, i + 1
 
 
 def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[str]]:
@@ -179,17 +159,16 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
     Returns
     -------
     vendor
-        Determined vendor (``"hkl"``, ``"emsoft"`` or ``"orix"``).
+        Determined vendor (``"hkl"`` or ``"emsoft"``).
     column_names
         List of column names.
     """
-    # Assume Oxford TSL by default
+    # Assume Oxford HKL by default
     vendor = "hkl"
 
     # Determine vendor by searching for the vendor footprint in the header
     vendor_footprint = {
         "emsoft": "EMsoft",
-        "orix": "Column names: phi1, Phi, phi2",
     }
     footprint_line = None
     for name, footprint in vendor_footprint.items():
