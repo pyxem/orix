@@ -33,6 +33,12 @@ from orix.quaternion import Rotation
 
 __all__ = ["file_reader"]
 
+# Plugin description
+format_name = "ctf"
+file_extensions = ["ctf"]
+writes = False
+writes_this = CrystalMap
+
 
 def file_reader(filename: str) -> CrystalMap:
     """Return a crystal map from a file in Oxford AZtec HKL's .ctf format. The
@@ -133,8 +139,6 @@ def _get_header(file: TextIOWrapper) -> List[str]:
     data_starting_row
         The starting row number for the data lines
     """
-    all_data = [line.rstrip() for line in file.readlines()]
-
     header = []
     line = file.readline()
     i = 0
