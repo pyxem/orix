@@ -104,8 +104,7 @@ def file_reader(filename: str) -> CrystalMap:
     data_dict["phase_id"][not_indexed] = -1
 
     # Set scan unit
-    scan_unit = "um"
-    data_dict["scan_unit"] = scan_unit
+    data_dict["scan_unit"] = "um"
 
     # Create rotations
     data_dict["rotations"] = Rotation.from_euler(
