@@ -57,9 +57,7 @@ def select_point(image):
         eu = xmap_yx.rotations.to_euler(degrees=True)[0]
         phase_name = xmap_yx.phases_in_data[:].name
         plt.plot(x_pos, y_pos, "+", c="black", markersize=15, markeredgewidth=3)
-        plt.title(
-            f"Phase: {phase_name}, Euler angles: {np.array_str(eu, precision=2)[1:-1]}"
-        )
+        plt.title(f"Phase: {phase_name}, Euler angles: {np.array_str(eu, precision=2)[1:-1]}")
         plt.draw()
 
     fig.canvas.mpl_connect("button_press_event", on_click)
