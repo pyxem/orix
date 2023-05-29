@@ -328,7 +328,6 @@ def _get_phases_from_header(
         "lattice_constants": [],
         "id": [],
     }
-
     for i, line in enumerate(header):
         if line.startswith("Phases"):
             break
