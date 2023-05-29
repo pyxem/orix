@@ -1,18 +1,18 @@
 """
-========
-Interactive IPF map with Euler angle 
-========
+====================================
+Interactive IPF map with Euler angle
+====================================
 
-This example shows how to use [`matplotlib event connections`](https://matplotlib.org/stable/users/explain/event_handling.html) 
-to add an interactive click function to the IPF plot to retrieve the phase 
-name and corresponding Euler angles from the location of click.
+This example shows how to use
+:doc:`matplotlib event connections <matplotlib:users/explain/event_handling>`
+to add an interactive click function to the inverse pole figure (IPF) plot to
+retrieve the phase name and corresponding Euler angles from the location of
+click.
 """
 import matplotlib.pyplot as plt
 import numpy as np
 
 from orix import data, plot
-from orix.quaternion import Rotation
-from orix.vector import Miller
 
 xmap = data.sdss_ferrite_austenite(allow_download=True)
 print(xmap)
@@ -53,13 +53,12 @@ def select_point(image):
             x_pos = 0
             y_pos = 0
 
-        phase = xmap.phases[xmap[int(y_pos), int(x_pos)].phase_id[0]].name
-        [Eu1, Eu2, Eu3] = np.rad2deg(
-            Rotation.to_euler(xmap[int(y_pos), int(x_pos)].orientations)
-        )[0]
+        xmap_yx = xmap[int(y_pos), int(x_pos)]
+        eu = xmap_yx.rotations.to_euler(degrees=True)[0]
+        phase_name = xmap_yx.phases_in_data[:].name
         plt.plot(x_pos, y_pos, "+", c="black", markersize=15, markeredgewidth=3)
         plt.title(
-            f"Phase: {phase}, Euler angles: {np.round(Eu1, 2)}, {np.round(Eu2, 2)}, {np.round(Eu3, 2)}"
+            f"Phase: {phase_name}, Euler angles: {np.array_str(eu, precision=2)[1:-1]}"
         )
         plt.draw()
 

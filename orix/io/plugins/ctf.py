@@ -16,30 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Reader of a crystal map from an .ctf file in formats produced by Oxford AZtec
-, EMsoft's EMdpmerge program.
+"""Reader of a crystal map from an .ctf file in formats produced by
+Oxford AZtec and EMsoft's EMdpmerge program.
 """
 
 from io import TextIOWrapper
-import re
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple
 import warnings
 
 from diffpy.structure import Lattice, Structure
 import numpy as np
 
-from orix import __version__
-from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
+# from orix import __version__
+from orix.crystal_map import CrystalMap, PhaseList
 from orix.quaternion import Rotation
-from orix.quaternion.symmetry import point_group_aliases
 
-__all__ = ["file_reader", "file_writer"]
-
-# Plugin description
-format_name = "ctf"
-file_extensions = ["ctf"]
-writes = True
-writes_this = CrystalMap
+__all__ = ["file_reader"]
 
 
 def file_reader(filename: str) -> CrystalMap:
@@ -111,9 +103,8 @@ def file_reader(filename: str) -> CrystalMap:
     )
 
     # Set which data points are not indexed
-    if vendor in ["orix", "hkl"]:
-        not_indexed = data_dict["phase_id"] == 0
-        data_dict["phase_id"][not_indexed] = -1
+    not_indexed = data_dict["phase_id"] == 0
+    data_dict["phase_id"][not_indexed] = -1
 
     # Set scan unit
     scan_unit = "um"
@@ -149,15 +140,32 @@ def _get_header(file: TextIOWrapper) -> List[str]:
     all_data = [line.rstrip() for line in file.readlines()]
 
     phase_num_row = 0
+    phases_num_line = str()
     for line in all_data:
         if "Phases" in line:
             phases_num_line = line
             break
         phase_num_row += 1
+    if phases_num_line:
+        try:
+            phase_num = int(phases_num_line.split("\t")[1])
+            header = all_data[: (phase_num_row + phase_num + 1)]
+            data_starting_row = phase_num_row + phase_num + 2
+        except:
+            header = None
+            data_starting_row = None
+            warnings.warn(
+                f"Total number of phases has to be defined in the .ctf file."
+                f"No such information can be found. Incompatible file format."
+            )
+    else:
+        header = None
+        data_starting_row = None
+        warnings.warn(
+            f"Total number of phases has to be defined in the .ctf file."
+            f"No such information can be found. Incompatible file format."
+        )
 
-    phase_num = int(phases_num_line.split("\t")[1])
-    header = all_data[: (phase_num_row + phase_num + 1)]
-    data_starting_row = phase_num_row + phase_num + 2
     return header, data_starting_row
 
 
@@ -316,42 +324,31 @@ def _get_phases_from_header(
     -----
     Regular expressions are used to collect phase name, formula and
     point group. This function have been tested with files from the
-    following vendor's formats: Oxford AZtec HKL, and EMsoft v4/v5.
+    following vendor's formats: Oxford AZtec HKL v5/v6, and EMsoft v4/v5.
     """
-
     phases = {
         "name": [],
         "space_group": [],
         "lattice_constants": [],
         "id": [],
     }
-    phase_num_row = 0
-    for line in header:
-        if "Phases" in line:
-            phases_num_line = line
-            break
-        phase_num_row += 1
-    phase_num = int(phases_num_line.split("\t")[1])
 
-    for num in range(phase_num):
-        phase_data = header[phase_num_row + num + 1].split("\t")
+    for i, line in enumerate(header):
+        if line.startswith("Phases"):
+            break
+
+    n_phases = int(line.split("\t")[1])
+
+    for j in range(n_phases):
+        phase_data = header[i + 1 + j].split("\t")
         phases["name"].append(phase_data[2])
         phases["space_group"].append(int(phase_data[4]))
         phases["lattice_constants"].append(
             [float(i) for i in phase_data[0].split(";") + phase_data[1].split(";")]
         )
-        phases["id"].append(num + 1)
+        phases["id"].append(j + 1)
 
     names = phases["name"]
-
-    # Ensure each phase has an ID (hopefully found in the header)
     phase_ids = [int(i) for i in phases["id"]]
-    n_phases = len(phases["name"])
-    if len(phase_ids) == 0:
-        phase_ids += [i for i in range(n_phases)]
-    elif n_phases - len(phase_ids) > 0 and len(phase_ids) != 0:
-        next_id = max(phase_ids) + 1
-        n_left = n_phases - len(phase_ids)
-        phase_ids += [i for i in range(next_id, next_id + n_left)]
 
     return phase_ids, names, phases["space_group"], phases["lattice_constants"]
