@@ -44,10 +44,7 @@ def file_reader(filename: str) -> CrystalMap:
     * EMsoft (from program `EMdpmerge`)
     * orix
 
-    All points satisfying the following criteria are classified as not
-    indexed:
-
-    * Oxford AZtec HKL: Phase == 0
+    All points with a phase of 0 are classified as not indexed.
 
     Parameters
     ----------
