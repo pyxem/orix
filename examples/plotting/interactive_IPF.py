@@ -5,9 +5,17 @@ Interactive IPF map with Euler angle
 
 This example shows how to use
 :doc:`matplotlib event connections <matplotlib:users/explain/event_handling>`
-to add an interactive click function to the inverse pole figure (IPF) plot to
+to add an interactive click function to the inverse pole figure (IPF) map to
 retrieve the phase name and corresponding Euler angles from the location of
 click.
+
+.. note::
+    This example shows the interactive capabilities of Matplotlib, and this
+    will not appear in the static documentation. Please run this code on your
+    machine to see the interactivity.
+
+    You can copy and paste individual parts, or download the entire example
+    using the link at the bottom of the page.
 """
 import matplotlib.pyplot as plt
 import numpy as np
