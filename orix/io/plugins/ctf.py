@@ -37,7 +37,7 @@ __all__ = ["file_reader"]
 format_name = "ctf"
 file_extensions = ["ctf"]
 writes = False
-writes_this = CrystalMap
+writes_this = None
 
 
 def file_reader(filename: str) -> CrystalMap:
