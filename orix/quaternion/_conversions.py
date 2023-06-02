@@ -498,12 +498,51 @@ def ax2qu_2d(ax: np.ndarray) -> np.ndarray:
     return qu
 
 
-def ax2qu(ax: np.ndarray) -> np.ndarray:
+def ax2qu(axes: np.ndarray, angles: np.ndarray) -> np.ndarray:
     """N-dimensional wrapper for ax2qu_2d, see the docstring of that
-    function.
+    function for further details.
+
+    Parameters
+    ----------
+    axes
+        (...,3) dimensional numpy array of (x, y, z) vectors.
+
+    angles
+        numpy array of angles in radians.
+
+    Returns
+    -------
+    qu
+        2D array of n (a, b, c, d) as 64-bit floats.
+
     """
+    # convert to numpy arrays of shape (...,3) and (...,1)
+    axes = np.atleast_2d(axes)
+    angles = np.atleast_1d(angles)
+    if axes.shape[-1] != 3:
+        raise ValueError("axes must be an array of shape (...,3)")
+    if angles.shape[-1] != 1:
+        angles = angles.reshape(angles.shape + (1,))
+    # get the shape of the data itself.
+    ax_shape = axes.shape[:-1]
+    ang_shape = angles.shape[:-1]
+    # case of n-dimensional axis and single angle
+    if ang_shape == (1,):
+        angles = np.ones(ax_shape + (1,)) * angles
+    # case of single axis and n-dimensional angle
+    elif ax_shape == (1,):
+        axes = np.ones(ang_shape + (3,)) * axes
+    elif ax_shape != ang_shape:
+        raise ValueError("""
+        The dimensions of axes and angles are {} and {}, respectively.
+        Either the dimensions must match, or one must be a singular value.
+        """.format(axes.shape, angles.shape))
+    ax = np.concatenate([axes.data, angles], axis=-1)
+
+    # convert the 'ax' array to the 2D array expected by ax2qu_2d
     n_ax = np.prod(ax.shape[:-1])
     ax2d = ax.astype(np.float64).reshape(n_ax, 4)
+    # reshape the resulting quaternion to the original shape.
     qu = ax2qu_2d(ax2d).reshape(ax.shape)
     return qu
 

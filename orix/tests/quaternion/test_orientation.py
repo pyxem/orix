@@ -502,8 +502,11 @@ class TestOrientationInitialization:
         o1 = Orientation.from_axes_angles(axis, angle, Oh)
         assert np.allclose(o1.to_euler(degrees=True), [135, 90, 225])
         assert o1.symmetry.name == "m-3m"
-        o2 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
+        deg_angle = np.rad2deg(angle)
+        o2 = Orientation.from_axes_angles(axis, deg_angle, Oh, degrees=True)
         assert np.allclose(o1.data, o2.data)
+        assert o1.symmetry.name == o2.symmetry.name == "m-3m"
+        assert np.allclose(o1.symmetry.data, o2.symmetry.data)
 
     def test_get_identity(self):
         """Get the identity orientation via two alternative routes."""

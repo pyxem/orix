@@ -27,7 +27,7 @@ import numpy as np
 import quaternion
 from scipy.spatial.transform import Rotation as SciPyRotation
 
-from orix._util import deprecated_argument
+from orix._util import deprecated, deprecated_argument
 from orix.base import Object3d
 from orix.quaternion import _conversions
 from orix.vector import AxAngle, Miller, Vector3d
@@ -70,9 +70,8 @@ class Quaternion(Object3d):
        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c))
     """
 
-    ########################################
-    ## Setters and Properties             ##
-    ########################################
+    # Setters and Properties #
+
     dim = 4
 
     @property
@@ -168,6 +167,8 @@ class Quaternion(Object3d):
         q = quaternion.from_float_array(self.data).conj()
         return Quaternion(quaternion.as_float_array(q))
 
+    # double underscore functions #
+
     def __invert__(self) -> Quaternion:
         return self.__class__(self.conj.data / (self.norm**2)[..., np.newaxis])
 
@@ -195,32 +196,32 @@ class Quaternion(Object3d):
     def __neg__(self) -> Quaternion:
         return self.__class__(-self.data)
 
-    ########################################
-    ##  "from_*" Class methods            ##
-    ########################################
+    # "from_*" Class methods #
 
-    # @classmethod
-    # def from_neo_euler(cls, neo_euler: "NeoEuler") -> Quaternion:
-    #     """Create unit quaternion(s) from a neo-euler (vector)
-    #     representation.
+    # TODO: Remove before 0.13.0
+    @classmethod
+    @deprecated(since="0.12", removal="0.13.0")
+    def from_neo_euler(cls, neo_euler: "NeoEuler") -> Quaternion:
+        """Create unit quaternion(s) from a neo-euler (vector)
+        representation.
 
-    #     Parameters
-    #     ----------
-    #     neo_euler
-    #         Vector parametrization of quaternions.
+        Parameters
+        ----------
+        neo_euler
+            Vector parametrization of quaternions.
 
-    #     Returns
-    #     -------
-    #     q
-    #         Unit quaternion(s).
-    #     """
-    #     s = np.sin(neo_euler.angle / 2)
-    #     a = np.cos(neo_euler.angle / 2)
-    #     b = s * neo_euler.axis.x
-    #     c = s * neo_euler.axis.y
-    #     d = s * neo_euler.axis.z
-    #     q = cls(np.stack([a, b, c, d], axis=-1)).unit
-    #     return q
+        Returns
+        -------
+        q
+            Unit quaternion(s).
+        """
+        s = np.sin(neo_euler.angle / 2)
+        a = np.cos(neo_euler.angle / 2)
+        b = s * neo_euler.axis.x
+        c = s * neo_euler.axis.y
+        d = s * neo_euler.axis.z
+        q = cls(np.stack([a, b, c, d], axis=-1)).unit
+        return q
 
     @classmethod
     def from_rodrigues(
@@ -229,16 +230,10 @@ class Quaternion(Object3d):
         ignore_warnings: bool = False,
     ) -> Quaternion:
         """Create unit quaternion(s) from a Rodrigues vector
-        representation
+        representation.
 
         These are also referred to as Rodrigues-Frank vectors, and
         are a neo-eulerian vector representation of orientation space:
-
-        Note, while this functionality has been added for completeness,
-        using rodrigues vectors for calculations is generally a bad
-        idea. Since their length scales with tan(angle/2), so does their
-        relative error. additionally, rotations of 180 are equivalent to
-        infinitely long vectors.
 
         Parameters
         ----------
@@ -252,25 +247,32 @@ class Quaternion(Object3d):
         -------
         q
             Unit quaternion(s).
+
+        Notes
+        -------
+        Rodrigues vectors are often useful as a visualization tool. However,
+        the length scales with :math:\tan(\theta/2), as does their relative
+        error. Additionally, rotations of 180 degrees are equivalent to
+        infinitely long vectors. For calculations, a good alternative can
+        often be axis/angle pairs.
         """
         axes = Vector3d(axes)
         norms = axes.norm
         angles = np.arctan(norms) * 2
 
-        if ignore_warnings == False:
-            if np.max(angles) > 179.999:
-                raise UserWarning(
-                    "Maximum angle is greater than 179.999. Rodrigues "
-                    + "Vectors cannot paramaterize 2-fold rotations. "
-                    + "Consider an alternative import method."
-                )
-            if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
-                raise UserWarning(
-                    "Maximum estimated error is greater than 0.1%."
-                    + "Rodriguez vectors have increaing associated errors"
-                    + " for small angle rotations. Consider an alternative "
-                    + "import method."
-                )
+        if np.max(angles) > 179.999:
+            raise UserWarning(
+                "Maximum angle is greater than 179.999. Rodrigues "
+                + "Vectors cannot paramaterize 2-fold rotations. "
+                + "Consider an alternative import method."
+            )
+        if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
+            raise UserWarning(
+                "Maximum estimated error is greater than 0.1%."
+                + "Rodriguez vectors have increaing associated errors"
+                + " for small angle rotations. Consider an alternative "
+                + "import method."
+            )
 
         qu = cls.from_axes_angles(axes, angles)
         return qu.unit
@@ -312,30 +314,13 @@ class Quaternion(Object3d):
         --------
         from_neo_euler
         """
-        # convert all possible tuple, numpy, and/list combinations into
-        # the numpy array of shape (..,4) expected by
-        # quaternions._conversions.ax2qu()
-        axes = Vector3d(axes).unit
+        # convert all the reasonable tuple, numpy, or list representations of
+        # axes and angles into numpy arrays.
+        axes = Vector3d(axes).unit.data
+        angles = np.array(angles)
         if degrees:
             angles = np.deg2rad(angles)
-        angles = np.array(angles)
-        if angles.shape == ():
-            angles = angles.reshape(1)
-        # case of n-dimensional axis and single angle
-        if angles.shape == (1,):
-            angles = np.ones(axes.shape + (1,)) * angles
-        # case of single axis and n-dimensional angle
-        elif axes.shape == (1,):
-            axes = Vector3d(axes.data * np.ones(angles.shape + (1,)))
-            angles = angles.reshape(angles.shape + (1,))
-        # case of n-dimensional axis and n-1 dimensional angle array
-        elif angles.shape == axes.shape:
-            angles = angles.reshape(axes.shape + (1,))
-        else:
-            assert (angles.shape == axes.shape + (1,), "oopsies")
-        axis_angle = np.concatenate([axes.data, angles], axis=-1)
-        # convert to quaternion with _conversions.ax2qu
-        quat = cls(_conversions.ax2qu(axis_angle))
+        quat = cls(_conversions.ax2qu(axes, angles))
         return quat.unit
 
     # TODO: Remove decorator, **kwargs, and use of "convention" in 0.13
@@ -390,12 +375,10 @@ class Quaternion(Object3d):
         if degrees:
             euler = np.deg2rad(euler)
 
-        eu = np.asarray(euler)
+        eu = np.atleast_2d(euler)
         if np.any(np.abs(eu) > 4 * np.pi):
             warnings.warn("Angles are quite high, did you forget to set degrees=True?")
 
-        if eu.shape == (3,):
-            eu = eu.reshape([1, 3])
         q = _conversions.eu2qu(eu)
         q = cls(q).unit
 
@@ -430,10 +413,13 @@ class Quaternion(Object3d):
          [1. 0. 0. 0.]
          [0. 1. 0. 0.]]
         """
-        om = np.asarray(matrix)
-        # Assert input can be interpreted as an array of (3, 3) arrays
-        assert om.ndim >= 2
-        assert om.shape[-2:] == (3, 3)
+        # Verify the input can be interpreted as an array of (3, 3) arrays
+        om = np.atleast2d(matrix)
+        if om.shape[-2:] != (3, 3):
+            raise ValueError(
+                "the last two dimensions of 'matrix' must be (3, 3)"
+                )
+
         q = _conversions.om2qu(om)
         q = cls(q).unit
 
@@ -637,9 +623,7 @@ class Quaternion(Object3d):
         q = cls(np.vstack((a, b, c, d)).T)
         return q
 
-    ########################################
-    ##  All other Class methods           ##
-    ########################################
+    # All other Class methods #
 
     @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
@@ -687,9 +671,7 @@ class Quaternion(Object3d):
         q[..., 0] = 1
         return cls(q)
 
-    ########################################
-    ##  to_* Functions                  ##
-    ########################################
+    #  all "to_*" Functions #
 
     # TODO: Remove decorator and **kwargs in 0.13
     @deprecated_argument("convention", since="0.9", removal="0.13")
@@ -835,7 +817,7 @@ class Quaternion(Object3d):
         return self.axis, self.angle
 
     def to_rodrigues(self) -> Vector3d:
-        """Return the neo-Eulerian Rodrigues Vector representation of the
+        r"""Return the neo-Eulerian Rodrigues Vector representation of the
         normalized quaternions.
         :cite:`rowenhorst2015consistent`.
 
@@ -843,12 +825,14 @@ class Quaternion(Object3d):
         -------
         rod
             an orix.vector.Vector3D object containing the axes of rotation,
-            with lengths equal to tan(angle/2).
+            with lengths equal to :math:`\tan(angle/2)` .
+
         Examples
         --------
         #TODO
+
         Notes
-        --------
+        -----
         This is often used as a plotting tool, as it produces an isomorphic
         (though not volume-preserving) mapping from the non-euclidean
         orientation space into cartesian coordinates.Additionaly, crystal
@@ -860,25 +844,26 @@ class Quaternion(Object3d):
         return rod
 
     def to_homochoric(self) -> Vector3d:
-        """Return the neo-Eulerian Homochoric Vector representation of
-        the normalized quaternions.
-        :cite:`rowenhorst2015consistent`.
+        r"""Return the neo-Eulerian homochoric Vector representation of
+        the normalized quaternions. :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
-        homo
-            an orix.vector.Vector3D object containing the axes of rotation,
-            with lengths equal to [0.75*(angle-sin(angle))]^(1/3).
+        vec
+            A :class:.Vector3D object containing the axes of rotation,
+            with lengths equal to
+            :math:`0.75\cdot(\theta - \sin(\theta))^{1/3}` .
 
         Examples
         --------
         #TODO
+
         Notes
-        --------
+        -----
         This is often used as a plotting tool, as it produces an isomorphic
         (though not angle-preserving) mapping from the non-euclidean
         orientation space into cartesian coordinates. Additionaly, unlike
-        Rodriguez vectors, all rotations map into a finite space, bounded by
+        Rodrigues vectors, all rotations map into a finite space, bounded by
         a sphere of radius pi.
         """
         ax = self.axis.unit
@@ -887,9 +872,7 @@ class Quaternion(Object3d):
         homo = ax * magnitude
         return homo
 
-    ########################################
-    ##  Public Functions                  ##
-    ########################################
+    # Public Functions #
 
     def dot(self, other: Quaternion) -> np.ndarray:
         """Return the dot products of the quaternions and the other
@@ -1047,9 +1030,7 @@ class Quaternion(Object3d):
                 "with `other` of type `Quaternion` or `Vector3d`"
             )
 
-    ########################################
-    ##  Private Functions                 ##
-    ########################################
+    # Private Functions #
 
     def _outer_dask(
         self, other: Union[Quaternion, Vector3d], chunk_size: int = 20

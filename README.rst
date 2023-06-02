@@ -70,7 +70,7 @@ You can also visit `PyPI <https://pypi.org/project/orix>`_, `Anaconda
 to download the source.
 
 Further details are available in the `installation guide
-<https://orix.readthedocs.io/en/latest/installation.html>`_.
+<https://orix.readthedocs.io/en/latest/#installation.html>`_.
 
 Citing orix
 -----------
