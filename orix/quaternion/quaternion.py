@@ -217,25 +217,32 @@ class Quaternion(Object3d):
         -------
         q
             Unit quaternion(s).
+
+        Notes
+        -------
+        Rodrigues vectors are often useful as a visualization tool. However,
+        the length scales with :math:\tan(\theta/2), as does their relative
+        error. Additionally, rotations of 180 degrees are equivalent to
+        infinitely long vectors. For calculations, a good alternative can
+        often be axis/angle pairs.
         """
         axes = Vector3d(axes)
         norms = axes.norm
         angles = np.arctan(norms) * 2
 
-        if ignore_warnings == False:
-            if np.max(angles) > 179.999:
-                raise UserWarning(
-                    "Maximum angle is greater than 179.999. Rodrigues "
-                    + "Vectors cannot paramaterize 2-fold rotations. "
-                    + "Consider an alternative import method."
-                )
-            if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
-                raise UserWarning(
-                    "Maximum estimated error is greater than 0.1%."
-                    + "Rodriguez vectors have increaing associated errors"
-                    + " for small angle rotations. Consider an alternative "
-                    + "import method."
-                )
+        if np.max(angles) > 179.999:
+            raise UserWarning(
+                "Maximum angle is greater than 179.999. Rodrigues "
+                + "Vectors cannot paramaterize 2-fold rotations. "
+                + "Consider an alternative import method."
+            )
+        if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
+            raise UserWarning(
+                "Maximum estimated error is greater than 0.1%."
+                + "Rodriguez vectors have increaing associated errors"
+                + " for small angle rotations. Consider an alternative "
+                + "import method."
+            )
 
         qu = cls.from_axes_angles(axes, angles)
         return qu.unit
@@ -798,9 +805,7 @@ class Quaternion(Object3d):
         q = cls(np.vstack((a, b, c, d)).T)
         return q
 
-    ########################################
-    ##  All other Class methods           ##
-    ########################################
+    # All other Class methods #
 
     @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
