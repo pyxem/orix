@@ -229,6 +229,8 @@ class Quaternion(Object3d):
         axes = Vector3d(axes)
         norms = axes.norm
         angles = np.arctan(norms) * 2
+        if axes.size * angles.size == 0:
+            return cls.empty()
 
         if np.max(angles) > 179.999:
             raise UserWarning(
@@ -290,6 +292,9 @@ class Quaternion(Object3d):
 
         axes = Vector3d(axes).unit.data
         angles = np.array(angles)
+        # trivial case of no input data
+        if axes.size * angles.size == 0:
+            return cls.empty()
         if degrees:
             angles = np.deg2rad(angles)
 
