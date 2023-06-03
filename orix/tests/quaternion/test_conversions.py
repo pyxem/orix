@@ -289,11 +289,13 @@ class TestRotationConversions:
             ax2qu_2d.py_func(axis_angle_pairs), quaternions_conversions, atol=1e-4
         )
         # nd
-        assert np.allclose(ax2qu(axis_angle_pairs), quaternions_conversions, atol=1e-4)
+        qu = ax2qu(axis_angle_pairs[:, :3], axis_angle_pairs[:, 3])
+        assert np.allclose(qu, quaternions_conversions, atol=1e-4)
         # nd_float32
-        axang_32 = axis_angle_pairs.astype(np.float32)
+        ax_32 = axis_angle_pairs[:, :3].astype(np.float32)
+        ang_32 = axis_angle_pairs[:, 3].astype(np.float32)
         qu_32 = quaternions_conversions.astype(np.float32)
-        assert np.allclose(ax2qu(axang_32), qu_32, atol=1e-4)
+        assert np.allclose(ax2qu(ax_32, ang_32), qu_32, atol=1e-4)
 
     def test_ho2ro(self, homochoric_vectors, rodrigues_vectors):
         # single

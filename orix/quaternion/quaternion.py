@@ -259,6 +259,8 @@ class Quaternion(Object3d):
         axes = Vector3d(axes)
         norms = axes.norm
         angles = np.arctan(norms) * 2
+        if axes.size * angles.size == 0:
+            return cls.empty()
 
         if np.max(angles) > 179.999:
             raise UserWarning(
@@ -318,6 +320,9 @@ class Quaternion(Object3d):
         # axes and angles into numpy arrays.
         axes = Vector3d(axes).unit.data
         angles = np.array(angles)
+        # trivial case of no input data
+        if axes.size * angles.size == 0:
+            return cls.empty()
         if degrees:
             angles = np.deg2rad(angles)
         quat = cls(_conversions.ax2qu(axes, angles))
@@ -414,11 +419,9 @@ class Quaternion(Object3d):
          [0. 1. 0. 0.]]
         """
         # Verify the input can be interpreted as an array of (3, 3) arrays
-        om = np.atleast2d(matrix)
+        om = np.atleast_2d(matrix)
         if om.shape[-2:] != (3, 3):
-            raise ValueError(
-                "the last two dimensions of 'matrix' must be (3, 3)"
-                )
+            raise ValueError("the last two dimensions of 'matrix' must be (3, 3)")
 
         q = _conversions.om2qu(om)
         q = cls(q).unit

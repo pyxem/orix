@@ -521,7 +521,7 @@ def ax2qu(axes: np.ndarray, angles: np.ndarray) -> np.ndarray:
     angles = np.atleast_1d(angles)
     if axes.shape[-1] != 3:
         raise ValueError("axes must be an array of shape (...,3)")
-    if angles.shape[-1] != 1:
+    if angles.shape[-1] != 1 or angles.shape == (1,):
         angles = angles.reshape(angles.shape + (1,))
     # get the shape of the data itself.
     ax_shape = axes.shape[:-1]
@@ -533,10 +533,14 @@ def ax2qu(axes: np.ndarray, angles: np.ndarray) -> np.ndarray:
     elif ax_shape == (1,):
         axes = np.ones(ang_shape + (3,)) * axes
     elif ax_shape != ang_shape:
-        raise ValueError("""
+        raise ValueError(
+            """
         The dimensions of axes and angles are {} and {}, respectively.
         Either the dimensions must match, or one must be a singular value.
-        """.format(axes.shape, angles.shape))
+        """.format(
+                axes.shape, angles.shape
+            )
+        )
     ax = np.concatenate([axes.data, angles], axis=-1)
 
     # convert the 'ax' array to the 2D array expected by ax2qu_2d
