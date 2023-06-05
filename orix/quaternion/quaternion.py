@@ -846,15 +846,14 @@ class Quaternion(Object3d):
         return rod
 
     def to_homochoric(self) -> Vector3d:
-        r"""Return the neo-Eulerian homochoric Vector representation of
-        the normalized quaternions. :cite:`rowenhorst2015consistent`.
+        r"""Return the neo-Eulerian homochoric vector representation of
+        the normalized quaternions :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
         vec
-            A :class:.Vector3D object containing the axes of rotation,
-            with lengths equal to
-            :math:`0.75\cdot(\theta - \sin(\theta))^{1/3}` .
+            The axes of rotation, with lengths equal to
+            :math:`0.75\cdot(\theta - \sin(\theta))^{1/3}`.
 
         Examples
         --------
