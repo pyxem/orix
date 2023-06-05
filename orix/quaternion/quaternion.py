@@ -803,15 +803,14 @@ class Quaternion(Object3d):
 
     def to_axes_angles(self) -> Tuple[Vector3d, np.ndarray]:
         """Return an axis-angle representation of the normalized
-        quaternions.
-        :cite:`rowenhorst2015consistent`.
+        quaternions :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
         axis
-            an orix.vector.Vector3D object containing the axes of rotation
+            The axes of rotation.
         angle
-            a numpy array representing the angles of rotation
+            The angles of rotation.
 
         Examples
         --------
