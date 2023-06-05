@@ -973,6 +973,11 @@ class Quaternion(Object3d):
         degrees
             If True, the angles are given in degrees. Default is False.
 
+        Parameters
+        ----------
+        degrees
+            If True, the angles are given in degrees. Default is False.
+
         Returns
         -------
         ax
