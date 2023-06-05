@@ -835,11 +835,11 @@ class Quaternion(Object3d):
 
         Notes
         -----
-        This is often used as a plotting tool, as it produces an isomorphic
-        (though not volume-preserving) mapping from the non-euclidean
-        orientation space into cartesian coordinates.Additionaly, crystal
-        systems which contain 222 as a quotient group have rectilinear
-        fundamental zones in this representation.
+        This is often used as a plotting tool, as it produces an
+        isomorphic (though not volume-preserving) mapping from the
+        non-euclidean orientation space into cartesian coordinates.
+        Additionally, crystal systems which contain 222 as a quotient
+        group have rectilinear fundamental zones in this representation.
         """
         ax = self.axis.unit
         rod = ax * np.tan(self.angle / 2)
