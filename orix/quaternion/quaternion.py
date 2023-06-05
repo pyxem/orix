@@ -861,11 +861,11 @@ class Quaternion(Object3d):
 
         Notes
         -----
-        This is often used as a plotting tool, as it produces an isomorphic
-        (though not angle-preserving) mapping from the non-euclidean
-        orientation space into cartesian coordinates. Additionaly, unlike
-        Rodrigues vectors, all rotations map into a finite space, bounded by
-        a sphere of radius pi.
+        This is often used as a plotting tool, as it produces an
+        isomorphic (though not angle-preserving) mapping from the
+        non-euclidean orientation space into cartesian coordinates.
+        Additionally, unlike Rodrigues vectors, all rotations map into a
+        finite space, bounded by a sphere of radius :math:`\pi`.
         """
         ax = self.axis.unit
         ang = self.angle
