@@ -910,6 +910,11 @@ class Quaternion(Object3d):
         r"""Return the unit quaternions as axis-angle vectors
         :cite:`rowenhorst2015consistent`.
 
+        Parameters
+        ----------
+        degrees
+            If True, the angles are given in degrees. Default is False.
+
         Returns
         -------
         ax

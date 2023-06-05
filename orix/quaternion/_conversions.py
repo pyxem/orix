@@ -946,6 +946,8 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
     norm = np.sqrt(np.sum(np.square(qu)))
     qu = qu / norm
 
+    norm = np.sqrt(np.sum(np.square(qu)))
+    qu = qu/norm
     return qu
 
 
@@ -1118,7 +1120,6 @@ def qu2om_single(qu: np.ndarray) -> np.ndarray:
     ac = qu[0] * qu[2]
     cd = qu[2] * qu[3]
     ab = qu[0] * qu[1]
-
     om[0, 0] = qq + 2 * bb
     om[0, 1] = 2 * (bc - ad)
     om[0, 2] = 2 * (bd + ac)
