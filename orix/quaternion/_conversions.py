@@ -1045,7 +1045,6 @@ def qu2eu(qu: np.ndarray) -> np.ndarray:
     eu = qu2eu_2d(qu2d).reshape(qu.shape[:-1] + (3,))
     return eu
 
-
 @nb.jit("float64[:, :](float64[:])", cache=True, nogil=True, nopython=True)
 def qu2om_single(qu: np.ndarray) -> np.ndarray:
     """Convert a single unit quaternion into an orthogonal rotation
