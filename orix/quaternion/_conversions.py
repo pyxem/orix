@@ -758,7 +758,7 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     ma
-        (3, 3) rotation matrix stored as a 3D nupy array as 64-bit floats.
+        (3, 3) rotation matrix as an array of 64-bit floats.
 
     Returns
     -------

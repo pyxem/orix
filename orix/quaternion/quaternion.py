@@ -70,7 +70,7 @@ class Quaternion(Object3d):
        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c))
     """
 
-    # Setters and Properties #
+    # -------------------------- Properties ------------------------- #
 
     dim = 4
 
@@ -167,7 +167,7 @@ class Quaternion(Object3d):
         q = quaternion.from_float_array(self.data).conj()
         return Quaternion(quaternion.as_float_array(q))
 
-    # double underscore functions #
+    # ----------------------- Dunder functions ---------------------- #
 
     def __invert__(self) -> Quaternion:
         return self.__class__(self.conj.data / (self.norm**2)[..., np.newaxis])
@@ -196,11 +196,11 @@ class Quaternion(Object3d):
     def __neg__(self) -> Quaternion:
         return self.__class__(-self.data)
 
-    # "from_*" Class methods #
+    # ------------------- "from_*" class methods -------------------- #
 
     # TODO: Remove before 0.13.0
     @classmethod
-    @deprecated(since="0.12", removal="0.13.0")
+    @deprecated(since="0.12", removal="0.13")
     def from_neo_euler(cls, neo_euler: "NeoEuler") -> Quaternion:
         """Create unit quaternion(s) from a neo-euler (vector)
         representation.
@@ -568,6 +568,8 @@ class Quaternion(Object3d):
 
         return out[0] if len(out) == 1 else tuple(out)
 
+    # ------------------ Additional Class methods ------------------- #
+
     @classmethod
     def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
         """Pointwise cross product of three quaternions.
@@ -626,8 +628,6 @@ class Quaternion(Object3d):
         q = cls(np.vstack((a, b, c, d)).T)
         return q
 
-    # All other Class methods #
-
     @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
         """Return random quaternions.
@@ -674,7 +674,7 @@ class Quaternion(Object3d):
         q[..., 0] = 1
         return cls(q)
 
-    #  all "to_*" Functions #
+    # -------------------- All "to_*" functions ---------------_----- #
 
     # TODO: Remove decorator and **kwargs in 0.13
     @deprecated_argument("convention", since="0.9", removal="0.13")
@@ -820,14 +820,13 @@ class Quaternion(Object3d):
 
     def to_rodrigues(self) -> Vector3d:
         r"""Return the neo-Eulerian Rodrigues Vector representation of the
-        normalized quaternions.
-        :cite:`rowenhorst2015consistent`.
+        normalized quaternions :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
         rod
-            an orix.vector.Vector3D object containing the axes of rotation,
-            with lengths equal to :math:`\tan(angle/2)` .
+            The axis of rotation, with lengths equal to
+            :math:`\tan(angle/2)` .
 
         Examples
         --------
@@ -870,10 +869,10 @@ class Quaternion(Object3d):
         ax = self.axis.unit
         ang = self.angle
         magnitude = (0.75 * (ang - np.sin(ang))) ** (1 / 3)
-        homo = ax * magnitude
-        return homo
+        vec = ax * magnitude
+        return vec
 
-    # Public Functions #
+    # -------------------- Other public functions ------------------- #
 
     def dot(self, other: Quaternion) -> np.ndarray:
         """Return the dot products of the quaternions and the other
@@ -1031,7 +1030,7 @@ class Quaternion(Object3d):
                 "with `other` of type `Quaternion` or `Vector3d`"
             )
 
-    # Private Functions #
+    # ------------------- Other private functions ------------------- #
 
     def _outer_dask(
         self, other: Union[Quaternion, Vector3d], chunk_size: int = 20
