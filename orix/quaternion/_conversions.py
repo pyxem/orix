@@ -897,17 +897,18 @@ def qu2eu_single(qu: np.ndarray) -> np.ndarray:
         return eu
     # account for the generic case
     eu_0a = ((qu[1] * qu[3]) - (qu[0]*qu[2]))/chi
-    eu_0b = -((qu[0] * qu[1]) - (qu[2]*qu[3]))/chi
+    eu_0b = (-(qu[0] * qu[1]) - (qu[2]*qu[3]))/chi
     eu_2a = ((qu[0] * qu[2]) + (qu[1]*qu[3]))/chi
     eu_2b = ((qu[2] * qu[3]) - (qu[0]*qu[1]))/chi
 
     eu[0] = np.arctan2(eu_0a, eu_0b)
-    eu[0] = np.arctan2(2*chi, q_03 - q_12)
+    eu[1] = np.arctan2(2*chi, q_03 - q_12)
     eu[2] = np.arctan2(eu_2a, eu_2b)
 
     # account for rounding errors
     eu[np.abs(eu) < _FLOAT_EPS] = 0
-    return eu
+    # convert negative angles to positives and return the result
+    return np.mod(eu, np.pi*2)
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
@@ -969,12 +970,12 @@ def qu2om_single(qu: np.ndarray) -> np.ndarray:
     array shapes and data types.
     """
 
-    om = np.zeros((3, 3), dtype = np.float64)
+    om = np.zeros((3, 3), dtype=np.float64)
     # Following A.15, calculate q_mean (qq below)
-    bb = qu[1]**2
-    cc = qu[2]**2
-    dd = qu[3]**2
-    qq = qu[0]**2 - (bb + cc + dd)
+    bb = qu[1] ** 2
+    cc = qu[2] ** 2
+    dd = qu[3] ** 2
+    qq = qu[0] ** 2 - (bb + cc + dd)
     # calculate all the other values used in A.15
     bc = qu[1] * qu[2]
     ad = qu[0] * qu[3]
