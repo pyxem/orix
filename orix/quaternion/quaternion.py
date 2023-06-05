@@ -810,8 +810,6 @@ class Quaternion(Object3d):
         q = cls(np.vstack((a, b, c, d)).T)
         return q
 
-    # All other Class methods #
-
     @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
         """Create random unit quaternions.
