@@ -30,6 +30,8 @@ for users.
 import numba as nb
 import numpy as np
 
+_FLOAT_EPS = np.finfo(float).eps
+_PI = np.pi
 
 @nb.jit("int64(float64[:])", cache=True, nogil=True, nopython=True)
 def get_pyramid_single(xyz: np.ndarray) -> int:
@@ -468,7 +470,10 @@ def ax2qu_single(ax: np.ndarray) -> np.ndarray:
     else:
         c = np.cos(ax[3] * 0.5)
         s = np.sin(ax[3] * 0.5)
-        return np.append(c, ax[:3] * s)
+        qu = np.append(c, ax[:3] * s)
+        norm = np.sqrt(np.sum(np.square(qu)))
+        qu = qu/norm
+        return qu
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
@@ -807,6 +812,8 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
     else:
         qu[3] = 0.5 * np.sqrt(q3_almost)
 
+    norm = np.sqrt(np.sum(np.square(qu)))
+    qu = qu/norm
     return qu
 
 
@@ -847,3 +854,181 @@ def om2qu(om: np.ndarray) -> np.ndarray:
     om3d = om.astype(np.float64).reshape(n_om, 3, 3)
     qu = om2qu_3d(om3d).reshape(om.shape[:-2] + (4,))
     return qu
+
+
+@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+def qu2eu_single(qu: np.ndarray) -> np.ndarray:
+    """Convert a unit quaternion to three Euler angles.
+
+    Parameters
+    ----------
+    qu
+        a unit quaternion.
+
+    Return
+    ------
+    eu
+        (alpha, beta, gamma) Euler angles given in radians
+        in the Bunge convention (ie, passive Z-X-Z).
+
+    Notes
+    -----
+    Uses Eqs. A.14 :cite:`rowenhorst2015consistent`.
+
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    eu = np.zeros(3, dtype=np.float64)
+
+    # Following A.14, compute q_03, q_12, and chi, assuming P=1
+    q_03 = (qu[0] * qu[0]) + (qu[3] * qu[3])
+    q_12 = (qu[1] * qu[1]) + (qu[2] * qu[2])
+    chi = np.sqrt(q_03*q_12)
+    # account for cases where chi is below rounding error
+    if chi < _FLOAT_EPS:
+        if q_12 < _FLOAT_EPS:
+            a = -2*qu[0]*qu[3]
+            b = qu[0]*qu[0] - qu[3]*qu[3]
+        else:
+            a = -2*qu[1]*qu[2]
+            b = qu[1]*qu[1] - qu[2]*qu[2]
+            eu[1] = _PI
+        eu[0] = np.arctan2(a, b)
+        return eu
+    # account for the generic case
+    eu_0a = ((qu[1] * qu[3]) - (qu[0]*qu[2]))/chi
+    eu_0b = -((qu[0] * qu[1]) - (qu[2]*qu[3]))/chi
+    eu_2a = ((qu[0] * qu[2]) + (qu[1]*qu[3]))/chi
+    eu_2b = ((qu[2] * qu[3]) - (qu[0]*qu[1]))/chi
+
+    eu[0] = np.arctan2(eu_0a, eu_0b)
+    eu[0] = np.arctan2(2*chi, q_03 - q_12)
+    eu[2] = np.arctan2(eu_2a, eu_2b)
+
+    # account for rounding errors
+    eu[np.abs(eu) < _FLOAT_EPS] = 0
+    return eu
+
+
+@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+def qu2eu_2d(qu: np.ndarray) -> np.ndarray:
+    """Conversion from an n-by-4 array of unit quaternions to an n-by-3
+    array of Euler angles.
+
+    Parameters
+    ----------
+    qu
+        2D array of n (q0, q1, q2, q3) quaternions as 64-bit floats.
+
+    Returns
+    -------
+    eu
+        2D array of n (alpha, beta, gamma) as 64-bit floats.
+
+    Notes
+    -----
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    n_vectors = qu.shape[0]
+    eu = np.zeros((n_vectors, 3), dtype=np.float64)
+    for i in nb.prange(n_vectors):
+        eu[i] = qu2eu_single(qu[i])
+    return eu
+
+
+def qu2eu(qu: np.ndarray) -> np.ndarray:
+    """N-dimensional wrapper for qu2eu_2d, see the docstring of that
+    function.
+    """
+    n_qu = np.prod(qu.shape[:-1])
+    qu2d = qu.astype(np.float64).reshape(n_qu, 4)
+    eu = qu2eu_2d(qu2d).reshape(qu.shape[:-1] + (3,))
+    return eu
+
+@nb.jit("float64[:, :](float64[:])", cache=True, nogil=True, nopython=True)
+def qu2om_single(qu: np.ndarray) -> np.ndarray:
+    """Convert a single unit quaternion into an orthogonal rotation
+    matrix.
+
+    Parameters
+    ----------
+    qu
+        1D unit quaternion (a, b, c, d) as 64-bit floats.
+
+    Returns
+    -------
+    om
+        (3, 3) rotation matrix as an array of 64-bit floats.
+
+    Notes
+    -----
+    Uses Eqs. A.15 :cite:`rowenhorst2015consistent`.
+
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+
+    om = np.zeros((3, 3), dtype = np.float64)
+    # Following A.15, calculate q_mean (qq below)
+    bb = qu[1]**2
+    cc = qu[2]**2
+    dd = qu[3]**2
+    qq = qu[0]**2 - (bb + cc + dd)
+    # calculate all the other values used in A.15
+    bc = qu[1] * qu[2]
+    ad = qu[0] * qu[3]
+    bd = qu[1] * qu[3]
+    ac = qu[0] * qu[2]
+    cd = qu[2] * qu[3]
+    ab = qu[0] * qu[1]
+    # calculate the matrix itself
+    om[0, 0] = qq + 2 * bb
+    om[0, 1] = 2 * (bc - ad)
+    om[0, 2] = 2 * (bd + ac)
+    om[1, 0] = 2 * (bc + ad)
+    om[1, 1] = qq + 2 * cc
+    om[1, 2] = 2 * (cd - ab)
+    om[2, 0] = 2 * (bd - ac)
+    om[2, 1] = 2 * (cd + ab)
+    om[2, 2] = qq + 2 * dd
+
+    return om
+
+
+@nb.jit("float64[:, :, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+def qu2om_2d(qu: np.ndarray) -> np.ndarray:
+    """Conversion from multiple unit quaternions to orthogonal rotation
+    matrices.
+
+    Parameters
+    ----------
+    qu
+        2D array of n (q0, q1, q2, q3) quaternions as 64-bit floats.
+
+    Returns
+    -------
+    om
+        3D array of n (3, 3) rotation matrices as 64-bit floats.
+
+    Notes
+    -----
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    n_vectors = qu.shape[0]
+    om = np.zeros((n_vectors, 3, 3), dtype=np.float64)
+    for i in nb.prange(n_vectors):
+        om[i, :, :] = qu2om_single(qu[i])
+    return om
+
+
+def qu2om(qu: np.ndarray) -> np.ndarray:
+    """N-dimensional wrapper for om2qu_3d, see the docstring of that
+    function.
+    """
+    n_qu = np.prod(qu.shape[:-1])
+    qu2d = qu.astype(np.float64).reshape(n_qu, 4)
+    om = qu2om_2d(qu2d).reshape(qu.shape[:-1] + (3,3))
+    return om
+

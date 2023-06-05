@@ -385,7 +385,7 @@ class Quaternion(Object3d):
             warnings.warn("Angles are quite high, did you forget to set degrees=True?")
 
         q = _conversions.eu2qu(eu)
-        q = cls(q).unit
+        q = cls(q)
 
         if direction == "crystal2lab":
             q = ~q
@@ -424,7 +424,7 @@ class Quaternion(Object3d):
             raise ValueError("the last two dimensions of 'matrix' must be (3, 3)")
 
         q = _conversions.om2qu(om)
-        q = cls(q).unit
+        q = cls(q)
 
         return q
 
@@ -696,63 +696,9 @@ class Quaternion(Object3d):
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
-        # A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
-        n = self.data.shape[:-1]
-        eu = np.zeros(n + (3,))
-
-        q = self.unit
-        a, b, c, d = q.a, q.b, q.c, q.d
-
-        q03 = a**2 + d**2
-        q12 = b**2 + c**2
-        chi = np.sqrt(q03 * q12)
-
-        # P = 1
-
-        q12_is_zero = q12 == 0
-        if np.sum(q12_is_zero) > 0:
-            alpha = np.arctan2(-2 * a * d, a**2 - d**2)
-            eu[..., 0] = np.where(q12_is_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(q12_is_zero, 0, eu[..., 1])
-            eu[..., 2] = np.where(q12_is_zero, 0, eu[..., 2])
-
-        q03_is_zero = q03 == 0
-        if np.sum(q03_is_zero) > 0:
-            alpha = np.arctan2(2 * b * c, b**2 - c**2)
-            eu[..., 0] = np.where(q03_is_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(q03_is_zero, np.pi, eu[..., 1])
-            eu[..., 2] = np.where(q03_is_zero, 0, eu[..., 2])
-
-        if np.sum(chi != 0) > 0:
-            not_zero = ~np.isclose(chi, 0)
-            alpha = np.arctan2(
-                np.divide(
-                    b * d - a * c, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-                np.divide(
-                    -a * b - c * d, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-            )
-            beta = np.arctan2(2 * chi, q03 - q12)
-            gamma = np.arctan2(
-                np.divide(
-                    a * c + b * d, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-                np.divide(
-                    c * d - a * b, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-            )
-            eu[..., 0] = np.where(not_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(not_zero, beta, eu[..., 1])
-            eu[..., 2] = np.where(not_zero, gamma, eu[..., 2])
-
-        # Reduce Euler angles to definition range
-        eu[np.abs(eu) < _FLOAT_EPS] = 0
-        eu = np.where(eu < 0, np.mod(eu + 2 * np.pi, (2 * np.pi, np.pi, 2 * np.pi)), eu)
-
+        eu = _conversions.qu2eu(self.unit.data)
         if degrees:
             eu = np.rad2deg(eu)
-
         return eu
 
     def to_matrix(self) -> np.ndarray:
@@ -775,35 +721,17 @@ class Quaternion(Object3d):
         >>> np.allclose(q2.to_matrix(), np.diag([1, -1, -1]))
         True
         """
-        q = self.unit
-        a, b, c, d = q.a, q.b, q.c, q.d
-        om = np.zeros(self.shape + (3, 3))
-
-        bb = b**2
-        cc = c**2
-        dd = d**2
-        qq = a**2 - (bb + cc + dd)
-        bc = b * c
-        ad = a * d
-        bd = b * d
-        ac = a * c
-        cd = c * d
-        ab = a * b
-        om[..., 0, 0] = qq + 2 * bb
-        om[..., 0, 1] = 2 * (bc - ad)
-        om[..., 0, 2] = 2 * (bd + ac)
-        om[..., 1, 0] = 2 * (bc + ad)
-        om[..., 1, 1] = qq + 2 * cc
-        om[..., 1, 2] = 2 * (cd - ab)
-        om[..., 2, 0] = 2 * (bd - ac)
-        om[..., 2, 1] = 2 * (cd + ab)
-        om[..., 2, 2] = qq + 2 * dd
-
+        om = _conversions.qu2om(self.unit.data)
         return om
 
-    def to_axes_angles(self) -> Tuple[Vector3d, np.ndarray]:
+    def to_axes_angles(self, degrees: bool = False) -> Tuple[Vector3d, np.ndarray]:
         """Return an axis-angle representation of the normalized
         quaternions :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        degrees
+            If True, the angles are given in degrees. Default is False.
 
         Returns
         -------
