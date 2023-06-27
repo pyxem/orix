@@ -477,16 +477,16 @@ class TestFromToMatrix:
         assert not np.isnan(q.data).any()
 
 
-# class TestFromAxesAngles:
-#     """These tests address Quaternion.from_axes_angles()."""
+class TestFromAxesAngles:
+    """These tests address Quaternion.from_axes_angles()."""
 
-#     def test_from_axes_angles(self, rotations):
-#         axangle = AxAngle.from_rotation(rotations)
-#         quat2 = Quaternion.from_neo_euler(axangle)
-#         quat3 = Quaternion.from_axes_angles(axangle.axis.data, axangle.angle)
-#         assert np.allclose(quat2.data, quat3.data)
+    def test_from_axes_angles(self, rotations):
+        axangle = AxAngle.from_rotation(rotations)
+        quat2 = Quaternion.from_neo_euler(axangle)
+        quat3 = Quaternion.from_axes_angles(axangle.axis.data, axangle.angle)
+        assert np.allclose(quat2.data, quat3.data)
 
-#         quat4 = Quaternion.from_axes_angles(
-#             axangle.axis.data, np.rad2deg(axangle.angle), degrees=True
-#         )
-#         assert np.allclose(quat4.data, quat3.data)
+        quat4 = Quaternion.from_axes_angles(
+            axangle.axis.data, np.rad2deg(axangle.angle), degrees=True
+        )
+        assert np.allclose(quat4.data, quat3.data)
