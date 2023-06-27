@@ -744,7 +744,10 @@ class Quaternion(Object3d):
         --------
         #TODO
         """
-        return self.axis, self.angle
+        angle = self.angle
+        if degrees:
+            angle = angle * 180 / np.pi
+        return self.axis, angle
 
     def to_rodrigues(self) -> Vector3d:
         r"""Return the neo-Eulerian Rodrigues Vector representation of the

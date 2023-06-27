@@ -30,8 +30,8 @@ for users.
 import numba as nb
 import numpy as np
 
-_FLOAT_EPS = np.finfo(float).eps
-_PI = np.pi
+FLOAT_EPS = np.finfo(float).eps
+
 
 @nb.jit("int64(float64[:])", cache=True, nogil=True, nopython=True)
 def get_pyramid_single(xyz: np.ndarray) -> int:
@@ -472,7 +472,7 @@ def ax2qu_single(ax: np.ndarray) -> np.ndarray:
         s = np.sin(ax[3] * 0.5)
         qu = np.append(c, ax[:3] * s)
         norm = np.sqrt(np.sum(np.square(qu)))
-        qu = qu/norm
+        qu = qu / norm
         return qu
 
 
@@ -511,7 +511,6 @@ def ax2qu(axes: np.ndarray, angles: np.ndarray) -> np.ndarray:
     ----------
     axes
         (...,3) dimensional numpy array of (x, y, z) vectors.
-
     angles
         numpy array of angles in radians.
 
@@ -762,7 +761,7 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    ma
+    om
         (3, 3) rotation matrix as an array of 64-bit floats.
 
     Returns
@@ -813,7 +812,7 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
         qu[3] = 0.5 * np.sqrt(q3_almost)
 
     norm = np.sqrt(np.sum(np.square(qu)))
-    qu = qu/norm
+    qu = qu / norm
     return qu
 
 
@@ -883,32 +882,32 @@ def qu2eu_single(qu: np.ndarray) -> np.ndarray:
     # Following A.14, compute q_03, q_12, and chi, assuming P=1
     q_03 = (qu[0] * qu[0]) + (qu[3] * qu[3])
     q_12 = (qu[1] * qu[1]) + (qu[2] * qu[2])
-    chi = np.sqrt(q_03*q_12)
+    chi = np.sqrt(q_03 * q_12)
     # account for cases where chi is below rounding error
-    if chi < _FLOAT_EPS:
-        if q_12 < _FLOAT_EPS:
-            a = -2*qu[0]*qu[3]
-            b = qu[0]*qu[0] - qu[3]*qu[3]
+    if chi < FLOAT_EPS:
+        if q_12 < FLOAT_EPS:
+            a = -2 * qu[0] * qu[3]
+            b = qu[0] * qu[0] - qu[3] * qu[3]
         else:
-            a = -2*qu[1]*qu[2]
-            b = qu[1]*qu[1] - qu[2]*qu[2]
-            eu[1] = _PI
+            a = -2 * qu[1] * qu[2]
+            b = qu[1] * qu[1] - qu[2] * qu[2]
+            eu[1] = np.pi
         eu[0] = np.arctan2(a, b)
         return eu
     # account for the generic case
-    eu_0a = ((qu[1] * qu[3]) - (qu[0]*qu[2]))/chi
-    eu_0b = (-(qu[0] * qu[1]) - (qu[2]*qu[3]))/chi
-    eu_2a = ((qu[0] * qu[2]) + (qu[1]*qu[3]))/chi
-    eu_2b = ((qu[2] * qu[3]) - (qu[0]*qu[1]))/chi
+    eu_0a = ((qu[1] * qu[3]) - (qu[0] * qu[2])) / chi
+    eu_0b = (-(qu[0] * qu[1]) - (qu[2] * qu[3])) / chi
+    eu_2a = ((qu[0] * qu[2]) + (qu[1] * qu[3])) / chi
+    eu_2b = ((qu[2] * qu[3]) - (qu[0] * qu[1])) / chi
 
     eu[0] = np.arctan2(eu_0a, eu_0b)
-    eu[1] = np.arctan2(2*chi, q_03 - q_12)
+    eu[1] = np.arctan2(2 * chi, q_03 - q_12)
     eu[2] = np.arctan2(eu_2a, eu_2b)
 
     # account for rounding errors
-    eu[np.abs(eu) < _FLOAT_EPS] = 0
+    eu[np.abs(eu) < FLOAT_EPS] = 0
     # convert negative angles to positives and return the result
-    return np.mod(eu, np.pi*2)
+    return np.mod(eu, np.pi * 2)
 
 
 @nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
@@ -946,6 +945,7 @@ def qu2eu(qu: np.ndarray) -> np.ndarray:
     qu2d = qu.astype(np.float64).reshape(n_qu, 4)
     eu = qu2eu_2d(qu2d).reshape(qu.shape[:-1] + (3,))
     return eu
+
 
 @nb.jit("float64[:, :](float64[:])", cache=True, nogil=True, nopython=True)
 def qu2om_single(qu: np.ndarray) -> np.ndarray:
@@ -1030,6 +1030,5 @@ def qu2om(qu: np.ndarray) -> np.ndarray:
     """
     n_qu = np.prod(qu.shape[:-1])
     qu2d = qu.astype(np.float64).reshape(n_qu, 4)
-    om = qu2om_2d(qu2d).reshape(qu.shape[:-1] + (3,3))
+    om = qu2om_2d(qu2d).reshape(qu.shape[:-1] + (3, 3))
     return om
-
