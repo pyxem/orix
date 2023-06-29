@@ -281,6 +281,31 @@ class Orientation(Misorientation):
             o.symmetry = symmetry
         return o
 
+    # TODO: Remove before 0.13.0
+    @classmethod
+    @deprecated(since="0.12", removal="0.13")
+    def from_neo_euler(
+        cls, neo_euler: NeoEuler, symmetry: Optional[Symmetry] = None
+    ) -> Orientation:
+        """Return orientation(s) from a neo-euler (vector)
+        representation.
+        Parameters
+        ----------
+        neo_euler
+            Vector parametrization of orientation(s).
+        symmetry
+            Symmetry of orientation(s). If not given (default), no
+            symmetry is set.
+        Returns
+        -------
+        ori
+            Orientations.
+        """
+        ori = super().from_neo_euler(neo_euler)
+        if symmetry:
+            ori.symmetry = symmetry
+        return ori
+
     @classmethod
     def from_axes_angles(
         cls,

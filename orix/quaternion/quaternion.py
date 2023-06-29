@@ -232,7 +232,7 @@ class Quaternion(Object3d):
         if axes.size * angles.size == 0:
             return cls.empty()
 
-        if np.max(angles) > 179.999:
+        if np.rad2deg(np.max(angles)) > 179.999:
             raise UserWarning(
                 "Maximum angle is greater than 179.999. Rodrigues "
                 + "Vectors cannot paramaterize 2-fold rotations. "
