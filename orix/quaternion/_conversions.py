@@ -335,8 +335,15 @@ def ax2ro_single(ax: np.ndarray) -> np.ndarray:
         ro[2] = 1
     else:
         ro[:3] = ax[:3]
-        # Need to deal with the 180 degree case
-        if np.abs(angle - np.pi) < 1e-7:
+        # Need to deal with the 180 degree case.
+        # a cutoff of 1e-3 will give a maximum rodrigues magnitude of
+        # approximately 2000. raising it higher can cause rounding errors
+        # during conversions to other rotation representations. If there
+        # is ever a situation where this error must be smaller, the accuracy
+        # of the test values for homochoric and axis_angle in
+        # test_conversions.py must be increased to more than 4 signifigant
+        # figures.
+        if np.abs(angle - np.pi) < 1e-3:
             ro[3] = np.inf
         else:
             ro[3] = np.tan(angle * 0.5)
@@ -553,6 +560,98 @@ def ax2qu(axes: np.ndarray, angles: np.ndarray) -> np.ndarray:
     # reshape the resulting quaternion to the original shape.
     qu = ax2qu_2d(ax2d).reshape(ax.shape)
     return qu
+
+
+@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+def qu2ax_single(qu: np.ndarray) -> np.ndarray:
+    """Conversion from a single un-normalized quaternion to an
+    axos-angle pair :cite:`rowenhorst2015consistent`.
+
+    Parameters
+    ----------
+    qu
+        1D array of (a, b, c, d) as 64-bit floats.
+
+    Returns
+    -------
+    ax
+        1D array of (x, y, z, angle) as 64-bit floats.
+
+    Notes
+    -----
+    Uses Eqs. A.16 :cite:`rowenhorst2015consistent`.
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    omega = 2 * np.arccos(qu[0])
+    if omega < FLOAT_EPS:
+        return np.array([0.0, 0.0, 1.0, 0.0], dtype=np.float64)
+    if np.abs(qu[0]) < FLOAT_EPS:
+        return np.array([qu[1], qu[2], qu[3], np.pi], dtype=np.float64)
+    if qu[0] > 0:
+        s = 1
+    else:
+        s = -1
+    s = s / np.sqrt(np.sum(qu[1:4] ** 2))
+    ax = np.array([s * qu[1], s * qu[2], s * qu[3], omega], dtype=np.float64)
+    return ax
+
+
+@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+def qu2ax_2d(qu: np.ndarray) -> np.ndarray:
+    """Conversion from multiple un-normalized quaternions to axis-angle
+    pairs :cite:`rowenhorst2015consistent`.
+
+    Parameters
+    ----------
+    qu
+        2D array of n (a, b, c, d) as 64-bit floats.
+
+    Returns
+    -------
+    ax
+        2D array of n (x, y, z, angle) as 64-bit floats.
+
+    Notes
+    -----
+    This function is optimized with Numba, so care must be taken with
+    array shapes and data types.
+    """
+    n_vectors = qu.shape[0]
+    ax = np.zeros((n_vectors, 4), dtype=np.float64)
+    for i in nb.prange(n_vectors):
+        ax[i] = qu2ax_single(qu[i])
+    return ax
+
+
+def qu2ax(qu: np.ndarray) -> np.ndarray:
+    """N-dimensional wrapper for qu2ax_2d, see the docstring of that
+    function for further details.
+
+    Parameters
+    ----------
+    qu
+        2D array of n (a, b, c, d) as 64-bit floats.
+
+    Returns
+    -------
+    axes
+        (...,3) dimensional numpy array of (x, y, z) vectors.
+    angles
+        (...,1) dimensional numpy array of angles in radians.
+
+    """
+    # convert qu to a numpy array of shape (...,4)
+    qu_nd = np.atleast_2d(qu)
+    # assert the shape makes sense for a quaternion
+    if qu_nd.shape[-1] != 4:
+        raise ValueError("input must be an array of shape (...,4)")
+    # convert the 'qu_nd' array to the 2D array expected by qu2ax_2d
+    n_qu = np.prod(qu.shape[:-1])
+    qu2d = qu.astype(np.float64).reshape(n_qu, 4)
+    # reshape the resulting axis/angle to the original shape.
+    axang = qu2ax_2d(qu2d).reshape(qu_nd.shape)
+    return (axang[..., :3], axang[..., 3].reshape(n_qu, 1))
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
@@ -893,7 +992,7 @@ def qu2eu_single(qu: np.ndarray) -> np.ndarray:
             b = qu[1] * qu[1] - qu[2] * qu[2]
             eu[1] = np.pi
         eu[0] = np.arctan2(a, b)
-        return eu
+        return np.mod(eu, np.pi * 2)
     # account for the generic case
     eu_0a = ((qu[1] * qu[3]) - (qu[0] * qu[2])) / chi
     eu_0b = (-(qu[0] * qu[1]) - (qu[2] * qu[3])) / chi

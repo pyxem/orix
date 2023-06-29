@@ -35,6 +35,7 @@ from orix.quaternion.misorientation import Misorientation
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
+from orix._util import deprecated, deprecated_argument
 from orix.vector import AxAngle, Miller, NeoEuler, Vector3d
 
 
@@ -256,6 +257,31 @@ class Orientation(Misorientation):
             ori.symmetry = symmetry
         return ori
 
+    # TODO: Remove before 0.13.0
+    @classmethod
+    @deprecated(since="0.12", removal="0.13")
+    def from_neo_euler(
+        cls, neo_euler: NeoEuler, symmetry: Optional[Symmetry] = None
+    ) -> Orientation:
+        """Return orientation(s) from a neo-euler (vector)
+        representation.
+        Parameters
+        ----------
+        neo_euler
+            Vector parametrization of orientation(s).
+        symmetry
+            Symmetry of orientation(s). If not given (default), no
+            symmetry is set.
+        Returns
+        -------
+        ori
+            Orientations.
+        """
+        ori = super().from_neo_euler(neo_euler)
+        if symmetry:
+            ori.symmetry = symmetry
+        return ori
+
     @classmethod
     def from_axes_angles(
         cls,
@@ -284,10 +310,6 @@ class Orientation(Misorientation):
         -------
         ori
             Orientation(s).
-
-        See Also
-        --------
-        from_neo_euler
 
         Examples
         --------
