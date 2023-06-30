@@ -210,6 +210,36 @@ class Quaternion(Object3d):
         rf
             Rodrigues-Frank vector parametrization of quaternion(s).
 
+        Returns
+        -------
+        q
+            Unit quaternion(s).
+        """
+        s = np.sin(neo_euler.angle / 2)
+        a = np.cos(neo_euler.angle / 2)
+        b = s * neo_euler.axis.x
+        c = s * neo_euler.axis.y
+        d = s * neo_euler.axis.z
+        q = cls(np.stack([a, b, c, d], axis=-1)).unit
+        return q
+
+    @classmethod
+    def from_rodrigues(
+        cls, rod: Union[np.ndarray, Vector3d, tuple, list]) -> Quaternion:
+        """Create unit quaternion(s) from Rodrigues vector(s) of length
+        three, ie:
+            :math:`\omega * (n_1, n_2, n_3)`
+        for creating quaternions from Rodrigues-Franck vector(s) of length
+        four, ie:
+            :math:`(n_1,n_2,n_3, \omega)`
+        users should instead use Quaternion.from_rodrigues_frank.
+        see Notes for details on the differences.
+
+        Parameters
+        ----------
+        rod
+            Rodrigues vector representations interpretable as Vector3D
+            objects
         ignore_warnings = False
             Silences warnings related to large errors or vector length
 
@@ -257,18 +287,15 @@ class Quaternion(Object3d):
             return cls.empty()
         # before passing, check for large angles and small errors
         if np.rad2deg(np.max(angles)) > 179.999:
-            raise UserWarning(
-                "Maximum angle is greater than 179.999. Rodrigues "
-                + "Vectors cannot paramaterize 2-fold rotations. "
-                + "Consider an alternative import method."
-            )
+            warnings.warn(
+                "Highest angle is greater than 179.999 degrees. Rodrigues"
+                + " Rodrigues vectors cannot paramtrize 2-fold rotations"
+                + "Consider an alternative class method.")
         if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
-            raise UserWarning(
-                "Maximum estimated error is greater than 0.1%."
-                + "Rodriguez vectors have increaing associated errors"
-                + " for small angle rotations. Consider an alternative "
-                + "import method."
-            )
+            warnings.warn(
+                "Max. estimated error is greater than 0.1%. Rodrigues "
+                + "vectors have increasing associated errors for small "
+                + "angle rotations. Consider an alternative class method.")
 
         qu = cls.from_axes_angles(axes, angles)
         return qu.unit
