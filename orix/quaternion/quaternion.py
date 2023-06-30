@@ -225,7 +225,8 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_rodrigues(
-        cls, rod: Union[np.ndarray, Vector3d, tuple, list]) -> Quaternion:
+        cls, rod: Union[np.ndarray, Vector3d, tuple, list]
+    ) -> Quaternion:
         """Create unit quaternion(s) from Rodrigues vector(s) of length
         three, ie:
             :math:`\omega * (n_1, n_2, n_3)`
@@ -290,12 +291,14 @@ class Quaternion(Object3d):
             warnings.warn(
                 "Highest angle is greater than 179.999 degrees. Rodrigues"
                 + " Rodrigues vectors cannot paramtrize 2-fold rotations"
-                + "Consider an alternative class method.")
+                + "Consider an alternative class method."
+            )
         if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
             warnings.warn(
                 "Max. estimated error is greater than 0.1%. Rodrigues "
                 + "vectors have increasing associated errors for small "
-                + "angle rotations. Consider an alternative class method.")
+                + "angle rotations. Consider an alternative class method."
+            )
 
         qu = cls.from_axes_angles(axes, angles)
         return qu.unit
