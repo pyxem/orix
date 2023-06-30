@@ -251,10 +251,7 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_rodrigues(
-        cls,
-        rod: Union[np.ndarray, Vector3d, tuple, list],
-        ignore_warnings: bool = False,
-    ) -> Quaternion:
+        cls, rod: Union[np.ndarray, Vector3d, tuple, list]) -> Quaternion:
         """Create unit quaternion(s) from Rodrigues vector(s) of length
         three, ie:
             :math:`\omega * (n_1, n_2, n_3)`
@@ -316,18 +313,15 @@ class Quaternion(Object3d):
             return cls.empty()
         # before passing, check for large angles and small errors
         if np.rad2deg(np.max(angles)) > 179.999:
-            raise UserWarning(
-                "Maximum angle is greater than 179.999. Rodrigues "
-                + "Vectors cannot paramaterize 2-fold rotations. "
-                + "Consider an alternative import method."
-            )
+            warnings.warn(
+                "Highest angle is greater than 179.999 degrees. Rodrigues"
+                + " Rodrigues vectors cannot paramtrize 2-fold rotations"
+                + "Consider an alternative class method.")
         if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
-            raise UserWarning(
-                "Maximum estimated error is greater than 0.1%."
-                + "Rodriguez vectors have increaing associated errors"
-                + " for small angle rotations. Consider an alternative "
-                + "import method."
-            )
+            warnings.warn(
+                "Max. estimated error is greater than 0.1%. Rodrigues "
+                + "vectors have increasing associated errors for small "
+                + "angle rotations. Consider an alternative class method.")
 
         qu = cls.from_axes_angles(axes, angles)
         return qu.unit
@@ -831,7 +825,11 @@ class Quaternion(Object3d):
 
         Examples
         --------
-        #TODO
+        >>> # 3-fold rotation around the 111 axis
+        >>> quat = Quaternion([0.5,0.5,0.5,0.5])
+        >>> axis, angle = quat.to_axes_angles()
+        >>> axis,np.rad2deg(angle)
+        
         """
         axis, angle = _conversions.qu2ax(self.data)
         if degrees:
@@ -851,7 +849,19 @@ class Quaternion(Object3d):
         Examples
         --------
 
-        #TODO
+        >>> # 3-fold rotation around the 111 axis
+        >>> quat = Quaternion([0.5,0.5,0.5,0.5])
+        >>> rod = quat.to_rodrigues()
+        >>> rod
+        Vector3d (1,)
+        [[1. 1. 1.]]
+
+        >>> # 4-fold rotation around the 111 axis
+        >>> quat = Quaternion([0.9239, 0.2209, 0.2209, 0.2209])
+        >>> rod = quat.to_rodrigues()
+        >>> rod
+        Vector3d (1,)
+        [[0.2391 0.2391 0.2391]]
 
         Notes
         -----
@@ -903,7 +913,12 @@ class Quaternion(Object3d):
 
         Examples
         --------
-        #TODO
+        >>> # 3-fold rotation around the 111 axis
+        >>> quat = Quaternion([0.5,0.5,0.5,0.5])
+        >>> rod = quat.to_homochoric()
+        >>> rod
+        Vector3d (1,)
+        [[0.5618 0.5618 0.5618]]
 
         Notes
         -----

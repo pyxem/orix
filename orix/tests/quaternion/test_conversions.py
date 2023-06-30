@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import warnings
+
 import numpy as np
 import pytest
 
@@ -344,9 +346,9 @@ class TestRotationConversions:
         assert np.allclose(rf_from_quat[4:], ro_64[4:], atol=1e-4)
         assert Quaternion.from_rodrigues_frank([]).size == 0
         # Test warnings for Quaternion class
-        with pytest.raises(UserWarning, match="179.99"):
+        with pytest.warns(UserWarning, match="179.99"):
             Quaternion.from_rodrigues([1e15, 1e15, 1e10])
-        with pytest.raises(UserWarning, match="Maximum"):
+        with pytest.warns(UserWarning, match="Max."):
             Quaternion.from_rodrigues([0, 0, 1e-16])
         with pytest.raises(ValueError, match="rodrigues_frank"):
             Quaternion.from_rodrigues([1, 2, 3, 4])
