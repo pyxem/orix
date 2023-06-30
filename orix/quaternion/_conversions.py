@@ -588,10 +588,9 @@ def qu2ax_single(qu: np.ndarray) -> np.ndarray:
         return np.array([0.0, 0.0, 1.0, 0.0], dtype=np.float64)
     if np.abs(qu[0]) < FLOAT_EPS:
         return np.array([qu[1], qu[2], qu[3], np.pi], dtype=np.float64)
+    s = -1
     if qu[0] > 0:
         s = 1
-    else:
-        s = -1
     s = s / np.sqrt(np.sum(qu[1:4] ** 2))
     ax = np.array([s * qu[1], s * qu[2], s * qu[3], omega], dtype=np.float64)
     return ax
@@ -651,7 +650,7 @@ def qu2ax(qu: np.ndarray) -> np.ndarray:
     qu2d = qu.astype(np.float64).reshape(n_qu, 4)
     # reshape the resulting axis/angle to the original shape.
     axang = qu2ax_2d(qu2d).reshape(qu_nd.shape)
-    return (axang[..., :3], axang[..., 3].reshape(n_qu, 1))
+    return (axang[..., :3], axang[..., 3].reshape(axang.shape[:-1] + (1,)))
 
 
 @nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)

@@ -252,42 +252,69 @@ class Quaternion(Object3d):
     @classmethod
     def from_rodrigues(
         cls,
-        axes: Union[np.ndarray, Vector3d, tuple, list],
+        rod: Union[np.ndarray, Vector3d, tuple, list],
         ignore_warnings: bool = False,
     ) -> Quaternion:
-        """Create unit quaternion(s) from a Rodrigues vector
-        representation.
-
-        These are also referred to as Rodrigues-Frank vectors, and
-        are a neo-eulerian vector representation of orientation space:
+        """Create unit quaternion(s) from Rodrigues vector(s) of length
+        three, ie:
+            :math:`\omega * (n_1, n_2, n_3)`
+        for creating quaternions from Rodrigues-Franck vector(s) of length
+        four, ie:
+            :math:`(n_1,n_2,n_3, \omega)`
+        users should instead use Quaternion.from_rodrigues_frank.
+        see Notes for details on the differences.
 
         Parameters
         ----------
-        rf
-            Rodrigues-Frank vector parametrization of quaternion(s).
-
+        rod
+            Rodrigues vector representations interpretable as Vector3D
+            objects
         ignore_warnings = False
-            Silences warnings related to large errors or large vectors
+            Silences warnings related to large errors or vector length
 
         Returns
         -------
-        q
+        quat
             Unit quaternion(s).
 
         Notes
         -------
-        Rodrigues vectors are often useful as a visualization tool. However,
-        the length scales with :math:\tan(\theta/2), as does their relative
-        error. Additionally, rotations of 180 degrees are equivalent to
-        infinitely long vectors. For calculations, a good alternative can
-        often be axis/angle pairs.
+        Olinde Rodrigues's 1840 vector description was popularized by
+        F. C. Frank due to it's useful rectilinear mapping of fundamental
+        zones, as is well-demonstrated in the following paper:
+            https://doi.org/10.1007/BF02649253
+        This is the version expected as input in this function.
+
+        However, the length of these 3d vectors, and thus their accuracy,
+        scales with :math:`\tan(\theta/2)`.
+        Additionally two-fold rotations produce vectors of infinite length.
+        Thus, C.S. Frank and others introduced the Rodrigues-Frank Vector
+        of length 4, consisting of a unit vector followed by the scaling
+        factor. This is better suited for storing data or performing rotation
+        calculations, as covered in :cite:`rowenhorst2015consistent`.
+
+        Note, the definitions presented here for Rodrigues-Frank and
+        Rodrigues Vectors are not universally adopted. Additionally, some
+        codes prefer the (angle, axis) representation as opposed to Orix's
+        (axis, angle). Thus, caution should be exercised when importing data
+        from non-Orix sources.
         """
-        axes = Vector3d(axes)
+        # Check for Rodrigues-Frank vector
+        if type(rod) != Vector3d:
+            if np.atleast_2d(rod).shape[-1] == 4:
+                raise ValueError(
+                    "Requires an input array of shape (...,3). for "
+                    + "Rodrigues-Frank vectors of shape (...,4) use "
+                    + "Quaternion.from_rodrigues_frank() instead."
+                )
+        # At this point, it is fastest to convert to axis-angle format
+        # and pass the results to Quaternion.from_axis_angle
+        axes = Vector3d(rod)
         norms = axes.norm
         angles = np.arctan(norms) * 2
         if axes.size * angles.size == 0:
             return cls.empty()
-
+        # before passing, check for large angles and small errors
         if np.rad2deg(np.max(angles)) > 179.999:
             raise UserWarning(
                 "Maximum angle is greater than 179.999. Rodrigues "
@@ -303,6 +330,42 @@ class Quaternion(Object3d):
             )
 
         qu = cls.from_axes_angles(axes, angles)
+        return qu.unit
+
+    @classmethod
+    def from_rodrigues_frank(cls, rf: Union[np.ndarray, tuple, list]) -> Quaternion:
+        """Create unit quaternion(s) from Rodrigues-Frank vector(s) of
+        length four, ie:
+            :math:`(n_1,n_2,n_3, \omega)`
+        for creating quaternions from Rodrigues vector(s) of length
+        three, ie:
+            :math:`\omega * (n_1, n_2, n_3)`
+        users should instead use Quaternion.from_rodrigues.
+        see the Notes for that function for details on the differences.
+
+        Parameters
+        ----------
+        rf
+            Rodrigues-Frank representation interpretable as a numpy
+            array of shape (...,4)
+
+        Returns
+        -------
+        quat
+            Unit quaternion(s).
+        """
+        axes = np.atleast_2d(rf)
+        # Check for Rodrigues vector
+        if type(rf) == Vector3d or axes.shape[-1] == 3:
+            raise ValueError(
+                "Requires an input array of shape (...,4)."
+                + "for Rodrigues vectors of shape (...,3),"
+                + " use Quaternion.from_rodirigues instead"
+            )
+        if axes.size == 0:
+            return cls.empty()
+        ax = _conversions.ro2ax(axes)
+        qu = cls(_conversions.ax2qu(ax[..., :3], ax[..., 3]))
         return qu.unit
 
     @classmethod
@@ -776,30 +839,57 @@ class Quaternion(Object3d):
         return axis, angle
 
     def to_rodrigues(self) -> Vector3d:
-        r"""Return the neo-Eulerian Rodrigues Vector representation of the
-        normalized quaternions :cite:`rowenhorst2015consistent`.
+        r"""Returns the neo-Eulerian Rodrigues representation of the
+        normalized quaternion(s) as a Vector3D object.
 
         Returns
         -------
         rod
-            The axis of rotation, with lengths equal to
-            :math:`\tan(angle/2)` .
+            a vector3D object parallel to the quaternion's axis of
+            rotation, with a magnitude of :math:`\tan(angle/2)` .
 
         Examples
         --------
+
         #TODO
 
         Notes
         -----
-        This is often used as a plotting tool, as it produces an
-        isomorphic (though not volume-preserving) mapping from the
-        non-euclidean orientation space into cartesian coordinates.
-        Additionally, crystal systems which contain 222 as a quotient
-        group have rectilinear fundamental zones in this representation.
+        This function returns the 3D vector representation of a rotation
+        originally proposed by Olinde Rodrigues. These vectors are often
+        used for plotting orientation data, as they create isomorphic
+        (though not volume preserving) plots, and fundamental zones have
+        rectilinear boundaries. This is well-demonstrated in the following
+        paper:
+            https://doi.org/10.1007/BF02649253
+        For the 4D Rodrigues-Frank (axis, angle) vector discussed in
+            :cite:`rowenhorst2015consistent`,
+        users should instead use `Quaternion.to_rodrigues_frank`.
         """
         ax = self.axis.unit
         rod = ax * np.tan(self.angle / 2)
         return rod
+
+    def to_rodrigues_frank(self) -> np.ndarray:
+        r"""Returns the Rodrigues-Frank :math:`(n_1,n_2,n_3, \omega)`
+        vector as presented in :cite:`rowenhorst2015consistent`.
+
+        Returns
+        -------
+        rod
+            a numpy array of shape (...,4)
+
+        Notes
+        -----
+        This function returns the 4D vector representation of a rotation
+        proposed by C.S. Frank, the uses of which are discussed further in
+        :cite:`rowenhorst2015consistent`. Users looking to directly create
+        3D plots of orientation data in Rodrigues space should instead use
+        `Quaternion.to_rodrigues`.
+        """
+        ax = np.concatenate(_conversions.qu2ax(self.unit.data), axis=-1)
+        rf = _conversions.ax2ro(ax)
+        return rf
 
     def to_homochoric(self) -> Vector3d:
         r"""Return the neo-Eulerian homochoric vector representation of

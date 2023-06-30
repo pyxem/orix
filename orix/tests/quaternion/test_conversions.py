@@ -315,7 +315,9 @@ class TestRotationConversions:
         ho_32 = homochoric_vectors.astype(np.float32)
         assert np.allclose(ho2ax(ho_32), axang_32, atol=1e-4)
 
-    def test_ax2ro2ax(self, axis_angle_pairs, rodrigues_vectors):
+    def test_ax2ro2ax(
+        self, axis_angle_pairs, rodrigues_vectors, quaternions_conversions
+    ):
         ax_64 = axis_angle_pairs
         ro_64 = rodrigues_vectors
         ax_32 = ax_64.astype(np.float32)
@@ -334,11 +336,22 @@ class TestRotationConversions:
         # nd_float32
         assert np.allclose(ax2ro(ax_32), ro_32, atol=1e-4)
         assert np.allclose(ro2ax(ro_32), ax_32, atol=1e-4)
+        # Test Quaternion class implementations
+        quat1 = Quaternion(quaternions_conversions)
+        quat2 = Quaternion.from_rodrigues_frank(ro_64)
+        assert np.allclose(quat1.data, quat2.data, atol=1e-4)
+        rf_from_quat = quat1.to_rodrigues_frank()
+        assert np.allclose(rf_from_quat[4:], ro_64[4:], atol=1e-4)
+        assert Quaternion.from_rodrigues_frank([]).size == 0
         # Test warnings for Quaternion class
         with pytest.raises(UserWarning, match="179.99"):
             Quaternion.from_rodrigues([1e15, 1e15, 1e10])
         with pytest.raises(UserWarning, match="Maximum"):
             Quaternion.from_rodrigues([0, 0, 1e-16])
+        with pytest.raises(ValueError, match="rodrigues_frank"):
+            Quaternion.from_rodrigues([1, 2, 3, 4])
+        with pytest.raises(ValueError, match="instead"):
+            Quaternion.from_rodrigues_frank([1, 2, 3])
 
     def test_ax2qu2ax(self, axis_angle_pairs, quaternions_conversions):
         ax_64 = axis_angle_pairs
@@ -352,9 +365,9 @@ class TestRotationConversions:
             assert np.allclose(ax2qu_single.py_func(ax), qu, atol=1e-4)
             assert np.allclose(qu2ax_single.py_func(qu), ax, atol=2e-4)
         # test conversion of souther hemisphere quaternion
-        southern_qu = np.array([-1,1,1,0], dtype=np.float64)
+        southern_qu = np.array([-1, 1, 1, 0], dtype=np.float64)
         south_ax = ax2qu_single(southern_qu)
-        assert np.allclose(south_ax, np.array([1,0,0,0]),atol=1e-4)
+        assert np.allclose(south_ax, np.array([1, 0, 0, 0]), atol=1e-4)
         # 2d
         assert np.allclose(ax2qu_2d.py_func(ax_64), qu_64, atol=1e-4)
         assert np.allclose(qu2ax_2d.py_func(qu_64), ax_64, atol=2e-4)
@@ -466,7 +479,9 @@ class TestRotationConversions:
         qu_32 = quaternions_conversions.astype(np.float32)
         assert np.allclose(om2qu(om_32), qu_32, atol=1e-4)
 
-    def test_quaternion_shortcuts(self,rodrigues_vectors,homochoric_vectors,quaternions_conversions):
+    def test_quaternion_shortcuts(
+        self, rodrigues_vectors, homochoric_vectors, quaternions_conversions
+    ):
         """These functions should evenutally be added to _conversions.py,
         but are currently done with shortcut functions in the Quaternion
         Class that use Quaternion.axis and Quaternion.angle."""
@@ -474,6 +489,6 @@ class TestRotationConversions:
         quat_hom = quat.to_homochoric().data
         quat_rod = quat.to_rodrigues().data
         hom_3 = homochoric_vectors[3:]
-        rod_3 = rodrigues_vectors[3:,:3]*rodrigues_vectors[3:,3:]
+        rod_3 = rodrigues_vectors[3:, :3] * rodrigues_vectors[3:, 3:]
         assert np.allclose(hom_3, quat_hom, atol=1e-4)
         assert np.allclose(rod_3, quat_rod, atol=2e-3)
