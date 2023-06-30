@@ -20,7 +20,6 @@ import numpy as np
 import pytest
 
 from orix.quaternion import Orientation, Quaternion, Rotation
-from orix.quaternion.symmetry import C1, Oh
 from orix.quaternion._conversions import (
     ax2qu,
     ax2qu_2d,
@@ -62,6 +61,7 @@ from orix.quaternion._conversions import (
     ro2ax_2d,
     ro2ax_single,
 )
+from orix.quaternion.symmetry import C1, Oh
 
 
 # NOTE to future test writers on unittest data:
