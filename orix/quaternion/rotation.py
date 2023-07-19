@@ -188,7 +188,7 @@ class Rotation(Quaternion):
 
         See Also
         --------
-        from_neo_euler
+        from_homochoric, from_rodrigues
         """
         return super().from_axes_angles(axes, angles, degrees)
 
@@ -482,8 +482,9 @@ class Rotation(Quaternion):
             Indices to reconstruct the flattened rotations from the
             initial rotations. Only returned if ``return_inverse=True``.
         """
-        if len(self.data) == 0:
-            return self.__class__(self.data)
+        if self.size == 0:
+            return self.empty()
+
         r = self.flatten()
 
         if antipodal:
