@@ -83,6 +83,10 @@ class Homochoric(NeoEuler):
         -------
         vec
             Homochoric vector.
+
+        See Also
+        --------
+        Quaternion.to_homochoric
         """
         theta = rotation.angle
         magnitude = (0.75 * (theta - np.sin(theta))) ** (1 / 3)
@@ -118,6 +122,10 @@ class Rodrigues(NeoEuler):
         -------
         vec
             Rodrigues vector.
+
+        See Also
+        --------
+        Quaternion.to_rodrigues
         """
         a = np.float64(rotation.a)
         with np.errstate(divide="ignore", invalid="ignore"):
@@ -152,6 +160,10 @@ class AxAngle(NeoEuler):
         -------
         vec
             Axis-angle representation of ``rotation``.
+
+        See Also
+        --------
+        Quaternion.to_axes_angles
         """
         return cls((rotation.axis * rotation.angle).data)
 

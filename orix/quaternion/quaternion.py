@@ -283,7 +283,7 @@ class Quaternion(Object3d):
 
         See Also
         --------
-        from_rodrigues
+        from_rodrigues, from_homochoric
         """
         if np.size(axes) == 0:
             return cls.empty()
@@ -312,13 +312,17 @@ class Quaternion(Object3d):
         ho
             Homochoric vectors parallel to the axes of rotation with
             lengths equal to
-            :math:`0.75\cdot(\theta - \sin(\theta))^{1/3}`, where
-            :math:`\theta` is the angle of rotation.
+            :math:`\left[\frac{3}{4}\cdot(\theta - \sin(\theta))\right]^{1/3}`,
+            where :math:`\theta` is the angle of rotation.
 
         Returns
         -------
         q
             Unit quaternions.
+
+        See Also
+        --------
+        from_axes_angles, from_rodrigues
         """
         if np.size(ho) == 0:
             return cls.empty()
@@ -347,24 +351,31 @@ class Quaternion(Object3d):
         ro: Union[np.ndarray, Vector3d, tuple, list],
         angles: Union[np.ndarray, tuple, list, float, None] = None,
     ) -> Quaternion:
-        r"""Create unit quaternions from Rodrigues vectors or
-        Rodrigues-Frank vectors :cite:`rowenhorst2015consistent`.
+        r"""Create unit quaternions from Rodrigues vectors
+        :math:`\hat{\mathbf{n}}` or Rodrigues-Frank vectors
+        :math:`\mathbf{\rho}` :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
         ro
             Rodrigues vectors :math:`\hat{\mathbf{n}}` of three
             components. These are the components of the Rodrigues-Frank
-            vectors if the angles ``omega`` are passed.
+            vectors :math:`\mathbf{\rho}` if the angles :math:`\omega`
+            are passed.
         angles
-            Angles :math:`\omega` of the Rodrigues-Frank vectors ``ro``,
-            one per vector. If these are not passed, ``ro`` are
-            the Rodrigues vectors.
+            Angles :math:`\omega` of the Rodrigues-Frank vectors
+            :math:`\mathbf{\rho}`, one per vector. If these are not
+            passed, ``ro`` are the Rodrigues vectors
+            :math:`\hat{\mathbf{n}}`.
 
         Returns
         -------
         q
             Unit quaternions.
+
+        See Also
+        --------
+        from_axes_angles, from_homochoric
 
         Notes
         -------
@@ -374,7 +385,7 @@ class Quaternion(Object3d):
 
             \mathbf{\rho} = \hat{\mathbf{n}}\tan\frac{\omega}{2}.
 
-        If the vector length is :math:`\rho = \|\mathbf{\rho}\|, the
+        If the vector length is :math:`\rho = |\mathbf{\rho}|`, the
         angle is given by
 
         .. math::
@@ -841,6 +852,10 @@ class Quaternion(Object3d):
             Axis-angle vectors with magnitude :math:`\theta` equal to
             the angle of rotation.
 
+        See Also
+        --------
+        to_homochoric, to_rodrigues
+
         Examples
         --------
         A 3-fold rotation around the [111] axis
@@ -877,6 +892,10 @@ class Quaternion(Object3d):
             rotation if ``frank=False`` or an array of four-component
             vectors if ``frank=True``.
 
+        See Also
+        --------
+        to_axes_angles, to_homochoric
+
         Examples
         --------
         A 3-fold rotation around the [111] axis
@@ -895,7 +914,7 @@ class Quaternion(Object3d):
         >>> np.linalg.norm(ro2[:, :3])
         1.0
 
-        A 45:math:`^{\circ}` rotation around the [111] axis
+        A 45:math:`\degree` rotation around the [111] axis
 
         >>> q2 = Quaternion.from_axes_angles([1, 1, 1], 45, degrees=True)
         >>> ro3 = q2.to_rodrigues()
@@ -932,8 +951,12 @@ class Quaternion(Object3d):
         ho
             Homochoric vectors parallel to the axes of rotation with
             lengths equal to
-            :math:`0.75\cdot(\theta - \sin(\theta))^{1/3}`, where
-            :math:`\theta` is the angle of rotation.
+            :math:`\left[\frac{3}{4}\cdot(\theta - \sin(\theta))\right]^{1/3}`,
+            where :math:`\theta` is the angle of rotation.
+
+        See Also
+        --------
+        to_axes_angles, from_rodrigues
 
         Examples
         --------
