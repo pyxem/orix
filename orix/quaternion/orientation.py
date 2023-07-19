@@ -18,8 +18,7 @@
 
 from __future__ import annotations
 
-from itertools import product as iproduct
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 import warnings
 
 import dask.array as da
@@ -29,14 +28,12 @@ from matplotlib.gridspec import SubplotSpec
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
-from tqdm import tqdm
 
-from orix._util import deprecated, deprecated_argument
+from orix._util import deprecated
 from orix.quaternion.misorientation import Misorientation
-from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import AxAngle, Miller, NeoEuler, Vector3d
+from orix.vector import Miller, NeoEuler, Vector3d
 
 
 class Orientation(Misorientation):
@@ -114,7 +111,8 @@ class Orientation(Misorientation):
         degrees: bool = False,
         **kwargs,
     ) -> Orientation:
-        """Initialize from an array of Euler angles.
+        """Create orientations from sets of Euler angles
+        :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
@@ -134,13 +132,13 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        ori
+        o
             Orientations.
         """
-        ori = super().from_euler(euler, direction=direction, degrees=degrees, **kwargs)
+        o = super().from_euler(euler, direction=direction, degrees=degrees, **kwargs)
         if symmetry:
-            ori.symmetry = symmetry
-        return ori
+            o.symmetry = symmetry
+        return o
 
     @classmethod
     def from_align_vectors(
@@ -156,7 +154,7 @@ class Orientation(Misorientation):
         Tuple[Orientation, np.ndarray],
         Tuple[Orientation, float, np.ndarray],
     ]:
-        """Return an estimated orientation to optimally align vectors in
+        """Create an estimated orientation to optimally align vectors in
         the crystal and sample reference frames.
 
         This method wraps
@@ -202,10 +200,10 @@ class Orientation(Misorientation):
         >>> from orix.quaternion import Orientation
         >>> from orix.vector import Vector3d, Miller
         >>> from orix.crystal_map import Phase
-        >>> uvw = Miller(uvw=[[0, 1, 0], [1, 0, 0]], phase=Phase(point_group="m-3m"))
+        >>> t = Miller(uvw=[[0, 1, 0], [1, 0, 0]], phase=Phase(point_group="m-3m"))
         >>> v_sample = Vector3d([[0, -1, 0], [0, 0, 1]])
-        >>> ori = Orientation.from_align_vectors(uvw, v_sample)
-        >>> ori * v_sample
+        >>> o = Orientation.from_align_vectors(t, v_sample)
+        >>> o * v_sample
         Vector3d (2,)
         [[0. 1. 0.]
          [1. 0. 0.]]
@@ -236,7 +234,7 @@ class Orientation(Misorientation):
     def from_matrix(
         cls, matrix: np.ndarray, symmetry: Optional[Symmetry] = None
     ) -> Orientation:
-        """Return orientation(s) from orientation matrices
+        """Create orientations from orientation matrices
         :cite:`rowenhorst2015consistent`.
 
         Parameters
@@ -249,22 +247,22 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        ori
+        o
             Orientations.
         """
-        ori = super().from_matrix(matrix)
+        o = super().from_matrix(matrix)
         if symmetry:
-            ori.symmetry = symmetry
-        return ori
+            o.symmetry = symmetry
+        return o
 
     # TODO: Remove before 0.13.0
     @classmethod
-    @deprecated(since="0.12", removal="0.13")
+    @deprecated(since="0.12", removal="0.13", alternative="from_axes_angles")
     def from_neo_euler(
         cls, neo_euler: NeoEuler, symmetry: Optional[Symmetry] = None
     ) -> Orientation:
-        """Return orientation(s) from a neo-euler (vector)
-        representation.
+        """Create orientations from a neo-euler (vector) representation.
+
         Parameters
         ----------
         neo_euler
@@ -272,15 +270,16 @@ class Orientation(Misorientation):
         symmetry
             Symmetry of orientation(s). If not given (default), no
             symmetry is set.
+
         Returns
         -------
-        ori
+        o
             Orientations.
         """
-        ori = super().from_neo_euler(neo_euler)
+        o = super().from_neo_euler(neo_euler)
         if symmetry:
-            ori.symmetry = symmetry
-        return ori
+            o.symmetry = symmetry
+        return o
 
     @classmethod
     def from_axes_angles(
@@ -290,7 +289,8 @@ class Orientation(Misorientation):
         symmetry: Optional[Symmetry] = None,
         degrees: bool = False,
     ) -> Orientation:
-        """Initialize from axis-angle pair(s).
+        """Create orientations from axis-angle pairs
+        :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
@@ -308,21 +308,21 @@ class Orientation(Misorientation):
 
         Returns
         -------
-        ori
+        o
             Orientation(s).
 
         Examples
         --------
         >>> from orix.quaternion import Orientation, symmetry
-        >>> ori = Orientation.from_axes_angles((0, 0, -1), 90, symmetry.Oh, degrees=True)
-        >>> ori
+        >>> o = Orientation.from_axes_angles((0, 0, -1), 90, symmetry.Oh, degrees=True)
+        >>> o
         Orientation (1,) m-3m
         [[ 0.7071  0.      0.     -0.7071]]
         """
-        ori = super().from_axes_angles(axes, angles, degrees)
+        o = super().from_axes_angles(axes, angles, degrees)
         if symmetry:
-            ori.symmetry = symmetry
-        return ori
+            o.symmetry = symmetry
+        return o
 
     @classmethod
     def from_scipy_rotation(
@@ -356,11 +356,11 @@ class Orientation(Misorientation):
         >>> from orix.vector import Vector3d
         >>> from scipy.spatial.transform import Rotation as SciPyRotation
         >>> r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
-        >>> ori = Orientation.from_scipy_rotation(r_scipy, symmetry.Oh)
+        >>> o = Orientation.from_scipy_rotation(r_scipy, symmetry.Oh)
         >>> v = [1, 1, 0]
         >>> r_scipy.apply(v)
         array([-1.,  1.,  0.])
-        >>> ori * Vector3d(v)
+        >>> o * Vector3d(v)
         Vector3d (1,)
         [[ 1. -1.  0.]]
         """
@@ -454,20 +454,20 @@ class Orientation(Misorientation):
         Examples
         --------
         >>> from orix.quaternion import Orientation, symmetry
-        >>> ori1 = Orientation.random((5, 3))
-        >>> ori2 = Orientation.random((6, 2))
-        >>> dist1 = ori1.angle_with_outer(ori2)
+        >>> o1 = Orientation.random((5, 3))
+        >>> o2 = Orientation.random((6, 2))
+        >>> dist1 = o1.angle_with_outer(o2)
         >>> dist1.shape
         (5, 3, 6, 2)
-        >>> ori1.symmetry = symmetry.Oh
-        >>> ori2.symmetry = symmetry.Oh
-        >>> dist_sym = ori1.angle_with_outer(ori2)
+        >>> o1.symmetry = symmetry.Oh
+        >>> o2.symmetry = symmetry.Oh
+        >>> dist_sym = o1.angle_with_outer(o2)
         >>> np.allclose(dist1.data, dist_sym.data)
         False
         """
-        ori = self.unit
+        o = self.unit
         if lazy:
-            dot_products = ori._dot_outer_dask(other, chunk_size=chunk_size)
+            dot_products = o._dot_outer_dask(other, chunk_size=chunk_size)
             # Round because some dot products are slightly above 1
             n_decimals = np.finfo(dot_products.dtype).precision
             dot_products = da.round(dot_products, n_decimals)
@@ -483,7 +483,7 @@ class Orientation(Misorientation):
             else:
                 da.store(sources=angles_dask, targets=angles)
         else:
-            dot_products = ori.dot_outer(other)
+            dot_products = o.dot_outer(other)
             angles = np.arccos(2 * dot_products**2 - 1)
             angles = np.nan_to_num(angles)
 
@@ -693,9 +693,9 @@ class Orientation(Misorientation):
 
         # Symmetrize every orientation by operations of the proper
         # subgroup different from rotation about the c-axis
-        ori = pg._special_rotation.outer(self)
+        o = pg._special_rotation.outer(self)
 
-        alpha, beta, gamma = ori.to_euler().T
+        alpha, beta, gamma = o.to_euler().T
         gamma = np.mod(gamma, 2 * np.pi / pg._primary_axis_order)
 
         # Find the first triplet among the symmetrically equivalent ones
