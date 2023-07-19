@@ -498,10 +498,12 @@ class TestOrientationInitialization:
 
     def test_from_neo_euler_symmetry(self):
         v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
-        o1 = Orientation.from_neo_euler(v)
+        with pytest.warns(np.VisibleDeprecationWarning):
+            o1 = Orientation.from_neo_euler(v)
         assert np.allclose(o1.data, [0.7071, 0, 0, 0.7071])
         assert o1.symmetry.name == "1"
-        o2 = Orientation.from_neo_euler(v, symmetry=Oh)
+        with pytest.warns(np.VisibleDeprecationWarning):
+            o2 = Orientation.from_neo_euler(v, symmetry=Oh)
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(o2.data, [-1, 0, 0, 0])
         assert o2.symmetry.name == "m-3m"
