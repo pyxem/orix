@@ -21,7 +21,7 @@ import pytest
 from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix.quaternion import Quaternion, Rotation
-from orix.vector import AxAngle, Vector3d
+from orix.vector import Vector3d
 
 rotations = [
     (0.707, 0.0, 0.0, 0.707),
@@ -227,55 +227,59 @@ def test_neg(rotation, i, expected_i):
     assert np.allclose(r.improper, expected_i)
 
 
-@pytest.mark.parametrize(
-    "rotation, improper, expected, improper_expected",
-    [
-        (
-            np.array([[0.5, 0.5, 0.5, 0.5], [1, 0, 0, 1]]),
-            [0, 0],
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.707106, 0, 0, 0.707106]]),
-            [0, 0],
-        ),
-        (
-            np.array([[0.5, 0.5, 0.5, 0.5], [1, 0, 0, 1]]),
-            [0, 1],
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.707106, 0, 0, 0.707106]]),
-            [0, 1],
-        ),
-        (
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
-            [0, 0],
-            np.array([[0.5, 0.5, 0.5, 0.5]]),
-            [0],
-        ),
-        (
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
-            [0, 1],
-            np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
-            [0, 1],
-        ),
-    ],
-    indirect=["rotation"],
-)
-def test_unique(rotation, improper, expected, improper_expected):
-    rotation.improper = improper
-    u = rotation.unique()
-    assert np.allclose(u.data, expected, atol=1e-6)
-    assert np.allclose(u.improper, improper_expected)
+class TestUnique:
+    @pytest.mark.parametrize(
+        "rotation, improper, expected, improper_expected",
+        [
+            (
+                np.array([[0.5, 0.5, 0.5, 0.5], [1, 0, 0, 1]]),
+                [0, 0],
+                np.array([[0.5, 0.5, 0.5, 0.5], [0.707106, 0, 0, 0.707106]]),
+                [0, 0],
+            ),
+            (
+                np.array([[0.5, 0.5, 0.5, 0.5], [1, 0, 0, 1]]),
+                [0, 1],
+                np.array([[0.5, 0.5, 0.5, 0.5], [0.707106, 0, 0, 0.707106]]),
+                [0, 1],
+            ),
+            (
+                np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
+                [0, 0],
+                np.array([[0.5, 0.5, 0.5, 0.5]]),
+                [0],
+            ),
+            (
+                np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
+                [0, 1],
+                np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]),
+                [0, 1],
+            ),
+        ],
+        indirect=["rotation"],
+    )
+    def test_unique(self, rotation, improper, expected, improper_expected):
+        rotation.improper = improper
+        u = rotation.unique()
+        assert np.allclose(u.data, expected, atol=1e-6)
+        assert np.allclose(u.improper, improper_expected)
 
+    def test_kwargs_unique(self, rotation):
+        """return_index and return_inverse edge cases"""
+        rotation.unique(return_index=True, return_inverse=True)
+        rotation.unique(return_index=True, return_inverse=False)
+        rotation.unique(return_index=False, return_inverse=True)
 
-def test_kwargs_unique(rotation):
-    """return_index and return_inverse edge cases"""
-    rotation.unique(return_index=True, return_inverse=True)
-    rotation.unique(return_index=True, return_inverse=False)
-    rotation.unique(return_index=False, return_inverse=True)
+    def test_unique_inverse(self):
+        r = Rotation.random((20,))
+        u, inverse = r.unique(return_inverse=True)
+        m = u[inverse] * ~r
+        assert np.allclose(m.angle, 0)
 
-
-def test_unique_inverse():
-    r = Rotation.random((20,))
-    u, inverse = r.unique(return_inverse=True)
-    m = u[inverse] * ~r
-    assert np.allclose(m.angle, 0)
+    def test_unique_empty(self):
+        r = Rotation.empty()
+        r2 = r.unique()
+        assert r2.size == 0
 
 
 def test_angle_with_outer():
@@ -542,24 +546,6 @@ class TestFromToMatrix:
         om2 = r2.to_matrix()
         assert r1 == r2
         assert np.allclose(om1, om2)
-
-
-# class TestFromAxesAngles:
-#     def test_from_axes_angles(self, rotations):
-#         axangle = AxAngle.from_rotation(rotations)
-#         rotations2 = Rotation.from_neo_euler(axangle)
-#         rotations3 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
-#         assert np.allclose(rotations2.data, rotations3.data)
-#         r1 = Rotation.from_neo_euler(axangle)
-#         r2 = Rotation.from_axes_angles(axangle.axis.data, axangle.angle)
-#         assert isinstance(r1, Rotation)
-#         assert isinstance(r2, Rotation)
-#         assert r1 == r2
-
-#         r3 = Rotation.from_axes_angles(
-#             axangle.axis.data, np.rad2deg(axangle.angle), degrees=True
-#         )
-#         assert np.allclose(r3.data, r2.data)
 
 
 class TestFromScipyRotation:
