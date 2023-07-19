@@ -44,32 +44,34 @@ import numpy as np
 from orix.quaternion import Quaternion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, get_distinguished_points
-from orix.vector import AxAngle, Rodrigues
+from orix.vector import Rodrigues
 
-_EPSILON = 1e-9  # small number to avoid round off problems
+_FLOAT_EPS = 1e-9  # Small number to avoid round off problems
 
 
 def _get_large_cell_normals(s1, s2):
     dp = get_distinguished_points(s1, s2)
+
+    if dp.size == 0:
+        return Rotation.empty()
+
     normals = Rodrigues.zero(dp.shape + (2,))
     planes1 = dp.axis * np.tan(dp.angle / 4)
     planes2 = -dp.axis * np.tan(dp.angle / 4) ** -1
     planes2.data[np.isnan(planes2.data)] = 0
     normals[:, 0] = planes1
     normals[:, 1] = planes2
-    normals: Rotation = (
-        Rotation.from_rodrigues(normals).flatten().unique(antipodal=False)
-    )
-    if not normals.size:
-        return normals
+    normals = Rotation.from_rodrigues(normals).flatten().unique(antipodal=False)
+
     _, inv = normals.axis.unique(return_inverse=True)
     axes_unique = []
     angles_unique = []
     for i in np.unique(inv):
         n = normals[inv == i]
         axes_unique.append(n.axis.data[0])
-        angles_unique.append(n.angle.max())
-    normals = Rotation.from_axes_angles(np.array(axes_unique), angles_unique)
+        angles_unique.append(np.max(n.angle))
+    normals = Rotation.from_axes_angles(axes_unique, angles_unique)
+
     return normals
 
 
@@ -166,11 +168,11 @@ class OrientationRegion(Rotation):
             Rotation.stack(c2).flatten(),
             Rotation.stack(c3).flatten(),
         )
-        rot = Rotation.triple_cross(c1, c2, c3)
-        rot = rot[~np.any(np.isnan(rot.data), axis=-1)]
-        rot = rot[rot < self].unique()
-        surface = np.any(np.isclose(rot.dot_outer(self), 0), axis=1)
-        return rot[surface]
+        r = Rotation.triple_cross(c1, c2, c3)
+        r = r[~np.any(np.isnan(r.data), axis=-1)]
+        r = r[r < self].unique()
+        surface = np.any(np.isclose(r.dot_outer(self), 0), axis=1)
+        return r[surface]
 
     def faces(self) -> list:
         normals = Rotation(self)
@@ -188,8 +190,8 @@ class OrientationRegion(Rotation):
         """
         c = Quaternion(self).dot_outer(Quaternion(other))
         inside = np.logical_or(
-            np.all(np.greater_equal(c, -_EPSILON), axis=0),
-            np.all(np.less_equal(c, +_EPSILON), axis=0),
+            np.all(np.greater_equal(c, -_FLOAT_EPS), axis=0),
+            np.all(np.less_equal(c, +_FLOAT_EPS), axis=0),
         )
         return inside
 
@@ -198,15 +200,15 @@ class OrientationRegion(Rotation):
         from orix.vector import Vector3d
 
         # Get a grid of vector directions
-        theta = np.linspace(0, 2 * np.pi - _EPSILON, 361)
-        rho = np.linspace(0, np.pi - _EPSILON, 181)
+        theta = np.linspace(0, 2 * np.pi - _FLOAT_EPS, 361)
+        rho = np.linspace(0, np.pi - _FLOAT_EPS, 181)
         theta, rho = np.meshgrid(theta, rho)
         g = Vector3d.from_polar(rho, theta)
 
         # Get the cell vector normal norms
-        n = Rodrigues.from_rotation(self).norm[:, np.newaxis, np.newaxis]
-        if n.size == 0:
+        if self.size == 0:
             return Rotation.from_axes_angles(g, np.pi)
+        n = self.to_rodrigues().norm[:, np.newaxis, np.newaxis]
 
         d = (-self.axis).dot_outer(g.unit)
         x = n * d
