@@ -851,8 +851,8 @@ class Quaternion(Object3d):
         >>> ax
         AxAngle (1,)
         [[1.2092 1.2092 1.2092]]
-        >>> ax.angle
-        array([[120.]])
+        >>> np.rad2deg(ax.angle)
+        array([120.])
         """
         axes, angles = _conversions.qu2ax(self.unit.data)
         ax = AxAngle(axes * angles)
@@ -888,8 +888,9 @@ class Quaternion(Object3d):
         Rodrigues (1,)
         [[1. 1. 1.]]
         >>> ro1.norm
-        1.7320508075688776
+        array([1.73205081])
         >>> ro2 = q.to_rodrigues(frank=True)
+        >>> ro2
         array([[0.57735027, 0.57735027, 0.57735027, 1.73205081]])
         >>> np.linalg.norm(ro2[:, :3])
         1.0
