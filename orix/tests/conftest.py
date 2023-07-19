@@ -724,6 +724,215 @@ loop_
     gc.collect()
 
 
+# ---------- Rotation representations for conversion tests ----------- #
+# NOTE to future test writers on unittest data:
+# All the data below can be recreated using 3Drotations, which is
+# available at
+# https://github.com/marcdegraef/3Drotations/blob/master/src/python.
+# 3Drotations is an expanded implementation of the rotation conversions
+# laid out in Rowenhorst et al. (2015), written by a subset of the
+# original authors.
+# Note, however, that orix differs from 3Drotations in its handling of
+# some edge cases. Software using 3Drotations (for example, Dream3D and
+# EBSDLib), handle rounding and other corrections after converting,
+# whereas orix accounts for them during. The first three angles in each
+# set are tests of these edge cases, and will therefore differ between
+# orix and 3Drotations. For all other angles, the datasets can be
+# recreated using a variation of:
+#   np.around(rotlib.qu2{insert_new_representation_here}(qu), 4).
+# This consistently gives results with four decimals of accuracy.
+
+
+@pytest.fixture
+def cubochoric_coordinates():
+    # fmt: off
+    return np.array(
+        [
+            [np.pi ** (2 / 3) / 2 + 1e-7,    1,    1],
+            [                          0,    0,    0],
+            [                     1.0725,    0,    0],
+            [                          0,    0,    1],
+            [                        0.1,  0.1,  0.2],
+            [                        0.1,  0.1, -0.2],
+            [                        0.5,  0.2,  0.1],
+            [                       -0.5, -0.2,  0.1],
+            [                        0.2,  0.5,  0.1],
+            [                        0.2, -0.5,  0.1],
+        ],
+        dtype=np.float64,
+    )
+    # fmt: on
+
+
+@pytest.fixture
+def homochoric_vectors():
+    # fmt: off
+    return np.array(
+        [
+            [      0,       0,       0],
+            [      0,       0,       0],
+            [ 1.3307,       0,       0],
+            [      0,       0,  1.2407],
+            [ 0.0785,  0.0785,  0.2219],
+            [ 0.0785,  0.0785, -0.2219],
+            [ 0.5879,  0.1801,  0.0827],
+            [-0.5879, -0.1801,  0.0827],
+            [ 0.1801,  0.5879,  0.0827],
+            [ 0.1801, -0.5879,  0.0827],
+        ],
+        dtype=np.float64,
+    )
+    # fmt: on
+
+
+@pytest.fixture
+def axis_angle_pairs():
+    # fmt: off
+    return np.array(
+        [
+            [      0,       0,       1,      0],
+            [      0,       0,       1,      0],
+            [      1,       0,       0,  np.pi],
+            [      0,       0,       1, 2.8418],
+            [ 0.3164,  0.3164,  0.8943, 0.4983],
+            [ 0.3164,  0.3164, -0.8943, 0.4983],
+            [ 0.9476,  0.2903,  0.1333, 1.2749],
+            [-0.9476, -0.2903,  0.1333, 1.2749],
+            [ 0.2903,  0.9476,  0.1333, 1.2749],
+            [ 0.2903, -0.9476,  0.1333, 1.2749],
+        ],
+        dtype=np.float64,
+    )
+    # fmt: on
+
+
+@pytest.fixture
+def rodrigues_vectors():
+    # fmt: off
+    return np.array(
+        [
+            [      0,       0,       1,      0],
+            [      0,       0,       1,      0],
+            [      1,       0,       0, np.inf],
+            [      0,       0,       1, 6.6212],
+            [ 0.3164,  0.3164,  0.8943, 0.2544],
+            [ 0.3164,  0.3164, -0.8943, 0.2544],
+            [ 0.9476,  0.2903,  0.1333, 0.7406],
+            [-0.9476, -0.2903,  0.1333, 0.7406],
+            [ 0.2903,  0.9476,  0.1333, 0.7406],
+            [ 0.2903, -0.9476,  0.1333, 0.7406]
+        ],
+        dtype=np.float64,
+    )
+    # fmt: on
+
+
+@pytest.fixture
+def orientation_matrices():
+    # fmt: off
+    return np.array(
+        [
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ],
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ],
+            [
+                [1,  0,  0],
+                [0, -1,  0],
+                [0,  0, -1],
+            ],
+            [
+                [-0.9554, -0.2953, 0],
+                [ 0.2953, -0.9554, 0],
+                [      0,       0, 1],
+            ],
+            [
+                [ 0.8906, -0.4152,  0.1856],
+                [ 0.4396,  0.8906, -0.1168],
+                [-0.1168,  0.1856,  0.9757],
+            ],
+            [
+                [ 0.8906, 0.4396,  0.1168],
+                [-0.4152, 0.8906, -0.1856],
+                [-0.1856, 0.1168,  0.9757],
+            ],
+            [
+                [ 0.9277, 0.0675,  0.3672],
+                [ 0.3224, 0.3512, -0.879 ],
+                [-0.1883, 0.9339,  0.3041],
+            ],
+            [
+                [0.9277,  0.0675, -0.3672],
+                [0.3224,  0.3512,  0.879 ],
+                [0.1883, -0.9339,  0.3041],
+            ],
+            [
+                [ 0.3512, 0.0675,  0.9339],
+                [ 0.3224, 0.9277, -0.1883],
+                [-0.879 , 0.3672,  0.3041],
+            ],
+            [
+                [ 0.3512, -0.3224, -0.879 ],
+                [-0.0675,  0.9277, -0.3672],
+                [ 0.9339,  0.1883,  0.3041],
+            ],
+        ],
+        dtype=np.float64
+    )
+    # fmt: on
+
+
+@pytest.fixture
+def quaternions_conversions():
+    # fmt: off
+    return np.array(
+        [
+            [     1,       0,       0,       0],
+            [     1,       0,       0,       0],
+            [     0,       1,       0,       0],
+            [0.1493,       0,       0,  0.9888],
+            [0.9691,  0.0780,  0.0780,  0.2205],
+            [0.9691,  0.0780,  0.0780, -0.2205],
+            [0.8036,  0.5640,  0.1728,  0.0793],
+            [0.8036, -0.5640, -0.1728,  0.0793],
+            [0.8036,  0.1728,  0.5640,  0.0793],
+            [0.8036,  0.1728, -0.5640,  0.0793],
+        ],
+        dtype=np.float64,
+    )
+    # fmt: on
+
+
+@pytest.fixture
+def euler_angles():
+    # fmt: off
+    return np.array(
+        [
+            [     0,      0,      0],
+            [     0,      0,      0],
+            [     0, 3.1416,      0],
+            [3.4413,      0,      0],
+            [3.7033, 0.2211, 2.1325],
+            [4.1507, 0.2211, 2.5799],
+            [3.3405, 1.2618, 2.7459],
+            [0.1989, 1.2618, 5.8875],
+            [4.3167, 1.2618, 1.7697],
+            [1.7697, 1.2618, 4.3167],
+        ],
+        dtype=np.float64,
+    )
+    # fmt: on
+
+
+# ------- End of rotation representations for conversion tests ------- #
+
+
 @pytest.fixture(autouse=True)
 def import_to_namespace(doctest_namespace):
     """Make :mod:`numpy` and :mod:`matplotlib.pyplot` available in
