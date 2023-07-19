@@ -30,9 +30,7 @@ from scipy.spatial.transform import Rotation as SciPyRotation
 from orix._util import deprecated, deprecated_argument
 from orix.base import Object3d
 from orix.quaternion import _conversions
-from orix.vector import AxAngle, Miller, Vector3d
-from orix.quaternion import _conversions
-from orix.vector import AxAngle, Miller, Vector3d
+from orix.vector import AxAngle, Homochoric, Miller, Rodrigues, Vector3d
 
 # Used to round values below 1e-16 to zero
 _FLOAT_EPS = np.finfo(float).eps
@@ -72,7 +70,7 @@ class Quaternion(Object3d):
        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c))
     """
 
-    # -------------------------- Properties ------------------------- #
+    # --------------------------- Properties ------------------------- #
 
     dim = 4
 
@@ -142,7 +140,7 @@ class Quaternion(Object3d):
 
     @property
     def axis(self) -> Vector3d:
-        """Return the axes of rotation."""
+        """Return the axis of rotation."""
         axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
         a_is_zero = self.a < -1e-6
         axis[a_is_zero] = -axis[a_is_zero]
@@ -153,17 +151,17 @@ class Quaternion(Object3d):
 
     @property
     def angle(self) -> np.ndarray:
-        """Return the angles of rotation."""
+        """Return the angle of rotation."""
         return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
 
     @property
     def antipodal(self) -> Quaternion:
-        """Return the quaternions and the antipodal ones."""
+        """Return the quaternion and its antipodal."""
         return self.__class__(np.stack([self.data, -self.data]))
 
     @property
     def conj(self) -> Quaternion:
-        r"""Return the conjugate of this quaternion
+        r"""Return the conjugate of the quaternion
         :math:`q^* = a - bi - cj - dk`.
         """
         q = quaternion.from_float_array(self.data).conj()
@@ -198,11 +196,11 @@ class Quaternion(Object3d):
     def __neg__(self) -> Quaternion:
         return self.__class__(-self.data)
 
-    # ------------------- "from_*" class methods -------------------- #
+    # -------------------- from_*() class methods -------------------- #
 
     # TODO: Remove before 0.13.0
     @classmethod
-    @deprecated(since="0.12", removal="0.13")
+    @deprecated(since="0.12", removal="0.13", alternative="from_axes_angles")
     def from_neo_euler(cls, neo_euler: "NeoEuler") -> Quaternion:
         """Create unit quaternion(s) from a neo-euler (vector)
         representation.
@@ -250,129 +248,14 @@ class Quaternion(Object3d):
         return qu.unit
 
     @classmethod
-    def from_rodrigues(
-        cls, rod: Union[np.ndarray, Vector3d, tuple, list]
-    ) -> Quaternion:
-        """Create unit quaternion(s) from Rodrigues vector(s) of length
-        three, ie:
-            :math:`\omega * (n_1, n_2, n_3)`
-        for creating quaternions from Rodrigues-Franck vector(s) of length
-        four, ie:
-            :math:`(n_1,n_2,n_3, \omega)`
-        users should instead use Quaternion.from_rodrigues_frank.
-        see Notes for details on the differences.
-
-        Parameters
-        ----------
-        rod
-            Rodrigues vector representations interpretable as Vector3D
-            objects
-        ignore_warnings = False
-            Silences warnings related to large errors or vector length
-
-        Returns
-        -------
-        quat
-            Unit quaternion(s).
-
-        Notes
-        -------
-        Olinde Rodrigues's 1840 vector description was popularized by
-        F. C. Frank due to it's useful rectilinear mapping of fundamental
-        zones, as is well-demonstrated in the following paper:
-            https://doi.org/10.1007/BF02649253
-        This is the version expected as input in this function.
-
-        However, the length of these 3d vectors, and thus their accuracy,
-        scales with :math:`\tan(\theta/2)`.
-        Additionally two-fold rotations produce vectors of infinite length.
-        Thus, C.S. Frank and others introduced the Rodrigues-Frank Vector
-        of length 4, consisting of a unit vector followed by the scaling
-        factor. This is better suited for storing data or performing rotation
-        calculations, as covered in :cite:`rowenhorst2015consistent`.
-
-        Note, the definitions presented here for Rodrigues-Frank and
-        Rodrigues Vectors are not universally adopted. Additionally, some
-        codes prefer the (angle, axis) representation as opposed to Orix's
-        (axis, angle). Thus, caution should be exercised when importing data
-        from non-Orix sources.
-        """
-        # Check for Rodrigues-Frank vector
-        if type(rod) != Vector3d:
-            if np.atleast_2d(rod).shape[-1] == 4:
-                raise ValueError(
-                    "Requires an input array of shape (...,3). for "
-                    + "Rodrigues-Frank vectors of shape (...,4) use "
-                    + "Quaternion.from_rodrigues_frank() instead."
-                )
-        # At this point, it is fastest to convert to axis-angle format
-        # and pass the results to Quaternion.from_axis_angle
-        axes = Vector3d(rod)
-        norms = axes.norm
-        angles = np.arctan(norms) * 2
-        if axes.size * angles.size == 0:
-            return cls.empty()
-        # before passing, check for large angles and small errors
-        if np.rad2deg(np.max(angles)) > 179.999:
-            warnings.warn(
-                "Highest angle is greater than 179.999 degrees. Rodrigues"
-                + " Rodrigues vectors cannot paramtrize 2-fold rotations"
-                + "Consider an alternative class method."
-            )
-        if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
-            warnings.warn(
-                "Max. estimated error is greater than 0.1%. Rodrigues "
-                + "vectors have increasing associated errors for small "
-                + "angle rotations. Consider an alternative class method."
-            )
-
-        qu = cls.from_axes_angles(axes, angles)
-        return qu.unit
-
-    @classmethod
-    def from_rodrigues_frank(cls, rf: Union[np.ndarray, tuple, list]) -> Quaternion:
-        """Create unit quaternion(s) from Rodrigues-Frank vector(s) of
-        length four, ie:
-            :math:`(n_1,n_2,n_3, \omega)`
-        for creating quaternions from Rodrigues vector(s) of length
-        three, ie:
-            :math:`\omega * (n_1, n_2, n_3)`
-        users should instead use Quaternion.from_rodrigues.
-        see the Notes for that function for details on the differences.
-
-        Parameters
-        ----------
-        rf
-            Rodrigues-Frank representation interpretable as a numpy
-            array of shape (...,4)
-
-        Returns
-        -------
-        quat
-            Unit quaternion(s).
-        """
-        axes = np.atleast_2d(rf)
-        # Check for Rodrigues vector
-        if type(rf) == Vector3d or axes.shape[-1] == 3:
-            raise ValueError(
-                "Requires an input array of shape (...,4)."
-                + "for Rodrigues vectors of shape (...,3),"
-                + " use Quaternion.from_rodirigues instead"
-            )
-        if axes.size == 0:
-            return cls.empty()
-        ax = _conversions.ro2ax(axes)
-        qu = cls(_conversions.ax2qu(ax[..., :3], ax[..., 3]))
-        return qu.unit
-
-    @classmethod
     def from_axes_angles(
         cls,
         axes: Union[np.ndarray, Vector3d, tuple, list],
         angles: Union[np.ndarray, tuple, list, float],
         degrees: bool = False,
     ) -> Quaternion:
-        """Initialize from axis-angle pair(s).
+        """Create unit quaternions from axis-angle pairs
+        :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
@@ -400,19 +283,157 @@ class Quaternion(Object3d):
 
         See Also
         --------
-        from_neo_euler
+        from_rodrigues
         """
-        # convert all the reasonable tuple, numpy, or list representations of
-        # axes and angles into numpy arrays.
+        if np.size(axes) == 0:
+            return cls.empty()
+
         axes = Vector3d(axes).unit.data
         angles = np.array(angles)
-        # trivial case of no input data
-        if axes.size * angles.size == 0:
-            return cls.empty()
         if degrees:
             angles = np.deg2rad(angles)
-        quat = cls(_conversions.ax2qu(axes, angles))
-        return quat.unit
+
+        q = _conversions.ax2qu(axes, angles)
+        q = cls(q)
+        q = q.unit
+
+        return q
+
+    @classmethod
+    def from_homochoric(
+        cls,
+        ho: Union[Vector3d, Homochoric, np.ndarray, tuple, list],
+    ) -> Quaternion:
+        r"""Create unit quaternions from homochoric vectors
+        :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        ho
+            Homochoric vectors parallel to the axes of rotation with
+            lengths equal to
+            :math:`0.75\cdot(\theta - \sin(\theta))^{1/3}`, where
+            :math:`\theta` is the angle of rotation.
+
+        Returns
+        -------
+        q
+            Unit quaternions.
+        """
+        if np.size(ho) == 0:
+            return cls.empty()
+
+        if isinstance(ho, Vector3d):
+            ho = ho.data
+        else:
+            ho = np.atleast_2d(ho)
+            if ho.shape[-1] != 3:
+                raise ValueError("Final dimension of vector array must be 3.")
+
+        shape = ho.shape[:-1]
+        ho = ho.reshape((-1, 3))
+
+        ax = _conversions.ho2ax(ho)
+        q = _conversions.ax2qu(ax[:, :3], ax[:, 3])
+        q = q.reshape(shape + (4,))
+        q = cls(q)
+        q = q.unit
+
+        return q
+
+    @classmethod
+    def from_rodrigues(
+        cls,
+        ro: Union[np.ndarray, Vector3d, tuple, list],
+        angles: Union[np.ndarray, tuple, list, float, None] = None,
+    ) -> Quaternion:
+        r"""Create unit quaternions from Rodrigues vectors or
+        Rodrigues-Frank vectors :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        ro
+            Rodrigues vectors :math:`\hat{\mathbf{n}}` of three
+            components. These are the components of the Rodrigues-Frank
+            vectors if the angles ``omega`` are passed.
+        angles
+            Angles :math:`\omega` of the Rodrigues-Frank vectors ``ro``,
+            one per vector. If these are not passed, ``ro`` are
+            the Rodrigues vectors.
+
+        Returns
+        -------
+        q
+            Unit quaternions.
+
+        Notes
+        -------
+        The Rodrigues-Frank vector :math:`\mathbf{\rho}` is defined as
+
+        .. math::
+
+            \mathbf{\rho} = \hat{\mathbf{n}}\tan\frac{\omega}{2}.
+
+        If the vector length is :math:`\rho = \|\mathbf{\rho}\|, the
+        angle is given by
+
+        .. math::
+
+            \omega = 2\arctan\rho.
+
+        O. Rodrigues's 1840 vector description was popularized by F. C.
+        Frank due to its useful rectilinear mapping of fundamental
+        zones, as is well-demonstrated in :cite:`frank1988orientation`.
+        However, the length of these vectors, and thus their accuracy,
+        scales with :math:`\tan(\omega/2)`. Additionally, two-fold
+        rotations produce vectors of infinite length. Thus, Frank and
+        others introduced the Rodrigues-Frank vector of length 4,
+        consisting of a unit vector followed by the scaling factor
+        :math:`\tan(\omega/2)`. This is better suited for storing data
+        or performing rotation calculations, as discussed in
+        :cite:`rowenhorst2015consistent`.
+        """
+        if np.size(ro) == 0:
+            return cls.empty()
+
+        if isinstance(ro, Vector3d):
+            ro = ro.data
+        else:
+            ro = np.atleast_2d(ro)
+            if ro.shape[-1] != 3:
+                raise ValueError("Final dimension of vector array must be 3.")
+
+        shape = ro.shape[:-1]
+        ro = ro.reshape((-1, 3))
+
+        if angles is None:
+            norm = Vector3d(ro).norm
+            if np.min(norm) < np.finfo(norm.dtype).resolution * 1000:
+                warnings.warn(
+                    "Max. estimated error is greater than 0.1%. Rodrigues vectors have "
+                    "increasing associated errors for small angle rotations. Consider "
+                    "creating quaternions in another way."
+                )
+            angles = 2 * np.arctan(norm)
+            angles = angles[:, np.newaxis]
+            ax = np.hstack((ro, angles))
+        else:
+            angles = angles.ravel()[:, np.newaxis]
+            ro_axes_angles = np.hstack((ro, angles))
+            ax = _conversions.ro2ax(ro_axes_angles)
+
+        if np.rad2deg(np.max(angles)) > 179.999:
+            warnings.warn(
+                "Highest angle is greater than 179.999 degrees. Rodrigues vectors "
+                "cannot parametrize 2-fold rotations. Consider creating quaternions"
+                " in another way."
+            )
+
+        q = cls.from_axes_angles(ax[:, :3], ax[:, 3])
+        q = q.reshape(*shape)
+        q = q.unit
+
+        return q
 
     # TODO: Remove decorator, **kwargs, and use of "convention" in 0.13
     @classmethod
@@ -424,7 +445,7 @@ class Quaternion(Object3d):
         degrees: bool = False,
         **kwargs,
     ) -> Quaternion:
-        """Initialize from Euler angle set(s)
+        """Create unit quaternions from Euler angle sets
         :cite:`rowenhorst2015consistent`.
 
         Parameters
@@ -480,7 +501,7 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_matrix(cls, matrix: Union[np.ndarray, tuple, list]) -> Quaternion:
-        """Create unit quaternions from the orientation matrices
+        """Create unit quaternions from orientation matrices
         :cite:`rowenhorst2015consistent`.
 
         Parameters
@@ -516,17 +537,18 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
-        """Initialize from :class:`scipy.spatial.transform.Rotation`.
+        """Create unit quaternions from
+        :class:`scipy.spatial.transform.Rotation`.
 
         Parameters
         ----------
         rotation
-            SciPy rotation(s).
+            SciPy rotations.
 
         Returns
         -------
         quaternion
-            Quaternion(s).
+            Quaternions.
 
         Notes
         -----
@@ -584,8 +606,7 @@ class Quaternion(Object3d):
         Tuple[Quaternion, np.ndarray],
         Tuple[Quaternion, float, np.ndarray],
     ]:
-        """Initialize an estimated quaternion to optimally align two
-        sets of vectors.
+        """Estimate a quaternion to optimally align two sets of vectors.
 
         This method wraps
         :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
@@ -654,7 +675,7 @@ class Quaternion(Object3d):
 
         return out[0] if len(out) == 1 else tuple(out)
 
-    # ------------------ Additional Class methods ------------------- #
+    # ------------------- Additional class methods ------------------- #
 
     @classmethod
     def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
@@ -716,7 +737,7 @@ class Quaternion(Object3d):
 
     @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
-        """Return random quaternions.
+        """Create random unit quaternions.
 
         Parameters
         ----------
@@ -760,13 +781,13 @@ class Quaternion(Object3d):
         q[..., 0] = 1
         return cls(q)
 
-    # -------------------- All "to_*" functions ---------------_----- #
+    # --------------------- All "to_*" functions --------------------- #
 
     # TODO: Remove decorator and **kwargs in 0.13
     @deprecated_argument("convention", since="0.9", removal="0.13")
     def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
-        r"""Return the normalized quaternions as Euler angles in the
-        Bunge convention :cite:`rowenhorst2015consistent`.
+        r"""Return the unit quaternions as Euler angles in the Bunge
+        convention :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
@@ -788,7 +809,7 @@ class Quaternion(Object3d):
         return eu
 
     def to_matrix(self) -> np.ndarray:
-        """Return the normalized quaternions as orientation matrices
+        """Return the unit quaternions as orientation matrices
         :cite:`rowenhorst2015consistent`.
 
         Returns
@@ -810,132 +831,132 @@ class Quaternion(Object3d):
         om = _conversions.qu2om(self.unit.data)
         return om
 
-    def to_axes_angles(self, degrees: bool = False) -> Tuple[Vector3d, np.ndarray]:
-        """Return an axis-angle representation of the normalized
-        quaternions :cite:`rowenhorst2015consistent`.
+    def to_axes_angles(self) -> AxAngle:
+        r"""Return the unit quaternions as axis-angle vectors
+        :cite:`rowenhorst2015consistent`.
+
+        Returns
+        -------
+        ax
+            Axis-angle vectors with magnitude :math:`\theta` equal to
+            the angle of rotation.
+
+        Examples
+        --------
+        A 3-fold rotation around the [111] axis
+
+        >>> from orix.quaternion import Quaternion
+        >>> q = Quaternion([0.5, 0.5, 0.5, 0.5])
+        >>> ax = q.to_axes_angles()
+        >>> ax
+        AxAngle (1,)
+        [[1.2092 1.2092 1.2092]]
+        >>> ax.angle
+        array([[120.]])
+        """
+        axes, angles = _conversions.qu2ax(self.unit.data)
+        ax = AxAngle(axes * angles)
+        return ax
+
+    def to_rodrigues(self, frank: bool = False) -> Union[Rodrigues, np.ndarray]:
+        r"""Return the unit quaternions as Rodrigues or Rodrigues-Frank
+         vectors :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
-        degrees
-            If True, the angles are given in degrees. Default is False.
+        frank
+            Whether to return Rodrigues vectors scaled by
+            :math:`\tan(\theta/2)`, where :math:`\theta` is the angle of
+            rotation, or Rodrigues-Frank vectors scaled by
+            :math:`\omega = 2\arctan(|\rho|)` in an array.
 
         Returns
         -------
-        axis
-            The axes of rotation.
-        angle
-            The angles of rotation.
+        ro
+            Vectors :math:`\hat{\mathbf{n}}` parallel to the axis of
+            rotation if ``frank=False`` or an array of four-component
+            vectors if ``frank=True``.
 
         Examples
         --------
-        >>> # 3-fold rotation around the 111 axis
-        >>> quat = Quaternion([0.5,0.5,0.5,0.5])
-        >>> axis, angle = quat.to_axes_angles()
-        >>> axis,np.rad2deg(angle)
+        A 3-fold rotation around the [111] axis
 
-        """
-        axis, angle = _conversions.qu2ax(self.data)
-        if degrees:
-            angle = angle * 180 / np.pi
-        return axis, angle
-
-    def to_rodrigues(self) -> Vector3d:
-        r"""Returns the neo-Eulerian Rodrigues representation of the
-        normalized quaternion(s) as a Vector3D object.
-
-        Returns
-        -------
-        rod
-            a vector3D object parallel to the quaternion's axis of
-            rotation, with a magnitude of :math:`\tan(angle/2)` .
-
-        Examples
-        --------
-
-        >>> # 3-fold rotation around the 111 axis
-        >>> quat = Quaternion([0.5,0.5,0.5,0.5])
-        >>> rod = quat.to_rodrigues()
-        >>> rod
-        Vector3d (1,)
+        >>> from orix.quaternion import Quaternion
+        >>> q = Quaternion.from_axes_angles([1, 1, 1], 120, degrees=True)
+        >>> ro1 = q.to_rodrigues()
+        >>> ro1
+        Rodrigues (1,)
         [[1. 1. 1.]]
+        >>> ro1.norm
+        1.7320508075688776
+        >>> ro2 = q.to_rodrigues(frank=True)
+        array([[0.57735027, 0.57735027, 0.57735027, 1.73205081]])
+        >>> np.linalg.norm(ro2[:, :3])
+        1.0
 
-        >>> # 4-fold rotation around the 111 axis
-        >>> quat = Quaternion([0.9239, 0.2209, 0.2209, 0.2209])
-        >>> rod = quat.to_rodrigues()
-        >>> rod
-        Vector3d (1,)
+        A 45:math:`^{\circ}` rotation around the [111] axis
+
+        >>> q2 = Quaternion.from_axes_angles([1, 1, 1], 45, degrees=True)
+        >>> ro3 = q2.to_rodrigues()
+        >>> ro3
+        Rodrigues (1,)
         [[0.2391 0.2391 0.2391]]
 
         Notes
         -----
-        This function returns the 3D vector representation of a rotation
-        originally proposed by Olinde Rodrigues. These vectors are often
-        used for plotting orientation data, as they create isomorphic
-        (though not volume preserving) plots, and fundamental zones have
-        rectilinear boundaries. This is well-demonstrated in the following
-        paper:
-            https://doi.org/10.1007/BF02649253
-        For the 4D Rodrigues-Frank (axis, angle) vector discussed in
-            :cite:`rowenhorst2015consistent`,
-        users should instead use `Quaternion.to_rodrigues_frank`.
+        Rodrigues vectors, originally proposed by O. Rodrigues, are
+        often used for plotting orientations as they create isomorphic
+        (though not volume-preserving) plots and form fundamental zones
+        with rectilinear boundaries. These features are
+        well-demonstrated in :cite:`frank1988orientation`. See
+        :cite:`rowenhorst2015consistent` for examples of usage of
+        Rodrigues-Frank vectors.
         """
-        ax = self.axis.unit
-        rod = ax * np.tan(self.angle / 2)
-        return rod
+        q = self.unit
+        if not frank:
+            ro = q.axis * np.tan(self.angle / 2)
+            ro = Rodrigues(ro)
+        else:
+            axes, angles = _conversions.qu2ax(q.data)
+            axes_angles = np.concatenate((axes, angles), axis=-1)
+            ro = _conversions.ax2ro(axes_angles)
+        return ro
 
-    def to_rodrigues_frank(self) -> np.ndarray:
-        r"""Returns the Rodrigues-Frank :math:`(n_1,n_2,n_3, \omega)`
-        vector as presented in :cite:`rowenhorst2015consistent`.
+    def to_homochoric(self) -> Homochoric:
+        r"""Return the unit quaternions as homochoric vectors
+        :cite:`rowenhorst2015consistent`.
 
         Returns
         -------
-        rod
-            a numpy array of shape (...,4)
-
-        Notes
-        -----
-        This function returns the 4D vector representation of a rotation
-        proposed by C.S. Frank, the uses of which are discussed further in
-        :cite:`rowenhorst2015consistent`. Users looking to directly create
-        3D plots of orientation data in Rodrigues space should instead use
-        `Quaternion.to_rodrigues`.
-        """
-        ax = np.concatenate(_conversions.qu2ax(self.unit.data), axis=-1)
-        rf = _conversions.ax2ro(ax)
-        return rf
-
-    def to_homochoric(self) -> Vector3d:
-        r"""Return the neo-Eulerian homochoric vector representation of
-        the normalized quaternions :cite:`rowenhorst2015consistent`.
-
-        Returns
-        -------
-        vec
-            The axes of rotation, with lengths equal to
-            :math:`0.75\cdot(\theta - \sin(\theta))^{1/3}`.
+        ho
+            Homochoric vectors parallel to the axes of rotation with
+            lengths equal to
+            :math:`0.75\cdot(\theta - \sin(\theta))^{1/3}`, where
+            :math:`\theta` is the angle of rotation.
 
         Examples
         --------
-        >>> # 3-fold rotation around the 111 axis
-        >>> quat = Quaternion([0.5,0.5,0.5,0.5])
-        >>> rod = quat.to_homochoric()
-        >>> rod
-        Vector3d (1,)
+        A 3-fold rotation about the [111] axis
+
+        >>> from orix.quaternion import Quaternion
+        >>> q = Quaternion.from_axes_angles([1, 1, 1], 120, degrees=True)
+        >>> ho = q.to_homochoric()
+        >>> ho
+        Homochoric (1,)
         [[0.5618 0.5618 0.5618]]
 
         Notes
         -----
-        This is often used as a plotting tool, as it produces an
-        isomorphic (though not angle-preserving) mapping from the
-        non-euclidean orientation space into cartesian coordinates.
-        Additionally, unlike Rodrigues vectors, all rotations map into a
-        finite space, bounded by a sphere of radius :math:`\pi`.
+        Homochoric vectors are often used for plotting orientations as
+        they create an isomorphic (though not angle-preserving) mapping
+        from the non-euclidean orientation space into Cartesian
+        coordinates. Additionally, unlike Rodrigues vectors, all
+        rotations map into a finite space, bounded by a sphere of radius
+        :math:`\pi`.
         """
-        ax = self.axis.unit
-        ang = self.angle
-        magnitude = (0.75 * (ang - np.sin(ang))) ** (1 / 3)
-        vec = ax * magnitude
-        return vec
+        ho = _conversions.qu2ho(self.unit.data)
+        ho = Homochoric(ho)
+        return ho
 
     # -------------------- Other public functions ------------------- #
 
