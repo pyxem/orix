@@ -16,6 +16,7 @@ Added
   use when plotting vectors.
 - Two offsets in the stereographic coordinates (X, Y) can be given to
   ``StereographicPlot.text()`` to offset text coordinates.
+- Explicit support for Python 3.11.
 
 Changed
 -------
