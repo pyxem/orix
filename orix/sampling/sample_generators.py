@@ -24,6 +24,11 @@ from orix.quaternion import OrientationRegion, Rotation, Symmetry
 from orix.quaternion.symmetry import get_point_group
 from orix.sampling.SO3_sampling import _three_uniform_samples_method, uniform_SO3_sample
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
+from orix.quaternion import symmetry
+from orix.sampling import sample_S2
+from orix.vector import Vector3d
+
+from diffsims.rotations import ConstrainedRotation
 
 
 def get_sample_fundamental(
@@ -165,3 +170,56 @@ def _remove_larger_than_angle(rot: Rotation, max_angle: Union[int, float]) -> Ro
     mask = half_angles < half_angle
     rot_out = rot[mask]
     return rot_out
+
+
+def get_sample_reduced_fundamental(
+    resolution: float,
+    mesh: str = None,
+    point_group: Symmetry = None,
+) -> Rotation:
+    """Produces orientations to align various crystallographic directions with
+    the z-axis, with the constraint that the first Euler angle phi_1=0.
+    The crystallographic directions sample the fundamental zone, representing
+    the smallest region of symmetrically unique directions of the relevant
+    crystal system or point group.
+    Parameters
+    ----------
+    resolution
+        An angle in degrees representing the maximum angular distance to a
+        first nearest neighbor grid point.
+    mesh
+        Type of meshing of the sphere that defines how the grid is created. See
+        orix.sampling.sample_S2 for all the options. A suitable default is
+        chosen depending on the crystal system.
+        point_group
+        Symmetry operations that determines the unique directions. Defaults to
+        no symmetry, which means sampling all 3D unit vectors.
+    Returns
+    -------
+    ConstrainedRotation
+        (N, 3) array representing Euler angles for the different orientations
+    """
+    if point_group is None:
+        point_group = symmetry.C1
+
+    if mesh is None:
+        s2_auto_sampling_map = {
+            "triclinic": "icosahedral",
+            "monoclinic": "icosahedral",
+            "orthorhombic": "spherified_cube_edge",
+            "tetragonal": "spherified_cube_edge",
+            "cubic": "spherified_cube_edge",
+            "trigonal": "hexagonal",
+            "hexagonal": "hexagonal",
+        }
+        mesh = s2_auto_sampling_map[point_group.system]
+
+    s2_sample = sample_S2(resolution, method=mesh)
+    fundamental = s2_sample[s2_sample <= point_group.fundamental_sector]
+
+    phi = fundamental.polar
+    phi2 = (np.pi / 2 - fundamental.azimuth) % (2 * np.pi)
+    phi1 = np.zeros(phi2.shape[0])
+    euler_angles = np.vstack([phi1, phi, phi2]).T
+
+    return Rotation.from_euler(euler_angles, degrees=False)
