@@ -20,8 +20,13 @@ import numpy as np
 import pytest
 
 from orix.quaternion import Rotation
-from orix.quaternion.symmetry import C2, C6, D6, get_point_group
-from orix.sampling import get_sample_fundamental, get_sample_local, uniform_SO3_sample
+from orix.quaternion.symmetry import C1, C2, C4, C6, D6, get_point_group
+from orix.sampling import (
+    get_sample_fundamental,
+    get_sample_local,
+    uniform_SO3_sample,
+    get_sample_reduced_fundamental,
+)
 from orix.sampling.SO3_sampling import _resolution_to_num_steps
 from orix.sampling._polyhedral_sampling import (
     _get_angles_between_nn_gridpoints,
@@ -175,3 +180,19 @@ class TestSampleFundamental:
         C2_sample = get_sample_fundamental(4, space_group=3, method="haar_euler")
         ratio = C2_sample.size / C6_sample.size
         assert np.isclose(ratio, 3, atol=0.2)
+
+    def test_get_sample_reduced_fundamental(self):
+        rotations = get_sample_reduced_fundamental(resolution=4, point_group=C1)
+        rotations2 = get_sample_reduced_fundamental(resolution=4, point_group=C2)
+        rotations4 = get_sample_reduced_fundamental(resolution=4, point_group=C4)
+        rotations6 = get_sample_reduced_fundamental(resolution=4, point_group=C4)
+
+        assert (
+            np.abs(rotations.size / rotations2.size) - 2 < 0.1
+        )  # about 2 times more rotations
+        assert (
+            np.abs(rotations2.size / rotations4.size) - 2 < 0.1
+        )  # about 2 times more rotations
+        assert (
+            np.abs(rotations.size / rotations6.size) - 6 < 0.1
+        )  # about 6 times more rotations
