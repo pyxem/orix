@@ -190,7 +190,7 @@ def get_sample_reduced_fundamental(
         Type of meshing of the sphere that defines how the grid is created. See
         orix.sampling.sample_S2 for all the options. A suitable default is
         chosen depending on the crystal system.
-        point_group
+    point_group
         Symmetry operations that determines the unique directions. Defaults to
         no symmetry, which means sampling all 3D unit vectors.
     Returns
@@ -224,43 +224,6 @@ def get_sample_reduced_fundamental(
     return Rotation.from_euler(euler_angles, degrees=False)
 
 
-def _get_rotation_from_z_to_direction(structure, direction):
-    """
-    Finds the rotation that takes [001] to a given zone axis.
-    Parameters
-    ----------
-    structure : diffpy.structure.structure.Structure
-        The structure for which a rotation needs to be found.
-    direction : array like
-        [UVW] direction that the 'z' axis should end up point down.
-    Returns
-    -------
-    euler_angles : tuple
-        'rzxz' in degrees.
-    See Also
-    --------
-    generate_zap_map
-    :meth:`~diffsims.generators.rotation_list_generators.get_grid_around_beam_direction`
-    Notes
-    -----
-    This implementation works with an axis arrangement that has +x as
-    left to right, +y as bottom to top and +z as out of the plane of a
-    page. Rotations are counter clockwise as you look from the tip of the
-    axis towards the origin
-    """
-    # Case where we don't need a rotation, As axis is [0,0,z] or [0,0,0]
-    if np.dot(direction, [0, 0, 1]) == np.linalg.norm(direction):
-        return (0, 0, 0)
-    # Normalize our directions
-    cartesian_direction = structure.lattice.cartesian(direction)
-    cartesian_direction = cartesian_direction / np.linalg.norm(cartesian_direction)
-    # Find the rotation using cartesian vector geometry
-    rotation_axis = np.cross([0, 0, 1], cartesian_direction)
-    rotation_angle = np.arccos(np.dot([0, 0, 1], cartesian_direction))
-    euler = axangle2euler(rotation_axis, rotation_angle, axes="rzxz")
-    return euler
-
-
 def _corners_to_centroid_and_edge_centers(corners):
     """
     Produces the midpoints and center of a trio of corners
@@ -290,6 +253,15 @@ def get_sample_zone_axis(
 ) -> Rotation:
     """Produces rotations to align various crystallographic directions with
     the sample zone axes.
+
+    Parameters
+    ----------
+    density
+        Either '3' or '7' for the number of directions to return.
+    phase
+        The phase for which the zone axis rotations are required.
+    return_directions
+        If True, returns the directions as well as the rotations.
     """
     system = phase.point_group.system
     corners_dict = {
