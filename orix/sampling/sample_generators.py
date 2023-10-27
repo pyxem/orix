@@ -19,6 +19,7 @@
 from typing import Optional, Union
 
 import numpy as np
+from transforms3d.euler import axangle2euler
 
 from orix.quaternion import OrientationRegion, Rotation, Symmetry
 from orix.quaternion.symmetry import get_point_group
@@ -26,6 +27,7 @@ from orix.sampling.SO3_sampling import _three_uniform_samples_method, uniform_SO
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
 from orix.quaternion import symmetry
 from orix.sampling import sample_S2
+from orix.crystal_map import Phase
 
 
 def get_sample_fundamental(
@@ -193,7 +195,7 @@ def get_sample_reduced_fundamental(
         no symmetry, which means sampling all 3D unit vectors.
     Returns
     -------
-    ConstrainedRotation
+    Rotation
         (N, 3) array representing Euler angles for the different orientations
     """
     if point_group is None:
@@ -220,55 +222,95 @@ def get_sample_reduced_fundamental(
     euler_angles = np.vstack([phi1, phi, phi2]).T
 
     return Rotation.from_euler(euler_angles, degrees=False)
+
+
+def _get_rotation_from_z_to_direction(structure, direction):
+    """
+    Finds the rotation that takes [001] to a given zone axis.
+    Parameters
+    ----------
+    structure : diffpy.structure.structure.Structure
+        The structure for which a rotation needs to be found.
+    direction : array like
+        [UVW] direction that the 'z' axis should end up point down.
+    Returns
+    -------
+    euler_angles : tuple
+        'rzxz' in degrees.
+    See Also
+    --------
+    generate_zap_map
+    :meth:`~diffsims.generators.rotation_list_generators.get_grid_around_beam_direction`
+    Notes
+    -----
+    This implementation works with an axis arrangement that has +x as
+    left to right, +y as bottom to top and +z as out of the plane of a
+    page. Rotations are counter clockwise as you look from the tip of the
+    axis towards the origin
+    """
+    # Case where we don't need a rotation, As axis is [0,0,z] or [0,0,0]
+    if np.dot(direction, [0, 0, 1]) == np.linalg.norm(direction):
+        return (0, 0, 0)
+    # Normalize our directions
+    cartesian_direction = structure.lattice.cartesian(direction)
+    cartesian_direction = cartesian_direction / np.linalg.norm(cartesian_direction)
+    # Find the rotation using cartesian vector geometry
+    rotation_axis = np.cross([0, 0, 1], cartesian_direction)
+    rotation_angle = np.arccos(np.dot([0, 0, 1], cartesian_direction))
+    euler = axangle2euler(rotation_axis, rotation_angle, axes="rzxz")
+    return euler
+
+
+def _corners_to_centroid_and_edge_centers(corners):
+    """
+    Produces the midpoints and center of a trio of corners
+    Parameters
+    ----------
+    corners : list of lists
+        Three corners of a streographic triangle
+    Returns
+    -------
+    list_of_corners : list
+        Length 7, elements ca, cb, cc, mean, cab, cbc, cac where naming is such that
+        ca is the first corner of the input, and cab is the midpoint between
+        corner a and corner b.
+    """
+    ca, cb, cc = corners[0], corners[1], corners[2]
+    mean = tuple(np.add(np.add(ca, cb), cc))
+    cab = tuple(np.add(ca, cb))
+    cbc = tuple(np.add(cb, cc))
+    cac = tuple(np.add(ca, cc))
+    return [ca, cb, cc, mean, cab, cbc, cac]
 
 
 def get_sample_zone_axis(
-    resolution: float,
-    mesh: str = None,
-    point_group: Symmetry = None,
+    density: str = "3",
+    phase: Phase = None,
+    return_directions: bool = False,
 ) -> Rotation:
-    """Produces the rotations to align various crystallographic directions with
-    the z-axis, with the constraint that the first Euler angle phi_1=0.
-
-
-    Parameters
-    ----------
-    resolution
-        An angle in degrees representing the maximum angular distance to a
-        first nearest neighbor grid point.
-    mesh
-        Type of meshing of the sphere that defines how the grid is created. See
-        orix.sampling.sample_S2 for all the options. A suitable default is
-        chosen depending on the crystal system.
-        point_group
-        Symmetry operations that determines the unique directions. Defaults to
-        no symmetry, which means sampling all 3D unit vectors.
-    Returns
-    -------
-    ConstrainedRotation
-        (N, 3) array representing Euler angles for the different orientations
+    """Produces rotations to align various crystallographic directions with
+    the sample zone axes.
     """
-    if point_group is None:
-        point_group = symmetry.C1
+    system = phase.point_group.system
+    corners_dict = {
+        "cubic": [(0, 0, 1), (1, 0, 1), (1, 1, 1)],
+        "hexagonal": [(0, 0, 1), (2, 1, 0), (1, 1, 0)],
+        "orthorhombic": [(0, 0, 1), (1, 0, 0), (0, 1, 0)],
+        "tetragonal": [(0, 0, 1), (1, 0, 0), (1, 1, 0)],
+        "trigonal": [(0, 0, 1), (-1, -2, 0), (1, -1, 0)],
+        "monoclinic": [(0, 0, 1), (0, 1, 0), (0, -1, 0)],
+    }
+    if density == "3":
+        direction_list = corners_dict[system]
+    elif density == "7":
+        direction_list = _corners_to_centroid_and_edge_centers(corners_dict[system])
+    else:
+        raise ValueError("Density must be either 3 or 7")
 
-    if mesh is None:
-        s2_auto_sampling_map = {
-            "triclinic": "icosahedral",
-            "monoclinic": "icosahedral",
-            "orthorhombic": "spherified_cube_edge",
-            "tetragonal": "spherified_cube_edge",
-            "cubic": "spherified_cube_edge",
-            "trigonal": "hexagonal",
-            "hexagonal": "hexagonal",
-        }
-        mesh = s2_auto_sampling_map[point_group.system]
-
-    s2_sample = sample_S2(resolution, method=mesh)
-    fundamental = s2_sample[s2_sample <= point_group.fundamental_sector]
-
-    phi = fundamental.polar
-    phi2 = (np.pi / 2 - fundamental.azimuth) % (2 * np.pi)
-    phi1 = np.zeros(phi2.shape[0])
-    euler_angles = np.vstack([phi1, phi, phi2]).T
-
-    return Rotation.from_euler(euler_angles, degrees=False)
+    euler_angles = np.array([
+        _get_rotation_from_z_to_direction(phase.structure, d) for d in direction_list
+    ])
+    if return_directions:
+        return Rotation.from_euler(euler_angles), direction_list
+    else:
+        return Rotation.from_euler(euler_angles)
