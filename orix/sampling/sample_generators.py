@@ -19,9 +19,9 @@
 from typing import Optional, Union
 
 import numpy as np
-from transforms3d.euler import axangle2euler
 
 from orix.quaternion import OrientationRegion, Rotation, Symmetry
+from orix.vector import Vector3d
 from orix.quaternion.symmetry import get_point_group
 from orix.sampling.SO3_sampling import _three_uniform_samples_method, uniform_SO3_sample
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
@@ -307,10 +307,15 @@ def get_sample_zone_axis(
     else:
         raise ValueError("Density must be either 3 or 7")
 
-    euler_angles = np.array([
-        _get_rotation_from_z_to_direction(phase.structure, d) for d in direction_list
-    ])
+    # rotate the directions to the z axis
+    rots = np.stack(
+        [
+            Rotation.from_align_vectors(v, Vector3d.zvector()).data
+            for v in direction_list
+        ]
+    )
+    rotations = Rotation(rots)
     if return_directions:
-        return Rotation.from_euler(euler_angles), direction_list
+        return rotations, direction_list
     else:
-        return Rotation.from_euler(euler_angles)
+        return rotations

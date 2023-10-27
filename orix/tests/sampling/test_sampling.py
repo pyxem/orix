@@ -209,15 +209,18 @@ class TestSampleFundamental:
         atom_list = []
         for coords in [[0, 0, 0], [0.5, 0, 0.5], [0, 0.5, 0.5], [0.5, 0.5, 0]]:
             x, y, z = coords[0], coords[1], coords[2]
-            atom_list.append(Atom(atype="Si", xyz=[x, y, z], lattice=latt))  # Motif part A
+            atom_list.append(
+                Atom(atype="Si", xyz=[x, y, z], lattice=latt)
+            )  # Motif part A
             atom_list.append(
                 Atom(atype="Si", xyz=[x + 0.25, y + 0.25, z + 0.25], lattice=latt)
             )  # Motif part B
         struct = Structure(atoms=atom_list, lattice=latt)
         p = Phase(structure=struct, space_group=227)
         if get_directions:
-            rot, _ = get_sample_zone_axis(phase=p, density=density, return_directions=True)
+            rot, _ = get_sample_zone_axis(
+                phase=p, density=density, return_directions=True
+            )
         else:
             rot = get_sample_zone_axis(phase=p, density=density)
         assert isinstance(rot, Rotation)
-

@@ -29,10 +29,12 @@ from orix.sampling.S2_sampling import (
 )
 from orix.sampling.S2_sampling import sampling_methods as sample_S2_methods
 from orix.sampling.SO3_sampling import uniform_SO3_sample
-from orix.sampling.sample_generators import (get_sample_fundamental,
-                                             get_sample_local,
-                                             get_sample_reduced_fundamental,
-                                             get_sample_zone_axis)
+from orix.sampling.sample_generators import (
+    get_sample_fundamental,
+    get_sample_local,
+    get_sample_reduced_fundamental,
+    get_sample_zone_axis,
+)
 
 __all__ = [
     "get_sample_fundamental",
