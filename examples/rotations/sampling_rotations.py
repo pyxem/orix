@@ -8,11 +8,9 @@ get both the zone axis and the reduced fundamental zone rotations for
 the phase of interest.
 """
 from diffpy.structure import Atom, Lattice, Structure
+
 from orix.crystal_map import Phase
-from orix.sampling import (
-    get_sample_reduced_fundamental,
-    get_sample_zone_axis,
-)
+from orix.sampling import get_sample_reduced_fundamental, get_sample_zone_axis
 from orix.vector import Vector3d
 
 a = 5.431
