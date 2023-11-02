@@ -27,7 +27,8 @@ then ``isort`` provides `commands
 <https://pycqa.github.io/isort/docs/configuration/action_comments.html>`__ that may be
 used to prevent sorting.
 
-Comment lines should preferably be limited to 72 characters.
+Comment and docstring lines should preferably be limited to 72 characters (including
+leading whitespaces).
 
 We use type hints in the function definition without type duplication in the function
 docstring, for example::
