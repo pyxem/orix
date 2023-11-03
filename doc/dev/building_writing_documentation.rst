@@ -122,3 +122,8 @@ Writing API reference
 
 Inherited attributes and methods are not listed in the API reference unless they are
 explicitly coded in the inheriting class.
+
+A class' ``set()`` method, if it has any, is excluded from the API reference.
+This is necessary because some plotting classes inheriting from Matplotlib's ``Axes()``
+class caused errors when the inherited ``set()`` method is to be included in the API
+reference by Sphinx (even though inherited methods are also explicitly excluded).
