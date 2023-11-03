@@ -351,9 +351,10 @@ class Quaternion(Object3d):
         ro: Union[np.ndarray, Vector3d, tuple, list],
         angles: Union[np.ndarray, tuple, list, float, None] = None,
     ) -> Quaternion:
-        r"""Create unit quaternions from Rodrigues vectors
-        :math:`\hat{\mathbf{n}}` or Rodrigues-Frank vectors
-        :math:`\mathbf{\rho}` :cite:`rowenhorst2015consistent`.
+        r"""Create unit quaternions from three component Rodrigues
+        vectors :math:`\hat{\mathbf{n}}` or four component
+        Rodrigues-Frank vectors :math:`\mathbf{\rho}`
+        :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
