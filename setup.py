@@ -10,6 +10,7 @@ from orix import __author__, __author_email__, __description__, __name__, __vers
 # fmt: off
 extra_feature_requirements = {
     "doc": [
+        "ipykernel",  # Used by nbsphinx to execute notebooks
         "memory_profiler",
         "nbsphinx                       >= 0.7",
         "numpydoc",
