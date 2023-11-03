@@ -10,20 +10,18 @@ from orix import __author__, __author_email__, __description__, __name__, __vers
 # fmt: off
 extra_feature_requirements = {
     "doc": [
-        "ipykernel",  # Used by nbsphinx to execute notebooks
         "memory_profiler",
         "nbsphinx                       >= 0.7",
         "numpydoc",
+        "pydata-sphinx-theme",
+        "scikit-image",
+        "scikit-learn",
         "sphinx                         >= 3.0.2",
         "sphinx-codeautolink[ipython]",
         "sphinx-copybutton              >= 0.2.5",
         "sphinx-design",
-        "sphinx-gallery                 < 0.11",
-        "sphinx-last-updated-by-git",
-        "pydata-sphinx-theme            >= 0.13.1",
+        "sphinx-gallery",
         "sphinxcontrib-bibtex           >= 1.0",
-        "scikit-image",
-        "scikit-learn",
     ],
     "tests": [
         "coverage                       >= 5.0",
@@ -38,7 +36,6 @@ extra_feature_requirements["dev"] = [
     "isort                              >= 5.10",
     "manifix",
     "outdated",
-    "packaging",
     "pre-commit                         >= 1.16",
 ] + list(chain(*list(extra_feature_requirements.values())))
 # fmt: on
@@ -71,7 +68,10 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        (
+            "License :: OSI Approved :: GNU General Public License v3 or later "
+            "(GPLv3+)"
+        ),
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering",

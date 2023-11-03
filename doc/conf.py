@@ -32,18 +32,19 @@ release = orix.__version__
 extensions = [
     "matplotlib.sphinxext.plot_directive",
     "nbsphinx",
-    "numpydoc",
     "sphinxcontrib.bibtex",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
+    "sphinx.ext.imgconverter",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",
+    "sphinx.ext.mathjax",
+    "numpydoc",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
-    "sphinx_last_updated_by_git",
 ]
 
 # Create links to references within orix's documentation to these packages
@@ -94,7 +95,7 @@ html_theme_options = {
     "github_url": "https://github.com/pyxem/orix",
     "header_links_before_dropdown": 6,
     "logo": {"alt_text": project, "text": project},
-    "navigation_with_keys": False,
+    "navigation_with_keys": True,
     "show_toc_level": 2,
     "use_edit_page_button": True,
 }
@@ -336,7 +337,7 @@ autosummary_generate = True
 
 
 # Download example datasets prior to building the docs
-print("[orix] Downloading example datasets")
+print("[orix] Downloading example datasets (if not found in the cache)")
 _ = data.sdss_ferrite_austenite(allow_download=True)
 _ = data.sdss_austenite(allow_download=True)
 _ = data.ti_orientations(allow_download=True)
