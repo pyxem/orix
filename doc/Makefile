@@ -3,8 +3,8 @@
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
-SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
+SPHINXOPTS    =
+SPHINXBUILD   = PYDEVD_DISABLE_FILE_VALIDATION=1 python -Xfrozen_modules=off -m sphinx
 SOURCEDIR     = .
 BUILDDIR      = build
 
@@ -13,6 +13,11 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .PHONY: help Makefile
+
+clean:
+	rm -rf $(BUILDDIR)
+	rm -rf $(SOURCEDIR)/examples
+	rm -rf $(SOURCEDIR)/reference/generated
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
