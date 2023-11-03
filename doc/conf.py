@@ -40,11 +40,11 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",
     "sphinx.ext.mathjax",
-    "numpydoc",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
+    "numpydoc",  # Must be loaded after autodoc
 ]
 
 # Create links to references within orix's documentation to these packages
