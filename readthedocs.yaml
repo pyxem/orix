@@ -14,10 +14,11 @@ build:
   os: ubuntu-22.04
   tools:
     python: "mambaforge-22.9"
+  apt_packages:
+    - imagemagick
 
 # Build doc in all formats (HTML, PDF and ePub)
 formats:
-  - htmlzip
   - pdf
 
 conda:
