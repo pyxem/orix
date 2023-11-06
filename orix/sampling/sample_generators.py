@@ -20,14 +20,13 @@ from typing import Optional, Union
 
 import numpy as np
 
-from orix.quaternion import OrientationRegion, Rotation, Symmetry
-from orix.vector import Vector3d
+from orix.crystal_map import Phase
+from orix.quaternion import OrientationRegion, Rotation, Symmetry, symmetry
 from orix.quaternion.symmetry import get_point_group
+from orix.sampling import sample_S2
 from orix.sampling.SO3_sampling import _three_uniform_samples_method, uniform_SO3_sample
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
-from orix.quaternion import symmetry
-from orix.sampling import sample_S2
-from orix.crystal_map import Phase
+from orix.vector import Vector3d
 
 
 def get_sample_fundamental(
