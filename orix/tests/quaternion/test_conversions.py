@@ -67,25 +67,6 @@ from orix.quaternion._conversions import (
 from orix.quaternion.symmetry import Oh
 
 
-@pytest.fixture
-def euler_angles():
-    return np.array(
-        [
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-            [0.0, 3.1416, 0.0],
-            [3.4413, 0.0, 0.0],
-            [3.7033, 0.2211, 2.1325],
-            [4.1507, 0.2211, 2.5799],
-            [3.3405, 1.2618, 2.7459],
-            [0.1989, 1.2618, 5.8875],
-            [4.3167, 1.2618, 1.7697],
-            [1.7697, 1.2618, 4.3167],
-        ],
-        dtype=np.float64,
-    )
-
-
 class TestRotationConversions:
     """Tests of conversions between rotation representations.
 

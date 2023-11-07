@@ -207,8 +207,8 @@ class Quaternion(Object3d):
 
         Parameters
         ----------
-        rf
-            Rodrigues-Frank vector parametrization of quaternion(s).
+        neo_euler
+            Vector parametrization of quaternions.
 
         Returns
         -------
@@ -724,122 +724,6 @@ class Quaternion(Object3d):
         return q
 
     @classmethod
-    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
-        """Pointwise cross product of three quaternions.
-
-        Parameters
-        ----------
-        q1
-            First quaternions.
-        q2
-            Second quaternions.
-        q3
-            Third quaternions.
-
-        Returns
-        -------
-        q
-            Quaternions resulting from the triple cross product.
-        """
-        q1a, q1b, q1c, q1d = q1.a, q1.b, q1.c, q1.d
-        q2a, q2b, q2c, q2d = q2.a, q2.b, q2.c, q2.d
-        q3a, q3b, q3c, q3d = q3.a, q3.b, q3.c, q3.d
-        # fmt: off
-        a = (
-            + q1b * q2c * q3d
-            - q1b * q3c * q2d
-            - q2b * q1c * q3d
-            + q2b * q3c * q1d
-            + q3b * q1c * q2d
-            - q3b * q2c * q1d
-        )
-        b = (
-            + q1a * q3c * q2d
-            - q1a * q2c * q3d
-            + q2a * q1c * q3d
-            - q2a * q3c * q1d
-            - q3a * q1c * q2d
-            + q3a * q2c * q1d
-        )
-        c = (
-            + q1a * q2b * q3d
-            - q1a * q3b * q2d
-            - q2a * q1b * q3d
-            + q2a * q3b * q1d
-            + q3a * q1b * q2d
-            - q3a * q2b * q1d
-        )
-        d = (
-            + q1a * q3b * q2c
-            - q1a * q2b * q3c
-            + q2a * q1b * q3c
-            - q2a * q3b * q1c
-            - q3a * q1b * q2c
-            + q3a * q2b * q1c
-        )
-        # fmt: on
-        q = cls(np.vstack((a, b, c, d)).T)
-        return q
-
-    @classmethod
-    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
-        """Pointwise cross product of three quaternions.
-
-        Parameters
-        ----------
-        q1
-            First quaternions.
-        q2
-            Second quaternions.
-        q3
-            Third quaternions.
-
-        Returns
-        -------
-        q
-            Quaternions resulting from the triple cross product.
-        """
-        q1a, q1b, q1c, q1d = q1.a, q1.b, q1.c, q1.d
-        q2a, q2b, q2c, q2d = q2.a, q2.b, q2.c, q2.d
-        q3a, q3b, q3c, q3d = q3.a, q3.b, q3.c, q3.d
-        # fmt: off
-        a = (
-            + q1b * q2c * q3d
-            - q1b * q3c * q2d
-            - q2b * q1c * q3d
-            + q2b * q3c * q1d
-            + q3b * q1c * q2d
-            - q3b * q2c * q1d
-        )
-        b = (
-            + q1a * q3c * q2d
-            - q1a * q2c * q3d
-            + q2a * q1c * q3d
-            - q2a * q3c * q1d
-            - q3a * q1c * q2d
-            + q3a * q2c * q1d
-        )
-        c = (
-            + q1a * q2b * q3d
-            - q1a * q3b * q2d
-            - q2a * q1b * q3d
-            + q2a * q3b * q1d
-            + q3a * q1b * q2d
-            - q3a * q2b * q1d
-        )
-        d = (
-            + q1a * q3b * q2c
-            - q1a * q2b * q3c
-            + q2a * q1b * q3c
-            - q2a * q3b * q1c
-            - q3a * q1b * q2c
-            + q3a * q2b * q1c
-        )
-        # fmt: on
-        q = cls(np.vstack((a, b, c, d)).T)
-        return q
-
-    @classmethod
     def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
         """Create random unit quaternions.
 
@@ -938,19 +822,6 @@ class Quaternion(Object3d):
     def to_axes_angles(self) -> AxAngle:
         r"""Return the unit quaternions as axis-angle vectors
         :cite:`rowenhorst2015consistent`.
-
-        Parameters
-        ----------
-        degrees
-            If True, the angles are given in degrees. Default is False.
-
-        Parameters
-        ----------
-        frank
-            Whether to return Rodrigues vectors scaled by
-            :math:`\tan(\theta/2)`, where :math:`\theta` is the angle of
-            rotation, or Rodrigues-Frank vectors scaled by
-            :math:`\omega = 2\arctan(|\rho|)` in an array.
 
         Returns
         -------
