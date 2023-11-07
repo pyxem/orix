@@ -207,45 +207,21 @@ class Quaternion(Object3d):
 
         Parameters
         ----------
-        rf
-            Rodrigues-Frank vector parametrization of quaternion(s).
-
-        ignore_warnings = False
-            Silences warnings related to large errors or large vectors
+        neo_euler
+            Vector parametrization of quaternions.
 
         Returns
         -------
         q
             Unit quaternion(s).
-
-        Notes
-        -------
-        Rodrigues vectors are often useful as a visualization tool. However,
-        the length scales with :math:\tan(\theta/2), as does their relative
-        error. Additionally, rotations of 180 degrees are equivalent to
-        infinitely long vectors. For calculations, a good alternative can
-        often be axis/angle pairs.
         """
-        axes = Vector3d(axes)
-        norms = axes.norm
-        angles = np.arctan(norms) * 2
-
-        if np.max(angles) > 179.999:
-            raise UserWarning(
-                "Maximum angle is greater than 179.999. Rodrigues "
-                + "Vectors cannot paramaterize 2-fold rotations. "
-                + "Consider an alternative import method."
-            )
-        if np.min(norms) < np.finfo(norms.dtype).resolution * 1000:
-            raise UserWarning(
-                "Maximum estimated error is greater than 0.1%."
-                + "Rodriguez vectors have increaing associated errors"
-                + " for small angle rotations. Consider an alternative "
-                + "import method."
-            )
-
-        qu = cls.from_axes_angles(axes, angles)
-        return qu.unit
+        s = np.sin(neo_euler.angle / 2)
+        a = np.cos(neo_euler.angle / 2)
+        b = s * neo_euler.axis.x
+        c = s * neo_euler.axis.y
+        d = s * neo_euler.axis.z
+        q = cls(np.stack([a, b, c, d], axis=-1)).unit
+        return q
 
     @classmethod
     def from_axes_angles(
