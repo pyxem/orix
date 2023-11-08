@@ -59,11 +59,11 @@ class NeoEuler(Vector3d, abc.ABC):
 
 
 class Homochoric(NeoEuler):
-    """Equal-volume mapping of the unit quaternion hemisphere.
+    r"""Equal-volume mapping of the unit quaternion hemisphere.
 
     The homochoric vector representing a rotation with rotation angle
-    :math:`\\theta` has magnitude
-    :math:`\\left[\\frac{3}{4}(\\theta - \\sin\\theta)\\right]^{\\frac{1}{3}}`.
+    :math:`\theta` has magnitude
+    :math:`\left[\frac{3}{4}(\theta - \sin\theta)\right]^{\frac{1}{3}}`.
 
     Notes
     -----
@@ -83,11 +83,14 @@ class Homochoric(NeoEuler):
         -------
         vec
             Homochoric vector.
+
+        See Also
+        --------
+        Quaternion.to_homochoric
         """
         theta = rotation.angle
-        n = rotation.axis
         magnitude = (0.75 * (theta - np.sin(theta))) ** (1 / 3)
-        return cls(n * magnitude)
+        return cls(rotation.axis * magnitude)
 
     @property
     def angle(self):
@@ -119,6 +122,10 @@ class Rodrigues(NeoEuler):
         -------
         vec
             Rodrigues vector.
+
+        See Also
+        --------
+        Quaternion.to_rodrigues
         """
         a = np.float64(rotation.a)
         with np.errstate(divide="ignore", invalid="ignore"):
@@ -134,10 +141,10 @@ class Rodrigues(NeoEuler):
 
 
 class AxAngle(NeoEuler):
-    """The simplest neo-Eulerian representation.
+    r"""The simplest neo-Eulerian representation.
 
-    The Axis-Angle vector representing a rotation with rotation angle
-    :math:`\\theta` has magnitude :math:`\\theta`
+    The axis-angle vector representing a rotation with rotation angle
+    :math:`\theta` has magnitude :math:`\theta`.
     """
 
     @classmethod
@@ -153,6 +160,10 @@ class AxAngle(NeoEuler):
         -------
         vec
             Axis-angle representation of ``rotation``.
+
+        See Also
+        --------
+        Quaternion.to_axes_angles
         """
         return cls((rotation.axis * rotation.angle).data)
 

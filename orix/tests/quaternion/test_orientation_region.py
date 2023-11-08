@@ -119,14 +119,12 @@ def test_get_distinguished_points(s1, s2, expected):
 )
 def test_get_large_cell_normals(s1, s2, expected):
     n = _get_large_cell_normals(s1, s2)
-    print(n)
     assert np.allclose(n.data, expected, atol=1e-3)
 
 
 def test_coverage_on_faces():
     o = OrientationRegion(Orientation([1, 1, 1, 1]))
-    f = o.faces()
-    return None
+    _ = o.faces()
 
 
 @pytest.mark.parametrize(
@@ -143,11 +141,10 @@ def test_coverage_on_faces():
     ],
 )
 def test_get_proper_point_groups(Gl, Gr):
-    get_proper_groups(Gl, Gr)
-    return None
+    _ = get_proper_groups(Gl, Gr)
 
 
 def test_get_proper_point_group_not_implemented():
-    """Double inversion case not yet implemented"""
+    """Double inversion case not yet implemented."""
     with pytest.raises(NotImplementedError):
         _ = get_proper_groups(Csz, Csz)
