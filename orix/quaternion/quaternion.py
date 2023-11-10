@@ -37,17 +37,29 @@ _FLOAT_EPS = np.finfo(float).eps
 
 
 class Quaternion(Object3d):
-    r"""Basic quaternion object.
+    r"""Quaternions.
 
     Quaternions support the following mathematical operations:
         - Unary negation.
-        - Inversion.
+        - Inversion (conjugation).
+        - Normalization to obtain unit quaternions.
         - Multiplication with other quaternions and vectors.
 
-    Quaternion-quaternion multiplication for two quaternions
-    :math:`q_1 = (a_1, b_1, c_1, d_1)`
-    and :math:`q_2 = (a_2, b_2, c_2, d_2)`
-    with :math:`q_3 = (a_3, b_3, c_3, d_3) = q_1 \cdot q_2` follows as:
+    A quaternion :math:`q` is defined as a four-component number of the
+    form :math:`q = a + ib + jc + kd`, where the imaginary units
+    :math:`(i, j, k)` satisfy the following relations:
+
+    .. math::
+
+        i^2 = j^2 = k^2 = -1;
+        ij = -ji = k; jk = -kj = i; ki = -ik = j.
+
+    In orix, quaternions are stored with the scalar part first followed
+    by the vector part, denoted :math:`q = (a, b, c, d)`.
+
+    Multiplication of two quaternions :math:`q_1 = (a_1, b_1, c_1, d_1)`
+    and :math:`q_2 = (a_2, b_2, c_2, d_2)` with
+    :math:`q_3 = q1 \cdot \q2 = (a_3, b_3, c_3, d_3)` is performed as:
 
     .. math::
        a_3 = a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2
@@ -58,9 +70,8 @@ class Quaternion(Object3d):
 
        d_3 = a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2
 
-    Quaternion-vector multiplication with a three-dimensional vector
-    :math:`v = (x, y, z)` calculates a rotated vector
-    :math:`v' = q \cdot v \cdot q^{-1}` and follows as:
+    Rotation of a 3D vector :math:`v = (x, y, z)` by a quaternion is
+    performed as:math:`v' = q \cdot v \cdot q^{-1}`. Written out:
 
     .. math::
        v'_x = x(a^2 + b^2 - c^2 - d^2) + 2(z(a \cdot c + b \cdot d) + y(b \cdot c - a \cdot d))
@@ -68,6 +79,24 @@ class Quaternion(Object3d):
        v'_y = y(a^2 - b^2 + c^2 - d^2) + 2(x(a \cdot d + b \cdot c) + z(c \cdot d - a \cdot b))
 
        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c))
+
+    The norm of a quaternion is defined as
+
+    .. math::
+
+        |q| = \sqrt{a^2 + b^2 + c^2 + d^2}.
+
+    Quaternions with unit norm :math:`|q| = 1` are known as unit
+    quaternions and can always be written on the form
+
+    .. math::
+
+        q = \cos\frac{\omega}{2} + \sin\frac{\omega}{2}(bi + cj + dk),
+
+    where :math:`(b, c, d)` are the direction cosines of the rotation
+    axis unit vector :math:`\mathbf{\hat{n}}`. The scalar part
+    :math:`a = \cos\frac{\omega}{2}` will always be positive or 0 for
+    rotations with rotation angle :math:`\omega = \pi`.
     """
 
     # --------------------------- Properties ------------------------- #
@@ -140,18 +169,22 @@ class Quaternion(Object3d):
 
     @property
     def axis(self) -> Vector3d:
-        """Return the axis of rotation."""
+        r"""Return the axis of rotation of the unit quaternion
+        :math:`\mathbf{\hat{n}} = (b, c, d)`.
+        """
         axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
         a_is_zero = self.a < -1e-6
         axis[a_is_zero] = -axis[a_is_zero]
         norm_is_zero = axis.norm == 0
-        axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero].data)
+        axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero])
         axis.data /= axis.norm[..., np.newaxis]
         return axis
 
     @property
     def angle(self) -> np.ndarray:
-        """Return the angle of rotation."""
+        r"""Return the angle of rotation of the unit quaternion
+        :math:`\omega = 2\arccos{|a|}`.
+        """
         return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
 
     @property
@@ -165,7 +198,7 @@ class Quaternion(Object3d):
         :math:`q^* = a - bi - cj - dk`.
         """
         q = quaternion.from_float_array(self.data).conj()
-        return Quaternion(quaternion.as_float_array(q))
+        return self.__class__(quaternion.as_float_array(q))
 
     # ----------------------- Dunder functions ---------------------- #
 
@@ -1116,6 +1149,12 @@ class Quaternion(Object3d):
                 "This operation is currently not avaliable in orix, please use outer "
                 "with `other` of type `Quaternion` or `Vector3d`"
             )
+
+    def inv(self) -> Quaternion:
+        r"""Return the inverse or conjugate of the quaternion
+        :math:`q^{-1} = a - bi - cj - dk`.
+        """
+        return self.conj
 
     # ------------------- Other private functions ------------------- #
 
