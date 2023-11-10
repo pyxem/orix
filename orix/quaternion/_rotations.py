@@ -19,12 +19,16 @@
 """Conversions of rotations between many common representations from
 :cite:`rowenhorst2015consistent`, accelerated with Numba.
 
-This module and documentation is only relevant for orix developers, not
-for users.
+Conventions:
 
-.. warning:
-    This module is for internal use only.  Do not use it in your own
-    code. We may change the API at any time with no warning.
+1. Right-handed Cartesian reference frames
+2. Rotation angles are taken to be positive for a counterclockwise
+   rotation when viewing from the end point of the rotation axis unit
+   vector towards the origin.
+3. Rotations are interpreted in the passive sense (even though P = 1!).
+4. Euler angle triplets are implemented using the Bunge convention, with
+   angular ranges as [0, 2pi], [0, pi], and [0, 2pi].
+5. Rotation angles are limited to [0, pi].
 """
 
 from typing import Tuple

@@ -16,20 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Base class for 3d objects.
-
-.. note::
-
-    Contents of this module are not meant to be used directly.
-"""
+"""Base class for three-dimensional objects."""
 
 from __future__ import annotations
 
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
-
-__all__ = ["DimensionError", "Object3d"]
 
 
 class DimensionError(Exception):

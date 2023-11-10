@@ -27,13 +27,14 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.base import Object3d
+from orix._base import Object3d
 
 
 class Vector3d(Object3d):
-    """Vector base class.
+    """Three-dimensional vectors.
 
-    Vectors support the following mathematical operations:
+    Vectors :math:`v = (x, y, z)` support the following mathematical
+    operations:
         - Unary negation.
         - Addition to other vectors, scalars, numbers, and compatible
           array-like objects.

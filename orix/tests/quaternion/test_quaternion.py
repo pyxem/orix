@@ -23,7 +23,7 @@ from diffpy.structure.spacegroups import sg225
 import numpy as np
 import pytest
 
-from orix.base import DimensionError
+from orix._base import DimensionError
 from orix.quaternion import Quaternion
 from orix.vector import AxAngle, Homochoric, Rodrigues, Vector3d
 

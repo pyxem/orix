@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 
 from orix.quaternion import Orientation
-from orix.quaternion._conversions import (
+from orix.quaternion._rotations import (
     ax2qu,
     ax2qu_2d,
     ax2qu_single,

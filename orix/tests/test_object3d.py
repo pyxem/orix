@@ -19,7 +19,7 @@
 import numpy as np
 import pytest
 
-from orix.base import DimensionError, Object3d
+from orix._base import DimensionError, Object3d
 
 
 @pytest.fixture(

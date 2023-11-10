@@ -27,9 +27,9 @@ import numpy as np
 import quaternion
 from scipy.spatial.transform import Rotation as SciPyRotation
 
+from orix._base import Object3d
 from orix._util import deprecated, deprecated_argument
-from orix.base import Object3d
-from orix.quaternion import _conversions
+from orix.quaternion import _rotations
 from orix.vector import AxAngle, Homochoric, Miller, Rodrigues, Vector3d
 
 # Used to round values below 1e-16 to zero
@@ -269,7 +269,7 @@ class Quaternion(Object3d):
         if degrees:
             angles = np.deg2rad(angles)
 
-        q = _conversions.ax2qu(axes, angles)
+        q = _rotations.ax2qu(axes, angles)
         q = cls(q)
         q = q.unit
 
@@ -313,8 +313,8 @@ class Quaternion(Object3d):
         shape = ho.shape[:-1]
         ho = ho.reshape((-1, 3))
 
-        ax = _conversions.ho2ax(ho)
-        q = _conversions.ax2qu(ax[:, :3], ax[:, 3])
+        ax = _rotations.ho2ax(ho)
+        q = _rotations.ax2qu(ax[:, :3], ax[:, 3])
         q = q.reshape(shape + (4,))
         q = cls(q)
         q = q.unit
@@ -408,7 +408,7 @@ class Quaternion(Object3d):
         else:
             angles = angles.ravel()[:, np.newaxis]
             ro_axes_angles = np.hstack((ro, angles))
-            ax = _conversions.ro2ax(ro_axes_angles)
+            ax = _rotations.ro2ax(ro_axes_angles)
 
         if np.rad2deg(np.max(angles)) > 179.999:
             warnings.warn(
@@ -479,7 +479,7 @@ class Quaternion(Object3d):
         if np.any(np.abs(eu) > 4 * np.pi):
             warnings.warn("Angles are quite high, did you forget to set degrees=True?")
 
-        q = _conversions.eu2qu(eu)
+        q = _rotations.eu2qu(eu)
         q = cls(q)
 
         if direction == "crystal2lab":
@@ -518,7 +518,7 @@ class Quaternion(Object3d):
         if om.shape[-2:] != (3, 3):
             raise ValueError("the last two dimensions of 'matrix' must be (3, 3)")
 
-        q = _conversions.om2qu(om)
+        q = _rotations.om2qu(om)
         q = cls(q)
 
         return q
@@ -791,7 +791,7 @@ class Quaternion(Object3d):
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
-        eu = _conversions.qu2eu(self.unit.data)
+        eu = _rotations.qu2eu(self.unit.data)
         if degrees:
             eu = np.rad2deg(eu)
         return eu
@@ -816,7 +816,7 @@ class Quaternion(Object3d):
         >>> np.allclose(q2.to_matrix(), np.diag([1, -1, -1]))
         True
         """
-        om = _conversions.qu2om(self.unit.data)
+        om = _rotations.qu2om(self.unit.data)
         return om
 
     def to_axes_angles(self) -> AxAngle:
@@ -846,7 +846,7 @@ class Quaternion(Object3d):
         >>> np.rad2deg(ax.angle)
         array([120.])
         """
-        axes, angles = _conversions.qu2ax(self.unit.data)
+        axes, angles = _rotations.qu2ax(self.unit.data)
         ax = AxAngle(axes * angles)
         return ax
 
@@ -914,9 +914,9 @@ class Quaternion(Object3d):
             ro = q.axis * np.tan(self.angle / 2)
             ro = Rodrigues(ro)
         else:
-            axes, angles = _conversions.qu2ax(q.data)
+            axes, angles = _rotations.qu2ax(q.data)
             axes_angles = np.concatenate((axes, angles), axis=-1)
-            ro = _conversions.ax2ro(axes_angles)
+            ro = _rotations.ax2ro(axes_angles)
         return ro
 
     def to_homochoric(self) -> Homochoric:
@@ -955,7 +955,7 @@ class Quaternion(Object3d):
         rotations map into a finite space, bounded by a sphere of radius
         :math:`\pi`.
         """
-        ho = _conversions.qu2ho(self.unit.data)
+        ho = _rotations.qu2ho(self.unit.data)
         ho = Homochoric(ho)
         return ho
 
