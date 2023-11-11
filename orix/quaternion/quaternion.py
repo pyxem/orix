@@ -102,7 +102,7 @@ class Quaternion(Object3d):
 
     1. Right-handed Cartesian reference frames
     2. Rotation angles :math:`\omega` are taken to be positive for a
-       counterclockwise rotation when viewing from the end point of the
+       counter-clockwise rotation when viewing from the end point of the
        rotation axis unit vector :math:`\hat{\mathbf{n}}` towards the
        origin.
     3. Rotations are *interpreted* in the passive sense. This means that
@@ -244,8 +244,6 @@ class Quaternion(Object3d):
 
     def __eq__(self, other: Union[Any, Quaternion]) -> bool:
         """Check if quaternions have equal shapes and values."""
-        # Only return equal if shape, values, and improper arrays are
-        # equal
         if (
             isinstance(other, Quaternion)
             and self.shape == other.shape
@@ -1175,7 +1173,9 @@ class Quaternion(Object3d):
             )
 
     def inv(self) -> Quaternion:
-        r"""Return the inverse :math:`q^{-1} = a - bi - cj - dk`."""
+        r"""Return the inverse quaternions
+        :math:`Q^{-1} = a - bi - cj - dk`.
+        """
         return self.__invert__()
 
     # -------------------- Other private methods --------------------- #

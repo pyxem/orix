@@ -24,6 +24,10 @@ Added
 - Creating neo-eulerian vectors from quaternions via new methods ``to_axes_angles()``,
   ``to_rodrigues()`` and ``to_homochoric()``. Rodrigues-Frank vectors can be returned
   from ``to_rodrigues()`` by passing ``frank=True``.
+- ``inv()`` method for ``Quaternion``, ``Rotation``, ``Orientation``, and
+  ``Misorientation``. For the three first, its behavior is identical to the inversion
+  operator ``~``. For misorientations, it inverts the direction of the transformation.
+  Convenient for chaining operations.
 
 Changed
 -------

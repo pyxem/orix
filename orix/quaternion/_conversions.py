@@ -22,7 +22,7 @@
 Conventions:
 
 1. Right-handed Cartesian reference frames
-2. Rotation angles are taken to be positive for a counterclockwise
+2. Rotation angles are taken to be positive for a counter-clockwise
    rotation when viewing from the end point of the rotation axis unit
    vector towards the origin.
 3. Rotations are *interpreted* in the passive sense. This means that we

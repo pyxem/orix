@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 from itertools import product as iproduct
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 import warnings
 
 import dask.array as da
@@ -87,12 +87,12 @@ class Misorientation(Rotation):
 
     # ------------------------ Dunder methods ------------------------ #
 
-    def __eq__(self, other):
+    def __eq__(self, other: Union[Any, Misorientation]) -> bool:
         v1 = super().__eq__(other)
         if not v1:
             return v1
         else:
-            # check symmetries are also equivalent
+            # Check whether symmetries also are equivalent
             v2 = []
             for sym_s, sym_o in zip(self._symmetry, other._symmetry):
                 v2.append(sym_s == sym_o)
@@ -101,6 +101,11 @@ class Misorientation(Rotation):
     def __getitem__(self, key) -> Misorientation:
         M = super().__getitem__(key)
         M._symmetry = self._symmetry
+        return M
+
+    def __invert__(self) -> Misorientation:
+        M = super().__invert__()
+        M._symmetry = self._symmetry[::-1]
         return M
 
     def __repr__(self):
@@ -540,3 +545,7 @@ class Misorientation(Rotation):
             angles = np.rad2deg(angles)
 
         return angles
+
+    def inv(self) -> Misorientation:
+        r"""Return the inverse misorientations :math:`M^{-1}`."""
+        return self.__invert__()

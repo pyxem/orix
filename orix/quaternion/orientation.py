@@ -75,7 +75,7 @@ class Orientation(Misorientation):
 
     @property
     def unit(self) -> Orientation:
-        """Unit orientations."""
+        """Return unit orientations."""
         O = super().unit
         O.symmetry = self.symmetry
         return O
@@ -111,7 +111,7 @@ class Orientation(Misorientation):
     @classmethod
     def from_euler(
         cls,
-        euler: np.ndarray,
+        euler: Union[np.ndarray, tuple, list],
         symmetry: Optional[Symmetry] = None,
         direction: str = "lab2crystal",
         degrees: bool = False,
@@ -823,10 +823,12 @@ class Orientation(Misorientation):
             for ax in axes:
                 ax.scatter(self, **kwargs)
 
-            figure.tight_layout()
-
         if return_figure:
             return figure
+
+    def inv(self) -> Orientation:
+        r"""Return the inverse orientations :math:`O^{-1}`."""
+        return self.__invert__()
 
     # -------------------- Other private methods --------------------- #
 

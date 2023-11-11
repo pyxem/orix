@@ -401,7 +401,7 @@ def _setup_inverse_pole_figure_plot(
         nrows = int(np.ceil(n_plots / 3))
 
     if figure_kwargs is None:
-        figure_kwargs = dict()
+        figure_kwargs = {"layout": "tight"}
     figure = plt.figure(**figure_kwargs)
     axes = []
     subplot_kw = dict(projection="ipf", symmetry=symmetry)

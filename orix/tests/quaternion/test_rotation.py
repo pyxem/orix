@@ -321,11 +321,14 @@ def test_angle_with_outer():
     ],
     indirect=["rotation"],
 )
-def test_inv(rotation, improper, expected, improper_expected):
+def test_inverse(rotation, improper, expected, improper_expected):
     rotation.improper = improper
-    r = ~rotation
-    assert np.allclose(r.data, expected, atol=1e-6)
-    assert np.allclose(r.improper, improper_expected)
+    R = ~rotation
+    assert np.allclose(R.data, expected, atol=1e-6)
+    assert np.allclose(R.improper, improper_expected)
+
+    R2 = rotation.inv()
+    assert R == R2
 
 
 @pytest.mark.parametrize(

@@ -16,10 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The fundamental sector for a symmetry in the stereographic
-projection.
-"""
-
 import numpy as np
 
 from orix.vector import SphericalRegion, Vector3d
@@ -40,6 +36,8 @@ class FundamentalSector(SphericalRegion):
 
     # Used when sorting `edges` for restricting stereographic plot
     _pole = -1
+
+    # -------------------------- Properties -------------------------- #
 
     @property
     def vertices(self) -> Vector3d:
@@ -87,11 +85,11 @@ class FundamentalSector(SphericalRegion):
 
     @property
     def edges(self) -> Vector3d:
-        """Return the unit vectors which delineates the region in the
+        """Return the unit vectors which delineate the region in the
         stereographic projection.
 
-        They are sorted in the counter-clockwise direction around the
-        sector center in the stereographic projection.
+        The vectors are sorted in the counter-clockwise direction
+        around the sector center in the stereographic projection.
 
         The first edge is repeated at the end. This is done so that
         :meth:`orix.plot.StereographicPlot.plot` draws bounding lines

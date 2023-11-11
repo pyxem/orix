@@ -127,8 +127,6 @@ class Rotation(Quaternion):
 
     def __eq__(self, other: Union[Any, Rotation]) -> bool:
         """Check if the rotations have equal shapes and values."""
-        # Only return equal if shape, values, and improper arrays are
-        # equal
         if (
             isinstance(other, Rotation)
             and self.shape == other.shape
@@ -407,6 +405,10 @@ class Rotation(Quaternion):
         else:
             dot_products[self.improper] = 0
         return dot_products
+
+    def inv(self) -> Quaternion:
+        r"""Return the inverse rotations :math:`R^{-1}`."""
+        return self.__invert__()
 
     # -------------------- Other private methods --------------------- #
 

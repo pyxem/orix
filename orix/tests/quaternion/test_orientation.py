@@ -415,6 +415,22 @@ class TestMisorientation:
         with pytest.raises(TypeError, match="Value must be a 2-tuple of"):
             _ = Misorientation.from_scipy_rotation(r_scipy, Oh)
 
+    def test_inverse(self):
+        M1 = Misorientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], (Oh, D6))
+        M2 = ~M1
+        assert M1.symmetry[0] == M2.symmetry[1]
+        assert M1.symmetry[1] == M2.symmetry[0]
+        assert np.allclose(M2.data, [np.sqrt(2) / 2, -np.sqrt(2) / 2, 0, 0])
+
+        M3 = M1.inv()
+        assert M3 == M2
+
+        v = Vector3d.yvector()
+        v1 = M1 * v
+        v2 = M2 * -v
+        assert np.allclose(v1.data, [0, 0, 1])
+        assert np.allclose(v2.data, [0, 0, 1])
+
 
 def test_orientation_equality():
     # symmetries must also be the same to be equal
@@ -821,3 +837,18 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+
+    def test_inverse(self):
+        O1 = Orientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], D6)
+        O2 = ~O1
+        assert O1.symmetry == O2.symmetry
+        assert np.allclose(O2.data, [np.sqrt(2) / 2, -np.sqrt(2) / 2, 0, 0])
+
+        O3 = O1.inv()
+        assert O3 == O2
+
+        v = Vector3d.yvector()
+        v1 = O1 * v
+        v2 = O2 * -v
+        assert np.allclose(v1.data, [0, 0, 1])
+        assert np.allclose(v2.data, [0, 0, 1])

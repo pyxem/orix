@@ -324,6 +324,12 @@ class TestQuaternion:
         )
         assert np.allclose(q2.data, q1.data)
 
+    def test_equality(self):
+        Q1 = Quaternion.from_axes_angles([1, 1, 1], -np.pi / 3)
+        Q2 = Quaternion.from_axes_angles([1, 1, 1], np.pi / 3)
+        assert Q1 != Q2
+        assert Q1 == Q2.inv()
+
 
 class TestToFromEuler:
     """These tests address .to_euler() and .from_euler()."""
