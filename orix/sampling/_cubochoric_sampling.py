@@ -32,7 +32,7 @@ import numba as nb
 import numpy as np
 
 from orix.quaternion import Rotation
-from orix.quaternion._rotations import ax2qu_single, cu2ro_single, ro2ax_single
+from orix.quaternion._conversions import ax2qu_single, cu2ro_single, ro2ax_single
 
 
 def cubochoric_sampling(

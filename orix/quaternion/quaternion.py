@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 import warnings
 
 import dask.array as da
@@ -29,7 +29,7 @@ from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix._base import Object3d
 from orix._util import deprecated, deprecated_argument
-from orix.quaternion import _rotations
+from orix.quaternion import _conversions
 from orix.vector import AxAngle, Homochoric, Miller, Rodrigues, Vector3d
 
 # Used to round values below 1e-16 to zero
@@ -40,10 +40,10 @@ class Quaternion(Object3d):
     r"""Quaternions.
 
     Quaternions support the following mathematical operations:
-        - Unary negation.
-        - Inversion (conjugation).
-        - Normalization to obtain unit quaternions.
-        - Multiplication with other quaternions and vectors.
+        * Unary negation.
+        * Inversion (conjugation).
+        * Normalization to obtain unit quaternions.
+        * Multiplication with other quaternions and vectors.
 
     A quaternion :math:`q` is defined as a four-component number of the
     form :math:`q = a + ib + jc + kd`, where the imaginary units
@@ -94,9 +94,22 @@ class Quaternion(Object3d):
         q = \cos\frac{\omega}{2} + \sin\frac{\omega}{2}(bi + cj + dk),
 
     where :math:`(b, c, d)` are the direction cosines of the rotation
-    axis unit vector :math:`\mathbf{\hat{n}}`. The scalar part
+    axis unit vector :math:`\hat{\mathbf{n}}`. The scalar part
     :math:`a = \cos\frac{\omega}{2}` will always be positive or 0 for
     rotations with rotation angle :math:`\omega = \pi`.
+
+    Conventions:
+
+    1. Right-handed Cartesian reference frames
+    2. Rotation angles :math:`\omega` are taken to be positive for a
+       counterclockwise rotation when viewing from the end point of the
+       rotation axis unit vector :math:`\hat{\mathbf{n}}` towards the
+       origin.
+    3. Rotations are *interpreted* in the passive sense.
+    4. Euler angle triplets are implemented using the Bunge convention,
+       with angular ranges as :math:`[0, 2\pi]`, :math:`[0, \pi]`, and
+       :math:`[0, 2\pi]`.
+    5. Rotation angles :math:`\omega` are limited to :math:`[0, \pi]`.
     """
 
     # --------------------------- Properties ------------------------- #
@@ -169,8 +182,8 @@ class Quaternion(Object3d):
 
     @property
     def axis(self) -> Vector3d:
-        r"""Return the axis of rotation of the unit quaternion
-        :math:`\mathbf{\hat{n}} = (b, c, d)`.
+        r"""Return the axis of rotation
+        :math:`\hat{\mathbf{n}} = (b, c, d)`.
         """
         axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
         a_is_zero = self.a < -1e-6
@@ -182,9 +195,7 @@ class Quaternion(Object3d):
 
     @property
     def angle(self) -> np.ndarray:
-        r"""Return the angle of rotation of the unit quaternion
-        :math:`\omega = 2\arccos{|a|}`.
-        """
+        r"""Return the angle of rotation :math:`\omega = 2\arccos{|a|}`."""
         return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
 
     @property
@@ -229,6 +240,19 @@ class Quaternion(Object3d):
     def __neg__(self) -> Quaternion:
         return self.__class__(-self.data)
 
+    def __eq__(self, other: Union[Any, Quaternion]) -> bool:
+        """Check if quaternions have equal shapes and values."""
+        # Only return equal if shape, values, and improper arrays are
+        # equal
+        if (
+            isinstance(other, Quaternion)
+            and self.shape == other.shape
+            and np.allclose(self.data, other.data)
+        ):
+            return True
+        else:
+            return False
+
     # -------------------- from_*() class methods -------------------- #
 
     # TODO: Remove before 0.13.0
@@ -263,16 +287,17 @@ class Quaternion(Object3d):
         angles: Union[np.ndarray, tuple, list, float],
         degrees: bool = False,
     ) -> Quaternion:
-        """Create unit quaternions from axis-angle pairs
+        r"""Create unit quaternions from axis-angle pairs
+        :math:`(\hat{\mathbf{n}}, \omega)`
         :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
         axes
-            Axes of rotation.
+            Axes of rotation :math:`\hat{\mathbf{n}}`.
         angles
-            Angles of rotation in radians (``degrees=False``) or degrees
-            (``degrees=True``).
+            Angles of rotation :math:`\omega` in radians
+            (``degrees=False``) or degrees (``degrees=True``).
         degrees
             If ``True``, the given angles are assumed to be in degrees.
             Default is ``False``.
@@ -302,7 +327,7 @@ class Quaternion(Object3d):
         if degrees:
             angles = np.deg2rad(angles)
 
-        q = _rotations.ax2qu(axes, angles)
+        q = _conversions.ax2qu(axes, angles)
         q = cls(q)
         q = q.unit
 
@@ -314,15 +339,15 @@ class Quaternion(Object3d):
         ho: Union[Vector3d, Homochoric, np.ndarray, tuple, list],
     ) -> Quaternion:
         r"""Create unit quaternions from homochoric vectors
-        :cite:`rowenhorst2015consistent`.
+        :math:`\mathbf{h}` :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
         ho
             Homochoric vectors parallel to the axes of rotation with
             lengths equal to
-            :math:`\left[\frac{3}{4}\cdot(\theta - \sin(\theta))\right]^{1/3}`,
-            where :math:`\theta` is the angle of rotation.
+            :math:`\left[\frac{3}{4}\cdot(\omega - \sin\omega)\right]^{1/3}`,
+            where :math:`\omega` is the angle of rotation.
 
         Returns
         -------
@@ -344,11 +369,11 @@ class Quaternion(Object3d):
                 raise ValueError("Final dimension of vector array must be 3.")
 
         shape = ho.shape[:-1]
-        ho = ho.reshape((-1, 3))
+        ho = ho.reshape(-1, 3)
 
-        ax = _rotations.ho2ax(ho)
-        q = _rotations.ax2qu(ax[:, :3], ax[:, 3])
-        q = q.reshape(shape + (4,))
+        ax = _conversions.ho2ax(ho)
+        q = _conversions.ax2qu(ax[:, :3], ax[:, 3])
+        q = q.reshape(*shape, 4)
         q = cls(q)
         q = q.unit
 
@@ -425,7 +450,7 @@ class Quaternion(Object3d):
                 raise ValueError("Final dimension of vector array must be 3.")
 
         shape = ro.shape[:-1]
-        ro = ro.reshape((-1, 3))
+        ro = ro.reshape(-1, 3)
 
         if angles is None:
             norm = Vector3d(ro).norm
@@ -441,7 +466,7 @@ class Quaternion(Object3d):
         else:
             angles = angles.ravel()[:, np.newaxis]
             ro_axes_angles = np.hstack((ro, angles))
-            ax = _rotations.ro2ax(ro_axes_angles)
+            ax = _conversions.ro2ax(ro_axes_angles)
 
         if np.rad2deg(np.max(angles)) > 179.999:
             warnings.warn(
@@ -512,7 +537,7 @@ class Quaternion(Object3d):
         if np.any(np.abs(eu) > 4 * np.pi):
             warnings.warn("Angles are quite high, did you forget to set degrees=True?")
 
-        q = _rotations.eu2qu(eu)
+        q = _conversions.eu2qu(eu)
         q = cls(q)
 
         if direction == "crystal2lab":
@@ -551,7 +576,7 @@ class Quaternion(Object3d):
         if om.shape[-2:] != (3, 3):
             raise ValueError("the last two dimensions of 'matrix' must be (3, 3)")
 
-        q = _rotations.om2qu(om)
+        q = _conversions.om2qu(om)
         q = cls(q)
 
         return q
@@ -770,7 +795,6 @@ class Quaternion(Object3d):
         q
             Unit quaternions.
         """
-        shape = (shape,) if isinstance(shape, int) else shape
         n = int(np.prod(shape))
         q = []
         while len(q) < n:
@@ -780,12 +804,12 @@ class Quaternion(Object3d):
             q += list(r)
         q = cls(np.array(q[:n]))
         q = q.unit
-        q = q.reshape(*shape)
+        q = q.reshape(shape)
         return q
 
     @classmethod
     def identity(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
-        """Return identity quaternions.
+        """Create identity quaternions.
 
         Parameters
         ----------
@@ -824,7 +848,7 @@ class Quaternion(Object3d):
             :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
             :math:`\phi_1 \in [0, 2\pi]`.
         """
-        eu = _rotations.qu2eu(self.unit.data)
+        eu = _conversions.qu2eu(self.unit.data)
         if degrees:
             eu = np.rad2deg(eu)
         return eu
@@ -849,7 +873,7 @@ class Quaternion(Object3d):
         >>> np.allclose(q2.to_matrix(), np.diag([1, -1, -1]))
         True
         """
-        om = _rotations.qu2om(self.unit.data)
+        om = _conversions.qu2om(self.unit.data)
         return om
 
     def to_axes_angles(self) -> AxAngle:
@@ -879,7 +903,7 @@ class Quaternion(Object3d):
         >>> np.rad2deg(ax.angle)
         array([120.])
         """
-        axes, angles = _rotations.qu2ax(self.unit.data)
+        axes, angles = _conversions.qu2ax(self.unit.data)
         ax = AxAngle(axes * angles)
         return ax
 
@@ -947,9 +971,9 @@ class Quaternion(Object3d):
             ro = q.axis * np.tan(self.angle / 2)
             ro = Rodrigues(ro)
         else:
-            axes, angles = _rotations.qu2ax(q.data)
+            axes, angles = _conversions.qu2ax(q.data)
             axes_angles = np.concatenate((axes, angles), axis=-1)
-            ro = _rotations.ax2ro(axes_angles)
+            ro = _conversions.ax2ro(axes_angles)
         return ro
 
     def to_homochoric(self) -> Homochoric:
@@ -988,7 +1012,7 @@ class Quaternion(Object3d):
         rotations map into a finite space, bounded by a sphere of radius
         :math:`\pi`.
         """
-        ho = _rotations.qu2ho(self.unit.data)
+        ho = _conversions.qu2ho(self.unit.data)
         ho = Homochoric(ho)
         return ho
 
@@ -1151,10 +1175,8 @@ class Quaternion(Object3d):
             )
 
     def inv(self) -> Quaternion:
-        r"""Return the inverse or conjugate of the quaternion
-        :math:`q^{-1} = a - bi - cj - dk`.
-        """
-        return self.conj
+        r"""Return the inverse :math:`q^{-1} = a - bi - cj - dk`."""
+        return self.__invert__()
 
     # ------------------- Other private functions ------------------- #
 

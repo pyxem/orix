@@ -455,13 +455,13 @@ class TestOrientationInitialization:
         )
         o1 = Orientation.from_matrix(om)
         assert np.allclose(
-            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape((4, 4))
+            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape(4, 4)
         )
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_matrix(om, symmetry=Oh)
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(
-            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape((4, 4))
+            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4)
         )
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)

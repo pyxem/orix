@@ -212,7 +212,7 @@ def test_mul_failing():
         _ = r * "cant-mult-by-this"
 
     for i in [0, -2]:
-        with pytest.raises(AssertionError, match="Rotations can only be multiplied by"):
+        with pytest.raises(ValueError, match="Rotations can only be multiplied by"):
             _ = r * i
 
 

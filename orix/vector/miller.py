@@ -739,13 +739,13 @@ class Miller(Vector3d):
         mill.coordinate_format = self.coordinate_format
         return mill
 
-    def reshape(self, *shape: Optional[int]) -> Miller:
+    def reshape(self, *shape: Union[int, tuple]) -> Miller:
         """Return a new instance with the vectors reshaped.
 
         Parameters
         ----------
         *shape
-            New shape.
+            The new shape as one or more integers or as a tuple.
 
         Returns
         -------
@@ -786,7 +786,7 @@ class Miller(Vector3d):
         if use_symmetry:
             operations = self.phase.point_group
             n_v = v.size
-            v2 = operations.outer(v).flatten().reshape(*(n_v, operations.size))
+            v2 = operations.outer(v).flatten().reshape(n_v, operations.size)
             data = v2.data.round(10)
             data_sorted = np.zeros_like(data)
             for i in range(n_v):

@@ -39,7 +39,7 @@ class DimensionError(Exception):
 
     def __init__(self, this: Object3d, data: np.ndarray):
         super().__init__(
-            f"{this.__class__.__name__} requires data of dimension {this.dim} but "
+            f"{this.__class__.__name__} requires data of dimension {this.dim}, but "
             f"received dimension {data.shape[-1]}"
         )
 
@@ -79,12 +79,12 @@ class Object3d:
 
     @property
     def data(self) -> np.ndarray:
-        """Return the object data."""
+        """Return the data."""
         return self._data[..., : self.dim]
 
     @data.setter
     def data(self, data: np.ndarray):
-        """Set the object data."""
+        """Set the data."""
         self._data[..., : self.dim] = data
 
     def __repr__(self) -> str:
@@ -116,7 +116,7 @@ class Object3d:
 
     @property
     def ndim(self) -> int:
-        """Return the number of navigation dimensions of the instance.
+        """Return the number of navigation dimensions of the object.
 
         For example, if :attr:`data` has shape (4, 5, 6), :attr:`ndim`
         is 3.
@@ -135,7 +135,7 @@ class Object3d:
         Parameters
         ----------
         sequence
-            A sequence of instances of a class inheriting from
+            A sequence of objects of a class inheriting from
             ``Object3d`` to stack.
         """
         sequence = [s._data for s in sequence]
@@ -162,7 +162,7 @@ class Object3d:
         entries.
 
         Unless overridden, this method returns the numerically unique
-        entries. Also removes zero entries which are assumed to be
+        entries. It also removes zero-entries which are assumed to be
         degenerate.
 
         Parameters
@@ -212,52 +212,54 @@ class Object3d:
             return obj
 
     def squeeze(self) -> Object3d:
-        """Return a new object with length one dimensions removed.
+        """Return a new object with the same data with length
+        1-dimensions removed.
 
         Returns
         -------
         obj
-            New object with no 1-dimensions.
+            Squeezed object.
         """
         obj = self.__class__(self)
-        obj._data = np.atleast_2d(np.squeeze(self._data))
+        obj._data = np.atleast_2d(self._data.squeeze())
         return obj
 
-    def reshape(self, *shape: int) -> Object3d:
-        """Return a new object containing the same data with a new
-        shape.
+    def reshape(self, *shape: Union[int, tuple]) -> Object3d:
+        """Return a new object with the same data in a new shape.
 
         Parameters
         ----------
-        shape
-            New shape of object.
+        *shape
+            The new shape as one or more integers or as a tuple.
 
         Returns
         -------
         obj
-            New object with new shape.
+            Reshaped object.
         """
+        if len(shape) == 1 and isinstance(shape[0], tuple):
+            shape = shape[0]
         obj = self.__class__(self.data.reshape(*shape, self.dim))
         obj._data = self._data.reshape(*shape, -1)
         return obj
 
     def transpose(self, *axes: Optional[int]) -> Object3d:
-        """Return a new object containing the same data transposed.
+        """Return a new object with the same data transposed.
 
-        If :attr:`ndim` is originally 2, then order may be undefined. In
-        this case the first two dimensions will be transposed.
+        If :attr:`ndim` is 2, the order may be undefined. In this case
+        the first two dimensions are transposed.
 
         Parameters
         ----------
         axes
             The transposed axes order. Only navigation axes need to be
-            defined. May be undefined if self only contains two
+            defined. May be undefined if the object only has two
             navigation dimensions.
 
         Returns
         -------
         obj
-            The object transposed.
+            Transposed object.
         """
         # 1d object should not be transposed
         if len(self.shape) == 1:
@@ -282,14 +284,14 @@ class Object3d:
     def get_random_sample(
         self, size: Optional[int] = 1, replace: bool = False, shuffle: bool = False
     ):
-        """Return a random sample of a given size in a flattened
-        instance.
+        """Return a new flattened object from a random sample of a given
+        size.
 
         Parameters
         ----------
         size
             Number of samples to draw. Cannot be greater than the size
-            of this instance. If not given, a single sample is drawn.
+            of this object. If not given, a single sample is drawn.
         replace
             See :meth:`numpy.random.Generator.choice`.
         shuffle
@@ -298,8 +300,8 @@ class Object3d:
         Returns
         -------
         new
-            New, flattened instance of a given size with elements drawn
-            randomly from this instance.
+            New flattened object of a given size with elements drawn
+            randomly from this object.
 
         See Also
         --------
