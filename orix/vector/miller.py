@@ -119,24 +119,7 @@ class Miller(Vector3d):
             self.coordinate_format = "hkil"
         super().__init__(xyz)
 
-    def __repr__(self) -> str:
-        """String representation."""
-        name = self.__class__.__name__
-        shape = self.shape
-        symmetry = None if self.phase is None else self.phase.point_group.name
-        coordinate_format = self.coordinate_format
-        data = np.array_str(self.coordinates, precision=4, suppress_small=True)
-        return (
-            f"{name} {shape}, point group {symmetry}, {coordinate_format}\n" f"{data}"
-        )
-
-    def __getitem__(self, key) -> Miller:
-        """NumPy fancy indexing of vectors."""
-        m = self.__class__(xyz=self.data[key], phase=self.phase).deepcopy()
-        m.coordinate_format = self.coordinate_format
-        return m
-
-    # ---------------------- Unique properties ---------------------- #
+    # -------------------------- Properties -------------------------- #
 
     @property
     def coordinate_format(self) -> str:
@@ -357,8 +340,6 @@ class Miller(Vector3d):
         """
         return self.phase.is_hexagonal
 
-    # ----------- Overwritten Vector3d/Object3d properties ----------- #
-
     @property
     def unit(self) -> Miller:
         """Return unit vectors."""
@@ -366,7 +347,26 @@ class Miller(Vector3d):
         m.coordinate_format = self.coordinate_format
         return m
 
-    # ------------------------ Unique methods ------------------------ #
+    # ------------------------ Dunder methods ------------------------ #
+
+    def __repr__(self) -> str:
+        """String representation."""
+        name = self.__class__.__name__
+        shape = self.shape
+        symmetry = None if self.phase is None else self.phase.point_group.name
+        coordinate_format = self.coordinate_format
+        data = np.array_str(self.coordinates, precision=4, suppress_small=True)
+        return (
+            f"{name} {shape}, point group {symmetry}, {coordinate_format}\n" f"{data}"
+        )
+
+    def __getitem__(self, key) -> Miller:
+        """NumPy fancy indexing of vectors."""
+        m = self.__class__(xyz=self.data[key], phase=self.phase).deepcopy()
+        m.coordinate_format = self.coordinate_format
+        return m
+
+    # ------------------------ Class methods ------------------------- #
 
     @classmethod
     def from_highest_indices(
@@ -424,6 +424,8 @@ class Miller(Vector3d):
         hkl = hkl.astype(float).round(0)
         return cls(hkl=hkl, phase=phase).unique()
 
+    # --------------------- Other public methods --------------------- #
+
     def deepcopy(self) -> Miller:
         """Return a deepcopy of the instance."""
         return deepcopy(self)
@@ -475,7 +477,7 @@ class Miller(Vector3d):
 
         Returns
         -------
-        mill
+        m
             Flattened symmetrically equivalent vectors.
         multiplicity
             Multiplicity of each vector. Returned if
@@ -543,40 +545,6 @@ class Miller(Vector3d):
         else:
             return m
 
-    def _compatible_with(self, other: Miller, raise_error: bool = False) -> bool:
-        """Whether ``self`` and ``other`` are the same (the same crystal
-        lattice and symmetry) with vectors in the same space.
-
-        Parameters
-        ----------
-        other
-            Another vector instance.
-        raise_error
-            Whether to raise a ``ValueError`` if the instances are
-            incompatible (default is ``False``).
-
-        Returns
-        -------
-        compatible
-            Whether they are compatible.
-        """
-        same_symmetry = self.phase.point_group == other.phase.point_group
-        same_lattice = np.allclose(
-            self.phase.structure.lattice.abcABG(),
-            other.phase.structure.lattice.abcABG(),
-        )
-        same_space = self.space == other.space
-        compatible = same_symmetry * same_lattice * same_space
-        if not compatible and raise_error:
-            raise ValueError(
-                "The crystal lattices and symmetries must be the same, and the "
-                "vector(s) must be in the same space"
-            )
-        else:
-            return compatible
-
-    # ------------- Overwritten Vector3d/Object3d methods ------------ #
-
     def angle_with(
         self,
         other: Miller,
@@ -636,15 +604,15 @@ class Miller(Vector3d):
 
         Returns
         -------
-        mill
+        m
             Vectors in reciprocal (direct) space if direct (reciprocal)
             vectors are crossed.
         """
         self._compatible_with(other, raise_error=True)
         new_fmt = dict(hkl="uvw", uvw="hkl", hkil="UVTW", UVTW="hkil")
-        mill = self.__class__(xyz=super().cross(other).data, phase=self.phase)
-        mill.coordinate_format = new_fmt[self.coordinate_format]
-        return mill
+        m = self.__class__(xyz=super().cross(other).data, phase=self.phase)
+        m.coordinate_format = new_fmt[self.coordinate_format]
+        return m
 
     def dot(self, other: Miller) -> np.ndarray:
         """Return the dot products of the vectors and the other vectors.
@@ -686,12 +654,12 @@ class Miller(Vector3d):
 
         Returns
         -------
-        mill
+        m
             Flattened vectors.
         """
-        mill = self.__class__(xyz=super().flatten().data, phase=self.phase)
-        mill.coordinate_format = self.coordinate_format
-        return mill
+        m = self.__class__(xyz=super().flatten().data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
+        return m
 
     def transpose(self, *axes: Optional[int]) -> Miller:
         """Return a new instance with the data transposed.
@@ -708,12 +676,12 @@ class Miller(Vector3d):
 
         Returns
         -------
-        mill
+        m
             New transposed Miller instance of the original instance.
         """
-        mill = self.__class__(xyz=super().transpose(*axes).data, phase=self.phase)
-        mill.coordinate_format = self.coordinate_format
-        return mill
+        m = self.__class__(xyz=super().transpose(*axes).data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
+        return m
 
     def get_nearest(self, *args) -> NotImplemented:
         """NotImplemented."""
@@ -729,15 +697,15 @@ class Miller(Vector3d):
 
         Returns
         -------
-        mill
+        m
             Mean vector.
         """
         # TODO: Allow using symmetry by projecting to fundamental sector
         if use_symmetry:
             return NotImplemented
-        mill = self.__class__(xyz=super().mean().data, phase=self.phase)
-        mill.coordinate_format = self.coordinate_format
-        return mill
+        m = self.__class__(xyz=super().mean().data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
+        return m
 
     def reshape(self, *shape: Union[int, tuple]) -> Miller:
         """Return a new instance with the vectors reshaped.
@@ -749,12 +717,12 @@ class Miller(Vector3d):
 
         Returns
         -------
-        mill
+        m
             New instance.
         """
-        mill = self.__class__(xyz=super().reshape(*shape).data, phase=self.phase)
-        mill.coordinate_format = self.coordinate_format
-        return mill
+        m = self.__class__(xyz=super().reshape(*shape).data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
+        return m
 
     def unique(
         self, use_symmetry: bool = False, return_index: bool = False
@@ -772,7 +740,7 @@ class Miller(Vector3d):
 
         Returns
         -------
-        mill
+        m
             Flattened unique vectors.
         idx
             Indices of the unique data in the (flattened) array.
@@ -796,12 +764,12 @@ class Miller(Vector3d):
             _, idx = np.unique(data_sorted, return_index=True, axis=0)
             v = v[idx[::-1]]
 
-        mill = self.__class__(xyz=v.data, phase=self.phase)
-        mill.coordinate_format = self.coordinate_format
+        m = self.__class__(xyz=v.data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
         if return_index:
-            return mill, idx
+            return m, idx
         else:
-            return mill
+            return m
 
     def in_fundamental_sector(
         self, symmetry: Optional["orix.quaternion.Symmetry"] = None
@@ -822,7 +790,7 @@ class Miller(Vector3d):
 
         Returns
         -------
-        mill
+        m
             Vectors within the fundamental sector.
 
         Examples
@@ -830,11 +798,11 @@ class Miller(Vector3d):
         >>> from orix.crystal_map import Phase
         >>> from orix.quaternion.symmetry import D6h
         >>> from orix.vector import Miller
-        >>> mill = Miller(uvw=(-1, 1, 0), phase=Phase(point_group="m-3m"))
-        >>> mill.in_fundamental_sector()
+        >>> t = Miller(uvw=(-1, 1, 0), phase=Phase(point_group="m-3m"))
+        >>> t.in_fundamental_sector()
         Miller (1,), point group m-3m, uvw
         [[1. 0. 1.]]
-        >>> mill.in_fundamental_sector(D6h)
+        >>> t.in_fundamental_sector(D6h)
         Miller (1,), point group m-3m, uvw
         [[1.366 0.366 0.   ]]
         """
@@ -846,9 +814,43 @@ class Miller(Vector3d):
                     "`Symmetry` with a `Symmetry.fundamental_sector`"
                 )
         v = Vector3d(self.data).in_fundamental_sector(symmetry)
-        mill = self.__class__(xyz=v.data, phase=self.phase)
-        mill.coordinate_format = self.coordinate_format
-        return mill
+        m = self.__class__(xyz=v.data, phase=self.phase)
+        m.coordinate_format = self.coordinate_format
+        return m
+
+    # -------------------- Other private methods --------------------- #
+
+    def _compatible_with(self, other: Miller, raise_error: bool = False) -> bool:
+        """Whether ``self`` and ``other`` are the same (the same crystal
+        lattice and symmetry) with vectors in the same space.
+
+        Parameters
+        ----------
+        other
+            Another vector instance.
+        raise_error
+            Whether to raise a ``ValueError`` if the instances are
+            incompatible (default is ``False``).
+
+        Returns
+        -------
+        compatible
+            Whether they are compatible.
+        """
+        same_symmetry = self.phase.point_group == other.phase.point_group
+        same_lattice = np.allclose(
+            self.phase.structure.lattice.abcABG(),
+            other.phase.structure.lattice.abcABG(),
+        )
+        same_space = self.space == other.space
+        compatible = same_symmetry * same_lattice * same_space
+        if not compatible and raise_error:
+            raise ValueError(
+                "The crystal lattices and symmetries must be the same, and the "
+                "vector(s) must be in the same space"
+            )
+        else:
+            return compatible
 
 
 def _transform_space(

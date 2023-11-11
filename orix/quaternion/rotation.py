@@ -35,10 +35,11 @@ _FLOAT_EPS = np.finfo(float).eps
 class Rotation(Quaternion):
     r"""Rotations of coordinate systems, leaving objects in place.
 
-    Rotations can be parametrized in numerous ways, but in orix are
-    handled as unit quaternions. Rotations can act on vectors or other
-    rotations. They are often most easily visualized as being a turn of
-    a certain angle about a certain axis.
+    Rotations :math:`R` can be parametrized in numerous ways, but in
+    orix are handled as unit quaternions. Rotations can act on vectors
+    or other rotations. They are often most easily visualized as being
+    a turn of a certain angle :math:`\omega` about a certain axis
+    :math:`\hat{\mathbf{n}}`.
 
     .. image:: /_static/img/rotation.png
        :width: 200px
@@ -60,6 +61,8 @@ class Rotation(Quaternion):
         with np.errstate(divide="ignore", invalid="ignore"):
             self.data /= self.norm[..., np.newaxis]
 
+    # -------------------------- Properties -------------------------- #
+
     @property
     def improper(self) -> np.ndarray:
         """Return ``True`` for improper rotations and ``False``
@@ -74,22 +77,24 @@ class Rotation(Quaternion):
     @property
     def antipodal(self) -> Rotation:
         """Return the rotation and its antipodal."""
-        r = self.__class__(np.stack([self.data, -self.data]))
-        r.improper = self.improper
-        return r
+        R = self.__class__(np.stack([self.data, -self.data]))
+        R.improper = self.improper
+        return R
+
+    # ------------------------ Dunder methods ------------------------ #
 
     def __mul__(
         self, other: Union[Rotation, Quaternion, Vector3d, np.ndarray, int, list]
     ):
         # Combine rotations self * other as first other, then self
         if isinstance(other, Rotation):
-            q = Quaternion(self) * Quaternion(other)
-            r = other.__class__(q)
-            r.improper = np.logical_xor(self.improper, other.improper)
-            return r
+            Q = Quaternion(self) * Quaternion(other)
+            R = other.__class__(Q)
+            R.improper = np.logical_xor(self.improper, other.improper)
+            return R
         if isinstance(other, Quaternion):
-            q = Quaternion(self) * other
-            return q
+            Q = Quaternion(self) * other
+            return Q
         if isinstance(other, Vector3d):
             v = Quaternion(self) * other
             improper = (self.improper * np.ones(other.shape)).astype(bool)
@@ -100,25 +105,25 @@ class Rotation(Quaternion):
             if isinstance(other, np.ndarray):
                 if not np.all(abs(other) == 1):
                     raise ValueError("Rotations can only be multiplied by 1 or -1")
-                r = Rotation(self.data)
-                r.improper = np.logical_xor(self.improper, other == -1)
-                return r
+                R = Rotation(self.data)
+                R.improper = np.logical_xor(self.improper, other == -1)
+                return R
         return NotImplemented
 
     def __neg__(self) -> Rotation:
-        r = self.__class__(self.data)
-        r.improper = np.logical_not(self.improper)
-        return r
+        R = self.__class__(self.data)
+        R.improper = np.logical_not(self.improper)
+        return R
 
     def __getitem__(self, key) -> Rotation:
-        r = super().__getitem__(key)
-        r.improper = self.improper[key]
-        return r
+        R = super().__getitem__(key)
+        R.improper = self.improper[key]
+        return R
 
     def __invert__(self) -> Rotation:
-        r = super().__invert__()
-        r.improper = self.improper
-        return r
+        R = super().__invert__()
+        R.improper = self.improper
+        return R
 
     def __eq__(self, other: Union[Any, Rotation]) -> bool:
         """Check if the rotations have equal shapes and values."""
@@ -133,6 +138,8 @@ class Rotation(Quaternion):
             return True
         else:
             return False
+
+    # ------------------------ Class methods ------------------------- #
 
     @classmethod
     def random_vonmises(
@@ -156,22 +163,24 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        r
+        R
             Rotations.
         """
         shape = (shape,) if isinstance(shape, int) else shape
         reference = Rotation(reference)
         n = int(np.prod(shape))
         sample_size = int(alpha) * n
-        r = []
+        R = []
         f_max = von_mises(reference, alpha, reference)
-        while len(r) < n:
-            r_i = cls.random(sample_size)
-            f = von_mises(r_i, alpha, reference)
+        while len(R) < n:
+            R_i = cls.random(sample_size)
+            f = von_mises(R_i, alpha, reference)
             x = np.random.rand(sample_size)
-            r_i = r_i[x * f_max < f]
-            r += list(r_i)
-        return cls.stack(r[:n]).reshape(shape)
+            R_i = R_i[x * f_max < f]
+            R += list(R_i)
+        return cls.stack(R[:n]).reshape(shape)
+
+    # --------------------- Other public methods --------------------- #
 
     def unique(
         self,
@@ -205,7 +214,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        r
+        R
             Unique rotations.
         idx_sort
             Indices of the flattened rotations where the unique entries
@@ -217,12 +226,12 @@ class Rotation(Quaternion):
         if self.size == 0:
             return self.empty()
 
-        r = self.flatten()
+        R = self.flatten()
 
         if antipodal:
-            abcd = r._differentiators()
+            abcd = R._differentiators()
         else:
-            abcd = np.stack([r.a, r.b, r.c, r.d, r.improper], axis=-1).round(10)
+            abcd = np.stack([R.a, R.b, R.c, R.d, R.improper], axis=-1).round(10)
         _, idx, inv = np.unique(abcd, axis=0, return_index=True, return_inverse=True)
         idx_argsort = np.argsort(idx)
         idx_sort = idx[idx_argsort]
@@ -231,8 +240,8 @@ class Rotation(Quaternion):
         inv_map = np.empty_like(idx_argsort)
         inv_map[idx_argsort] = np.arange(idx_argsort.size)
         inv = inv_map[inv]
-        dat = r[idx_sort]
-        dat.improper = r.improper[idx_sort]
+        dat = R[idx_sort]
+        dat.improper = R.improper[idx_sort]
 
         if return_index and return_inverse:
             return dat, idx_sort, inv
@@ -296,10 +305,10 @@ class Rotation(Quaternion):
         Examples
         --------
         >>> from orix.quaternion import Rotation
-        >>> r1 = Rotation.random((5, 3))
-        >>> r2 = Rotation.random((6, 2))
-        >>> dist = r1.angle_with_outer(r2)
-        >>> dist.shape
+        >>> R1 = Rotation.random((5, 3))
+        >>> R2 = Rotation.random((6, 2))
+        >>> omega = R1.angle_with_outer(R2)
+        >>> omega.shape
         (5, 3, 6, 2)
 
         See Also
@@ -342,7 +351,7 @@ class Rotation(Quaternion):
 
         Returns
         -------
-        r
+        R
             Outer rotation products.
         """
         if lazy:
@@ -353,28 +362,28 @@ class Rotation(Quaternion):
                     da.store(darr, arr)
             else:
                 da.store(darr, arr)
-            r = other.__class__(arr)
+            R = other.__class__(arr)
         else:
-            r = super().outer(other)
+            R = super().outer(other)
 
-        if isinstance(r, Rotation):
-            r.improper = np.logical_xor.outer(self.improper, other.improper)
-        elif isinstance(r, Vector3d):
-            r[self.improper] = -r[self.improper]
+        if isinstance(R, Rotation):
+            R.improper = np.logical_xor.outer(self.improper, other.improper)
+        elif isinstance(R, Vector3d):
+            R[self.improper] = -R[self.improper]
 
-        return r
+        return R
 
     def flatten(self) -> Rotation:
         """Return a new rotation instance collapsed into one dimension.
 
         Returns
         -------
-        r
+        R
             Rotations collapsed into one dimension.
         """
-        r = super().flatten()
-        r.improper = self.improper.T.flatten().T
-        return r
+        R = super().flatten()
+        R.improper = self.improper.T.flatten().T
+        return R
 
     def dot_outer(self, other: Rotation) -> np.ndarray:
         """Return the outer dot products of the rotations and the other
@@ -398,6 +407,8 @@ class Rotation(Quaternion):
         else:
             dot_products[self.improper] = 0
         return dot_products
+
+    # -------------------- Other private methods --------------------- #
 
     def _differentiators(self) -> np.ndarray:
         a = self.a
@@ -436,7 +447,7 @@ def von_mises(
 
     Returns
     -------
-    r
+    R
         Rotations.
 
     Notes

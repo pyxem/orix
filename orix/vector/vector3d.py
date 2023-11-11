@@ -79,6 +79,8 @@ class Vector3d(Object3d):
 
     dim = 3
 
+    # -------------------------- Properties -------------------------- #
+
     @property
     def x(self) -> np.ndarray:
         """Return or set the x coordinates.
@@ -200,6 +202,8 @@ class Vector3d(Object3d):
         """
         return np.arccos(self.data[..., 2] / self.radial.data)
 
+    # ------------------------ Dunder methods ------------------------ #
+
     def __neg__(self) -> Vector3d:
         return self.__class__(-self.data)
 
@@ -302,109 +306,7 @@ class Vector3d(Object3d):
     def __rtruediv__(self, other: Any):
         raise ValueError("Division by a vector is undefined")
 
-    def dot(self, other: Vector3d) -> np.ndarray:
-        """Return the dot products of the vectors and the other vectors.
-
-        Parameters
-        ----------
-        other
-            Other vectors with a compatible shape.
-
-        Returns
-        -------
-        dot_products
-            Dot products.
-
-        Examples
-        --------
-        >>> from orix.vector import Vector3d
-        >>> v = Vector3d((0, 0, 1.0))
-        >>> w = Vector3d(((0, 0, 0.5), (0.4, 0.6, 0)))
-        >>> v.dot(w)
-        array([0.5, 0. ])
-        >>> w.dot(v)
-        array([0.5, 0. ])
-        """
-        if not isinstance(other, Vector3d):
-            raise ValueError("{} is not a vector!".format(other))
-        return np.sum(self.data * other.data, axis=-1)
-
-    def dot_outer(
-        self,
-        other: Vector3d,
-        lazy: bool = False,
-        chunk_size: int = 20,
-        progressbar: bool = False,
-    ) -> np.ndarray:
-        """Return the outer dot products of all vectors and all the
-        other vectors.
-
-        Parameters
-        ----------
-        other
-            Compute the outer dot product with these vectors.
-        lazy
-            Whether to perform the computation lazily with Dask. Default
-            is ``False``.
-        chunk_size
-            Number of orientations per axis to include in each iteration
-            of the computation. Default is 20. Only applies when
-            ``lazy`` is ``True``.
-        progressbar
-            Whether to show a progressbar during computation if ``lazy``
-            is ``True``. Default is ``True``.
-
-        Returns
-        -------
-        dot_products
-            Dot products.
-
-        Examples
-        --------
-        >>> from orix.vector import Vector3d
-        >>> v = Vector3d(((0.0, 0.0, 1.0), (1.0, 0.0, 0.0)))  # shape = (2, )
-        >>> w = Vector3d(((0.0, 0.0, 0.5), (0.4, 0.6, 0.0), (0.5, 0.5, 0.5)))  # shape = (3, )
-        >>> v.dot_outer(w)
-        array([[0.5, 0. , 0.5],
-               [0. , 0.4, 0.5]])
-        >>> w.dot_outer(v)  # shape = (3, 2)
-        array([[0.5, 0. ],
-               [0. , 0.4],
-               [0.5, 0.5]])
-        """
-        if lazy:
-            dots = np.empty(self.shape + other.shape)
-            dp = self._dot_outer_dask(other, chunk_size)
-            if progressbar:
-                with ProgressBar():
-                    da.store(sources=dp, targets=dots)
-            else:
-                da.store(sources=dp, targets=dots)
-        else:
-            dots = np.tensordot(self.data, other.data, axes=(-1, -1))
-        return dots
-
-    def cross(self, other: Vector3d) -> Vector3d:
-        """Return the cross product of a vector with another vector.
-
-        Vectors must have compatible shape for broadcasting to work.
-
-        Returns
-        -------
-        vec
-            The class of ``other`` is preserved.
-
-        Examples
-        --------
-        >>> from orix.vector import Vector3d
-        >>> v = Vector3d(((1, 0, 0), (-1, 0, 0)))
-        >>> w = Vector3d((0, 1, 0))
-        >>> v.cross(w)
-        Vector3d (2,)
-        [[ 0  0  1]
-         [ 0  0 -1]]
-        """
-        return other.__class__(np.cross(self.data, other.data))
+    # ------------------------ Class methods ------------------------- #
 
     @classmethod
     def from_polar(
@@ -547,6 +449,112 @@ class Vector3d(Object3d):
 
         return paths
 
+    # --------------------- Other public methods --------------------- #
+
+    def dot(self, other: Vector3d) -> np.ndarray:
+        """Return the dot products of the vectors and the other vectors.
+
+        Parameters
+        ----------
+        other
+            Other vectors with a compatible shape.
+
+        Returns
+        -------
+        dot_products
+            Dot products.
+
+        Examples
+        --------
+        >>> from orix.vector import Vector3d
+        >>> v = Vector3d((0, 0, 1.0))
+        >>> w = Vector3d(((0, 0, 0.5), (0.4, 0.6, 0)))
+        >>> v.dot(w)
+        array([0.5, 0. ])
+        >>> w.dot(v)
+        array([0.5, 0. ])
+        """
+        if not isinstance(other, Vector3d):
+            raise ValueError("{} is not a vector!".format(other))
+        return np.sum(self.data * other.data, axis=-1)
+
+    def dot_outer(
+        self,
+        other: Vector3d,
+        lazy: bool = False,
+        chunk_size: int = 20,
+        progressbar: bool = False,
+    ) -> np.ndarray:
+        """Return the outer dot products of all vectors and all the
+        other vectors.
+
+        Parameters
+        ----------
+        other
+            Compute the outer dot product with these vectors.
+        lazy
+            Whether to perform the computation lazily with Dask. Default
+            is ``False``.
+        chunk_size
+            Number of orientations per axis to include in each iteration
+            of the computation. Default is 20. Only applies when
+            ``lazy`` is ``True``.
+        progressbar
+            Whether to show a progressbar during computation if ``lazy``
+            is ``True``. Default is ``True``.
+
+        Returns
+        -------
+        dot_products
+            Dot products.
+
+        Examples
+        --------
+        >>> from orix.vector import Vector3d
+        >>> v = Vector3d(((0.0, 0.0, 1.0), (1.0, 0.0, 0.0)))  # shape = (2, )
+        >>> w = Vector3d(((0.0, 0.0, 0.5), (0.4, 0.6, 0.0), (0.5, 0.5, 0.5)))  # shape = (3, )
+        >>> v.dot_outer(w)
+        array([[0.5, 0. , 0.5],
+               [0. , 0.4, 0.5]])
+        >>> w.dot_outer(v)  # shape = (3, 2)
+        array([[0.5, 0. ],
+               [0. , 0.4],
+               [0.5, 0.5]])
+        """
+        if lazy:
+            dots = np.empty(self.shape + other.shape)
+            dp = self._dot_outer_dask(other, chunk_size)
+            if progressbar:
+                with ProgressBar():
+                    da.store(sources=dp, targets=dots)
+            else:
+                da.store(sources=dp, targets=dots)
+        else:
+            dots = np.tensordot(self.data, other.data, axes=(-1, -1))
+        return dots
+
+    def cross(self, other: Vector3d) -> Vector3d:
+        """Return the cross product of a vector with another vector.
+
+        Vectors must have compatible shape for broadcasting to work.
+
+        Returns
+        -------
+        vec
+            The class of ``other`` is preserved.
+
+        Examples
+        --------
+        >>> from orix.vector import Vector3d
+        >>> v = Vector3d(((1, 0, 0), (-1, 0, 0)))
+        >>> w = Vector3d((0, 1, 0))
+        >>> v.cross(w)
+        Vector3d (2,)
+        [[ 0  0  1]
+         [ 0  0 -1]]
+        """
+        return other.__class__(np.cross(self.data, other.data))
+
     def angle_with(self, other: Vector3d, degrees: bool = False) -> np.ndarray:
         """Return the angles between these vectors in other vectors.
 
@@ -591,7 +599,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        vec
+        v
             A new vector with entries rotated.
 
         Examples
@@ -613,9 +621,9 @@ class Vector3d(Object3d):
 
         axis = Vector3d.zvector() if axis is None else axis
         angle = 0 if angle is None else angle
-        q = Rotation.from_axes_angles(axis, angle)
+        R = Rotation.from_axes_angles(axis, angle)
 
-        return q * self
+        return R * self
 
     def get_nearest(
         self, x: Vector3d, inclusive: bool = False, tiebreak: bool = None
@@ -638,7 +646,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        vec
+        v
             Vector with the smallest angle to this vector.
 
         Raises
@@ -659,20 +667,20 @@ class Vector3d(Object3d):
         eps = 1e-9 if inclusive else 0
         cosines = x.dot(self)
         mask = np.logical_and(-1 - eps < cosines, cosines < 1 + eps)
-        vec = x[mask]
-        if vec.size == 0:
+        v = x[mask]
+        if v.size == 0:
             return Vector3d.empty()
         cosines = cosines[mask]
-        verticality = vec.dot(tiebreak)
+        verticality = v.dot(tiebreak)
         order = np.lexsort((cosines, verticality))
-        return vec[order[-1]]
+        return v[order[-1]]
 
     def mean(self) -> Vector3d:
         """Return the mean vector.
 
         Returns
         -------
-        vec
+        v
             The mean vector.
         """
         axis = tuple(range(self.ndim))
@@ -723,7 +731,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        vec
+        v
             Vectors within the fundamental sector.
 
         Examples
@@ -750,20 +758,20 @@ class Vector3d(Object3d):
             vv = symmetry[-1] * v[idx]
             if vv.size != 0:
                 v[idx] = vv
-            rot = symmetry[:3]
+            S = symmetry[:3]
         elif symmetry.name == "-3":
             idx = v.z < 0
             vv = symmetry[3] * v[idx]
             if vv.size != 0:
                 v[idx] = vv
-            rot = symmetry[:3]
+            S = symmetry[:3]
         else:
-            rot = symmetry
+            S = symmetry
 
-        rotated_centers = rot * center
+        rotated_centers = S * center
         closeness = v.dot_outer(rotated_centers).round(12)
         idx_max = np.argmax(closeness, axis=-1)
-        v2 = ~rot[idx_max] * v
+        v2 = ~S[idx_max] * v
 
         # Keep the ones already inside the sector
         mask = v <= fs
@@ -1388,6 +1396,8 @@ class Vector3d(Object3d):
 
         if return_figure:
             return fig
+
+    # -------------------- Other private methods --------------------- #
 
     @staticmethod
     def _setup_plot(
