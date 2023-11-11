@@ -105,7 +105,9 @@ class Quaternion(Object3d):
        counterclockwise rotation when viewing from the end point of the
        rotation axis unit vector :math:`\hat{\mathbf{n}}` towards the
        origin.
-    3. Rotations are *interpreted* in the passive sense.
+    3. Rotations are *interpreted* in the passive sense. This means that
+       rotations are interpreted as basis transformations of reference
+       frames, with vectors fixed in space.
     4. Euler angle triplets are implemented using the Bunge convention,
        with angular ranges as :math:`[0, 2\pi]`, :math:`[0, \pi]`, and
        :math:`[0, 2\pi]`.

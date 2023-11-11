@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Point transformations of objects."""
-
 from __future__ import annotations
 
 from typing import Any, Tuple, Union

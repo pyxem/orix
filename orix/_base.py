@@ -135,8 +135,7 @@ class Object3d:
         Parameters
         ----------
         sequence
-            A sequence of objects of a class inheriting from
-            ``Object3d`` to stack.
+            A sequence of objects to stack.
         """
         sequence = [s._data for s in sequence]
         stack = np.stack(sequence, axis=-2)

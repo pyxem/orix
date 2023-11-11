@@ -134,7 +134,7 @@ class Misorientation(Rotation):
         Gl, Gr = self._symmetry
 
         if grain_exchange and (Gl._tuples == Gr._tuples):
-            misorientations = Misorientation.stack([self, ~self]).flatten()
+            misorientations = Misorientation.stack((self, ~self)).flatten()
         else:
             misorientations = Misorientation(self)
 

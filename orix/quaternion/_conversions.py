@@ -25,7 +25,9 @@ Conventions:
 2. Rotation angles are taken to be positive for a counterclockwise
    rotation when viewing from the end point of the rotation axis unit
    vector towards the origin.
-3. Rotations are interpreted in the passive sense (even though P = 1!).
+3. Rotations are *interpreted* in the passive sense. This means that we
+   rotate reference frames with vectors fixed in space. Rotations are
+   basis transformations rather than coordinate transformations.
 4. Euler angle triplets are implemented using the Bunge convention, with
    angular ranges as [0, 2pi], [0, pi], and [0, 2pi].
 5. Rotation angles are limited to [0, pi].
