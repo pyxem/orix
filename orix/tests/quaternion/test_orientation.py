@@ -418,8 +418,7 @@ class TestMisorientation:
     def test_inverse(self):
         M1 = Misorientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], (Oh, D6))
         M2 = ~M1
-        assert M1.symmetry[0] == M2.symmetry[1]
-        assert M1.symmetry[1] == M2.symmetry[0]
+        assert M1.symmetry == M2.symmetry[::-1]
         assert np.allclose(M2.data, [np.sqrt(2) / 2, -np.sqrt(2) / 2, 0, 0])
 
         M3 = M1.inv()
@@ -430,6 +429,17 @@ class TestMisorientation:
         v2 = M2 * -v
         assert np.allclose(v1.data, [0, 0, 1])
         assert np.allclose(v2.data, [0, 0, 1])
+
+    def test_random(self):
+        M1 = Misorientation.random()
+        assert M1.symmetry == (C1, C1)
+
+        shape = (2, 3)
+        M2 = Misorientation.random(shape)
+        assert M2.shape == shape
+
+        M3 = Misorientation.random(symmetry=(Oh, D6))
+        assert M3.symmetry == (Oh, D6)
 
 
 def test_orientation_equality():
@@ -852,3 +862,14 @@ class TestOrientation:
         v2 = O2 * -v
         assert np.allclose(v1.data, [0, 0, 1])
         assert np.allclose(v2.data, [0, 0, 1])
+
+    def test_random(self):
+        O1 = Orientation.random()
+        assert O1.symmetry == C1
+
+        shape = (2, 3)
+        O2 = Orientation.random(shape)
+        assert O2.shape == shape
+
+        O3 = Orientation.random(symmetry=Oh)
+        assert O3.symmetry == Oh

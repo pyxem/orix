@@ -28,6 +28,9 @@ Added
   ``Misorientation``. For the three first, its behavior is identical to the inversion
   operator ``~``. For misorientations, it inverts the direction of the transformation.
   Convenient for chaining operations.
+- The ``random()`` methods of ``Orientation`` and ``Misorientation`` now accept
+  ``symmetry``. A ``random()`` method is also added to ``Vector3d`` and ``Miller``, the
+  latter accepting a ``phase``.
 
 Changed
 -------

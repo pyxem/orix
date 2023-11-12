@@ -780,32 +780,6 @@ class Quaternion(Object3d):
         return Q
 
     @classmethod
-    def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
-        """Create random unit quaternions.
-
-        Parameters
-        ----------
-        shape
-            Shape of the quaternion instance.
-
-        Returns
-        -------
-        Q
-            Unit quaternions.
-        """
-        n = int(np.prod(shape))
-        Q = []
-        while len(Q) < n:
-            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
-            r2 = np.sum(np.square(r), axis=1)
-            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
-            Q += list(r)
-        Q = cls(np.array(Q[:n]))
-        Q = Q.unit
-        Q = Q.reshape(shape)
-        return Q
-
-    @classmethod
     def identity(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
         """Create identity quaternions.
 

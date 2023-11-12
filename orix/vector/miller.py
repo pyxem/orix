@@ -129,7 +129,7 @@ class Miller(Vector3d):
         ----------
         value : str
             Vector coordinate format, either ``"xyz"``, ``"uvw"``,
-            ``"UVTW"``, ``"hkl"`` or ``"hkil"``.
+            ``"UVTW"``, ``"hkl"``, or ``"hkil"``.
         """
         return self._coordinate_format
 
@@ -423,6 +423,44 @@ class Miller(Vector3d):
         hkl = _get_indices_from_highest(highest_indices=highest_hkl)
         hkl = hkl.astype(float).round(0)
         return cls(hkl=hkl, phase=phase).unique()
+
+    @classmethod
+    def random(
+        cls,
+        phase: "orix.crystal_map.Phase",
+        shape: Union[int, tuple] = (1,),
+        coordinate_format: str = "xyz",
+    ) -> Miller:
+        """Create random Miller indices.
+
+        Parameters
+        ----------
+        phase
+            A phase with a crystal lattice and symmetry.
+        shape
+            Shape of the indices.
+        coordinate_format
+            Coordinate format of indices, either ``"xyz"`` (default),
+            ``"uvw"``, ``"UVTW"``, ``"hkl"``, or ``"hkil"``.
+
+        Returns
+        -------
+        m
+            Random Miller indices.
+
+        Examples
+        --------
+        >>> from orix.crystal_map import Phase
+        >>> from orix.vector import Miller
+        >>> phase = Phase(point_group="m-3m")
+        >>> _ = Miller.random(phase)
+        >>> _ = Miller.random(phase, (3, 4))
+        >>> _ = Miller.random(phase, (3, 4), "hkl")
+        """
+        v = Vector3d.random(shape)
+        m = Miller(xyz=v.data, phase=phase)
+        m.coordinate_format = coordinate_format
+        return m
 
     # --------------------- Other public methods --------------------- #
 

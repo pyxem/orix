@@ -77,6 +77,8 @@ class Object3d:
     def __finalize__(self, data):
         pass
 
+    # -------------------------- Properties -------------------------- #
+
     @property
     def data(self) -> np.ndarray:
         """Return the data."""
@@ -86,28 +88,6 @@ class Object3d:
     def data(self, data: np.ndarray):
         """Set the data."""
         self._data[..., : self.dim] = data
-
-    def __repr__(self) -> str:
-        """Return a string representation of the data."""
-        name = self.__class__.__name__
-        shape = str(self.shape)
-        data = np.array_str(self.data, precision=4, suppress_small=True)
-        return "\n".join([name + " " + shape, data])
-
-    def __getitem__(self, key):
-        """Return a slice of the object."""
-        data = np.atleast_2d(self.data[key])
-        obj = self.__class__(data)
-        return obj
-
-    def __setitem__(self, key, value: np.ndarray):
-        """Set a slice of the data."""
-        self.data[key] = value.data
-
-    @classmethod
-    def empty(cls):
-        """Return an empty object with the appropriate dimensions."""
-        return cls(np.zeros((0, cls.dim)))
 
     @property
     def shape(self) -> tuple:
@@ -128,8 +108,46 @@ class Object3d:
         """Return the total number of entries in this object."""
         return int(np.prod(self.shape))
 
+    @property
+    def norm(self) -> np.ndarray:
+        """Return the norm of the data."""
+        return np.sqrt(np.sum(np.square(self.data), axis=-1))
+
+    @property
+    def unit(self) -> Object3d:
+        """Return the unit object."""
+        with np.errstate(divide="ignore", invalid="ignore"):
+            obj = self.__class__(np.nan_to_num(self.data / self.norm[..., np.newaxis]))
+            return obj
+
+    # ------------------------ Dunder methods ------------------------ #
+
+    def __repr__(self) -> str:
+        """Return a string representation of the data."""
+        name = self.__class__.__name__
+        shape = str(self.shape)
+        data = np.array_str(self.data, precision=4, suppress_small=True)
+        return "\n".join([name + " " + shape, data])
+
+    def __getitem__(self, key) -> Object3d:
+        """Return a slice of the object."""
+        data = np.atleast_2d(self.data[key])
+        obj = self.__class__(data)
+        return obj
+
+    def __setitem__(self, key, value: np.ndarray):
+        """Set a slice of the data."""
+        self.data[key] = value.data
+
+    # ------------------------ Class methods ------------------------- #
+
     @classmethod
-    def stack(cls, sequence: Any):
+    def empty(cls) -> Object3d:
+        """Return an empty object with the appropriate dimensions."""
+        return cls(np.zeros((0, cls.dim)))
+
+    @classmethod
+    def stack(cls, sequence: Any) -> Object3d:
         """Return a stacked object from the sequence.
 
         Parameters
@@ -142,6 +160,34 @@ class Object3d:
         obj = cls(stack[..., : cls.dim])
         obj._data = stack
         return obj
+
+    @classmethod
+    def random(cls, shape: Union[int, tuple] = (1,)) -> Object3d:
+        """Create object with random data.
+
+        Parameters
+        ----------
+        shape
+            Shape of the object.
+
+        Returns
+        -------
+        obj
+            Object with random data.
+        """
+        n = int(np.prod(shape))
+        obj = []
+        while len(obj) < n:
+            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
+            r2 = np.sum(np.square(r), axis=1)
+            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
+            obj += list(r)
+        obj = cls(np.array(obj[:n]))
+        obj = obj.unit
+        obj = obj.reshape(shape)
+        return obj
+
+    # --------------------- Other public methods --------------------- #
 
     def flatten(self):
         """Return a new object with the same data in a single column."""
@@ -196,18 +242,6 @@ class Object3d:
         elif return_inverse and not return_index:
             return obj, inv
         else:
-            return obj
-
-    @property
-    def norm(self) -> np.ndarray:
-        """Return the norm of the data."""
-        return np.sqrt(np.sum(np.square(self.data), axis=-1))
-
-    @property
-    def unit(self) -> Object3d:
-        """Return the unit object."""
-        with np.errstate(divide="ignore", invalid="ignore"):
-            obj = self.__class__(np.nan_to_num(self.data / self.norm[..., np.newaxis]))
             return obj
 
     def squeeze(self) -> Object3d:

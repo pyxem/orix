@@ -216,16 +216,16 @@ class Misorientation(Rotation):
         rotation: SciPyRotation,
         symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
     ) -> Misorientation:
-        """Return misorientations(s) from
+        """Return misorientationss from
         :class:`scipy.spatial.transform.Rotation`.
 
         Parameters
         ----------
         rotation
-            SciPy rotation(s).
+            SciPy rotations.
         symmetry
             Tuple of two sets of crystal symmetries. If not given, the
-            returned misorientation(s) is assumed to be transformation
+            returned misorientations are assumed to be transformations
             between crystals with only the identity operation, *1*
             (*C1*).
 
@@ -236,8 +236,8 @@ class Misorientation(Rotation):
 
         Notes
         -----
-        The SciPy rotation is inverted to be consistent with the orix
-        framework of passive rotations.
+        The SciPy rotations are inverted to be consistent with the orix
+        framework of rotations.
 
         Examples
         --------
@@ -260,6 +260,34 @@ class Misorientation(Rotation):
         [[-1.  1.  0.]]
         """
         M = super().from_scipy_rotation(rotation)
+        if symmetry:
+            M.symmetry = symmetry
+        return M
+
+    @classmethod
+    def random(
+        cls,
+        shape: Union[int, tuple] = (1,),
+        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
+    ) -> Misorientation:
+        """Create random misorientations.
+
+        Parameters
+        ----------
+        shape
+            Shape of the misorientations.
+        symmetry
+            Tuple of two sets of crystal symmetries. If not given, the
+            returned misorientation(s) is assumed to be transformation
+            between crystals with only the identity operation, *1*
+            (*C1*).
+
+        Returns
+        -------
+        M
+            Random misorientations.
+        """
+        M = super().random(shape)
         if symmetry:
             M.symmetry = symmetry
         return M

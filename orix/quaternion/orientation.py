@@ -341,7 +341,6 @@ class Orientation(Misorientation):
         ----------
         rotation
             SciPy rotation(s).
-
         symmetry
             Crystal symmetry. If not given, the returned orientation(s)
             is given only the identity symmetry operation, *1* (*C1*).
@@ -371,6 +370,30 @@ class Orientation(Misorientation):
         [[ 1. -1.  0.]]
         """
         O = super().from_scipy_rotation(rotation)
+        if symmetry:
+            O.symmetry = symmetry
+        return O
+
+    @classmethod
+    def random(
+        cls, shape: Union[int, tuple] = (1,), symmetry: Optional[Symmetry] = None
+    ) -> Orientation:
+        """Create random orientations.
+
+        Parameters
+        ----------
+        shape
+            Shape of the orientations.
+        symmetry
+            Crystal symmetry. If not given, the returned orientation(s)
+            is given only the identity symmetry operation, *1* (*C1*).
+
+        Returns
+        -------
+        O
+            Random orientations.
+        """
+        O = super().random(shape)
         if symmetry:
             O.symmetry = symmetry
         return O

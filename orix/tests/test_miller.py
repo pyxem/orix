@@ -397,6 +397,17 @@ class TestMiller:
         assert np.allclose(v4, [0.25, 0, 1])
         assert np.allclose(v5, v3)
 
+    def test_random(self):
+        m = Miller.random(CUBIC_PHASE)
+        assert m.phase.name == CUBIC_PHASE.name
+        assert m.size == 1
+        assert m.coordinate_format == "xyz"
+
+        shape = (2, 3)
+        g = Miller.random(HEXAGONAL_PHASE, shape, "hkl")
+        assert g.shape == shape
+        assert g.coordinate_format == "hkl"
+
 
 class TestMillerBravais:
     def test_uvw2UVTW(self):
