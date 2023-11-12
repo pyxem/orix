@@ -1502,7 +1502,7 @@ class Vector3d(Object3d):
 
         if figure is None:
             if figure_kwargs is None:
-                figure_kwargs = dict()
+                figure_kwargs = {"layout": "tight"}
             figure, axes = plt.subplots(
                 ncols=ncols, subplot_kw=subplot_kw, **figure_kwargs
             )
