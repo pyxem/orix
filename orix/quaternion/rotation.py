@@ -51,6 +51,30 @@ class Rotation(Quaternion):
     vectors as a rotation by the unit quaternion followed by inversion.
 
     See the documentation of quaternions for the applied conventions.
+
+    Examples
+    --------
+    Rotate vector vA defined in coordinate system A to vector vB defined
+    in coordinate system B
+
+    >>> import numpy as np
+    >>> from orix.quaternion import Quaternion
+    >>> from orix.vector import Vector3d
+    >>> R = Rotation.random()
+    >>> vA = Vector3d.random()
+    >>> vB = R * vA
+    >>> np.allclose(vB.data, np.dot(R.to_matrix().squeeze(), vA.data.squeeze()))
+    True
+
+    Combine two rotations R1 and R2, applied in that order
+
+    >>> R1, R2 = Rotation.random(2)
+    >>> R12 = R2 * R1
+    >>> np.allclose(
+    ...     R12.to_matrix().squeeze(),
+    ...     np.dot(R2.to_matrix().squeeze(), R1.to_matrix().squeeze())
+    ... )
+    True
     """
 
     def __init__(self, data: Union[np.ndarray, Rotation, list, tuple]):
