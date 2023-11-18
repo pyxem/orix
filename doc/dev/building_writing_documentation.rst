@@ -127,3 +127,30 @@ A class' ``set()`` method, if it has any, is excluded from the API reference.
 This is necessary because some plotting classes inheriting from Matplotlib's ``Axes()``
 class caused errors when the inherited ``set()`` method is to be included in the API
 reference by Sphinx (even though inherited methods are also explicitly excluded).
+
+Mathematical notation
+---------------------
+
+We try to use a mathematical notation consistent throughout our documentation and
+internal (not user-facing) source code for naming variables.
+Rotation objects are denoted by uppercase letters and vector objects are denoted by
+lowercase letters.
+
+* Quaternion :math:`Q = (a, b, c, d)`
+* Rotation axis :math:`\hat{\mathbf{n}}`
+* Rotation angle :math:`\omega`
+* Rotation :math:`R = (a, b, c, d)`
+* Orientation :math:`O = (a, b, c, d)`
+* Misorientation :math:`M = (a, b, c, d)`
+* Symmetry operations:
+    - Set of operations :math:`S`
+    - Single operation :math:`s = (a, b, c, d)`
+* Vector3d :math:`v = (x, y, z)`
+* Miller with coordinate format:
+    - "xyz": :math:`m = (x, y, z)`
+    - "hkl" or "hkil": :math:`g = (h, k, l)`
+    - "uvw" or "UVTW": :math:`t = [u, v, w]`
+* Polar angles
+    - Azimuth :math:`\phi`
+    - Polar :math:`\theta`
+* Stereographic coordinates :math:`(X, Y)`

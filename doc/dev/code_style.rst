@@ -60,3 +60,8 @@ required at the top of the file::
 
 Type hints for various built-in classes are available from the ``typing`` module.
 ``np.ndarray`` should be used for arrays.
+
+Mathematical notation
+---------------------
+
+See :doc:`build-and-write-documentation:mathematical-notation`.
