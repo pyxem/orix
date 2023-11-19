@@ -68,7 +68,7 @@ jobs:
           - os: ubuntu-latest
             python-version: 3.7
             OLDEST_SUPPORTED_VERSION: true
-            DEPENDENCIES: diffpy.structure==3  matplotlib==3.3
+            DEPENDENCIES: diffpy.structure==3  matplotlib==3.5
             LABEL: -oldest
     steps:
       - uses: actions/checkout@v3

@@ -385,7 +385,7 @@ class Misorientation(Rotation):
         self,
         projection: str = "axangle",
         figure: Optional[plt.Figure] = None,
-        position: Union[int, Tuple[int, int], SubplotSpec] = None,
+        position: Union[int, Tuple[int, int], SubplotSpec] = (1, 1, 1),
         return_figure: bool = False,
         wireframe_kwargs: Optional[dict] = None,
         size: Optional[int] = None,

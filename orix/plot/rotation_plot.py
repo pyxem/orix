@@ -18,17 +18,16 @@
 
 from typing import Optional, Tuple, Union
 
-from matplotlib import __version__, projections
+from matplotlib import projections
 from matplotlib.gridspec import SubplotSpec
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from packaging import version
 
 from orix.vector import AxAngle, Rodrigues
 
 
 class RotationPlot(Axes3D):
-    """Plot of a (mis)orientation region, extending Matplotlib."""
+    """Plot of a (mis)orientation region."""
 
     name = None
     transformation_class = None
@@ -139,14 +138,14 @@ class RotationPlot(Axes3D):
 
 
 class RodriguesPlot(RotationPlot):
-    """Plot rotations in a Rodrigues-Frank projection."""
+    """Plot rotations in Rodrigues-Frank space."""
 
     name = "rodrigues"
     transformation_class = Rodrigues
 
 
 class AxAnglePlot(RotationPlot):
-    """Plot rotations in an Axes-Angle projection."""
+    """Plot rotations in a axis-angle space."""
 
     name = "axangle"
     transformation_class = AxAngle
@@ -159,7 +158,7 @@ projections.register_projection(AxAnglePlot)
 def _setup_rotation_plot(
     figure: Optional[plt.Figure] = None,
     projection: str = "axangle",
-    position: Union[int, tuple, SubplotSpec, None] = None,
+    position: Union[int, tuple, SubplotSpec, None] = (1, 1, 1),
     figure_kwargs: Optional[dict] = None,
 ) -> Tuple[plt.Figure, Union[AxAnglePlot, RodriguesPlot]]:
     """Return a figure and rotation plot axis of the correct type.
@@ -193,22 +192,17 @@ def _setup_rotation_plot(
     ax
         The axis-angle or Rodrigues plot axis.
     """
-    # Create figure if not already created, then add axis to figure
     if figure is None:
         if figure_kwargs is None:
-            figure_kwargs = dict()
+            figure_kwargs = {"layout": "tight"}
         figure = plt.figure(**figure_kwargs)
 
-    subplot_kwds = dict(projection=projection, proj_type="ortho")
+    subplot_kwds = {
+        "projection": projection,
+        "proj_type": "ortho",
+        "auto_add_to_figure": False,
+    }
 
-    # TODO: Remove when the oldest supported version of Matplotlib increases
-    # from 3.3 to 3.4.
-    # See: https://matplotlib.org/stable/api/_as_gen/mpl_toolkits.mplot3d.axes3d.Axes3D.html#mpl_toolkits.mplot3d.axes3d.Axes3D
-    if version.parse(__version__) >= version.parse("3.4"):  # pragma: no cover
-        subplot_kwds["auto_add_to_figure"] = False
-
-    if position is None:
-        position = (1, 1, 1)
     if hasattr(position, "__iter__"):
         # (nrows, ncols, index)
         ax = figure.add_subplot(*position, **subplot_kwds)

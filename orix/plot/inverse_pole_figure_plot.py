@@ -352,7 +352,7 @@ def _setup_inverse_pole_figure_plot(
     direction: Optional[Vector3d] = None,
     hemisphere: Optional[str] = None,
     figure_kwargs: Optional[Dict] = None,
-) -> Tuple[Figure, maxes.Axes]:
+) -> Tuple[Figure, np.ndarray]:
     """Set up an inverse pole figure plot.
 
     Parameters

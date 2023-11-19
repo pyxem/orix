@@ -86,7 +86,7 @@ setup(
         "dask[array]",
         "diffpy.structure       >= 3.0.2",
         "h5py",
-        "matplotlib             >= 3.3",
+        "matplotlib             >= 3.5",
         "matplotlib-scalebar",
         "numba",
         "numpy",
