@@ -82,9 +82,9 @@ def test_unit(rotation):
 
 
 def test_equality():
-    r1 = Rotation.random((5,))
+    r1 = Rotation.random(5)
     r1_copy = Rotation(r1)
-    r2 = Rotation.random((5,))
+    r2 = Rotation.random(5)
     assert r1 == r1
     assert r1_copy == r1
     # test values not equal
@@ -271,7 +271,7 @@ class TestUnique:
         rotation.unique(return_index=False, return_inverse=True)
 
     def test_unique_inverse(self):
-        r = Rotation.random((20,))
+        r = Rotation.random(20)
         u, inverse = r.unique(return_inverse=True)
         m = u[inverse] * ~r
         assert np.allclose(m.angle, 0)
@@ -288,7 +288,7 @@ def test_angle_with_outer():
     awo_self = r.angle_with_outer(r)
     assert awo_self.shape == shape + shape
     assert np.allclose(np.diag(awo_self), 0, atol=1e-6)
-    r2 = Rotation.random((6,))
+    r2 = Rotation.random(6)
     dist = r.angle_with_outer(r2)
     assert dist.shape == r.shape + r2.shape
     dist2 = r2.angle_with_outer(r)
@@ -457,7 +457,7 @@ def test_outer_lazy_rot():
 
 def test_outer_lazy_vec():
     r = Rotation.random((5, 3))
-    v = Vector3d(np.random.rand(6, 4, 3)).unit
+    v = Vector3d.random((6, 4))
     v2 = r.outer(v)
     v2_lazy = r.outer(v, lazy=True, chunk_size=20)
     assert isinstance(v2, Vector3d)
@@ -574,8 +574,8 @@ class TestFromAlignVectors:
 
 class TestAngleWith:
     def test_angle_with(self):
-        rot1 = Rotation.random((5,))
-        rot2 = Rotation.random((5,))
+        rot1 = Rotation.random(5)
+        rot2 = Rotation.random(5)
         ang_rad = rot1.angle_with(rot2)
         ang_deg = rot1.angle_with(rot2, degrees=True)
         assert np.allclose(np.rad2deg(ang_rad), ang_deg)

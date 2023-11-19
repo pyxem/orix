@@ -452,7 +452,7 @@ def test_orientation_equality():
     assert o1 == o2
     o2.symmetry = C3
     assert o1 != o2
-    o3 = Orientation.random((6,))
+    o3 = Orientation.random(6)
     assert o1 != o3
     o3.symmetry = o1.symmetry
     assert o1 != o3
@@ -683,7 +683,7 @@ class TestOrientation:
         assert np.allclose(dist, awo_self)
         assert np.allclose(np.diag(awo_self), 0, atol=1e-6)
 
-        o2 = Orientation.random((6,))
+        o2 = Orientation.random(6)
         dist = o.angle_with_outer(o2)
         assert dist.shape == o.shape + o2.shape
 

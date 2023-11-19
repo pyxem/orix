@@ -376,7 +376,7 @@ class Orientation(Misorientation):
 
     @classmethod
     def random(
-        cls, shape: Union[int, tuple] = (1,), symmetry: Optional[Symmetry] = None
+        cls, shape: Union[int, tuple] = 1, symmetry: Optional[Symmetry] = None
     ) -> Orientation:
         """Create random orientations.
 

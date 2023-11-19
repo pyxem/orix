@@ -428,7 +428,7 @@ class Miller(Vector3d):
     def random(
         cls,
         phase: "orix.crystal_map.Phase",
-        shape: Union[int, tuple] = (1,),
+        shape: Union[int, tuple] = 1,
         coordinate_format: str = "xyz",
     ) -> Miller:
         """Create random Miller indices.

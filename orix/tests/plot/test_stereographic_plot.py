@@ -463,7 +463,7 @@ class TestDrawCircle:
         plt.close("all")
 
     def test_pdf_args(self):
-        v = Vector3d(np.random.randn(10, 3)).unit
+        v = Vector3d.random(10)
         resolution = 5
         fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection="stereographic"))
         # vector arg

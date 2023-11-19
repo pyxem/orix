@@ -243,7 +243,7 @@ class TestQuaternion:
         abcd = rng.normal(size=np.prod(new_shape)).reshape(*shape, 4)
         q = Quaternion(abcd).unit
 
-        v = Vector3d(np.random.rand(7, 4, 3)).unit
+        v = Vector3d.random((7, 4))
 
         qvo_numpy = q.outer(v)
         assert isinstance(qvo_numpy, Vector3d)
@@ -276,7 +276,7 @@ class TestQuaternion:
         out, _ = capsys.readouterr()
         assert not out
         # test other is Vector3d
-        v = Vector3d(np.random.rand(2, 3, 3)).unit
+        v = Vector3d.random((2, 3))
         _ = q.outer(v, lazy=True)
         out, _ = capsys.readouterr()
         assert "Completed" in out

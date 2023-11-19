@@ -51,7 +51,7 @@ def test_unit_cell_plot_default():
 
 
 def test_unit_cell_plot_multiple_orientations_raises():
-    ori = Orientation.random((2,))
+    ori = Orientation.random(2)
     with pytest.raises(ValueError, match="Can only plot a single unit cell"):
         ori.plot_unit_cell()
     plt.close("all")
@@ -135,7 +135,7 @@ def test_calculate_basic_unit_cell_raises():
 
 
 def test_unit_cell_plot_invalid_structure_raises():
-    ori = Orientation.random((1,))
+    ori = Orientation.random()
     with pytest.raises(TypeError, match=r"Structure must be diffpy.structure."):
         ori.plot_unit_cell(structure=np.arange(3))
 

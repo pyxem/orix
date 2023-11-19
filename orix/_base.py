@@ -162,7 +162,7 @@ class Object3d:
         return obj
 
     @classmethod
-    def random(cls, shape: Union[int, tuple] = (1,)) -> Object3d:
+    def random(cls, shape: Union[int, tuple] = 1) -> Object3d:
         """Create object with random data.
 
         Parameters
