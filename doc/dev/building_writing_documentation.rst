@@ -145,8 +145,8 @@ lowercase letters.
 * Symmetry operations:
     - Set of operations :math:`S`
     - Single operation :math:`s = (a, b, c, d)`
-* Vector3d :math:`v = (x, y, z)`
-* Miller with coordinate format:
+* 3D vector :math:`v = (x, y, z)`
+* Reciprocal or direct lattice vectors (``Miller``) with coordinate formats:
     - "xyz": :math:`m = (x, y, z)`
     - "hkl" or "hkil": :math:`g = (h, k, l)`
     - "uvw" or "UVTW": :math:`t = [u, v, w]`

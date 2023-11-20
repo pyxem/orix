@@ -64,4 +64,4 @@ Type hints for various built-in classes are available from the ``typing`` module
 Mathematical notation
 ---------------------
 
-See :doc:`build-and-write-documentation:mathematical-notation`.
+See :doc:`dev/building_writing_documentation:mathematical-notation`.

@@ -59,7 +59,7 @@ class Quaternion(Object3d):
 
     Multiplication of two quaternions :math:`Q_1 = (a_1, b_1, c_1, d_1)`
     and :math:`Q_2 = (a_2, b_2, c_2, d_2)` with
-    :math:`Q_3 = q1 \cdot \q2 = (a_3, b_3, c_3, d_3)` is performed as:
+    :math:`Q_3 = q1 \cdot q2 = (a_3, b_3, c_3, d_3)` is performed as:
 
     .. math::
        a_3 = a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2
@@ -71,7 +71,7 @@ class Quaternion(Object3d):
        d_3 = a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2
 
     Rotation of a 3D vector :math:`v = (x, y, z)` by a quaternion is
-    performed as:math:`v' = Q \cdot v \cdot Q^{-1}`. Written out:
+    performed as :math:`v' = Q \cdot v \cdot Q^{-1}`. Written out:
 
     .. math::
        v'_x = x(a^2 + b^2 - c^2 - d^2) + 2(z(a \cdot c + b \cdot d) + y(b \cdot c - a \cdot d))
@@ -86,8 +86,8 @@ class Quaternion(Object3d):
 
         |Q| = \sqrt{a^2 + b^2 + c^2 + d^2}.
 
-    Quaternions with unit norm :math:`|Q| = 1` are known as unit
-    quaternions and can always be written on the form
+    Unit quaternions have a norm of :math:`|Q| = 1` and can always be written on the
+    form
 
     .. math::
 
@@ -100,7 +100,7 @@ class Quaternion(Object3d):
 
     Conventions:
 
-    1. Right-handed Cartesian reference frames
+    1. Right-handed Cartesian reference frames.
     2. Rotation angles :math:`\omega` are taken to be positive for a
        counter-clockwise rotation when viewing from the end point of the
        rotation axis unit vector :math:`\hat{\mathbf{n}}` towards the
@@ -413,7 +413,7 @@ class Quaternion(Object3d):
         from_axes_angles, from_homochoric
 
         Notes
-        -------
+        -----
         The Rodrigues-Frank vector :math:`\mathbf{\rho}` is defined as
 
         .. math::
