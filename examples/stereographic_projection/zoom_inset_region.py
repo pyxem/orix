@@ -46,8 +46,10 @@ ax_inset.scatter(v2)
 ax_inset.scatter(v_ref, c="r")
 
 # Restrict the inset region to the extent vectors
-ax_inset.set_xlim(x_inset.min(), x_inset.max())
-ax_inset.set_ylim(y_inset.min(), y_inset.max())
+ax_inset.set(
+    xlim=(x_inset.min(), x_inset.max()),
+    ylim=(y_inset.min(), y_inset.max()),
+)
 
 # Add lines indicating the inset zoom
 ip = InsetPosition(ax, rect)

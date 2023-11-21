@@ -3,8 +3,8 @@ r"""
 Combining rotations
 ===================
 
-This example demonstrates how to combine two rotations :math:`R_1` and
-:math:`R_2`, i.e. from right to left like so
+This example demonstrates how to combine two rotations :math:`R_1` and :math:`R_2`, i.e.
+from right to left like so
 
 .. math::
 
@@ -12,15 +12,13 @@ This example demonstrates how to combine two rotations :math:`R_1` and
 
 To convince ourselves that this order is correct, we rotate a vector
 :math:`\mathbf{v} = (0, 0, z)` by two rotations: rotation :math:`R_1` by
-:math:`120^{\circ}` around :math:`[1 1 1]` followed by rotation
-:math:`R_2` by :math:`180^{\circ}` around :math:`[1 1 0]`.
-Rotation :math:`R_1` is carried out first, followed by rotation
-:math:`R_2`.
+:math:`120^{\circ}` around :math:`[1 1 1]` followed by rotation :math:`R_2` by
+:math:`180^{\circ}` around :math:`[1 1 0]`.
+Rotation :math:`R_1` is carried out first, followed by rotation :math:`R_2`.
 
-Note that a negative angle :math:`\omega` when *defining* a rotation in
-the axis-angle representation :math:`(\hat{\mathbf{n}}, \omega)` is
-necessary for consistent transformations between rotation
-representations.
+Note that a negative angle :math:`\omega` when *defining* a rotation in the axis-angle
+representation :math:`(\hat{\mathbf{n}}, \omega)` is necessary for consistent
+transformations between rotation representations.
 """
 
 import matplotlib.pyplot as plt
