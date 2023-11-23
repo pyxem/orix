@@ -31,24 +31,24 @@ from orix._base import Object3d
 
 
 class Vector3d(Object3d):
-    """Three-dimensional vectors.
+    r"""Three-dimensional vectors.
 
-    Vectors :math:`v = (x, y, z)` support the following mathematical
-    operations:
-        - Unary negation.
-        - Addition to other vectors, scalars, numbers, and compatible
-          array-like objects.
-        - Subtraction to and from the above.
-        - Multiplication to scalars, numbers, and compatible array-like
-          objects.
-        - Division by the same as multiplication. Division by a vector
-          is not defined in general.
+    Vectors :math:`\mathbf{v} = (x, y, z)` support the following
+    mathematical operations:
+
+    * Unary negation.
+    * Addition to other vectors, numbers, and compatible array-like
+      objects.
+    * Subtraction to and from the above.
+    * Multiplication to numbers and compatible array-like objects.
+    * Division by the same as multiplication. Division by a vector is
+      not defined in general.
 
     Examples
     --------
     >>> from orix.vector import Vector3d
-    >>> v = Vector3d((1, 2, 3))
-    >>> w = Vector3d(np.array([[1, 0, 0], [0, 1, 1]]))
+    >>> v = Vector3d([1, 2, 3])
+    >>> w = Vector3d([[1, 0, 0], [0, 1, 1]])
     >>> w.x
     array([1, 0])
     >>> v.unit
@@ -75,6 +75,20 @@ class Vector3d(Object3d):
     Vector3d (2,)
     [[ 0.5  1.   1.5]
      [-0.5 -1.  -1.5]]
+
+    Vectors can be rotated by quaternion-like objects (which are
+    interpreted as basis transformations)
+
+    >>> from orix.quaternion import Rotation
+    >>> R = Rotation.from_axes_angles([0, 0, 1], -45, degrees=True)
+    >>> v2 = Vector3d([1, 1, 1.])
+    >>> v3 = R * v2
+    >>> v3
+    Vector3d (1,)
+    [[ 1.4142 -0.      1.    ]]
+    >>> v3_np = np.dot(R.to_matrix().squeeze(), v2.data.squeeze())
+    >>> np.allclose(v3.data, v3_np)
+    True
     """
 
     dim = 3

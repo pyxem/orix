@@ -40,10 +40,11 @@ class Quaternion(Object3d):
     r"""Quaternions.
 
     Quaternions support the following mathematical operations:
-        * Unary negation.
-        * Inversion (conjugation).
-        * Normalization to obtain unit quaternions.
-        * Multiplication with other quaternions and vectors.
+
+    * Unary negation.
+    * Inversion (conjugation).
+    * Normalization to obtain unit quaternions.
+    * Multiplication with other quaternions and vectors.
 
     A quaternion :math:`Q` is defined as a four-component number of the
     form :math:`Q = a + ib + jc + kd`, where the imaginary units
@@ -52,6 +53,7 @@ class Quaternion(Object3d):
     .. math::
 
         i^2 = j^2 = k^2 = -1;
+
         ij = -ji = k; jk = -kj = i; ki = -ik = j.
 
     In orix, quaternions are stored with the scalar part first followed
@@ -62,23 +64,25 @@ class Quaternion(Object3d):
     :math:`Q_3 = q1 \cdot q2 = (a_3, b_3, c_3, d_3)` is performed as:
 
     .. math::
-       a_3 = a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2
 
-       b_3 = a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2
+        a_3 = a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2
 
-       c_3 = a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2
+        b_3 = a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2
 
-       d_3 = a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2
+        c_3 = a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2
+
+        d_3 = a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2
 
     Rotation of a 3D vector :math:`v = (x, y, z)` by a quaternion is
     performed as :math:`v' = Q \cdot v \cdot Q^{-1}`. Written out:
 
     .. math::
-       v'_x = x(a^2 + b^2 - c^2 - d^2) + 2(z(a \cdot c + b \cdot d) + y(b \cdot c - a \cdot d))
 
-       v'_y = y(a^2 - b^2 + c^2 - d^2) + 2(x(a \cdot d + b \cdot c) + z(c \cdot d - a \cdot b))
+        v'_x = x(a^2 + b^2 - c^2 - d^2) + 2[z(a \cdot c + b \cdot d) + y(b \cdot c - a \cdot d)]
 
-       v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c))
+        v'_y = y(a^2 - b^2 + c^2 - d^2) + 2[x(a \cdot d + b \cdot c) + z(c \cdot d - a \cdot b)]
+
+        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2[y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c)]
 
     The norm of a quaternion is defined as
 

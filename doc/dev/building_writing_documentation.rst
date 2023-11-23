@@ -128,6 +128,8 @@ This is necessary because some plotting classes inheriting from Matplotlib's ``A
 class caused errors when the inherited ``set()`` method is to be included in the API
 reference by Sphinx (even though inherited methods are also explicitly excluded).
 
+.. _mathematical_notation:
+
 Mathematical notation
 ---------------------
 
@@ -143,14 +145,20 @@ lowercase letters.
 * Orientation :math:`O = (a, b, c, d)`
 * Misorientation :math:`M = (a, b, c, d)`
 * Symmetry operations:
-    - Set of operations :math:`S`
-    - Single operation :math:`s = (a, b, c, d)`
-* 3D vector :math:`v = (x, y, z)`
+
+  * Set of operations :math:`S`
+  * Single operation :math:`s = (a, b, c, d)`
+
+* 3D vector :math:`\mathbf{v} = (x, y, z)`
 * Reciprocal or direct lattice vectors (``Miller``) with coordinate formats:
-    - "xyz": :math:`m = (x, y, z)`
-    - "hkl" or "hkil": :math:`g = (h, k, l)`
-    - "uvw" or "UVTW": :math:`t = [u, v, w]`
+
+  * "xyz": :math:`\mathbf{m} = (x, y, z)`
+  * "hkl" or "hkil": :math:`\mathbf{g} = (h, k, l)`
+  * "uvw" or "UVTW": :math:`\mathbf{t} = [u, v, w]`
+
 * Polar angles
-    - Azimuth :math:`\phi`
-    - Polar :math:`\theta`
+
+  * Azimuth :math:`\phi`
+  * Polar :math:`\theta`
+
 * Stereographic coordinates :math:`(X, Y)`
