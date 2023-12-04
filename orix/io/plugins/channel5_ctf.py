@@ -21,14 +21,11 @@ Channel5 program.
 """
 
 from io import TextIOWrapper
-import re
-from typing import List, Optional, Tuple, Union
-import warnings
+from typing import List, Tuple
 
 from diffpy.structure import Lattice, Structure
 import numpy as np
 
-from orix import __version__
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.quaternion import Rotation, get_point_group
 
@@ -45,13 +42,13 @@ file_extensions = ["ctf"]
 writes = False
 writes_this = CrystalMap
 errorCodes = {
-    0: 'Success',
-    1: 'Low band contrast',
-    2: 'Low band slope',
-    3: 'No solution',
-    4: 'High MAD',
-    5: 'Not yet analysed (job cancelled before point!)',
-    6: 'Unexpected error (excepts etc.)'
+    0: "Success",
+    1: "Low band contrast",
+    2: "Low band slope",
+    3: "No solution",
+    4: "High MAD",
+    5: "Not yet analysed (job cancelled before point!)",
+    6: "Unexpected error (excepts etc.)",
 }
 
 
@@ -79,7 +76,7 @@ def file_reader(filename: str) -> CrystalMap:
         header, file_data = _parse_file(f)
 
     # Only Grid JobMode supported
-    if header['JobMode'] != 'Grid':
+    if header["JobMode"] != "Grid":
         raise ValueError(
             "Cannot return a crystal map from the file data because only a Grid JobMode"
             "is supported"
@@ -89,24 +86,22 @@ def file_reader(filename: str) -> CrystalMap:
     phase_ids, phase_names, symmetries, lattice_constants = _get_phases_from_header(
         header
     )
-    
+
     structures = []
     for name, abcABG in zip(phase_names, lattice_constants):
         structures.append(Structure(title=name, lattice=Lattice(*abcABG)))
 
     # Get vendor properties
-    props = {
-        prop: file_data[prop] for prop in ['Bands', 'Error', 'MAD', 'BC', 'BS']
-    }
+    props = {prop: file_data[prop] for prop in ["Bands", "Error", "MAD", "BC", "BS"]}
 
     # Data needed to create a CrystalMap object
     data_dict = {
-        "euler1": np.radians(file_data['Euler1']),
-        "euler2": np.radians(file_data['Euler2']),
-        "euler3": np.radians(file_data['Euler3']),
-        "x": file_data['X'],
-        "y": file_data['Y'],
-        "phase_id": file_data['Phase'],
+        "euler1": np.radians(file_data["Euler1"]),
+        "euler2": np.radians(file_data["Euler2"]),
+        "euler3": np.radians(file_data["Euler3"]),
+        "x": file_data["X"],
+        "y": file_data["Y"],
+        "phase_id": file_data["Phase"],
         "prop": props,
     }
 
@@ -134,6 +129,7 @@ def file_reader(filename: str) -> CrystalMap:
 
     return CrystalMap(**data_dict)
 
+
 def _parse_file(file: TextIOWrapper) -> Tuple[dict, dict]:
     """Return the header and data parsed from .ctf file.
 
@@ -150,44 +146,44 @@ def _parse_file(file: TextIOWrapper) -> Tuple[dict, dict]:
         Dictionary of individual measurements
     """
     vendor = file.readline().strip()
-    if vendor != 'Channel Text File':
+    if vendor != "Channel Text File":
         raise ValueError("Not a Channel 5 Text File")
     header_parsed = False
     header = {}
     while not header_parsed:
-        line = file.readline().split('\t', maxsplit=1)
-        if line[0] == 'Phases':
+        line = file.readline().split("\t", maxsplit=1)
+        if line[0] == "Phases":
             n_phases = int(line[1])
             phases = []
             for i in range(n_phases):
-                phase_data = file.readline().strip().split('\t')
-                a, b, c = map(float, phase_data[0].split(';'))
-                alpha, beta, gamma = map(float, phase_data[1].split(';'))
+                phase_data = file.readline().strip().split("\t")
+                a, b, c = map(float, phase_data[0].split(";"))
+                alpha, beta, gamma = map(float, phase_data[1].split(";"))
                 try:
                     point_group = get_point_group(int(phase_data[4])).name
                 except ValueError:
-                    point_group = '1'
+                    point_group = "1"
                 phase = {
                     "phase_id": i + 1,
                     "name": phase_data[2],
                     "lattice_constants": [a, b, c, alpha, beta, gamma],
                     "point_group": point_group,
-                    "author": phase_data[7]
+                    "author": phase_data[7],
                 }
                 phases.append(phase)
-            header['Phases'] = phases
+            header["Phases"] = phases
             header_parsed = True
         else:
             header[line[0]] = line[1].strip()
     # parse machine settings
-    ms = header.pop('Euler angles refer to Sample Coordinate system (CS0)!').split()
-    header['Settings'] = {label: value for label, value in zip(ms[0::2], ms[1::2])}
+    ms = header.pop("Euler angles refer to Sample Coordinate system (CS0)!").split()
+    header["Settings"] = {label: value for label, value in zip(ms[0::2], ms[1::2])}
     # parse data
     data_headers = file.readline().split()
-    data_array = np.fromstring(file.read(), sep='\t').reshape((-1, len(data_headers))).T
+    data_array = np.fromstring(file.read(), sep="\t").reshape((-1, len(data_headers))).T
     data = {label: value for label, value in zip(data_headers, data_array)}
     # Convert selected columns to int
-    for label in ['Phase', 'Bands', 'Error', 'BC',  'BS']:
+    for label in ["Phase", "Bands", "Error", "BC", "BS"]:
         if label in data:
             data[label] = data[label].astype(int)
     return header, data
@@ -220,10 +216,10 @@ def _get_phases_from_header(
     names = []
     point_groups = []
     lattice_constants = []
-    for phase in header['Phases']:
-        phase_ids.append(phase['phase_id'])
-        names.append(phase['name'])
-        point_groups.append(phase['point_group'])
-        lattice_constants.append(phase['lattice_constants'])
+    for phase in header["Phases"]:
+        phase_ids.append(phase["phase_id"])
+        names.append(phase["name"])
+        point_groups.append(phase["point_group"])
+        lattice_constants.append(phase["lattice_constants"])
 
     return phase_ids, names, point_groups, lattice_constants
