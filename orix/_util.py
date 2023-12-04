@@ -16,16 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Helper functions and classes for managing orix.
-
-This module and documentation is only relevant for orix developers, not
-for users.
-
-.. warning:
-    This module and its submodules are for internal use only.  Do not
-    use them in your own code. We may change the API at any time with no
-    warning.
-"""
+"""Helper functions and classes for managing orix."""
 
 
 import functools

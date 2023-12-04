@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 from itertools import product as iproduct
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 import warnings
 
 import dask.array as da
@@ -37,10 +37,10 @@ from orix.vector import Miller
 
 
 class Misorientation(Rotation):
-    r"""Misorientation object.
+    r"""Misorientations :math:`M`.
 
     Misorientations represent transformations from one orientation,
-    :math:`g_1` to another, :math:`g_2`: :math:`g_2 \cdot g_1^{-1}`.
+    :math:`O_1` to another, :math:`O_2`: :math:`O_2 \cdot O_1^{-1}`.
 
     They have symmetries associated with each of the starting
     orientations.
@@ -64,6 +64,8 @@ class Misorientation(Rotation):
         if symmetry:
             self.symmetry = symmetry
 
+    # -------------------------- Properties -------------------------- #
+
     @property
     def symmetry(self) -> Tuple[Symmetry, Symmetry]:
         """Return or set the crystal symmetries.
@@ -83,62 +85,258 @@ class Misorientation(Rotation):
             raise ValueError("Value must be a 2-tuple of Symmetry objects.")
         self._symmetry = tuple(value)
 
-    def __getitem__(self, key) -> Misorientation:
-        mori = super().__getitem__(key)
-        mori._symmetry = self._symmetry
-        return mori
+    # ------------------------ Dunder methods ------------------------ #
 
-    def __eq__(self, other):
+    def __eq__(self, other: Union[Any, Misorientation]) -> bool:
         v1 = super().__eq__(other)
         if not v1:
             return v1
         else:
-            # check symmetries are also equivalent
+            # Check whether symmetries also are equivalent
             v2 = []
             for sym_s, sym_o in zip(self._symmetry, other._symmetry):
                 v2.append(sym_s == sym_o)
             return all(v2)
 
+    def __getitem__(self, key) -> Misorientation:
+        M = super().__getitem__(key)
+        M._symmetry = self._symmetry
+        return M
+
+    def __invert__(self) -> Misorientation:
+        M = super().__invert__()
+        M._symmetry = self._symmetry[::-1]
+        return M
+
+    def __repr__(self):
+        """String representation."""
+        cls = self.__class__.__name__
+        shape = str(self.shape)
+        s1, s2 = self._symmetry[0].name, self._symmetry[1].name
+        s2 = "" if s2 == "1" else s2
+        symm = s1 + (s2 and ", ") + s2
+        data = np.array_str(self.data, precision=4, suppress_small=True)
+        rep = "{} {} {}\n{}".format(cls, shape, symm, data)
+        return rep
+
+    # ------------------------ Class methods ------------------------- #
+
+    @classmethod
+    def from_align_vectors(
+        cls,
+        other: Miller,
+        initial: Miller,
+        weights: Optional[np.ndarray] = None,
+        return_rmsd: bool = False,
+        return_sensitivity: bool = False,
+    ) -> Union[
+        Misorientation,
+        Tuple[Misorientation, float],
+        Tuple[Misorientation, np.ndarray],
+        Tuple[Misorientation, float, np.ndarray],
+    ]:
+        """Return an estimated misorientation to optimally align two
+        sets of vectors, one set in each crystal.
+
+        This method wraps
+        :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
+        that method for further explanations of parameters and returns.
+
+        Parameters
+        ----------
+        other
+            Directions of shape ``(n,)`` in the other crystal.
+        initial
+            Directions of shape ``(n,)`` in the initial crystal.
+        weights
+            Relative importance of the different vectors.
+        return_rmsd
+            Whether to return the (weighted) root mean square distance
+            between ``other`` and ``initial`` after alignment. Default
+            is ``False``.
+        return_sensitivity
+            Whether to return the sensitivity matrix. Default is
+            ``False``.
+
+        Returns
+        -------
+        estimated_misorientation
+            Best estimate of the misorientation that transforms
+            ``initial`` to ``other``. The symmetry of the misorientation
+            is inferred from the phase of ``other`` and ``initial``, if
+            given.
+        rmsd
+            Returned when ``return_rmsd=True``.
+        sensitivity
+            Returned when ``return_sensitivity=True``.
+
+        Raises
+        ------
+        ValueError
+            If ``other`` and ``initial`` are not Miller instances.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Misorientation
+        >>> from orix.vector import Miller
+        >>> from orix.crystal_map import Phase
+        >>> t1 = Miller(uvw=[[1, 0, 0], [0, 1, 0]], phase=Phase(point_group="m-3m"))
+        >>> t2 = Miller(uvw=[[1, 0, 0], [0, 0, 1]], phase=Phase(point_group="m-3m"))
+        >>> M12 = Misorientation.from_align_vectors(t2, t1)
+        >>> M12 * t1
+        Miller (2,), point group m-3m, uvw
+        [[1. 0. 0.]
+         [0. 0. 1.]]
+        """
+        if not isinstance(other, Miller) or not isinstance(initial, Miller):
+            raise ValueError(
+                "Arguments other and initial must both be of type Miller, "
+                f"but are of type {type(other)} and {type(initial)}."
+            )
+
+        out = super().from_align_vectors(
+            other=other,
+            initial=initial,
+            weights=weights,
+            return_rmsd=return_rmsd,
+            return_sensitivity=return_sensitivity,
+        )
+        out = list(out)
+
+        try:
+            out[0].symmetry = (initial.phase.point_group, other.phase.point_group)
+        except (AttributeError, ValueError):
+            pass
+
+        return out[0] if len(out) == 1 else tuple(out)
+
+    @classmethod
+    def from_scipy_rotation(
+        cls,
+        rotation: SciPyRotation,
+        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
+    ) -> Misorientation:
+        """Return misorientationss from
+        :class:`scipy.spatial.transform.Rotation`.
+
+        Parameters
+        ----------
+        rotation
+            SciPy rotations.
+        symmetry
+            Tuple of two sets of crystal symmetries. If not given, the
+            returned misorientations are assumed to be transformations
+            between crystals with only the identity operation, *1*
+            (*C1*).
+
+        Returns
+        -------
+        M
+            Misorientations.
+
+        Notes
+        -----
+        The SciPy rotations are inverted to be consistent with the orix
+        framework of rotations.
+
+        Examples
+        --------
+        >>> from orix.crystal_map import Phase
+        >>> from orix.quaternion import Misorientation, symmetry
+        >>> from orix.vector import Miller
+        >>> from scipy.spatial.transform import Rotation as SciPyRotation
+        >>> R_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+        >>> M = Misorientation.from_scipy_rotation(
+        ...     R_scipy, (symmetry.Oh, symmetry.Oh)
+        ... )
+        >>> t = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
+        >>> R_scipy.apply(t.data)
+        array([[-1.,  1.,  0.]])
+        >>> M * t
+        Miller (1,), point group m-3m, uvw
+        [[ 1. -1.  0.]]
+        >>> ~M * t
+        Miller (1,), point group m-3m, uvw
+        [[-1.  1.  0.]]
+        """
+        M = super().from_scipy_rotation(rotation)
+        if symmetry:
+            M.symmetry = symmetry
+        return M
+
+    @classmethod
+    def random(
+        cls,
+        shape: Union[int, tuple] = 1,
+        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
+    ) -> Misorientation:
+        """Create random misorientations.
+
+        Parameters
+        ----------
+        shape
+            Shape of the misorientations.
+        symmetry
+            Tuple of two sets of crystal symmetries. If not given, the
+            returned misorientation(s) is assumed to be transformation
+            between crystals with only the identity operation, *1*
+            (*C1*).
+
+        Returns
+        -------
+        M
+            Random misorientations.
+        """
+        M = super().random(shape)
+        if symmetry:
+            M.symmetry = symmetry
+        return M
+
+    # --------------------- Other public methods --------------------- #
+
     def reshape(self, *shape) -> Misorientation:
-        mori = super().reshape(*shape)
-        mori._symmetry = self._symmetry
-        return mori
+        M = super().reshape(*shape)
+        M._symmetry = self._symmetry
+        return M
 
     def flatten(self) -> Misorientation:
-        mori = super().flatten()
-        mori._symmetry = self._symmetry
-        return mori
+        M = super().flatten()
+        M._symmetry = self._symmetry
+        return M
 
     def squeeze(self) -> Misorientation:
-        mori = super().squeeze()
-        mori._symmetry = self._symmetry
-        return mori
+        M = super().squeeze()
+        M._symmetry = self._symmetry
+        return M
 
     def transpose(self, *axes) -> Misorientation:
-        mori = super().transpose(*axes)
-        mori._symmetry = self._symmetry
-        return mori
+        M = super().transpose(*axes)
+        M._symmetry = self._symmetry
+        return M
 
     def equivalent(self, grain_exchange: bool = False) -> Misorientation:
         r"""Return the equivalent misorientations.
 
+        Parameters
+        ----------
         grain_exchange
             If ``True`` the rotation :math:`g` and :math:`g^{-1}` are
             considered to be identical. Default is ``False``.
 
         Returns
         -------
-        mori
+        M
             The equivalent misorientations.
         """
         Gl, Gr = self._symmetry
 
         if grain_exchange and (Gl._tuples == Gr._tuples):
-            misorientations = Misorientation.stack([self, ~self]).flatten()
+            M = Misorientation.stack((self, ~self)).flatten()
         else:
-            misorientations = Misorientation(self)
+            M = Misorientation(self)
 
-        equivalent = Gr.outer(misorientations.outer(Gl))
+        equivalent = Gr.outer(M.outer(Gl))
+
         return self.__class__(equivalent).flatten()
 
     def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> Misorientation:
@@ -152,16 +350,16 @@ class Misorientation(Rotation):
 
         Returns
         -------
-        mori
+        M
             A new misorientation object with the assigned symmetry.
 
         Examples
         --------
         >>> from orix.quaternion.symmetry import C4, C2
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> m = Misorientation(data)
-        >>> m.symmetry = (C4, C2)
-        >>> m.map_into_symmetry_reduced_zone()
+        >>> M = Misorientation(data)
+        >>> M.symmetry = (C4, C2)
+        >>> M.map_into_symmetry_reduced_zone()
         Misorientation (2,) 4, 2
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
@@ -183,22 +381,11 @@ class Misorientation(Rotation):
         o_inside._symmetry = (Gl, Gr)
         return o_inside
 
-    def __repr__(self):
-        """String representation."""
-        cls = self.__class__.__name__
-        shape = str(self.shape)
-        s1, s2 = self._symmetry[0].name, self._symmetry[1].name
-        s2 = "" if s2 == "1" else s2
-        symm = s1 + (s2 and ", ") + s2
-        data = np.array_str(self.data, precision=4, suppress_small=True)
-        rep = "{} {} {}\n{}".format(cls, shape, symm, data)
-        return rep
-
     def scatter(
         self,
         projection: str = "axangle",
         figure: Optional[plt.Figure] = None,
-        position: Union[int, Tuple[int, int], SubplotSpec] = None,
+        position: Union[int, Tuple[int, int], SubplotSpec] = (1, 1, 1),
         return_figure: bool = False,
         wireframe_kwargs: Optional[dict] = None,
         size: Optional[int] = None,
@@ -322,21 +509,21 @@ class Misorientation(Rotation):
 
         Notes
         -----
-        Given two misorientations :math:`m_i` and :math:`m_j` with the
+        Given two misorientations :math:`M_i` and :math:`M_j` with the
         same two symmetry groups, the smallest angle is considered as
         the geodesic distance
 
         .. math::
 
-            d(m_i, m_j) = \arccos(2(m_i \cdot m_j)^2 - 1),
+            d(M_i, M_j) = \arccos(2(M_i \cdot M_j)^2 - 1),
 
-        where :math:`(m_i \cdot m_j)` is the highest dot product
+        where :math:`(M_i \cdot M_j)` is the highest dot product
         between symmetrically equivalent misorientations to
-        :math:`m_{i,j}`, given by
+        :math:`M_{i,j}`, given by
 
         .. math::
 
-            \max_{s_k \in S_k} s_k m_i s_l s_k m_j^{-1} s_l,
+            \max_{s_k \in S_k} s_k M_i s_l s_k M_j^{-1} s_l,
 
         where :math:`s_k \in S_k` and :math:`s_l \in S_l`, with
         :math:`S_k` and :math:`S_l` being the two symmetry groups.
@@ -344,9 +531,9 @@ class Misorientation(Rotation):
         Examples
         --------
         >>> from orix.quaternion import Misorientation, symmetry
-        >>> m = Misorientation.from_axes_angles([1, 0, 0], [0, 90], degrees=True)
-        >>> m.symmetry = (symmetry.D6, symmetry.D6)
-        >>> m.get_distance_matrix(progressbar=False, degrees=True)
+        >>> M = Misorientation.from_axes_angles([1, 0, 0], [0, 90], degrees=True)
+        >>> M.symmetry = (symmetry.D6, symmetry.D6)
+        >>> M.get_distance_matrix(progressbar=False, degrees=True)
         array([[ 0., 90.],
                [90.,  0.]])
         """
@@ -354,16 +541,16 @@ class Misorientation(Rotation):
         symmetry = _get_unique_symmetry_elements(*self.symmetry)
 
         # Perform "s_k m_i s_l s_k m_j" (see Notes)
-        mori1 = symmetry.outer(self).outer(symmetry)
-        mori2 = mori1._outer_dask(~self, chunk_size=chunk_size)
+        M1 = symmetry.outer(self).outer(symmetry)
+        M2 = M1._outer_dask(~self, chunk_size=chunk_size)
 
         # Perform last outer product and reduce to all dot products at
         # the same time
         warnings.filterwarnings("ignore", category=da.PerformanceWarning)
-        str1 = "abcdefghijklmnopqrstuvwxy"[: mori2.ndim]
+        str1 = "abcdefghijklmnopqrstuvwxy"[: M2.ndim]
         str2 = "z" + str1[-1]  # Last axis has shape (4,)
         sum_over = f"{str1},{str2}->{str1[:-1] + str2[0]}"
-        all_dot_products = da.einsum(sum_over, mori2, symmetry.data)
+        all_dot_products = da.einsum(sum_over, M2, symmetry.data)
 
         # Get highest dot product
         axes = (0, self.ndim + 1, 2 * self.ndim + 2)
@@ -387,145 +574,6 @@ class Misorientation(Rotation):
 
         return angles
 
-    @classmethod
-    def from_align_vectors(
-        cls,
-        other: Miller,
-        initial: Miller,
-        weights: Optional[np.ndarray] = None,
-        return_rmsd: bool = False,
-        return_sensitivity: bool = False,
-    ) -> Union[
-        Misorientation,
-        Tuple[Misorientation, float],
-        Tuple[Misorientation, np.ndarray],
-        Tuple[Misorientation, float, np.ndarray],
-    ]:
-        """Return an estimated misorientation to optimally align two
-        sets of vectors, one set in each crystal.
-
-        This method wraps
-        :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
-        that method for further explanations of parameters and returns.
-
-        Parameters
-        ----------
-        other
-            Directions of shape ``(n,)`` in the other crystal.
-        initial
-            Directions of shape ``(n,)`` in the initial crystal.
-        weights
-            Relative importance of the different vectors.
-        return_rmsd
-            Whether to return the (weighted) root mean square distance
-            between ``other`` and ``initial`` after alignment. Default
-            is ``False``.
-        return_sensitivity
-            Whether to return the sensitivity matrix. Default is
-            ``False``.
-
-        Returns
-        -------
-        estimated_misorientation
-            Best estimate of the misorientation that transforms
-            ``initial`` to ``other``. The symmetry of the misorientation
-            is inferred from the phase of ``other`` and ``initial``, if
-            given.
-        rmsd
-            Returned when ``return_rmsd=True``.
-        sensitivity
-            Returned when ``return_sensitivity=True``.
-
-        Raises
-        ------
-        ValueError
-            If ``other`` and ``initial`` are not Miller instances.
-
-        Examples
-        --------
-        >>> from orix.quaternion import Misorientation
-        >>> from orix.vector import Miller
-        >>> from orix.crystal_map import Phase
-        >>> uvw1 = Miller(uvw=[[1, 0, 0], [0, 1, 0]], phase=Phase(point_group="m-3m"))
-        >>> uvw2 = Miller(uvw=[[1, 0, 0], [0, 0, 1]], phase=Phase(point_group="m-3m"))
-        >>> mori12 = Misorientation.from_align_vectors(uvw2, uvw1)
-        >>> mori12 * uvw1
-        Miller (2,), point group m-3m, uvw
-        [[1. 0. 0.]
-         [0. 0. 1.]]
-        """
-        if not isinstance(other, Miller) or not isinstance(initial, Miller):
-            raise ValueError(
-                "Arguments other and initial must both be of type Miller, "
-                f"but are of type {type(other)} and {type(initial)}."
-            )
-
-        out = super().from_align_vectors(
-            other=other,
-            initial=initial,
-            weights=weights,
-            return_rmsd=return_rmsd,
-            return_sensitivity=return_sensitivity,
-        )
-        out = list(out)
-
-        try:
-            out[0].symmetry = (initial.phase.point_group, other.phase.point_group)
-        except (AttributeError, ValueError):
-            pass
-
-        return out[0] if len(out) == 1 else tuple(out)
-
-    @classmethod
-    def from_scipy_rotation(
-        cls,
-        rotation: SciPyRotation,
-        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
-    ) -> Misorientation:
-        """Return misorientations(s) from
-        :class:`scipy.spatial.transform.Rotation`.
-
-        Parameters
-        ----------
-        rotation
-            SciPy rotation(s).
-        symmetry
-            Tuple of two sets of crystal symmetries. If not given, the
-            returned misorientation(s) is assumed to be transformation
-            between crystals with only the identity operation, *1*
-            (*C1*).
-
-        Returns
-        -------
-        misorientation
-            Misorientation(s).
-
-        Notes
-        -----
-        The SciPy rotation is inverted to be consistent with the orix
-        framework of passive rotations.
-
-        Examples
-        --------
-        >>> from orix.crystal_map import Phase
-        >>> from orix.quaternion import Misorientation, symmetry
-        >>> from orix.vector import Miller
-        >>> from scipy.spatial.transform import Rotation as SciPyRotation
-        >>> r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
-        >>> mori = Misorientation.from_scipy_rotation(
-        ...     r_scipy, (symmetry.Oh, symmetry.Oh)
-        ... )
-        >>> uvw = Miller(uvw=[1, 1, 0], phase=Phase(point_group="m-3m"))
-        >>> r_scipy.apply(uvw.data)
-        array([[-1.,  1.,  0.]])
-        >>> mori * uvw
-        Miller (1,), point group m-3m, uvw
-        [[ 1. -1.  0.]]
-        >>> ~mori * uvw
-        Miller (1,), point group m-3m, uvw
-        [[-1.  1.  0.]]
-        """
-        mori = super().from_scipy_rotation(rotation)
-        if symmetry:
-            mori.symmetry = symmetry
-        return mori
+    def inv(self) -> Misorientation:
+        r"""Return the inverse misorientations :math:`M^{-1}`."""
+        return self.__invert__()

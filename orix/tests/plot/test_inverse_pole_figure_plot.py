@@ -127,7 +127,7 @@ class TestInversePoleFigurePlot:
 
     def test_inverse_pole_density_function(self):
         fig, axes = _setup_inverse_pole_figure_plot(symmetry=symmetry.C6h)
-        v = Vector3d(np.random.randn(10_000, 3)).unit
+        v = Vector3d.random(10_000)
         with np.errstate(divide="ignore"):
             axes[0].pole_density_function(v, colorbar=True, log=True)
         assert len(fig.axes) == 2

@@ -67,23 +67,23 @@ class TestCrystalMapProperties:
         props = CrystalMapProperties(d, id=np.arange(map_size))
 
         # 2D
-        prop_2d = np.arange(map_size * 2).reshape((10, 2))
+        prop_2d = np.arange(map_size * 2).reshape(10, 2)
         props["prop_2d"] = prop_2d
         assert np.allclose(props["prop_2d"], prop_2d)
 
         # 3D
-        prop_3d = np.arange(map_size * 4).reshape((10, 2, 2))
+        prop_3d = np.arange(map_size * 4).reshape(10, 2, 2)
         props["prop_3d"] = prop_3d
         assert np.allclose(props["prop_3d"], prop_3d)
 
         with pytest.raises(IndexError, match="boolean index did not match indexed"):
-            props["prop_3d_wrong"] = np.random.random(40).reshape((2, 10, 2))
+            props["prop_3d_wrong"] = np.random.random(40).reshape(2, 10, 2)
 
         # Update 2D array, accounting for in data values
         is_in_data = np.ones(map_size, dtype=bool)
         is_in_data[5] = False
         props.is_in_data = is_in_data
-        new_prop_2d = np.arange(map_size * 2).reshape((map_size, 2))
+        new_prop_2d = np.arange(map_size * 2).reshape(map_size, 2)
         props["prop_2d"] = new_prop_2d[is_in_data]
         np.allclose(props["prop_2d"], new_prop_2d[is_in_data])
 

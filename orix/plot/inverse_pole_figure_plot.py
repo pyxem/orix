@@ -352,7 +352,7 @@ def _setup_inverse_pole_figure_plot(
     direction: Optional[Vector3d] = None,
     hemisphere: Optional[str] = None,
     figure_kwargs: Optional[Dict] = None,
-) -> Tuple[Figure, maxes.Axes]:
+) -> Tuple[Figure, np.ndarray]:
     """Set up an inverse pole figure plot.
 
     Parameters
@@ -401,7 +401,7 @@ def _setup_inverse_pole_figure_plot(
         nrows = int(np.ceil(n_plots / 3))
 
     if figure_kwargs is None:
-        figure_kwargs = dict()
+        figure_kwargs = {"layout": "tight"}
     figure = plt.figure(**figure_kwargs)
     axes = []
     subplot_kw = dict(projection="ipf", symmetry=symmetry)

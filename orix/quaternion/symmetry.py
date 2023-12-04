@@ -54,16 +54,7 @@ class Symmetry(Rotation):
 
     name = ""
 
-    def __repr__(self) -> str:
-        data = np.array_str(self.data, precision=4, suppress_small=True)
-        return f"{self.__class__.__name__} {self.shape} {self.name}\n{data}"
-
-    def __and__(self, other: Symmetry) -> Symmetry:
-        generators = [g for g in self.subgroups if g in other.subgroups]
-        return Symmetry.from_generators(*generators)
-
-    def __hash__(self) -> hash:
-        return hash(self.name.encode() + self.data.tobytes() + self.improper.tobytes())
+    # -------------------------- Properties -------------------------- #
 
     @property
     def order(self) -> int:
@@ -351,6 +342,21 @@ class Symmetry(Rotation):
 
         return rot.flatten()
 
+    # ------------------------ Dunder methods ------------------------ #
+
+    def __repr__(self) -> str:
+        data = np.array_str(self.data, precision=4, suppress_small=True)
+        return f"{self.__class__.__name__} {self.shape} {self.name}\n{data}"
+
+    def __and__(self, other: Symmetry) -> Symmetry:
+        generators = [g for g in self.subgroups if g in other.subgroups]
+        return Symmetry.from_generators(*generators)
+
+    def __hash__(self) -> hash:
+        return hash(self.name.encode() + self.data.tobytes() + self.improper.tobytes())
+
+    # ------------------------ Class methods ------------------------- #
+
     @classmethod
     def from_generators(cls, *generators: Rotation) -> Symmetry:
         """Create a Symmetry from a minimum list of generating
@@ -396,6 +402,8 @@ class Symmetry(Rotation):
             generator = generator.outer(generator).unique()
             size_new = generator.size
         return generator
+
+    # --------------------- Other public methods --------------------- #
 
     def get_axis_orders(self) -> Dict[Vector3d, int]:
         s = self[self.angle > 0]

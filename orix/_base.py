@@ -16,20 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Base class for 3d objects.
-
-.. note::
-
-    Contents of this module are not meant to be used directly.
-"""
+"""Base class for three-dimensional objects."""
 
 from __future__ import annotations
 
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
-
-__all__ = ["DimensionError", "Object3d"]
 
 
 class DimensionError(Exception):
@@ -46,7 +39,7 @@ class DimensionError(Exception):
 
     def __init__(self, this: Object3d, data: np.ndarray):
         super().__init__(
-            f"{this.__class__.__name__} requires data of dimension {this.dim} but "
+            f"{this.__class__.__name__} requires data of dimension {this.dim}, but "
             f"received dimension {data.shape[-1]}"
         )
 
@@ -84,37 +77,17 @@ class Object3d:
     def __finalize__(self, data):
         pass
 
+    # -------------------------- Properties -------------------------- #
+
     @property
     def data(self) -> np.ndarray:
-        """Return the object data."""
+        """Return the data."""
         return self._data[..., : self.dim]
 
     @data.setter
     def data(self, data: np.ndarray):
-        """Set the object data."""
+        """Set the data."""
         self._data[..., : self.dim] = data
-
-    def __repr__(self) -> str:
-        """Return a string representation of the data."""
-        name = self.__class__.__name__
-        shape = str(self.shape)
-        data = np.array_str(self.data, precision=4, suppress_small=True)
-        return "\n".join([name + " " + shape, data])
-
-    def __getitem__(self, key):
-        """Return a slice of the object."""
-        data = np.atleast_2d(self.data[key])
-        obj = self.__class__(data)
-        return obj
-
-    def __setitem__(self, key, value: np.ndarray):
-        """Set a slice of the data."""
-        self.data[key] = value.data
-
-    @classmethod
-    def empty(cls):
-        """Return an empty object with the appropriate dimensions."""
-        return cls(np.zeros((0, cls.dim)))
 
     @property
     def shape(self) -> tuple:
@@ -123,7 +96,7 @@ class Object3d:
 
     @property
     def ndim(self) -> int:
-        """Return the number of navigation dimensions of the instance.
+        """Return the number of navigation dimensions of the object.
 
         For example, if :attr:`data` has shape (4, 5, 6), :attr:`ndim`
         is 3.
@@ -135,21 +108,86 @@ class Object3d:
         """Return the total number of entries in this object."""
         return int(np.prod(self.shape))
 
+    @property
+    def norm(self) -> np.ndarray:
+        """Return the norm of the data."""
+        return np.sqrt(np.sum(np.square(self.data), axis=-1))
+
+    @property
+    def unit(self) -> Object3d:
+        """Return the unit object."""
+        with np.errstate(divide="ignore", invalid="ignore"):
+            obj = self.__class__(np.nan_to_num(self.data / self.norm[..., np.newaxis]))
+            return obj
+
+    # ------------------------ Dunder methods ------------------------ #
+
+    def __repr__(self) -> str:
+        """Return a string representation of the data."""
+        name = self.__class__.__name__
+        shape = str(self.shape)
+        data = np.array_str(self.data, precision=4, suppress_small=True)
+        return "\n".join([name + " " + shape, data])
+
+    def __getitem__(self, key) -> Object3d:
+        """Return a slice of the object."""
+        data = np.atleast_2d(self.data[key])
+        obj = self.__class__(data)
+        return obj
+
+    def __setitem__(self, key, value: np.ndarray):
+        """Set a slice of the data."""
+        self.data[key] = value.data
+
+    # ------------------------ Class methods ------------------------- #
+
     @classmethod
-    def stack(cls, sequence: Any):
+    def empty(cls) -> Object3d:
+        """Return an empty object with the appropriate dimensions."""
+        return cls(np.zeros((0, cls.dim)))
+
+    @classmethod
+    def stack(cls, sequence: Any) -> Object3d:
         """Return a stacked object from the sequence.
 
         Parameters
         ----------
         sequence
-            A sequence of instances of a class inheriting from
-            ``Object3d`` to stack.
+            A sequence of objects to stack.
         """
         sequence = [s._data for s in sequence]
         stack = np.stack(sequence, axis=-2)
         obj = cls(stack[..., : cls.dim])
         obj._data = stack
         return obj
+
+    @classmethod
+    def random(cls, shape: Union[int, tuple] = 1) -> Object3d:
+        """Create object with random data.
+
+        Parameters
+        ----------
+        shape
+            Shape of the object.
+
+        Returns
+        -------
+        obj
+            Object with random data.
+        """
+        n = int(np.prod(shape))
+        obj = []
+        while len(obj) < n:
+            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
+            r2 = np.sum(np.square(r), axis=1)
+            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
+            obj += list(r)
+        obj = cls(np.array(obj[:n]))
+        obj = obj.unit
+        obj = obj.reshape(shape)
+        return obj
+
+    # --------------------- Other public methods --------------------- #
 
     def flatten(self):
         """Return a new object with the same data in a single column."""
@@ -169,7 +207,7 @@ class Object3d:
         entries.
 
         Unless overridden, this method returns the numerically unique
-        entries. Also removes zero entries which are assumed to be
+        entries. It also removes zero-entries which are assumed to be
         degenerate.
 
         Parameters
@@ -206,65 +244,55 @@ class Object3d:
         else:
             return obj
 
-    @property
-    def norm(self) -> np.ndarray:
-        """Return the norm of the data."""
-        return np.sqrt(np.sum(np.square(self.data), axis=-1))
-
-    @property
-    def unit(self) -> Object3d:
-        """Return the unit object."""
-        with np.errstate(divide="ignore", invalid="ignore"):
-            obj = self.__class__(np.nan_to_num(self.data / self.norm[..., np.newaxis]))
-            return obj
-
     def squeeze(self) -> Object3d:
-        """Return a new object with length one dimensions removed.
+        """Return a new object with the same data with length
+        1-dimensions removed.
 
         Returns
         -------
         obj
-            New object with no 1-dimensions.
+            Squeezed object.
         """
         obj = self.__class__(self)
-        obj._data = np.atleast_2d(np.squeeze(self._data))
+        obj._data = np.atleast_2d(self._data.squeeze())
         return obj
 
-    def reshape(self, *shape: int) -> Object3d:
-        """Return a new object containing the same data with a new
-        shape.
+    def reshape(self, *shape: Union[int, tuple]) -> Object3d:
+        """Return a new object with the same data in a new shape.
 
         Parameters
         ----------
-        shape
-            New shape of object.
+        *shape
+            The new shape as one or more integers or as a tuple.
 
         Returns
         -------
         obj
-            New object with new shape.
+            Reshaped object.
         """
+        if len(shape) == 1 and isinstance(shape[0], tuple):
+            shape = shape[0]
         obj = self.__class__(self.data.reshape(*shape, self.dim))
         obj._data = self._data.reshape(*shape, -1)
         return obj
 
     def transpose(self, *axes: Optional[int]) -> Object3d:
-        """Return a new object containing the same data transposed.
+        """Return a new object with the same data transposed.
 
-        If :attr:`ndim` is originally 2, then order may be undefined. In
-        this case the first two dimensions will be transposed.
+        If :attr:`ndim` is 2, the order may be undefined. In this case
+        the first two dimensions are transposed.
 
         Parameters
         ----------
         axes
             The transposed axes order. Only navigation axes need to be
-            defined. May be undefined if self only contains two
+            defined. May be undefined if the object only has two
             navigation dimensions.
 
         Returns
         -------
         obj
-            The object transposed.
+            Transposed object.
         """
         # 1d object should not be transposed
         if len(self.shape) == 1:
@@ -289,14 +317,14 @@ class Object3d:
     def get_random_sample(
         self, size: Optional[int] = 1, replace: bool = False, shuffle: bool = False
     ):
-        """Return a random sample of a given size in a flattened
-        instance.
+        """Return a new flattened object from a random sample of a given
+        size.
 
         Parameters
         ----------
         size
             Number of samples to draw. Cannot be greater than the size
-            of this instance. If not given, a single sample is drawn.
+            of this object. If not given, a single sample is drawn.
         replace
             See :meth:`numpy.random.Generator.choice`.
         shuffle
@@ -305,8 +333,8 @@ class Object3d:
         Returns
         -------
         new
-            New, flattened instance of a given size with elements drawn
-            randomly from this instance.
+            New flattened object of a given size with elements drawn
+            randomly from this object.
 
         See Also
         --------

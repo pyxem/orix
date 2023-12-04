@@ -24,11 +24,21 @@ Added
 - Creating neo-eulerian vectors from quaternions via new methods ``to_axes_angles()``,
   ``to_rodrigues()`` and ``to_homochoric()``. Rodrigues-Frank vectors can be returned
   from ``to_rodrigues()`` by passing ``frank=True``.
+- ``inv()`` method for ``Quaternion``, ``Rotation``, ``Orientation``, and
+  ``Misorientation``. For the three first, its behavior is identical to the inversion
+  operator ``~``. For misorientations, it inverts the direction of the transformation.
+  Convenient for chaining operations.
+- The ``random()`` methods of ``Orientation`` and ``Misorientation`` now accept
+  ``symmetry``. A ``random()`` method is also added to ``Vector3d`` and ``Miller``, the
+  latter accepting a ``phase``.
 
 Changed
 -------
 - The ``convention`` parameter in ``from_euler()`` and ``to_euler()`` will be removed in
   the next minor release, 0.13, instead of release 1.0 as previously stated.
+- Allow passing a tuple of integers to ``reshape()`` methods of 3D objects.
+- ``random()`` methods no longer accept a list as a valid shape: pass a tuple instead.
+- Increase minimal version of Matplotlib to >= 3.5.
 
 Deprecated
 ----------

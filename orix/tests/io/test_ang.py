@@ -644,7 +644,7 @@ class TestAngWriter:
     )
     def test_write_data_index(self, crystal_map_input, tmp_path, index):
         xmap = CrystalMap(**crystal_map_input)
-        ci = np.arange(xmap.size * xmap.rotations_per_point).reshape((xmap.size, -1))
+        ci = np.arange(xmap.size * xmap.rotations_per_point).reshape(xmap.size, -1)
         xmap.prop["ci"] = ci
         xmap.prop["iq"] = np.arange(xmap.size)
         extra_prop = "iq_times_ci"
@@ -676,7 +676,7 @@ class TestAngWriter:
         """
         xmap = CrystalMap(**crystal_map_input)
         xmap.prop["ci"] = np.arange(xmap.size * xmap.rotations_per_point).reshape(
-            (xmap.size, xmap.rotations_per_point)
+            xmap.size, xmap.rotations_per_point
         )
         fname = tmp_path / "test_write_data_index_none.ang"
         save(fname, xmap, extra_prop=["ci"])

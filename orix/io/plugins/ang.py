@@ -466,7 +466,7 @@ def file_writer(
         )
     else:
         eulers = xmap.get_map_data("rotations", decimals=decimals, fill_value=0)
-    eulers = eulers.reshape((map_size, 3))
+    eulers = eulers.reshape(map_size, 3)
     indexed_points = xmap.get_map_data(xmap.is_indexed, fill_value=False).reshape(
         map_size
     )

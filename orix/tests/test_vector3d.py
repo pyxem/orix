@@ -395,7 +395,7 @@ def test_mean_xyz():
 
 
 def test_transpose_1d():
-    v1 = Vector3d(np.random.rand(7, 3))
+    v1 = Vector3d.random(7)
     v2 = v1.transpose()
 
     assert np.allclose(v1.data, v2.data)
@@ -404,25 +404,23 @@ def test_transpose_1d():
 @pytest.mark.parametrize(
     "shape, expected_shape",
     [
-        ([6, 4, 3], [4, 6, 3]),
-        ([11, 5, 3], [5, 11, 3]),
+        ((6, 4), (4, 6)),
+        ((11, 5), (5, 11)),
     ],
 )
 def test_transpose_2d_data_shape(shape, expected_shape):
-    v1 = Vector3d(np.random.rand(*shape))
-    v2 = v1.transpose()
-
-    assert v2.data.shape == tuple(expected_shape)
+    v1 = Vector3d.random(shape)
+    assert v1.transpose().shape == expected_shape
 
 
 def test_transpose_3d_no_axes():
-    v1 = Vector3d(np.random.rand(5, 4, 2, 3))
+    v1 = Vector3d.random((5, 4, 2))
     with pytest.raises(ValueError, match="Axes must be defined for more than"):
         _ = v1.transpose()
 
 
 def test_transpose_3d_wrong_number_of_axes():
-    v1 = Vector3d(np.random.rand(5, 4, 2, 3))
+    v1 = Vector3d.random((5, 4, 2))
     with pytest.raises(ValueError, match="Number of axes is ill-defined"):
         _ = v1.transpose(0, 2)
 
@@ -430,37 +428,31 @@ def test_transpose_3d_wrong_number_of_axes():
 @pytest.mark.parametrize(
     "shape, expected_shape",
     [
-        ([6, 4], [4, 6]),
-        ([11, 5], [5, 11]),
+        ((6, 4), (4, 6)),
+        ((11, 5), (5, 11)),
     ],
 )
 def test_transpose_2d_shape(shape, expected_shape):
-    v1 = Vector3d(np.random.rand(*shape, 3))
-    v2 = v1.transpose()
-
-    assert v2.shape == tuple(expected_shape)
+    v1 = Vector3d.random(shape)
+    assert v1.transpose().shape == expected_shape
 
 
 @pytest.mark.parametrize(
     "shape, expected_shape, axes",
-    [([6, 4, 5, 3], [4, 5, 6, 3], [1, 2, 0]), ([6, 4, 5, 3], [5, 4, 6, 3], [2, 1, 0])],
+    [((6, 4, 5), (4, 5, 6), (1, 2, 0)), ((6, 4, 5), (5, 4, 6), (2, 1, 0))],
 )
 def test_transpose_3d_data_shape(shape, expected_shape, axes):
-    v1 = Vector3d(np.random.rand(*shape))
-    v2 = v1.transpose(*axes)
-
-    assert v2.data.shape == tuple(expected_shape)
+    v1 = Vector3d.random(shape)
+    assert v1.transpose(*axes).shape == expected_shape
 
 
 @pytest.mark.parametrize(
     "shape, expected_shape, axes",
-    [([6, 4, 5], [4, 5, 6], [1, 2, 0]), ([6, 4, 5], [5, 4, 6], [2, 1, 0])],
+    [((6, 4, 5), (4, 5, 6), (1, 2, 0)), ((6, 4, 5), (5, 4, 6), (2, 1, 0))],
 )
 def test_transpose_3d_shape(shape, expected_shape, axes):
-    v1 = Vector3d(np.random.rand(*shape, 3))
-    v2 = v1.transpose(*axes)
-
-    assert v2.shape == tuple(expected_shape)
+    v1 = Vector3d.random(shape)
+    assert v1.transpose(*axes).shape == expected_shape
 
 
 def test_zero_perpendicular():
@@ -484,7 +476,7 @@ class TestSpareNotImplemented:
 
 class TestVector3dInversePoleDensityFunction:
     def test_ipdf_plot(self):
-        v = Vector3d(np.random.randn(1_000, 3)).unit
+        v = Vector3d.random(1_000)
         fig = v.inverse_pole_density_function(
             symmetry=symmetry.Th,
             return_figure=True,
@@ -497,7 +489,7 @@ class TestVector3dInversePoleDensityFunction:
 
     def test_ipdf_plot_hemisphere_raises(self):
         with pytest.raises(ValueError, match="Hemisphere must be either "):
-            v = Vector3d(np.random.randn(1_000, 3)).unit
+            v = Vector3d.random(1_000)
             _ = v.inverse_pole_density_function(
                 symmetry=symmetry.Th,
                 return_figure=True,
@@ -507,7 +499,7 @@ class TestVector3dInversePoleDensityFunction:
 
 class TestVector3dPoleDensityFunction:
     def test_pdf_plot_colorbar(self):
-        v = Vector3d(np.random.randn(10_000, 3)).unit
+        v = Vector3d.random(10_000)
         fig1 = v.pole_density_function(return_figure=True, colorbar=True)
         assert len(fig1.axes) == 2  # plot and colorbar
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
@@ -531,7 +523,7 @@ class TestVector3dPoleDensityFunction:
         plt.close(fig4)
 
     def test_pdf_plot_hemisphere(self):
-        v = Vector3d(np.random.randn(10_000, 3)).unit
+        v = Vector3d.random(10_000)
         fig1 = v.pole_density_function(return_figure=True, hemisphere="upper")
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
         assert any(qm1)
@@ -563,7 +555,7 @@ class TestVector3dPoleDensityFunction:
         assert np.allclose(qmesh2, qmesh3_2)  # lower
 
     def test_pdf_plot_sigma(self):
-        v = Vector3d(np.random.randn(10_000, 3)).unit
+        v = Vector3d.random(10_000)
         fig1 = v.pole_density_function(return_figure=True)
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
         assert any(qm1)
@@ -580,7 +572,7 @@ class TestVector3dPoleDensityFunction:
         assert not np.allclose(qmesh1, qmesh2)
 
     def test_pdf_plot_log(self):
-        v = Vector3d(np.random.randn(10_000, 3)).unit
+        v = Vector3d.random(10_000)
         fig1 = v.pole_density_function(return_figure=True)
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
         assert any(qm1)
@@ -597,7 +589,7 @@ class TestVector3dPoleDensityFunction:
         assert not np.allclose(qmesh1, qmesh2)
 
     def test_pdf_hemisphere_raises(self):
-        v = Vector3d(np.random.randn(100, 3)).unit
+        v = Vector3d.random(100)
         with pytest.raises(ValueError, match=r"Hemisphere must be either "):
             _ = v.pole_density_function(return_figure=True, hemisphere="test")
 

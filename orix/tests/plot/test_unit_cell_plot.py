@@ -17,10 +17,8 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 from diffpy.structure import Lattice, Structure
-from matplotlib import __version__ as _MPL_VERSION
 from matplotlib import pyplot as plt
 import numpy as np
-from packaging import version
 import pytest
 
 from orix.plot._util import Arrow3D
@@ -38,10 +36,7 @@ def test_unit_cell_plot_default():
     axes = fig.axes[0]
     assert len(axes.lines) == 12  # 12 edges in orthorhombic unit cell
     # 6 Arrow3D -> 3 for both sample and crystal reference frames
-    if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
-        assert len(axes.patches) == 6
-    else:  # pragma: no cover
-        assert len(axes.artists) == 6
+    assert len(axes.patches) == 6
     # test default projection
     assert axes.azim == -90
     assert round(axes.elev) == 90
@@ -51,7 +46,7 @@ def test_unit_cell_plot_default():
 
 
 def test_unit_cell_plot_multiple_orientations_raises():
-    ori = Orientation.random((2,))
+    ori = Orientation.random(2)
     with pytest.raises(ValueError, match="Can only plot a single unit cell"):
         ori.plot_unit_cell()
     plt.close("all")
@@ -87,10 +82,7 @@ def test_unit_cell_plot_crystal_reference_axes_position_center():
         structure=structure,
         crystal_axes_loc="center",
     )
-    if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
-        arrows = fig.axes[0].patches
-    else:  # pragma: no cover
-        arrows = fig.axes[0].artists
+    arrows = fig.axes[0].patches
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
     crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
     assert np.allclose(crys_ref_ax_data[:, :, 0], 0)
@@ -108,10 +100,7 @@ def test_unit_cell_plot_crystal_reference_axes_position_origin():
         structure=structure,
         crystal_axes_loc="origin",
     )
-    if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
-        arrows = fig.axes[0].patches
-    else:  # pragma: no cover
-        arrows = fig.axes[0].artists
+    arrows = fig.axes[0].patches
     crys_ref_ax = [p for p in arrows if "Crystal reference axes" in p.get_label()]
     crys_ref_ax_data = np.stack([np.array(a._verts3d) for a in crys_ref_ax])
     assert np.allclose(crys_ref_ax_data[:, :, 0] + np.array((a1, a2, a3)) / 2, 0)
@@ -135,7 +124,7 @@ def test_calculate_basic_unit_cell_raises():
 
 
 def test_unit_cell_plot_invalid_structure_raises():
-    ori = Orientation.random((1,))
+    ori = Orientation.random()
     with pytest.raises(TypeError, match=r"Structure must be diffpy.structure."):
         ori.plot_unit_cell(structure=np.arange(3))
 
