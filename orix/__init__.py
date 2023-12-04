@@ -15,4 +15,5 @@ __credits__ = [
     "Anders Christian Mathisen",
     "Simon Høgås",
     "Alexander Clausen",
+    "Ondrej Lexa",
 ]
