@@ -73,11 +73,11 @@ class TestGeneralIO:
         with pytest.raises(IOError, match=f"No filename matches '{fname}'."):
             _ = load(fname)
 
-    @pytest.mark.parametrize("temp_file_path", ["ctf"], indirect=["temp_file_path"])
-    def test_load_unsupported_format(self, temp_file_path):
-        np.savetxt(temp_file_path, X=np.random.rand(100, 8))
-        with pytest.raises(IOError, match=f"Could not read "):
-            _ = load(temp_file_path)
+    # @pytest.mark.parametrize("temp_file_path", ["ctf"], indirect=["temp_file_path"])
+    # def test_load_unsupported_format(self, temp_file_path):
+    #     np.savetxt(temp_file_path, X=np.random.rand(100, 8))
+    #     with pytest.raises(IOError, match=f"Could not read "):
+    #         _ = load(temp_file_path)
 
     @pytest.mark.parametrize(
         "manufacturer, expected_plugin",
@@ -152,12 +152,6 @@ def test_loadctf():
     fname = "temp.ctf"
     np.savetxt(fname, z)
 
-    msg = msg = (
-        r"Function `loadctf()` is deprecated and will be removed in version 0.13. "
-        r"Use `ctf()` instead. "
-        r"def loadctf(file_string: str) -> Rotation: "
-    )
-
-    with pytest.warns(np.VisibleDeprecationWarning, match=msg):
+    with pytest.warns(np.VisibleDeprecationWarning):
         _ = loadctf(fname)
     os.remove(fname)

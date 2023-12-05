@@ -48,7 +48,7 @@ def file_reader(filename: str) -> CrystalMap:
 
     * Oxford AZtec HKL
     * EMsoft (from program `EMdpmerge`)
-    * orix
+
 
     All points with a phase of 0 are classified as not indexed.
 
@@ -79,7 +79,22 @@ def file_reader(filename: str) -> CrystalMap:
 
     # Get vendor and column names
     n_rows, n_cols = file_data.shape
-    vendor, column_names = _get_vendor_columns(header, n_cols)
+
+    column_names = (
+        [
+            "phase_id",
+            "x",
+            "y",
+            "bands",
+            "error",
+            "euler1",
+            "euler2",
+            "euler3",
+            "MAD",  # Mean angular deviation
+            "BC",  # Band contrast
+            "BS",  # Band Slope
+        ],
+    )
 
     # Data needed to create a CrystalMap object
     data_dict = {
@@ -147,134 +162,6 @@ def _get_header(file: TextIOWrapper) -> List[str]:
         i += 1
         line = file.readline()
     return header, i + 1
-
-
-def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[str]]:
-    """Return the .ctf file column names and vendor, determined from the
-    header.
-
-    Parameters
-    ----------
-    header
-        List with header lines as individual elements.
-    n_cols_file
-        Number of file columns.
-
-    Returns
-    -------
-    vendor
-        Determined vendor (``"hkl"`` or ``"emsoft"``).
-    column_names
-        List of column names.
-    """
-    # Assume Oxford HKL by default
-    vendor = "hkl"
-
-    # Determine vendor by searching for the vendor footprint in the header
-    vendor_footprint = {
-        "emsoft": "EMsoft",
-    }
-    footprint_line = None
-    for name, footprint in vendor_footprint.items():
-        for line in header:
-            if footprint in line:
-                vendor = name
-                footprint_line = line
-                break
-
-    # Variants of vendor column names encountered in real data sets
-    column_names = {
-        "hkl": {
-            0: [
-                "phase_id",
-                "x",
-                "y",
-                "bands",
-                "error",
-                "euler1",
-                "euler2",
-                "euler3",
-                "MAD",  # Mean angular deviation
-                "BC",  # Band contrast
-                "BS",  # Band Slope
-            ],
-        },
-        "emsoft": {
-            0: [
-                "phase_id",
-                "x",
-                "y",
-                "bands",
-                "error",
-                "euler1",
-                "euler2",
-                "euler3",
-                "MAD",  # Mean angular deviation
-                "BC",  # Band contrast
-                "BS",  # Band Slope
-            ]
-        },
-        "orix": {
-            0: [
-                "phase_id",
-                "x",
-                "y",
-                "bands",
-                "error",
-                "euler1",
-                "euler2",
-                "euler3",
-                "MAD",  # Mean angular deviation
-                "BC",  # Band contrast
-                "BS",  # Band Slope
-            ],
-        },
-        "unknown": {
-            0: [
-                "phase_id",
-                "x",
-                "y",
-                "bands",
-                "error",
-                "euler1",
-                "euler2",
-                "euler3",
-                "MAD",  # Mean angular deviation
-                "BC",  # Band contrast
-                "BS",  # Band Slope
-            ]
-        },
-    }
-
-    n_variants = len(column_names[vendor])
-    n_cols_expected = [len(column_names[vendor][k]) for k in range(n_variants)]
-    if vendor == "orix" and "Column names" in footprint_line:
-        # Append names of extra properties found, if any, in the orix
-        # .ang file header
-        vendor_column_names = column_names[vendor][0]
-        n_cols = n_cols_expected[0]
-        extra_props = footprint_line.split(":")[1].split(",")[n_cols:]
-        vendor_column_names += [i.lstrip(" ").replace(" ", "_") for i in extra_props]
-    elif n_cols_file not in n_cols_expected:
-        warnings.warn(
-            f"Number of columns, {n_cols_file}, in the file is not equal to "
-            f"the expected number of columns, {n_cols_expected}, for the \n"
-            f"assumed vendor '{vendor}'. Will therefore assume the following "
-            "columns: phase_id, x, y, bands, error, euler1, euler2, euler3"
-            "MAD, BC, BS, etc."
-        )
-        vendor = "unknown"
-        vendor_column_names = column_names[vendor][0]
-        n_cols = len(vendor_column_names)
-        if n_cols_file > n_cols:
-            # Add any extra columns as properties
-            for i in range(n_cols_file - n_cols):
-                vendor_column_names.append("unknown" + str(i + 3))
-    else:
-        idx = np.where(np.equal(n_cols_file, n_cols_expected))[0][0]
-        vendor_column_names = column_names[vendor][idx]
-
-    return vendor, vendor_column_names
 
 
 def _get_phases_from_header(
