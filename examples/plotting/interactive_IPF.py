@@ -39,6 +39,18 @@ rgb_all[xmap.phase_id == 1] = rgb_au
 rgb_all[xmap.phase_id == 2] = rgb_fe
 xmap_gb = rgb_all.reshape(xmap.shape + (3,))
 
+# Add an overlay of dot product to the orientation color map to enhance grain boundary contrast=
+xmap_overlay = rgb_all.reshape(xmap.shape + (3,))
+overlay_1dim = (xmap.prop["dp"]).reshape(xmap.shape)
+overlay_min = np.nanmin(overlay_1dim)
+rescaled_overlay = (overlay_1dim - overlay_min) / (
+    np.nanmax(overlay_1dim) - overlay_min
+)
+n_channels = 3
+for i in range(n_channels):
+    xmap_overlay[:, :, i] *= rescaled_overlay
+xmap_image = xmap_overlay
+
 
 # An interactive function for getting the phase name and euler angles from the clicking position
 def select_point(image):
@@ -69,6 +81,7 @@ def select_point(image):
         plt.draw()
 
     fig.canvas.mpl_connect("button_press_event", on_click)
+    plt.axis("off")
     plt.show()
     plt.draw()
     return coords  # click point coordintes in [x, y] format
