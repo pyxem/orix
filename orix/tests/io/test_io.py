@@ -152,5 +152,12 @@ def test_loadctf():
     fname = "temp.ctf"
     np.savetxt(fname, z)
 
-    _ = loadctf(fname)
+    msg = msg = (
+        r"Function `loadctf()` is deprecated and will be removed in version 0.13. "
+        r"Use `ctf()` instead. "
+        r"def loadctf(file_string: str) -> Rotation: "
+    )
+
+    with pytest.warns(np.VisibleDeprecationWarning, match=msg):
+        _ = loadctf(fname)
     os.remove(fname)
