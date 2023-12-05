@@ -27,6 +27,7 @@ import warnings
 from diffpy.structure import Lattice, Structure
 import numpy as np
 
+from orix import __version__
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.quaternion import Rotation
 
