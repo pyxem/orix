@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from diffpy.structure import Lattice, Structure
+from diffpy.structure import Lattice, Structure, Atom
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
@@ -332,6 +332,48 @@ class TestPhase:
         assert np.allclose(ar.data, [0.588, 0.340, 0], atol=1e-3)
         assert np.allclose(br.data, [0, 0.679, 0], atol=1e-3)
         assert np.allclose(cr.data, [0, 0, 0.714], atol=1e-3)
+
+    @pytest.mark.parametrize(
+        ["lat", "atoms"],
+        [
+            [
+                Lattice(1, 1, 1, 90, 90, 90),
+                [
+                    Atom("C", [0, 0, 0]),
+                    Atom("C", [0.5, 0.5, 0.5]),
+                    Atom("C", [0.5, 0, 0]),
+                ],
+            ],
+            [
+                Lattice(1, 1, 1, 90, 90, 120),
+                [
+                    Atom("C", [0, 0, 0]),
+                    Atom("C", [0.5, 0, 0]),
+                    Atom("C", [0.5, 0.5, 0.5]),
+                ],
+            ],
+            [
+                Lattice(1, 2, 3, 90, 90, 60),
+                [
+                    Atom("C", [0, 0, 0]),
+                    Atom("C", [0.1, 0.1, 0.6]),
+                    Atom("C", [0.5, 0, 0]),
+                ],
+            ],
+        ],
+    )
+    def test_atom_positions(self, lat, atoms):
+        structure = Structure(atoms, lat)
+        phase = Phase(structure=structure)
+
+        assert np.allclose(phase.structure.xyz_cartn, structure.xyz_cartn)
+
+        if not np.allclose(structure.lattice.base, phase.structure.lattice.base):
+            # Not all atoms are necessarily changed. Therefore assert any
+            assert any(
+                not np.allclose(a.xyz, b.xyz)
+                for a, b in zip(structure, phase.structure)
+            )
 
     def test_from_cif(self, cif_file):
         """CIF files parsed correctly with space group and all."""
