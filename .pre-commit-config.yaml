@@ -13,3 +13,7 @@ repos:
         name: isort (python)
         args:
           [--profile=black, --filter-files, --force-sort-within-sections]
+ci:
+  # Don't run automatically on PRs, instead add the comment
+  # "pre-commit.ci autofix" on a pull request to manually trigger auto-fixing
+  autofix_prs: false
