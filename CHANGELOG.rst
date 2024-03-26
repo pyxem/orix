@@ -39,6 +39,7 @@ Changed
 - Allow passing a tuple of integers to ``reshape()`` methods of 3D objects.
 - ``random()`` methods no longer accept a list as a valid shape: pass a tuple instead.
 - Increase minimal version of Matplotlib to >= 3.5.
+- Updated copyright year to 2024.
 
 Deprecated
 ----------
