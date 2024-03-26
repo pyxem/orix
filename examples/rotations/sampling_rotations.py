@@ -7,6 +7,7 @@ This example shows how to sample some phase object in Orix. We will
 get both the zone axis and the reduced fundamental zone rotations for
 the phase of interest.
 """
+
 from diffpy.structure import Atom, Lattice, Structure
 
 from orix.crystal_map import Phase
