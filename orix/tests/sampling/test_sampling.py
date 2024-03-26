@@ -185,7 +185,7 @@ class TestSampleFundamental:
         assert np.isclose(ratio, 3, atol=0.2)
 
     def test_get_sample_reduced_fundamental(self):
-        rotations = get_sample_reduced_fundamental(resolution=4, point_group=C1)
+        rotations = get_sample_reduced_fundamental(resolution=4)
         rotations2 = get_sample_reduced_fundamental(resolution=4, point_group=C2)
         rotations4 = get_sample_reduced_fundamental(resolution=4, point_group=C4)
         rotations6 = get_sample_reduced_fundamental(resolution=4, point_group=C4)
