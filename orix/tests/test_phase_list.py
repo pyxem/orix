@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from diffpy.structure import Lattice, Structure, Atom
+from diffpy.structure import Atom, Lattice, Structure
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
