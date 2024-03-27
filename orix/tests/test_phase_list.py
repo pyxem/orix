@@ -365,15 +365,24 @@ class TestPhase:
     def test_atom_positions(self, lat, atoms):
         structure = Structure(atoms, lat)
         phase = Phase(structure=structure)
-
+        # xyz_cartn is independent of basis
         assert np.allclose(phase.structure.xyz_cartn, structure.xyz_cartn)
+        
+        # however, Phase should (in many cases) change the basis.
+        if np.allclose(structure.lattice.base, phase.structure.lattice.base):
+            # In this branch we are in the same basis & all atoms should be the same
+            for atom_from_structure, atom_from_phase in zip(structure, phase.structure):
+                assert np.allclose(atom_from_structure.xyz, atom_from_phase.xyz)
+        else:
+            # Here we have differing basis, so xyz must disagree for at least some atoms
+            disagreement_found = False
 
-        if not np.allclose(structure.lattice.base, phase.structure.lattice.base):
-            # Not all atoms are necessarily changed. Therefore assert any
-            assert any(
-                not np.allclose(a.xyz, b.xyz)
-                for a, b in zip(structure, phase.structure)
-            )
+            for atom_from_structure, atom_from_phase in zip(structure, phase.structure):
+                if not np.allclose(atom_from_structure.xyz, atom_from_phase.xyz):
+                    disagreement_found = True
+                    break
+
+            assert disagreement_found
 
     def test_from_cif(self, cif_file):
         """CIF files parsed correctly with space group and all."""
