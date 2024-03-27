@@ -33,6 +33,7 @@ Fixed
 -----
 - Transparency of polar stereographic grid lines can now be controlled by Matplotlib's
   ``grid.alpha``, just like the azimuth grid lines.
+- Previously ``Phase`` was failing to adjust atom position to accomodate for the change of basis. This is now fixed.
 
 2023-03-14 - version 0.11.1
 ===========================
