@@ -367,7 +367,7 @@ class TestPhase:
         phase = Phase(structure=structure)
         # xyz_cartn is independent of basis
         assert np.allclose(phase.structure.xyz_cartn, structure.xyz_cartn)
-        
+
         # however, Phase should (in many cases) change the basis.
         if np.allclose(structure.lattice.base, phase.structure.lattice.base):
             # In this branch we are in the same basis & all atoms should be the same
