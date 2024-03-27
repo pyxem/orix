@@ -73,7 +73,7 @@ class TestGeneralIO:
         with pytest.raises(IOError, match=f"No filename matches '{fname}'."):
             _ = load(fname)
 
-    @pytest.mark.parametrize("temp_file_path", ["ctf"], indirect=["temp_file_path"])
+    @pytest.mark.parametrize("temp_file_path", ["ktf"], indirect=["temp_file_path"])
     def test_load_unsupported_format(self, temp_file_path):
         np.savetxt(temp_file_path, X=np.random.rand(100, 8))
         with pytest.raises(IOError, match=f"Could not read "):
@@ -152,5 +152,6 @@ def test_loadctf():
     fname = "temp.ctf"
     np.savetxt(fname, z)
 
-    _ = loadctf(fname)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        _ = loadctf(fname)
     os.remove(fname)

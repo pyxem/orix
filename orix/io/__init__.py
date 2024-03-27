@@ -37,6 +37,7 @@ from warnings import warn
 from h5py import File, is_hdf5
 import numpy as np
 
+from orix._util import deprecated
 from orix.crystal_map import CrystalMap
 from orix.io.plugins import plugin_list
 from orix.io.plugins._h5ebsd import hdf5group2dict
@@ -73,6 +74,8 @@ def loadang(file_string: str) -> Rotation:
     return Rotation.from_euler(euler)
 
 
+# TODO: Remove in 0.13
+@deprecated(since="0.12", removal="0.13", alternative="ctf")
 def loadctf(file_string: str) -> Rotation:
     """Load ``.ctf`` files.
 
