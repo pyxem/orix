@@ -11,6 +11,7 @@ Unreleased
 
 Added
 -----
+- New plugin ``channel5_ctf`` to read crystal map from HKL Channel 5 ctf file.
 - ``Vector3d.from_path_ends()`` class method to get vectors between two vectors.
 - Convenience function ``plot.format_labels()`` to get nicely formatted vector labels to
   use when plotting vectors.
