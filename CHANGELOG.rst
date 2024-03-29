@@ -31,6 +31,9 @@ Added
 - The ``random()`` methods of ``Orientation`` and ``Misorientation`` now accept
   ``symmetry``. A ``random()`` method is also added to ``Vector3d`` and ``Miller``, the
   latter accepting a ``phase``.
+- ``Added orix.sampling.get_sample_zone_axis`` for getting zone axes for some point group.
+- ``Added orix.sampling.get_sample_reduced_fundamental`` for getting reduced
+  fundamental zone for some point group.
 
 Changed
 -------
