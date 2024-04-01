@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -415,6 +415,32 @@ class TestMisorientation:
         with pytest.raises(TypeError, match="Value must be a 2-tuple of"):
             _ = Misorientation.from_scipy_rotation(r_scipy, Oh)
 
+    def test_inverse(self):
+        M1 = Misorientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], (Oh, D6))
+        M2 = ~M1
+        assert M1.symmetry == M2.symmetry[::-1]
+        assert np.allclose(M2.data, [np.sqrt(2) / 2, -np.sqrt(2) / 2, 0, 0])
+
+        M3 = M1.inv()
+        assert M3 == M2
+
+        v = Vector3d.yvector()
+        v1 = M1 * v
+        v2 = M2 * -v
+        assert np.allclose(v1.data, [0, 0, 1])
+        assert np.allclose(v2.data, [0, 0, 1])
+
+    def test_random(self):
+        M1 = Misorientation.random()
+        assert M1.symmetry == (C1, C1)
+
+        shape = (2, 3)
+        M2 = Misorientation.random(shape)
+        assert M2.shape == shape
+
+        M3 = Misorientation.random(symmetry=(Oh, D6))
+        assert M3.symmetry == (Oh, D6)
+
 
 def test_orientation_equality():
     # symmetries must also be the same to be equal
@@ -426,7 +452,7 @@ def test_orientation_equality():
     assert o1 == o2
     o2.symmetry = C3
     assert o1 != o2
-    o3 = Orientation.random((6,))
+    o3 = Orientation.random(6)
     assert o1 != o3
     o3.symmetry = o1.symmetry
     assert o1 != o3
@@ -455,13 +481,13 @@ class TestOrientationInitialization:
         )
         o1 = Orientation.from_matrix(om)
         assert np.allclose(
-            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape((4, 4))
+            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape(4, 4)
         )
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_matrix(om, symmetry=Oh)
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(
-            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape((4, 4))
+            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4)
         )
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
@@ -657,7 +683,7 @@ class TestOrientation:
         assert np.allclose(dist, awo_self)
         assert np.allclose(np.diag(awo_self), 0, atol=1e-6)
 
-        o2 = Orientation.random((6,))
+        o2 = Orientation.random(6)
         dist = o.angle_with_outer(o2)
         assert dist.shape == o.shape + o2.shape
 
@@ -821,3 +847,29 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+
+    def test_inverse(self):
+        O1 = Orientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], D6)
+        O2 = ~O1
+        assert O1.symmetry == O2.symmetry
+        assert np.allclose(O2.data, [np.sqrt(2) / 2, -np.sqrt(2) / 2, 0, 0])
+
+        O3 = O1.inv()
+        assert O3 == O2
+
+        v = Vector3d.yvector()
+        v1 = O1 * v
+        v2 = O2 * -v
+        assert np.allclose(v1.data, [0, 0, 1])
+        assert np.allclose(v2.data, [0, 0, 1])
+
+    def test_random(self):
+        O1 = Orientation.random()
+        assert O1.symmetry == C1
+
+        shape = (2, 3)
+        O2 = Orientation.random(shape)
+        assert O2.shape == shape
+
+        O3 = Orientation.random(symmetry=Oh)
+        assert O3.symmetry == Oh

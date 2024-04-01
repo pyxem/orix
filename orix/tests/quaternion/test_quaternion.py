@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -23,7 +23,7 @@ from diffpy.structure.spacegroups import sg225
 import numpy as np
 import pytest
 
-from orix.base import DimensionError
+from orix._base import DimensionError
 from orix.quaternion import Quaternion
 from orix.vector import AxAngle, Homochoric, Rodrigues, Vector3d
 
@@ -121,6 +121,18 @@ class TestQuaternion:
         assert np.allclose((q * ~q).a, 1)
         assert np.allclose((q * ~q).data[..., 1:], 0)
 
+        assert np.allclose((q * q.inv()).data, (q.inv() * q).data)
+        assert np.allclose((q * q.inv()).a, 1)
+        assert np.allclose((q * q.inv()).data[..., 1:], 0)
+
+    def test_reshape(self):
+        q = Quaternion.random((4, 3))
+        q2 = q.reshape(3, 4)
+        q3 = q.reshape((3, 4))
+
+        assert np.may_share_memory(q.data, q2.data)
+        assert np.allclose(q2.data, q3.data)
+
     def test_dot(self, quaternion, something):
         q = quaternion
         assert np.allclose(q.dot(q), np.sum(q.data**2, axis=-1))
@@ -188,7 +200,7 @@ class TestQuaternion:
     def test_outer(self, shape):
         rng = np.random.default_rng()
         new_shape = shape + (4,)
-        abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
+        abcd = rng.normal(size=np.prod(new_shape)).reshape(*shape, 4)
         q = Quaternion(abcd)
 
         qo_numpy = q.outer(q)
@@ -228,10 +240,10 @@ class TestQuaternion:
     def test_outer_vector_lazy(self, shape):
         rng = np.random.default_rng()
         new_shape = shape + (4,)
-        abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
+        abcd = rng.normal(size=np.prod(new_shape)).reshape(*shape, 4)
         q = Quaternion(abcd).unit
 
-        v = Vector3d(np.random.rand(7, 4, 3)).unit
+        v = Vector3d.random((7, 4))
 
         qvo_numpy = q.outer(v)
         assert isinstance(qvo_numpy, Vector3d)
@@ -254,18 +266,18 @@ class TestQuaternion:
         rng = np.random.default_rng()
         shape = (5, 3)
         new_shape = shape + (4,)
-        abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
+        abcd = rng.normal(size=np.prod(new_shape)).reshape(*shape, 4)
         q = Quaternion(abcd).unit
         # other is Quaternion
-        _ = q.outer(q, lazy=True, progressbar=True)
+        _ = q.outer(q, lazy=True)
         out, _ = capsys.readouterr()
         assert "Completed" in out
         _ = q.outer(q, lazy=True, progressbar=False)
         out, _ = capsys.readouterr()
         assert not out
         # test other is Vector3d
-        v = Vector3d(np.random.rand(2, 3, 3)).unit
-        _ = q.outer(v, lazy=True, progressbar=True)
+        v = Vector3d.random((2, 3))
+        _ = q.outer(v, lazy=True)
         out, _ = capsys.readouterr()
         assert "Completed" in out
         _ = q.outer(v, lazy=True, progressbar=False)
@@ -276,7 +288,7 @@ class TestQuaternion:
         shape = (5,)
         rng = np.random.default_rng()
         new_shape = shape + (4,)
-        abcd = rng.normal(size=np.prod(new_shape)).reshape(shape + (4,))
+        abcd = rng.normal(size=np.prod(new_shape)).reshape(*shape, 4)
         q = Quaternion(abcd)
         # not Quaternion or Vector3d
         other = np.random.rand(7, 3)
@@ -311,6 +323,12 @@ class TestQuaternion:
             [[2, -1, 0], [0, 0, 1]], [[3, 1, 0], [-1, 3, 0]]
         )
         assert np.allclose(q2.data, q1.data)
+
+    def test_equality(self):
+        Q1 = Quaternion.from_axes_angles([1, 1, 1], -np.pi / 3)
+        Q2 = Quaternion.from_axes_angles([1, 1, 1], np.pi / 3)
+        assert Q1 != Q2
+        assert Q1 == Q2.inv()
 
 
 class TestToFromEuler:
@@ -442,7 +460,7 @@ class TestFromToMatrix:
         om = np.array([ident, 2 * ident, rot_180x, 2 * rot_180x])
         assert np.allclose(Quaternion.from_matrix(om).data, q.data)
         assert np.allclose(
-            Quaternion.from_matrix(om.reshape((2, 2, 3, 3))).data, q.reshape(2, 2).data
+            Quaternion.from_matrix(om.reshape(2, 2, 3, 3)).data, q.reshape(2, 2).data
         )
 
     def test_from_to_matrix(self):
@@ -456,7 +474,7 @@ class TestFromToMatrix:
         )
 
     def test_from_euler_to_matrix_from_matrix(self, eu):
-        q = Quaternion.from_euler(eu.reshape((5, 2, 3)))
+        q = Quaternion.from_euler(eu.reshape(5, 2, 3))
         assert np.allclose(Quaternion.from_matrix(q.to_matrix()).data, q.data)
 
     def test_from_matrix_to_euler_from_euler_to_matrix(self, eu):
@@ -564,7 +582,7 @@ class TestFromToHomochoric:
         ho1 = homochoric_vectors
         ho2 = Vector3d(ho1)
         ho3 = Homochoric(ho1)
-        ho4 = homochoric_vectors.reshape((2, 5, 3))
+        ho4 = homochoric_vectors.reshape(2, 5, 3)
 
         q1 = Quaternion.from_homochoric(ho1)
         q2 = Quaternion.from_homochoric(ho2)
@@ -574,9 +592,7 @@ class TestFromToHomochoric:
         assert np.allclose(q1.data, quaternions_conversions, atol=1e-4)
         assert np.allclose(q2.data, quaternions_conversions, atol=1e-4)
         assert np.allclose(q3.data, quaternions_conversions, atol=1e-4)
-        assert np.allclose(
-            q4.data, quaternions_conversions.reshape((2, 5, 4)), atol=1e-4
-        )
+        assert np.allclose(q4.data, quaternions_conversions.reshape(2, 5, 4), atol=1e-4)
 
         assert np.allclose(ho1, q1.to_homochoric().data, atol=1e-4)
         assert np.allclose(ho1, q2.to_homochoric().data, atol=1e-4)

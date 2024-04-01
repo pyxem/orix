@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -15,24 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
-
-"""An orientation region is some subset of the complete space of orientations.
-
-The complete orientation space represents every possible orientation of an
-object. The whole space is not always needed, for example if the orientation
-of an object is constrained or (most commonly) if the object is symmetrical. In
-this case, the space can be segmented using sets of Rotations representing
-boundaries in the space. This is clearest in the Rodrigues parametrisation,
-where the boundaries are planes, such as the example here: the asymmetric
-domain of an adjusted 432 symmetry.
-
-.. image:: /_static/img/orientation-region-Oq.png
-   :width: 300px
-   :alt: Boundaries of an orientation region in Rodrigues space.
-   :align: center
-
-Rotations or orientations can be inside or outside of an orientation region.
-"""
 
 from __future__ import annotations
 
@@ -122,9 +104,41 @@ def get_proper_groups(Gl: Symmetry, Gr: Symmetry) -> Tuple[Symmetry, Symmetry]:
 
 
 class OrientationRegion(Rotation):
-    """A set of :class:`~orix.quaternion.Rotation` which are the normals
-    of an orientation region.
+    """Some subset of the complete space of orientations.
+
+    The complete orientation space represents every possible orientation
+    of an object. The whole space is not always needed, for example if
+    the orientation of an object is constrained or (most commonly) if
+    the object is symmetrical. In this case, the space can be segmented
+    using sets of Rotations representing boundaries in the space. This
+    is clearest in the Rodrigues parametrisation, where the boundaries
+    are planes, such as the example here: the asymmetric domain of an
+    adjusted 432 symmetry.
+
+    .. image:: /_static/img/orientation-region-Oq.png
+       :width: 300px
+       :alt: Boundaries of an orientation region in Rodrigues space.
+       :align: center
+
+    Rotations or orientations can be inside or outside of an orientation
+    region.
     """
+
+    # ------------------------ Dunder methods ------------------------ #
+
+    def __gt__(self, other: OrientationRegion) -> np.ndarray:
+        """Overridden greater than method. Applying this to an
+        Orientation will return only those orientations that lie within
+        the OrientationRegion.
+        """
+        c = Quaternion(self).dot_outer(Quaternion(other))
+        inside = np.logical_or(
+            np.all(np.greater_equal(c, -_FLOAT_EPS), axis=0),
+            np.all(np.less_equal(c, +_FLOAT_EPS), axis=0),
+        )
+        return inside
+
+    # ------------------------ Class methods ------------------------- #
 
     @classmethod
     def from_symmetry(cls, s1: Symmetry, s2: Symmetry = C1) -> OrientationRegion:
@@ -150,6 +164,8 @@ class OrientationRegion(Rotation):
                 np.any(np.isclose(orientation_region.dot_outer(vertices), 0), axis=1)
             ]
         return orientation_region
+
+    # --------------------- Other public methods --------------------- #
 
     def vertices(self) -> Rotation:
         """Return the vertices of the asymmetric domain.
@@ -182,18 +198,6 @@ class OrientationRegion(Rotation):
             faces.append(vertices[np.isclose(vertices.dot(n), 0)])
         faces = [f for f in faces if f.size > 2]
         return faces
-
-    def __gt__(self, other: OrientationRegion) -> np.ndarray:
-        """Overridden greater than method. Applying this to an
-        Orientation will return only those orientations that lie within
-        the OrientationRegion.
-        """
-        c = Quaternion(self).dot_outer(Quaternion(other))
-        inside = np.logical_or(
-            np.all(np.greater_equal(c, -_FLOAT_EPS), axis=0),
-            np.all(np.less_equal(c, +_FLOAT_EPS), axis=0),
-        )
-        return inside
 
     def get_plot_data(self) -> Rotation:
         """Suitable Rotations for the construction of a wireframe."""

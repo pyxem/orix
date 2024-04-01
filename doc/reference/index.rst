@@ -24,8 +24,8 @@ the below list of modules:
 .. code-block:: python
 
     >>> from orix.quaternion import Orientation, symmetry
-    >>> ori = Orientation.from_axes_angles([1, 1, 1], np.pi / 2, symmetry.Oh)
-    >>> ori
+    >>> O = Orientation.from_axes_angles([1, 1, 1], np.pi / 2, symmetry.Oh)
+    >>> O
     Orientation (1,) m-3m
     [[0.7071 0.4082 0.4082 0.4082]]
 
@@ -41,7 +41,6 @@ code lines.
     :toctree: generated
     :template: custom-module-template.rst
 
-    base
     data
     crystal_map
     io

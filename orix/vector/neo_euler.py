@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -70,6 +70,19 @@ class Homochoric(NeoEuler):
     The homochoric transformation has no analytical inverse.
     """
 
+    # -------------------------- Properties -------------------------- #
+
+    @property
+    def angle(self):
+        """Calling this attribute raises an error since it cannot be
+        determined analytically.
+        """
+        raise AttributeError(
+            "The angle of a homochoric vector cannot be determined analytically."
+        )
+
+    # ------------------------ Class methods ------------------------- #
+
     @classmethod
     def from_rotation(cls, rotation: "Rotation") -> Homochoric:
         """Create an homochoric vector from a rotation.
@@ -81,7 +94,7 @@ class Homochoric(NeoEuler):
 
         Returns
         -------
-        vec
+        v
             Homochoric vector.
 
         See Also
@@ -92,15 +105,6 @@ class Homochoric(NeoEuler):
         magnitude = (0.75 * (theta - np.sin(theta))) ** (1 / 3)
         return cls(rotation.axis * magnitude)
 
-    @property
-    def angle(self):
-        """Calling this attribute raises an error since it cannot be
-        determined analytically.
-        """
-        raise AttributeError(
-            "The angle of a homochoric vector cannot be determined analytically."
-        )
-
 
 class Rodrigues(NeoEuler):
     """In Rodrigues space, straight lines map to rotations about a fixed axis.
@@ -108,6 +112,15 @@ class Rodrigues(NeoEuler):
     The Rodrigues vector representing a rotation with rotation angle
     :math:`\\theta` has magnitude :math:`\\tan\\frac{\\theta}{2}`.
     """
+
+    # -------------------------- Properties -------------------------- #
+
+    @property
+    def angle(self) -> np.ndarray:
+        """Return the angle of the Rodrigues vector."""
+        return np.arctan(self.norm) * 2
+
+    # ------------------------ Class methods ------------------------- #
 
     @classmethod
     def from_rotation(cls, rotation: "Rotation") -> Rodrigues:
@@ -120,7 +133,7 @@ class Rodrigues(NeoEuler):
 
         Returns
         -------
-        vec
+        v
             Rodrigues vector.
 
         See Also
@@ -131,13 +144,8 @@ class Rodrigues(NeoEuler):
         with np.errstate(divide="ignore", invalid="ignore"):
             data = np.stack((rotation.b / a, rotation.c / a, rotation.d / a), axis=-1)
         data[np.isnan(data)] = 0
-        r = cls(data)
-        return r
-
-    @property
-    def angle(self) -> np.ndarray:
-        """Return the angle of the Rodrigues vector."""
-        return np.arctan(self.norm) * 2
+        ro = cls(data)
+        return ro
 
 
 class AxAngle(NeoEuler):
@@ -146,6 +154,15 @@ class AxAngle(NeoEuler):
     The axis-angle vector representing a rotation with rotation angle
     :math:`\theta` has magnitude :math:`\theta`.
     """
+
+    # -------------------------- Properties -------------------------- #
+
+    @property
+    def angle(self):
+        """Return the angle of the axis-angle rotation."""
+        return self.norm
+
+    # ------------------------ Class methods ------------------------- #
 
     @classmethod
     def from_rotation(cls, rotation: "Rotation") -> AxAngle:
@@ -158,7 +175,7 @@ class AxAngle(NeoEuler):
 
         Returns
         -------
-        vec
+        v
             Axis-angle representation of ``rotation``.
 
         See Also
@@ -166,11 +183,6 @@ class AxAngle(NeoEuler):
         Quaternion.to_axes_angles
         """
         return cls((rotation.axis * rotation.angle).data)
-
-    @property
-    def angle(self):
-        """Return the angle of the axis-angle rotation."""
-        return self.norm
 
     @classmethod
     def from_axes_angles(
@@ -194,7 +206,7 @@ class AxAngle(NeoEuler):
 
         Returns
         -------
-        vec
+        v
             Axis-angle instance of the axes and angles.
         """
         axes = Vector3d(axes).unit

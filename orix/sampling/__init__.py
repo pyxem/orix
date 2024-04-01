@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -29,11 +29,18 @@ from orix.sampling.S2_sampling import (
 )
 from orix.sampling.S2_sampling import sampling_methods as sample_S2_methods
 from orix.sampling.SO3_sampling import uniform_SO3_sample
-from orix.sampling.sample_generators import get_sample_fundamental, get_sample_local
+from orix.sampling.sample_generators import (
+    get_sample_fundamental,
+    get_sample_local,
+    get_sample_reduced_fundamental,
+    get_sample_zone_axis,
+)
 
 __all__ = [
     "get_sample_fundamental",
+    "get_sample_reduced_fundamental",
     "get_sample_local",
+    "get_sample_zone_axis",
     "sample_S2",
     "sample_S2_methods",
     "uniform_SO3_sample",

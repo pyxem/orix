@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,33 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from matplotlib import __version__ as _MPL_VERSION
 from matplotlib import pyplot as plt
 import numpy as np
-from packaging import version
 import pytest
 
 from orix.plot import AxAnglePlot, RodriguesPlot, RotationPlot
 from orix.quaternion import Misorientation, Orientation, OrientationRegion
 from orix.quaternion.symmetry import C1, D6
 
-# TODO: Remove when the oldest supported version of Matplotlib
-# increases from 3.3 to 3.4.
-# See: https://matplotlib.org/stable/api/_as_gen/mpl_toolkits.mplot3d.axes3d.Axes3D.html#mpl_toolkits.mplot3d.axes3d.Axes3D
-_SUBPLOT_KWARGS = dict()
-if version.parse(_MPL_VERSION) >= version.parse("3.4"):  # pragma: no cover
-    _SUBPLOT_KWARGS["auto_add_to_figure"] = False
-
 
 def test_init_rodrigues_plot():
-    fig = plt.figure(figsize=(3, 3))
-    ax = fig.add_subplot(projection="rodrigues", **_SUBPLOT_KWARGS)
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="rodrigues", auto_add_to_figure=False)
     assert isinstance(ax, RodriguesPlot)
 
 
 def test_init_axangle_plot():
-    fig = plt.figure(figsize=(3, 3))
-    ax = fig.add_subplot(projection="axangle", **_SUBPLOT_KWARGS)
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="axangle", auto_add_to_figure=False)
     assert isinstance(ax, AxAnglePlot)
 
 
@@ -51,7 +42,9 @@ def test_RotationPlot_methods():
     misori = Misorientation([1, 1, 1, 1])  # any will do
     ori = Orientation.random()
     fig = plt.figure()
-    ax = fig.add_subplot(projection="axangle", proj_type="ortho", **_SUBPLOT_KWARGS)
+    ax = fig.add_subplot(
+        projection="axangle", proj_type="ortho", auto_add_to_figure=False
+    )
     ax.scatter(misori)
     ax.scatter(ori)
     ax.plot(misori)
@@ -70,11 +63,12 @@ def test_full_region_plot():
 
 def test_RotationPlot_transform_fundamental_zone_raises():
     fig = plt.figure()
-    rp = RotationPlot(fig)
+    ax = RotationPlot(fig)
+    fig.add_axes(ax)
     with pytest.raises(
         TypeError, match="fundamental_zone is not an OrientationRegion object"
     ):
-        rp.transform(Orientation.random(), fundamental_zone=1)
+        ax.transform(Orientation.random(), fundamental_zone=1)
 
 
 def test_RotationPlot_map_into_symmetry_reduced_zone():
@@ -97,7 +91,9 @@ def test_RotationPlot_map_into_symmetry_reduced_zone():
 def test_correct_aspect_ratio():
     # Set up figure the "old" way
     fig = plt.figure()
-    ax = fig.add_subplot(projection="axangle", proj_type="ortho", **_SUBPLOT_KWARGS)
+    ax = fig.add_subplot(
+        projection="axangle", proj_type="ortho", auto_add_to_figure=False
+    )
 
     # Check aspect ratio
     x_old, _, z_old = ax.get_box_aspect()

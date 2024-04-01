@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -135,7 +135,10 @@ class Phase:
             old_matrix = value.lattice.base
             new_matrix = _new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
             value = copy.deepcopy(value)
+            # Ensure atom positions are expressed in the new basis
+            old_xyz_cartn = value.xyz_cartn
             value.lattice.setLatBase(new_matrix)
+            value.xyz_cartn = old_xyz_cartn
             if value.title == "" and hasattr(self, "_structure"):
                 value.title = self.name
             self._structure = value

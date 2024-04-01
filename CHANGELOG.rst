@@ -25,11 +25,25 @@ Added
 - Creating neo-eulerian vectors from quaternions via new methods ``to_axes_angles()``,
   ``to_rodrigues()`` and ``to_homochoric()``. Rodrigues-Frank vectors can be returned
   from ``to_rodrigues()`` by passing ``frank=True``.
+- ``inv()`` method for ``Quaternion``, ``Rotation``, ``Orientation``, and
+  ``Misorientation``. For the three first, its behavior is identical to the inversion
+  operator ``~``. For misorientations, it inverts the direction of the transformation.
+  Convenient for chaining operations.
+- The ``random()`` methods of ``Orientation`` and ``Misorientation`` now accept
+  ``symmetry``. A ``random()`` method is also added to ``Vector3d`` and ``Miller``, the
+  latter accepting a ``phase``.
+- ``Added orix.sampling.get_sample_zone_axis`` for getting zone axes for some point group.
+- ``Added orix.sampling.get_sample_reduced_fundamental`` for getting reduced
+  fundamental zone for some point group.
 
 Changed
 -------
 - The ``convention`` parameter in ``from_euler()`` and ``to_euler()`` will be removed in
   the next minor release, 0.13, instead of release 1.0 as previously stated.
+- Allow passing a tuple of integers to ``reshape()`` methods of 3D objects.
+- ``random()`` methods no longer accept a list as a valid shape: pass a tuple instead.
+- Increase minimal version of Matplotlib to >= 3.5.
+- Updated copyright year to 2024.
 
 Deprecated
 ----------
@@ -44,6 +58,7 @@ Fixed
 -----
 - Transparency of polar stereographic grid lines can now be controlled by Matplotlib's
   ``grid.alpha``, just like the azimuth grid lines.
+- Previously ``Phase`` was failing to adjust atom position to accomodate for the change of basis. This is now fixed.
 
 2023-03-14 - version 0.11.1
 ===========================

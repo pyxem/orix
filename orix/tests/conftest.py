@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -652,7 +652,7 @@ def crystal_map_input(request, rotations):
     data_shape = (map_size,)
     if rotations_per_point > 1:
         data_shape += (rotations_per_point,)
-    d["rotations"] = rotations[rot_idx].reshape(*data_shape)
+    d["rotations"] = rotations[rot_idx].reshape(data_shape)
     phase_id = np.random.choice(unique_phase_ids, map_size)
     for i in range(len(unique_phase_ids)):
         phase_id[i] = unique_phase_ids[i]

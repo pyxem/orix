@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -183,10 +183,10 @@ def _euler_angles_haar_measure(resolution: Union[int, float], unique: bool) -> R
     alpha = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
     beta = np.arccos(np.linspace(1, -1, num=half_steps, endpoint=False))
     gamma = np.linspace(0, 2 * np.pi, num=num_steps, endpoint=False)
-    q = np.array(np.meshgrid(alpha, beta, gamma)).T.reshape((-1, 3))
+    q = np.array(np.meshgrid(alpha, beta, gamma)).T.reshape(-1, 3)
 
     # Convert to quaternions
-    q = Rotation.from_euler(q, direction="lab2crystal")
+    q = Rotation.from_euler(q)
 
     if unique:
         q = q.unique()

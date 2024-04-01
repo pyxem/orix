@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -45,7 +45,7 @@ def point_groups(request):
 
 class TestMeasurePoleDensityFunction:
     def test_pole_density_function(self):
-        v = Vector3d(np.random.randn(10_000, 3)).unit
+        v = Vector3d.random(10_000)
 
         hist1, (x1, y1) = pole_density_function(v)
         assert hist1.shape[0] + 1 == x1.shape[0] == y1.shape[0]
@@ -67,13 +67,13 @@ class TestMeasurePoleDensityFunction:
 
     def test_pole_density_function_symmetry(self, point_groups):
         pg = point_groups
-        v = Vector3d(np.random.randn(10_000, 3)).unit
+        v = Vector3d.random(10_000)
 
         hist, _ = pole_density_function(v, symmetry=pg, mrd=False)
         assert np.allclose(hist.sum(), v.size, rtol=0.01)
 
     def test_pole_density_function_hemisphere(self):
-        v = Vector3d(np.random.randn(11_234, 3)).unit
+        v = Vector3d.random(11_234)
 
         hist1_upper, _ = pole_density_function(v, hemisphere="upper")
         assert np.allclose(hist1_upper.mean(), 1)
@@ -88,7 +88,7 @@ class TestMeasurePoleDensityFunction:
     @pytest.mark.parametrize("n", [10, 1000, 10_000, 12_546])
     def test_pole_density_function_values(self, n):
         # vectors only on upper hemisphere
-        v = Vector3d(np.random.randn(n, 3)).unit
+        v = Vector3d.random(n)
         v2 = deepcopy(v)
         v2.z[v2.z < 0] *= -1
 
@@ -102,21 +102,21 @@ class TestMeasurePoleDensityFunction:
         assert np.allclose(hist3.sum(), n, rtol=0.1)
 
     def test_pole_density_function_log(self):
-        v = Vector3d(np.random.randn(11_234, 3)).unit
+        v = Vector3d.random(11_234)
 
         hist1, _ = pole_density_function(v, log=False)
         hist2, _ = pole_density_function(v, log=True)
         assert not np.allclose(hist1, hist2)
 
     def test_pole_density_function_sigma(self):
-        v = Vector3d(np.random.randn(11_234, 3)).unit
+        v = Vector3d.random(11_234)
 
         hist1, _ = pole_density_function(v, sigma=2.5)
         hist2, _ = pole_density_function(v, sigma=5)
         assert not np.allclose(hist1, hist2)
 
     def test_pole_density_function_weights(self):
-        v = Vector3d(np.random.randn(11_234, 3)).unit
+        v = Vector3d.random(11_234)
         v.z[v.z < 0] *= -1
 
         hist0, _ = pole_density_function(v, weights=None)
@@ -140,7 +140,7 @@ class TestMeasurePoleDensityFunction:
         assert not np.allclose(hist0, hist2_1)
 
     def test_PDF_IPDF_equivalence(self):
-        v = Vector3d(np.random.randn(100_000, 3)).unit
+        v = Vector3d.random(100_000)
 
         hist_pdf, _ = pole_density_function(v, weights=None)
         hist_ipdf, _ = pole_density_function(v, weights=None, symmetry=symmetry.C1)

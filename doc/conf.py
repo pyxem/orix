@@ -25,7 +25,6 @@ copyright = f"2018-{str(datetime.now().year)}, {orix.__author__}"
 author = orix.__author__
 release = orix.__version__
 
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -341,3 +340,25 @@ print("[orix] Downloading example datasets (if not found in the cache)")
 _ = data.sdss_ferrite_austenite(allow_download=True)
 _ = data.sdss_austenite(allow_download=True)
 _ = data.ti_orientations(allow_download=True)
+
+
+def skip_member(app, what, name, obj, skip, options):
+    """Exclude objects not defined within orix from the API reference.
+
+    This ensures inherited members from Matplotlib axes extensions are
+    excluded from the reference. We could exclude inherited members
+    all together in the Sphinx Jinja2 template. But, this would mean
+    classes such as Rotation would have to "overwrite" all methods and
+    properties from Quaternion for these members to be listed in the
+    API reference of Rotation. Instead, we allow inherited members, but
+    try our best to skip members coming from outside orix here.
+    """
+    if what in ["attribute", "property"]:
+        obj_module = inspect.getmodule(getattr(obj, "fget", None))
+    else:
+        obj_module = inspect.getmodule(obj)
+    return "orix" not in getattr(obj_module, "__name__", [])
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip_member)

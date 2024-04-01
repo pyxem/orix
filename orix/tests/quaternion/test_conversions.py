@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -77,8 +77,8 @@ class TestRotationConversions:
     def test_eu2qu2eu(self, euler_angles, quaternions_conversions):
         qu_64 = quaternions_conversions
         eu_64 = euler_angles
-        qu_32_nd = qu_64.astype(np.float32).reshape((2, 5, 4))
-        eu_32_nd = eu_64.astype(np.float32).reshape((2, 5, 3))
+        qu_32_nd = qu_64.astype(np.float32).reshape(2, 5, 4)
+        eu_32_nd = eu_64.astype(np.float32).reshape(2, 5, 3)
 
         # Single
         for qu, eu in zip(qu_64, eu_64):
@@ -90,8 +90,8 @@ class TestRotationConversions:
         assert np.allclose(eu2qu_2d.py_func(eu_64), qu_64, atol=1e-4)
 
         # ND and jit
-        qu_64_nd = qu_64.reshape((2, 5, 4))
-        eu_64_nd = eu_64.reshape((2, 5, 3))
+        qu_64_nd = qu_64.reshape(2, 5, 4)
+        eu_64_nd = eu_64.reshape(2, 5, 3)
         assert np.allclose(eu2qu(eu_64_nd), qu_64_nd, atol=1e-4)
         assert np.allclose(qu2eu(qu_64_nd), eu_64_nd, atol=1e-4)
 
@@ -117,7 +117,7 @@ class TestRotationConversions:
         assert np.allclose(get_pyramid_2d.py_func(cu_64), pyramid)
 
         # ND
-        cu_64_nd = cu_64.reshape((5, 2, 3))
+        cu_64_nd = cu_64.reshape(5, 2, 3)
         assert np.allclose(get_pyramid(cu_64_nd), pyramid)
 
     def test_cu2ho(self, cubochoric_coordinates, homochoric_vectors):
@@ -132,8 +132,8 @@ class TestRotationConversions:
         assert np.allclose(cu2ho_2d.py_func(cu_64), ho_64, atol=1e-4)
 
         # ND
-        cu_64_nd = cu_64.reshape((5, 2, 3))
-        ho_64_nd = ho_64.reshape((5, 2, 3))
+        cu_64_nd = cu_64.reshape(5, 2, 3)
+        ho_64_nd = ho_64.reshape(5, 2, 3)
         assert np.allclose(cu2ho(cu_64_nd), ho_64_nd, atol=1e-4)
 
         # ND float32
@@ -153,8 +153,8 @@ class TestRotationConversions:
         assert np.allclose(ho2ax_2d.py_func(ho_64), ax_64, atol=1e-4)
 
         # ND
-        ho_64_nd = ho_64.reshape((2, 5, 3))
-        ax_64_nd = ax_64.reshape((2, 5, 4))
+        ho_64_nd = ho_64.reshape(2, 5, 3)
+        ax_64_nd = ax_64.reshape(2, 5, 4)
         assert np.allclose(ho2ax(ho_64_nd), ax_64_nd, atol=1e-4)
 
         # ND float32
@@ -179,8 +179,8 @@ class TestRotationConversions:
         assert np.allclose(ro2ax_2d.py_func(ro_64), ax_64, atol=1e-4)
 
         # ND
-        ax_64_nd = ax_64.reshape((2, 5, 4))
-        ro_64_nd = ro_64.reshape((2, 5, 4))
+        ax_64_nd = ax_64.reshape(2, 5, 4)
+        ro_64_nd = ro_64.reshape(2, 5, 4)
         assert np.allclose(ax2ro(ax_64_nd), ro_64_nd, atol=1e-4)
         assert np.allclose(ro2ax(ro_64_nd), ax_64_nd, atol=1e-4)
 
@@ -209,8 +209,8 @@ class TestRotationConversions:
         assert np.allclose(qu2ax_2d.py_func(qu_64), ax_64, atol=2e-4)
 
         # ND
-        ax_64_nd = ax_64.reshape((2, 5, 4))
-        qu_64_nd = qu_64.reshape((2, 5, 4))
+        ax_64_nd = ax_64.reshape(2, 5, 4)
+        qu_64_nd = qu_64.reshape(2, 5, 4)
         assert np.allclose(
             ax2qu(ax_64_nd[..., :3], ax_64_nd[..., 3]), qu_64_nd, atol=1e-4
         )
@@ -256,8 +256,8 @@ class TestRotationConversions:
         assert np.allclose(ho2ro_2d.py_func(ho_64), ro_64, atol=1e-4)
 
         # ND
-        ho_64_nd = ho_64.reshape((2, 5, 3))
-        ro_64_nd = ro_64.reshape((2, 5, 4))
+        ho_64_nd = ho_64.reshape(2, 5, 3)
+        ro_64_nd = ro_64.reshape(2, 5, 4)
         assert np.allclose(ho2ro(ho_64_nd), ro_64_nd, atol=1e-4)
 
         # ND float32
@@ -277,8 +277,8 @@ class TestRotationConversions:
         assert np.allclose(cu2ro_2d.py_func(cu_64), ro_64, atol=1e-4)
 
         # ND
-        cu_64_nd = cu_64.reshape((2, 5, 3))
-        ro_64_nd = ro_64.reshape((2, 5, 4))
+        cu_64_nd = cu_64.reshape(2, 5, 3)
+        ro_64_nd = ro_64.reshape(2, 5, 4)
         assert np.allclose(cu2ro(cu_64_nd), ro_64_nd, atol=1e-4)
 
         # ND float32
@@ -309,8 +309,8 @@ class TestRotationConversions:
         assert np.allclose(om_64, qu2om_2d.py_func(qu_64), atol=1e-4)
 
         # ND
-        om_64_nd = om_64.reshape((2, 5, 3, 3))
-        qu_64_nd = qu_64.reshape((2, 5, 4))
+        om_64_nd = om_64.reshape(2, 5, 3, 3)
+        qu_64_nd = qu_64.reshape(2, 5, 4)
         assert np.allclose(om2qu(om_64_nd), qu_64_nd, atol=1e-4)
         assert np.allclose(om_64_nd, qu2om(qu_64_nd), atol=1e-4)
 
@@ -338,8 +338,8 @@ class TestRotationConversions:
         assert np.allclose(om2qu_3d.py_func(om_64), qu_64, atol=1e-4)
 
         # ND
-        om_64_nd = om_64.reshape((2, 5, 3, 3))
-        qu_64_nd = qu_64.reshape((2, 5, 4))
+        om_64_nd = om_64.reshape(2, 5, 3, 3)
+        qu_64_nd = qu_64.reshape(2, 5, 4)
         assert np.allclose(om2qu(om_64_nd), qu_64_nd, atol=1e-4)
 
         # ND float32
@@ -359,8 +359,8 @@ class TestRotationConversions:
         assert np.allclose(qu2ho_2d.py_func(qu_64), ho_64, atol=1e-4)
 
         # ND
-        qu_64_nd = qu_64.reshape((2, 5, 4))
-        ho_64_nd = ho_64.reshape((2, 5, 3))
+        qu_64_nd = qu_64.reshape(2, 5, 4)
+        ho_64_nd = ho_64.reshape(2, 5, 3)
         assert np.allclose(qu2ho(qu_64_nd), ho_64_nd, atol=1e-4)
 
         # ND float32
