@@ -31,8 +31,9 @@ Added
 - The ``random()`` methods of ``Orientation`` and ``Misorientation`` now accept
   ``symmetry``. A ``random()`` method is also added to ``Vector3d`` and ``Miller``, the
   latter accepting a ``phase``.
-- ``Added orix.sampling.get_sample_zone_axis`` for getting zone axes for some point group.
-- ``Added orix.sampling.get_sample_reduced_fundamental`` for getting reduced
+- Added ``orix.sampling.get_sample_zone_axis()`` for getting zone axes for some point
+  group.
+- Added ``orix.sampling.get_sample_reduced_fundamental()`` for getting reduced
   fundamental zone for some point group.
 
 Changed
@@ -50,14 +51,13 @@ Deprecated
   and will be removed in v0.13. Use the existing ``from_axes_angles()`` and the new
   ``from_rodrigues()`` and ``from_homochoric()`` instead.
 
-Removed
--------
-
 Fixed
 -----
 - Transparency of polar stereographic grid lines can now be controlled by Matplotlib's
   ``grid.alpha``, just like the azimuth grid lines.
-- Previously ``Phase`` was failing to adjust atom position to accomodate for the change of basis. This is now fixed.
+- Previously, ``Phase`` did not adjust atom positions when forcing
+  ``Phase.structure.lattice.base`` to use the crystal axes alignment ``e1 || a``,
+  ``e3 || c*``. This is now fixed.
 
 2023-03-14 - version 0.11.1
 ===========================
