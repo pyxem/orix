@@ -13,6 +13,7 @@ __credits__ = [
     "Niels Cautaerts",
     "Austin Gerlt",
     "Anders Christian Mathisen",
+    "Carter Francis",
     "Simon Høgås",
     "Alexander Clausen",
     "Viljar Johan Femoen",
