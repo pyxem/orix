@@ -10,9 +10,6 @@ on:
   workflow_dispatch:
     workflow: '*'
 
-env:
-  MPLBACKEND: agg
-
 jobs:
   code:
     name: code style
@@ -59,15 +56,16 @@ jobs:
     name: ${{ matrix.os }}-py${{ matrix.python-version }}${{ matrix.LABEL }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+    env:
+      MPLBACKEND: agg
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11"]
+        python-version: ['3.10', '3.11']
         include:
           - os: ubuntu-latest
             python-version: 3.7
-            OLDEST_SUPPORTED_VERSION: true
             DEPENDENCIES: diffpy.structure==3  matplotlib==3.5
             LABEL: -oldest
     steps:
@@ -84,7 +82,7 @@ jobs:
           pip install -U -e .'[doc, tests]'
 
       - name: Install oldest supported version
-        if: ${{ matrix.OLDEST_SUPPORTED_VERSION }}
+        if: ${{ contains(matrix.LABEL, 'oldest') }}
         run: |
           pip install ${{ matrix.DEPENDENCIES }}
 
@@ -102,7 +100,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -n 2 --cov=orix --pyargs orix
+          pytest --pyargs orix --reruns 2 -n 2 --cov=orix
 
       - name: Generate line coverage
         if: ${{ matrix.os == 'ubuntu-latest' }}
