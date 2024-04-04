@@ -10,7 +10,6 @@ Matplotlib example
 """
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
 
 from orix import plot, projections, sampling
 from orix.vector import Vector3d
@@ -38,22 +37,19 @@ x_inset, y_inset = stereo.vector2xy(v_inset)
 # The zoomed inset rectangle origin (x, y), width and height
 rect = [0.15, 0.2, 0.43, 0.43]
 
-# Add a new stereographic projection axis with a grid resolution of 2
-# degrees to the figure and plot the vectors here as well
-ax_inset = fig.add_axes(rect, projection="stereographic")
-ax_inset.stereographic_grid(True, 2, 2)
-ax_inset.scatter(v2)
-ax_inset.scatter(v_ref, c="r")
-
-# Restrict the inset region to the extent vectors
+# Add a new stereographic projection axis and zoom in
+ax_inset = ax.inset_axes(rect, projection="stereographic")
 ax_inset.set(
     xlim=(x_inset.min(), x_inset.max()),
     ylim=(y_inset.min(), y_inset.max()),
 )
 
+# Add a grid of 2 degrees resolution and re-plot the vectors
+ax_inset.stereographic_grid(True, 2, 2)
+ax_inset.scatter(v2)
+ax_inset.scatter(v_ref, c="r")
+
 # Add lines indicating the inset zoom
-ip = InsetPosition(ax, rect)
-ax_inset.set_axes_locator(ip)
 ax.indicate_inset_zoom(ax_inset, edgecolor="k")
 
 # Add border to the inset region
