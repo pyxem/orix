@@ -26,7 +26,7 @@ with the `Miniconda distribution <https://docs.conda.io/en/latest/miniconda.html
 Then, install the required dependencies while making the development version available
 globally (in the ``conda`` environment)::
 
-    pip install --editable .[dev]
+    pip install --editable ".[dev]"
 
 This installs all necessary development dependencies, including those for running tests
 and building documentation.
