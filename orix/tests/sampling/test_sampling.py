@@ -170,6 +170,23 @@ class TestSampleFundamental:
     def C6_sample(self):
         return get_sample_fundamental(resolution=4, point_group=C6, method="haar_euler")
 
+    @pytest.fixture(scope="session")
+    def phase(self):
+        a = 5.431
+        latt = Lattice(a, a, a, 90, 90, 90)
+        atom_list = []
+        for coords in [[0, 0, 0], [0.5, 0, 0.5], [0, 0.5, 0.5], [0.5, 0.5, 0]]:
+            x, y, z = coords[0], coords[1], coords[2]
+            atom_list.append(
+                Atom(atype="Si", xyz=[x, y, z], lattice=latt)
+            )  # Motif part A
+            atom_list.append(
+                Atom(atype="Si", xyz=[x + 0.25, y + 0.25, z + 0.25], lattice=latt)
+            )  # Motif part B
+        struct = Structure(atoms=atom_list, lattice=latt)
+        p = Phase(structure=struct, space_group=227)
+        return p
+
     def test_get_sample_fundamental_zone_order(self, C6_sample):
         """Cross check point counts to group order terms."""
         D6_sample = get_sample_fundamental(4, point_group=D6, method="haar_euler")
@@ -200,30 +217,29 @@ class TestSampleFundamental:
             np.abs(rotations.size / rotations6.size) - 6 < 0.1
         )  # about 6 times more rotations
 
+    def test_get_sample_reduced_fundamental_phase(self, phase):
+        rotations = get_sample_reduced_fundamental(resolution=4, phase=phase)
+        rotations2 = get_sample_reduced_fundamental(
+            resolution=4, point_group=phase.point_group
+        )
+        np.testing.assert_allclose(rotations.data, rotations2.data)
+
+    def test_get_sample_fundamental_phase(self, phase):
+        rotations = get_sample_fundamental(resolution=4, phase=phase)
+        rotations2 = get_sample_fundamental(resolution=4, point_group=phase.point_group)
+        np.testing.assert_allclose(rotations.data, rotations2.data)
+
     @pytest.mark.parametrize("density", ("3", "7", "5"))
     @pytest.mark.parametrize("get_directions", (True, False))
-    def test_get_zone_axis(self, density, get_directions):
-        a = 5.431
-        latt = Lattice(a, a, a, 90, 90, 90)
-        atom_list = []
-        for coords in [[0, 0, 0], [0.5, 0, 0.5], [0, 0.5, 0.5], [0.5, 0.5, 0]]:
-            x, y, z = coords[0], coords[1], coords[2]
-            atom_list.append(
-                Atom(atype="Si", xyz=[x, y, z], lattice=latt)
-            )  # Motif part A
-            atom_list.append(
-                Atom(atype="Si", xyz=[x + 0.25, y + 0.25, z + 0.25], lattice=latt)
-            )  # Motif part B
-        struct = Structure(atoms=atom_list, lattice=latt)
-        p = Phase(structure=struct, space_group=227)
+    def test_get_zone_axis(self, density, get_directions, phase):
         if density == "5":
             with pytest.raises(ValueError):
-                get_sample_zone_axis(phase=p, density=density)
+                get_sample_zone_axis(phase=phase, density=density)
         else:
             if get_directions:
                 rot, _ = get_sample_zone_axis(
-                    phase=p, density=density, return_directions=True
+                    phase=phase, density=density, return_directions=True
                 )
             else:
-                rot = get_sample_zone_axis(phase=p, density=density)
+                rot = get_sample_zone_axis(phase=phase, density=density)
             assert isinstance(rot, Rotation)
