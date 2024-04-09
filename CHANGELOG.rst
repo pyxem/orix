@@ -31,10 +31,9 @@ Added
 - The ``random()`` methods of ``Orientation`` and ``Misorientation`` now accept
   ``symmetry``. A ``random()`` method is also added to ``Vector3d`` and ``Miller``, the
   latter accepting a ``phase``.
-- Added ``orix.sampling.get_sample_zone_axis()`` for getting zone axes for some point
-  group.
-- Added ``orix.sampling.get_sample_reduced_fundamental()`` for getting reduced
-  fundamental zone for some point group.
+- Function ``orix.sampling.get_sample_reduced_fundamental()`` for sampling rotations
+  that rotate the Z-vector (0, 0, 1) onto the fundamental sector of the Laue group of a
+  given ``Symmetry``.
 
 Changed
 -------
@@ -43,7 +42,6 @@ Changed
 - Allow passing a tuple of integers to ``reshape()`` methods of 3D objects.
 - ``random()`` methods no longer accept a list as a valid shape: pass a tuple instead.
 - Increase minimal version of Matplotlib to >= 3.5.
-- Updated copyright year to 2024.
 
 Deprecated
 ----------
