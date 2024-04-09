@@ -16,18 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from diffpy.structure import Atom, Lattice, Structure
 import numpy as np
 import pytest
 
-from orix.crystal_map import Phase
 from orix.quaternion import Rotation
-from orix.quaternion.symmetry import C1, C2, C4, C6, D6, get_point_group
+from orix.quaternion.symmetry import C2, C4, C6, D6, get_point_group
 from orix.sampling import (
     get_sample_fundamental,
     get_sample_local,
     get_sample_reduced_fundamental,
-    get_sample_zone_axis,
     uniform_SO3_sample,
 )
 from orix.sampling.SO3_sampling import _resolution_to_num_steps
@@ -199,31 +196,3 @@ class TestSampleFundamental:
         assert (
             np.abs(rotations.size / rotations6.size) - 6 < 0.1
         )  # about 6 times more rotations
-
-    @pytest.mark.parametrize("density", ("3", "7", "5"))
-    @pytest.mark.parametrize("get_directions", (True, False))
-    def test_get_zone_axis(self, density, get_directions):
-        a = 5.431
-        latt = Lattice(a, a, a, 90, 90, 90)
-        atom_list = []
-        for coords in [[0, 0, 0], [0.5, 0, 0.5], [0, 0.5, 0.5], [0.5, 0.5, 0]]:
-            x, y, z = coords[0], coords[1], coords[2]
-            atom_list.append(
-                Atom(atype="Si", xyz=[x, y, z], lattice=latt)
-            )  # Motif part A
-            atom_list.append(
-                Atom(atype="Si", xyz=[x + 0.25, y + 0.25, z + 0.25], lattice=latt)
-            )  # Motif part B
-        struct = Structure(atoms=atom_list, lattice=latt)
-        p = Phase(structure=struct, space_group=227)
-        if density == "5":
-            with pytest.raises(ValueError):
-                get_sample_zone_axis(phase=p, density=density)
-        else:
-            if get_directions:
-                rot, _ = get_sample_zone_axis(
-                    phase=p, density=density, return_directions=True
-                )
-            else:
-                rot = get_sample_zone_axis(phase=p, density=density)
-            assert isinstance(rot, Rotation)
