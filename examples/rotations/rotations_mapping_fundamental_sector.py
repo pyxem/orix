@@ -3,20 +3,20 @@
 Rotations mapping the fundamental sector on *S2*
 ================================================
 
-This example shows how to sample rotations :math:`\mathbf{R}` that when
-rotating the vector :math:`\mathbf{v_z} = (0, 0, 1)`, the resulting
-vectors cover the fundamental sector of a given Laue class.
+This example shows how to sample rotations :math:`\mathbf{R}` that when rotating the
+vector :math:`\mathbf{v_z} = (0, 0, 1)`, the resulting vectors cover the fundamental
+sector of a given Laue class.
 
 We show this by comparing the vectors we get by: 
 
-1. sampling rotations for *4/mmm* and then rotating :math:`\mathbf{v_z}`
-2. sampling all of *S2* but only keeping those within the corresponding
-   fundamental sector.
+1. Sampling rotations for *4/mmm* and then rotating :math:`\mathbf{v_z}`
+2. Sampling all of *S2* but only keeping those within the corresponding fundamental
+   sector.
 
 Apart from the first rotation, all rotations have a Euler angle
 :math:`\phi = 0^{\circ}`.
-These "reduced" rotations are useful in template matching of spot
-patterns from the transmission electron microscope.
+These "reduced" rotations can be useful in template matching of spot patterns from the
+transmission electron microscope.
 """
 
 import matplotlib.pyplot as plt
@@ -46,7 +46,7 @@ print(v1)
 print(v2)
 
 ########################################################################
-# Plot the vectors in the fundamental sector of 4/mmm
+# Plot the vectors in the fundamental sector of Laue group 4/mmm
 fig, (ax0, ax1) = plt.subplots(
     ncols=2, subplot_kw={"projection": "ipf", "symmetry": pg}, layout="tight"
 )
