@@ -6,8 +6,8 @@ Rotating z-vector to high-symmetry crystal directions
 This example shows how to sample high-symmetry crystal directions
 :math:`\mathbf{t} = [u, v, w]` (or zone axes) using
 :meth:`orix.vector.Miller.from_highest_indices`.
-We will also get the rotations :math:`R` rotating :math:`\mathbf{v_z} = (0, 0, 1)` to
-:math:`\mathbf{t}`.
+We will also return the rotations :math:`R` which rotate
+:math:`\mathbf{v_z} = (0, 0, 1)` to :math:`\mathbf{t}`.
 
 We do the following to obtain the high-symmetry crystal directions:
 
