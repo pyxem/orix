@@ -417,7 +417,7 @@ class Symmetry(Rotation):
     def get_highest_order_axis(self) -> Tuple[Vector3d, np.ndarray]:
         axis_orders = self.get_axis_orders()
         if len(axis_orders) == 0:
-            return Vector3d.zvector(), np.infty
+            return Vector3d.zvector(), np.inf
         highest_order = max(axis_orders.values())
         axes = Vector3d.stack(
             [ao for ao in axis_orders if axis_orders[ao] == highest_order]
