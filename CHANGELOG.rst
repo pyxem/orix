@@ -43,6 +43,10 @@ Changed
 - ``random()`` methods no longer accept a list as a valid shape: pass a tuple instead.
 - Increase minimal version of Matplotlib to >= 3.5.
 
+Removed
+-------
+- Support for Python 3.7.
+
 Deprecated
 ----------
 - Creating quaternions from neo-eulerian vectors via ``from_neo_euler()`` is deprecated
