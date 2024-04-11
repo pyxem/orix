@@ -63,7 +63,6 @@ setup(
     long_description_content_type="text/x-rst",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -79,7 +78,7 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     packages=find_packages(exclude=["orix/tests"]),
     extras_require=extra_feature_requirements,
     # fmt: off
