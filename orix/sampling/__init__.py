@@ -33,14 +33,12 @@ from orix.sampling.sample_generators import (
     get_sample_fundamental,
     get_sample_local,
     get_sample_reduced_fundamental,
-    get_sample_zone_axis,
 )
 
 __all__ = [
     "get_sample_fundamental",
     "get_sample_reduced_fundamental",
     "get_sample_local",
-    "get_sample_zone_axis",
     "sample_S2",
     "sample_S2_methods",
     "uniform_SO3_sample",

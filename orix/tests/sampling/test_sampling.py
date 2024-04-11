@@ -16,18 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from diffpy.structure import Atom, Lattice, Structure
 import numpy as np
 import pytest
 
-from orix.crystal_map import Phase
 from orix.quaternion import Rotation
-from orix.quaternion.symmetry import C1, C2, C4, C6, D6, get_point_group
+from orix.quaternion.symmetry import C2, C4, C6, D6, Oh, get_point_group
 from orix.sampling import (
     get_sample_fundamental,
     get_sample_local,
     get_sample_reduced_fundamental,
-    get_sample_zone_axis,
     uniform_SO3_sample,
 )
 from orix.sampling.SO3_sampling import _resolution_to_num_steps
@@ -37,6 +34,7 @@ from orix.sampling._polyhedral_sampling import (
     _get_max_grid_angle,
     _get_start_and_end_index,
 )
+from orix.vector import Vector3d
 
 
 @pytest.fixture(scope="session")
@@ -185,45 +183,34 @@ class TestSampleFundamental:
         assert np.isclose(ratio, 3, atol=0.2)
 
     def test_get_sample_reduced_fundamental(self):
-        rotations = get_sample_reduced_fundamental(resolution=4)
-        rotations2 = get_sample_reduced_fundamental(resolution=4, point_group=C2)
-        rotations4 = get_sample_reduced_fundamental(resolution=4, point_group=C4)
-        rotations6 = get_sample_reduced_fundamental(resolution=4, point_group=C4)
+        vz = Vector3d.zvector()
 
-        assert (
-            np.abs(rotations.size / rotations2.size) - 2 < 0.1
-        )  # about 2 times more rotations
-        assert (
-            np.abs(rotations2.size / rotations4.size) - 2 < 0.1
-        )  # about 2 times more rotations
-        assert (
-            np.abs(rotations.size / rotations6.size) - 6 < 0.1
-        )  # about 6 times more rotations
+        R_C1 = get_sample_reduced_fundamental(resolution=4)
+        v_C1 = R_C1 * vz
+        assert np.allclose(v_C1.mean().data, [0, 0, 0])
 
-    @pytest.mark.parametrize("density", ("3", "7", "5"))
-    @pytest.mark.parametrize("get_directions", (True, False))
-    def test_get_zone_axis(self, density, get_directions):
-        a = 5.431
-        latt = Lattice(a, a, a, 90, 90, 90)
-        atom_list = []
-        for coords in [[0, 0, 0], [0.5, 0, 0.5], [0, 0.5, 0.5], [0.5, 0.5, 0]]:
-            x, y, z = coords[0], coords[1], coords[2]
-            atom_list.append(
-                Atom(atype="Si", xyz=[x, y, z], lattice=latt)
-            )  # Motif part A
-            atom_list.append(
-                Atom(atype="Si", xyz=[x + 0.25, y + 0.25, z + 0.25], lattice=latt)
-            )  # Motif part B
-        struct = Structure(atoms=atom_list, lattice=latt)
-        p = Phase(structure=struct, space_group=227)
-        if density == "5":
-            with pytest.raises(ValueError):
-                get_sample_zone_axis(phase=p, density=density)
-        else:
-            if get_directions:
-                rot, _ = get_sample_zone_axis(
-                    phase=p, density=density, return_directions=True
-                )
-            else:
-                rot = get_sample_zone_axis(phase=p, density=density)
-            assert isinstance(rot, Rotation)
+        R_C4 = get_sample_reduced_fundamental(resolution=4, point_group=C4)
+        v_C4 = R_C4 * vz
+        assert np.all(v_C4 <= C4.fundamental_sector)
+
+        R_C6 = get_sample_reduced_fundamental(resolution=4, point_group=C6)
+        v_C6 = R_C6 * vz
+        assert np.all(v_C6 <= C6.fundamental_sector)
+
+        R_Oh = get_sample_reduced_fundamental(point_group=Oh)
+        v_Oh = R_Oh * vz
+        assert np.all(v_Oh <= Oh.fundamental_sector)
+
+        # Some rotations have a phi1 Euler angle of multiples of pi,
+        # presumably due to rounding errors
+        phi1_C1 = R_C1.to_euler()[:, 0].round(7)
+        assert np.allclose(np.unique(phi1_C1), [0, 2 * np.pi], atol=1e-7)
+        phi1_C4 = R_C4.to_euler()[:, 0].round(7)
+        assert np.allclose(np.unique(phi1_C4), [0, np.pi / 2], atol=1e-7)
+        phi1_C6 = R_C6.to_euler()[:, 0].round(7)
+        assert np.allclose(np.unique(phi1_C6), [0, np.pi / 2], atol=1e-7)
+        phi1_Oh = R_Oh.to_euler()[:, 0].round(7)
+        assert np.allclose(np.unique(phi1_Oh), [0, np.pi / 2], atol=1e-7)
+
+        R_Oh2 = get_sample_reduced_fundamental(point_group=Oh, method="icosahedral")
+        assert R_Oh.size > R_Oh2.size

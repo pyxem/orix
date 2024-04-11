@@ -17,9 +17,10 @@ build:
   apt_packages:
     - imagemagick
 
-# Build doc in all formats (HTML, PDF and ePub)
+# Doc formats
 formats:
-  - pdf
+  - htmlzip
+#  - pdf
 
 conda:
   environment: doc/environment.yml
