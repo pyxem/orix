@@ -33,6 +33,7 @@ def get_sample_fundamental(
     resolution: Union[int, float] = 2,
     point_group: Optional[Symmetry] = None,
     space_group: Optional[int] = None,
+    phase: Optional[Phase] = None,
     method: str = "cubochoric",
     **kwargs
 ) -> Rotation:
@@ -48,6 +49,10 @@ def get_sample_fundamental(
         must be.
     space_group
         Between 1 and 231. Must be given if ``point_group`` is not.
+    phase
+        The phase for which the fundamental zone rotations are sampled.
+        If not given, the point group or space group is used to determine
+        the crystal system.
     method
         ``"cubochoric"`` (default), ``"haar_euler"`` or
         ``"quaternion"``. See :func:`~orix.sampling.uniform_SO3_sample`
@@ -79,6 +84,8 @@ def get_sample_fundamental(
      [ 0.877   0.2884  0.2884  0.2538]
      [ 0.877   0.2774  0.2774  0.2774]]
     """
+    if phase is not None:
+        point_group = phase.point_group
     if point_group is None:
         point_group = get_point_group(space_group, proper=True)
 
@@ -173,6 +180,7 @@ def _remove_larger_than_angle(rot: Rotation, max_angle: Union[int, float]) -> Ro
 def get_sample_reduced_fundamental(
     resolution: float,
     mesh: str = None,
+    phase: Phase = None,
     point_group: Symmetry = None,
 ) -> Rotation:
     """Produces rotations to align various crystallographic directions with
@@ -189,16 +197,23 @@ def get_sample_reduced_fundamental(
         Type of meshing of the sphere that defines how the grid is created. See
         orix.sampling.sample_S2 for all the options. A suitable default is
         chosen depending on the crystal system.
+    phase
+        The phase for which the reduced fundamental zone rotations are
+        sampled. If not given, the point group is used to determine the
+        crystal system.
     point_group
-        Symmetry operations that determines the unique directions. Defaults to
+        Symmetry operations that determines the unique directions. If ``Phase``
+        is given the ``Phase.point_group`` is used instead. Defaults to
         no symmetry, which means sampling all 3D unit vectors.
     Returns
     -------
     Rotation
         (N, 3) array representing Euler angles for the different orientations
     """
-    if point_group is None:
+    if point_group is None and phase is None:
         point_group = symmetry.C1
+    if phase is not None:
+        point_group = phase.point_group
 
     if mesh is None:
         s2_auto_sampling_map = {
