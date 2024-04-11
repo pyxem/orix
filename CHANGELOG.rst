@@ -34,6 +34,9 @@ Added
 - ``Added orix.sampling.get_sample_zone_axis`` for getting zone axes for some point group.
 - ``Added orix.sampling.get_sample_reduced_fundamental`` for getting reduced
   fundamental zone for some point group.
+- Added ``phase`` argument to ``orix.sampling.get_sample_fundamental`` and
+  ``orix.sampling.get_sample_reduced_fundamental`` for passing a
+  phase to the functions rather than a space group or point group.
 
 Changed
 -------
