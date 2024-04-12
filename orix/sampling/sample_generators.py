@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -21,7 +21,8 @@ from typing import Optional, Union
 import numpy as np
 
 from orix.quaternion import OrientationRegion, Rotation, Symmetry
-from orix.quaternion.symmetry import get_point_group
+from orix.quaternion.symmetry import C1, get_point_group
+from orix.sampling import sample_S2
 from orix.sampling.SO3_sampling import _three_uniform_samples_method, uniform_SO3_sample
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
@@ -39,7 +40,7 @@ def get_sample_fundamental(
     ----------
     resolution
         The characteristic distance between a rotation and its neighbour
-        in degrees.
+        in degrees. Default is 2 degrees.
     point_group
         One of the 11 proper point groups. If not given, ``space_group``
         must be.
@@ -103,13 +104,13 @@ def get_sample_local(
     ----------
     resolution
         The characteristic distance between a rotation and its neighbour
-        in degrees.
+        in degrees. Default is 2 degrees.
     center
         The rotation at which the grid is centered. The identity is used
         if not given.
     grid_width
         The largest angle of rotation in degrees away from center that
-        is acceptable.
+        is acceptable. Default is 10 degrees.
     method
         ``"cubochoric"`` (default), ``"haar_euler"`` or
         ``"quaternion"``. See :func:`~orix.sampling.uniform_SO3_sample`
@@ -165,3 +166,61 @@ def _remove_larger_than_angle(rot: Rotation, max_angle: Union[int, float]) -> Ro
     mask = half_angles < half_angle
     rot_out = rot[mask]
     return rot_out
+
+
+def get_sample_reduced_fundamental(
+    resolution: float = 2,
+    method: Optional[str] = None,
+    point_group: Optional[Symmetry] = None,
+) -> Rotation:
+    r"""Return a grid of rotations that rotate the Z-vector (0, 0, 1)
+    into the fundamental sector of a point group's Laue group.
+
+    The rotations are constrained in that the first Euler angle is
+    :math:`\phi_1 = 0^{\circ}`.
+
+    Parameters
+    ----------
+    resolution
+        The characteristic distance between a rotation and its neighbour
+        in degrees. Default is 2 degrees.
+    method
+        Name of method to mesh the unit sphere. See
+        :func:`orix.sampling.sample_S2` for options. If not given, a
+        suitable default is chosen given by the crystal system of the
+        given point group.
+    point_group
+        Point group with symmetry operations that define the
+        :attr:`~orix.quaternion.symmetry.Symmetry.fundamental_sector`
+        on the unit sphere. If not given, rotations that rotate the
+        Z-vector onto the whole sphere are returned.
+
+    Returns
+    -------
+    R
+        Rotations of shape ``(n, 3)``.
+    """
+    if point_group is None:
+        point_group = C1
+
+    if method is None:
+        sampling_method = {
+            "triclinic": "icosahedral",
+            "monoclinic": "icosahedral",
+            "orthorhombic": "spherified_cube_edge",
+            "tetragonal": "spherified_cube_edge",
+            "cubic": "spherified_cube_edge",
+            "trigonal": "hexagonal",
+            "hexagonal": "hexagonal",
+        }
+        method = sampling_method[point_group.system]
+
+    v = sample_S2(resolution, method=method)
+    v_fs = v[v <= point_group.fundamental_sector]
+
+    phi = v_fs.polar
+    phi2 = (np.pi / 2 - v_fs.azimuth) % (2 * np.pi)
+    phi1 = np.zeros(phi2.shape[0])
+    euler = np.vstack([phi1, phi, phi2]).T
+
+    return Rotation.from_euler(euler, degrees=False)

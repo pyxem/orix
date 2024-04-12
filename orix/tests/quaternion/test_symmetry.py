@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -912,7 +912,7 @@ class TestEulerFundamentalRegion:
         # fmt: on
 
         # Unknown symmetry
-        unrecognized_symmetry = Symmetry.random((4,))
+        unrecognized_symmetry = Symmetry.random(4)
         assert np.allclose(
             unrecognized_symmetry.euler_fundamental_region, (360, 180, 360)
         )
@@ -937,7 +937,7 @@ class TestEulerFundamentalRegion:
         for pg in [C6, D6]:
             assert pg._primary_axis_order == 6
 
-        unrecognized_symmetry = Symmetry.random((4,))
+        unrecognized_symmetry = Symmetry.random(4)
         assert unrecognized_symmetry._primary_axis_order is None
 
         # All point groups provide an order
@@ -978,7 +978,7 @@ class TestEulerFundamentalRegion:
             ),
         )
 
-        unrecognized_symmetry = Symmetry.random((4,))
+        unrecognized_symmetry = Symmetry.random(4)
         assert np.allclose(unrecognized_symmetry._special_rotation.data, (1, 0, 0, 0))
 
         # All point groups provide at least one rotation

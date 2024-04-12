@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -181,7 +181,7 @@ class EMsoftH5ebsdFile(H5ebsdFile):
                 prop = dd[property_name]
                 if prop.shape[-1] == n_top_matches and np.prod(prop.shape) > map_size:
                     # Not a refined dot product file
-                    prop = prop[:map_size].reshape((map_size, n_top_matches))
+                    prop = prop[:map_size].reshape(map_size, n_top_matches)
                 else:
                     # Refined dot product file
                     prop = prop.reshape(map_size)

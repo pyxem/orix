@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -18,14 +18,8 @@
 
 """Four-dimensional objects.
 
-In a simplified sense, quaternions are an extension of the concept of complex
-numbers, represented by :math:`a + bi + cj + dk` where :math:`i`, :math:`j`, and
-:math:`k` are quaternion units and :math:`i^2 = j^2 = k^2 = ijk = -1`. For
-further reference see
-`the Wikipedia article <https://en.wikipedia.org/wiki/Quaternion>`_.
-
-Unit quaternions are efficient objects for representing rotations, and hence
-orientations.
+Unit quaternions are efficient objects for representing rotations, and
+hence orientations.
 """
 
 from orix.quaternion.quaternion import Quaternion  # isort: skip
@@ -34,7 +28,6 @@ from orix.quaternion.orientation_region import OrientationRegion, get_proper_gro
 from orix.quaternion.rotation import Rotation, von_mises
 from orix.quaternion.symmetry import Symmetry, get_distinguished_points, get_point_group
 
-# Lists what will be imported when calling "from orix.quaternion import *"
 __all__ = [
     "Quaternion",
     "Rotation",

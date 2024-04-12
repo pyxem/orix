@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -415,6 +415,32 @@ class TestMisorientation:
         with pytest.raises(TypeError, match="Value must be a 2-tuple of"):
             _ = Misorientation.from_scipy_rotation(r_scipy, Oh)
 
+    def test_inverse(self):
+        M1 = Misorientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], (Oh, D6))
+        M2 = ~M1
+        assert M1.symmetry == M2.symmetry[::-1]
+        assert np.allclose(M2.data, [np.sqrt(2) / 2, -np.sqrt(2) / 2, 0, 0])
+
+        M3 = M1.inv()
+        assert M3 == M2
+
+        v = Vector3d.yvector()
+        v1 = M1 * v
+        v2 = M2 * -v
+        assert np.allclose(v1.data, [0, 0, 1])
+        assert np.allclose(v2.data, [0, 0, 1])
+
+    def test_random(self):
+        M1 = Misorientation.random()
+        assert M1.symmetry == (C1, C1)
+
+        shape = (2, 3)
+        M2 = Misorientation.random(shape)
+        assert M2.shape == shape
+
+        M3 = Misorientation.random(symmetry=(Oh, D6))
+        assert M3.symmetry == (Oh, D6)
+
 
 def test_orientation_equality():
     # symmetries must also be the same to be equal
@@ -426,7 +452,7 @@ def test_orientation_equality():
     assert o1 == o2
     o2.symmetry = C3
     assert o1 != o2
-    o3 = Orientation.random((6,))
+    o3 = Orientation.random(6)
     assert o1 != o3
     o3.symmetry = o1.symmetry
     assert o1 != o3
@@ -455,13 +481,13 @@ class TestOrientationInitialization:
         )
         o1 = Orientation.from_matrix(om)
         assert np.allclose(
-            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape((4, 4))
+            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape(4, 4)
         )
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_matrix(om, symmetry=Oh)
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(
-            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape((4, 4))
+            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4)
         )
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
@@ -498,10 +524,12 @@ class TestOrientationInitialization:
 
     def test_from_neo_euler_symmetry(self):
         v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
-        o1 = Orientation.from_neo_euler(v)
+        with pytest.warns(np.VisibleDeprecationWarning):
+            o1 = Orientation.from_neo_euler(v)
         assert np.allclose(o1.data, [0.7071, 0, 0, 0.7071])
         assert o1.symmetry.name == "1"
-        o2 = Orientation.from_neo_euler(v, symmetry=Oh)
+        with pytest.warns(np.VisibleDeprecationWarning):
+            o2 = Orientation.from_neo_euler(v, symmetry=Oh)
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(o2.data, [-1, 0, 0, 0])
         assert o2.symmetry.name == "m-3m"
@@ -512,16 +540,14 @@ class TestOrientationInitialization:
     def test_from_axes_angles(self, rotations):
         axis = Vector3d.xvector() - Vector3d.yvector()
         angle = np.pi / 2
-        axangle = AxAngle.from_axes_angles(axis, angle)
-        o1 = Orientation.from_neo_euler(axangle, Oh)
-        o2 = Orientation.from_axes_angles(axis, angle, Oh)
+        o1 = Orientation.from_axes_angles(axis, angle, Oh)
         assert np.allclose(o1.to_euler(degrees=True), [135, 90, 225])
+        assert o1.symmetry.name == "m-3m"
+        deg_angle = np.rad2deg(angle)
+        o2 = Orientation.from_axes_angles(axis, deg_angle, Oh, degrees=True)
         assert np.allclose(o1.data, o2.data)
         assert o1.symmetry.name == o2.symmetry.name == "m-3m"
         assert np.allclose(o1.symmetry.data, o2.symmetry.data)
-
-        o3 = Orientation.from_axes_angles(axis, np.rad2deg(angle), Oh, degrees=True)
-        assert np.allclose(o2.data, o3.data)
 
     def test_get_identity(self):
         """Get the identity orientation via two alternative routes."""
@@ -561,7 +587,7 @@ class TestOrientationInitialization:
         with pytest.raises(TypeError, match="Value must be an instance of"):
             _ = Orientation.from_scipy_rotation(r_scipy, (Oh, Oh))
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_from_euler_warns(self):
         """Orientation.from_euler() warns only once when "convention"
         argument is passed.
@@ -573,7 +599,7 @@ class TestOrientationInitialization:
             _ = Orientation.from_euler(euler)
 
         msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"Argument `convention` is deprecated and will be removed in version 0.13. "
             r"To avoid this warning, please do not use `convention`. "
             r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
             "more details."
@@ -582,7 +608,7 @@ class TestOrientationInitialization:
             _ = Orientation.from_euler(euler, convention="whatever")
         assert len(record2) == 1
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_from_euler_convention_mtex(self):
         """Passing convention="mtex" to Orientation.from_euler() works
         but warns once.
@@ -593,7 +619,7 @@ class TestOrientationInitialization:
             ori2 = Orientation.from_euler(euler, convention="mtex")
         assert np.allclose(ori1.data, ori2.data)
 
-    # TODO: Remove in 1.0
+    # TODO: Remove in 0.13
     def test_to_euler_convention_warns(self):
         """Orientation.to_euler() warns only once when "convention"
         argument is passed.
@@ -605,7 +631,7 @@ class TestOrientationInitialization:
             ori2 = ori1.to_euler()
 
         msg = (
-            r"Argument `convention` is deprecated and will be removed in version 1.0. "
+            r"Argument `convention` is deprecated and will be removed in version 0.13. "
             r"To avoid this warning, please do not use `convention`. "
             r"See the documentation of `to_euler\(\)` for more details."
         )
@@ -657,7 +683,7 @@ class TestOrientation:
         assert np.allclose(dist, awo_self)
         assert np.allclose(np.diag(awo_self), 0, atol=1e-6)
 
-        o2 = Orientation.random((6,))
+        o2 = Orientation.random(6)
         dist = o.angle_with_outer(o2)
         assert dist.shape == o.shape + o2.shape
 
@@ -821,3 +847,29 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+
+    def test_inverse(self):
+        O1 = Orientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], D6)
+        O2 = ~O1
+        assert O1.symmetry == O2.symmetry
+        assert np.allclose(O2.data, [np.sqrt(2) / 2, -np.sqrt(2) / 2, 0, 0])
+
+        O3 = O1.inv()
+        assert O3 == O2
+
+        v = Vector3d.yvector()
+        v1 = O1 * v
+        v2 = O2 * -v
+        assert np.allclose(v1.data, [0, 0, 1])
+        assert np.allclose(v2.data, [0, 0, 1])
+
+    def test_random(self):
+        O1 = Orientation.random()
+        assert O1.symmetry == C1
+
+        shape = (2, 3)
+        O2 = Orientation.random(shape)
+        assert O2.shape == shape
+
+        O3 = Orientation.random(symmetry=Oh)
+        assert O3.symmetry == Oh

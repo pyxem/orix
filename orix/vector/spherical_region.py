@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,34 +16,32 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Vectors describing a segment of a sphere.
-
-Each entry represents a plane normal in 3-d. Vectors can lie in, on, or outside
-the spherical region.
-
-.. image:: /_static/img/spherical-region-D3.png
-   :width: 200px
-   :alt: Representation of the planes comprising a spherical region.
-   :align: center
-
-Examples
---------
->>> from orix.vector import SphericalRegion, Vector3d
->>> sr = SphericalRegion([0, 0, 1])  # Region above the x-y plane
->>> v = Vector3d([(0, 0, 1), (0, 0, -1), (1, 0, 0)])
->>> v < sr
-array([ True, False, False])
->>> v <= sr
-array([ True, False,  True])
-"""
-
 import numpy as np
 
 from orix.vector import Vector3d
 
 
 class SphericalRegion(Vector3d):
-    """A set of vectors representing normals segmenting a sphere."""
+    """Normals segmenting a sphere.
+
+    Each entry represents a plane normal in 3D. Vectors can lie in, on,
+    or outside the spherical region.
+
+    .. image:: /_static/img/spherical-region-D3.png
+       :width: 200px
+       :alt: Representation of the planes comprising a spherical region.
+       :align: center
+
+    Examples
+    --------
+    >>> from orix.vector import SphericalRegion, Vector3d
+    >>> sr = SphericalRegion([0, 0, 1])  # Region above the x-y plane
+    >>> v = Vector3d([(0, 0, 1), (0, 0, -1), (1, 0, 0)])
+    >>> v < sr
+    array([ True, False, False])
+    >>> v <= sr
+    array([ True, False,  True])
+    """
 
     def __gt__(self, x: Vector3d) -> np.ndarray:
         """Returns True where x is strictly inside the region.

@@ -1,9 +1,10 @@
-"""
+r"""
 ========================
 Plot symmetry operations
 ========================
 
-This example shows how to draw symmetry operations of proper rotations.
+This example shows how to draw proper symmetry operations :math:`s`
+(no reflections or inversions).
 """
 
 import matplotlib.pyplot as plt
@@ -12,7 +13,11 @@ from orix import plot
 from orix.vector import Vector3d
 
 marker_size = 200
-fig, (ax0, ax1) = plt.subplots(ncols=2, subplot_kw=dict(projection="stereographic"))
+fig, (ax0, ax1) = plt.subplots(
+    ncols=2,
+    subplot_kw={"projection": "stereographic"},
+    layout="tight",
+)
 
 ax0.set_title("432", pad=20)
 # 4-fold (outer markers will be clipped a bit...)
@@ -46,5 +51,3 @@ ax1.set_title("222", pad=20)
 v2fold = Vector3d([[0, 0, 1], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
 ax1.symmetry_marker(v2fold, fold=2, c="C2", s=2 * marker_size)
 ax1.draw_circle(v2fold, color="C2")
-
-fig.tight_layout()

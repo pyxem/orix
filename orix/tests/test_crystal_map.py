@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -264,7 +264,7 @@ class TestCrystalMap:
         desired_size = np.prod(shape)
         assert np.allclose(
             xmap.rotations.data,
-            np.array([1, 0, 0, 0] * desired_size).reshape((desired_size, 4)),
+            np.array([1, 0, 0, 0] * desired_size).reshape(desired_size, 4),
         )
         assert xmap.shape == shape
         for i in ["y", "x"]:
@@ -751,7 +751,7 @@ class TestCrystalMapGetMapData:
             (
                 ((4, 4), (0.5, 1), 2, [0]),
                 "x",
-                np.array([0, 1, 2, 3] * 4).reshape((4, 4)),
+                np.array([0, 1, 2, 3] * 4).reshape(4, 4),
             ),
             (
                 ((4, 4), (0.5, 1), 2, [0]),
@@ -856,14 +856,14 @@ class TestCrystalMapGetMapData:
 
         new_shape = xmap.shape + (3,)
         if xmap.rotations_per_point > 1:
-            expected_array = xmap.rotations[:, 0].to_euler().reshape(*new_shape)
+            expected_array = xmap.rotations[:, 0].to_euler().reshape(new_shape)
         else:
-            expected_array = xmap.rotations.to_euler().reshape(*new_shape)
+            expected_array = xmap.rotations.to_euler().reshape(new_shape)
         assert np.allclose(r, expected_array, atol=1e-3)
 
         # Get with array (RGB)
         new_shape2 = (xmap.size, 3)
-        r2 = xmap.get_map_data(r.reshape(*new_shape2))
+        r2 = xmap.get_map_data(r.reshape(new_shape2))
         assert np.allclose(r2, expected_array, atol=1e-3)
 
     @pytest.mark.parametrize(

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,16 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Helper functions and classes for managing orix.
-
-This module and documentation is only relevant for orix developers, not
-for users.
-
-.. warning:
-    This module and its submodules are for internal use only.  Do not
-    use them in your own code. We may change the API at any time with no
-    warning.
-"""
+"""Helper functions and classes for managing orix."""
 
 
 import functools

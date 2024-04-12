@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 import warnings
 
 import dask.array as da
@@ -27,49 +27,100 @@ import numpy as np
 import quaternion
 from scipy.spatial.transform import Rotation as SciPyRotation
 
-from orix._util import deprecated_argument
-from orix.base import Object3d
-from orix.vector import AxAngle, Miller, Vector3d
+from orix._base import Object3d
+from orix._util import deprecated, deprecated_argument
+from orix.quaternion import _conversions
+from orix.vector import AxAngle, Homochoric, Miller, Rodrigues, Vector3d
 
 # Used to round values below 1e-16 to zero
 _FLOAT_EPS = np.finfo(float).eps
 
 
 class Quaternion(Object3d):
-    r"""Basic quaternion object.
+    r"""Quaternions.
 
     Quaternions support the following mathematical operations:
-        - Unary negation.
-        - Inversion.
-        - Multiplication with other quaternions and vectors.
 
-    Quaternion-quaternion multiplication for two quaternions
-    :math:`q_1 = (a_1, b_1, c_1, d_1)`
-    and :math:`q_2 = (a_2, b_2, c_2, d_2)`
-    with :math:`q_3 = (a_3, b_3, c_3, d_3) = q_1 \cdot q_2` follows as:
+    * Unary negation.
+    * Inversion (conjugation).
+    * Normalization to obtain unit quaternions.
+    * Multiplication with other quaternions and vectors.
 
-    .. math::
-       a_3 = (a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2)
-
-       b_3 = (a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2)
-
-       c_3 = (a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2)
-
-       d_3 = (a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2)
-
-    Quaternion-vector multiplication with a three-dimensional vector
-    :math:`v = (x, y, z)` calculates a rotated vector
-    :math:`v' = q \cdot v \cdot q^{-1}` and follows as:
+    A quaternion :math:`Q` is defined as a four-component number of the
+    form :math:`Q = a + ib + jc + kd`, where the imaginary units
+    :math:`(i, j, k)` satisfy the following relations:
 
     .. math::
-       v'_x = x(a^2 + b^2 - c^2 - d^2) + 2(z(a \cdot c + b \cdot d) + y(b \cdot c - a \cdot d))
 
-       v'_y = y(a^2 - b^2 + c^2 - d^2) + 2(x(a \cdot d + b \cdot c) + z(c \cdot d - a \cdot b))
+        i^2 = j^2 = k^2 = -1;
 
-       v'_z = z(a^2 - b^2 - c^2 + d^2) + 2(y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c))
+        ij = -ji = k; jk = -kj = i; ki = -ik = j.
+
+    In orix, quaternions are stored with the scalar part first followed
+    by the vector part, denoted :math:`Q = (a, b, c, d)`.
+
+    Multiplication of two quaternions :math:`Q_1 = (a_1, b_1, c_1, d_1)`
+    and :math:`Q_2 = (a_2, b_2, c_2, d_2)` with
+    :math:`Q_3 = q1 \cdot q2 = (a_3, b_3, c_3, d_3)` is performed as:
+
+    .. math::
+
+        a_3 = a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2
+
+        b_3 = a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2
+
+        c_3 = a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2
+
+        d_3 = a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2
+
+    Rotation of a 3D vector :math:`v = (x, y, z)` by a quaternion is
+    performed as :math:`v' = Q \cdot v \cdot Q^{-1}`. Written out:
+
+    .. math::
+
+        v'_x = x(a^2 + b^2 - c^2 - d^2) + 2[z(a \cdot c + b \cdot d) + y(b \cdot c - a \cdot d)]
+
+        v'_y = y(a^2 - b^2 + c^2 - d^2) + 2[x(a \cdot d + b \cdot c) + z(c \cdot d - a \cdot b)]
+
+        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2[y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c)]
+
+    The norm of a quaternion is defined as
+
+    .. math::
+
+        |Q| = \sqrt{a^2 + b^2 + c^2 + d^2}.
+
+    Unit quaternions have a norm of :math:`|Q| = 1` and can always be written on the
+    form
+
+    .. math::
+
+        Q = \cos\frac{\omega}{2} + \sin\frac{\omega}{2}(bi + cj + dk),
+
+    where :math:`(b, c, d)` are the direction cosines of the rotation
+    axis unit vector :math:`\hat{\mathbf{n}}`. The scalar part
+    :math:`a = \cos\frac{\omega}{2}` will always be positive or 0 for
+    rotations with rotation angle :math:`\omega = \pi`.
+
+    Conventions:
+
+    1. Right-handed Cartesian reference frames.
+    2. Rotation angles :math:`\omega` are taken to be positive for a
+       counter-clockwise rotation when viewing from the end point of the
+       rotation axis unit vector :math:`\hat{\mathbf{n}}` towards the
+       origin.
+    3. Rotations are *interpreted* in the passive sense. This means that
+       rotations are interpreted as basis transformations of reference
+       frames, with vectors fixed in space.
+    4. Euler angle triplets are implemented using the Bunge convention,
+       with angular ranges as :math:`[0, 2\pi]`, :math:`[0, \pi]`, and
+       :math:`[0, 2\pi]`.
+    5. Rotation angles :math:`\omega` are limited to :math:`[0, \pi]`.
     """
 
     dim = 4
+
+    # -------------------------- Properties -------------------------- #
 
     @property
     def a(self) -> np.ndarray:
@@ -136,33 +187,53 @@ class Quaternion(Object3d):
         self.data[..., 3] = value
 
     @property
+    def axis(self) -> Vector3d:
+        r"""Return the axis of rotation
+        :math:`\hat{\mathbf{n}} = (b, c, d)`.
+        """
+        axis = Vector3d(np.stack((self.b, self.c, self.d), axis=-1))
+        a_is_zero = self.a < -1e-6
+        axis[a_is_zero] = -axis[a_is_zero]
+        norm_is_zero = axis.norm == 0
+        axis[norm_is_zero] = Vector3d.zvector() * np.sign(self.a[norm_is_zero])
+        axis.data /= axis.norm[..., np.newaxis]
+        return axis
+
+    @property
+    def angle(self) -> np.ndarray:
+        r"""Return the angle of rotation :math:`\omega = 2\arccos{|a|}`."""
+        return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
+
+    @property
     def antipodal(self) -> Quaternion:
-        """Return the quaternions and the antipodal ones."""
+        """Return the quaternion and its antipodal."""
         return self.__class__(np.stack([self.data, -self.data]))
 
     @property
     def conj(self) -> Quaternion:
-        r"""Return the conjugate of this quaternion
-        :math:`q^* = a - bi - cj - dk`.
+        r"""Return the conjugate of the quaternion
+        :math:`Q^* = a - bi - cj - dk`.
         """
-        q = quaternion.from_float_array(self.data).conj()
-        return Quaternion(quaternion.as_float_array(q))
+        Q = quaternion.from_float_array(self.data).conj()
+        return self.__class__(quaternion.as_float_array(Q))
+
+    # ------------------------ Dunder methods ------------------------ #
 
     def __invert__(self) -> Quaternion:
         return self.__class__(self.conj.data / (self.norm**2)[..., np.newaxis])
 
     def __mul__(self, other: Union[Quaternion, Vector3d]):
         if isinstance(other, Quaternion):
-            q1 = quaternion.from_float_array(self.data)
-            q2 = quaternion.from_float_array(other.data)
-            return other.__class__(quaternion.as_float_array(q1 * q2))
+            Q1 = quaternion.from_float_array(self.data)
+            Q2 = quaternion.from_float_array(other.data)
+            return other.__class__(quaternion.as_float_array(Q1 * Q2))
         elif isinstance(other, Vector3d):
             # check broadcast shape is correct before calculation, as
             # quaternion.rotat_vectors will perform outer product
             # this keeps current __mul__ broadcast behaviour
-            q1 = quaternion.from_float_array(self.data)
+            Q1 = quaternion.from_float_array(self.data)
             v = quaternion.as_vector_part(
-                (q1 * quaternion.from_vector_part(other.data)) * ~q1
+                (Q1 * quaternion.from_vector_part(other.data)) * ~Q1
             )
             if isinstance(other, Miller):
                 m = other.__class__(xyz=v, phase=other.phase)
@@ -175,65 +246,22 @@ class Quaternion(Object3d):
     def __neg__(self) -> Quaternion:
         return self.__class__(-self.data)
 
+    def __eq__(self, other: Union[Any, Quaternion]) -> bool:
+        """Check if quaternions have equal shapes and values."""
+        if (
+            isinstance(other, Quaternion)
+            and self.shape == other.shape
+            and np.allclose(self.data, other.data)
+        ):
+            return True
+        else:
+            return False
+
+    # ------------------------ Class methods ------------------------- #
+
+    # TODO: Remove before 0.13.0
     @classmethod
-    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
-        """Pointwise cross product of three quaternions.
-
-        Parameters
-        ----------
-        q1
-            First quaternions.
-        q2
-            Second quaternions.
-        q3
-            Third quaternions.
-
-        Returns
-        -------
-        q
-            Quaternions resulting from the triple cross product.
-        """
-        q1a, q1b, q1c, q1d = q1.a, q1.b, q1.c, q1.d
-        q2a, q2b, q2c, q2d = q2.a, q2.b, q2.c, q2.d
-        q3a, q3b, q3c, q3d = q3.a, q3.b, q3.c, q3.d
-        # fmt: off
-        a = (
-            + q1b * q2c * q3d
-            - q1b * q3c * q2d
-            - q2b * q1c * q3d
-            + q2b * q3c * q1d
-            + q3b * q1c * q2d
-            - q3b * q2c * q1d
-        )
-        b = (
-            + q1a * q3c * q2d
-            - q1a * q2c * q3d
-            + q2a * q1c * q3d
-            - q2a * q3c * q1d
-            - q3a * q1c * q2d
-            + q3a * q2c * q1d
-        )
-        c = (
-            + q1a * q2b * q3d
-            - q1a * q3b * q2d
-            - q2a * q1b * q3d
-            + q2a * q3b * q1d
-            + q3a * q1b * q2d
-            - q3a * q2b * q1d
-        )
-        d = (
-            + q1a * q3b * q2c
-            - q1a * q2b * q3c
-            + q2a * q1b * q3c
-            - q2a * q3b * q1c
-            - q3a * q1b * q2c
-            + q3a * q2b * q1c
-        )
-        # fmt: on
-        q = cls(np.vstack((a, b, c, d)).T)
-        return q
-
-    @classmethod
+    @deprecated(since="0.12", removal="0.13", alternative="from_axes_angles")
     def from_neo_euler(cls, neo_euler: "NeoEuler") -> Quaternion:
         """Create unit quaternion(s) from a neo-euler (vector)
         representation.
@@ -245,7 +273,7 @@ class Quaternion(Object3d):
 
         Returns
         -------
-        q
+        Q
             Unit quaternion(s).
         """
         s = np.sin(neo_euler.angle / 2)
@@ -253,8 +281,8 @@ class Quaternion(Object3d):
         b = s * neo_euler.axis.x
         c = s * neo_euler.axis.y
         d = s * neo_euler.axis.z
-        q = cls(np.stack([a, b, c, d], axis=-1)).unit
-        return q
+        Q = cls(np.stack([a, b, c, d], axis=-1)).unit
+        return Q
 
     @classmethod
     def from_axes_angles(
@@ -263,43 +291,203 @@ class Quaternion(Object3d):
         angles: Union[np.ndarray, tuple, list, float],
         degrees: bool = False,
     ) -> Quaternion:
-        """Initialize from axis-angle pair(s).
+        r"""Create unit quaternions from axis-angle pairs
+        :math:`(\hat{\mathbf{n}}, \omega)`
+        :cite:`rowenhorst2015consistent`.
 
         Parameters
         ----------
         axes
-            Axes of rotation.
+            Axes of rotation :math:`\hat{\mathbf{n}}`.
         angles
-            Angles of rotation in radians (``degrees=False``) or degrees
-            (``degrees=True``).
+            Angles of rotation :math:`\omega` in radians
+            (``degrees=False``) or degrees (``degrees=True``).
         degrees
             If ``True``, the given angles are assumed to be in degrees.
             Default is ``False``.
 
         Returns
         -------
-        q
+        Q
             Unit quaternions.
 
         Examples
         --------
         >>> from orix.quaternion import Quaternion
-        >>> q = Quaternion.from_axes_angles((0, 0, -1), 90, degrees=True)
-        >>> q
+        >>> Q = Quaternion.from_axes_angles((0, 0, -1), 90, degrees=True)
+        >>> Q
         Quaternion (1,)
         [[ 0.7071  0.      0.     -0.7071]]
 
         See Also
         --------
-        from_neo_euler
+        from_rodrigues, from_homochoric
         """
-        axangle = AxAngle.from_axes_angles(axes, angles, degrees)
-        q = cls.from_neo_euler(axangle).unit
-        return q
+        if np.size(axes) == 0:
+            return cls.empty()
 
-    # TODO: Remove decorator, **kwargs, and use of "convention" in 1.0
+        axes = Vector3d(axes).unit.data
+        angles = np.array(angles)
+        if degrees:
+            angles = np.deg2rad(angles)
+
+        Q = _conversions.ax2qu(axes, angles)
+        Q = cls(Q)
+        Q = Q.unit
+
+        return Q
+
     @classmethod
-    @deprecated_argument("convention", "0.9", "1.0", "direction")
+    def from_homochoric(
+        cls,
+        ho: Union[Vector3d, Homochoric, np.ndarray, tuple, list],
+    ) -> Quaternion:
+        r"""Create unit quaternions from homochoric vectors
+        :math:`\mathbf{h}` :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        ho
+            Homochoric vectors parallel to the axes of rotation with
+            lengths equal to
+            :math:`\left[\frac{3}{4}\cdot(\omega - \sin\omega)\right]^{1/3}`,
+            where :math:`\omega` is the angle of rotation.
+
+        Returns
+        -------
+        Q
+            Unit quaternions.
+
+        See Also
+        --------
+        from_axes_angles, from_rodrigues
+        """
+        if np.size(ho) == 0:
+            return cls.empty()
+
+        if isinstance(ho, Vector3d):
+            ho = ho.data
+        else:
+            ho = np.atleast_2d(ho)
+            if ho.shape[-1] != 3:
+                raise ValueError("Final dimension of vector array must be 3.")
+
+        shape = ho.shape[:-1]
+        ho = ho.reshape(-1, 3)
+
+        ax = _conversions.ho2ax(ho)
+        Q = _conversions.ax2qu(ax[:, :3], ax[:, 3])
+        Q = Q.reshape(*shape, 4)
+        Q = cls(Q)
+        Q = Q.unit
+
+        return Q
+
+    @classmethod
+    def from_rodrigues(
+        cls,
+        ro: Union[np.ndarray, Vector3d, tuple, list],
+        angles: Union[np.ndarray, tuple, list, float, None] = None,
+    ) -> Quaternion:
+        r"""Create unit quaternions from three-component Rodrigues
+        vectors :math:`\hat{\mathbf{n}}` or four-component
+        Rodrigues-Frank vectors :math:`\mathbf{\rho}`
+        :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        ro
+            Rodrigues vectors :math:`\hat{\mathbf{n}}` of three
+            components. These are the components of the Rodrigues-Frank
+            vectors :math:`\mathbf{\rho}` if the angles :math:`\omega`
+            are passed.
+        angles
+            Angles :math:`\omega` of the Rodrigues-Frank vectors
+            :math:`\mathbf{\rho}`, one per vector. If these are not
+            passed, ``ro`` are the Rodrigues vectors
+            :math:`\hat{\mathbf{n}}`.
+
+        Returns
+        -------
+        Q
+            Unit quaternions.
+
+        See Also
+        --------
+        from_axes_angles, from_homochoric
+
+        Notes
+        -----
+        The Rodrigues-Frank vector :math:`\mathbf{\rho}` is defined as
+
+        .. math::
+
+            \mathbf{\rho} = \hat{\mathbf{n}}\tan\frac{\omega}{2}.
+
+        If the vector length is :math:`\rho = |\mathbf{\rho}|`, the
+        angle is given by
+
+        .. math::
+
+            \omega = 2\arctan\rho.
+
+        O. Rodrigues's 1840 vector description was popularized by F. C.
+        Frank due to its useful rectilinear mapping of fundamental
+        zones, as is well-demonstrated in :cite:`frank1988orientation`.
+        However, the length of these vectors, and thus their accuracy,
+        scales with :math:`\tan\omega/2`. Additionally, two-fold
+        rotations produce vectors of infinite length. Thus, Frank and
+        others introduced the Rodrigues-Frank vector of length 4,
+        consisting of a unit vector followed by the scaling factor
+        :math:`\tan\omega/2`. This is better suited for storing data
+        or performing rotation calculations, as discussed in
+        :cite:`rowenhorst2015consistent`.
+        """
+        if np.size(ro) == 0:
+            return cls.empty()
+
+        if isinstance(ro, Vector3d):
+            ro = ro.data
+        else:
+            ro = np.atleast_2d(ro)
+            if ro.shape[-1] != 3:
+                raise ValueError("Final dimension of vector array must be 3.")
+
+        shape = ro.shape[:-1]
+        ro = ro.reshape(-1, 3)
+
+        if angles is None:
+            norm = Vector3d(ro).norm
+            if np.min(norm) < np.finfo(norm.dtype).resolution * 1000:
+                warnings.warn(
+                    "Max. estimated error is greater than 0.1%. Rodrigues vectors have "
+                    "increasing associated errors for small angle rotations. Consider "
+                    "creating quaternions in another way."
+                )
+            angles = 2 * np.arctan(norm)
+            angles = angles[:, np.newaxis]
+            ax = np.hstack((ro, angles))
+        else:
+            angles = angles.ravel()[:, np.newaxis]
+            ro_axes_angles = np.hstack((ro, angles))
+            ax = _conversions.ro2ax(ro_axes_angles)
+
+        if np.rad2deg(np.max(angles)) > 179.999:
+            warnings.warn(
+                "Highest angle is greater than 179.999 degrees. Rodrigues vectors "
+                "cannot parametrize 2-fold rotations. Consider creating quaternions"
+                " in another way."
+            )
+
+        Q = cls.from_axes_angles(ax[:, :3], ax[:, 3])
+        Q = Q.reshape(*shape)
+        Q = Q.unit
+
+        return Q
+
+    # TODO: Remove decorator, **kwargs, and use of "convention" in 0.13
+    @classmethod
+    @deprecated_argument("convention", "0.9", "0.13", "direction")
     def from_euler(
         cls,
         euler: Union[np.ndarray, tuple, list],
@@ -307,7 +495,7 @@ class Quaternion(Object3d):
         degrees: bool = False,
         **kwargs,
     ) -> Quaternion:
-        """Initialize from Euler angle set(s)
+        """Create unit quaternions from Euler angle sets
         :cite:`rowenhorst2015consistent`.
 
         Parameters
@@ -325,7 +513,7 @@ class Quaternion(Object3d):
 
         Returns
         -------
-        q
+        Q
             Unit quaternions.
         """
         direction = direction.lower()
@@ -349,40 +537,21 @@ class Quaternion(Object3d):
         if degrees:
             euler = np.deg2rad(euler)
 
-        eu = np.asarray(euler)
+        eu = np.atleast_2d(euler)
         if np.any(np.abs(eu) > 4 * np.pi):
             warnings.warn("Angles are quite high, did you forget to set degrees=True?")
 
-        n = eu.shape[:-1]
-        alpha, beta, gamma = eu[..., 0], eu[..., 1], eu[..., 2]
-
-        # Uses A.5 & A.6 from Modelling Simul. Mater. Sci. Eng. 23
-        # (2015) 083501
-        sigma = 0.5 * np.add(alpha, gamma)
-        delta = 0.5 * np.subtract(alpha, gamma)
-        c = np.cos(beta / 2)
-        s = np.sin(beta / 2)
-
-        # Using P = 1 from A.6
-        q = np.zeros(n + (4,))
-        q[..., 0] = c * np.cos(sigma)
-        q[..., 1] = -s * np.cos(delta)
-        q[..., 2] = -s * np.sin(delta)
-        q[..., 3] = -c * np.sin(sigma)
-
-        for i in [1, 2, 3, 0]:  # Flip the zero element last
-            q[..., i] = np.where(q[..., 0] < 0, -q[..., i], q[..., i])
-
-        q = cls(q).unit
+        Q = _conversions.eu2qu(eu)
+        Q = cls(Q)
 
         if direction == "crystal2lab":
-            q = ~q
+            Q = ~Q
 
-        return q
+        return Q
 
     @classmethod
     def from_matrix(cls, matrix: Union[np.ndarray, tuple, list]) -> Quaternion:
-        """Create unit quaternions from the orientation matrices
+        """Create unit quaternions from orientation matrices
         :cite:`rowenhorst2015consistent`.
 
         Parameters
@@ -393,56 +562,43 @@ class Quaternion(Object3d):
 
         Returns
         -------
-        q
+        Q
             Unit quaternions.
 
         Examples
         --------
         >>> from orix.quaternion import Quaternion
-        >>> q = Quaternion.from_matrix([np.eye(3), 2 * np.eye(3), np.diag([1, -1, -1])])
-        >>> q
+        >>> Q = Quaternion.from_matrix([np.eye(3), 2 * np.eye(3), np.diag([1, -1, -1])])
+        >>> Q
         Quaternion (3,)
         [[1. 0. 0. 0.]
          [1. 0. 0. 0.]
          [0. 1. 0. 0.]]
         """
-        om = np.asarray(matrix)
-        # Assuming (3, 3) as last two dims
-        n = (1,) if om.ndim == 2 else om.shape[:-2]
-        q = np.zeros(n + (4,))
+        # Verify the input can be interpreted as an array of (3, 3) arrays
+        om = np.atleast_2d(matrix)
+        if om.shape[-2:] != (3, 3):
+            raise ValueError("the last two dimensions of 'matrix' must be (3, 3)")
 
-        # Compute quaternion components
-        q0_almost = 1 + om[..., 0, 0] + om[..., 1, 1] + om[..., 2, 2]
-        q1_almost = 1 + om[..., 0, 0] - om[..., 1, 1] - om[..., 2, 2]
-        q2_almost = 1 - om[..., 0, 0] + om[..., 1, 1] - om[..., 2, 2]
-        q3_almost = 1 - om[..., 0, 0] - om[..., 1, 1] + om[..., 2, 2]
-        q[..., 0] = 0.5 * np.sqrt(np.where(q0_almost < _FLOAT_EPS, 0, q0_almost))
-        q[..., 1] = 0.5 * np.sqrt(np.where(q1_almost < _FLOAT_EPS, 0, q1_almost))
-        q[..., 2] = 0.5 * np.sqrt(np.where(q2_almost < _FLOAT_EPS, 0, q2_almost))
-        q[..., 3] = 0.5 * np.sqrt(np.where(q3_almost < _FLOAT_EPS, 0, q3_almost))
+        Q = _conversions.om2qu(om)
+        Q = cls(Q)
 
-        # Modify component signs if necessary
-        q[..., 1] = np.where(om[..., 2, 1] < om[..., 1, 2], -q[..., 1], q[..., 1])
-        q[..., 2] = np.where(om[..., 0, 2] < om[..., 2, 0], -q[..., 2], q[..., 2])
-        q[..., 3] = np.where(om[..., 1, 0] < om[..., 0, 1], -q[..., 3], q[..., 3])
-
-        q = cls(q).unit
-
-        return q
+        return Q
 
     @classmethod
     def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
-        """Initialize from :class:`scipy.spatial.transform.Rotation`.
+        """Create unit quaternions from
+        :class:`scipy.spatial.transform.Rotation`.
 
         Parameters
         ----------
         rotation
-            SciPy rotation(s).
+            SciPy rotations.
 
         Returns
         -------
         quaternion
-            Quaternion(s).
+            Quaternions.
 
         Notes
         -----
@@ -460,26 +616,26 @@ class Quaternion(Object3d):
 
         SciPy and orix represent quaternions differently
 
-        >>> r_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
-        >>> r_scipy.as_quat()
+        >>> R_scipy = SciPyRotation.from_euler("ZXZ", [90, 0, 0], degrees=True)
+        >>> R_scipy.as_quat()
         array([0.        , 0.        , 0.70710678, 0.70710678])
-        >>> q = Quaternion.from_scipy_rotation(r_scipy)
-        >>> q
+        >>> Q = Quaternion.from_scipy_rotation(R_scipy)
+        >>> Q
         Quaternion (1,)
         [[ 0.7071  0.      0.     -0.7071]]
-        >>> ~q
+        >>> ~Q
         Quaternion (1,)
         [[ 0.7071 -0.     -0.      0.7071]]
 
         SciPy and orix rotate vectors differently
 
         >>> v = [1, 1, 0]
-        >>> r_scipy.apply(v)
+        >>> R_scipy.apply(v)
         array([-1.,  1.,  0.])
-        >>> q * Vector3d(v)
+        >>> Q * Vector3d(v)
         Vector3d (1,)
         [[ 1. -1.  0.]]
-        >>> ~q * Vector3d(v)
+        >>> ~Q * Vector3d(v)
         Vector3d (1,)
         [[-1.  1.  0.]]
         """
@@ -500,8 +656,7 @@ class Quaternion(Object3d):
         Tuple[Quaternion, np.ndarray],
         Tuple[Quaternion, float, np.ndarray],
     ]:
-        """Initialize an estimated quaternion to optimally align two
-        sets of vectors.
+        """Estimate a quaternion to optimally align two sets of vectors.
 
         This method wraps
         :meth:`~scipy.spatial.transform.Rotation.align_vectors`. See
@@ -539,15 +694,15 @@ class Quaternion(Object3d):
         >>> from orix.vector import Vector3d
         >>> v1 = Vector3d([[1, 0, 0], [0, 1, 0]])
         >>> v2 = Vector3d([[0, -1, 0], [0, 0, 1]])
-        >>> q12 = Quaternion.from_align_vectors(v2, v1)
-        >>> q12 * v1
+        >>> Q12 = Quaternion.from_align_vectors(v2, v1)
+        >>> Q12 * v1
         Vector3d (2,)
         [[ 0. -1.  0.]
          [ 0.  0.  1.]]
-        >>> q21, dist = Quaternion.from_align_vectors(v1, v2, return_rmsd=True)
+        >>> Q21, dist = Quaternion.from_align_vectors(v1, v2, return_rmsd=True)
         >>> dist
         0.0
-        >>> q21 * v2
+        >>> Q21 * v2
         Vector3d (2,)
         [[1. 0. 0.]
          [0. 1. 0.]]
@@ -556,11 +711,11 @@ class Quaternion(Object3d):
             other = Vector3d(other)
         if not isinstance(initial, Vector3d):
             initial = Vector3d(initial)
-        vec1 = initial.unit.data
-        vec2 = other.unit.data
+        v1 = initial.unit.data
+        v2 = other.unit.data
 
         out = SciPyRotation.align_vectors(
-            vec1, vec2, weights=weights, return_sensitivity=return_sensitivity
+            v1, v2, weights=weights, return_sensitivity=return_sensitivity
         )
         out = list(out)
         out[0] = cls.from_scipy_rotation(out[0])
@@ -571,35 +726,66 @@ class Quaternion(Object3d):
         return out[0] if len(out) == 1 else tuple(out)
 
     @classmethod
-    def random(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
-        """Return random quaternions.
+    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
+        """Pointwise cross product of three quaternions.
 
         Parameters
         ----------
-        shape
-            Shape of the quaternion instance.
+        q1
+            First quaternions.
+        q2
+            Second quaternions.
+        q3
+            Third quaternions.
 
         Returns
         -------
-        q
-            Unit quaternions.
+        Q
+            Quaternions resulting from the triple cross product.
         """
-        shape = (shape,) if isinstance(shape, int) else shape
-        n = int(np.prod(shape))
-        q = []
-        while len(q) < n:
-            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
-            r2 = np.sum(np.square(r), axis=1)
-            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
-            q += list(r)
-        q = cls(np.array(q[:n]))
-        q = q.unit
-        q = q.reshape(*shape)
-        return q
+        Q1a, Q1b, Q1c, Q1d = q1.a, q1.b, q1.c, q1.d
+        Q2a, Q2b, Q2c, Q2d = q2.a, q2.b, q2.c, q2.d
+        Q3a, Q3b, Q3c, Q3d = q3.a, q3.b, q3.c, q3.d
+        # fmt: off
+        a = (
+            + Q1b * Q2c * Q3d
+            - Q1b * Q3c * Q2d
+            - Q2b * Q1c * Q3d
+            + Q2b * Q3c * Q1d
+            + Q3b * Q1c * Q2d
+            - Q3b * Q2c * Q1d
+        )
+        b = (
+            + Q1a * Q3c * Q2d
+            - Q1a * Q2c * Q3d
+            + Q2a * Q1c * Q3d
+            - Q2a * Q3c * Q1d
+            - Q3a * Q1c * Q2d
+            + Q3a * Q2c * Q1d
+        )
+        c = (
+            + Q1a * Q2b * Q3d
+            - Q1a * Q3b * Q2d
+            - Q2a * Q1b * Q3d
+            + Q2a * Q3b * Q1d
+            + Q3a * Q1b * Q2d
+            - Q3a * Q2b * Q1d
+        )
+        d = (
+            + Q1a * Q3b * Q2c
+            - Q1a * Q2b * Q3c
+            + Q2a * Q1b * Q3c
+            - Q2a * Q3b * Q1c
+            - Q3a * Q1b * Q2c
+            + Q3a * Q2b * Q1c
+        )
+        # fmt: on
+        Q = cls(np.vstack((a, b, c, d)).T)
+        return Q
 
     @classmethod
     def identity(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
-        """Return identity quaternions.
+        """Create identity quaternions.
 
         Parameters
         ----------
@@ -608,13 +794,205 @@ class Quaternion(Object3d):
 
         Returns
         -------
-        q
+        Q
             Identity quaternions.
         """
         shape = (shape,) if isinstance(shape, int) else shape
-        q = np.zeros(shape + (4,))
-        q[..., 0] = 1
-        return cls(q)
+        Q = np.zeros(shape + (4,))
+        Q[..., 0] = 1
+        return cls(Q)
+
+    # ---------------------- All "to_*" methods- --------------------- #
+
+    # TODO: Remove decorator and **kwargs in 0.13
+    @deprecated_argument("convention", since="0.9", removal="0.13")
+    def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
+        r"""Return the unit quaternions as Euler angles in the Bunge
+        convention :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        degrees
+            If ``True``, the given angles are returned in degrees.
+            Default is ``False``.
+
+        Returns
+        -------
+        eu
+            Array of Euler angles in radians (``degrees=False``) or
+            degrees (``degrees=True``), in the ranges
+            :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
+            :math:`\phi_1 \in [0, 2\pi]`.
+        """
+        eu = _conversions.qu2eu(self.unit.data)
+        if degrees:
+            eu = np.rad2deg(eu)
+        return eu
+
+    def to_matrix(self) -> np.ndarray:
+        """Return the unit quaternions as orientation matrices
+        :cite:`rowenhorst2015consistent`.
+
+        Returns
+        -------
+        om
+            Array of orientation matrices after normalizing the
+            quaternions.
+
+        Examples
+        --------
+        >>> from orix.quaternion import Quaternion
+        >>> Q1 = Quaternion([[1, 0, 0, 0], [2, 0, 0, 0]])
+        >>> np.allclose(Q1.to_matrix(), np.eye(3))
+        True
+        >>> Q2 = Quaternion([[0, 1, 0, 0], [0, 2, 0, 0]])
+        >>> np.allclose(Q2.to_matrix(), np.diag([1, -1, -1]))
+        True
+        """
+        om = _conversions.qu2om(self.unit.data)
+        return om
+
+    def to_axes_angles(self) -> AxAngle:
+        r"""Return the unit quaternions as axis-angle vectors
+        :cite:`rowenhorst2015consistent`.
+
+        Returns
+        -------
+        ax
+            Axis-angle vectors with magnitude :math:`\theta` equal to
+            the angle of rotation.
+
+        See Also
+        --------
+        to_homochoric, to_rodrigues
+
+        Examples
+        --------
+        A 3-fold rotation around the [111] axis
+
+        >>> from orix.quaternion import Quaternion
+        >>> Q = Quaternion([0.5, 0.5, 0.5, 0.5])
+        >>> ax = Q.to_axes_angles()
+        >>> ax
+        AxAngle (1,)
+        [[1.2092 1.2092 1.2092]]
+        >>> np.rad2deg(ax.angle)
+        array([120.])
+        """
+        axes, angles = _conversions.qu2ax(self.unit.data)
+        ax = AxAngle(axes * angles)
+        return ax
+
+    def to_rodrigues(self, frank: bool = False) -> Union[Rodrigues, np.ndarray]:
+        r"""Return the unit quaternions as Rodrigues or Rodrigues-Frank
+         vectors :cite:`rowenhorst2015consistent`.
+
+        Parameters
+        ----------
+        frank
+            Whether to return Rodrigues vectors scaled by
+            :math:`\tan(\theta/2)`, where :math:`\theta` is the angle of
+            rotation, or Rodrigues-Frank vectors scaled by
+            :math:`\omega = 2\arctan(|\rho|)` in an array.
+
+        Returns
+        -------
+        ro
+            Vectors :math:`\hat{\mathbf{n}}` parallel to the axis of
+            rotation if ``frank=False`` or an array of four-component
+            vectors if ``frank=True``.
+
+        See Also
+        --------
+        to_axes_angles, to_homochoric
+
+        Examples
+        --------
+        A 3-fold rotation around the [111] axis
+
+        >>> from orix.quaternion import Quaternion
+        >>> Q = Quaternion.from_axes_angles([1, 1, 1], 120, degrees=True)
+        >>> ro1 = Q.to_rodrigues()
+        >>> ro1
+        Rodrigues (1,)
+        [[1. 1. 1.]]
+        >>> ro1.norm
+        array([1.73205081])
+        >>> ro2 = Q.to_rodrigues(frank=True)
+        >>> ro2
+        array([[0.57735027, 0.57735027, 0.57735027, 1.73205081]])
+        >>> np.linalg.norm(ro2[:, :3])
+        1.0
+
+        A 45:math:`\degree` rotation around the [111] axis
+
+        >>> Q2 = Quaternion.from_axes_angles([1, 1, 1], 45, degrees=True)
+        >>> ro3 = Q2.to_rodrigues()
+        >>> ro3
+        Rodrigues (1,)
+        [[0.2391 0.2391 0.2391]]
+
+        Notes
+        -----
+        Rodrigues vectors, originally proposed by O. Rodrigues, are
+        often used for plotting orientations as they create isomorphic
+        (though not volume-preserving) plots and form fundamental zones
+        with rectilinear boundaries. These features are
+        well-demonstrated in :cite:`frank1988orientation`. See
+        :cite:`rowenhorst2015consistent` for examples of usage of
+        Rodrigues-Frank vectors.
+        """
+        Q = self.unit
+        if not frank:
+            ro = Q.axis * np.tan(self.angle / 2)
+            ro = Rodrigues(ro)
+        else:
+            axes, angles = _conversions.qu2ax(Q.data)
+            axes_angles = np.concatenate((axes, angles), axis=-1)
+            ro = _conversions.ax2ro(axes_angles)
+        return ro
+
+    def to_homochoric(self) -> Homochoric:
+        r"""Return the unit quaternions as homochoric vectors
+        :cite:`rowenhorst2015consistent`.
+
+        Returns
+        -------
+        ho
+            Homochoric vectors parallel to the axes of rotation with
+            lengths equal to
+            :math:`\left[\frac{3}{4}\cdot(\theta - \sin(\theta))\right]^{1/3}`,
+            where :math:`\theta` is the angle of rotation.
+
+        See Also
+        --------
+        to_axes_angles, from_rodrigues
+
+        Examples
+        --------
+        A 3-fold rotation about the [111] axis
+
+        >>> from orix.quaternion import Quaternion
+        >>> Q = Quaternion.from_axes_angles([1, 1, 1], 120, degrees=True)
+        >>> ho = Q.to_homochoric()
+        >>> ho
+        Homochoric (1,)
+        [[0.5618 0.5618 0.5618]]
+
+        Notes
+        -----
+        Homochoric vectors are often used for plotting orientations as
+        they create an isomorphic (though not angle-preserving) mapping
+        from the non-euclidean orientation space into Cartesian
+        coordinates. Additionally, unlike Rodrigues vectors, all
+        rotations map into a finite space, bounded by a sphere of radius
+        :math:`\pi`.
+        """
+        ho = _conversions.qu2ho(self.unit.data)
+        ho = Homochoric(ho)
+        return ho
+
+    # --------------------- Other public methods --------------------- #
 
     def dot(self, other: Quaternion) -> np.ndarray:
         """Return the dot products of the quaternions and the other
@@ -638,9 +1016,9 @@ class Quaternion(Object3d):
         Examples
         --------
         >>> from orix.quaternion import Quaternion
-        >>> q1 = Quaternion([[1, 0, 0, 0], [0.9239, 0, 0, 0.3827]])
-        >>> q2 = Quaternion([[0.9239, 0, 0, 0.3827], [0.7071, 0, 0, 0.7071]])
-        >>> q1.dot(q2)
+        >>> Q1 = Quaternion([[1, 0, 0, 0], [0.9239, 0, 0, 0.3827]])
+        >>> Q2 = Quaternion([[0.9239, 0, 0, 0.3827], [0.7071, 0, 0, 0.7071]])
+        >>> Q1.dot(Q2)
         array([0.9239    , 0.92389686])
         """
         return np.sum(self.data * other.data, axis=-1)
@@ -667,9 +1045,9 @@ class Quaternion(Object3d):
         Examples
         --------
         >>> from orix.quaternion import Quaternion
-        >>> q1 = Quaternion([[1, 0, 0, 0], [0.9239, 0, 0, 0.3827]])
-        >>> q2 = Quaternion([[0.9239, 0, 0, 0.3827], [0.7071, 0, 0, 0.7071]])
-        >>> q1.dot_outer(q2)
+        >>> Q1 = Quaternion([[1, 0, 0, 0], [0.9239, 0, 0, 0.3827]])
+        >>> Q2 = Quaternion([[0.9239, 0, 0, 0.3827], [0.7071, 0, 0, 0.7071]])
+        >>> Q1.dot_outer(Q2)
         array([[0.9239    , 0.7071    ],
                [1.0000505 , 0.92389686]])
         """
@@ -689,9 +1067,9 @@ class Quaternion(Object3d):
         The method used here corresponds to Equation (13) in
         https://arc.aiaa.org/doi/pdf/10.2514/1.28949.
         """
-        q = self.flatten().data.T
-        qq = q.dot(q.T)
-        w, v = np.linalg.eig(qq)
+        Q = self.flatten().data.T
+        QQ = Q.dot(Q.T)
+        w, v = np.linalg.eig(QQ)
         w_max = np.argmax(w)
         return self.__class__(v[:, w_max])
 
@@ -742,11 +1120,11 @@ class Quaternion(Object3d):
                 else:
                     da.store(darr, arr)
             else:
-                q1 = quaternion.from_float_array(self.data)
-                q2 = quaternion.from_float_array(other.data)
+                Q1 = quaternion.from_float_array(self.data)
+                Q2 = quaternion.from_float_array(other.data)
                 # np.outer works with flattened array
-                q = np.outer(q1, q2).reshape(q1.shape + q2.shape)
-                arr = quaternion.as_float_array(q)
+                Q = np.outer(Q1, Q2).reshape(Q1.shape + Q2.shape)
+                arr = quaternion.as_float_array(Q)
             return other.__class__(arr)
         elif isinstance(other, Vector3d):
             if lazy:
@@ -758,8 +1136,8 @@ class Quaternion(Object3d):
                 else:
                     da.store(darr, arr)
             else:
-                q = quaternion.from_float_array(self.data)
-                arr = quaternion.rotate_vectors(q, other.data)
+                Q = quaternion.from_float_array(self.data)
+                arr = quaternion.rotate_vectors(Q, other.data)
             if isinstance(other, Miller):
                 m = other.__class__(xyz=arr, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
@@ -772,130 +1150,13 @@ class Quaternion(Object3d):
                 "with `other` of type `Quaternion` or `Vector3d`"
             )
 
-    # TODO: Remove decorator and **kwargs in 1.0
-    @deprecated_argument("convention", since="0.9", removal="1.0")
-    def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
-        r"""Return the normalized quaternions as Euler angles in the
-        Bunge convention :cite:`rowenhorst2015consistent`.
-
-        Parameters
-        ----------
-        degrees
-            If ``True``, the given angles are returned in degrees.
-            Default is ``False``.
-
-        Returns
-        -------
-        eu
-            Array of Euler angles in radians (``degrees=False``) or
-            degrees (``degrees=True``), in the ranges
-            :math:`\phi_1 \in [0, 2\pi]`, :math:`\Phi \in [0, \pi]`, and
-            :math:`\phi_1 \in [0, 2\pi]`.
+    def inv(self) -> Quaternion:
+        r"""Return the inverse quaternions
+        :math:`Q^{-1} = a - bi - cj - dk`.
         """
-        # A.14 from Modelling Simul. Mater. Sci. Eng. 23 (2015) 083501
-        n = self.data.shape[:-1]
-        eu = np.zeros(n + (3,))
+        return self.__invert__()
 
-        q = self.unit
-        a, b, c, d = q.a, q.b, q.c, q.d
-
-        q03 = a**2 + d**2
-        q12 = b**2 + c**2
-        chi = np.sqrt(q03 * q12)
-
-        # P = 1
-
-        q12_is_zero = q12 == 0
-        if np.sum(q12_is_zero) > 0:
-            alpha = np.arctan2(-2 * a * d, a**2 - d**2)
-            eu[..., 0] = np.where(q12_is_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(q12_is_zero, 0, eu[..., 1])
-            eu[..., 2] = np.where(q12_is_zero, 0, eu[..., 2])
-
-        q03_is_zero = q03 == 0
-        if np.sum(q03_is_zero) > 0:
-            alpha = np.arctan2(2 * b * c, b**2 - c**2)
-            eu[..., 0] = np.where(q03_is_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(q03_is_zero, np.pi, eu[..., 1])
-            eu[..., 2] = np.where(q03_is_zero, 0, eu[..., 2])
-
-        if np.sum(chi != 0) > 0:
-            not_zero = ~np.isclose(chi, 0)
-            alpha = np.arctan2(
-                np.divide(
-                    b * d - a * c, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-                np.divide(
-                    -a * b - c * d, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-            )
-            beta = np.arctan2(2 * chi, q03 - q12)
-            gamma = np.arctan2(
-                np.divide(
-                    a * c + b * d, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-                np.divide(
-                    c * d - a * b, chi, where=not_zero, out=np.full_like(chi, np.inf)
-                ),
-            )
-            eu[..., 0] = np.where(not_zero, alpha, eu[..., 0])
-            eu[..., 1] = np.where(not_zero, beta, eu[..., 1])
-            eu[..., 2] = np.where(not_zero, gamma, eu[..., 2])
-
-        # Reduce Euler angles to definition range
-        eu[np.abs(eu) < _FLOAT_EPS] = 0
-        eu = np.where(eu < 0, np.mod(eu + 2 * np.pi, (2 * np.pi, np.pi, 2 * np.pi)), eu)
-
-        if degrees:
-            eu = np.rad2deg(eu)
-
-        return eu
-
-    def to_matrix(self) -> np.ndarray:
-        """Return the normalized quaternions as orientation matrices
-        :cite:`rowenhorst2015consistent`.
-
-        Returns
-        -------
-        om
-            Array of orientation matrices after normalizing the
-            quaternions.
-
-        Examples
-        --------
-        >>> from orix.quaternion import Quaternion
-        >>> q1 = Quaternion([[1, 0, 0, 0], [2, 0, 0, 0]])
-        >>> np.allclose(q1.to_matrix(), np.eye(3))
-        True
-        >>> q2 = Quaternion([[0, 1, 0, 0], [0, 2, 0, 0]])
-        >>> np.allclose(q2.to_matrix(), np.diag([1, -1, -1]))
-        True
-        """
-        q = self.unit
-        a, b, c, d = q.a, q.b, q.c, q.d
-        om = np.zeros(self.shape + (3, 3))
-
-        bb = b**2
-        cc = c**2
-        dd = d**2
-        qq = a**2 - (bb + cc + dd)
-        bc = b * c
-        ad = a * d
-        bd = b * d
-        ac = a * c
-        cd = c * d
-        ab = a * b
-        om[..., 0, 0] = qq + 2 * bb
-        om[..., 0, 1] = 2 * (bc - ad)
-        om[..., 0, 2] = 2 * (bd + ac)
-        om[..., 1, 0] = 2 * (bc + ad)
-        om[..., 1, 1] = qq + 2 * cc
-        om[..., 1, 2] = 2 * (cd - ab)
-        om[..., 2, 0] = 2 * (bd - ac)
-        om[..., 2, 1] = 2 * (cd + ab)
-        om[..., 2, 2] = qq + 2 * dd
-
-        return om
+    # -------------------- Other private methods --------------------- #
 
     def _outer_dask(
         self, other: Union[Quaternion, Vector3d], chunk_size: int = 20
@@ -949,8 +1210,8 @@ class Quaternion(Object3d):
         sum_over = f"...{str1},{str2}...->{str1 + str2}"
 
         # Get quaternion parameters as dask arrays to be computed later
-        q1 = da.from_array(self.data, chunks=chunks1)
-        a1, b1, c1, d1 = q1[..., 0], q1[..., 1], q1[..., 2], q1[..., 3]
+        Q1 = da.from_array(self.data, chunks=chunks1)
+        a1, b1, c1, d1 = Q1[..., 0], Q1[..., 1], Q1[..., 2], Q1[..., 3]
 
         # We silence dask's einsum performance warnings for "small"
         # chunk sizes, since using the chunk sizes suggested floods
@@ -958,8 +1219,8 @@ class Quaternion(Object3d):
         warnings.filterwarnings("ignore", category=da.PerformanceWarning)
 
         if isinstance(other, Quaternion):
-            q2 = da.from_array(other.data, chunks=chunks2)
-            a2, b2, c2, d2 = q2[..., 0], q2[..., 1], q2[..., 2], q2[..., 3]
+            Q2 = da.from_array(other.data, chunks=chunks2)
+            a2, b2, c2, d2 = Q2[..., 0], Q2[..., 1], Q2[..., 2], Q2[..., 3]
             # fmt: off
             a = (
                 + da.einsum(sum_over, a1, a2)

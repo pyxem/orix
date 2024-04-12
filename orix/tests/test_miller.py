@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -281,13 +281,13 @@ class TestMiller:
 
         # Initialization of vectors work as expected
         shape1 = (2, 3)
-        m1 = Miller(hkl=v.reshape(shape1 + (3,)), phase=TETRAGONAL_PHASE)
+        m1 = Miller(hkl=v.reshape(*shape1, 3), phase=TETRAGONAL_PHASE)
         assert m1.shape == shape1
-        assert np.allclose(m1.hkl, v.reshape(shape1 + (3,)))
+        assert np.allclose(m1.hkl, v.reshape(*shape1, 3))
         shape2 = (2, 3)[::-1]
-        m2 = Miller(uvw=v.reshape(shape2 + (3,)), phase=TETRAGONAL_PHASE)
+        m2 = Miller(uvw=v.reshape(*shape2, 3), phase=TETRAGONAL_PHASE)
         assert m2.shape == shape2
-        assert np.allclose(m2.uvw, v.reshape(shape2 + (3,)))
+        assert np.allclose(m2.uvw, v.reshape(*shape2, 3))
 
         # Vector length and multiplicity
         assert m1.length.shape == m1.shape
@@ -323,8 +323,8 @@ class TestMiller:
         assert m5.unique().shape == (5,)
 
         # Reshape
-        m6 = m1.reshape(*shape2)
-        assert np.allclose(m6.hkl, v.reshape(shape2 + (3,)))
+        m6 = m1.reshape(shape2)
+        assert np.allclose(m6.hkl, v.reshape(*shape2, 3))
         assert m1._compatible_with(m6)  # Phase carries over
 
     def test_transpose(self):
@@ -396,6 +396,17 @@ class TestMiller:
         v5 = _transform_space(v4, "r", "d", lattice)
         assert np.allclose(v4, [0.25, 0, 1])
         assert np.allclose(v5, v3)
+
+    def test_random(self):
+        m = Miller.random(CUBIC_PHASE)
+        assert m.phase.name == CUBIC_PHASE.name
+        assert m.size == 1
+        assert m.coordinate_format == "xyz"
+
+        shape = (2, 3)
+        g = Miller.random(HEXAGONAL_PHASE, shape, "hkl")
+        assert g.shape == shape
+        assert g.coordinate_format == "hkl"
 
 
 class TestMillerBravais:

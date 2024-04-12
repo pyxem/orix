@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -466,7 +466,7 @@ def file_writer(
         )
     else:
         eulers = xmap.get_map_data("rotations", decimals=decimals, fill_value=0)
-    eulers = eulers.reshape((map_size, 3))
+    eulers = eulers.reshape(map_size, 3)
     indexed_points = xmap.get_map_data(xmap.is_indexed, fill_value=False).reshape(
         map_size
     )

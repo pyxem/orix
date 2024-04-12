@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -61,18 +61,39 @@ class TestStereographicPlot:
 
         plt.close("all")
 
-    def test_annotate(self):
+    def test_text(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
         ax.scatter(v)
-        format_vector = lambda v: str(v.data[0]).replace(" ", "")
-        for vi in v:
-            ax.text(vi, s=format_vector(vi))
+        labels = plot.format_labels(v.data, ("[", "]"), use_latex=False)
+        for i in range(v.size):
+            ax.text(v[i], s=labels[i])
 
         assert len(ax.texts) == 3
         assert ax.texts[0].get_text() == "[001]"
         assert ax.texts[1].get_text() == "[-101]"
         assert ax.texts[2].get_text() == "[111]"
+
+        plt.close("all")
+
+    def test_text_offset(self):
+        _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
+        ax.scatter(v)
+        labels = plot.format_labels(v.data)
+        offset = (-0.02, 0.05)
+        for i in range(v.size):
+            ax.text(v[i], s=labels[i], offset=offset)
+
+        x, y = ax._projection.vector2xy(v)
+        x += offset[0]
+        y += offset[1]
+
+        assert len(ax.texts) == 3
+        for i in range(v.size):
+            assert ax.texts[i].get_text() == labels[i]
+            assert np.isclose(ax.texts[i]._x, x[i])
+            assert np.isclose(ax.texts[i]._y, y[i])
 
         plt.close("all")
 
@@ -102,9 +123,14 @@ class TestStereographicPlot:
         assert ax._azimuth_resolution == azimuth_res
         assert ax._polar_resolution == polar_res
 
-        ax.stereographic_grid(azimuth_resolution=30, polar_resolution=45)
+        alpha = 0.5
+        with plt.rc_context({"grid.alpha": alpha}):
+            ax.stereographic_grid(azimuth_resolution=30, polar_resolution=45)
         assert ax._azimuth_resolution == 30
         assert ax._polar_resolution == 45
+
+        assert len(ax.collections) == 2
+        assert all([coll.get_alpha() for coll in ax.collections])
 
         plt.close("all")
 
@@ -209,7 +235,7 @@ class TestStereographicPlot:
     @pytest.mark.parametrize("shape", [(5, 10), (2, 3)])
     def test_multidimensional_vector(self, shape):
         n = np.prod(shape)
-        v = Vector3d(np.random.normal(size=3 * n).reshape(shape + (3,)))
+        v = Vector3d(np.random.normal(size=3 * n).reshape(*shape, 3))
         v.scatter()
         v.draw_circle()
 
@@ -437,7 +463,7 @@ class TestDrawCircle:
         plt.close("all")
 
     def test_pdf_args(self):
-        v = Vector3d(np.random.randn(10, 3)).unit
+        v = Vector3d.random(10)
         resolution = 5
         fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection="stereographic"))
         # vector arg
@@ -469,20 +495,20 @@ class TestDrawCircle:
 
 class TestRestrictToFundamentalSector:
     def test_restrict_to_fundamental_sector(self):
-        fig1, ax1 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        _, ax1 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         vertices = ax1.patches[0].get_verts()
 
-        # C1's has no fundamental sector, so the circle marking the
+        # C1 has no fundamental sector, so the circle marking the
         # edge of the axis region should be unchanged
-        fig2, ax2 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        _, ax2 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax2.restrict_to_sector(symmetry.C1.fundamental_sector)
         assert np.allclose(vertices, ax2.patches[0].get_verts())
 
-        # C6's fundamental sector is 1 / 6 of the unit sphere, with
+        # C6 fundamental sector is 1 / 6 of the unit sphere, with
         # half of it in the upper hemisphere
-        fig3, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
+        _, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
         ax3[0].restrict_to_sector(symmetry.C6.fundamental_sector)
-        assert not np.allclose(vertices, ax3[0].patches[0].get_verts())
+        assert not np.allclose(vertices[:10], ax3[0].patches[0].get_verts()[:10])
         assert ax3[0].patches[1].get_label() == "sa_sector"
 
         # Ensure grid lines are clipped by sector
@@ -492,13 +518,13 @@ class TestRestrictToFundamentalSector:
         # Oh's fundamental sector is only in the upper hemisphere,
         # so the same as C1's sector applies for the lower hemisphere
         fs = symmetry.Oh.fundamental_sector
-        fig4, ax4 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        _, ax4 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax4.restrict_to_sector(fs)
         upper_patches4 = ax4.patches
         assert len(upper_patches4) == 2
         assert upper_patches4[1].get_label() == "sa_sector"
 
-        fig5, ax5 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        _, ax5 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax5.hemisphere = "lower"
         ax5.restrict_to_sector(fs)
         lower_patches4 = ax5.patches

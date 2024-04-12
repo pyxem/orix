@@ -2,7 +2,6 @@ include CHANGELOG.rst
 include CONTRIBUTING.rst
 include environment.yml
 include LICENSE
-include MANIFEST.in
 include README.rst
 include RELEASE.rst
 include readthedocs.yaml
@@ -10,6 +9,6 @@ include setup.cfg
 include setup.py
 include tutorials/README.rst
 
-recursive-include doc Makefile make.bat *.rst *.py *.ipynb *.bib *.txt *.cfg *.sh
+recursive-include doc Makefile make.bat *.rst *.py *.ipynb *.bib *.txt *.cfg *.sh *.yml
 recursive-include doc/_static *.png *.jpb *.svg *.css *.sh
 recursive-include examples *.txt *.py

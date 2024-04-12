@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - python=3.11
+  # Version requirements imposed by nbconvert via nbsphinx
+  - pandoc>=2.14.2, <4.0.0

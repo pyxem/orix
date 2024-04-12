@@ -12,6 +12,14 @@ If you think your work should be listed here, please raise an issue `on GitHub
 <https://github.com/pyxem/orix>`__ or `contact the developers
 <pyxem.team@gmail.com>`__.
 
+2024
+====
+- I. MacLaren, E. Frutos-Myro, S. Zeltmann, C. Ophus, "A method for crystallographic
+  mapping of an alpha-beta titanium alloy with nanometre resolution using scanning
+  precession electron diffraction and open-source software libraries," *Journal of
+  Microscopy*, 1-9 (2024).
+  https://doi/10.1111/jmi.13275.
+
 2022
 ====
 

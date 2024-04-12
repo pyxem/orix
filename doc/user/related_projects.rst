@@ -24,5 +24,8 @@ find useful:
   orix depends on numpy-quaternion for quaternion multiplication.
 - `texture <https://github.com/usnistgov/texture>`_: Python scripts for analysis of
   crystallographic texture.
-- :doc:`pymicro <pymicro:index>`: Python package to work with material microstructures
-  and 3D data sets.
+- `pymicro <https://pymicro.readthedocs.io>`_`: Python package to work with material
+  microstructures and 3D data sets.
+- `DREAM.3D <https://dream3d.io/>`_`: C++ library to reconstruct, instatiate, quantify,
+  mesh, handle and visualize multidimensional (3D), multimodal data (mainly EBSD
+  orientation data).

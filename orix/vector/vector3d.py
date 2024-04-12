@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -27,27 +27,28 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.base import Object3d
+from orix._base import Object3d
 
 
 class Vector3d(Object3d):
-    """Vector base class.
+    r"""Three-dimensional vectors.
 
-    Vectors support the following mathematical operations:
-        - Unary negation.
-        - Addition to other vectors, scalars, numbers, and compatible
-          array-like objects.
-        - Subtraction to and from the above.
-        - Multiplication to scalars, numbers, and compatible array-like
-          objects.
-        - Division by the same as multiplication. Division by a vector
-          is not defined in general.
+    Vectors :math:`\mathbf{v} = (x, y, z)` support the following
+    mathematical operations:
+
+    * Unary negation.
+    * Addition to other vectors, numbers, and compatible array-like
+      objects.
+    * Subtraction to and from the above.
+    * Multiplication to numbers and compatible array-like objects.
+    * Division by the same as multiplication. Division by a vector is
+      not defined in general.
 
     Examples
     --------
     >>> from orix.vector import Vector3d
-    >>> v = Vector3d((1, 2, 3))
-    >>> w = Vector3d(np.array([[1, 0, 0], [0, 1, 1]]))
+    >>> v = Vector3d([1, 2, 3])
+    >>> w = Vector3d([[1, 0, 0], [0, 1, 1]])
     >>> w.x
     array([1, 0])
     >>> v.unit
@@ -74,9 +75,25 @@ class Vector3d(Object3d):
     Vector3d (2,)
     [[ 0.5  1.   1.5]
      [-0.5 -1.  -1.5]]
+
+    Vectors can be rotated by quaternion-like objects (which are
+    interpreted as basis transformations)
+
+    >>> from orix.quaternion import Rotation
+    >>> R = Rotation.from_axes_angles([0, 0, 1], -45, degrees=True)
+    >>> v2 = Vector3d([1, 1, 1.])
+    >>> v3 = R * v2
+    >>> v3
+    Vector3d (1,)
+    [[ 1.4142 -0.      1.    ]]
+    >>> v3_np = np.dot(R.to_matrix().squeeze(), v2.data.squeeze())
+    >>> np.allclose(v3.data, v3_np)
+    True
     """
 
     dim = 3
+
+    # -------------------------- Properties -------------------------- #
 
     @property
     def x(self) -> np.ndarray:
@@ -199,6 +216,8 @@ class Vector3d(Object3d):
         """
         return np.arccos(self.data[..., 2] / self.radial.data)
 
+    # ------------------------ Dunder methods ------------------------ #
+
     def __neg__(self) -> Vector3d:
         return self.__class__(-self.data)
 
@@ -300,6 +319,151 @@ class Vector3d(Object3d):
 
     def __rtruediv__(self, other: Any):
         raise ValueError("Division by a vector is undefined")
+
+    # ------------------------ Class methods ------------------------- #
+
+    @classmethod
+    def from_polar(
+        cls,
+        azimuth: Union[np.ndarray, list, tuple, float],
+        polar: Union[np.ndarray, list, tuple, float],
+        radial: float = 1.0,
+        degrees: bool = False,
+    ) -> Vector3d:
+        """Initialize from spherical coordinates according to the ISO
+        31-11 standard :cite:`weisstein2005spherical`.
+
+        Parameters
+        ----------
+        azimuth
+            Azimuth angle(s) in radians (``degrees=False``) or degrees
+            (``degrees=True``).
+        polar
+            Polar angle(s) in radians (``degrees=False``) or degrees
+            (``degrees=True``).
+        radial
+            Radial distance. Defaults to 1 to produce unit vectors.
+        degrees
+            If ``True``, the angles are assumed to be in degrees.
+            Default is ``False``.
+
+        Returns
+        -------
+        vec
+        """
+        azimuth = np.atleast_1d(azimuth)
+        polar = np.atleast_1d(polar)
+        if degrees:
+            azimuth = np.deg2rad(azimuth)
+            polar = np.deg2rad(polar)
+        sin_polar = np.sin(polar)
+        x = np.cos(azimuth) * sin_polar
+        y = np.sin(azimuth) * sin_polar
+        z = np.cos(polar)
+        return radial * cls(np.stack((x, y, z), axis=-1))
+
+    @classmethod
+    def zero(cls, shape: Tuple[int] = (1,)) -> Vector3d:
+        """Return zero vectors in the specified shape.
+
+        Parameters
+        ----------
+        shape
+            Output vectors' shape.
+
+        Returns
+        -------
+        vec
+            Zero vectors.
+        """
+        return cls(np.zeros(shape + (cls.dim,)))
+
+    @classmethod
+    def xvector(cls) -> Vector3d:
+        """Return a unit vector in the x-direction."""
+        return cls((1, 0, 0))
+
+    @classmethod
+    def yvector(cls) -> Vector3d:
+        """Return a unit vector in the y-direction."""
+        return cls((0, 1, 0))
+
+    @classmethod
+    def zvector(cls) -> Vector3d:
+        """Return a unit vector in the z-direction."""
+        return cls((0, 0, 1))
+
+    @classmethod
+    def from_path_ends(
+        cls,
+        vectors: Union[list, tuple, Vector3d],
+        close: bool = False,
+        steps: int = 100,
+    ) -> Vector3d:
+        r"""Return vectors along the shortest path on the sphere between
+        two or more consectutive vectors.
+
+        Parameters
+        ----------
+        vectors
+            Two or more vectors to get paths between.
+        close
+            Whether to append the first to the end of ``vectors`` in
+            order to close the paths when more than two vectors are
+            passed. Default is False.
+        steps
+            Number of vectors in the great circle about the normal
+            vector between each two vectors *before* restricting the
+            circle to the path between the two. Default is 100. More
+            steps give a smoother path on the sphere.
+
+        Returns
+        -------
+        paths
+            Vectors along the shortest path(s) between given vectors.
+
+        Notes
+        -----
+        The vectors along the shortest path on the sphere between two
+        vectors :math:`v_1` and :math:`v_2` are found by first getting
+        the vectors :math:`v_i` along the great circle about the vector
+        normal to these two vectors, and then only keeping the part of
+        the circle between the two vectors. Vectors within this part
+        satisfy these two conditions
+
+        .. math::
+            (v_1 \times v_i) \cdot (v_1 \times v_2) \geq 0,
+            (v_2 \times v_i) \cdot (v_2 \times v_1) \geq 0.
+        """
+        v = Vector3d(vectors).flatten()
+
+        if close:
+            v = Vector3d(np.concatenate((v.data, v[0].data)))
+
+        paths_list = []
+
+        n = v.size - 1
+        for i in range(n):
+            v1, v2 = v[i : i + 2]
+            v_normal = v1.cross(v2)
+            v_circle = v_normal.get_circle(steps=steps)
+
+            cond1 = v1.cross(v_circle).dot(v1.cross(v2)) >= 0
+            cond2 = v2.cross(v_circle).dot(v2.cross(v1)) >= 0
+
+            v_path = v_circle[cond1 & cond2]
+
+            to_concatenate = (v1.data, v_path.data)
+            if i == n - 1:
+                to_concatenate += (v2.data,)
+            paths_list.append(np.concatenate(to_concatenate, axis=0))
+
+        paths_data = np.concatenate(paths_list, axis=0)
+        paths = Vector3d(paths_data)
+
+        return paths
+
+    # --------------------- Other public methods --------------------- #
 
     def dot(self, other: Vector3d) -> np.ndarray:
         """Return the dot products of the vectors and the other vectors.
@@ -405,77 +569,6 @@ class Vector3d(Object3d):
         """
         return other.__class__(np.cross(self.data, other.data))
 
-    @classmethod
-    def from_polar(
-        cls,
-        azimuth: Union[np.ndarray, list, tuple, float],
-        polar: Union[np.ndarray, list, tuple, float],
-        radial: float = 1.0,
-        degrees: bool = False,
-    ) -> Vector3d:
-        """Initialize from spherical coordinates according to the ISO
-        31-11 standard :cite:`weisstein2005spherical`.
-
-        Parameters
-        ----------
-        azimuth
-            Azimuth angle(s) in radians (``degrees=False``) or degrees
-            (``degrees=True``).
-        polar
-            Polar angle(s) in radians (``degrees=False``) or degrees
-            (``degrees=True``).
-        radial
-            Radial distance. Defaults to 1 to produce unit vectors.
-        degrees
-            If ``True``, the angles are assumed to be in degrees.
-            Default is ``False``.
-
-        Returns
-        -------
-        vec
-        """
-        azimuth = np.atleast_1d(azimuth)
-        polar = np.atleast_1d(polar)
-        if degrees:
-            azimuth = np.deg2rad(azimuth)
-            polar = np.deg2rad(polar)
-        sin_polar = np.sin(polar)
-        x = np.cos(azimuth) * sin_polar
-        y = np.sin(azimuth) * sin_polar
-        z = np.cos(polar)
-        return radial * cls(np.stack((x, y, z), axis=-1))
-
-    @classmethod
-    def zero(cls, shape: Tuple[int] = (1,)) -> Vector3d:
-        """Return zero vectors in the specified shape.
-
-        Parameters
-        ----------
-        shape
-            Output vectors' shape.
-
-        Returns
-        -------
-        vec
-            Zero vectors.
-        """
-        return cls(np.zeros(shape + (cls.dim,)))
-
-    @classmethod
-    def xvector(cls) -> Vector3d:
-        """Return a unit vector in the x-direction."""
-        return cls((1, 0, 0))
-
-    @classmethod
-    def yvector(cls) -> Vector3d:
-        """Return a unit vector in the y-direction."""
-        return cls((0, 1, 0))
-
-    @classmethod
-    def zvector(cls) -> Vector3d:
-        """Return a unit vector in the z-direction."""
-        return cls((0, 0, 1))
-
     def angle_with(self, other: Vector3d, degrees: bool = False) -> np.ndarray:
         """Return the angles between these vectors in other vectors.
 
@@ -520,7 +613,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        vec
+        v
             A new vector with entries rotated.
 
         Examples
@@ -539,12 +632,12 @@ class Vector3d(Object3d):
         """
         # Import here to avoid circular import
         from orix.quaternion import Rotation
-        from orix.vector.neo_euler import AxAngle
 
         axis = Vector3d.zvector() if axis is None else axis
         angle = 0 if angle is None else angle
-        q = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, angle))
-        return q * self
+        R = Rotation.from_axes_angles(axis, angle)
+
+        return R * self
 
     def get_nearest(
         self, x: Vector3d, inclusive: bool = False, tiebreak: bool = None
@@ -567,7 +660,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        vec
+        v
             Vector with the smallest angle to this vector.
 
         Raises
@@ -588,20 +681,20 @@ class Vector3d(Object3d):
         eps = 1e-9 if inclusive else 0
         cosines = x.dot(self)
         mask = np.logical_and(-1 - eps < cosines, cosines < 1 + eps)
-        vec = x[mask]
-        if vec.size == 0:
+        v = x[mask]
+        if v.size == 0:
             return Vector3d.empty()
         cosines = cosines[mask]
-        verticality = vec.dot(tiebreak)
+        verticality = v.dot(tiebreak)
         order = np.lexsort((cosines, verticality))
-        return vec[order[-1]]
+        return v[order[-1]]
 
     def mean(self) -> Vector3d:
         """Return the mean vector.
 
         Returns
         -------
-        vec
+        v
             The mean vector.
         """
         axis = tuple(range(self.ndim))
@@ -652,7 +745,7 @@ class Vector3d(Object3d):
 
         Returns
         -------
-        vec
+        v
             Vectors within the fundamental sector.
 
         Examples
@@ -679,20 +772,20 @@ class Vector3d(Object3d):
             vv = symmetry[-1] * v[idx]
             if vv.size != 0:
                 v[idx] = vv
-            rot = symmetry[:3]
+            S = symmetry[:3]
         elif symmetry.name == "-3":
             idx = v.z < 0
             vv = symmetry[3] * v[idx]
             if vv.size != 0:
                 v[idx] = vv
-            rot = symmetry[:3]
+            S = symmetry[:3]
         else:
-            rot = symmetry
+            S = symmetry
 
-        rotated_centers = rot * center
+        rotated_centers = S * center
         closeness = v.dot_outer(rotated_centers).round(12)
         idx_max = np.argmax(closeness, axis=-1)
-        v2 = ~rot[idx_max] * v
+        v2 = ~S[idx_max] * v
 
         # Keep the ones already inside the sector
         mask = v <= fs
@@ -1024,7 +1117,7 @@ class Vector3d(Object3d):
         projection: str = "stereographic",
         figure: Optional[Figure] = None,
         axes_labels: Optional[List[str]] = None,
-        vector_labels: Optional[List[str]] = None,
+        vector_labels: Union[np.ndarray, List[str], None] = None,
         hemisphere: Optional[str] = None,
         reproject: bool = False,
         show_hemisphere_label: Optional[bool] = None,
@@ -1050,7 +1143,9 @@ class Vector3d(Object3d):
             Reference frame axes labels, defaults to
             ``[None, None, None]``.
         vector_labels
-            Vector text labels, which by default are not added.
+            Labels for each vector. None are added if not given. Their
+            offsets in stereographic coordinates (X, Y) can be
+            controlled by passing ``offset`` to ``text_kwargs``.
         hemisphere
             Which hemisphere(s) to plot the vectors in, defaults to
             ``None``, which means ``"upper"`` if a new figure is
@@ -1316,6 +1411,8 @@ class Vector3d(Object3d):
         if return_figure:
             return fig
 
+    # -------------------- Other private methods --------------------- #
+
     @staticmethod
     def _setup_plot(
         projection: str = "stereographic",
@@ -1419,7 +1516,7 @@ class Vector3d(Object3d):
 
         if figure is None:
             if figure_kwargs is None:
-                figure_kwargs = dict()
+                figure_kwargs = {"layout": "tight"}
             figure, axes = plt.subplots(
                 ncols=ncols, subplot_kw=subplot_kw, **figure_kwargs
             )

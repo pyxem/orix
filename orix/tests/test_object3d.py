@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -19,7 +19,7 @@
 import numpy as np
 import pytest
 
-from orix.base import DimensionError, Object3d
+from orix._base import DimensionError, Object3d
 
 
 @pytest.fixture(
@@ -202,7 +202,7 @@ def test_unique(test_object3d):
 
 @pytest.mark.parametrize("test_object3d", [4], indirect=["test_object3d"])
 def test_get_random_sample(test_object3d):
-    o3d = test_object3d(np.arange(80).reshape((5, 4, 4)))
+    o3d = test_object3d(np.arange(80).reshape(5, 4, 4))
     o3d_sample = o3d.get_random_sample(10)
     assert o3d_sample.size == 10
 

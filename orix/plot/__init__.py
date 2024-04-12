@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -23,6 +23,7 @@
 :class:`~orix.crystal_map.CrystalMap`.
 """
 
+from orix.plot._util import format_labels
 from orix.plot.crystal_map_plot import CrystalMapPlot
 from orix.plot.direction_color_keys import DirectionColorKeyTSL
 from orix.plot.orientation_color_keys import EulerColorKey, IPFColorKeyTSL
@@ -39,6 +40,7 @@ __all__ = [
     "CrystalMapPlot",
     "DirectionColorKeyTSL",
     "EulerColorKey",
+    "format_labels",
     "InversePoleFigurePlot",
     "IPFColorKeyTSL",
     "RodriguesPlot",

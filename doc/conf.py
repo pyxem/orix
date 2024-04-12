@@ -25,25 +25,25 @@ copyright = f"2018-{str(datetime.now().year)}, {orix.__author__}"
 author = orix.__author__
 release = orix.__version__
 
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
     "matplotlib.sphinxext.plot_directive",
     "nbsphinx",
-    "numpydoc",
     "sphinxcontrib.bibtex",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
+    "sphinx.ext.imgconverter",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",
+    "sphinx.ext.mathjax",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
-    "sphinx_last_updated_by_git",
+    "numpydoc",  # Must be loaded after autodoc
 ]
 
 # Create links to references within orix's documentation to these packages
@@ -61,7 +61,6 @@ intersphinx_mapping = {
     "nbval": ("https://nbval.readthedocs.io/en/latest", None),
     "numpy": ("https://numpy.org/doc/stable", None),
     "numpydoc": ("https://numpydoc.readthedocs.io/en/latest", None),
-    "pymicro": ("https://pymicro.readthedocs.io/projects/pymicro/en/latest", None),
     "pytest": ("https://docs.pytest.org/en/stable", None),
     "python": ("https://docs.python.org/3", None),
     "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
@@ -78,7 +77,15 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "build",
+    "Thumbs.db",
+    ".DS_Store",
+    # Suppress warnings from Sphinx regarding "duplicate source files":
+    # https://github.com/executablebooks/MyST-NB/issues/363#issuecomment-1682540222
+    "examples/*/*.ipynb",
+    "examples/*/*.py",
+]
 
 # HTML theming: pydata-sphinx-theme
 # https://pydata-sphinx-theme.readthedocs.io
@@ -87,7 +94,7 @@ html_theme_options = {
     "github_url": "https://github.com/pyxem/orix",
     "header_links_before_dropdown": 6,
     "logo": {"alt_text": project, "text": project},
-    "navigation_with_keys": False,
+    "navigation_with_keys": True,
     "show_toc_level": 2,
     "use_edit_page_button": True,
 }
@@ -329,7 +336,29 @@ autosummary_generate = True
 
 
 # Download example datasets prior to building the docs
-print("[orix] Downloading example datasets")
+print("[orix] Downloading example datasets (if not found in the cache)")
 _ = data.sdss_ferrite_austenite(allow_download=True)
 _ = data.sdss_austenite(allow_download=True)
 _ = data.ti_orientations(allow_download=True)
+
+
+def skip_member(app, what, name, obj, skip, options):
+    """Exclude objects not defined within orix from the API reference.
+
+    This ensures inherited members from Matplotlib axes extensions are
+    excluded from the reference. We could exclude inherited members
+    all together in the Sphinx Jinja2 template. But, this would mean
+    classes such as Rotation would have to "overwrite" all methods and
+    properties from Quaternion for these members to be listed in the
+    API reference of Rotation. Instead, we allow inherited members, but
+    try our best to skip members coming from outside orix here.
+    """
+    if what in ["attribute", "property"]:
+        obj_module = inspect.getmodule(getattr(obj, "fget", None))
+    else:
+        obj_module = inspect.getmodule(obj)
+    return "orix" not in getattr(obj_module, "__name__", [])
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip_member)

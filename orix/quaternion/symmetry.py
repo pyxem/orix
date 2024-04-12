@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.vector import AxAngle, Vector3d
+from orix.vector import Vector3d
 
 
 class Symmetry(Rotation):
@@ -54,16 +54,7 @@ class Symmetry(Rotation):
 
     name = ""
 
-    def __repr__(self) -> str:
-        data = np.array_str(self.data, precision=4, suppress_small=True)
-        return f"{self.__class__.__name__} {self.shape} {self.name}\n{data}"
-
-    def __and__(self, other: Symmetry) -> Symmetry:
-        generators = [g for g in self.subgroups if g in other.subgroups]
-        return Symmetry.from_generators(*generators)
-
-    def __hash__(self) -> hash:
-        return hash(self.name.encode() + self.data.tobytes() + self.improper.tobytes())
+    # -------------------------- Properties -------------------------- #
 
     @property
     def order(self) -> int:
@@ -316,7 +307,7 @@ class Symmetry(Rotation):
 
         def symmetry_axis(v: Vector3d, n: int) -> Rotation:
             angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
-            return Rotation.from_neo_euler(AxAngle.from_axes_angles(v, angles))
+            return Rotation.from_axes_angles(v, angles)
 
         # Symmetry axes
         vx = Vector3d.xvector()
@@ -350,6 +341,21 @@ class Symmetry(Rotation):
             rot = Rotation.identity((1,))
 
         return rot.flatten()
+
+    # ------------------------ Dunder methods ------------------------ #
+
+    def __repr__(self) -> str:
+        data = np.array_str(self.data, precision=4, suppress_small=True)
+        return f"{self.__class__.__name__} {self.shape} {self.name}\n{data}"
+
+    def __and__(self, other: Symmetry) -> Symmetry:
+        generators = [g for g in self.subgroups if g in other.subgroups]
+        return Symmetry.from_generators(*generators)
+
+    def __hash__(self) -> hash:
+        return hash(self.name.encode() + self.data.tobytes() + self.improper.tobytes())
+
+    # ------------------------ Class methods ------------------------- #
 
     @classmethod
     def from_generators(cls, *generators: Rotation) -> Symmetry:
@@ -397,6 +403,8 @@ class Symmetry(Rotation):
             size_new = generator.size
         return generator
 
+    # --------------------- Other public methods --------------------- #
+
     def get_axis_orders(self) -> Dict[Vector3d, int]:
         s = self[self.angle > 0]
         if s.size == 0:
@@ -409,7 +417,7 @@ class Symmetry(Rotation):
     def get_highest_order_axis(self) -> Tuple[Vector3d, np.ndarray]:
         axis_orders = self.get_axis_orders()
         if len(axis_orders) == 0:
-            return Vector3d.zvector(), np.infty
+            return Vector3d.zvector(), np.inf
         highest_order = max(axis_orders.values())
         axes = Vector3d.stack(
             [ao for ao in axis_orders if axis_orders[ao] == highest_order]
@@ -425,7 +433,7 @@ class Symmetry(Rotation):
         if order > 6:
             return Vector3d.empty()
         axis = Vector3d.zvector().get_nearest(axes, inclusive=True)
-        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2 * np.pi / order))
+        r = Rotation.from_axes_angles(axis, 2 * np.pi / order)
 
         diads = symmetry.diads
         nearest_diad = axis.get_nearest(diads)
@@ -442,7 +450,7 @@ class Symmetry(Rotation):
             return sr
         axes, order = inside.get_highest_order_axis()
         axis = axis.get_nearest(axes)
-        r = Rotation.from_neo_euler(AxAngle.from_axes_angles(axis, 2 * np.pi / order))
+        r = Rotation.from_axes_angles(axis, 2 * np.pi / order)
         nearest_diad = next_diad
         n1 = axis.cross(nearest_diad).unit
         n2 = -(r * n1)

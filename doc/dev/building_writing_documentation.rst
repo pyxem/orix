@@ -10,7 +10,7 @@ New documents should fit into one of these categories.
 We use :doc:`Sphinx <sphinx:index>` for documenting functionality.
 Install necessary dependencies to build the documentation::
 
-    pip install --editable .[doc]
+    pip install --editable ".[doc]"
 
 .. note::
 
@@ -18,9 +18,6 @@ Install necessary dependencies to build the documentation::
     :mod:`orix.data` module upon building the documentation.
     See the section on the :ref:`data module <adding-data-to-data-module>` for more
     details.
-
-If you get an error message running the above in a ``zsh`` shell, try wrapping the last
-part in a string, like ``'.[doc]'``.
 
 Then, build the documentation from the ``doc`` directory::
 
@@ -122,3 +119,43 @@ Writing API reference
 
 Inherited attributes and methods are not listed in the API reference unless they are
 explicitly coded in the inheriting class.
+
+A class' ``set()`` method, if it has any, is excluded from the API reference.
+This is necessary because some plotting classes inheriting from Matplotlib's ``Axes()``
+class caused errors when the inherited ``set()`` method is to be included in the API
+reference by Sphinx (even though inherited methods are also explicitly excluded).
+
+.. _mathematical_notation:
+
+Mathematical notation
+---------------------
+
+We try to use a mathematical notation consistent throughout our documentation and
+internal (not user-facing) source code for naming variables.
+Rotation objects are denoted by uppercase letters and vector objects are denoted by
+lowercase letters.
+
+* Quaternion :math:`Q = (a, b, c, d)`
+* Rotation axis :math:`\hat{\mathbf{n}}`
+* Rotation angle :math:`\omega`
+* Rotation :math:`R = (a, b, c, d)`
+* Orientation :math:`O = (a, b, c, d)`
+* Misorientation :math:`M = (a, b, c, d)`
+* Symmetry operations:
+
+  * Set of operations :math:`S`
+  * Single operation :math:`s = (a, b, c, d)`
+
+* 3D vector :math:`\mathbf{v} = (x, y, z)`
+* Reciprocal or direct lattice vectors (``Miller``) with coordinate formats:
+
+  * "xyz": :math:`\mathbf{m} = (x, y, z)`
+  * "hkl" or "hkil": :math:`\mathbf{g} = (h, k, l)`
+  * "uvw" or "UVTW": :math:`\mathbf{t} = [u, v, w]`
+
+* Polar angles
+
+  * Azimuth :math:`\phi`
+  * Polar :math:`\theta`
+
+* Stereographic coordinates :math:`(X, Y)`
