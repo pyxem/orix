@@ -11,6 +11,25 @@ Unreleased
 
 Added
 -----
+
+Changed
+-------
+
+Removed
+-------
+
+Deprecated
+----------
+
+Fixed
+-----
+
+
+2024-04-13 - version 0.12.0
+===========================
+
+Added
+-----
 - ``Vector3d.from_path_ends()`` class method to get vectors between two vectors.
 - Convenience function ``plot.format_labels()`` to get nicely formatted vector labels to
   use when plotting vectors.
