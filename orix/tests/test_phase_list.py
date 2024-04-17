@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-from diffpy.structure import Atom, Lattice, Structure
+from diffpy.structure import Atom, Lattice, Structure, loadStructure
 from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
@@ -395,6 +395,12 @@ class TestPhase:
         assert np.allclose(
             lattice.base, [[15.5, 0, 0], [0, 4.05, 0], [-1.779, 0, 6.501]], atol=1e-3
         )
+        # check result is the same when defining structure directly
+        structure = loadStructure(cif_file)
+        phase2 = Phase(structure=structure)
+        assert np.allclose(phase.structure.lattice.base, phase2.structure.lattice.base)
+        assert np.allclose(phase.structure.xyz, phase2.structure.xyz)
+        assert np.allclose(phase.structure.xyz_cartn, phase2.structure.xyz_cartn)
 
 
 class TestPhaseList:
