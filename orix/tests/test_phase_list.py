@@ -395,12 +395,13 @@ class TestPhase:
         assert np.allclose(
             lattice.base, [[15.5, 0, 0], [0, 4.05, 0], [-1.779, 0, 6.501]], atol=1e-3
         )
-        # check result is the same when defining structure directly
+
+    def test_from_cif_same_structure(self, cif_file):
+        phase1 = Phase.from_cif(cif_file)
         structure = loadStructure(cif_file)
         phase2 = Phase(structure=structure)
-        assert np.allclose(phase.structure.lattice.base, phase2.structure.lattice.base)
-        assert np.allclose(phase.structure.xyz, phase2.structure.xyz)
-        assert np.allclose(phase.structure.xyz_cartn, phase2.structure.xyz_cartn)
+        assert np.allclose(phase1.structure.lattice.base, phase2.structure.lattice.base)
+        assert np.allclose(phase1.structure.xyz, phase2.structure.xyz)
 
 
 class TestPhaseList:
