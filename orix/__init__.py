@@ -16,5 +16,6 @@ __credits__ = [
     "Carter Francis",
     "Simon Høgås",
     "Viljar Johan Femoen",
+    "Alessandra da Silva", 
     "Alexander Clausen",
 ]
