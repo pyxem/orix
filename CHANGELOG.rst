@@ -23,6 +23,8 @@ Deprecated
 
 Fixed
 -----
+- ``ax2qu`` and ``Quaternion.from_axes_angles()`` would raise if the input arrays were
+  broadcastable but the final dimension was ``1``. This has been fixed.
 
 
 2024-04-13 - version 0.12.0
