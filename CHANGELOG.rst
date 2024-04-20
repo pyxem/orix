@@ -11,9 +11,9 @@ its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>
 
 Fixed
 -----
-- ``Phase.from_cif()`` now correctly adjust atom positions when forcing
+- ``Phase.from_cif()`` now correctly adjusts atom positions when forcing
   ``Phase.structure.lattice.base`` to use the crystal axes alignment ``e1 || a``,
-  ``e3 || c*``.
+  ``e3 || c*``. This bug was introduced in 0.12.0.
 
 2024-04-13 - version 0.12.0
 ===========================
