@@ -6,11 +6,13 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
-2024-04-20 - version 0.12.1
+2024-04-21 - version 0.12.1
 ===========================
 
 Fixed
 -----
+- ``ax2qu`` and ``Quaternion.from_axes_angles()`` would raise if the input arrays were
+  broadcastable but the final dimension was ``1``. This has been fixed.
 - ``Phase.from_cif()`` now correctly adjusts atom positions when forcing
   ``Phase.structure.lattice.base`` to use the crystal axes alignment ``e1 || a``,
   ``e3 || c*``. This bug was introduced in 0.12.0.
