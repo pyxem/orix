@@ -57,14 +57,14 @@ Post-release action
   top banner of one of the tutorials via the `documentation
   <https://orix.readthedocs.io/en/stable>`__.
 
-- Bring changes in ``main`` into ``develop`` by first branching from ``main``, merge
-  ``develop`` into the new branch and fix potential conflicts. After these conflicts are
+- Bring changes in ``main`` into ``develop`` by first branching from ``develop``, merge
+  ``main`` into the new branch and fix potential conflicts. After these conflicts are
   fixed, update or revert ``__version__`` and make any updates to this guide if
   necessary. Make a PR to ``develop`` and merge.
-
-- Tidy up GitHub issues and close the corresponding milestone.
 
 - A PR to the conda-forge feedstock will be created by the conda-forge bot. Follow the
   relevant instructions from the conda-forge documentation on updating packages, as well
   as the instructions in the PR. Merge after checks pass. Monitor the Azure pipeline CI
   to ensure the release is successfully published to conda-forge.
+
+- Tidy up GitHub issues and close the corresponding milestone.

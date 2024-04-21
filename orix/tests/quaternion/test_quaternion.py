@@ -511,7 +511,10 @@ class TestFromToAxesAngles:
     axis-angle vectors.
     """
 
-    def test_from_axes_angles(self, rotations):
+    @pytest.mark.parametrize("extra_dim", [True, False])
+    def test_from_axes_angles(self, rotations, extra_dim):
+        if extra_dim:
+            rotations = rotations.__class__(rotations.data[..., np.newaxis, :])
         ax = AxAngle.from_rotation(rotations)
         with pytest.warns(np.VisibleDeprecationWarning):
             q2 = Quaternion.from_neo_euler(ax)

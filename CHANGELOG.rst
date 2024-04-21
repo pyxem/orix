@@ -6,6 +6,27 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
+Unreleased
+==========
+
+Added
+-----
+
+Changed
+-------
+
+Removed
+-------
+
+Deprecated
+----------
+
+Fixed
+-----
+- ``ax2qu`` and ``Quaternion.from_axes_angles()`` would raise if the input arrays were
+  broadcastable but the final dimension was ``1``. This has been fixed.
+
+
 2024-04-13 - version 0.12.0
 ===========================
 
