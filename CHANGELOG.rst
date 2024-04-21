@@ -25,6 +25,17 @@ Fixed
 -----
 
 
+2024-04-21 - version 0.12.1
+===========================
+
+Fixed
+-----
+- ``ax2qu`` and ``Quaternion.from_axes_angles()`` would raise if the input arrays were
+  broadcastable but the final dimension was ``1``. This has been fixed.
+- ``Phase.from_cif()`` now correctly adjusts atom positions when forcing
+  ``Phase.structure.lattice.base`` to use the crystal axes alignment ``e1 || a``,
+  ``e3 || c*``. This bug was introduced in 0.12.0.
+
 2024-04-13 - version 0.12.0
 ===========================
 

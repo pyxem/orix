@@ -554,7 +554,7 @@ def ax2qu(axes: np.ndarray, angles: np.ndarray) -> np.ndarray:
 
     if axes.shape[-1] != 3:
         raise ValueError("Final dimension of axes array must be 3.")
-    if angles.shape[-1] != 1 or angles.shape == (1,):
+    if angles.shape[-1] != 1 or angles.shape == (1,) or axes.shape[:-1] == angles.shape:
         angles = angles.reshape(angles.shape + (1,))
 
     axes_shape = axes.shape[:-1]
