@@ -339,9 +339,6 @@ class Phase:
         parser = p_cif.P_cif()
         name = os.path.splitext(os.path.split(filename)[1])[0]
         structure = parser.parseFile(filename)
-        lattice = structure.lattice
-        new_base = _new_structure_matrix_from_alignment(lattice.base, x="a", z="c*")
-        lattice.setLatBase(new_base)
         space_group = parser.spacegroup.number
         return cls(name, space_group, structure=structure)
 
