@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -495,20 +495,20 @@ class TestDrawCircle:
 
 class TestRestrictToFundamentalSector:
     def test_restrict_to_fundamental_sector(self):
-        fig1, ax1 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        _, ax1 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         vertices = ax1.patches[0].get_verts()
 
-        # C1's has no fundamental sector, so the circle marking the
+        # C1 has no fundamental sector, so the circle marking the
         # edge of the axis region should be unchanged
-        fig2, ax2 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        _, ax2 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax2.restrict_to_sector(symmetry.C1.fundamental_sector)
         assert np.allclose(vertices, ax2.patches[0].get_verts())
 
-        # C6's fundamental sector is 1 / 6 of the unit sphere, with
+        # C6 fundamental sector is 1 / 6 of the unit sphere, with
         # half of it in the upper hemisphere
-        fig3, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
+        _, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
         ax3[0].restrict_to_sector(symmetry.C6.fundamental_sector)
-        assert not np.allclose(vertices, ax3[0].patches[0].get_verts())
+        assert not np.allclose(vertices[:10], ax3[0].patches[0].get_verts()[:10])
         assert ax3[0].patches[1].get_label() == "sa_sector"
 
         # Ensure grid lines are clipped by sector
@@ -518,13 +518,13 @@ class TestRestrictToFundamentalSector:
         # Oh's fundamental sector is only in the upper hemisphere,
         # so the same as C1's sector applies for the lower hemisphere
         fs = symmetry.Oh.fundamental_sector
-        fig4, ax4 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        _, ax4 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax4.restrict_to_sector(fs)
         upper_patches4 = ax4.patches
         assert len(upper_patches4) == 2
         assert upper_patches4[1].get_label() == "sa_sector"
 
-        fig5, ax5 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        _, ax5 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax5.hemisphere = "lower"
         ax5.restrict_to_sector(fs)
         lower_patches4 = ax5.patches

@@ -12,6 +12,9 @@ extra_feature_requirements = {
     "doc": [
         "ipykernel",  # Used by nbsphinx to execute notebooks
         "memory_profiler",
+        # TODO: Remove nbconvert pin once
+        #  https://github.com/pyxem/orix/issues/494 is resolved
+        "nbconvert                      < 7.14",
         "nbsphinx                       >= 0.7",
         "numpydoc",
         "pydata-sphinx-theme",
@@ -29,6 +32,7 @@ extra_feature_requirements = {
         "numpydoc",
         "pytest                         >= 5.4",
         "pytest-cov                     >= 2.8.1",
+        "pytest-rerunfailures",
         "pytest-xdist",
     ],
 }
@@ -62,7 +66,6 @@ setup(
     long_description_content_type="text/x-rst",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -78,7 +81,7 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     packages=find_packages(exclude=["orix/tests"]),
     extras_require=extra_feature_requirements,
     # fmt: off

@@ -10,7 +10,7 @@ New documents should fit into one of these categories.
 We use :doc:`Sphinx <sphinx:index>` for documenting functionality.
 Install necessary dependencies to build the documentation::
 
-    pip install --editable .[doc]
+    pip install --editable ".[doc]"
 
 .. note::
 
@@ -18,9 +18,6 @@ Install necessary dependencies to build the documentation::
     :mod:`orix.data` module upon building the documentation.
     See the section on the :ref:`data module <adding-data-to-data-module>` for more
     details.
-
-If you get an error message running the above in a ``zsh`` shell, try wrapping the last
-part in a string, like ``'.[doc]'``.
 
 Then, build the documentation from the ``doc`` directory::
 

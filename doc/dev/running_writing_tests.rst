@@ -6,10 +6,7 @@ The tests reside in a ``tests`` module.
 Tests are short methods that call functions in ``orix`` and compare resulting output
 values with known answers. Install necessary dependencies to run the tests::
 
-   pip install --editable .[tests]
-
-If you get an error message running the above in a ``zsh`` shell, try wrapping the last
-part in a string, like ``'.[tests]'``.
+   pip install --editable ".[tests]"
 
 Some useful :doc:`fixtures <pytest:explanation/fixtures>` are available in the
 ``conftest.py`` file.
@@ -39,7 +36,7 @@ Docstring examples are tested :doc:`with pytest <pytest:how-to/doctest>` as well
 already available in the namespace as ``np`` and ``plt``, respectively.
 The docstring tests can be run from the top directory::
 
-    pytest --doctest-modules --ignore-glob=orix/tests orix/*.py
+    pytest orix --doctest-modules --ignore-glob=orix/tests
 
 Tips for writing tests of Numba decorated functions:
 

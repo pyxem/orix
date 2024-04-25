@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -511,7 +511,10 @@ class TestFromToAxesAngles:
     axis-angle vectors.
     """
 
-    def test_from_axes_angles(self, rotations):
+    @pytest.mark.parametrize("extra_dim", [True, False])
+    def test_from_axes_angles(self, rotations, extra_dim):
+        if extra_dim:
+            rotations = rotations.__class__(rotations.data[..., np.newaxis, :])
         ax = AxAngle.from_rotation(rotations)
         with pytest.warns(np.VisibleDeprecationWarning):
             q2 = Quaternion.from_neo_euler(ax)

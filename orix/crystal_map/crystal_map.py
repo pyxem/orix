@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -775,17 +775,6 @@ class CrystalMap:
         -------
         xmap
             Crystal map.
-
-        Examples
-        --------
-        >>> from orix.crystal_map import CrystalMap
-        >>> xmap = CrystalMap.empty((5, 10))
-        >>> xmap
-        Phase  Orientations  Name  Space group  Point group  Proper point group     Color
-            0   50 (100.0%)  None         None         None                None  tab:blue
-        Properties:
-        Scan unit: px
-        >>> xmap.plot("x")  # Increasing towards the right
         """
         d, n = create_coordinate_arrays(shape, step_sizes)
         d["rotations"] = Rotation.identity((n,))

@@ -1,3 +1,4 @@
+# %%
 r"""
 ====================================
 Orientation from aligning directions
@@ -39,8 +40,8 @@ v = Vector3d(~O_ref * t)
 
 # Plot the reference orientation sample directions as empty circles
 fig = v.scatter(
+    c="none",
     ec=["r", "b"],
-    fc="none",
     grid=True,
     axes_labels=["X", "Y"],
     return_figure=True,

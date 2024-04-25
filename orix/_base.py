@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -196,9 +196,7 @@ class Object3d:
         obj._data = self._data.T.reshape(real_dim, -1).T
         return obj
 
-    def unique(
-        self, return_index: bool = False, return_inverse: bool = False
-    ) -> Union[
+    def unique(self, return_index: bool = False, return_inverse: bool = False) -> Union[
         Tuple[Object3d, np.ndarray, np.ndarray],
         Tuple[Object3d, np.ndarray],
         Object3d,
