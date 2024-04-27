@@ -11,6 +11,7 @@ Unreleased
 
 Added
 -----
+- We can now read 2D crystal maps from Channel Text Files (CTFs) using ``io.load()``.
 
 Changed
 -------
@@ -20,6 +21,8 @@ Removed
 
 Deprecated
 ----------
+- ``loadang()`` and ``loadctf()`` are deprecated and will be removed in the next minor
+  release. Please use ``io.load()`` instead.
 
 Fixed
 -----

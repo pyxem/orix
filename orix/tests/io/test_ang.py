@@ -77,7 +77,8 @@ from orix.tests.conftest import (
     indirect=["angfile_astar"],
 )
 def test_loadang(angfile_astar, expected_data):
-    loaded_data = loadang(angfile_astar)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        loaded_data = loadang(angfile_astar)
     assert np.allclose(loaded_data.data, expected_data)
 
 

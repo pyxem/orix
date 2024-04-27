@@ -146,8 +146,8 @@ class TestGeneralIO:
         assert crystal_map2.phases[0].name == expected_phase_name
 
 
+# TODO: Remove after 0.13.0
 def test_loadctf():
-    """Crude test of the ctf loader"""
     z = np.random.rand(100, 8)
     fname = "temp.ctf"
     np.savetxt(fname, z)
