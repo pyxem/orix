@@ -22,7 +22,7 @@ TSL, NanoMegas ASTAR Index or EMsoft's EMdpmerge program.
 
 from io import TextIOWrapper
 import re
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 import warnings
 
 from diffpy.structure import Lattice, Structure
@@ -43,10 +43,12 @@ writes_this = CrystalMap
 
 
 def file_reader(filename: str) -> CrystalMap:
-    """Return a crystal map from a file in EDAX TLS's .ang format. The
-    map in the input is assumed to be 2D.
+    """Return a crystal map from a file in EDAX TLS's .ang format.
 
-    Many vendors produce an .ang file. Supported vendors are:
+    The map in the input is assumed to be 2D.
+
+    Many vendors/programs produce an .ang file. Files from the following
+    vendors/programs are tested:
 
     * EDAX TSL
     * NanoMegas ASTAR Index
@@ -72,20 +74,19 @@ def file_reader(filename: str) -> CrystalMap:
     with open(filename) as f:
         header = _get_header(f)
 
-    # Get phase names and crystal symmetries from header (potentially empty)
-    phase_ids, phase_names, symmetries, lattice_constants = _get_phases_from_header(
-        header
-    )
-    structures = []
-    for name, abcABG in zip(phase_names, lattice_constants):
-        structures.append(Structure(title=name, lattice=Lattice(*abcABG)))
+    # Phase information, potentially empty
+    phases = _get_phases_from_header(header)
+    phases["structures"] = []
+    lattice_constants = phases.pop("lattice_constants")
+    for name, abcABG in zip(phases["names"], lattice_constants):
+        structure = Structure(title=name, lattice=Lattice(*abcABG))
+        phases["structures"].append(structure)
 
     # Read all file data
     file_data = np.loadtxt(filename)
 
     # Get vendor and column names
-    n_rows, n_cols = file_data.shape
-    vendor, column_names = _get_vendor_columns(header, n_cols)
+    vendor, column_names = _get_vendor_columns(header, file_data.shape[1])
 
     # Data needed to create a CrystalMap object
     data_dict = {
@@ -98,18 +99,13 @@ def file_reader(filename: str) -> CrystalMap:
         "prop": {},
     }
     for column, name in enumerate(column_names):
-        if name in data_dict.keys():
+        if name in data_dict:
             data_dict[name] = file_data[:, column]
         else:
             data_dict["prop"][name] = file_data[:, column]
 
     # Add phase list to dictionary
-    data_dict["phase_list"] = PhaseList(
-        names=phase_names,
-        point_groups=symmetries,
-        structures=structures,
-        ids=phase_ids,
-    )
+    data_dict["phase_list"] = PhaseList(**phases)
 
     # Set which data points are not indexed
     # TODO: Add not-indexed convention for INDEX ASTAR
@@ -134,7 +130,7 @@ def file_reader(filename: str) -> CrystalMap:
     return CrystalMap(**data_dict)
 
 
-def _get_header(file: TextIOWrapper) -> List[str]:
+def _get_header(file: TextIOWrapper) -> list[str]:
     """Return the first lines starting with '#' in an .ang file.
 
     Parameters
@@ -149,13 +145,16 @@ def _get_header(file: TextIOWrapper) -> List[str]:
     """
     header = []
     line = file.readline()
-    while line.startswith("#"):
+    i = 0
+    # Prevent endless loop by not reading past 1 000 lines
+    while line.startswith("#") and i < 1_000:
         header.append(line.rstrip())
         line = file.readline()
+        i += 1
     return header
 
 
-def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[str]]:
+def _get_vendor_columns(header: list[str], n_cols_file: int) -> tuple[str, list[str]]:
     """Return the .ang file column names and vendor, determined from the
     header.
 
@@ -174,15 +173,13 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
     column_names
         List of column names.
     """
-    # Assume EDAX TSL by default
-    vendor = "tsl"
-
-    # Determine vendor by searching for the vendor footprint in the header
+    # Determine vendor by searching for vendor footprint in header
     vendor_footprint = {
         "emsoft": "EMsoft",
         "astar": "ACOM",
         "orix": "Column names: phi1, Phi, phi2",
     }
+    vendor = "tsl"  # Default guess
     footprint_line = None
     for name, footprint in vendor_footprint.items():
         for line in header:
@@ -307,9 +304,7 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
     return vendor, vendor_column_names
 
 
-def _get_phases_from_header(
-    header: List[str],
-) -> Tuple[List[int], List[str], List[str], List[List[float]]]:
+def _get_phases_from_header(header: list[str]) -> dict:
     """Return phase names and symmetries detected in an .ang file
     header.
 
@@ -320,43 +315,38 @@ def _get_phases_from_header(
 
     Returns
     -------
-    ids
-        Phase IDs.
-    phase_names
-        List of names of detected phases.
-    phase_point_groups
-        List of point groups of detected phase.
-    lattice_constants
-        List of list of lattice parameters of detected phases.
+    phase_dict
+        Dictionary with the following keys (and types): "ids" (int),
+        "names" (str), "point_groups" (str), "lattice_constants" (list
+        of floats).
 
     Notes
     -----
-    Regular expressions are used to collect phase name, formula and
-    point group. This function have been tested with files from the
-    following vendor's formats: EDAX TSL OIM Data Collection v7, ASTAR
-    Index, and EMsoft v4/v5.
+    This function has been tested with files from the following vendor's
+    formats: EDAX TSL OIM Data Collection v7, ASTAR Index, and EMsoft
+    v4/v5.
     """
-    regexps = {
-        "id": "# Phase([ \t]+)([0-9 ]+)",
-        "name": "# MaterialName([ \t]+)([A-z0-9 ]+)",
-        "formula": "# Formula([ \t]+)([A-z0-9 ]+)",
-        "point_group": "# Symmetry([ \t]+)([A-z0-9 ]+)",
+    str_patterns = {
+        "ids": "# Phase([ \t]+)([0-9 ]+)",
+        "names": "# MaterialName([ \t]+)([A-z0-9 ]+)",
+        "formulas": "# Formula([ \t]+)([A-z0-9 ]+)",
+        "point_groups": "# Symmetry([ \t]+)([A-z0-9 ]+)",
         "lattice_constants": r"# LatticeConstants([ \t+])(.*)",
     }
     phases = {
-        "name": [],
-        "formula": [],
-        "point_group": [],
+        "ids": [],
+        "names": [],
+        "formulas": [],
+        "point_groups": [],
         "lattice_constants": [],
-        "id": [],
     }
     for line in header:
-        for key, exp in regexps.items():
+        for key, exp in str_patterns.items():
             match = re.search(exp, line)
             if match:
                 group = re.split("[ \t]", line.lstrip("# ").rstrip(" "))
                 group = list(filter(None, group))
-                if key == "name":
+                if key == "names":
                     group = " ".join(group[1:])  # Drop "MaterialName"
                 elif key == "lattice_constants":
                     group = [float(i) for i in group[1:]]
@@ -364,22 +354,24 @@ def _get_phases_from_header(
                     group = group[-1]
                 phases[key].append(group)
 
-    # Check if formula is empty (sometimes the case for ASTAR Index)
-    names = phases["formula"]
-    if len(names) == 0 or any([i != "" for i in names]):
-        names = phases["name"]
+    n_phases = len(phases["names"])
+
+    # Use formulas in place of material names if they are all valid
+    formulas = phases.pop("formulas")
+    if len(formulas) == n_phases and all([len(name) for name in formulas]):
+        phases["names"] = formulas
 
     # Ensure each phase has an ID (hopefully found in the header)
-    phase_ids = [int(i) for i in phases["id"]]
-    n_phases = len(phases["name"])
-    if len(phase_ids) == 0:
+    phase_ids = [int(i) for i in phases["ids"]]
+    if not len(phase_ids):
         phase_ids += [i for i in range(n_phases)]
     elif n_phases - len(phase_ids) > 0 and len(phase_ids) != 0:
         next_id = max(phase_ids) + 1
         n_left = n_phases - len(phase_ids)
         phase_ids += [i for i in range(next_id, next_id + n_left)]
+    phases["ids"] = phase_ids
 
-    return phase_ids, names, phases["point_group"], phases["lattice_constants"]
+    return phases
 
 
 def file_writer(
@@ -390,7 +382,7 @@ def file_writer(
     confidence_index_prop: Optional[str] = None,
     detector_signal_prop: Optional[str] = None,
     pattern_fit_prop: Optional[str] = None,
-    extra_prop: Union[str, List[str], None] = None,
+    extra_prop: Union[str, list[str], None] = None,
 ):
     """Write a crystal map to an .ang file readable by MTEX and EDAX TSL
     OIM Analysis v7.
@@ -424,31 +416,31 @@ def file_writer(
         Which map property to use as the image quality. If not given
         (default), ``"iq"`` or ``"imagequality"``, if present, is used,
         otherwise just zeros. If the property has more than one value
-        per point and ``index`` is not given, only the first value is
+        per point and *index* is not given, only the first value is
         used.
     confidence_index_prop
         Which map property to use as the confidence index. If not given
         (default), ``"ci"``, ``"confidenceindex"``, ``"scores"``, or
         ``"correlation"``, if present, is used, otherwise just zeros. If
-        the property has more than one value per point and ``index`` is
+        the property has more than one value per point and *index* is
         not given, only the first value is used.
     detector_signal_prop
         Which map property to use as the detector signal. If not given
         (default), ``"ds"``, or ``"detector_signal"``, if present, is
         used, otherwise just zeros. If the property has more than one
-        value per point and ``index`` is not given, only the first value
+        value per point and *index* is not given, only the first value
         is used.
     pattern_fit_prop
         Which map property to use as the pattern fit. If not given
         (default), ``"fit"`` or ``"patternfit"``, if present, is used,
         otherwise just zeros. If the property has more than one value
-        per point and ``index`` is not given, only the first value is
+        per point and *index* is not given, only the first value is
         used.
     extra_prop
         One or multiple properties to add as extra columns in the .ang
         file, as a string or a list of strings. If not given (default),
         no extra properties are added. If a property has more than one
-        value per point and ``index`` is not given, only the first value
+        value per point and *index* is not given, only the first value
         is used.
     """
     header = _get_header_from_phases(xmap)
@@ -598,7 +590,7 @@ def _get_header_from_phases(xmap: CrystalMap) -> str:
         phase_name = phase.name
         if phase_name == "":
             phase_name = f"phase{phase_id}"
-        if phase.point_group is None:
+        if not phase.point_group:
             point_group_name = "1"
         else:
             proper_point_group = phase.point_group.proper_subgroup
@@ -634,7 +626,7 @@ def _get_header_from_phases(xmap: CrystalMap) -> str:
     return header
 
 
-def _get_nrows_ncols_step_sizes(xmap: CrystalMap) -> Tuple[int, int, float, float]:
+def _get_nrows_ncols_step_sizes(xmap: CrystalMap) -> tuple[int, int, float, float]:
     """Get crystal map shape and step sizes.
 
     Parameters
@@ -649,7 +641,7 @@ def _get_nrows_ncols_step_sizes(xmap: CrystalMap) -> Tuple[int, int, float, floa
     dy
     dx
     """
-    nrows, ncols = (1, 1)
+    nrows = ncols = 1
     dy, dx = xmap.dy, xmap.dx
     if xmap.ndim == 1:
         ncols = xmap.shape[0]
@@ -677,8 +669,8 @@ def _get_column_width(max_value: int, decimals: int = 5) -> int:
 
 def _get_prop_arrays(
     xmap: CrystalMap,
-    prop_names: List[str],
-    desired_prop_names: List[str],
+    prop_names: list[str],
+    desired_prop_names: list[str],
     map_size: int,
     index: Union[int, None],
     decimals: int = 5,
@@ -733,8 +725,8 @@ def _get_prop_arrays(
 def _get_prop_array(
     xmap: CrystalMap,
     prop_name: str,
-    expected_prop_names: List[str],
-    prop_names: List[str],
+    expected_prop_names: list[str],
+    prop_names: list[str],
     prop_names_lower_arr: np.ndarray,
     index: Union[int, None],
     decimals: int = 5,
@@ -745,9 +737,8 @@ def _get_prop_array(
 
     Reasons for why the property cannot be read:
 
-        * Property name isn't among the crystal map properties
-        * Property has only one value per point, but ``index`` is not
-          ``None``
+    * Property name isn't among the crystal map properties
+    * Property has only one value per point, but *index* is not ``None``
 
     Parameters
     ----------
@@ -766,10 +757,10 @@ def _get_prop_array(
         Property array or none if none found.
     """
     kwargs = dict(decimals=decimals, fill_value=fill_value)
-    if len(prop_names_lower_arr) == 0 and prop_name is None:
+    if not len(prop_names_lower_arr) and not prop_name:
         return
     else:
-        if prop_name is None:
+        if not prop_name:
             # Search for a suitable property
             for k in expected_prop_names:
                 is_equal = k == prop_names_lower_arr
@@ -783,6 +774,6 @@ def _get_prop_array(
             # Return the single array even if `index` is given
             return xmap.get_map_data(prop_name, **kwargs)
         else:
-            if index is None:
+            if not index:
                 index = 0
             return xmap.get_map_data(xmap.prop[prop_name][:, index], **kwargs)

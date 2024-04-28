@@ -15,6 +15,8 @@ Added
 
 Changed
 -------
+- Phase names in crystal maps read from .ang files with ``io.load()`` now prefer to use
+  the abbreviated "Formula" instead of "MaterialName" in the file header.
 
 Removed
 -------

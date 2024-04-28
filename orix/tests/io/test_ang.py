@@ -176,7 +176,7 @@ class TestAngReader:
         assert xmap.phases.size == 2  # Including non-indexed
         assert xmap.phases.ids == [-1, 0]
         phase = xmap.phases[0]
-        assert phase.name == "Aluminum"
+        assert phase.name == "Al"
         assert phase.point_group.name == "432"
 
     @pytest.mark.parametrize(
@@ -501,12 +501,12 @@ class TestAngReader:
             "#",
             "# GRID: SqrGrid#",
         ]
-        ids, names, point_groups, lattice_constants = _get_phases_from_header(header)
+        phases = _get_phases_from_header(header)
 
-        assert names == expected_names
-        assert point_groups == expected_point_groups
-        assert np.allclose(lattice_constants, expected_lattice_constants)
-        assert np.allclose(ids, expected_phase_id)
+        assert phases["names"] == expected_names
+        assert phases["point_groups"] == expected_point_groups
+        assert np.allclose(phases["lattice_constants"], expected_lattice_constants)
+        assert np.allclose(phases["ids"], expected_phase_id)
 
 
 class TestAngWriter:
