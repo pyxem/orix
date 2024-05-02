@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -77,7 +77,8 @@ from orix.tests.conftest import (
     indirect=["angfile_astar"],
 )
 def test_loadang(angfile_astar, expected_data):
-    loaded_data = loadang(angfile_astar)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        loaded_data = loadang(angfile_astar)
     assert np.allclose(loaded_data.data, expected_data)
 
 
@@ -175,7 +176,7 @@ class TestAngReader:
         assert xmap.phases.size == 2  # Including non-indexed
         assert xmap.phases.ids == [-1, 0]
         phase = xmap.phases[0]
-        assert phase.name == "Aluminum"
+        assert phase.name == "Al"
         assert phase.point_group.name == "432"
 
     @pytest.mark.parametrize(
@@ -500,12 +501,12 @@ class TestAngReader:
             "#",
             "# GRID: SqrGrid#",
         ]
-        ids, names, point_groups, lattice_constants = _get_phases_from_header(header)
+        phases = _get_phases_from_header(header)
 
-        assert names == expected_names
-        assert point_groups == expected_point_groups
-        assert np.allclose(lattice_constants, expected_lattice_constants)
-        assert np.allclose(ids, expected_phase_id)
+        assert phases["names"] == expected_names
+        assert phases["point_groups"] == expected_point_groups
+        assert np.allclose(phases["lattice_constants"], expected_lattice_constants)
+        assert np.allclose(phases["ids"], expected_phase_id)
 
 
 class TestAngWriter:

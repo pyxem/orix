@@ -4,7 +4,8 @@ Installation
 
 orix can be installed with `pip <https://pypi.org/project/orix/>`__,
 `conda <https://anaconda.org/conda-forge/orix>`__ or from source, and supports Python
->= 3.7. All alternatives are available on Windows, macOS and Linux.
+>= 3.8.
+All alternatives are available on Windows, macOS and Linux.
 
 .. _install-with-pip:
 

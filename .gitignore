@@ -67,6 +67,7 @@ doc/build/
 doc/examples/
 doc/reference/generated/
 doc/source/_autosummary/
+doc/sg_execution_times.rst
 
 # PyBuilder
 target/

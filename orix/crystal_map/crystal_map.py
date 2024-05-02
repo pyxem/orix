@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,7 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -350,12 +350,12 @@ class CrystalMap:
     @property
     def dx(self) -> float:
         """Return the x coordinate step size."""
-        return self._step_size_from_coordinates(self._x)
+        return _step_size_from_coordinates(self._x)
 
     @property
     def dy(self) -> float:
         """Return the y coordinate step size."""
-        return self._step_size_from_coordinates(self._y)
+        return _step_size_from_coordinates(self._y)
 
     @property
     def row(self) -> Union[None, np.ndarray]:
@@ -775,17 +775,6 @@ class CrystalMap:
         -------
         xmap
             Crystal map.
-
-        Examples
-        --------
-        >>> from orix.crystal_map import CrystalMap
-        >>> xmap = CrystalMap.empty((5, 10))
-        >>> xmap
-        Phase  Orientations  Name  Space group  Point group  Proper point group     Color
-            0   50 (100.0%)  None         None         None                None  tab:blue
-        Properties:
-        Scan unit: px
-        >>> xmap.plot("x")  # Increasing towards the right
         """
         d, n = create_coordinate_arrays(shape, step_sizes)
         d["rotations"] = Rotation.identity((n,))
@@ -1050,29 +1039,9 @@ class CrystalMap:
         if return_figure:
             return fig
 
-    @staticmethod
-    def _step_size_from_coordinates(coordinates: np.ndarray) -> float:
-        """Return step size in input ``coordinates`` array.
-
-        Parameters
-        ----------
-        coordinates
-            Linear coordinate array.
-
-        Returns
-        -------
-        step_size
-            Step size in ``coordinates`` array.
-        """
-        unique_sorted = np.sort(np.unique(coordinates))
-        step_size = 0
-        if unique_sorted.size != 1:
-            step_size = unique_sorted[1] - unique_sorted[0]
-        return step_size
-
     def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
-        """Return a tuple of slices defining the current data extent in
-        all directions.
+        """Return a slices defining the current data extent in all
+        directions.
 
         Parameters
         ----------
@@ -1083,23 +1052,14 @@ class CrystalMap:
         Returns
         -------
         slices
-            Data slice in each existing dimension, in (z, y, x) order.
+            Data slice in each existing direction in (y, x) order.
         """
         if only_is_in_data:
             coordinates = self._coordinates
         else:
             coordinates = self._all_coordinates
-
-        # Loop over dimension coordinates and step sizes
-        slices = []
-        for coords, step in zip(coordinates.values(), self._step_sizes.values()):
-            if coords is not None and step != 0:
-                c_min, c_max = np.min(coords), np.max(coords)
-                i_min = int(np.around(c_min / step))
-                i_max = int(np.around((c_max / step) + 1))
-                slices.append(slice(i_min, i_max))
-
-        return tuple(slices)
+        slices = _data_slices_from_coordinates(coordinates, self._step_sizes)
+        return slices
 
     def _data_shape_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
         """Return data shape based upon coordinate arrays.
@@ -1113,7 +1073,7 @@ class CrystalMap:
         Returns
         -------
         data_shape
-            Shape of data in all existing dimensions, in (z, y, x) order.
+            Shape of data in each existing direction in (y, x) order.
         """
         data_shape = []
         for dim_slice in self._data_slices_from_coordinates(only_is_in_data):
@@ -1121,13 +1081,70 @@ class CrystalMap:
         return tuple(data_shape)
 
 
+def _data_slices_from_coordinates(
+    coords: dict[str, np.ndarray], steps: Union[dict[str, float], None] = None
+) -> tuple[slice]:
+    """Return a list of slices defining the current data extent in all
+    directions.
+
+    Parameters
+    ----------
+    coords
+        Dictionary with coordinate arrays.
+    steps
+        Dictionary with step sizes in each direction. If not given, they
+        are computed from *coords*.
+
+    Returns
+    -------
+    slices
+        Data slice in each direction.
+    """
+    if steps is None:
+        steps = {
+            "x": _step_size_from_coordinates(coords["x"]),
+            "y": _step_size_from_coordinates(coords["y"]),
+        }
+    slices = []
+    for coords, step in zip(coords.values(), steps.values()):
+        if coords is not None and step != 0:
+            c_min, c_max = np.min(coords), np.max(coords)
+            i_min = int(np.around(c_min / step))
+            i_max = int(np.around((c_max / step) + 1))
+            slices.append(slice(i_min, i_max))
+    slices = tuple(slices)
+    return slices
+
+
+def _step_size_from_coordinates(coordinates: np.ndarray) -> float:
+    """Return step size in input *coordinates* array.
+
+    Parameters
+    ----------
+    coordinates
+        Linear coordinate array.
+
+    Returns
+    -------
+    step_size
+        Step size in *coordinates* array.
+    """
+    unique_sorted = np.sort(np.unique(coordinates))
+    if unique_sorted.size != 1:
+        step_size = unique_sorted[1] - unique_sorted[0]
+    else:
+        step_size = 0
+    return step_size
+
+
 def create_coordinate_arrays(
     shape: Optional[tuple] = None, step_sizes: Optional[tuple] = None
-) -> Tuple[dict, int]:
-    """Create flattened coordinate arrays from a given map shape and
+) -> tuple[dict, int]:
+    """Return flattened coordinate arrays from a given map shape and
     step sizes, suitable for initializing a
-    :class:`~orix.crystal_map.CrystalMap`. Arrays for 1D or 2D maps can
-    be returned.
+    :class:`~orix.crystal_map.CrystalMap`.
+
+    Arrays for 1D or 2D maps can be returned.
 
     Parameters
     ----------
@@ -1136,13 +1153,13 @@ def create_coordinate_arrays(
         and ten columns.
     step_sizes
         Map step sizes. If not given, it is set to 1 px in each map
-        direction given by ``shape``.
+        direction given by *shape*.
 
     Returns
     -------
     d
-        Dictionary with keys ``"y"`` and ``"x"``, depending on the
-        length of ``shape``, with coordinate arrays.
+        Dictionary with keys ``"x"`` and ``"y"``, depending on the
+        length of *shape*, with coordinate arrays.
     map_size
         Number of map points.
 
@@ -1156,10 +1173,10 @@ def create_coordinate_arrays(
     >>> create_coordinate_arrays((2, 3), (1.5, 1.5))
     ({'x': array([0. , 1.5, 3. , 0. , 1.5, 3. ]), 'y': array([0. , 0. , 0. , 1.5, 1.5, 1.5])}, 6)
     """
-    if shape is None:
+    if not shape:
         shape = (5, 10)
     ndim = len(shape)
-    if step_sizes is None:
+    if not step_sizes:
         step_sizes = (1,) * ndim
 
     if ndim == 3 or len(step_sizes) > 2:

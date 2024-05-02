@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -28,6 +28,7 @@
 
     ang
     bruker_h5ebsd
+    ctf
     emsoft_h5ebsd
     orix_hdf5
 """
@@ -36,8 +37,8 @@ from orix.io.plugins import ang, bruker_h5ebsd, ctf, emsoft_h5ebsd, orix_hdf5
 
 plugin_list = [
     ang,
-    ctf,
     bruker_h5ebsd,
+    ctf,
     emsoft_h5ebsd,
     orix_hdf5,
 ]

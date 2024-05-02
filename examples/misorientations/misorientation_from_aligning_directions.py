@@ -64,8 +64,8 @@ print("Error distance: ", err)
 # Plot the two directions in the (unrotated) first crystal's reference
 # frame as open circles
 fig = t_cubic.scatter(
+    c="none",
     ec=["r", "b"],
-    fc="none",
     grid=True,
     axes_labels=["e1", "e2"],
     return_figure=True,

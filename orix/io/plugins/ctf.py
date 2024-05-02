@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,19 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Reader of a crystal map from an .ctf file in formats produced by
-Oxford AZtec and EMsoft's EMdpmerge program.
+"""Reader of a crystal map from a file in the Channel Text File (CTF)
+format.
 """
 
 from io import TextIOWrapper
-from typing import List, Tuple
-import warnings
+import re
 
 from diffpy.structure import Lattice, Structure
 import numpy as np
 
-from orix import __version__
 from orix.crystal_map import CrystalMap, PhaseList
+from orix.crystal_map.crystal_map import _data_slices_from_coordinates
 from orix.quaternion import Rotation
 
 __all__ = ["file_reader"]
@@ -41,62 +40,55 @@ writes_this = None
 
 
 def file_reader(filename: str) -> CrystalMap:
-    """Return a crystal map from a file in Oxford AZtec HKL's .ctf format. The
-    map in the input is assumed to be 2D.
+    """Return a crystal map from a file in the Channel Text File (CTF)
+    format.
 
-    Many vendors produce an .ctf file. Supported vendors are:
+    The map in the input is assumed to be 2D.
 
-    * Oxford AZtec HKL
+    Many vendors/programs produce a .ctf files. Files from the following
+    vendors/programs are tested:
+
+    * Oxford Instruments AZtec
+    * Bruker Esprit
+    * NanoMegas ASTAR Index
     * EMsoft (from program `EMdpmerge`)
-
+    * MTEX
 
     All points with a phase of 0 are classified as not indexed.
 
     Parameters
     ----------
     filename
-        Path and file name.
+        Path to file.
 
     Returns
     -------
     xmap
         Crystal map.
+
+    Notes
+    -----
+    Files written by MTEX do not contain information of the space group.
+
+    Files written by EMsoft have the column names for mean angular
+    deviation (MAD), band contrast (BC), and band slope (BS) renamed to
+    DP (dot product), OSM (orientation similarity metric), and IQ (image
+    quality), respectively.
     """
-    # Get file header
     with open(filename, "r") as f:
-        [header, data_starting_row] = _get_header(f)
+        header, data_starting_row, vendor = _get_header(f)
 
-    # Get phase names and crystal symmetries from header (potentially empty)
-    phase_ids, phase_names, symmetries, lattice_constants = _get_phases_from_header(
-        header
-    )
-    structures = []
-    for name, abcABG in zip(phase_names, lattice_constants):
-        structures.append(Structure(title=name, lattice=Lattice(*abcABG)))
+    # Phase information, potentially empty
+    phases = _get_phases_from_header(header)
+    phases["structures"] = []
+    lattice_constants = phases.pop("lattice_constants")
+    for name, abcABG in zip(phases["names"], lattice_constants):
+        structure = Structure(title=name, lattice=Lattice(*abcABG))
+        phases["structures"].append(structure)
 
-    # Read all file data
     file_data = np.loadtxt(filename, skiprows=data_starting_row)
 
-    # Get vendor and column names
-    n_rows, n_cols = file_data.shape
-
-    column_names = (
-        [
-            "phase_id",
-            "x",
-            "y",
-            "bands",
-            "error",
-            "euler1",
-            "euler2",
-            "euler3",
-            "MAD",  # Mean angular deviation
-            "BC",  # Band contrast
-            "BS",  # Band Slope
-        ],
-    )
-
-    # Data needed to create a CrystalMap object
+    # Data needed to create a crystal map
     data_dict = {
         "euler1": None,
         "euler2": None,
@@ -106,19 +98,32 @@ def file_reader(filename: str) -> CrystalMap:
         "phase_id": None,
         "prop": {},
     }
+    column_names = [
+        "phase_id",
+        "x",
+        "y",
+        "bands",
+        "error",
+        "euler1",
+        "euler2",
+        "euler3",
+        "MAD",  # Mean angular deviation
+        "BC",  # Band contrast
+        "BS",  # Band slope
+    ]
+    emsoft_mapping = {"MAD": "DP", "BC": "OSM", "BS": "IQ"}
     for column, name in enumerate(column_names):
-        if name in data_dict.keys():
+        if name in data_dict:
             data_dict[name] = file_data[:, column]
         else:
+            if vendor == "emsoft" and name in emsoft_mapping:
+                name = emsoft_mapping[name]
             data_dict["prop"][name] = file_data[:, column]
 
-    # Add phase list to dictionary
-    data_dict["phase_list"] = PhaseList(
-        names=phase_names,
-        space_groups=symmetries,
-        structures=structures,
-        ids=phase_ids,
-    )
+    if vendor == "astar":
+        data_dict = _fix_astar_coords(header, data_dict)
+
+    data_dict["phase_list"] = PhaseList(**phases)
 
     # Set which data points are not indexed
     not_indexed = data_dict["phase_id"] == 0
@@ -138,9 +143,9 @@ def file_reader(filename: str) -> CrystalMap:
     return CrystalMap(**data_dict)
 
 
-def _get_header(file: TextIOWrapper) -> List[str]:
-    """Return the first lines above the mapping data and the data starting row number
-    in an .ctf file.
+def _get_header(file: TextIOWrapper) -> tuple[list[str], int, list[str]]:
+    """Return file header, row number of start of data in file, and the
+    detected vendor(s).
 
     Parameters
     ----------
@@ -153,50 +158,72 @@ def _get_header(file: TextIOWrapper) -> List[str]:
         List with header lines as individual elements.
     data_starting_row
         The starting row number for the data lines
+    vendor
+        Vendor detected based on some header pattern. Default is to
+        assume Oxford/Bruker, ``"oxford_or_bruker"`` (assuming no
+        difference between the two vendor's CTF formats). Other options
+        are ``"emsoft"``, ``"astar"``, and ``"mtex"``.
     """
+    vendor = []
+    vendor_pattern = {
+        "emsoft": re.compile(
+            (
+                r"EMsoft v\. ([A-Za-z0-9]+(_[A-Za-z0-9]+)+); BANDS=pattern index, "
+                r"MAD=CI, BC=OSM, BS=IQ"
+            ),
+        ),
+        "astar": re.compile(r"Author[\t\s]File created from ACOM RES results"),
+        "mtex": re.compile("(?<=)Created from mtex"),
+    }
+
     header = []
     line = file.readline()
     i = 0
-    while not line.startswith("Phase\tX\tY"):
+    # Prevent endless loop by not reading past 1 000 lines
+    while not line.startswith("Phase\tX\tY") and i < 1_000:
+        for k, v in vendor_pattern.items():
+            if v.search(line):
+                vendor.append(k)
         header.append(line.rstrip())
         i += 1
         line = file.readline()
-    return header, i + 1
+
+    if not vendor:
+        vendor = "oxford_or_bruker"
+    else:
+        vendor = vendor[0]  # Assume only one vendor
+
+    return header, i + 1, vendor
 
 
-def _get_phases_from_header(
-    header: List[str],
-) -> Tuple[List[int], List[str], List[str], List[List[float]]]:
-    """Return phase names and symmetries detected in an .ctf file
-    header.
+def _get_phases_from_header(header: list[str]) -> dict:
+    """Return phase names and symmetries detected in a .ctf file header.
 
     Parameters
     ----------
     header
         List with header lines as individual elements.
+    vendor
+        Vendor of the file.
 
     Returns
     -------
-    ids
-        Phase IDs.
-    phase_names
-        List of names of detected phases.
-    phase_point_groups
-        List of point groups of detected phase.
-    lattice_constants
-        List of list of lattice parameters of detected phases.
+    phase_dict
+        Dictionary with the following keys (and types): "ids" (int),
+        "names" (str), "space_groups" (int), "point_groups" (str),
+        "lattice_constants" (list of floats).
 
     Notes
     -----
-    Regular expressions are used to collect phase name, formula and
-    point group. This function have been tested with files from the
-    following vendor's formats: Oxford AZtec HKL v5/v6, and EMsoft v4/v5.
+    This function has been tested with files from the following vendor's
+    formats: Oxford AZtec HKL v5/v6 and EMsoft v4/v5.
     """
     phases = {
-        "name": [],
-        "space_group": [],
+        "ids": [],
+        "names": [],
+        "point_groups": [],
+        "space_groups": [],
         "lattice_constants": [],
-        "id": [],
     }
     for i, line in enumerate(header):
         if line.startswith("Phases"):
@@ -204,16 +231,102 @@ def _get_phases_from_header(
 
     n_phases = int(line.split("\t")[1])
 
+    # Laue classes
+    laue_ids = [
+        "-1",
+        "2/m",
+        "mmm",
+        "4/m",
+        "4/mmm",
+        "-3",
+        "-3m",
+        "6/m",
+        "6/mmm",
+        "m3",
+        "m-3m",
+    ]
+
     for j in range(n_phases):
         phase_data = header[i + 1 + j].split("\t")
-        phases["name"].append(phase_data[2])
-        phases["space_group"].append(int(phase_data[4]))
-        phases["lattice_constants"].append(
-            [float(i) for i in phase_data[0].split(";") + phase_data[1].split(";")]
-        )
-        phases["id"].append(j + 1)
+        phases["ids"].append(j + 1)
+        abcABG = ";".join(phase_data[:2])
+        abcABG = abcABG.split(";")
+        abcABG = [float(i.replace(",", ".")) for i in abcABG]
+        phases["lattice_constants"].append(abcABG)
+        phases["names"].append(phase_data[2])
+        laue_id = int(phase_data[3])
+        phases["point_groups"].append(laue_ids[laue_id - 1])
+        sg = int(phase_data[4])
+        if sg == 0:
+            sg = None
+        phases["space_groups"].append(sg)
 
-    names = phases["name"]
-    phase_ids = [int(i) for i in phases["id"]]
+    return phases
 
-    return phase_ids, names, phases["space_group"], phases["lattice_constants"]
+
+def _fix_astar_coords(header: list[str], data_dict: dict) -> dict:
+    """Return the data dictionary with coordinate arrays possibly fixed
+    for ASTAR Index files.
+
+    Parameters
+    ----------
+    header
+        List with header lines.
+    data_dict
+        Dictionary for creating a crystal map.
+
+    Returns
+    -------
+    data_dict
+        Dictionary with possibly fixed coordinate arrays.
+
+    Notes
+    -----
+    ASTAR Index files may have fewer decimals in the coordinate columns
+    than in the X/YSteps header values (e.g. X_1 = 0.0019 vs.
+    XStep = 0.00191999995708466). This may cause our crystal map
+    algorithm for finding the map shape to fail. We therefore run this
+    algorithm and compare the found shape to the shape given in the
+    file. If they are different, we use our own coordinate arrays.
+    """
+    coords = {k: data_dict[k] for k in ["x", "y"]}
+    slices = _data_slices_from_coordinates(coords)
+    found_shape = (slices[0].stop + 1, slices[1].stop + 1)
+    cells = _get_xy_cells(header)
+    shape = (cells["y"], cells["x"])
+    if found_shape != shape:
+        steps = _get_xy_step(header)
+        y, x = np.indices(shape, dtype=np.float64)
+        y *= steps["y"]
+        x *= steps["x"]
+        data_dict["y"] = y.ravel()
+        data_dict["x"] = x.ravel()
+    return data_dict
+
+
+def _get_xy_step(header: list[str]) -> dict[str, float]:
+    pattern_step = re.compile(r"(?<=[XY]Step[\t\s])(.*)")
+    steps = {"x": None, "y": None}
+    for line in header:
+        match = pattern_step.search(line)
+        if match:
+            step = float(match.group(0).replace(",", "."))
+            if line.startswith("XStep"):
+                steps["x"] = step
+            elif line.startswith("YStep"):
+                steps["y"] = step
+    return steps
+
+
+def _get_xy_cells(header: list[str]) -> dict[str, int]:
+    pattern_cells = re.compile(r"(?<=[XY]Cells[\t\s])(.*)")
+    cells = {"x": None, "y": None}
+    for line in header:
+        match = pattern_cells.search(line)
+        if match:
+            step = int(match.group(0))
+            if line.startswith("XCells"):
+                cells["x"] = step
+            elif line.startswith("YCells"):
+                cells["y"] = step
+    return cells

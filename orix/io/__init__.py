@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 the orix developers
+# Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
 #
@@ -46,7 +46,6 @@ from orix.quaternion import Rotation
 extensions = [plugin.file_extensions for plugin in plugin_list if plugin.writes]
 
 
-# Lists what will be imported when calling "from orix.io import *"
 __all__ = [
     "loadang",
     "loadctf",
@@ -55,6 +54,8 @@ __all__ = [
 ]
 
 
+# TODO: Remove after 0.13.0
+@deprecated(since="0.13", removal="0.14", alternative="io.load")
 def loadang(file_string: str) -> Rotation:
     """Load ``.ang`` files.
 
@@ -74,8 +75,8 @@ def loadang(file_string: str) -> Rotation:
     return Rotation.from_euler(euler)
 
 
-# TODO: Remove in 0.13
-@deprecated(since="0.12", removal="0.13", alternative="ctf")
+# TODO: Remove after 0.13.0
+@deprecated(since="0.13", removal="0.14", alternative="io.load")
 def loadctf(file_string: str) -> Rotation:
     """Load ``.ctf`` files.
 
