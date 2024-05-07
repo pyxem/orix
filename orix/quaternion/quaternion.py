@@ -240,8 +240,8 @@ class Quaternion(Object3d):
                 m.coordinate_format = other.coordinate_format
                 return m
             else:
-                kwargs = other.get_kwargs(self)
-                return other.__class__(v, **kwargs)
+                kwargs = other.get_kwargs(v, self)
+                return other.__class__(**kwargs)
         return NotImplemented
 
     def __neg__(self) -> Quaternion:

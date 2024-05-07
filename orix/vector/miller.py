@@ -161,6 +161,10 @@ class Miller(Vector3d):
         """
         return _transform_space(self.data, "c", "r", self.phase.structure.lattice)
 
+    def get_kwargs(self, new_data, *args, **kwargs) -> dict:
+        """Return the keyword arguments to create the instance."""
+        return dict(xyz=new_data)
+
     @hkl.setter
     def hkl(self, value: np.ndarray):
         """Set the reciprocal lattice vectors."""
