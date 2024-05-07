@@ -731,6 +731,11 @@ class Vector3d(Object3d):
             polar = np.rad2deg(polar)
         return azimuth, polar, self.radial
 
+    def get_kwargs(self, *args, **kwargs) -> Dict[str, Any]:
+        """Return the dictionary of attributes to be used in the
+        constructor when applying an ufunc."""
+        return {}
+
     def in_fundamental_sector(self, symmetry: "Symmetry") -> Vector3d:
         """Project vectors to a symmetry's fundamental sector (inverse
         pole figure).
