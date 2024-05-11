@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import gc
 import os
 from tempfile import TemporaryDirectory
 
@@ -40,102 +39,9 @@ def eu():
     return np.random.rand(10, 3)
 
 
-ANGFILE_TSL_HEADER = (
-    "# TEM_PIXperUM          1.000000\n"
-    "# x-star                0.413900\n"
-    "# y-star                0.729100\n"
-    "# z-star                0.514900\n"
-    "# WorkingDistance       27.100000\n"
-    "#\n"
-    "# Phase 2\n"
-    "# MaterialName      Aluminum\n"
-    "# Formula       Al\n"
-    "# Info      \n"
-    "# Symmetry              43\n"
-    "# LatticeConstants      4.040 4.040 4.040  90.000  90.000  90.000\n"
-    "# NumberFamilies        69\n"
-    "# hklFamilies        1 -1 -1 1 8.469246 1\n"
-    "# ElasticConstants  -1.000000 -1.000000 -1.000000 -1.000000 -1.000000 -1.000000\n"
-    "# Categories0 0 0 0 0 \n"
-    "# Phase 3\n"
-    "# MaterialName  	Iron Titanium Oxide\n"
-    "# Formula     	FeTiO3\n"
-    "# Info 		\n"
-    "# Symmetry              32\n"
-    "# LatticeConstants      5.123 5.123 13.760  90.000  90.000 120.000\n"
-    "# NumberFamilies        60\n"
-    "# hklFamilies   	 3  0  0 1 100.000000 1\n"
-    "# ElasticConstants  -1.000000 -1.000000 -1.000000 -1.000000 -1.000000 -1.000000\n"
-    "# Categories0 0 0 0 0\n"
-    "#\n"
-    "# GRID: SqrGrid\n"
-    "# XSTEP: 0.100000\n"
-    "# YSTEP: 0.100000\n"
-    "# NCOLS_ODD: 42\n"
-    "# NCOLS_EVEN: 42\n"
-    "# NROWS: 13\n"
-    "#\n"
-    "# OPERATOR:     sem\n"
-    "#\n"
-    "# SAMPLEID:     \n"
-    "#\n"
-    "# SCANID:   \n"
-    "#\n"
-)
+# ---------------------------- IO fixtures --------------------------- #
 
-ANGFILE_ASTAR_HEADER = (
-    "# File created from ACOM RES results\n"
-    "# ni-dislocations.res\n"
-    "#     \n"
-    "#     \n"
-    "# MaterialName      Nickel\n"
-    "# Formula\n"
-    "# Symmetry          43\n"
-    "# LatticeConstants  3.520  3.520  3.520  90.000  90.000  90.000\n"
-    "# NumberFamilies    4\n"
-    "# hklFamilies       1  1  1 1 0.000000\n"
-    "# hklFamilies       2  0  0 1 0.000000\n"
-    "# hklFamilies       2  2  0 1 0.000000\n"
-    "# hklFamilies       3  1  1 1 0.000000\n"
-    "#\n"
-    "# GRID: SqrGrid#\n"
-)
-
-ANGFILE_EMSOFT_HEADER = (
-    "# TEM_PIXperUM          1.000000\n"
-    "# x-star                 0.446667\n"
-    "# y-star                 0.586875\n"
-    "# z-star                 0.713450\n"
-    "# WorkingDistance        0.000000\n"
-    "#\n"
-    "# Phase 1\n"
-    "# MaterialName    austenite\n"
-    "# Formula       austenite\n"
-    "# Info          patterns indexed using EMsoft::EMEBSDDI\n"
-    "# Symmetry              43\n"
-    "# LatticeConstants      3.595 3.595 3.595   90.000 90.000 90.000\n"
-    "# NumberFamilies        0\n"
-    "# Phase 2\n"
-    "# MaterialName    ferrite/ferrite\n"
-    "# Formula       ferrite/ferrite\n"
-    "# Info          patterns indexed using EMsoft::EMEBSDDI\n"
-    "# Symmetry              43\n"
-    "# LatticeConstants      2.867 2.867 2.867   90.000 90.000 90.000\n"
-    "# NumberFamilies        0\n"
-    "# GRID: SqrGrid\n"
-    "# XSTEP:  1.500000\n"
-    "# YSTEP:  1.500000\n"
-    "# NCOLS_ODD:   13\n"
-    "# NCOLS_EVEN:   13\n"
-    "# NROWS:   42\n"
-    "#\n"
-    "# OPERATOR:   Håkon Wiik Ånes\n"
-    "#\n"
-    "# SAMPLEID:\n"
-    "#\n"
-    "# SCANID:\n"
-    "#\n"
-)
+# ----------------------------- .ang file ---------------------------- #
 
 
 @pytest.fixture()
@@ -143,7 +49,6 @@ def temp_ang_file():
     with TemporaryDirectory() as tempdir:
         f = open(os.path.join(tempdir, "temp_ang_file.ang"), mode="w+")
         yield f
-        gc.collect()  # Garbage collection so that file can be used by multiple tests
 
 
 @pytest.fixture(params=["h5"])
@@ -155,7 +60,48 @@ def temp_file_path(request):
     with TemporaryDirectory() as tmp:
         file_path = os.path.join(tmp, "data_temp." + ext)
         yield file_path
-        gc.collect()
+
+
+ANGFILE_TSL_HEADER = r"""# TEM_PIXperUM          1.000000
+# x-star                0.413900
+# y-star                0.729100
+# z-star                0.514900
+# WorkingDistance       27.100000
+#
+# Phase 2
+# MaterialName      Aluminum
+# Formula       Al
+# Info
+# Symmetry              43
+# LatticeConstants      4.040 4.040 4.040  90.000  90.000  90.000
+# NumberFamilies        69
+# hklFamilies        1 -1 -1 1 8.469246 1
+# ElasticConstants  -1.000000 -1.000000 -1.000000 -1.000000 -1.000000 -1.000000
+# Categories0 0 0 0 0
+# Phase 3
+# MaterialName  	Iron Titanium Oxide
+# Formula     	FeTiO3
+# Info
+# Symmetry              32
+# LatticeConstants      5.123 5.123 13.760  90.000  90.000 120.000
+# NumberFamilies        60
+# hklFamilies   	 3  0  0 1 100.000000 1
+# ElasticConstants  -1.000000 -1.000000 -1.000000 -1.000000 -1.000000 -1.000000
+# Categories0 0 0 0 0
+#
+# GRID: SqrGrid
+# XSTEP: 0.100000
+# YSTEP: 0.100000
+# NCOLS_ODD: 42
+# NCOLS_EVEN: 42
+# NROWS: 13
+#
+# OPERATOR:     sem
+#
+# SAMPLEID:
+#
+# SCANID:
+#"""
 
 
 @pytest.fixture(
@@ -237,7 +183,23 @@ def angfile_tsl(tmpdir, request):
     )
 
     yield f
-    gc.collect()
+
+
+ANGFILE_ASTAR_HEADER = r"""# File created from ACOM RES results
+# ni-dislocations.res
+#
+#
+# MaterialName      Nickel
+# Formula
+# Symmetry          43
+# LatticeConstants  3.520  3.520  3.520  90.000  90.000  90.000
+# NumberFamilies    4
+# hklFamilies       1  1  1 1 0.000000
+# hklFamilies       2  0  0 1 0.000000
+# hklFamilies       2  2  0 1 0.000000
+# hklFamilies       3  1  1 1 0.000000
+#
+# GRID: SqrGrid#"""
 
 
 @pytest.fixture(
@@ -302,7 +264,41 @@ def angfile_astar(tmpdir, request):
     )
 
     yield f
-    gc.collect()
+
+
+ANGFILE_EMSOFT_HEADER = r"""# TEM_PIXperUM          1.000000
+# x-star                 0.446667
+# y-star                 0.586875
+# z-star                 0.713450
+# WorkingDistance        0.000000
+#
+# Phase 1
+# MaterialName    austenite
+# Formula       austenite
+# Info          patterns indexed using EMsoft::EMEBSDDI
+# Symmetry              43
+# LatticeConstants      3.595 3.595 3.595   90.000 90.000 90.000
+# NumberFamilies        0
+# Phase 2
+# MaterialName    ferrite/ferrite
+# Formula       ferrite/ferrite
+# Info          patterns indexed using EMsoft::EMEBSDDI
+# Symmetry              43
+# LatticeConstants      2.867 2.867 2.867   90.000 90.000 90.000
+# NumberFamilies        0
+# GRID: SqrGrid
+# XSTEP:  1.500000
+# YSTEP:  1.500000
+# NCOLS_ODD:   13
+# NCOLS_EVEN:   13
+# NROWS:   42
+#
+# OPERATOR:   Håkon Wiik Ånes
+#
+# SAMPLEID:
+#
+# SCANID:
+#"""
 
 
 @pytest.fixture(
@@ -359,7 +355,238 @@ def angfile_emsoft(tmpdir, request):
     )
 
     yield f
-    gc.collect()
+
+
+# ----------------------------- .ctf file ---------------------------- #
+
+# Variable map shape and step sizes
+CTF_OXFORD_HEADER = r"""Channel Text File
+Prj	standard steel sample
+Author	
+JobMode	Grid
+XCells	%i
+YCells	%i
+XStep	%.4f
+YStep	%.4f
+AcqE1	0.0000
+AcqE2	0.0000
+AcqE3	0.0000
+Euler angles refer to Sample Coordinate system (CS0)!	Mag	180.0000	Coverage	97	Device	0	KV	20.0000	TiltAngle	70.0010	TiltAxis	0	DetectorOrientationE1	0.9743	DetectorOrientationE2	89.4698	DetectorOrientationE3	2.7906	WorkingDistance	14.9080	InsertionDistance	185.0
+Phases	2
+3.660;3.660;3.660	90.000;90.000;90.000	Iron fcc	11	225			Some reference
+2.867;2.867;2.867	90.000;90.000;90.000	Iron bcc	11	229			Some other reference
+Phase	X	Y	Bands	Error	Euler1	Euler2	Euler3	MAD	BC	BS"""
+
+
+@pytest.fixture(
+    params=[
+        (
+            (7, 13),  # map_shape
+            (0.1, 0.1),  # step_sizes
+            np.random.choice([1, 2], 7 * 13),  # phase_id
+            np.array([[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589]]),  # R
+        )
+    ]
+)
+def ctf_oxford(tmpdir, request):
+    """Create a dummy CTF file in Oxford Instrument's format from input.
+
+    10% of points are non-indexed (phase ID of 0 and MAD = 0).
+
+    Parameters expected in `request`
+    --------------------------------
+    map_shape : tuple of ints
+        Map shape to create.
+    step_sizes : tuple of floats
+        Step sizes in x and y coordinates in microns.
+    phase_id : numpy.ndarray
+        Array of map size with phase IDs in header.
+    rotations : numpy.ndarray
+        A sample, smaller than the map size, of Euler angle triplets.
+    """
+    # Unpack parameters
+    (ny, nx), (dy, dx), phase_id, R_example = request.param
+
+    # File columns
+    d, map_size = create_coordinate_arrays((ny, nx), (dy, dx))
+    x, y = d["x"], d["y"]
+    rng = np.random.default_rng()
+    bands = rng.integers(8, size=map_size, dtype=np.uint8)
+    err = np.zeros(map_size, dtype=np.uint8)
+    mad = rng.random(map_size)
+    bc = rng.integers(150, 200, map_size)
+    bs = rng.integers(190, 255, map_size)
+    R_idx = np.random.choice(np.arange(len(R_example)), map_size)
+    R = R_example[R_idx]
+    R = np.rad2deg(R)
+
+    # Insert 10% non-indexed points
+    non_indexed_points = np.random.choice(
+        np.arange(map_size), replace=False, size=int(map_size * 0.1)
+    )
+    phase_id[non_indexed_points] = 0
+    R[non_indexed_points] = 0.0
+    bands[non_indexed_points] = 0
+    err[non_indexed_points] = 3
+    mad[non_indexed_points] = 0.0
+    bc[non_indexed_points] = 0
+    bs[non_indexed_points] = 0
+
+    CTF_OXFORD_HEADER2 = CTF_OXFORD_HEADER % (nx, ny, dx, dy)
+
+    f = tmpdir.join("file.ctf")
+    np.savetxt(
+        fname=f,
+        X=np.column_stack(
+            (phase_id, x, y, bands, err, R[:, 0], R[:, 1], R[:, 2], mad, bc, bs)
+        ),
+        fmt="%-4i%-8.4f%-8.4f%-4i%-4i%-11.4f%-11.4f%-11.4f%-8.4f%-4i%-i",
+        header=CTF_OXFORD_HEADER2,
+        comments="",
+    )
+
+    yield f
+
+
+# Variable map shape, comma as decimal separator in fixed step size
+CTF_BRUKER_HEADER = r"""Channel Text File
+Prj unnamed
+Author	[Unknown]
+JobMode	Grid
+XCells	%i
+YCells	%i
+XStep	0,001998
+YStep	0,001998
+AcqE1	0
+AcqE2	0
+AcqE3	0
+Euler angles refer to Sample Coordinate system (CS0)!	Mag	150000,000000	Coverage	100	Device	0	KV	30,000000	TiltAngle	0	TiltAxis	0
+Phases	1
+4,079000;4,079000;4,079000	90,000000;90,000000;90,000000	Gold	11	225
+Phase	X	Y	Bands	Error	Euler1	Euler2	Euler3	MAD	BC	BS"""
+
+
+@pytest.fixture(
+    params=[
+        (
+            (7, 13),  # map_shape
+            np.array([[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589]]),  # R
+        )
+    ]
+)
+def ctf_bruker(tmpdir, request):
+    """Create a dummy CTF file in Bruker's format from input.
+
+    Identical to Oxford files except for the following:
+
+    * All band slopes (BS) may be set to 255
+    * Decimal separators in header may be with comma
+
+    Parameters expected in `request`
+    --------------------------------
+    map_shape : tuple of ints
+        Map shape to create.
+    rotations : numpy.ndarray
+        A sample, smaller than the map size, of Euler angle triplets.
+    """
+    # Unpack parameters
+    (ny, nx), R_example = request.param
+    dy = dx = 0.001998
+
+    # File columns
+    d, map_size = create_coordinate_arrays((ny, nx), (dy, dx))
+    x, y = d["x"], d["y"]
+    rng = np.random.default_rng()
+    bands = rng.integers(8, size=map_size, dtype=np.uint8)
+    err = np.zeros(map_size, dtype=np.uint8)
+    mad = rng.random(map_size)
+    bc = rng.integers(50, 105, map_size)
+    bs = np.full(map_size, 255, dtype=np.uint8)
+    R_idx = np.random.choice(np.arange(len(R_example)), map_size)
+    R = R_example[R_idx]
+    R = np.rad2deg(R)
+
+    # Insert 10% non-indexed points
+    phase_id = np.ones(map_size, dtype=np.uint8)
+    non_indexed_points = np.random.choice(
+        np.arange(map_size), replace=False, size=int(map_size * 0.1)
+    )
+    phase_id[non_indexed_points] = 0
+    R[non_indexed_points] = 0.0
+    bands[non_indexed_points] = 0
+    err[non_indexed_points] = 3
+    mad[non_indexed_points] = 0.0
+    bc[non_indexed_points] = 0
+    bs[non_indexed_points] = 0
+
+    CTF_BRUKER_HEADER2 = CTF_BRUKER_HEADER % (nx, ny)
+
+    f = tmpdir.join("file.ctf")
+    np.savetxt(
+        fname=f,
+        X=np.column_stack(
+            (phase_id, x, y, bands, err, R[:, 0], R[:, 1], R[:, 2], mad, bc, bs)
+        ),
+        fmt="%-4i%-8.4f%-8.4f%-4i%-4i%-11.4f%-11.4f%-11.4f%-8.4f%-4i%-i",
+        header=CTF_BRUKER_HEADER2,
+        comments="",
+    )
+
+    yield f
+
+
+# Variable map shape, small fixed step size
+CTF_ASTAR_HEADER = r"""Channel Text File
+Prj	C:\some\where\scan.res
+Author	File created from ACOM RES results
+JobMode	Grid
+XCells	%i
+YCells	%i
+XStep	0.00191999995708466
+YStep	0.00191999995708466
+AcqE1	0
+AcqE2	0
+AcqE3	0
+Euler angles refer to Sample Coordinate system (CS0)!	Mag	200	Coverage	100	Device	0	KV	20	TiltAngle	70	TiltAxis	0
+Phases	1
+4.0780;4.0780;4.0780	90;90;90	_mineral 'Gold'  'Gold'	11	225
+Phase	X	Y	Bands	Error	Euler1	Euler2	Euler3	MAD	BC	BS"""
+
+# Variable map shape and step sizes
+CTF_EMSOFT_HEADER = r"""Channel Text File
+EMsoft v. 4_1_1_9d5269a; BANDS=pattern index, MAD=CI, BC=OSM, BS=IQ
+Author	Me
+JobMode	Grid
+XCells	  %i
+YCells	  %i
+XStep	  %.2f
+YStep	  %.2f
+AcqE1	0
+AcqE2	0
+AcqE3	0
+Euler angles refer to Sample Coordinate system (CS0)!	Mag	30	Coverage	100	Device	0	KV	 0.0	TiltAngle	0.00	TiltAxis	0
+Phases	1
+3.524;3.524;3.524	90.000;90.000;90.000	Ni	11	225
+Phase	X	Y	Bands	Error	Euler1	Euler2	Euler3	MAD	BC	BS"""
+
+# Variable map shape and step sizes
+CTF_MTEX_HEADER = r"""Channel Text File
+Prj /some/where/mtex.ctf
+Author	Me Again
+JobMode	Grid
+XCells	%i
+YCells	%i
+XStep	%.4f
+YStep	%.4f
+AcqE1	0.0000
+AcqE2	0.0000
+AcqE3	0.0000
+Euler angles refer to Sample Coordinate system (CS0)!	Mag	0.0000	Coverage	0	Device	0	KV	0.0000	TiltAngle	0.0000	TiltAxis	0	DetectorOrientationE1	0.0000	DetectorOrientationE2	0.0000	DetectorOrientationE3	0.0000	WorkingDistance	0.0000	InsertionDistance	0.0000	
+Phases	1
+4.079;4.079;4.079	90.000;90.000;90.000	Gold	11	0			Created from mtex
+Phase	X	Y	Bands	Error	Euler1	Euler2	Euler3	MAD	BC	BS"""
+
+# ---------------------------- HDF5 files ---------------------------- #
 
 
 @pytest.fixture(
@@ -486,7 +713,6 @@ def temp_emsoft_h5ebsd_file(tmpdir, request):
         phase_group.create_dataset(name, data=np.array([data], dtype=np.dtype("S")))
 
     yield f
-    gc.collect()
 
 
 @pytest.fixture(
@@ -602,7 +828,68 @@ def temp_bruker_h5ebsd_file(tmpdir, request):
     data_group.create_dataset("phi2", data=rot[:, 2])
 
     yield f
-    gc.collect()
+
+
+# --------------------------- Other files ---------------------------- #
+
+
+@pytest.fixture
+def cif_file(tmpdir):
+    """Actual CIF file of beta double prime phase often seen in Al-Mg-Si
+    alloys.
+    """
+    file_contents = """#======================================================================
+
+# CRYSTAL DATA
+
+#----------------------------------------------------------------------
+
+data_VESTA_phase_1
+
+
+_chemical_name_common                  ''
+_cell_length_a                         15.50000
+_cell_length_b                         4.05000
+_cell_length_c                         6.74000
+_cell_angle_alpha                      90
+_cell_angle_beta                       105.30000
+_cell_angle_gamma                      90
+_space_group_name_H-M_alt              'C 2/m'
+_space_group_IT_number                 12
+
+loop_
+_space_group_symop_operation_xyz
+   'x, y, z'
+   '-x, -y, -z'
+   '-x, y, -z'
+   'x, -y, z'
+   'x+1/2, y+1/2, z'
+   '-x+1/2, -y+1/2, -z'
+   '-x+1/2, y+1/2, -z'
+   'x+1/2, -y+1/2, z'
+
+loop_
+   _atom_site_label
+   _atom_site_occupancy
+   _atom_site_fract_x
+   _atom_site_fract_y
+   _atom_site_fract_z
+   _atom_site_adp_type
+   _atom_site_B_iso_or_equiv
+   _atom_site_type_symbol
+   Mg(1)      1.0     0.000000      0.000000      0.000000     Biso  1.000000 Mg
+   Mg(2)      1.0     0.347000      0.000000      0.089000     Biso  1.000000 Mg
+   Mg(3)      1.0     0.423000      0.000000      0.652000     Biso  1.000000 Mg
+   Si(1)      1.0     0.054000      0.000000      0.649000     Biso  1.000000 Si
+   Si(2)      1.0     0.190000      0.000000      0.224000     Biso  1.000000 Si
+   Al         1.0     0.211000      0.000000      0.626000     Biso  1.000000 Al"""
+    f = open(tmpdir.join("betapp.cif"), mode="w")
+    f.write(file_contents)
+    f.close()
+    yield f.name
+
+
+# ----------------------- Crystal map fixtures ----------------------- #
 
 
 @pytest.fixture(
@@ -663,65 +950,6 @@ def crystal_map_input(request, rotations):
 @pytest.fixture
 def crystal_map(crystal_map_input):
     return CrystalMap(**crystal_map_input)
-
-
-@pytest.fixture
-def cif_file(tmpdir):
-    """Actual CIF file of beta double prime phase often seen in Al-Mg-Si
-    alloys.
-    """
-    file_contents = """
-#======================================================================
-
-# CRYSTAL DATA
-
-#----------------------------------------------------------------------
-
-data_VESTA_phase_1
-
-
-_chemical_name_common                  ''
-_cell_length_a                         15.50000
-_cell_length_b                         4.05000
-_cell_length_c                         6.74000
-_cell_angle_alpha                      90
-_cell_angle_beta                       105.30000
-_cell_angle_gamma                      90
-_space_group_name_H-M_alt              'C 2/m'
-_space_group_IT_number                 12
-
-loop_
-_space_group_symop_operation_xyz
-   'x, y, z'
-   '-x, -y, -z'
-   '-x, y, -z'
-   'x, -y, z'
-   'x+1/2, y+1/2, z'
-   '-x+1/2, -y+1/2, -z'
-   '-x+1/2, y+1/2, -z'
-   'x+1/2, -y+1/2, z'
-
-loop_
-   _atom_site_label
-   _atom_site_occupancy
-   _atom_site_fract_x
-   _atom_site_fract_y
-   _atom_site_fract_z
-   _atom_site_adp_type
-   _atom_site_B_iso_or_equiv
-   _atom_site_type_symbol
-   Mg(1)      1.0     0.000000      0.000000      0.000000     Biso  1.000000 Mg
-   Mg(2)      1.0     0.347000      0.000000      0.089000     Biso  1.000000 Mg
-   Mg(3)      1.0     0.423000      0.000000      0.652000     Biso  1.000000 Mg
-   Si(1)      1.0     0.054000      0.000000      0.649000     Biso  1.000000 Si
-   Si(2)      1.0     0.190000      0.000000      0.224000     Biso  1.000000 Si
-   Al         1.0     0.211000      0.000000      0.626000     Biso  1.000000 Al"
-"""
-    f = open(tmpdir.join("betapp.cif"), mode="w")
-    f.write(file_contents)
-    f.close()
-    yield f.name
-    gc.collect()
 
 
 # ---------- Rotation representations for conversion tests ----------- #
