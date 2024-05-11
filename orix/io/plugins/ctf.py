@@ -22,6 +22,7 @@ format.
 
 from io import TextIOWrapper
 import re
+from typing import Dict, List, Tuple
 
 from diffpy.structure import Lattice, Structure
 import numpy as np
@@ -143,7 +144,7 @@ def file_reader(filename: str) -> CrystalMap:
     return CrystalMap(**data_dict)
 
 
-def _get_header(file: TextIOWrapper) -> tuple[list[str], int, list[str]]:
+def _get_header(file: TextIOWrapper) -> Tuple[List[str], int, List[str]]:
     """Return file header, row number of start of data in file, and the
     detected vendor(s).
 
@@ -193,7 +194,7 @@ def _get_header(file: TextIOWrapper) -> tuple[list[str], int, list[str]]:
     return header, i + 1, vendor
 
 
-def _get_phases_from_header(header: list[str]) -> dict:
+def _get_phases_from_header(header: List[str]) -> dict:
     """Return phase names and symmetries detected in a .ctf file header.
 
     Parameters
@@ -261,7 +262,7 @@ def _get_phases_from_header(header: list[str]) -> dict:
     return phases
 
 
-def _fix_astar_coords(header: list[str], data_dict: dict) -> dict:
+def _fix_astar_coords(header: List[str], data_dict: dict) -> dict:
     """Return the data dictionary with coordinate arrays possibly fixed
     for ASTAR Index files.
 
@@ -301,7 +302,7 @@ def _fix_astar_coords(header: list[str], data_dict: dict) -> dict:
     return data_dict
 
 
-def _get_xy_step(header: list[str]) -> dict[str, float]:
+def _get_xy_step(header: List[str]) -> Dict[str, float]:
     pattern_step = re.compile(r"(?<=[XY]Step[\t\s])(.*)")
     steps = {"x": None, "y": None}
     for line in header:
@@ -315,7 +316,7 @@ def _get_xy_step(header: list[str]) -> dict[str, float]:
     return steps
 
 
-def _get_xy_cells(header: list[str]) -> dict[str, int]:
+def _get_xy_cells(header: List[str]) -> Dict[str, int]:
     pattern_cells = re.compile(r"(?<=[XY]Cells[\t\s])(.*)")
     cells = {"x": None, "y": None}
     for line in header:
