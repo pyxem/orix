@@ -17,7 +17,7 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-from typing import Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1082,8 +1082,8 @@ class CrystalMap:
 
 
 def _data_slices_from_coordinates(
-    coords: dict[str, np.ndarray], steps: Union[dict[str, float], None] = None
-) -> tuple[slice]:
+    coords: Dict[str, np.ndarray], steps: Union[Dict[str, float], None] = None
+) -> Tuple[slice]:
     """Return a list of slices defining the current data extent in all
     directions.
 
@@ -1139,7 +1139,7 @@ def _step_size_from_coordinates(coordinates: np.ndarray) -> float:
 
 def create_coordinate_arrays(
     shape: Optional[tuple] = None, step_sizes: Optional[tuple] = None
-) -> tuple[dict, int]:
+) -> Tuple[dict, int]:
     """Return flattened coordinate arrays from a given map shape and
     step sizes, suitable for initializing a
     :class:`~orix.crystal_map.CrystalMap`.
