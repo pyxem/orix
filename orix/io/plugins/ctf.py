@@ -188,10 +188,7 @@ def _get_header(file: TextIOWrapper) -> tuple[list[str], int, list[str]]:
         i += 1
         line = file.readline()
 
-    if not vendor:
-        vendor = "oxford_or_bruker"
-    else:
-        vendor = vendor[0]  # Assume only one vendor
+    vendor = vendor[0] if len(vendor) == 1 else "oxford_or_bruker"
 
     return header, i + 1, vendor
 

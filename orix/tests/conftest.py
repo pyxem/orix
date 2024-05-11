@@ -29,6 +29,10 @@ from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
 from orix.quaternion import Rotation
 
 
+def pytest_sessionstart(session):  # pragma: no cover
+    plt.rcParams["backend"] = "agg"
+
+
 @pytest.fixture
 def rotations():
     return Rotation([(2, 4, 6, 8), (-1, -3, -5, -7)])
@@ -434,7 +438,7 @@ def ctf_oxford(tmpdir, request):
 
     CTF_OXFORD_HEADER2 = CTF_OXFORD_HEADER % (nx, ny, dx, dy)
 
-    f = tmpdir.join("file.ctf")
+    f = tmpdir.join("oxford.ctf")
     np.savetxt(
         fname=f,
         X=np.column_stack(
@@ -521,7 +525,7 @@ def ctf_bruker(tmpdir, request):
 
     CTF_BRUKER_HEADER2 = CTF_BRUKER_HEADER % (nx, ny)
 
-    f = tmpdir.join("file.ctf")
+    f = tmpdir.join("bruker.ctf")
     np.savetxt(
         fname=f,
         X=np.column_stack(
@@ -552,6 +556,77 @@ Phases	1
 4.0780;4.0780;4.0780	90;90;90	_mineral 'Gold'  'Gold'	11	225
 Phase	X	Y	Bands	Error	Euler1	Euler2	Euler3	MAD	BC	BS"""
 
+
+@pytest.fixture(
+    params=[
+        (
+            (7, 13),  # map_shape
+            np.array([[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589]]),  # R
+        )
+    ]
+)
+def ctf_astar(tmpdir, request):
+    """Create a dummy CTF file in NanoMegas ASTAR's format from input.
+
+    Identical to Oxford files except for the following:
+
+    * Bands = 6 (always?)
+    * Error = 0 (always?)
+    * Only two decimals in Euler angles
+
+    Parameters expected in `request`
+    --------------------------------
+    map_shape : tuple of ints
+        Map shape to create.
+    rotations : numpy.ndarray
+        A sample, smaller than the map size, of Euler angle triplets.
+    """
+    # Unpack parameters
+    (ny, nx), R_example = request.param
+    dy = dx = 0.00191999995708466
+
+    # File columns
+    d, map_size = create_coordinate_arrays((ny, nx), (dy, dx))
+    x, y = d["x"], d["y"]
+    rng = np.random.default_rng()
+    bands = np.full(map_size, 6, dtype=np.uint8)
+    err = np.zeros(map_size, dtype=np.uint8)
+    mad = rng.random(map_size)
+    bc = rng.integers(0, 60, map_size)
+    bs = rng.integers(35, 42, map_size)
+    R_idx = np.random.choice(np.arange(len(R_example)), map_size)
+    R = R_example[R_idx]
+    R = np.rad2deg(R)
+
+    # Insert 10% non-indexed points
+    phase_id = np.ones(map_size, dtype=np.uint8)
+    non_indexed_points = np.random.choice(
+        np.arange(map_size), replace=False, size=int(map_size * 0.1)
+    )
+    phase_id[non_indexed_points] = 0
+    R[non_indexed_points] = 0.0
+    bands[non_indexed_points] = 0
+    err[non_indexed_points] = 3
+    mad[non_indexed_points] = 0.0
+    bc[non_indexed_points] = 0
+    bs[non_indexed_points] = 0
+
+    CTF_ASTAR_HEADER2 = CTF_ASTAR_HEADER % (nx, ny)
+
+    f = tmpdir.join("astar.ctf")
+    np.savetxt(
+        fname=f,
+        X=np.column_stack(
+            (phase_id, x, y, bands, err, R[:, 0], R[:, 1], R[:, 2], mad, bc, bs)
+        ),
+        fmt="%-4i%-8.4f%-8.4f%-4i%-4i%-9.2f%-9.2f%-9.2f%-8.4f%-4i%-i",
+        header=CTF_ASTAR_HEADER2,
+        comments="",
+    )
+
+    yield f
+
+
 # Variable map shape and step sizes
 CTF_EMSOFT_HEADER = r"""Channel Text File
 EMsoft v. 4_1_1_9d5269a; BANDS=pattern index, MAD=CI, BC=OSM, BS=IQ
@@ -569,6 +644,78 @@ Phases	1
 3.524;3.524;3.524	90.000;90.000;90.000	Ni	11	225
 Phase	X	Y	Bands	Error	Euler1	Euler2	Euler3	MAD	BC	BS"""
 
+
+@pytest.fixture(
+    params=[
+        (
+            (7, 13),  # map_shape
+            (1, 2),  # step_sizes
+            np.array([[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589]]),  # R
+        )
+    ]
+)
+def ctf_emsoft(tmpdir, request):
+    """Create a dummy CTF file in EMsoft's format from input.
+
+    Identical to Oxford files except for the following:
+
+    * Bands = dictionary index
+    * Error = 0
+    * Only three decimals in Euler angles
+
+    Parameters expected in `request`
+    --------------------------------
+    map_shape : tuple of ints
+        Map shape to create.
+    step_sizes : tuple of floats
+        Step sizes in x and y coordinates in microns.
+    rotations : numpy.ndarray
+        A sample, smaller than the map size, of Euler angle triplets.
+    """
+    # Unpack parameters
+    (ny, nx), (dy, dx), R_example = request.param
+
+    # File columns
+    d, map_size = create_coordinate_arrays((ny, nx), (dy, dx))
+    x, y = d["x"], d["y"]
+    rng = np.random.default_rng()
+    bands = rng.integers(0, 333_000, map_size)
+    err = np.zeros(map_size, dtype=np.uint8)
+    mad = rng.random(map_size)
+    bc = rng.integers(60, 140, map_size)
+    bs = rng.integers(60, 120, map_size)
+    R_idx = np.random.choice(np.arange(len(R_example)), map_size)
+    R = R_example[R_idx]
+    R = np.rad2deg(R)
+
+    # Insert 10% non-indexed points
+    phase_id = np.ones(map_size, dtype=np.uint8)
+    non_indexed_points = np.random.choice(
+        np.arange(map_size), replace=False, size=int(map_size * 0.1)
+    )
+    phase_id[non_indexed_points] = 0
+    R[non_indexed_points] = 0.0
+    bands[non_indexed_points] = 0
+    mad[non_indexed_points] = 0.0
+    bc[non_indexed_points] = 0
+    bs[non_indexed_points] = 0
+
+    CTF_EMSOFT_HEADER2 = CTF_EMSOFT_HEADER % (nx, ny, dx, dy)
+
+    f = tmpdir.join("emsoft.ctf")
+    np.savetxt(
+        fname=f,
+        X=np.column_stack(
+            (phase_id, x, y, bands, err, R[:, 0], R[:, 1], R[:, 2], mad, bc, bs)
+        ),
+        fmt="%-4i%-8.4f%-8.4f%-7i%-4i%-10.3f%-10.3f%-10.3f%-8.4f%-4i%-i",
+        header=CTF_EMSOFT_HEADER2,
+        comments="",
+    )
+
+    yield f
+
+
 # Variable map shape and step sizes
 CTF_MTEX_HEADER = r"""Channel Text File
 Prj /some/where/mtex.ctf
@@ -585,6 +732,70 @@ Euler angles refer to Sample Coordinate system (CS0)!	Mag	0.0000	Coverage	0	Devi
 Phases	1
 4.079;4.079;4.079	90.000;90.000;90.000	Gold	11	0			Created from mtex
 Phase	X	Y	Bands	Error	Euler1	Euler2	Euler3	MAD	BC	BS"""
+
+
+@pytest.fixture(
+    params=[
+        (
+            (7, 13),  # map_shape
+            (1, 2),  # step_sizes
+            np.array([[4.48549, 0.95242, 0.79150], [1.34390, 0.27611, 0.82589]]),  # R
+        )
+    ]
+)
+def ctf_mtex(tmpdir, request):
+    """Create a dummy CTF file in MTEX's format from input.
+
+    Identical to Oxford files except for the properties Bands, Error,
+    MAD, BC, and BS are all equal to 0.
+
+    Parameters expected in `request`
+    --------------------------------
+    map_shape : tuple of ints
+        Map shape to create.
+    step_sizes : tuple of floats
+        Step sizes in x and y coordinates in microns.
+    rotations : numpy.ndarray
+        A sample, smaller than the map size, of Euler angle triplets.
+    """
+    # Unpack parameters
+    (ny, nx), (dy, dx), R_example = request.param
+
+    # File columns
+    d, map_size = create_coordinate_arrays((ny, nx), (dy, dx))
+    x, y = d["x"], d["y"]
+    bands = np.zeros(map_size)
+    err = np.zeros(map_size)
+    mad = np.zeros(map_size)
+    bc = np.zeros(map_size)
+    bs = np.zeros(map_size)
+    R_idx = np.random.choice(np.arange(len(R_example)), map_size)
+    R = R_example[R_idx]
+    R = np.rad2deg(R)
+
+    # Insert 10% non-indexed points
+    phase_id = np.ones(map_size, dtype=np.uint8)
+    non_indexed_points = np.random.choice(
+        np.arange(map_size), replace=False, size=int(map_size * 0.1)
+    )
+    phase_id[non_indexed_points] = 0
+    R[non_indexed_points] = 0.0
+
+    CTF_MTEX_HEADER2 = CTF_MTEX_HEADER % (nx, ny, dx, dy)
+
+    f = tmpdir.join("mtex.ctf")
+    np.savetxt(
+        fname=f,
+        X=np.column_stack(
+            (phase_id, x, y, bands, err, R[:, 0], R[:, 1], R[:, 2], mad, bc, bs)
+        ),
+        fmt="%-4i%-8.4f%-8.4f%-4i%-4i%-11.4f%-11.4f%-11.4f%-8.4f%-4i%-i",
+        header=CTF_MTEX_HEADER2,
+        comments="",
+    )
+
+    yield f
+
 
 # ---------------------------- HDF5 files ---------------------------- #
 
