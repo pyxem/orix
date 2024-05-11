@@ -22,7 +22,7 @@ TSL, NanoMegas ASTAR Index or EMsoft's EMdpmerge program.
 
 from io import TextIOWrapper
 import re
-from typing import Optional, Union
+from typing import List, Optional, Tuple, Union
 import warnings
 
 from diffpy.structure import Lattice, Structure
@@ -130,7 +130,7 @@ def file_reader(filename: str) -> CrystalMap:
     return CrystalMap(**data_dict)
 
 
-def _get_header(file: TextIOWrapper) -> list[str]:
+def _get_header(file: TextIOWrapper) -> List[str]:
     """Return the first lines starting with '#' in an .ang file.
 
     Parameters
@@ -154,7 +154,7 @@ def _get_header(file: TextIOWrapper) -> list[str]:
     return header
 
 
-def _get_vendor_columns(header: list[str], n_cols_file: int) -> tuple[str, list[str]]:
+def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[str]]:
     """Return the .ang file column names and vendor, determined from the
     header.
 
@@ -304,7 +304,7 @@ def _get_vendor_columns(header: list[str], n_cols_file: int) -> tuple[str, list[
     return vendor, vendor_column_names
 
 
-def _get_phases_from_header(header: list[str]) -> dict:
+def _get_phases_from_header(header: List[str]) -> dict:
     """Return phase names and symmetries detected in an .ang file
     header.
 
@@ -382,7 +382,7 @@ def file_writer(
     confidence_index_prop: Optional[str] = None,
     detector_signal_prop: Optional[str] = None,
     pattern_fit_prop: Optional[str] = None,
-    extra_prop: Union[str, list[str], None] = None,
+    extra_prop: Union[str, List[str], None] = None,
 ):
     """Write a crystal map to an .ang file readable by MTEX and EDAX TSL
     OIM Analysis v7.
@@ -626,7 +626,7 @@ def _get_header_from_phases(xmap: CrystalMap) -> str:
     return header
 
 
-def _get_nrows_ncols_step_sizes(xmap: CrystalMap) -> tuple[int, int, float, float]:
+def _get_nrows_ncols_step_sizes(xmap: CrystalMap) -> Tuple[int, int, float, float]:
     """Get crystal map shape and step sizes.
 
     Parameters
@@ -669,10 +669,10 @@ def _get_column_width(max_value: int, decimals: int = 5) -> int:
 
 def _get_prop_arrays(
     xmap: CrystalMap,
-    prop_names: list[str],
-    desired_prop_names: list[str],
+    prop_names: List[str],
+    desired_prop_names: List[str],
     map_size: int,
-    index: Union[int, None],
+    index: Optional[int],
     decimals: int = 5,
 ) -> np.ndarray:
     """Return a 2D array (n_points, n_properties) with desired property
@@ -725,10 +725,10 @@ def _get_prop_arrays(
 def _get_prop_array(
     xmap: CrystalMap,
     prop_name: str,
-    expected_prop_names: list[str],
-    prop_names: list[str],
+    expected_prop_names: List[str],
+    prop_names: List[str],
     prop_names_lower_arr: np.ndarray,
-    index: Union[int, None],
+    index: Optional[int],
     decimals: int = 5,
     fill_value: Union[int, float, bool] = 0,
 ) -> Union[np.ndarray, None]:
