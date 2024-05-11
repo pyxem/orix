@@ -12,9 +12,7 @@ extra_feature_requirements = {
     "doc": [
         "ipykernel",  # Used by nbsphinx to execute notebooks
         "memory_profiler",
-        # TODO: Remove nbconvert pin once
-        #  https://github.com/pyxem/orix/issues/494 is resolved
-        "nbconvert                      < 7.14",
+        "nbconvert                      >= 7.16.4",
         "nbsphinx                       >= 0.7",
         "numpydoc",
         "pydata-sphinx-theme",
