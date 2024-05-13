@@ -676,7 +676,8 @@ class Vector3d(Object3d):
         Vector3d (1,)
         [[0.6 0.  0. ]]
         """
-        assert self.size == 1, "`get_nearest` only works for single vectors."
+        if self.size != 1:
+            raise AttributeError("`get_nearest` only works for single vectors")
         tiebreak = Vector3d.zvector() if tiebreak is None else tiebreak
         eps = 1e-9 if inclusive else 0
         cosines = x.dot(self)
