@@ -13,6 +13,7 @@ __credits__ = [
     "Duncan Johnstone",
     "Niels Cautaerts",
     "Anders Christian Mathisen",
+    "Zhou Xu",
     "Carter Francis",
     "Simon Høgås",
     "Viljar Johan Femoen",
