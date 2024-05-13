@@ -140,7 +140,7 @@ class Rodrigues(NeoEuler):
         --------
         Quaternion.to_rodrigues
         """
-        a = np.float64(rotation.a)
+        a = rotation.a.astype(np.float64)
         with np.errstate(divide="ignore", invalid="ignore"):
             data = np.stack((rotation.b / a, rotation.c / a, rotation.d / a), axis=-1)
         data[np.isnan(data)] = 0
