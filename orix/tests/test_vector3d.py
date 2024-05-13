@@ -460,6 +460,16 @@ def test_zero_perpendicular():
         _ = Vector3d.zero((1,)).perpendicular
 
 
+def test_get_nearest():
+    v_ref = Vector3d.zvector()
+    v = Vector3d([[0, 0, 0.9], [0, 0, 0.8], [0, 0, 1.1]])
+    v_nearest = v_ref.get_nearest(v)
+    assert np.allclose(v_nearest.data, [0, 0, 0.9])
+
+    with pytest.raises(AttributeError, match="`get_nearest` only works for "):
+        v.get_nearest(v_ref)
+
+
 class TestSpareNotImplemented:
     def test_radd_notimplemented(self, vector):
         with pytest.raises(TypeError):
