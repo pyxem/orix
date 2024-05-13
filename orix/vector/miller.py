@@ -20,12 +20,22 @@ from __future__ import annotations
 
 from copy import deepcopy
 from itertools import product
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union
+
+try:
+    # New in Python 3.11
+    from typing import Self
+except ImportError:  # pragma: no cover
+    from typing_extensions import Self
 
 from diffpy.structure import Lattice
 import numpy as np
 
 from orix.vector import Vector3d
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orix.crystal_map import Phase
+    from orix.quaternion import Symmetry
 
 
 class Miller(Vector3d):
@@ -48,13 +58,12 @@ class Miller(Vector3d):
         Indices of direct lattice vector(s). Default is ``None``.
     UVTW
         Indices of direct lattice vector(s), often preferred over
-        ``uvw`` in trigonal and hexagonal lattices. Default is ``None``.
+        *uvw* in trigonal and hexagonal lattices. Default is ``None``.
     hkl
         Indices of reciprocal lattice vector(s). Default is ``None``.
     hkil
-        Indices of reciprocal lattice vector(s), often preferred
-        over ``hkl`` in trigonal and hexagonal lattices. Default is
-        ``None``.
+        Indices of reciprocal lattice vector(s), often preferred over
+        *hkl* in trigonal and hexagonal lattices. Default is ``None``.
     phase
         A phase with a crystal lattice and symmetry. Must be passed
         whenever direct or reciprocal lattice vectors are created.
@@ -77,13 +86,8 @@ class Miller(Vector3d):
         UVTW: Union[np.ndarray, list, tuple, None] = None,
         hkl: Union[np.ndarray, list, tuple, None] = None,
         hkil: Union[np.ndarray, list, tuple, None] = None,
-        phase: Optional["orix.crystal_map.Phase"] = None,
-    ):
-        """Create a set of direct lattice vectors (uvw or UVTW) or
-        reciprocal lattice vectors (hkl or hkil) describing directions
-        with respect to a crystal reference frame defined by a phase's
-        crystal lattice and symmetry.
-        """
+        phase: Optional["Phase"] = None,
+    ) -> None:
         n_passed = np.sum([i is not None for i in [xyz, uvw, UVTW, hkl, hkil]])
         if n_passed == 0 or n_passed > 1:
             raise ValueError(
@@ -134,7 +138,7 @@ class Miller(Vector3d):
         return self._coordinate_format
 
     @coordinate_format.setter
-    def coordinate_format(self, value: str):
+    def coordinate_format(self, value: str) -> None:
         """Set the vector coordinate format."""
         formats = ["xyz", "uvw", "UVTW", "hkl", "hkil"]
         if value not in formats:
@@ -162,12 +166,12 @@ class Miller(Vector3d):
         return _transform_space(self.data, "c", "r", self.phase.structure.lattice)
 
     @hkl.setter
-    def hkl(self, value: np.ndarray):
+    def hkl(self, value: np.ndarray) -> None:
         """Set the reciprocal lattice vectors."""
         self.data = _transform_space(value, "r", "c", self.phase.structure.lattice)
 
     @property
-    def hkil(self):
+    def hkil(self) -> np.ndarray:
         r"""Return or set the reciprocal lattice vectors expressed as
         4-index Miller-Bravais indices.
 
@@ -181,7 +185,7 @@ class Miller(Vector3d):
         return _hkl2hkil(self.hkl)
 
     @hkil.setter
-    def hkil(self, value: np.ndarray):
+    def hkil(self, value: np.ndarray) -> None:
         """Set the reciprocal lattice vectors expressed as 4-index
         Miller-Bravais indices.
         """
@@ -223,12 +227,12 @@ class Miller(Vector3d):
         return _transform_space(self.data, "c", "d", self.phase.structure.lattice)
 
     @uvw.setter
-    def uvw(self, value: np.ndarray):
+    def uvw(self, value: np.ndarray) -> None:
         """Set the direct lattice vectors."""
         self.data = _transform_space(value, "d", "c", self.phase.structure.lattice)
 
     @property
-    def UVTW(self):
+    def UVTW(self) -> np.ndarray:
         r"""Return or set the direct lattice vectors expressed as
         4-index Weber symbols.
 
@@ -249,7 +253,7 @@ class Miller(Vector3d):
         return _uvw2UVTW(self.uvw)
 
     @UVTW.setter
-    def UVTW(self, value):
+    def UVTW(self, value: np.ndarray) -> None:
         """Set the direct lattice vectors expressed as 4-index Weber
         symbols.
         """
@@ -341,7 +345,7 @@ class Miller(Vector3d):
         return self.phase.is_hexagonal
 
     @property
-    def unit(self) -> Miller:
+    def unit(self) -> Self:
         """Return unit vectors."""
         m = self.__class__(xyz=super().unit.data, phase=self.phase)
         m.coordinate_format = self.coordinate_format
@@ -360,7 +364,7 @@ class Miller(Vector3d):
             f"{name} {shape}, point group {symmetry}, {coordinate_format}\n" f"{data}"
         )
 
-    def __getitem__(self, key) -> Miller:
+    def __getitem__(self, key) -> Self:
         """NumPy fancy indexing of vectors."""
         m = self.__class__(xyz=self.data[key], phase=self.phase).deepcopy()
         m.coordinate_format = self.coordinate_format
@@ -371,10 +375,11 @@ class Miller(Vector3d):
     @classmethod
     def from_highest_indices(
         cls,
-        phase: "orix.crystal_map.Phase",
+        phase: "Phase",
         uvw: Union[np.ndarray, list, tuple, None] = None,
         hkl: Union[np.ndarray, list, tuple, None] = None,
-    ) -> Miller:
+        include_zero_vector: bool = False,
+    ) -> Self:
         """Create a set of unique direct or reciprocal lattice vectors
         from three highest indices and a phase (crystal lattice and
         symmetry).
@@ -401,9 +406,7 @@ class Miller(Vector3d):
         return cls(**init_kw).unique()
 
     @classmethod
-    def from_min_dspacing(
-        cls, phase: "orix.crystal_map.Phase", min_dspacing: float = 0.05
-    ) -> Miller:
+    def from_min_dspacing(cls, phase: "Phase", min_dspacing: float = 0.05) -> Self:
         """Create a set of unique reciprocal lattice vectors with a
         a direct space interplanar spacing greater than a lower
         threshold.
@@ -427,10 +430,10 @@ class Miller(Vector3d):
     @classmethod
     def random(
         cls,
-        phase: "orix.crystal_map.Phase",
+        phase: "Phase",
         shape: Union[int, tuple] = 1,
         coordinate_format: str = "xyz",
-    ) -> Miller:
+    ) -> Self:
         """Create random Miller indices.
 
         Parameters
@@ -464,11 +467,11 @@ class Miller(Vector3d):
 
     # --------------------- Other public methods --------------------- #
 
-    def deepcopy(self) -> Miller:
+    def deepcopy(self) -> Self:
         """Return a deepcopy of the instance."""
         return deepcopy(self)
 
-    def round(self, max_index: int = 20) -> Miller:
+    def round(self, max_index: int = 20) -> Self:
         """Round a set of index triplet (Miller) or quartet
         (Miller-Bravais/Weber) to the *closest* smallest integers.
 
@@ -496,9 +499,7 @@ class Miller(Vector3d):
         unique: bool = False,
         return_multiplicity: bool = False,
         return_index: bool = False,
-    ) -> Union[
-        Miller, Tuple[Miller, np.ndarray], Tuple[Miller, np.ndarray, np.ndarray]
-    ]:
+    ) -> Union[Self, Tuple[Self, np.ndarray], Tuple[Self, np.ndarray, np.ndarray]]:
         """Return vectors symmetrically equivalent to the vectors.
 
         Parameters
@@ -585,7 +586,7 @@ class Miller(Vector3d):
 
     def angle_with(
         self,
-        other: Miller,
+        other: Self,
         use_symmetry: bool = False,
         degrees: bool = False,
     ) -> np.ndarray:
@@ -630,7 +631,7 @@ class Miller(Vector3d):
 
         return angles
 
-    def cross(self, other: Miller):
+    def cross(self, other: Self) -> Self:
         """Return the cross products of the vectors with the other
         vectors, which is considered the zone axes between the vectors.
 
@@ -652,7 +653,7 @@ class Miller(Vector3d):
         m.coordinate_format = new_fmt[self.coordinate_format]
         return m
 
-    def dot(self, other: Miller) -> np.ndarray:
+    def dot(self, other: Self) -> np.ndarray:
         """Return the dot products of the vectors and the other vectors.
 
         Parameters
@@ -669,7 +670,7 @@ class Miller(Vector3d):
         self._compatible_with(other, raise_error=True)
         return super().dot(other)
 
-    def dot_outer(self, other: Miller) -> np.ndarray:
+    def dot_outer(self, other: Self) -> np.ndarray:
         """Return the outer dot products of the vectors and the other
         vectors.
 
@@ -687,7 +688,7 @@ class Miller(Vector3d):
         self._compatible_with(other, raise_error=True)
         return super().dot_outer(other)
 
-    def flatten(self) -> Miller:
+    def flatten(self) -> Self:
         """Return the flattened vectors.
 
         Returns
@@ -699,7 +700,7 @@ class Miller(Vector3d):
         m.coordinate_format = self.coordinate_format
         return m
 
-    def transpose(self, *axes: Optional[int]) -> Miller:
+    def transpose(self, *axes: Optional[int]) -> Self:
         """Return a new instance with the data transposed.
 
         The order may be undefined if :attr:`ndim` is originally 2. In
@@ -725,7 +726,7 @@ class Miller(Vector3d):
         """NotImplemented."""
         return NotImplemented
 
-    def mean(self, use_symmetry: bool = False) -> Miller:
+    def mean(self, use_symmetry: bool = False) -> Self:
         """Return the mean vector of the set of vectors.
 
         Parameters
@@ -745,7 +746,7 @@ class Miller(Vector3d):
         m.coordinate_format = self.coordinate_format
         return m
 
-    def reshape(self, *shape: Union[int, tuple]) -> Miller:
+    def reshape(self, *shape: Union[int, tuple]) -> Self:
         """Return a new instance with the vectors reshaped.
 
         Parameters
@@ -764,7 +765,7 @@ class Miller(Vector3d):
 
     def unique(
         self, use_symmetry: bool = False, return_index: bool = False
-    ) -> Union[Miller, Tuple[Miller, np.ndarray]]:
+    ) -> Union[Self, Tuple[Self, np.ndarray]]:
         """Unique vectors in ``self``.
 
         Parameters
@@ -809,9 +810,7 @@ class Miller(Vector3d):
         else:
             return m
 
-    def in_fundamental_sector(
-        self, symmetry: Optional["orix.quaternion.Symmetry"] = None
-    ) -> Miller:
+    def in_fundamental_sector(self, symmetry: Optional["Symmetry"] = None) -> Self:
         """Project Miller indices to a symmetry's fundamental sector
         (inverse pole figure).
 
@@ -858,7 +857,7 @@ class Miller(Vector3d):
 
     # -------------------- Other private methods --------------------- #
 
-    def _compatible_with(self, other: Miller, raise_error: bool = False) -> bool:
+    def _compatible_with(self, other: Self, raise_error: bool = False) -> bool:
         """Whether ``self`` and ``other`` are the same (the same crystal
         lattice and symmetry) with vectors in the same space.
 
@@ -977,7 +976,7 @@ def _hkil2hkl(hkil: np.ndarray) -> np.ndarray:
     return hkl
 
 
-def _check_hkil(hkil: np.ndarray):
+def _check_hkil(hkil: np.ndarray) -> None:
     hkil = np.asarray(hkil)
     if not np.allclose(np.sum(hkil[..., :3], axis=-1), 0, atol=1e-4):
         raise ValueError(
@@ -1016,7 +1015,7 @@ def _UVTW2uvw(UVTW: np.ndarray, convention: Optional[str] = None) -> np.ndarray:
     return uvw
 
 
-def _check_UVTW(UVTW: np.ndarray):
+def _check_UVTW(UVTW: np.ndarray) -> None:
     UVTW = np.asarray(UVTW)
     if not np.allclose(np.sum(UVTW[..., :3], axis=-1), 0, atol=1e-4):
         raise ValueError(
