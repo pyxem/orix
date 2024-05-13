@@ -11,15 +11,20 @@ Unreleased
 
 Added
 -----
+- We can now read 2D crystal maps from Channel Text Files (CTFs) using ``io.load()``.
 
 Changed
 -------
+- Phase names in crystal maps read from .ang files with ``io.load()`` now prefer to use
+  the abbreviated "Formula" instead of "MaterialName" in the file header.
 
 Removed
 -------
 
 Deprecated
 ----------
+- ``loadang()`` and ``loadctf()`` are deprecated and will be removed in the next minor
+  release. Please use ``io.load()`` instead.
 
 Fixed
 -----

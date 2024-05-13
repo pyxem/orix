@@ -28,15 +28,17 @@
 
     ang
     bruker_h5ebsd
+    ctf
     emsoft_h5ebsd
     orix_hdf5
 """
 
-from orix.io.plugins import ang, bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
+from orix.io.plugins import ang, bruker_h5ebsd, ctf, emsoft_h5ebsd, orix_hdf5
 
 plugin_list = [
     ang,
     bruker_h5ebsd,
+    ctf,
     emsoft_h5ebsd,
     orix_hdf5,
 ]

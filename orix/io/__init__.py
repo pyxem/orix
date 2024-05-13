@@ -37,6 +37,7 @@ from warnings import warn
 from h5py import File, is_hdf5
 import numpy as np
 
+from orix._util import deprecated
 from orix.crystal_map import CrystalMap
 from orix.io.plugins import plugin_list
 from orix.io.plugins._h5ebsd import hdf5group2dict
@@ -45,7 +46,6 @@ from orix.quaternion import Rotation
 extensions = [plugin.file_extensions for plugin in plugin_list if plugin.writes]
 
 
-# Lists what will be imported when calling "from orix.io import *"
 __all__ = [
     "loadang",
     "loadctf",
@@ -54,6 +54,8 @@ __all__ = [
 ]
 
 
+# TODO: Remove after 0.13.0
+@deprecated(since="0.13", removal="0.14", alternative="io.load")
 def loadang(file_string: str) -> Rotation:
     """Load ``.ang`` files.
 
@@ -73,6 +75,8 @@ def loadang(file_string: str) -> Rotation:
     return Rotation.from_euler(euler)
 
 
+# TODO: Remove after 0.13.0
+@deprecated(since="0.13", removal="0.14", alternative="io.load")
 def loadctf(file_string: str) -> Rotation:
     """Load ``.ctf`` files.
 
