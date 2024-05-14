@@ -29,11 +29,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 
-from orix._util import deprecated
 from orix.quaternion.misorientation import Misorientation
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import Miller, NeoEuler, Vector3d
+from orix.vector import Miller, Vector3d
 
 
 class Orientation(Misorientation):
@@ -107,7 +106,6 @@ class Orientation(Misorientation):
 
     # ------------------------ Class methods ------------------------- #
 
-    # TODO: Remove use of **kwargs in 1.0
     @classmethod
     def from_euler(
         cls,
@@ -115,7 +113,6 @@ class Orientation(Misorientation):
         symmetry: Optional[Symmetry] = None,
         direction: str = "lab2crystal",
         degrees: bool = False,
-        **kwargs,
     ) -> Orientation:
         """Create orientations from sets of Euler angles
         :cite:`rowenhorst2015consistent`.
@@ -141,7 +138,7 @@ class Orientation(Misorientation):
         O
             Orientations.
         """
-        O = super().from_euler(euler, direction=direction, degrees=degrees, **kwargs)
+        O = super().from_euler(euler, direction=direction, degrees=degrees)
         if symmetry:
             O.symmetry = symmetry
         return O
@@ -257,32 +254,6 @@ class Orientation(Misorientation):
             Orientations.
         """
         O = super().from_matrix(matrix)
-        if symmetry:
-            O.symmetry = symmetry
-        return O
-
-    # TODO: Remove before 0.13.0
-    @classmethod
-    @deprecated(since="0.12", removal="0.13", alternative="from_axes_angles")
-    def from_neo_euler(
-        cls, neo_euler: NeoEuler, symmetry: Optional[Symmetry] = None
-    ) -> Orientation:
-        """Create orientations from a neo-euler (vector) representation.
-
-        Parameters
-        ----------
-        neo_euler
-            Vector parametrization of orientation(s).
-        symmetry
-            Symmetry of orientation(s). If not given (default), no
-            symmetry is set.
-
-        Returns
-        -------
-        O
-            Orientations.
-        """
-        O = super().from_neo_euler(neo_euler)
         if symmetry:
             O.symmetry = symmetry
         return O

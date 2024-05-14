@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import warnings
-
 from diffpy.structure import Lattice, Structure
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,7 +41,7 @@ from orix.quaternion.symmetry import (
     _groups,
     _proper_groups,
 )
-from orix.vector import AxAngle, Miller, Vector3d 
+from orix.vector import Miller, Vector3d 
 # isort: on
 # fmt: on
 
@@ -522,22 +520,7 @@ class TestOrientationInitialization:
         ):
             _ = Orientation.from_align_vectors(a, b)
 
-    def test_from_neo_euler_symmetry(self):
-        v = AxAngle.from_axes_angles(axes=Vector3d.zvector(), angles=np.pi / 2)
-        with pytest.warns(np.VisibleDeprecationWarning):
-            o1 = Orientation.from_neo_euler(v)
-        assert np.allclose(o1.data, [0.7071, 0, 0, 0.7071])
-        assert o1.symmetry.name == "1"
-        with pytest.warns(np.VisibleDeprecationWarning):
-            o2 = Orientation.from_neo_euler(v, symmetry=Oh)
-        o2 = o2.map_into_symmetry_reduced_zone()
-        assert np.allclose(o2.data, [-1, 0, 0, 0])
-        assert o2.symmetry.name == "m-3m"
-        o3 = Orientation(o1.data, symmetry=Oh)
-        o3 = o3.map_into_symmetry_reduced_zone()
-        assert np.allclose(o3.data, o2.data)
-
-    def test_from_axes_angles(self, rotations):
+    def test_from_axes_angles(self):
         axis = Vector3d.xvector() - Vector3d.yvector()
         angle = np.pi / 2
         o1 = Orientation.from_axes_angles(axis, angle, Oh)
@@ -586,58 +569,6 @@ class TestOrientationInitialization:
         # Raises an appropriate error message
         with pytest.raises(TypeError, match="Value must be an instance of"):
             _ = Orientation.from_scipy_rotation(r_scipy, (Oh, Oh))
-
-    # TODO: Remove in 0.13
-    def test_from_euler_warns(self):
-        """Orientation.from_euler() warns only once when "convention"
-        argument is passed.
-        """
-        euler = np.random.rand(10, 3)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error")
-            _ = Orientation.from_euler(euler)
-
-        msg = (
-            r"Argument `convention` is deprecated and will be removed in version 0.13. "
-            r"To avoid this warning, please do not use `convention`. "
-            r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
-            "more details."
-        )
-        with pytest.warns(np.VisibleDeprecationWarning, match=msg) as record2:
-            _ = Orientation.from_euler(euler, convention="whatever")
-        assert len(record2) == 1
-
-    # TODO: Remove in 0.13
-    def test_from_euler_convention_mtex(self):
-        """Passing convention="mtex" to Orientation.from_euler() works
-        but warns once.
-        """
-        euler = np.random.rand(10, 3)
-        ori1 = Orientation.from_euler(euler, direction="crystal2lab")
-        with pytest.warns(np.VisibleDeprecationWarning, match=r"Argument `convention`"):
-            ori2 = Orientation.from_euler(euler, convention="mtex")
-        assert np.allclose(ori1.data, ori2.data)
-
-    # TODO: Remove in 0.13
-    def test_to_euler_convention_warns(self):
-        """Orientation.to_euler() warns only once when "convention"
-        argument is passed.
-        """
-        ori1 = Orientation.from_euler(np.random.rand(10, 3))
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error")
-            ori2 = ori1.to_euler()
-
-        msg = (
-            r"Argument `convention` is deprecated and will be removed in version 0.13. "
-            r"To avoid this warning, please do not use `convention`. "
-            r"See the documentation of `to_euler\(\)` for more details."
-        )
-        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
-            ori3 = ori1.to_euler(convention="whatever")
-        assert np.allclose(ori2, ori3)
 
 
 class TestOrientation:

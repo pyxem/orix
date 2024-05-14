@@ -28,12 +28,8 @@ import quaternion
 from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix._base import Object3d
-from orix._util import deprecated, deprecated_argument
 from orix.quaternion import _conversions
 from orix.vector import AxAngle, Homochoric, Miller, Rodrigues, Vector3d
-
-# Used to round values below 1e-16 to zero
-_FLOAT_EPS = np.finfo(float).eps
 
 
 class Quaternion(Object3d):
@@ -259,31 +255,6 @@ class Quaternion(Object3d):
 
     # ------------------------ Class methods ------------------------- #
 
-    # TODO: Remove before 0.13.0
-    @classmethod
-    @deprecated(since="0.12", removal="0.13", alternative="from_axes_angles")
-    def from_neo_euler(cls, neo_euler: "NeoEuler") -> Quaternion:
-        """Create unit quaternion(s) from a neo-euler (vector)
-        representation.
-
-        Parameters
-        ----------
-        neo_euler
-            Vector parametrization of quaternions.
-
-        Returns
-        -------
-        Q
-            Unit quaternion(s).
-        """
-        s = np.sin(neo_euler.angle / 2)
-        a = np.cos(neo_euler.angle / 2)
-        b = s * neo_euler.axis.x
-        c = s * neo_euler.axis.y
-        d = s * neo_euler.axis.z
-        Q = cls(np.stack([a, b, c, d], axis=-1)).unit
-        return Q
-
     @classmethod
     def from_axes_angles(
         cls,
@@ -485,15 +456,12 @@ class Quaternion(Object3d):
 
         return Q
 
-    # TODO: Remove decorator, **kwargs, and use of "convention" in 0.13
     @classmethod
-    @deprecated_argument("convention", "0.9", "0.13", "direction")
     def from_euler(
         cls,
         euler: Union[np.ndarray, tuple, list],
         direction: str = "lab2crystal",
         degrees: bool = False,
-        **kwargs,
     ) -> Quaternion:
         """Create unit quaternions from Euler angle sets
         :cite:`rowenhorst2015consistent`.
@@ -517,9 +485,7 @@ class Quaternion(Object3d):
             Unit quaternions.
         """
         direction = direction.lower()
-        if direction == "mtex" or (
-            "convention" in kwargs and kwargs["convention"] == "mtex"
-        ):
+        if direction == "mtex":
             # MTEX' rotations are transformations from the crystal to
             # the lab reference frames. See
             # https://mtex-toolbox.github.io/MTEXvsBungeConvention.html
@@ -804,9 +770,7 @@ class Quaternion(Object3d):
 
     # ---------------------- All "to_*" methods- --------------------- #
 
-    # TODO: Remove decorator and **kwargs in 0.13
-    @deprecated_argument("convention", since="0.9", removal="0.13")
-    def to_euler(self, degrees: bool = False, **kwargs) -> np.ndarray:
+    def to_euler(self, degrees: bool = False) -> np.ndarray:
         r"""Return the unit quaternions as Euler angles in the Bunge
         convention :cite:`rowenhorst2015consistent`.
 
