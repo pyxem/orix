@@ -30,11 +30,14 @@ about a fixed axis.
 from __future__ import annotations
 
 import abc
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
 from orix.vector import Vector3d
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orix.quaternion import Rotation
 
 
 class NeoEuler(Vector3d, abc.ABC):

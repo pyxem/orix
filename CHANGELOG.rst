@@ -20,6 +20,10 @@ Changed
 
 Removed
 -------
+- Removed deprecated ``from_neo_euler()`` method for ``Quaternion`` and its subclasses.
+- Removed deprecated argument ``convention`` in ``from_euler()`` and ``to_euler()``
+  methods for ``Quaternion`` and its subclasses. Use ``direction`` instead. Passing
+  ``convention`` will now raise an error.
 
 Deprecated
 ----------

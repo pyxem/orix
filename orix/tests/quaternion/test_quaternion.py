@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-import warnings
-
 import dask.array as da
 from diffpy.structure.spacegroups import sg225
 import numpy as np
@@ -25,7 +23,7 @@ import pytest
 
 from orix._base import DimensionError
 from orix.quaternion import Quaternion
-from orix.vector import AxAngle, Homochoric, Rodrigues, Vector3d
+from orix.vector import AxAngle, Homochoric, Vector3d
 
 
 @pytest.fixture(
@@ -345,9 +343,6 @@ class TestToFromEuler:
         eu4 = Quaternion.from_euler(eu).to_euler(degrees=True)
         assert np.allclose(np.rad2deg(eu), eu4)
 
-    def test_mtex(self, eu):
-        _ = Quaternion.from_euler(eu, direction="mtex")
-
     def test_direction_values(self, eu):
         q_mtex = Quaternion.from_euler(eu, direction="mtex")
         q_c2l = Quaternion.from_euler(eu, direction="crystal2lab")
@@ -356,9 +351,6 @@ class TestToFromEuler:
         assert np.allclose(q_default.data, q_l2c.data)
         assert np.allclose(q_mtex.data, q_c2l.data)
         assert np.allclose((q_l2c * q_c2l).data, [1, 0, 0, 0])
-
-    def test_direction_kwarg(self, eu):
-        _ = Quaternion.from_euler(eu)
 
     def test_direction_kwarg_dumb(self, eu):
         with pytest.raises(ValueError, match="The chosen direction is not one of "):
@@ -375,56 +367,6 @@ class TestToFromEuler:
         with pytest.warns(UserWarning, match="Angles are quite high, did you forget "):
             q = Quaternion.from_euler([90, 0, 0])
             assert np.allclose(q.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
-
-    # TODO: Remove in 0.13
-    def test_from_euler_warns(self, eu):
-        """Quaternion.from_euler() warns only when "convention" argument
-        is passed.
-        """
-        # No warning is raised
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            _ = Quaternion.from_euler(eu)
-
-        msg = (
-            r"Argument `convention` is deprecated and will be removed in version 0.13. "
-            r"To avoid this warning, please do not use `convention`. "
-            r"Use `direction` instead. See the documentation of `from_euler\(\)` for "
-            "more details."
-        )
-        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
-            _ = Quaternion.from_euler(eu, convention="whatever")
-
-    # TODO: Remove in 0.13
-    def test_from_euler_convention_mtex(self, eu):
-        """Passing convention="mtex" to Quaternion.from_euler() works but
-        warns.
-        """
-        q1 = Quaternion.from_euler(eu, direction="crystal2lab")
-        with pytest.warns(np.VisibleDeprecationWarning, match=r"Argument `convention`"):
-            q2 = Quaternion.from_euler(eu, convention="mtex")
-        assert np.allclose(q1.data, q2.data)
-
-    # TODO: Remove in 0.13
-    def test_to_euler_convention_warns(self, eu):
-        """Quaternion.to_euler() warns only when "convention" argument is
-        passed.
-        """
-        q1 = Quaternion.from_euler(eu)
-
-        # No warning is raised
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            q2 = q1.to_euler()
-
-        msg = (
-            r"Argument `convention` is deprecated and will be removed in version 0.13. "
-            r"To avoid this warning, please do not use `convention`. "
-            r"See the documentation of `to_euler\(\)` for more details."
-        )
-        with pytest.warns(np.VisibleDeprecationWarning, match=msg):
-            q3 = q1.to_euler(convention="whatever")
-        assert np.allclose(q2, q3)
 
 
 class TestFromToMatrix:
@@ -516,13 +458,9 @@ class TestFromToAxesAngles:
         if extra_dim:
             rotations = rotations.__class__(rotations.data[..., np.newaxis, :])
         ax = AxAngle.from_rotation(rotations)
-        with pytest.warns(np.VisibleDeprecationWarning):
-            q2 = Quaternion.from_neo_euler(ax)
-        q3 = Quaternion.from_axes_angles(ax.axis.data, ax.angle)
-        assert np.allclose(q2.data, q3.data)
-
-        q4 = Quaternion.from_axes_angles(ax.axis, np.rad2deg(ax.angle), degrees=True)
-        assert np.allclose(q4.data, q3.data)
+        Q1 = Quaternion.from_axes_angles(ax.axis.data, ax.angle)
+        Q2 = Quaternion.from_axes_angles(ax.axis, np.rad2deg(ax.angle), degrees=True)
+        assert np.allclose(Q1.data, Q2.data)
 
     def test_to_axes_angles(self, quaternions_conversions, axis_angle_pairs):
         ax = Quaternion(quaternions_conversions).to_axes_angles()
@@ -555,21 +493,6 @@ class TestFromToRodrigues:
             _ = Quaternion.from_rodrigues([0, 0, 1e-16])
         with pytest.raises(ValueError, match="Final dimension of vector array must be"):
             Quaternion.from_rodrigues([1, 2, 3, 4])
-
-    def test_backwards_consistency(self, quaternions_conversions, rodrigues_vectors):
-        axes = rodrigues_vectors[..., :3]
-        angles = rodrigues_vectors[..., 3][..., np.newaxis]
-        with pytest.warns(RuntimeWarning):
-            ro = Rodrigues(axes * angles)
-
-        with pytest.warns(np.VisibleDeprecationWarning):
-            q1 = Quaternion.from_neo_euler(ro)
-        with pytest.warns(UserWarning, match="Highest angle is greater than 179.999 "):
-            q2 = Quaternion.from_rodrigues(axes, angles)
-
-        assert np.allclose(q1[2].data, 0)
-        match_idx = [0, 1, 3, 4, 5, 6, 7, 8, 9]
-        assert np.allclose(q1[match_idx].data, q2[match_idx].data, atol=1e-4)
 
     def test_from_rodrigues_empty(self):
         q = Quaternion.from_rodrigues([])
