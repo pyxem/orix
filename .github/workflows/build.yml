@@ -2,8 +2,6 @@ name: build
 
 on:
   push:
-    branches:
-      - '*'
     branches-ignore:
       - 'pre-commit-ci-update-config'
   pull_request:
