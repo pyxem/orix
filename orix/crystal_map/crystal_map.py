@@ -749,6 +749,43 @@ class CrystalMap:
 
         return representation
 
+    def to_dict(self) -> dict[dict[str,str]]:
+        """Return dictionary of the data."""
+        result = {}
+        if self.size == 0:
+            return result
+
+        phases = self.phases_in_data
+        phase_ids = self.phase_id
+
+        # Ensure attributes set to None are treated OK
+        names = ["None" if not name else name for name in phases.names]
+        sg_names = ["None" if not i else i.short_name for i in phases.space_groups]
+        pg_names = ["None" if not i else i.name for i in phases.point_groups]
+        ppg_names = [
+            "None" if not i else i.proper_subgroup.name for i in phases.point_groups
+        ]
+
+        # Determine dictionary of phases
+        unique_phases = np.unique(phase_ids)
+        for i, phase_id in enumerate(unique_phases.astype(int)):
+            p_size = np.where(phase_ids == phase_id)[0].size
+            p_percentage = 100 * p_size / self.size
+            result[phase_id] = {
+                "number pixel"      : p_size,
+                "percentage"        : p_percentage,
+                "name"              : names[i],
+                "space group"       : sg_names[i],
+                "point group"       : pg_names[i],
+                "proper point group": ppg_names[i],
+                "color"             : phases.colors[i]
+            }
+
+        # Properties and spatial coordinates and scan unit
+        result["properties"] = list(self.prop.keys())
+        result["scan unit"]  = self.scan_unit
+        return result
+
     def deepcopy(self) -> "CrystalMap":
         """Return a deep copy using :func:`copy.deepcopy` function."""
         return copy.deepcopy(self)
