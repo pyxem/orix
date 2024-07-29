@@ -90,7 +90,7 @@ setup(
         "matplotlib-scalebar",
         "numba",
         "numpy",
-        "numpy-quaternion",
+        "quaternionic",
         "pooch                  >= 0.13",
         "scipy",
         "tqdm",

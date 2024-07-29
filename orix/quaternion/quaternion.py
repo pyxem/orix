@@ -24,7 +24,9 @@ import warnings
 import dask.array as da
 from dask.diagnostics import ProgressBar
 import numpy as np
-import quaternion
+import quaternionic as quaternion
+
+# import quaternion
 from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix._base import Object3d
@@ -214,8 +216,8 @@ class Quaternion(Object3d):
         r"""Return the conjugate of the quaternion
         :math:`Q^* = a - bi - cj - dk`.
         """
-        Q = quaternion.from_float_array(self.data).conj()
-        return self.__class__(quaternion.as_float_array(Q))
+        Q = quaternion.array(self.data).conj()
+        return self.__class__(quaternion.array(Q))
 
     # ------------------------ Dunder methods ------------------------ #
 
@@ -224,17 +226,15 @@ class Quaternion(Object3d):
 
     def __mul__(self, other: Union[Quaternion, Vector3d]):
         if isinstance(other, Quaternion):
-            Q1 = quaternion.from_float_array(self.data)
-            Q2 = quaternion.from_float_array(other.data)
-            return other.__class__(quaternion.as_float_array(Q1 * Q2))
+            Q1 = quaternion.array(self.data)
+            Q2 = quaternion.array(other.data)
+            return other.__class__(quaternion.array(Q1 * Q2))
         elif isinstance(other, Vector3d):
             # check broadcast shape is correct before calculation, as
             # quaternion.rotat_vectors will perform outer product
             # this keeps current __mul__ broadcast behaviour
-            Q1 = quaternion.from_float_array(self.data)
-            v = quaternion.as_vector_part(
-                (Q1 * quaternion.from_vector_part(other.data)) * ~Q1
-            )
+            Q1 = quaternion.array(self.data)
+            v = ((Q1 * other.data.from_vector_part) * ~Q1).to_vector_part
             if isinstance(other, Miller):
                 m = other.__class__(xyz=v, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
@@ -1120,11 +1120,11 @@ class Quaternion(Object3d):
                 else:
                     da.store(darr, arr)
             else:
-                Q1 = quaternion.from_float_array(self.data)
-                Q2 = quaternion.from_float_array(other.data)
+                Q1 = quaternion.array(self.data)
+                Q2 = quaternion.array(other.data)
                 # np.outer works with flattened array
                 Q = np.outer(Q1, Q2).reshape(Q1.shape + Q2.shape)
-                arr = quaternion.as_float_array(Q)
+                arr = quaternion.array(Q)
             return other.__class__(arr)
         elif isinstance(other, Vector3d):
             if lazy:
@@ -1136,8 +1136,8 @@ class Quaternion(Object3d):
                 else:
                     da.store(darr, arr)
             else:
-                Q = quaternion.from_float_array(self.data)
-                arr = quaternion.rotate_vectors(Q, other.data)
+                Q = quaternion.array(self.data)
+                arr = Q.rotate(other.data)
             if isinstance(other, Miller):
                 m = other.__class__(xyz=arr, phase=other.phase)
                 m.coordinate_format = other.coordinate_format

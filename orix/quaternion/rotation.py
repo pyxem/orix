@@ -23,6 +23,7 @@ from typing import Any, Tuple, Union
 import dask.array as da
 from dask.diagnostics import ProgressBar
 import numpy as np
+import quaternionic as quaternion
 from scipy.special import hyp0f1
 
 from orix.quaternion import Quaternion
@@ -96,7 +97,7 @@ class Rotation(Quaternion):
 
     @improper.setter
     def improper(self, value: np.ndarray):
-        self._data[..., -1] = value
+        self._data[..., -1] = quaternion.array(value)
 
     @property
     def antipodal(self) -> Rotation:
