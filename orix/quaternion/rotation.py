@@ -79,12 +79,19 @@ class Rotation(Quaternion):
     """
 
     def __init__(self, data: Union[np.ndarray, Rotation, list, tuple]):
-        super().__init__(data)
-        self._data = np.concatenate((self.data, np.zeros(self.shape + (1,))), axis=-1)
         if isinstance(data, Rotation):
-            self.improper = data.improper
+            self._data = data.data
+            self.improper = np.array(data.improper, dtype=bool)
+        else:
+            data = np.array(data)
+            if data.shape[-1] == 4:
+                super().__init__(data)
+                self.improper = np.zeros(self.shape, dtype=bool)
+            elif data.shape[-1] == 5:
+                super().__init__(data[..., :-1])
+                self.improper = np.array(data[..., -1]).astype(bool)
         with np.errstate(divide="ignore", invalid="ignore"):
-            self.data /= self.norm[..., np.newaxis]
+            self.data = self.data.normalized
 
     # -------------------------- Properties -------------------------- #
 
@@ -93,11 +100,17 @@ class Rotation(Quaternion):
         """Return ``True`` for improper rotations and ``False``
         otherwise.
         """
-        return self._data[..., -1].astype(bool)
+        return np.array(self._improper).astype(bool)
 
     @improper.setter
     def improper(self, value: np.ndarray):
-        self._data[..., -1] = quaternion.array(value)
+        value = np.array(value)
+        if value.shape != self._data.shape[:-1]:
+            raise ValueError(
+                f"The value shape ({value.shape}) must match "
+                f"the shape of the data ({self.data.shape}). "
+            )
+        self._improper = value
 
     @property
     def antipodal(self) -> Rotation:
@@ -390,7 +403,9 @@ class Rotation(Quaternion):
             R = super().outer(other)
 
         if isinstance(R, Rotation):
-            R.improper = np.logical_xor.outer(self.improper, other.improper)
+            R.improper = np.logical_xor.outer(
+                np.repeat(self.improper[..., None], 4, axis=-1), other.improper
+            )
         elif isinstance(R, Vector3d):
             R[self.improper] = -R[self.improper]
 

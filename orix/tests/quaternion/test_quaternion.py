@@ -84,7 +84,9 @@ class TestQuaternion:
         assert np.allclose((-quaternion).data, (-quaternion.data))
 
     def test_norm(self, quaternion):
-        assert np.allclose(quaternion.norm, (quaternion.data**2).sum(axis=-1) ** 0.5)
+        assert np.allclose(
+            quaternion.norm, (quaternion.data.ndarray**2).sum(axis=-1) ** 0.5
+        )
 
     def test_unit(self, quaternion):
         assert np.allclose(quaternion.unit.norm, 1)

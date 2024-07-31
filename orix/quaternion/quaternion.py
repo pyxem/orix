@@ -122,6 +122,10 @@ class Quaternion(Object3d):
 
     dim = 4
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._data = quaternion.array(self.data)
+
     # -------------------------- Properties -------------------------- #
 
     @property
@@ -133,12 +137,12 @@ class Quaternion(Object3d):
         value : numpy.ndarray
             Scalar quaternion component.
         """
-        return self.data[..., 0]
+        return self.data.w
 
     @a.setter
     def a(self, value: np.ndarray):
         """Set the scalar quaternion component."""
-        self.data[..., 0] = value
+        self.data.w = value
 
     @property
     def b(self) -> np.ndarray:
@@ -149,12 +153,12 @@ class Quaternion(Object3d):
         value : numpy.ndarray
             First vector quaternion component.
         """
-        return self.data[..., 1]
+        return self.data.x
 
     @b.setter
     def b(self, value: np.ndarray):
         """Set the first vector quaternion component."""
-        self.data[..., 1] = value
+        self.data.x = value
 
     @property
     def c(self) -> np.ndarray:
@@ -165,12 +169,12 @@ class Quaternion(Object3d):
         value : numpy.ndarray
             Second vector quaternion component.
         """
-        return self.data[..., 2]
+        return self.data.y
 
     @c.setter
     def c(self, value: np.ndarray):
         """Set the second vector quaternion component."""
-        self.data[..., 2] = value
+        self.data.y = value
 
     @property
     def d(self) -> np.ndarray:
@@ -181,12 +185,12 @@ class Quaternion(Object3d):
         value : numpy.ndarray
             Third vector quaternion component.
         """
-        return self.data[..., 3]
+        return self.data.z
 
     @d.setter
     def d(self, value: np.ndarray):
         """Set the third vector quaternion component."""
-        self.data[..., 3] = value
+        self.data.z = value
 
     @property
     def axis(self) -> Vector3d:
@@ -484,6 +488,11 @@ class Quaternion(Object3d):
         Q = Q.unit
 
         return Q
+
+    def flatten(self):
+        """Return a new object with the same data in a single column."""
+        obj = self.__class__(self.data.flattened)
+        return obj
 
     # TODO: Remove decorator, **kwargs, and use of "convention" in 0.13
     @classmethod
