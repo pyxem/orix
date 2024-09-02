@@ -6,8 +6,8 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
-Unreleased
-==========
+2024-09-03 - version 0.13.0
+===========================
 
 Added
 -----
@@ -29,10 +29,6 @@ Deprecated
 ----------
 - ``loadang()`` and ``loadctf()`` are deprecated and will be removed in the next minor
   release. Please use ``io.load()`` instead.
-
-Fixed
------
-
 
 2024-04-21 - version 0.12.1
 ===========================
