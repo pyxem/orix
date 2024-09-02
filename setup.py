@@ -93,6 +93,8 @@ setup(
         "numpy",
         "numpy-quaternion",
         "pooch                  >= 0.13",
+        # TODO: Remove once https://github.com/diffpy/diffpy.structure/issues/97 is fixed
+        "pycifrw",
         "scipy",
         "tqdm",
     ],
