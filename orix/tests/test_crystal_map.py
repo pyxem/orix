@@ -22,6 +22,7 @@ import numpy as np
 import pytest
 
 from orix.crystal_map import CrystalMap, Phase, PhaseList, create_coordinate_arrays
+from orix.crystal_map.crystal_map import _data_slices_from_coordinates
 from orix.plot import CrystalMapPlot
 from orix.quaternion import Orientation, Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
@@ -1089,6 +1090,11 @@ class TestCrystalMapShape:
     def test_coordinate_axes(self, crystal_map_input, expected_coordinate_axes):
         xmap = CrystalMap(**crystal_map_input)
         assert xmap._coordinate_axes == expected_coordinate_axes
+
+    def test_data_slices_from_coordinates_no_steps(self):
+        d, _ = create_coordinate_arrays((3, 4), step_sizes=(0.1, 0.2))
+        slices = _data_slices_from_coordinates(d)
+        assert slices == (slice(0, 4, None), slice(0, 3, None))
 
 
 class TestCrystalMapPlotMethod:

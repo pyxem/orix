@@ -25,87 +25,84 @@ from orix.quaternion import Misorientation, Orientation, OrientationRegion
 from orix.quaternion.symmetry import C1, D6
 
 
-def test_init_rodrigues_plot():
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="rodrigues", auto_add_to_figure=False)
-    assert isinstance(ax, RodriguesPlot)
+class TestRodriguesPlot:
+    def test_creation(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="rodrigues")
+        assert isinstance(ax, RodriguesPlot)
 
 
-def test_init_axangle_plot():
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="axangle", auto_add_to_figure=False)
-    assert isinstance(ax, AxAnglePlot)
+class TestAxisAnglePlot:
+    def test_creation(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="axangle")
+        assert isinstance(ax, AxAnglePlot)
 
+        plt.close("all")
 
-def test_RotationPlot_methods():
-    """This code is lifted from demo-3-v0.1."""
-    misori = Misorientation([1, 1, 1, 1])  # any will do
-    ori = Orientation.random()
-    fig = plt.figure()
-    ax = fig.add_subplot(
-        projection="axangle", proj_type="ortho", auto_add_to_figure=False
-    )
-    ax.scatter(misori)
-    ax.scatter(ori)
-    ax.plot(misori)
-    ax.plot(ori)
-    ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
-    plt.close("all")
+    def test_rotation_plot(self):
+        M = Misorientation.random()
+        O = Orientation.random()
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="axangle", proj_type="ortho")
+        ax.scatter(M)
+        ax.scatter(O)
+        ax.plot(M)
+        ax.plot(O)
+        ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
 
-    # Clear the edge case
-    ax.transform(np.asarray([1, 1, 1]))
+        ax.transform(np.asarray([1, 1, 1]))  # Edge case
 
+        plt.close("all")
 
-def test_full_region_plot():
-    empty = OrientationRegion.from_symmetry(C1, C1)
-    _ = empty.get_plot_data()
+    def test_get_plot_data(self):
+        empty = OrientationRegion.from_symmetry(C1, C1)
+        _ = empty.get_plot_data()
 
+    def test_rotation_plot_transform_fundamental_zone_raises(self):
+        fig = plt.figure()
+        ax = RotationPlot(fig)
+        fig.add_axes(ax)
+        with pytest.raises(TypeError, match="fundamental_zone is not an "):
+            ax.transform(Orientation.random(), fundamental_zone=1)
 
-def test_RotationPlot_transform_fundamental_zone_raises():
-    fig = plt.figure()
-    ax = RotationPlot(fig)
-    fig.add_axes(ax)
-    with pytest.raises(
-        TypeError, match="fundamental_zone is not an OrientationRegion object"
-    ):
-        ax.transform(Orientation.random(), fundamental_zone=1)
+    def test_rotation_plot_map_into_symmetry_reduced_zone(self):
+        # Orientations are (in, out) of D6 fundamental zone
+        O = Orientation(((1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)))
+        O.symmetry = D6
+        fz = OrientationRegion.from_symmetry(O.symmetry)
+        assert np.allclose(O < fz, (True, False))
 
+        # test map_into_symmetry_reduced_zone in RotationPlot.transform
+        fig = O.scatter(return_figure=True)
+        xyz_symmetry = fig.axes[0].collections[1]._offsets3d
 
-def test_RotationPlot_map_into_symmetry_reduced_zone():
-    # orientations are (in, out) of D6 fundamental zone
-    ori = Orientation(((1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)))
-    ori.symmetry = D6
-    fz = OrientationRegion.from_symmetry(ori.symmetry)
-    assert np.allclose(ori < fz, (True, False))
-    # test map_into_symmetry_reduced_zone in RotationPlot.transform
-    fig = ori.scatter(return_figure=True)
-    xyz_symmetry = fig.axes[0].collections[1]._offsets3d
-    # compute same plot again but with C1 symmetry where both orientations are in C1 FZ
-    ori.symmetry = C1
-    fig2 = ori.scatter(return_figure=True)
-    xyz = fig2.axes[0].collections[1]._offsets3d
-    # test that the plotted points are not the same
-    assert not np.allclose(xyz_symmetry, xyz)
+        # compute same plot again but with C1 symmetry where both orientations are in C1 FZ
+        O.symmetry = C1
+        fig2 = O.scatter(return_figure=True)
+        xyz = fig2.axes[0].collections[1]._offsets3d
 
+        # test that the plotted points are not the same
+        assert not np.allclose(xyz_symmetry, xyz)
 
-def test_correct_aspect_ratio():
-    # Set up figure the "old" way
-    fig = plt.figure()
-    ax = fig.add_subplot(
-        projection="axangle", proj_type="ortho", auto_add_to_figure=False
-    )
+        plt.close("all")
 
-    # Check aspect ratio
-    x_old, _, z_old = ax.get_box_aspect()
-    assert np.allclose(x_old / z_old, 1.334, atol=1e-3)
+    def test_correct_aspect_ratio(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="axangle", proj_type="ortho")
 
-    fr = OrientationRegion.from_symmetry(D6)
-    ax._correct_aspect_ratio(fr, set_limits=False)
+        # Check aspect ratio
+        x_old, _, z_old = ax.get_box_aspect()
+        assert np.allclose(x_old / z_old, 1.334, atol=1e-3)
 
-    x_new, _, z_new = ax.get_box_aspect()
-    assert np.allclose(x_new / z_new, 3, atol=1e-3)
+        fr = OrientationRegion.from_symmetry(D6)
+        ax._correct_aspect_ratio(fr, set_limits=False)
 
-    # Check data limits
-    assert np.allclose(ax.get_xlim(), [0, 1])
-    ax._correct_aspect_ratio(fr)  # set_limits=True is default
-    assert np.allclose(ax.get_xlim(), [-np.pi / 2, np.pi / 2])
+        x_new, _, z_new = ax.get_box_aspect()
+        assert np.allclose(x_new / z_new, 3, atol=1e-3)
+
+        assert np.allclose(ax.get_xlim(), [0, 1], atol=0.1)
+        ax._correct_aspect_ratio(fr)  # set_limits=True is default
+        assert np.allclose(ax.get_xlim(), [-np.pi / 2, np.pi / 2])
+
+        plt.close("all")

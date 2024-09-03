@@ -28,9 +28,6 @@ from scipy.special import hyp0f1
 from orix.quaternion import Quaternion
 from orix.vector import Vector3d
 
-# Used to round values below 1e-16 to zero
-_FLOAT_EPS = np.finfo(float).eps
-
 
 class Rotation(Quaternion):
     r"""Rotations of coordinate systems, leaving objects in place.

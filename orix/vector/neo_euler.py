@@ -30,11 +30,14 @@ about a fixed axis.
 from __future__ import annotations
 
 import abc
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
 from orix.vector import Vector3d
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orix.quaternion import Rotation
 
 
 class NeoEuler(Vector3d, abc.ABC):
@@ -140,7 +143,7 @@ class Rodrigues(NeoEuler):
         --------
         Quaternion.to_rodrigues
         """
-        a = np.float64(rotation.a)
+        a = rotation.a.astype(np.float64)
         with np.errstate(divide="ignore", invalid="ignore"):
             data = np.stack((rotation.b / a, rotation.c / a, rotation.d / a), axis=-1)
         data[np.isnan(data)] = 0
