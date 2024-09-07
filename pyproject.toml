@@ -4,6 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "orix"
+# conf.py assumes orix developers to be first author
 authors = [{name = "orix developers", email = "pyxem.team@gmail.com"}]
 description = "orix is an open-source Python library for handling crystal orientation mapping data"
 license = {file = "LICENSE"}
