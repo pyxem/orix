@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "orix"
 authors = [{name = "orix developers", email = "pyxem.team@gmail.com"}]
-description = "Handling crystal orientation mapping data"
+description = "orix is an open-source Python library for handling crystal orientation mapping data"
 license = {file = "LICENSE"}
 readme = {file = "README.rst", content-type = "text/x-rst"}
 dynamic = ["version"]
@@ -74,9 +74,6 @@ dev = [
     "pre-commit                     >= 1.16",
     "orix[doc,tests,coverage]",
 ]
-
-[tool.hatch.readme]
-path = "orix/__init__.py"
 
 [tool.hatch.version]
 path = "orix/__init__.py"
