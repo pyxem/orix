@@ -1,15 +1,8 @@
-.. raw:: html
+|logo| orix
+===========
 
-    <p>
-      <h1>
-        <a href="https://orix.readthedocs.io"><img valign="middle" src="https://raw.githubusercontent.com/pyxem/orix/develop/doc/_static/img/orix_logo.png" width="50" alt="orix logo"/></a>
-        orix
-      </h1>
-    </p>
-
-.. Content above here until EXCLUDE plus one line is excluded from the long description
-.. in the source distributions uploaded to PyPI
-.. EXCLUDE
+.. |logo| image:: https://raw.githubusercontent.com/pyxem/orix/develop/doc/_static/img/orix_logo.png
+  :width: 50
 
 orix is an open-source Python library for analysing orientations and crystal symmetry.
 
