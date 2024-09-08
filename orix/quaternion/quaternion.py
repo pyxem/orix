@@ -1073,11 +1073,16 @@ class Quaternion(Object3d):
                 else:
                     da.store(darr, arr)
             else:
-                Q1 = quaternion.from_float_array(self.data)
-                Q2 = quaternion.from_float_array(other.data)
-                # np.outer works with flattened array
-                Q = np.outer(Q1, Q2).reshape(Q1.shape + Q2.shape)
-                arr = quaternion.as_float_array(Q)
+                if installed["numpy-quaternion"]:
+                    import quaternion
+
+                    Q1 = quaternion.from_float_array(self.data)
+                    Q2 = quaternion.from_float_array(other.data)
+                    # np.outer works with flattened array
+                    Q = np.outer(Q1, Q2).reshape(Q1.shape + Q2.shape)
+                    arr = quaternion.as_float_array(Q)
+                else:
+                    pass
             return other.__class__(arr)
         elif isinstance(other, Vector3d):
             if lazy:
@@ -1089,8 +1094,13 @@ class Quaternion(Object3d):
                 else:
                     da.store(darr, arr)
             else:
-                Q = quaternion.from_float_array(self.data)
-                arr = quaternion.rotate_vectors(Q, other.data)
+                if installed["numpy-quaternion"]:
+                    import quaternion
+
+                    Q = quaternion.from_float_array(self.data)
+                    arr = quaternion.rotate_vectors(Q, other.data)
+                else:
+                    pass
             if isinstance(other, Miller):
                 m = other.__class__(xyz=arr, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
