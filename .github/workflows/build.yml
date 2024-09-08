@@ -50,6 +50,9 @@ jobs:
             python-version: 3.8
             DEPENDENCIES: diffpy.structure==3.0.2  matplotlib==3.5
             LABEL: -oldest
+          - os: ubuntu-latest
+            python-version: 3.11
+            LABEL: -minimum_requirement
     steps:
       - uses: actions/checkout@v4
 
@@ -58,10 +61,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install depedencies and package
+      - name: Install core depedencies and package
         shell: bash
         run: |
           pip install -U -e .'[doc,tests,coverage]'
+
+      - name: Install optional dependencies
+        if: ${{ !contains(matrix.LABEL, 'minimum_requirement') }}
+        shell: bash
+        run: |
+          pip install -e .'[all]'
 
       - name: Install oldest supported version
         if: ${{ contains(matrix.LABEL, 'oldest') }}
