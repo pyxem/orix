@@ -32,7 +32,6 @@ dependencies = [
     "matplotlib-scalebar",
     "numba",
     "numpy",
-    "numpy-quaternion",
     "pooch                  >= 0.13",
     # TODO: Remove once https://github.com/diffpy/diffpy.structure/issues/97 is fixed
     "pycifrw",
@@ -41,6 +40,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+all = [
+    "numpy-quaternion",
+]
 doc = [
     "ipykernel",  # Used by nbsphinx to execute notebooks
     "memory_profiler",
