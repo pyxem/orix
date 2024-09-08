@@ -6,8 +6,10 @@ from datetime import datetime
 import inspect
 import os
 from os.path import dirname, relpath
+from pathlib import Path
 import re
 import sys
+import tomllib
 
 from numpydoc.docscrape_sphinx import SphinxDocString
 
@@ -20,9 +22,14 @@ from orix import data
 # sys.path.insert(0, os.path.abspath("."))
 sys.path.append("../")
 
-project = "orix"
-copyright = f"2018-{str(datetime.now().year)}, {orix.__author__}"
-author = orix.__author__
+top_dir = Path(__file__).parent.parent
+
+with open(top_dir / "pyproject.toml", "rb") as f:
+    metadata = tomllib.load(f)
+
+project = metadata["project"]["name"]
+author = metadata["project"]["authors"][0]["name"]
+copyright = f"2018-{str(datetime.now().year)}, {author}"
 release = orix.__version__
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -120,10 +127,10 @@ html_favicon = "_static/img/orix_logo.png"
 # modifications to point nbviewer and Binder to the GitHub develop
 # branch links when the documentation is launched from a kikuchipy
 # version with "dev" in the version
-if "dev" in orix.__version__:
+if "dev" in release:
     release_version = "develop"
 else:
-    release_version = "v" + orix.__version__
+    release_version = "v" + release
 # This is processed by Jinja2 and inserted before each notebook
 nbsphinx_prolog = (
     r"""
@@ -234,14 +241,14 @@ def linkcode_resolve(domain, info):
     fn = relpath(fn, start=startdir).replace(os.path.sep, "/")
 
     if fn.startswith("orix/"):
-        m = re.match(r"^.*dev0\+([a-f\d]+)$", orix.__version__)
+        m = re.match(r"^.*dev0\+([a-f\d]+)$", release)
         pre_link = "https://github.com/pyxem/orix/blob/"
         if m:
             return pre_link + "%s/%s%s" % (m.group(1), fn, linespec)
-        elif "dev" in orix.__version__:
+        elif "dev" in release:
             return pre_link + "develop/%s%s" % (fn, linespec)
         else:
-            return pre_link + "v%s/%s%s" % (orix.__version__, fn, linespec)
+            return pre_link + "v%s/%s%s" % (release, fn, linespec)
     else:
         return None
 

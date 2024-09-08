@@ -112,7 +112,7 @@ We use :doc:`nbval <nbval:index>` for this.
 The tutorial notebooks can be run interactively in the browser with the help of Binder.
 When creating a server from the orix source code, Binder installs the packages listed in
 the ``environment.yml`` configuration file, which must include all ``doc`` dependencies
-in ``setup.py`` necessary to run the notebooks.
+in ``pyproject.toml`` necessary to run the notebooks.
 
 Writing API reference
 ---------------------
