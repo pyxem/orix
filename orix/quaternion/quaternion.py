@@ -1066,47 +1066,49 @@ class Quaternion(Object3d):
         if isinstance(other, Quaternion):
             if lazy:
                 darr = self._outer_dask(other, chunk_size=chunk_size)
-                arr = np.empty(darr.shape)
+                qu = np.empty(darr.shape)
                 if progressbar:
                     with ProgressBar():
-                        da.store(darr, arr)
+                        da.store(darr, qu)
                 else:
-                    da.store(darr, arr)
+                    da.store(darr, qu)
             else:
                 if installed["numpy-quaternion"]:
                     import quaternion
 
-                    Q1 = quaternion.from_float_array(self.data)
-                    Q2 = quaternion.from_float_array(other.data)
+                    qu1 = quaternion.from_float_array(self.data)
+                    qu2 = quaternion.from_float_array(other.data)
                     # np.outer works with flattened array
-                    Q = np.outer(Q1, Q2).reshape(Q1.shape + Q2.shape)
-                    arr = quaternion.as_float_array(Q)
+                    qu12 = np.outer(qu1, qu2).reshape(qu1.shape + qu2.shape)
+                    qu = quaternion.as_float_array(qu12)
                 else:
-                    pass
-            return other.__class__(arr)
+                    Q12 = self.reshape(-1, 1) * other.reshape(1, -1)
+                    qu = Q12.data.reshape(self.shape + other.shape + (4,))
+            return other.__class__(qu)
         elif isinstance(other, Vector3d):
             if lazy:
                 darr = self._outer_dask(other, chunk_size=chunk_size)
-                arr = np.empty(darr.shape)
+                v_arr = np.empty(darr.shape)
                 if progressbar:
                     with ProgressBar():
-                        da.store(darr, arr)
+                        da.store(darr, v_arr)
                 else:
-                    da.store(darr, arr)
+                    da.store(darr, v_arr)
             else:
                 if installed["numpy-quaternion"]:
                     import quaternion
 
-                    Q = quaternion.from_float_array(self.data)
-                    arr = quaternion.rotate_vectors(Q, other.data)
+                    qu12 = quaternion.from_float_array(self.data)
+                    v_arr = quaternion.rotate_vectors(qu12, other.data)
                 else:
-                    pass
+                    v = self.reshape(-1, 1) * other.reshape(1, -1)
+                    v_arr = v.data.reshape(self.shape + other.shape + (3,))
             if isinstance(other, Miller):
-                m = other.__class__(xyz=arr, phase=other.phase)
+                m = other.__class__(xyz=v_arr, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
                 return m
             else:
-                return other.__class__(arr)
+                return other.__class__(v_arr)
         else:
             raise NotImplementedError(
                 "This operation is currently not avaliable in orix, please use outer "
