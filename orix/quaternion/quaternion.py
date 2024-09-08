@@ -23,11 +23,12 @@ import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
+import numba as nb
 import numpy as np
-import quaternion
 from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix._base import Object3d
+from orix.constants import installed
 from orix.quaternion import _conversions
 from orix.vector import AxAngle, Homochoric, Miller, Rodrigues, Vector3d
 
@@ -48,9 +49,8 @@ class Quaternion(Object3d):
 
     .. math::
 
-        i^2 = j^2 = k^2 = -1;
-
-        ij = -ji = k; jk = -kj = i; ki = -ik = j.
+        i^2 &= j^2 = k^2 = -1;\\
+        ij &= -ji = k; jk = -kj = i; ki = -ik = j.
 
     In orix, quaternions are stored with the scalar part first followed
     by the vector part, denoted :math:`Q = (a, b, c, d)`.
@@ -61,12 +61,9 @@ class Quaternion(Object3d):
 
     .. math::
 
-        a_3 = a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2
-
-        b_3 = a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2
-
-        c_3 = a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2
-
+        a_3 = a_1 \cdot a_2 - b_1 \cdot b_2 - c_1 \cdot c_2 - d_1 \cdot d_2\\
+        b_3 = a_1 \cdot b_2 + b_1 \cdot a_2 + c_1 \cdot d_2 - d_1 \cdot c_2\\
+        c_3 = a_1 \cdot c_2 - b_1 \cdot d_2 + c_1 \cdot a_2 + d_1 \cdot b_2\\
         d_3 = a_1 \cdot d_2 + b_1 \cdot c_2 - c_1 \cdot b_2 + d_1 \cdot a_2
 
     Rotation of a 3D vector :math:`v = (x, y, z)` by a quaternion is
@@ -74,11 +71,9 @@ class Quaternion(Object3d):
 
     .. math::
 
-        v'_x = x(a^2 + b^2 - c^2 - d^2) + 2[z(a \cdot c + b \cdot d) + y(b \cdot c - a \cdot d)]
-
-        v'_y = y(a^2 - b^2 + c^2 - d^2) + 2[x(a \cdot d + b \cdot c) + z(c \cdot d - a \cdot b)]
-
-        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2[y(a \cdot b + c \cdot d) + x(b \cdot d - a \cdot c)]
+        v'_x = x + 2a(cz - dy) - 2d(dx - bz) + 2c(by - cx)\\
+        v'_y = y + 2d(cz - dy) + 2a(dx - bz) - 2b(by - cx)\\
+        v'_z = z - 2c(cz - dy) + 2b(dx - bz) + 2a(by - cx)
 
     The norm of a quaternion is defined as
 
@@ -120,66 +115,38 @@ class Quaternion(Object3d):
 
     @property
     def a(self) -> np.ndarray:
-        """Return or set the scalar quaternion component.
-
-        Parameters
-        ----------
-        value : numpy.ndarray
-            Scalar quaternion component.
-        """
+        """Return or set the scalar quaternion component."""
         return self.data[..., 0]
 
     @a.setter
-    def a(self, value: np.ndarray):
-        """Set the scalar quaternion component."""
+    def a(self, value: np.ndarray) -> None:
         self.data[..., 0] = value
 
     @property
     def b(self) -> np.ndarray:
-        """Return or set the first vector quaternion component.
-
-        Parameters
-        ----------
-        value : numpy.ndarray
-            First vector quaternion component.
-        """
+        """Return or set the first vector quaternion component."""
         return self.data[..., 1]
 
     @b.setter
-    def b(self, value: np.ndarray):
-        """Set the first vector quaternion component."""
+    def b(self, value: np.ndarray) -> None:
         self.data[..., 1] = value
 
     @property
     def c(self) -> np.ndarray:
-        """Return or set the second vector quaternion component.
-
-        Parameters
-        ----------
-        value : numpy.ndarray
-            Second vector quaternion component.
-        """
+        """Return or set the second vector quaternion component."""
         return self.data[..., 2]
 
     @c.setter
-    def c(self, value: np.ndarray):
-        """Set the second vector quaternion component."""
+    def c(self, value: np.ndarray) -> None:
         self.data[..., 2] = value
 
     @property
     def d(self) -> np.ndarray:
-        """Return or set the third vector quaternion component.
-
-        Parameters
-        ----------
-        value : numpy.ndarray
-            Third vector quaternion component.
-        """
+        """Return or set the third vector quaternion component."""
         return self.data[..., 3]
 
     @d.setter
-    def d(self, value: np.ndarray):
-        """Set the third vector quaternion component."""
+    def d(self, value: np.ndarray) -> None:
         self.data[..., 3] = value
 
     @property
@@ -208,29 +175,51 @@ class Quaternion(Object3d):
     @property
     def conj(self) -> Quaternion:
         r"""Return the conjugate of the quaternion
-        :math:`Q^* = a - bi - cj - dk`.
+        :math:`Q^{*} = a - bi - cj - dk`.
         """
-        Q = quaternion.from_float_array(self.data).conj()
-        return self.__class__(quaternion.as_float_array(Q))
+        if installed["numpy-quaternion"]:
+            import quaternion
+
+            qu2 = quaternion.from_float_array(self.data).conj()
+            qu2 = quaternion.as_float_array(qu2)
+        else:
+            qu2 = np.empty_like(self.data)
+            qu_conj_gufunc(self.data, qu2)
+        Q = self.__class__(qu2)
+        return Q
 
     # ------------------------ Dunder methods ------------------------ #
 
     def __invert__(self) -> Quaternion:
         return self.__class__(self.conj.data / (self.norm**2)[..., np.newaxis])
 
-    def __mul__(self, other: Union[Quaternion, Vector3d]):
+    def __mul__(
+        self, other: Union[Quaternion, Vector3d]
+    ) -> Union[Quaternion, Vector3d]:
         if isinstance(other, Quaternion):
-            Q1 = quaternion.from_float_array(self.data)
-            Q2 = quaternion.from_float_array(other.data)
-            return other.__class__(quaternion.as_float_array(Q1 * Q2))
+            if installed["numpy-quaternion"]:
+                import quaternion
+
+                Q1 = quaternion.from_float_array(self.data)
+                Q2 = quaternion.from_float_array(other.data)
+                qu2 = quaternion.as_float_array(Q1 * Q2)
+            else:
+                qu2 = qu_multiply(self.data, other.data)
+            Q = self.__class__(qu2)
+            return Q
         elif isinstance(other, Vector3d):
-            # check broadcast shape is correct before calculation, as
-            # quaternion.rotat_vectors will perform outer product
-            # this keeps current __mul__ broadcast behaviour
-            Q1 = quaternion.from_float_array(self.data)
-            v = quaternion.as_vector_part(
-                (Q1 * quaternion.from_vector_part(other.data)) * ~Q1
-            )
+            if installed["numpy-quaternion"]:
+                import quaternion
+
+                # Don't use rotate_vectors as it may perform an outer
+                # product. The following keeps current __mul__ broadcast
+                # behavior.
+                Q1 = quaternion.from_float_array(self.data)
+                v = quaternion.as_vector_part(
+                    (Q1 * quaternion.from_vector_part(other.data)) * ~Q1
+                )
+            else:
+                v = qu_rotate_vec(self.unit.data, other.data)
             if isinstance(other, Miller):
                 m = other.__class__(xyz=v, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
@@ -243,7 +232,7 @@ class Quaternion(Object3d):
         return self.__class__(-self.data)
 
     def __eq__(self, other: Union[Any, Quaternion]) -> bool:
-        """Check if quaternions have equal shapes and values."""
+        """Check if quaternions have equal shapes and components."""
         if (
             isinstance(other, Quaternion)
             and self.shape == other.shape
@@ -302,8 +291,8 @@ class Quaternion(Object3d):
         if degrees:
             angles = np.deg2rad(angles)
 
-        Q = _conversions.ax2qu(axes, angles)
-        Q = cls(Q)
+        qu = _conversions.ax2qu(axes, angles)
+        Q = cls(qu)
         Q = Q.unit
 
         return Q
@@ -1237,3 +1226,49 @@ class Quaternion(Object3d):
         new_chunks = tuple(chunks1[:-1]) + tuple(chunks2[:-1]) + (-1,)
 
         return out.rechunk(new_chunks)
+
+
+@nb.guvectorize("(n)->(n)", cache=True)
+def qu_conj_gufunc(qu: np.ndarray, qu2: np.ndarray) -> None:  # pragma: no cover
+    qu2[0] = qu[0]
+    for i in range(3):
+        qu2[i + 1] = -1.0 * qu[i + 1]
+
+
+@nb.guvectorize("(n),(n)->(n)", cache=True)
+def qu_multiply_gufunc(
+    qu1: np.ndarray, qu2: np.ndarray, qu12: np.ndarray
+) -> None:  # pragma: no cover
+    qu12[0] = qu1[0] * qu2[0] - qu1[1] * qu2[1] - qu1[2] * qu2[2] - qu1[3] * qu2[3]
+    qu12[1] = qu1[1] * qu2[0] + qu1[0] * qu2[1] - qu1[3] * qu2[2] + qu1[2] * qu2[3]
+    qu12[2] = qu1[2] * qu2[0] + qu1[3] * qu2[1] + qu1[0] * qu2[2] - qu1[1] * qu2[3]
+    qu12[3] = qu1[3] * qu2[0] - qu1[2] * qu2[1] + qu1[1] * qu2[2] + qu1[0] * qu2[3]
+
+
+def qu_multiply(qu1: np.ndarray, qu2: np.ndarray) -> np.ndarray:
+    shape = np.broadcast_shapes(qu1.shape, qu2.shape)
+    qu12 = np.empty(shape, dtype=np.float64)
+    qu_multiply_gufunc(qu1, qu2, qu12)
+    return qu12
+
+
+@nb.guvectorize("(n),(m)->(m)", cache=True)
+def qu_rotate_vec_gufunc(
+    qu: np.ndarray, v1: np.ndarray, v2: np.ndarray
+) -> None:  # pragma: no cover
+    a, b, c, d = qu
+    x, y, z = v1
+    tx = 2 * (c * z - d * y)
+    ty = 2 * (d * x - b * z)
+    tz = 2 * (b * y - c * x)
+    v2[0] = x + a * tx - d * ty + c * tz
+    v2[1] = y + d * tx + a * ty - b * tz
+    v2[2] = z - c * tx + b * ty + a * tz
+
+
+def qu_rotate_vec(qu: np.ndarray, v: np.ndarray) -> np.ndarray:
+    qu, v = np.atleast_2d(qu, v)
+    shape = np.broadcast_shapes(qu.shape[:-1], v.shape[:-1]) + (3,)
+    v2 = np.empty(shape, dtype=np.float64)
+    qu_rotate_vec_gufunc(qu, v, v2)
+    return v2
