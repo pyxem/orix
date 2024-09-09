@@ -71,9 +71,9 @@ class Quaternion(Object3d):
 
     .. math::
 
-        v'_x = x(a^2 + b^2 - c^2 - d^2) + 2z(a * c + b * d) + y(b * c - a * d)\\
-        v'_y = y(a^2 - b^2 + c^2 - d^2) + 2x(a * d + b * c) + z(c * d - a * b)\\
-        v'_z = z(a^2 - b^2 - c^2 + d^2) + 2y(a * b + c * d) + x(b * d - a * c)
+        v'_x = x + 2a(cz - dy) - 2d(dx - bz) + 2c(by - cx)\\
+        v'_y = y + 2d(cz - dy) + 2a(dx - bz) - 2b(by - cx)\\
+        v'_z = z - 2c(cz - dy) + 2b(dx - bz) + 2a(by - cx)
 
     The norm of a quaternion is defined as
 
@@ -1273,19 +1273,14 @@ def qu_multiply(qu1: np.ndarray, qu2: np.ndarray) -> np.ndarray:
 def qu_rotate_vec_gufunc(
     qu: np.ndarray, v1: np.ndarray, v2: np.ndarray
 ) -> None:  # pragma: no cover
-    aa = qu[0] * qu[0]
-    ab = qu[0] * qu[1]
-    ac = qu[0] * qu[2]
-    ad = qu[0] * qu[3]
-    bb = qu[1] * qu[1]
-    bc = qu[1] * qu[2]
-    bd = qu[1] * qu[3]
-    cc = qu[2] * qu[2]
-    cd = qu[2] * qu[3]
-    dd = qu[3] * qu[3]
-    v2[0] = v1[0] * (aa + bb - cc - dd) + 2 * v1[2] * (ac + bd) + v1[1] * (bc - ad)
-    v2[1] = v1[1] * (aa - bb + cc - dd) + 2 * v1[0] * (ad + bc) + v1[2] * (cd - ab)
-    v2[2] = v1[2] * (aa - bb - cc + dd) + 2 * v1[1] * (ab + cd) + v1[0] * (bd - ac)
+    a, b, c, d = qu
+    x, y, z = v1
+    tx = 2 * (c * z - d * y)
+    ty = 2 * (d * x - b * z)
+    tz = 2 * (b * y - c * x)
+    v2[0] = x + a * tx - d * ty + c * tz
+    v2[1] = y + d * tx + a * ty - b * tz
+    v2[2] = z - c * tx + b * ty + a * tz
 
 
 def qu_rotate_vec(qu: np.ndarray, v: np.ndarray) -> np.ndarray:
