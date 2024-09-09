@@ -1,22 +1,15 @@
 """Constants and such useful across modules."""
 
 from importlib.metadata import version
-from pathlib import Path
-import tomllib
 
-# Dependencies
-with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as f:
-    d = tomllib.load(f)
-    deps = d["project"]["dependencies"]
-    optional_deps = d["project"]["optional-dependencies"]["all"]
-    deps += optional_deps
-
+# NB! Update project config file if this list is updated!
+optional_deps = ["numpy-quaternion"]
 installed = {}
-for pkg in deps:
+for pkg in optional_deps:
     try:
         _ = version(pkg)
         installed[pkg] = True
     except ImportError:
         installed[pkg] = False
 
-del version, Path, tomllib, d, deps, optional_deps
+del optional_deps
