@@ -14,11 +14,16 @@ With pip
 
 orix is availabe from the Python Package Index (PyPI), and can therefore be installed
 with `pip <https://pip.pypa.io/en/stable>`__.
-The software has optional dependencies for some functionality.
-See the tables below for the core and optional dependencies.
-To install all dependencies, do::
+To install all of orix' functionality, do::
 
     pip install orix[all]
+
+To install only the strictly required dependencies with limited functionality, do::
+
+    pip install orix
+
+See :ref:`dependencies` for the base and optional dependencies and alternatives for how
+to install these.
 
 To update orix to the latest release::
 
@@ -44,9 +49,16 @@ To create an environment and activate it, run the following::
 If you prefer a graphical interface to manage packages and environments, you can install
 the `Anaconda distribution <https://docs.continuum.io/anaconda>`__ instead.
 
-To install::
+To install all of orix' functionality, do::
 
     conda install orix --channel conda-forge
+
+To install only the strictly required dependencies with limited functionality, do::
+
+    conda install orix-base -c conda-forge
+
+See :ref:`dependencies` for the base and optional dependencies and alternatives for how
+to install these.
 
 To update orix to the latest release::
 
@@ -114,3 +126,6 @@ Package             Purpose                                     Required in modu
 =================== =========================================== =======================
 
 .. _numpy-quaternion: https://quaternion.readthedocs.io/en/stable/
+
+Optional dependencies can be installed either with `pip install orix[all]` or by
+installing each dependency separately, such as `pip install orix numpy-quaternion`.
