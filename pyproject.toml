@@ -37,6 +37,8 @@ dependencies = [
     "pycifrw",
     "scipy",
     "tqdm",
+    # TODO: Remove once Python 3.11 is the minimal version
+    "typing_extensions",
 ]
 
 [project.optional-dependencies]
