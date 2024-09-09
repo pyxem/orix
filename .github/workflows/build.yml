@@ -64,7 +64,7 @@ jobs:
       - name: Install core depedencies and package
         shell: bash
         run: |
-          pip install -U -e .'[doc,tests,coverage]'
+          pip install -U -e .'[tests,coverage]'
 
       - name: Install optional dependencies
         if: ${{ !contains(matrix.LABEL, 'minimum_requirement') }}
