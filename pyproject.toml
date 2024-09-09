@@ -58,7 +58,6 @@ doc = [
     "sphinx-design",
     "sphinx-gallery",
     "sphinxcontrib-bibtex           >= 1.0",
-    "tomllib",
 ]
 tests = [
     "numpydoc",

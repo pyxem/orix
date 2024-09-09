@@ -6,10 +6,8 @@ from datetime import datetime
 import inspect
 import os
 from os.path import dirname, relpath
-from pathlib import Path
 import re
 import sys
-import tomllib
 
 from numpydoc.docscrape_sphinx import SphinxDocString
 
@@ -22,13 +20,8 @@ from orix import data
 # sys.path.insert(0, os.path.abspath("."))
 sys.path.append("../")
 
-top_dir = Path(__file__).parent.parent
-
-with open(top_dir / "pyproject.toml", "rb") as f:
-    metadata = tomllib.load(f)
-
-project = metadata["project"]["name"]
-author = metadata["project"]["authors"][0]["name"]
+project = "orix"
+author = "orix developers"
 copyright = f"2018-{str(datetime.now().year)}, {author}"
 release = orix.__version__
 
