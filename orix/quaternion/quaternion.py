@@ -183,8 +183,9 @@ class Quaternion(Object3d):
             qu2 = quaternion.from_float_array(self.data).conj()
             qu2 = quaternion.as_float_array(qu2)
         else:
-            qu2 = np.empty_like(self.data)
-            qu_conj_gufunc(self.data, qu2)
+            qu1 = self.data.astype(np.float64)
+            qu2 = np.empty_like(qu1)
+            qu_conj_gufunc(qu1, qu2)
         Q = self.__class__(qu2)
         return Q
 
@@ -1079,11 +1080,11 @@ class Quaternion(Object3d):
                     qu1 = quaternion.from_float_array(self.data)
                     qu2 = quaternion.from_float_array(other.data)
                     # np.outer works with flattened array
-                    qu12 = np.outer(qu1, qu2).reshape(qu1.shape + qu2.shape)
+                    qu12 = np.outer(qu1, qu2).reshape(*qu1.shape, *qu2.shape)
                     qu = quaternion.as_float_array(qu12)
                 else:
-                    Q12 = self.reshape(-1, 1) * other.reshape(1, -1)
-                    qu = Q12.data.reshape(self.shape + other.shape + (4,))
+                    Q12 = Quaternion(self).reshape(-1, 1) * other.reshape(1, -1)
+                    qu = Q12.data.reshape(*self.shape, *other.shape, 4)
             return other.__class__(qu)
         elif isinstance(other, Vector3d):
             if lazy:
@@ -1098,11 +1099,11 @@ class Quaternion(Object3d):
                 if installed["numpy-quaternion"]:
                     import quaternion
 
-                    qu12 = quaternion.from_float_array(self.data)
-                    v_arr = quaternion.rotate_vectors(qu12, other.data)
+                    qu = quaternion.from_float_array(self.data)
+                    v_arr = quaternion.rotate_vectors(qu, other.data)
                 else:
-                    v = self.reshape(-1, 1) * other.reshape(1, -1)
-                    v_arr = v.data.reshape(self.shape + other.shape + (3,))
+                    v = Quaternion(self).reshape(-1, 1) * other.reshape(1, -1)
+                    v_arr = v.reshape(*self.shape, *other.shape).data
             if isinstance(other, Miller):
                 m = other.__class__(xyz=v_arr, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
@@ -1259,6 +1260,10 @@ def qu_multiply_gufunc(
 
 def qu_multiply(qu1: np.ndarray, qu2: np.ndarray) -> np.ndarray:
     shape = np.broadcast_shapes(qu1.shape, qu2.shape)
+    if not np.issubdtype(qu1.dtype, np.float64):
+        qu1 = qu1.astype(np.float64)
+    if not np.issubdtype(qu2.dtype, np.float64):
+        qu2 = qu2.astype(np.float64)
     qu12 = np.empty(shape, dtype=np.float64)
     qu_multiply_gufunc(qu1, qu2, qu12)
     return qu12
@@ -1279,8 +1284,13 @@ def qu_rotate_vec_gufunc(
 
 
 def qu_rotate_vec(qu: np.ndarray, v: np.ndarray) -> np.ndarray:
-    qu, v = np.atleast_2d(qu, v)
+    qu = np.atleast_2d(qu)
+    v = np.atleast_2d(v)
     shape = np.broadcast_shapes(qu.shape[:-1], v.shape[:-1]) + (3,)
+    if not np.issubdtype(qu.dtype, np.float64):
+        qu = qu.astype(np.float64)
+    if not np.issubdtype(v.dtype, np.float64):
+        v = v.astype(np.float64)
     v2 = np.empty(shape, dtype=np.float64)
     qu_rotate_vec_gufunc(qu, v, v2)
     return v2
