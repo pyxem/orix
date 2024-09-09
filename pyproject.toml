@@ -40,7 +40,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-all = [
+all = [  # NB! Update constants.py if this list is updated!
     "numpy-quaternion",
 ]
 doc = [
@@ -58,6 +58,7 @@ doc = [
     "sphinx-design",
     "sphinx-gallery",
     "sphinxcontrib-bibtex           >= 1.0",
+    "tomllib",
 ]
 tests = [
     "numpydoc",
