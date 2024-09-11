@@ -80,7 +80,7 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
-    "build",
+    "_build",
     "Thumbs.db",
     ".DS_Store",
     # Suppress warnings from Sphinx regarding "duplicate source files":
@@ -331,7 +331,7 @@ sphinx_gallery_conf = {
     "filename_pattern": "^((?!sgskip).)*$",
     "gallery_dirs": "examples",
     "reference_url": {"orix": None},
-    "run_stale_examples": True,
+    "run_stale_examples": False,
     "show_memory": True,
 }
 autosummary_generate = True
