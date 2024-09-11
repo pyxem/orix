@@ -27,6 +27,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
+from orix import constants
 from orix._base import Object3d
 
 
@@ -159,9 +160,21 @@ class Vector3d(Object3d):
 
     @property
     def perpendicular(self) -> Vector3d:
-        """Return the perpendicular vectors."""
-        if np.any(self.x == 0) and np.any(self.y == 0):
-            if np.any(self.z == 0):
+        r"""Return the perpendicular vectors.
+
+        Notes
+        -----
+        The following convention is used:
+
+        .. math::
+
+            (x, y, z) &\rightarrow (-y, x, 0),\\
+            (0, 0, z) &\rightarrow (1, 0, 0).
+        """
+        if np.any(abs(self.x) < constants.eps12) and np.any(
+            abs(self.y) < constants.eps12
+        ):
+            if np.any(abs(self.z) < constants.eps12):
                 raise ValueError("No vectors are perpendicular")
             return Vector3d.xvector()
         x = -self.y
@@ -432,7 +445,7 @@ class Vector3d(Object3d):
         satisfy these two conditions
 
         .. math::
-            (v_1 \times v_i) \cdot (v_1 \times v_2) \geq 0,
+            (v_1 \times v_i) \cdot (v_1 \times v_2) \geq 0,\\
             (v_2 \times v_i) \cdot (v_2 \times v_1) \geq 0.
         """
         v = Vector3d(vectors).flatten()
@@ -448,8 +461,8 @@ class Vector3d(Object3d):
             v_normal = v1.cross(v2)
             v_circle = v_normal.get_circle(steps=steps)
 
-            cond1 = v1.cross(v_circle).dot(v1.cross(v2)) >= 0
-            cond2 = v2.cross(v_circle).dot(v2.cross(v1)) >= 0
+            cond1 = v1.cross(v_circle).dot(v_normal) >= 0
+            cond2 = v2.cross(v_circle).dot(-v_normal) >= 0
 
             v_path = v_circle[cond1 & cond2]
 
@@ -466,31 +479,43 @@ class Vector3d(Object3d):
     # --------------------- Other public methods --------------------- #
 
     def dot(self, other: Vector3d) -> np.ndarray:
-        """Return the dot products of the vectors and the other vectors.
+        r"""Return the dot products :math:`D` of the vectors.
 
         Parameters
         ----------
         other
-            Other vectors with a compatible shape.
+            Other vectors. Shapes must be broadcastable.
 
         Returns
         -------
-        dot_products
+        D
             Dot products.
+
+        Notes
+        -----
+        The dot product :math:`D` between :math:`\mathbf{v_1}` and
+        :math:`\mathbf{v_2}` is given by
+
+        .. math::
+
+            D = \mathbf{v_1}\cdot\mathbf{v_2} = |\mathbf{v_1}|\:|\mathbf{v_2}|\cos{\omega},
+
+        where :math:`\omega` is the angle between the two vectors.
 
         Examples
         --------
         >>> from orix.vector import Vector3d
-        >>> v = Vector3d((0, 0, 1.0))
-        >>> w = Vector3d(((0, 0, 0.5), (0.4, 0.6, 0)))
-        >>> v.dot(w)
+        >>> v1 = Vector3d([0, 0, 1])
+        >>> v2 = Vector3d([[0, 0, 0.5], [0.4, 0.6, 0]])
+        >>> v1.dot(v2)
         array([0.5, 0. ])
-        >>> w.dot(v)
+        >>> v2.dot(v1)
         array([0.5, 0. ])
         """
         if not isinstance(other, Vector3d):
-            raise ValueError("{} is not a vector!".format(other))
-        return np.sum(self.data * other.data, axis=-1)
+            raise ValueError(f"{other} is not a vector")
+        D = np.sum(self.data * other.data, axis=-1)
+        return D
 
     def dot_outer(
         self,
@@ -596,8 +621,8 @@ class Vector3d(Object3d):
 
     def rotate(
         self,
-        axis: Union[np.ndarray, Vector3d] = None,
-        angle: Union[List[float], float, np.np.ndarray] = 0,
+        axis: Union[np.ndarray, Vector3d, None] = None,
+        angle: Union[List[float], float, np.ndarray] = 0,
     ) -> Vector3d:
         """Convenience function for rotating this vector.
 
@@ -824,11 +849,18 @@ class Vector3d(Object3d):
         vector to the current vector at ``opening_angle`` and (2) about
         the current vector in a full circle.
         """
+        from orix.quaternion.rotation import Rotation
+
         circles = self.zero((self.size, steps))
         full_circle = np.linspace(0, 2 * np.pi, num=steps)
         opening_angles = np.ones(self.size) * opening_angle
-        for i, (v, oa) in enumerate(zip(self.flatten(), opening_angles)):
-            circles[i] = v.rotate(v.perpendicular, oa).rotate(v, full_circle)
+        v = self.flatten()
+        for i in range(v.size):
+            vi = v[i]
+            R1 = Rotation.from_axes_angles(vi.perpendicular, opening_angles[i])
+            R2 = Rotation.from_axes_angles(vi, full_circle)
+            circles[i] = R2 * R1 * vi
+
         return circles
 
     def inverse_pole_density_function(
