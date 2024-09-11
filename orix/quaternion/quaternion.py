@@ -201,12 +201,12 @@ class Quaternion(Object3d):
             if installed["numpy-quaternion"]:
                 import quaternion
 
-                Q1 = quaternion.from_float_array(self.data)
-                Q2 = quaternion.from_float_array(other.data)
-                qu2 = quaternion.as_float_array(Q1 * Q2)
+                qu1 = quaternion.from_float_array(self.data)
+                qu2 = quaternion.from_float_array(other.data)
+                qu12 = quaternion.as_float_array(qu1 * qu2)
             else:
-                qu2 = qu_multiply(self.data, other.data)
-            Q = self.__class__(qu2)
+                qu12 = qu_multiply(self.data, other.data)
+            Q = self.__class__(qu12)
             return Q
         elif isinstance(other, Vector3d):
             if installed["numpy-quaternion"]:
@@ -215,9 +215,9 @@ class Quaternion(Object3d):
                 # Don't use rotate_vectors as it may perform an outer
                 # product. The following keeps current __mul__ broadcast
                 # behavior.
-                Q1 = quaternion.from_float_array(self.data)
+                qu = quaternion.from_float_array(self.data)
                 v = quaternion.as_vector_part(
-                    (Q1 * quaternion.from_vector_part(other.data)) * ~Q1
+                    (qu * quaternion.from_vector_part(other.data)) * ~qu
                 )
             else:
                 v = qu_rotate_vec(self.unit.data, other.data)
@@ -1244,8 +1244,9 @@ class Quaternion(Object3d):
 @nb.guvectorize("(n)->(n)", cache=True)
 def qu_conj_gufunc(qu: np.ndarray, qu2: np.ndarray) -> None:  # pragma: no cover
     qu2[0] = qu[0]
-    for i in range(3):
-        qu2[i + 1] = -1.0 * qu[i + 1]
+    qu2[1] = -qu[1]
+    qu2[2] = -qu[2]
+    qu2[3] = -qu[3]
 
 
 @nb.guvectorize("(n),(n)->(n)", cache=True)
