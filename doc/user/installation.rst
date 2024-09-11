@@ -100,32 +100,32 @@ Dependencies
 orix builds on the great work and effort of many people.
 This is a list of core package dependencies:
 
-==================================================== ============================================================
-Package                                              Purpose
-==================================================== ============================================================
-:doc:`dask<dask:index>`                              Out-of-memory processing of data larger than RAM
-:doc:`diffpy.structure <diffpy.structure:index>`     Handling of crystal structures
-:doc:`h5py <h5py:index>`                             Read/write of HDF5 files
-:doc:`matplotlib <matplotlib:index>`                 Visualization
-`matplotlib-scalebar`_                               Scale bar for crystal map plots
-:doc:`numba <numba:index>`                           CPU acceleration
-:doc:`numpy <numpy:index>`                           Handling of N-dimensional arrays
-:doc:`pooch <pooch:api/index>`                       Downloading and caching of datasets
-:doc:`scipy <scipy:index>`                           Optimization algorithms, filtering and more
-`tqdm <https://tqdm.github.io/>`__                   Progressbars
-==================================================== ============================================================
+================================================ ================================================
+Package                                          Purpose
+================================================ ================================================
+:doc:`dask<dask:index>`                          Out-of-memory processing of data larger than RAM
+:doc:`diffpy.structure <diffpy.structure:index>` Handling of crystal structures
+:doc:`h5py <h5py:index>`                         Read/write of HDF5 files
+:doc:`matplotlib <matplotlib:index>`             Visualization
+`matplotlib-scalebar`_                           Scale bar for crystal map plots
+:doc:`numba <numba:index>`                       CPU acceleration
+:doc:`numpy <numpy:index>`                       Handling of N-dimensional arrays
+:doc:`pooch <pooch:api/index>`                   Downloading and caching of datasets
+:doc:`scipy <scipy:index>`                       Optimization algorithms, filtering and more
+`tqdm <https://tqdm.github.io/>`__               Progressbars
+================================================ ================================================
 
 .. _matplotlib-scalebar: https://github.com/ppinard/matplotlib-scalebar
 
 Some functionality requires optional dependencies:
 
-=================== =========================================== =======================
-Package             Purpose                                     Required in module
-=================== =========================================== =======================
-`numpy-quaternion`_ Faster quaternion and vector multiplication :mod:`~orix.quaternion`
-=================== =========================================== =======================
+=================== ===========================================
+Package             Purpose                                    
+=================== ===========================================
+`numpy-quaternion`_ Faster quaternion and vector multiplication
+=================== ===========================================
 
 .. _numpy-quaternion: https://quaternion.readthedocs.io/en/stable/
 
-Optional dependencies can be installed either with `pip install orix[all]` or by
-installing each dependency separately, such as `pip install orix numpy-quaternion`.
+Optional dependencies can be installed either with ``pip install orix[all]`` or by
+installing each dependency separately, such as ``pip install orix numpy-quaternion``.
