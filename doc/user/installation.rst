@@ -14,7 +14,7 @@ With pip
 
 orix is availabe from the Python Package Index (PyPI), and can therefore be installed
 with `pip <https://pip.pypa.io/en/stable>`__.
-To install all of orix' functionality, do::
+To install all of orix's functionality, do::
 
     pip install orix[all]
 
@@ -49,7 +49,7 @@ To create an environment and activate it, run the following::
 If you prefer a graphical interface to manage packages and environments, you can install
 the `Anaconda distribution <https://docs.continuum.io/anaconda>`__ instead.
 
-To install all of orix' functionality, do::
+To install all of orix's functionality, do::
 
     conda install orix --channel conda-forge
 

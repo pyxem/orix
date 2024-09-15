@@ -1,7 +1,7 @@
 How to make a new release of ``orix``
 =====================================
 
-After version 0.9.0, orix' branching model changed to one similar to the Gitflow
+After version 0.9.0, orix's branching model changed to one similar to the Gitflow
 Workflow (`original blog post
 <https://nvie.com/posts/a-successful-git-branching-model/>`__).
 
