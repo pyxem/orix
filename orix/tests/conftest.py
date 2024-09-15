@@ -25,23 +25,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from orix import constants
 from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
 from orix.quaternion import Rotation
+
+# --------------------------- pytest hooks --------------------------- #
 
 
 def pytest_sessionstart(session):  # pragma: no cover
     plt.rcParams["backend"] = "agg"
 
 
-@pytest.fixture
-def rotations():
-    return Rotation([(2, 4, 6, 8), (-1, -3, -5, -7)])
+# -------------------- Control of test selection --------------------- #
 
+skipif_numpy_quaternion_present = pytest.mark.skipif(
+    constants.installed["numpy-quaternion"], reason="numpy-quaternion installed"
+)
 
-@pytest.fixture()
-def eu():
-    return np.random.rand(10, 3)
-
+skipif_numpy_quaternion_missing = pytest.mark.skipif(
+    not constants.installed["numpy-quaternion"], reason="numpy-quaternion not installed"
+)
 
 # ---------------------------- IO fixtures --------------------------- #
 
@@ -1164,7 +1167,7 @@ def crystal_map(crystal_map_input):
 
 
 # ---------- Rotation representations for conversion tests ----------- #
-# NOTE to future test writers on unittest data:
+# NOTE: to future test writers on unittest data:
 # All the data below can be recreated using 3Drotations, which is
 # available at
 # https://github.com/marcdegraef/3Drotations/blob/master/src/python.
@@ -1370,6 +1373,19 @@ def euler_angles():
 
 
 # ------- End of rotation representations for conversion tests ------- #
+
+
+# ------------------------ Geometry fixtures ------------------------- #
+
+
+@pytest.fixture
+def rotations():
+    return Rotation([(2, 4, 6, 8), (-1, -3, -5, -7)])
+
+
+@pytest.fixture()
+def eu():
+    return np.random.rand(10, 3)
 
 
 @pytest.fixture(autouse=True)
