@@ -1241,6 +1241,20 @@ class Quaternion(Object3d):
         return out.rechunk(new_chunks)
 
 
+# ------------------- Numba accelerated functions -------------------- #
+# Functions with Numba decorators are compiled to machine code at run
+# time (just-in-time) and cached for later calls.
+#
+# Some functions are generalized universal functions (gufuncs),
+# https://numba.readthedocs.io/en/stable/user/vectorize.html.
+# Array shapes are determined from signatures such as (n)->(n), meaning
+# the input and output arrays both have single dimensions of size n.
+# The final input parameter (array) is overwritten inside the function,
+# with no return.
+# Ensure float64 to avoid surprising errors (some occured during
+# testing).
+
+
 @nb.guvectorize("(n)->(n)", cache=True)
 def qu_conj_gufunc(qu: np.ndarray, qu2: np.ndarray) -> None:  # pragma: no cover
     qu2[0] = qu[0]
