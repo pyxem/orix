@@ -30,7 +30,7 @@ def uniform_SO3_sample(
     resolution: Union[int, float],
     method: str = "cubochoric",
     unique: bool = True,
-    **kwargs
+    **kwargs,
 ) -> Rotation:
     r"""Uniform sampling of *SO(3)* by a number of methods.
 

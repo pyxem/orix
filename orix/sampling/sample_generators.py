@@ -31,7 +31,7 @@ def get_sample_fundamental(
     point_group: Optional[Symmetry] = None,
     space_group: Optional[int] = None,
     method: str = "cubochoric",
-    **kwargs
+    **kwargs,
 ) -> Rotation:
     """Return an equispaced grid of rotations within a fundamental zone.
 
@@ -95,7 +95,7 @@ def get_sample_local(
     center: Optional[Rotation] = None,
     grid_width: Union[int, float] = 10,
     method: str = "cubochoric",
-    **kwargs
+    **kwargs,
 ) -> Rotation:
     """Return a grid of rotations about a given rotation.
 
