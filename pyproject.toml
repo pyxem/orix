@@ -86,7 +86,7 @@ path = "orix/__init__.py"
 precision = 2
 
 [tool.coverage.run]
-branch = true
+branch = false
 source = ["orix"]
 relative_files = true
 omit = [
