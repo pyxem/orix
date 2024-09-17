@@ -26,7 +26,7 @@ for pkg in optional_deps:
     try:
         _ = version(pkg)
         installed[pkg] = True
-    except ImportError:
+    except ImportError:  # pragma: no cover
         installed[pkg] = False
 
 # Typical tolerances for comparisons in need of a precision. We

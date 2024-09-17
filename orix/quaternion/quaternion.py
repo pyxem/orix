@@ -181,7 +181,7 @@ class Quaternion(Object3d):
 
             qu2 = quaternion.from_float_array(self.data).conj()
             qu2 = quaternion.as_float_array(qu2)
-        else:
+        else:  # pragma: no cover
             qu1 = self.data.astype(np.float64)
             qu2 = np.empty_like(qu1)
             qu_conj_gufunc(qu1, qu2)
@@ -203,7 +203,7 @@ class Quaternion(Object3d):
                 qu1 = quaternion.from_float_array(self.data)
                 qu2 = quaternion.from_float_array(other.data)
                 qu12 = quaternion.as_float_array(qu1 * qu2)
-            else:
+            else:  # pragma: no cover
                 qu12 = qu_multiply(self.data, other.data)
             Q = self.__class__(qu12)
             return Q
@@ -218,7 +218,7 @@ class Quaternion(Object3d):
                 v = quaternion.as_vector_part(
                     (qu * quaternion.from_vector_part(other.data)) * ~qu
                 )
-            else:
+            else:  # pragma: no cover
                 v = qu_rotate_vec(self.unit.data, other.data)
             if isinstance(other, Miller):
                 m = other.__class__(xyz=v, phase=other.phase)
@@ -1081,7 +1081,7 @@ class Quaternion(Object3d):
                     # np.outer works with flattened array
                     qu12 = np.outer(qu1, qu2).reshape(*qu1.shape, *qu2.shape)
                     qu = quaternion.as_float_array(qu12)
-                else:
+                else:  # pragma: no cover
                     Q12 = Quaternion(self).reshape(-1, 1) * other.reshape(1, -1)
                     qu = Q12.data.reshape(*self.shape, *other.shape, 4)
             return other.__class__(qu)
@@ -1100,7 +1100,7 @@ class Quaternion(Object3d):
 
                     qu = quaternion.from_float_array(self.data)
                     v_arr = quaternion.rotate_vectors(qu, other.data)
-                else:
+                else:  # pragma: no cover
                     v = Quaternion(self).reshape(-1, 1) * other.reshape(1, -1)
                     v_arr = v.reshape(*self.shape, *other.shape).data
             if isinstance(other, Miller):
@@ -1272,7 +1272,7 @@ def qu_multiply_gufunc(
     qu12[3] = qu1[3] * qu2[0] - qu1[2] * qu2[1] + qu1[1] * qu2[2] + qu1[0] * qu2[3]
 
 
-def qu_multiply(qu1: np.ndarray, qu2: np.ndarray) -> np.ndarray:
+def qu_multiply(qu1: np.ndarray, qu2: np.ndarray) -> np.ndarray:  # pragma: no cover
     shape = np.broadcast_shapes(qu1.shape, qu2.shape)
     if not np.issubdtype(qu1.dtype, np.float64):
         qu1 = qu1.astype(np.float64)
@@ -1297,7 +1297,7 @@ def qu_rotate_vec_gufunc(
     v2[2] = z - c * tx + b * ty + a * tz
 
 
-def qu_rotate_vec(qu: np.ndarray, v: np.ndarray) -> np.ndarray:
+def qu_rotate_vec(qu: np.ndarray, v: np.ndarray) -> np.ndarray:  # pragma: no cover
     qu = np.atleast_2d(qu)
     v = np.atleast_2d(v)
     shape = np.broadcast_shapes(qu.shape[:-1], v.shape[:-1]) + (3,)
