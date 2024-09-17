@@ -374,7 +374,8 @@ class TestStatusBar:
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
         _ = ax.plot_map(crystal_map)
-        assert ax.format_coord(0, 0) == "(x, y) = (0, 0)"
+        # TODO: Remove (x, y) = (0, 0) when requuring matplotlib > 3.8
+        assert ax.format_coord(0, 0) in ["(x, y) = (0, 0)", "x=0 y=0"]
 
         fig = plt.figure()
         ax = fig.add_subplot(projection=PLOT_MAP)
