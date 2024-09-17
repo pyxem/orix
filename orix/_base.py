@@ -271,7 +271,7 @@ class Object3d:
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
         obj = self.__class__(self.data.reshape(*shape, self.dim))
-        obj._data = self._data.reshape(*shape, -1)
+        obj._data = self._data.reshape(*shape, self._data.shape[-1])
         return obj
 
     def transpose(self, *axes: Optional[int]) -> Object3d:

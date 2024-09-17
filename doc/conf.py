@@ -6,10 +6,8 @@ from datetime import datetime
 import inspect
 import os
 from os.path import dirname, relpath
-from pathlib import Path
 import re
 import sys
-import tomllib
 
 from numpydoc.docscrape_sphinx import SphinxDocString
 
@@ -22,13 +20,8 @@ from orix import data
 # sys.path.insert(0, os.path.abspath("."))
 sys.path.append("../")
 
-top_dir = Path(__file__).parent.parent
-
-with open(top_dir / "pyproject.toml", "rb") as f:
-    metadata = tomllib.load(f)
-
-project = metadata["project"]["name"]
-author = metadata["project"]["authors"][0]["name"]
+project = "orix"
+author = "orix developers"
 copyright = f"2018-{str(datetime.now().year)}, {author}"
 release = orix.__version__
 
@@ -66,8 +59,10 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org/stable", None),
     "nbsphinx": ("https://nbsphinx.readthedocs.io/en/latest", None),
     "nbval": ("https://nbval.readthedocs.io/en/latest", None),
+    "numba": ("https://numba.readthedocs.io/en/latest", None),
     "numpy": ("https://numpy.org/doc/stable", None),
     "numpydoc": ("https://numpydoc.readthedocs.io/en/latest", None),
+    "pooch": ("https://www.fatiando.org/pooch/latest", None),
     "pytest": ("https://docs.pytest.org/en/stable", None),
     "python": ("https://docs.python.org/3", None),
     "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
@@ -85,7 +80,7 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
-    "build",
+    "_build",
     "Thumbs.db",
     ".DS_Store",
     # Suppress warnings from Sphinx regarding "duplicate source files":
@@ -336,7 +331,7 @@ sphinx_gallery_conf = {
     "filename_pattern": "^((?!sgskip).)*$",
     "gallery_dirs": "examples",
     "reference_url": {"orix": None},
-    "run_stale_examples": True,
+    "run_stale_examples": False,
     "show_memory": True,
 }
 autosummary_generate = True

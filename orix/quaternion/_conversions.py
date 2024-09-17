@@ -18,19 +18,6 @@
 
 """Conversions of rotations between many common representations from
 :cite:`rowenhorst2015consistent`, accelerated with Numba.
-
-Conventions:
-
-1. Right-handed Cartesian reference frames
-2. Rotation angles are taken to be positive for a counter-clockwise
-   rotation when viewing from the end point of the rotation axis unit
-   vector towards the origin.
-3. Rotations are *interpreted* in the passive sense. This means that we
-   rotate reference frames with vectors fixed in space. Rotations are
-   basis transformations rather than coordinate transformations.
-4. Euler angle triplets are implemented using the Bunge convention, with
-   angular ranges as [0, 2pi], [0, pi], and [0, 2pi].
-5. Rotation angles are limited to [0, pi].
 """
 
 from typing import Tuple
@@ -38,10 +25,10 @@ from typing import Tuple
 import numba as nb
 import numpy as np
 
-FLOAT_EPS = np.finfo(float).eps
+from orix import constants
 
 
-@nb.jit("int64(float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("int64(float64[:])", cache=True, fastmath=True, nogil=True)
 def get_pyramid_single(xyz: np.ndarray) -> int:
     """Determine to which out of six pyramids in the cube a (x, y, z)
     coordinate belongs.
@@ -77,7 +64,7 @@ def get_pyramid_single(xyz: np.ndarray) -> int:
         return 6
 
 
-@nb.jit("int64[:](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("int64[:](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def get_pyramid_2d(xyz: np.ndarray) -> np.ndarray:
     """Determine to which out of six pyramids in the cube a 2D array of
     (x, y, z) coordinates belongs.
@@ -116,7 +103,7 @@ def get_pyramid(xyz: np.ndarray) -> np.ndarray:
     return pyramids
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def cu2ho_single(cu: np.ndarray) -> np.ndarray:
     """Convert a single set of cubochoric coordinates to un-normalized
     homochoric coordinates :cite:`singh2016orientation`.
@@ -195,7 +182,7 @@ def cu2ho_single(cu: np.ndarray) -> np.ndarray:
         return np.roll(ho, -1)
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def cu2ho_2d(cu: np.ndarray) -> np.ndarray:
     """Convert multiple cubochoric coordinates to un-normalized
     homochoric coordinates :cite:`singh2016orientation`.
@@ -234,7 +221,7 @@ def cu2ho(cu: np.ndarray) -> np.ndarray:
     return ho
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def ho2ax_single(ho: np.ndarray) -> np.ndarray:
     """Convert a single set of homochoric coordinates to an
     un-normalized axis-angle pair :cite:`rowenhorst2015consistent`.
@@ -285,7 +272,7 @@ def ho2ax_single(ho: np.ndarray) -> np.ndarray:
     return ax
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def ho2ax_2d(ho: np.ndarray) -> np.ndarray:
     """Convert multiple homochoric coordinates to un-normalized
     axis-angle pairs :cite:`rowenhorst2015consistent`.
@@ -325,7 +312,7 @@ def ho2ax(ho: np.ndarray) -> np.ndarray:
     return ax
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def ax2ro_single(ax: np.ndarray) -> np.ndarray:
     """Convert a single angle-axis pair to an un-normalized Rodrigues
     vector :cite:`rowenhorst2015consistent`.
@@ -365,7 +352,7 @@ def ax2ro_single(ax: np.ndarray) -> np.ndarray:
     return ro
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def ax2ro_2d(ax: np.ndarray) -> np.ndarray:
     """Convert multiple axis-angle pairs to un-normalized Rodrigues
     vectors :cite:`rowenhorst2015consistent`.
@@ -405,7 +392,7 @@ def ax2ro(ax: np.ndarray) -> np.ndarray:
     return ro
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def ro2ax_single(ro: np.ndarray) -> np.ndarray:
     """Convert a single Rodrigues vector to an un-normalized axis-angle
     pair :cite:`rowenhorst2015consistent`.
@@ -434,7 +421,7 @@ def ro2ax_single(ro: np.ndarray) -> np.ndarray:
         return np.append(ro[:3] / norm, 2 * np.arctan(ro[3]))
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def ro2ax_2d(ro: np.ndarray) -> np.ndarray:
     """Convert multiple Rodrigues vectors to un-normalized axis-angle
     pairs :cite:`rowenhorst2015consistent`.
@@ -474,7 +461,7 @@ def ro2ax(ro: np.ndarray) -> np.ndarray:
     return ax
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def ax2qu_single(ax: np.ndarray) -> np.ndarray:
     """Convert a single axis-angle pair to a unit quaternion
     :cite:`rowenhorst2015consistent`.
@@ -505,7 +492,7 @@ def ax2qu_single(ax: np.ndarray) -> np.ndarray:
         return qu
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def ax2qu_2d(ax: np.ndarray) -> np.ndarray:
     """Convert multiple axis-angle pairs to unit quaternions
     :cite:`rowenhorst2015consistent`.
@@ -582,7 +569,7 @@ def ax2qu(axes: np.ndarray, angles: np.ndarray) -> np.ndarray:
     return qu
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def qu2ax_single(qu: np.ndarray) -> np.ndarray:
     """Convert a single (un)normalized quaternion to a normalized
     axis-angle pair :cite:`rowenhorst2015consistent`.
@@ -606,10 +593,10 @@ def qu2ax_single(qu: np.ndarray) -> np.ndarray:
     """
     omega = 2 * np.arccos(qu[0])
 
-    if omega < FLOAT_EPS:
+    if omega < constants.eps9:
         return np.array([0, 0, 1, 0], dtype=np.float64)
 
-    if np.abs(qu[0]) < FLOAT_EPS:
+    if np.abs(qu[0]) < constants.eps9:
         return np.array([qu[1], qu[2], qu[3], np.pi], dtype=np.float64)
 
     s = np.sqrt(np.sum(np.square(qu[1:])))
@@ -622,7 +609,7 @@ def qu2ax_single(qu: np.ndarray) -> np.ndarray:
     return ax
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def qu2ax_2d(qu: np.ndarray) -> np.ndarray:
     """Convert multiple (un)normalized quaternions to normalized
     axis-angle pairs :cite:`rowenhorst2015consistent`.
@@ -685,7 +672,7 @@ def qu2ax(qu: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     return axes, angles
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def ho2ro_single(ho: np.ndarray) -> np.ndarray:
     """Convert a single set of homochoric coordinates to an
     un-normalized Rodrigues vector :cite:`rowenhorst2015consistent`.
@@ -708,7 +695,7 @@ def ho2ro_single(ho: np.ndarray) -> np.ndarray:
     return ax2ro_single(ho2ax_single(ho))
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def ho2ro_2d(ho: np.ndarray) -> np.ndarray:
     """Convert multiple homochoric coordinates to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
@@ -748,7 +735,7 @@ def ho2ro(ho: np.ndarray) -> np.ndarray:
     return ro
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def cu2ro_single(cu: np.ndarray) -> np.ndarray:
     """Convert a single set of cubochoric coordinates to an
     un-normalized Rodrigues vector :cite:`rowenhorst2015consistent`.
@@ -774,7 +761,7 @@ def cu2ro_single(cu: np.ndarray) -> np.ndarray:
         return ho2ro_single(cu2ho_single(cu))
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def cu2ro_2d(cu: np.ndarray) -> np.ndarray:
     """Convert multiple cubochoric coordinates to un-normalized
     Rodrigues vectors :cite:`rowenhorst2015consistent`.
@@ -814,7 +801,7 @@ def cu2ro(cu: np.ndarray) -> np.ndarray:
     return ro
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def eu2qu_single(eu: np.ndarray) -> np.ndarray:
     """Convert three Euler angles (alpha, beta, gamma) to a unit
     quaternion :cite:`rowenhorst2015consistent`.
@@ -854,7 +841,7 @@ def eu2qu_single(eu: np.ndarray) -> np.ndarray:
     return qu
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def eu2qu_2d(eu: np.ndarray) -> np.ndarray:
     """Convert multiple Euler angles (alpha, beta, gamma) to unit
     quaternions.
@@ -894,7 +881,7 @@ def eu2qu(eu: np.ndarray) -> np.ndarray:
     return qu
 
 
-@nb.jit("float64[:](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def om2qu_single(om: np.ndarray) -> np.ndarray:
     """Convert a single (3, 3) rotation matrix to a unit quaternion
     :cite:`rowenhorst2015consistent`.
@@ -923,26 +910,26 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
 
     qu = np.zeros(4, dtype=np.float64)
 
-    if a_almost < FLOAT_EPS:
+    if a_almost < constants.eps9:
         qu[0] = 0
     else:
         qu[0] = 0.5 * np.sqrt(a_almost)
 
-    if b_almost < FLOAT_EPS:
+    if b_almost < constants.eps9:
         qu[1] = 0
     elif om[2, 1] < om[1, 2]:
         qu[1] = -0.5 * np.sqrt(b_almost)
     else:
         qu[1] = 0.5 * np.sqrt(b_almost)
 
-    if c_almost < FLOAT_EPS:
+    if c_almost < constants.eps9:
         qu[2] = 0
     elif om[0, 2] < om[2, 0]:
         qu[2] = -0.5 * np.sqrt(c_almost)
     else:
         qu[2] = 0.5 * np.sqrt(c_almost)
 
-    if d_almost < FLOAT_EPS:
+    if d_almost < constants.eps9:
         qu[3] = 0
     elif om[1, 0] < om[0, 1]:
         qu[3] = -0.5 * np.sqrt(d_almost)
@@ -955,7 +942,7 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
     return qu
 
 
-@nb.jit("float64[:, :](float64[:, :, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :, :])", cache=True, fastmath=True, nogil=True)
 def om2qu_3d(om: np.ndarray) -> np.ndarray:
     """Convert multiple rotation matrices to unit quaternions
     :cite:`rowenhorst2015consistent`.
@@ -995,7 +982,7 @@ def om2qu(om: np.ndarray) -> np.ndarray:
     return qu
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def qu2eu_single(qu: np.ndarray) -> np.ndarray:
     """Convert a unit quaternion to three Euler angles
     :cite:`rowenhorst2015consistent`.
@@ -1025,8 +1012,8 @@ def qu2eu_single(qu: np.ndarray) -> np.ndarray:
     q_bc = (qu[1] * qu[1]) + (qu[2] * qu[2])
     chi = np.sqrt(q_ad * q_bc)
 
-    if chi < FLOAT_EPS:
-        if q_bc < FLOAT_EPS:
+    if chi < constants.eps9:
+        if q_bc < constants.eps9:
             a = -2 * qu[0] * qu[3]
             b = qu[0] * qu[0] - qu[3] * qu[3]
         else:
@@ -1045,12 +1032,12 @@ def qu2eu_single(qu: np.ndarray) -> np.ndarray:
     eu[1] = np.arctan2(2 * chi, q_ad - q_bc)
     eu[2] = np.arctan2(eu_2a, eu_2b)
 
-    eu[np.abs(eu) < FLOAT_EPS] = 0
+    eu[np.abs(eu) < constants.eps9] = 0
 
     return np.mod(eu, np.pi * 2)
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def qu2eu_2d(qu: np.ndarray) -> np.ndarray:
     """Convert multiple unit quaternions to Euler angles.
 
@@ -1089,7 +1076,7 @@ def qu2eu(qu: np.ndarray) -> np.ndarray:
     return eu
 
 
-@nb.jit("float64[:, :](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:])", cache=True, fastmath=True, nogil=True)
 def qu2om_single(qu: np.ndarray) -> np.ndarray:
     """Convert a unit quaternion to an orthogonal rotation matrix
      :cite:`rowenhorst2015consistent`.
@@ -1137,7 +1124,7 @@ def qu2om_single(qu: np.ndarray) -> np.ndarray:
     return om
 
 
-@nb.jit("float64[:, :, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def qu2om_2d(qu: np.ndarray) -> np.ndarray:
     """Convert multiple unit quaternions to orthogonal rotation
     matrices.
@@ -1177,7 +1164,7 @@ def qu2om(qu: np.ndarray) -> np.ndarray:
     return om
 
 
-@nb.jit("float64[:](float64[:])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:](float64[:])", cache=True, fastmath=True, nogil=True)
 def qu2ho_single(qu: np.ndarray) -> np.ndarray:
     """Convert a single (un)normalized quaternion to a normalized
     homochoric vector :cite:`rowenhorst2015consistent`.
@@ -1201,7 +1188,7 @@ def qu2ho_single(qu: np.ndarray) -> np.ndarray:
     """
     omega = 2 * np.arccos(qu[0])
 
-    if omega < FLOAT_EPS:
+    if omega < constants.eps9:
         return np.zeros(3, dtype=np.float64)
 
     s = np.sqrt(np.sum(np.square(qu[1:])))
@@ -1212,7 +1199,7 @@ def qu2ho_single(qu: np.ndarray) -> np.ndarray:
     return ho
 
 
-@nb.jit("float64[:, :](float64[:, :])", cache=True, nogil=True, nopython=True)
+@nb.njit("float64[:, :](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def qu2ho_2d(qu: np.ndarray) -> np.ndarray:
     """Convert multiple (un)normalized quaternions to normalized
     homochoric vectors :cite:`rowenhorst2015consistent`.

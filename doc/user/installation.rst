@@ -13,9 +13,17 @@ With pip
 ========
 
 orix is availabe from the Python Package Index (PyPI), and can therefore be installed
-with `pip <https://pip.pypa.io/en/stable>`__. To install, run the following::
+with `pip <https://pip.pypa.io/en/stable>`__.
+To install all of orix's functionality, do::
+
+    pip install orix[all]
+
+To install only the strictly required dependencies with limited functionality, do::
 
     pip install orix
+
+See :ref:`dependencies` for the base and optional dependencies and alternatives for how
+to install these.
 
 To update orix to the latest release::
 
@@ -25,7 +33,7 @@ To install a specific version of orix (say version 0.8.1)::
 
     pip install orix==0.8.1
 
-.. _optional-dependencies:
+.. _install-with-anaconda:
 
 With Anaconda
 =============
@@ -35,15 +43,22 @@ To install with Anaconda, we recommend you install it in a `conda environment
 with the `Miniconda distribution <https://docs.conda.io/en/latest/miniconda.html>`__.
 To create an environment and activate it, run the following::
 
-   conda create --name orix-env python=3.9
+   conda create --name orix-env python=3.11
    conda activate orix-env
 
 If you prefer a graphical interface to manage packages and environments, you can install
 the `Anaconda distribution <https://docs.continuum.io/anaconda>`__ instead.
 
-To install::
+To install all of orix's functionality, do::
 
     conda install orix --channel conda-forge
+
+To install only the strictly required dependencies with limited functionality, do::
+
+    conda install orix-base -c conda-forge
+
+See :ref:`dependencies` for the base and optional dependencies and alternatives for how
+to install these.
 
 To update orix to the latest release::
 
@@ -75,3 +90,42 @@ See the :ref:`contributing guide <setting-up-a-development-installation>` for ho
 up a development installation and keep it up to date.
 
 .. _https://github.com/pyxem/orix/archive/v<major.minor.patch>/orix-<major.minor.patch>.tar.gz: https://github.com/pyxem/orix/archive/v<major.minor.patch>/orix-<major.minor.patch>.tar.gz
+
+
+.. _dependencies:
+
+Dependencies
+============
+
+orix builds on the great work and effort of many people.
+This is a list of core package dependencies:
+
+================================================ ================================================
+Package                                          Purpose
+================================================ ================================================
+:doc:`dask<dask:index>`                          Out-of-memory processing of data larger than RAM
+:doc:`diffpy.structure <diffpy.structure:index>` Handling of crystal structures
+:doc:`h5py <h5py:index>`                         Read/write of HDF5 files
+:doc:`matplotlib <matplotlib:index>`             Visualization
+`matplotlib-scalebar`_                           Scale bar for crystal map plots
+:doc:`numba <numba:index>`                       CPU acceleration
+:doc:`numpy <numpy:index>`                       Handling of N-dimensional arrays
+:doc:`pooch <pooch:api/index>`                   Downloading and caching of datasets
+:doc:`scipy <scipy:index>`                       Optimization algorithms, filtering and more
+`tqdm <https://tqdm.github.io/>`__               Progressbars
+================================================ ================================================
+
+.. _matplotlib-scalebar: https://github.com/ppinard/matplotlib-scalebar
+
+Some functionality requires optional dependencies:
+
+=================== ===========================================
+Package             Purpose                                    
+=================== ===========================================
+`numpy-quaternion`_ Faster quaternion and vector multiplication
+=================== ===========================================
+
+.. _numpy-quaternion: https://quaternion.readthedocs.io/en/stable/
+
+Optional dependencies can be installed either with ``pip install orix[all]`` or by
+installing each dependency separately, such as ``pip install orix numpy-quaternion``.

@@ -6,7 +6,7 @@
 SPHINXOPTS    =
 SPHINXBUILD   = PYDEVD_DISABLE_FILE_VALIDATION=1 python -Xfrozen_modules=off -m sphinx
 SOURCEDIR     = .
-BUILDDIR      = build
+BUILDDIR      = _build
 
 # Put it first so that "make" without argument is like "make help".
 help:

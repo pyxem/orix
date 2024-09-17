@@ -3,7 +3,7 @@
 Subplots
 ========
 
-This example shows how to place different plots in the same figure using orix' various
+This example shows how to place different plots in the same figure using orix's various
 :mod:`plot types <orix.plot>`, which extend Matplotlib's plot types.
 
 By first creating a blank figure and then using
