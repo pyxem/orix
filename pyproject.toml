@@ -32,11 +32,11 @@ dependencies = [
     "numba",
     "numpy",
     "pooch                  >= 0.13",
-    # TODO: Remove once https://github.com/diffpy/diffpy.structure/issues/97 is fixed
+    # TODO: Remove once diffpy.structure >= 3.2.1
     "pycifrw",
     "scipy",
     "tqdm",
-    # TODO: Remove once Python 3.11 is the minimal version
+    # TODO: Remove once Python >= 3.11
     "typing_extensions",
 ]
 
