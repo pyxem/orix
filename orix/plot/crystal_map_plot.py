@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
@@ -428,8 +427,6 @@ class CrystalMapPlot(Axes):
         n_rows, n_cols = self._data_shape
 
         # Get rotations, ensuring correct masking
-        # TODO: Show orientations in Euler angles (computationally
-        #  intensive...)
         r = crystal_map.get_map_data("rotations", decimals=3)
 
         # Get image data, overwriting potentially masked regions set to 0.0

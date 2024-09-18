@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
@@ -108,7 +107,7 @@ def file_reader(filename: str) -> CrystalMap:
     data_dict["phase_list"] = PhaseList(**phases)
 
     # Set which data points are not indexed
-    # TODO: Add not-indexed convention for INDEX ASTAR
+    # TODO: Add not-indexed convention for ASTAR INDEX
     if vendor in ["orix", "tsl"]:
         not_indexed = data_dict["prop"]["ci"] == -1
         data_dict["phase_id"][not_indexed] = -1

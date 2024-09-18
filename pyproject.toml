@@ -4,18 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "orix"
-# conf.py assumes orix developers to be first author
 authors = [{name = "orix developers"}]
 description = "orix is an open-source Python library for handling crystal orientation mapping data"
 license = {file = "LICENSE"}
 readme = {file = "README.rst", content-type = "text/x-rst"}
 dynamic = ["version"]
+requires-python = ">= 3.10"
 classifiers=[
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
@@ -28,16 +27,16 @@ dependencies = [
     "dask[array]",
     "diffpy.structure       >= 3.0.2",
     "h5py",
-    "matplotlib             >= 3.5",
+    "matplotlib             >= 3.6.1",
     "matplotlib-scalebar",
     "numba",
     "numpy",
     "pooch                  >= 0.13",
-    # TODO: Remove once https://github.com/diffpy/diffpy.structure/issues/97 is fixed
+    # TODO: Remove once diffpy.structure >= 3.2.1
     "pycifrw",
     "scipy",
     "tqdm",
-    # TODO: Remove once Python 3.11 is the minimal version
+    # TODO: Remove once Python >= 3.11
     "typing_extensions",
 ]
 
@@ -87,7 +86,7 @@ path = "orix/__init__.py"
 precision = 2
 
 [tool.coverage.run]
-branch = true
+branch = false
 source = ["orix"]
 relative_files = true
 omit = [

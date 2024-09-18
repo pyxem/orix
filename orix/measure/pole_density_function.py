@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
@@ -34,7 +33,7 @@ def pole_density_function(
     hemisphere: str = "upper",
     symmetry: Optional[Symmetry] = None,
     log: bool = False,
-    mrd: bool = True
+    mrd: bool = True,
 ) -> Tuple[np.ma.MaskedArray, Tuple[np.ndarray, np.ndarray]]:
     """Compute the Pole Density Function (PDF) of vectors in the
     stereographic projection. See :cite:`rohrer2004distribution`.
