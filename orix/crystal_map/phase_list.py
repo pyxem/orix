@@ -341,7 +341,7 @@ class Phase:
         structure = parser.parseFile(str(path))
         try:
             space_group = parser.spacegroup.number
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             space_group = None
             warnings.warn(f"Could not read space group from CIF file {path!r}")
         return cls(name, space_group, structure=structure)
