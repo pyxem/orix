@@ -20,8 +20,8 @@ from __future__ import annotations
 from collections import OrderedDict
 import copy
 from itertools import islice
-import os
-from typing import Dict, List, Optional, Tuple, Union
+from pathlib import Path
+from typing import Generator
 import warnings
 
 from diffpy.structure import Structure
@@ -95,13 +95,12 @@ class Phase:
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        space_group: Union[int, SpaceGroup, None] = None,
-        point_group: Union[int, str, Symmetry, None] = None,
-        structure: Optional[Structure] = None,
-        color: Optional[str] = None,
-    ):
-        """Create a phase."""
+        name: str | None = None,
+        space_group: int | SpaceGroup | None = None,
+        point_group: int | str | Symmetry | None = None,
+        structure: Structure | None = None,
+        color: str | None = None,
+    ) -> None:
         self.structure = structure if structure is not None else Structure()
         if name is not None:
             self.name = name
@@ -127,7 +126,7 @@ class Phase:
         return self._structure
 
     @structure.setter
-    def structure(self, value: Structure):
+    def structure(self, value: Structure) -> None:
         """Set the crystal structure."""
         if isinstance(value, Structure):
             # Ensure correct alignment
@@ -156,12 +155,12 @@ class Phase:
         return self.structure.title
 
     @name.setter
-    def name(self, value: str):
+    def name(self, value: str) -> None:
         """Set the phase name."""
         self.structure.title = str(value)
 
     @property
-    def color(self):
+    def color(self) -> str:
         """Return or set the name of phase color.
 
         Parameters
@@ -173,7 +172,7 @@ class Phase:
         return self._color
 
     @color.setter
-    def color(self, value: str):
+    def color(self, value: str) -> None:
         """Set the phase color."""
         value_hex = mcolors.to_hex(value)
         for name, color_hex in ALL_COLORS.items():
@@ -187,7 +186,7 @@ class Phase:
         return mcolors.to_rgb(self.color)
 
     @property
-    def space_group(self) -> SpaceGroup:
+    def space_group(self) -> SpaceGroup | None:
         """Return or set the space group.
 
         Parameters
@@ -199,7 +198,7 @@ class Phase:
         return self._space_group
 
     @space_group.setter
-    def space_group(self, value: Union[int, SpaceGroup, None]):
+    def space_group(self, value: int | SpaceGroup | None) -> None:
         """Set the space group."""
         if isinstance(value, int):
             value = GetSpaceGroup(value)
@@ -207,10 +206,11 @@ class Phase:
             raise ValueError(
                 f"'{value}' must be of type {SpaceGroup}, an integer 1-230, or None."
             )
-        self._space_group = value  # Overwrites any point group set before
+        # Overwrites any point group set before
+        self._space_group: SpaceGroup | None = value
 
     @property
-    def point_group(self) -> Symmetry:
+    def point_group(self) -> Symmetry | None:
         """Return or set the point group.
 
         Parameters
@@ -224,7 +224,7 @@ class Phase:
             return self._point_group
 
     @point_group.setter
-    def point_group(self, value: Union[int, str, Symmetry, None]):
+    def point_group(self, value: int | str | Symmetry | None) -> None:
         """Set the point group."""
         if isinstance(value, int):
             value = str(value)
@@ -320,7 +320,7 @@ class Phase:
         )
 
     @classmethod
-    def from_cif(cls, filename: str) -> Phase:
+    def from_cif(cls, filename: str | Path) -> Phase:
         """Return a new phase from a CIF file using
         :mod:`diffpy.structure`'s CIF file parser.
 
@@ -335,10 +335,15 @@ class Phase:
         phase
             New phase.
         """
+        path = Path(filename)
         parser = p_cif.P_cif()
-        name = os.path.splitext(os.path.split(filename)[1])[0]
-        structure = parser.parseFile(filename)
-        space_group = parser.spacegroup.number
+        name = path.stem
+        structure = parser.parseFile(str(path))
+        try:
+            space_group = parser.spacegroup.number
+        except AttributeError:
+            space_group = None
+            warnings.warn(f"Could not read space group from CIF file {path!r}")
         return cls(name, space_group, structure=structure)
 
     def deepcopy(self) -> Phase:
@@ -431,16 +436,14 @@ class PhaseList:
 
     def __init__(
         self,
-        phases: Union[Phase, List[Phase], Dict[Phase], None] = None,
-        names: Union[str, List[str], None] = None,
-        space_groups: Union[int, SpaceGroup, List[Union[int, SpaceGroup]], None] = None,
-        point_groups: Union[
-            str, int, Symmetry, List[Union[str, int, Symmetry]], None
-        ] = None,
-        colors: Union[str, List[str], None] = None,
-        ids: Union[int, List[int], np.ndarray, None] = None,
-        structures: Union[Structure, List[Structure], None] = None,
-    ):
+        phases: Phase | list[Phase] | dict[int, Phase] | None = None,
+        names: str | list[str] | None = None,
+        space_groups: int | SpaceGroup | list[int | SpaceGroup] | None = None,
+        point_groups: str | int | Symmetry | list[str | int | Symmetry] | None = None,
+        colors: str | list[str] | None = None,
+        ids: int | list[int] | np.ndarray | None = None,
+        structures: Structure | list[Structure] | None = None,
+    ) -> None:
         """Create a new phase list."""
         d = {}
         if isinstance(phases, list):
@@ -554,27 +557,27 @@ class PhaseList:
         self._dict = OrderedDict(sorted(d.items()))
 
     @property
-    def names(self) -> List[str]:
+    def names(self) -> list[str]:
         """Return the phases' names."""
         return [phase.name for _, phase in self]
 
     @property
-    def space_groups(self) -> List[SpaceGroup]:
+    def space_groups(self) -> list[SpaceGroup]:
         """Return the phases' space groups."""
         return [phase.space_group for _, phase in self]
 
     @property
-    def point_groups(self) -> List[Symmetry]:
+    def point_groups(self) -> list[Symmetry]:
         """Return the phases' point groups."""
         return [phase.point_group for _, phase in self]
 
     @property
-    def colors(self) -> List[str]:
+    def colors(self) -> list[str]:
         """Return the phases' colors."""
         return [phase.color for _, phase in self]
 
     @property
-    def colors_rgb(self) -> List[tuple]:
+    def colors_rgb(self) -> list[tuple]:
         """Return the phases' RGB color values."""
         return [phase.color_rgb for _, phase in self]
 
@@ -584,16 +587,16 @@ class PhaseList:
         return len(self._dict.items())
 
     @property
-    def ids(self) -> List[int]:
+    def ids(self) -> list[int]:
         """Return the unique phase IDs in the list of phases."""
         return list(self._dict.keys())
 
     @property
-    def structures(self) -> List[Structure]:
+    def structures(self) -> list[Structure]:
         """Return the phases' structures."""
         return [phase.structure for _, phase in self]
 
-    def __getitem__(self, key) -> Union[PhaseList, Phase]:
+    def __getitem__(self, key) -> PhaseList | Phase:
         """Return a PhaseList or a Phase object, depending on the number
         of phases in the list matches the `key`.
         """
@@ -640,7 +643,7 @@ class PhaseList:
         else:
             return PhaseList(d)
 
-    def __delitem__(self, key: Union[int, str]):
+    def __delitem__(self, key: int | str) -> None:
         """Delete a phase from the phase list.
 
         Parameters
@@ -663,7 +666,7 @@ class PhaseList:
         else:
             raise TypeError(f"{key} is an invalid phase ID or name.")
 
-    def __iter__(self) -> Tuple[int, Phase]:
+    def __iter__(self) -> Generator[tuple[int, Phase]]:
         """Return a tuple with phase ID and Phase object, in that order."""
         for phase_id, phase in self._dict.items():
             yield phase_id, phase
@@ -720,7 +723,7 @@ class PhaseList:
         """Return a deep copy using :func:`copy.deepcopy` function."""
         return copy.deepcopy(self)
 
-    def add_not_indexed(self):
+    def add_not_indexed(self) -> None:
         """Add a dummy phase to assign to not indexed data points.
 
         The phase, named ``"not_indexed"``, has a
@@ -730,7 +733,7 @@ class PhaseList:
         self._dict[-1] = Phase(name="not_indexed", color="white")
         self.sort_by_id()
 
-    def sort_by_id(self):
+    def sort_by_id(self) -> None:
         """Sort the list according to phase ID in-place."""
         self._dict = OrderedDict(sorted(self._dict.items()))
 
@@ -753,7 +756,7 @@ class PhaseList:
                 return phase_id
         raise KeyError(f"'{name}' is not among the phase names {self.names}.")
 
-    def add(self, value: Union[Phase, List[Phase], PhaseList]):
+    def add(self, value: Phase | list[Phase] | PhaseList) -> None:
         """Add phases to the end of a phase list in-place, incrementing
         the phase IDs.
 
@@ -809,9 +812,9 @@ class PhaseList:
 
 def _new_structure_matrix_from_alignment(
     old_matrix: np.ndarray,
-    x: Optional[str] = None,
-    y: Optional[str] = None,
-    z: Optional[str] = None,
+    x: str | None = None,
+    y: str | None = None,
+    z: str | None = None,
 ) -> np.ndarray:
     """Return a new structure matrix given the old structure matrix and
     at least two aligned axes x, y, or z.
