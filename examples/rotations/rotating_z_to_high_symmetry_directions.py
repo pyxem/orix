@@ -1,4 +1,4 @@
-"""
+r"""
 =====================================================
 Rotating z-vector to high-symmetry crystal directions
 =====================================================
@@ -26,7 +26,7 @@ beam path.
 
 from orix.crystal_map import Phase
 from orix.quaternion import Rotation
-from orix.vector import Miller, Vector3d
+from orix.vector import Miller
 
 phase = Phase(point_group="mmm")
 t = Miller.from_highest_indices(phase, uvw=[1, 1, 1])
