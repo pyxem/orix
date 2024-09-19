@@ -27,6 +27,8 @@ Removed
 
 Fixed
 -----
+- ``Phase.from_cif()`` still gives a valid phase even though the space group could not
+  be read.
 
 2024-09-03 - version 0.13.0
 ===========================
