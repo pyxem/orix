@@ -21,8 +21,8 @@ from orix import data
 sys.path.append("../")
 
 project = "orix"
-copyright = f"2018-{str(datetime.now().year)}, {orix.__author__}"
-author = orix.__author__
+author = "orix developers"
+copyright = f"2018-{str(datetime.now().year)}, {author}"
 release = orix.__version__
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -59,8 +59,10 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org/stable", None),
     "nbsphinx": ("https://nbsphinx.readthedocs.io/en/latest", None),
     "nbval": ("https://nbval.readthedocs.io/en/latest", None),
+    "numba": ("https://numba.readthedocs.io/en/latest", None),
     "numpy": ("https://numpy.org/doc/stable", None),
     "numpydoc": ("https://numpydoc.readthedocs.io/en/latest", None),
+    "pooch": ("https://www.fatiando.org/pooch/latest", None),
     "pytest": ("https://docs.pytest.org/en/stable", None),
     "python": ("https://docs.python.org/3", None),
     "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
@@ -78,7 +80,7 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
-    "build",
+    "_build",
     "Thumbs.db",
     ".DS_Store",
     # Suppress warnings from Sphinx regarding "duplicate source files":
@@ -120,10 +122,10 @@ html_favicon = "_static/img/orix_logo.png"
 # modifications to point nbviewer and Binder to the GitHub develop
 # branch links when the documentation is launched from a kikuchipy
 # version with "dev" in the version
-if "dev" in orix.__version__:
+if "dev" in release:
     release_version = "develop"
 else:
-    release_version = "v" + orix.__version__
+    release_version = "v" + release
 # This is processed by Jinja2 and inserted before each notebook
 nbsphinx_prolog = (
     r"""
@@ -234,14 +236,14 @@ def linkcode_resolve(domain, info):
     fn = relpath(fn, start=startdir).replace(os.path.sep, "/")
 
     if fn.startswith("orix/"):
-        m = re.match(r"^.*dev0\+([a-f\d]+)$", orix.__version__)
+        m = re.match(r"^.*dev0\+([a-f\d]+)$", release)
         pre_link = "https://github.com/pyxem/orix/blob/"
         if m:
             return pre_link + "%s/%s%s" % (m.group(1), fn, linespec)
-        elif "dev" in orix.__version__:
+        elif "dev" in release:
             return pre_link + "develop/%s%s" % (fn, linespec)
         else:
-            return pre_link + "v%s/%s%s" % (orix.__version__, fn, linespec)
+            return pre_link + "v%s/%s%s" % (release, fn, linespec)
     else:
         return None
 
@@ -329,7 +331,7 @@ sphinx_gallery_conf = {
     "filename_pattern": "^((?!sgskip).)*$",
     "gallery_dirs": "examples",
     "reference_url": {"orix": None},
-    "run_stale_examples": True,
+    "run_stale_examples": False,
     "show_memory": True,
 }
 autosummary_generate = True

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
@@ -204,7 +203,7 @@ class TestSampleFundamental:
         # Some rotations have a phi1 Euler angle of multiples of pi,
         # presumably due to rounding errors
         phi1_C1 = R_C1.to_euler()[:, 0].round(7)
-        assert np.allclose(np.unique(phi1_C1), [0, 2 * np.pi], atol=1e-7)
+        assert np.allclose(np.unique(phi1_C1), 0, atol=1e-7)
         phi1_C4 = R_C4.to_euler()[:, 0].round(7)
         assert np.allclose(np.unique(phi1_C4), [0, np.pi / 2], atol=1e-7)
         phi1_C6 = R_C6.to_euler()[:, 0].round(7)

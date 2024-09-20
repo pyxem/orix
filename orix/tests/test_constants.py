@@ -15,22 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Tools for handling a crystallographic map of orientations, crystal
-phases and key properties associated with every spatial coordinate in a
-1D or 2D.
+from orix import constants
 
-All map properties with a value in each data point are stored as 1D
-arrays.
-"""
+from .conftest import skipif_numpy_quaternion_missing, skipif_numpy_quaternion_present
 
-from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
-from orix.crystal_map.crystal_map_properties import CrystalMapProperties
-from orix.crystal_map.phase_list import Phase, PhaseList
 
-__all__ = [
-    "create_coordinate_arrays",
-    "CrystalMap",
-    "CrystalMapProperties",
-    "Phase",
-    "PhaseList",
-]
+class TestConstants:
+    @skipif_numpy_quaternion_present
+    def test_numpy_quaternion_not_installed(self):
+        assert not constants.installed["numpy-quaternion"]
+
+    @skipif_numpy_quaternion_missing
+    def test_numpy_quaternion_installed(self):
+        assert constants.installed["numpy-quaternion"]

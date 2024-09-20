@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
@@ -16,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Reader and writer of a crystal map to and from orix' own HDF5 file
+"""Reader and writer of a crystal map to and from orix's own HDF5 file
 format.
 """
 
@@ -44,7 +43,7 @@ writes_this = CrystalMap
 
 
 def file_reader(filename: str, **kwargs) -> CrystalMap:
-    """Return a crystal map from a file in orix' HDF5 file format.
+    """Return a crystal map from a file in orix's HDF5 file format.
 
     Parameters
     ----------

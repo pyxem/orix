@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
@@ -23,12 +22,11 @@ from typing import Tuple
 
 import numpy as np
 
+from orix import constants
 from orix.quaternion import Quaternion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, get_distinguished_points
 from orix.vector import Rodrigues
-
-_FLOAT_EPS = 1e-9  # Small number to avoid round off problems
 
 
 def _get_large_cell_normals(s1, s2):
@@ -133,8 +131,8 @@ class OrientationRegion(Rotation):
         """
         c = Quaternion(self).dot_outer(Quaternion(other))
         inside = np.logical_or(
-            np.all(np.greater_equal(c, -_FLOAT_EPS), axis=0),
-            np.all(np.less_equal(c, +_FLOAT_EPS), axis=0),
+            np.all(np.greater_equal(c, -constants.eps9), axis=0),
+            np.all(np.less_equal(c, constants.eps9), axis=0),
         )
         return inside
 
@@ -204,8 +202,8 @@ class OrientationRegion(Rotation):
         from orix.vector import Vector3d
 
         # Get a grid of vector directions
-        theta = np.linspace(0, 2 * np.pi - _FLOAT_EPS, 361)
-        rho = np.linspace(0, np.pi - _FLOAT_EPS, 181)
+        theta = np.linspace(0, 2 * np.pi - constants.eps9, 361)
+        rho = np.linspace(0, np.pi - constants.eps9, 181)
         theta, rho = np.meshgrid(theta, rho)
         g = Vector3d.from_polar(rho, theta)
 

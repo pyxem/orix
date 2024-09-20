@@ -6,6 +6,27 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
+2024-09-20 - version 0.13.1
+===========================
+
+Added
+-----
+- Support for Python 3.12.
+
+Changed
+-------
+- numpy-quaternion is now an optional dependency and will not be installed with ``pip``
+  unless ``pip install orix[all]`` is used.
+
+Removed
+-------
+- Support for Python 3.8 and 3.9.
+
+Fixed
+-----
+- ``Phase.from_cif()`` still gives a valid phase even though the space group could not
+  be read.
+
 2024-09-03 - version 0.13.0
 ===========================
 

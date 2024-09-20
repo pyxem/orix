@@ -14,13 +14,13 @@ jobs:
     name: code style
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: psf/black@stable
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - uses: isort/isort-action@master
         with:
@@ -34,23 +34,6 @@ jobs:
         run: |
           black --diff --line-length 77 doc/tutorials/*.ipynb
 
-  # Make sure all necessary files will be included in a release
-  manifest:
-    name: check manifest
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v4
-
-      - name: Install dependencies
-        run: |
-          pip install manifix
-
-      - name: Check MANIFEST.in file
-        run: |
-          python setup.py manifix
-
   build-with-pip:
     name: ${{ matrix.os }}-py${{ matrix.python-version }}${{ matrix.LABEL }}
     runs-on: ${{ matrix.os }}
@@ -61,24 +44,33 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.10', '3.11']
+        python-version: ['3.11', '3.12']
         include:
           - os: ubuntu-latest
-            python-version: 3.8
-            DEPENDENCIES: diffpy.structure==3.0.2  matplotlib==3.5
+            python-version: '3.10'
+            DEPENDENCIES: diffpy.structure==3.0.2 matplotlib==3.6.1
             LABEL: -oldest
+          - os: ubuntu-latest
+            python-version: '3.12'
+            LABEL: -minimum_requirement
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install depedencies and package
+      - name: Install core depedencies and package
         shell: bash
         run: |
-          pip install -U -e .'[doc, tests]'
+          pip install -U -e .'[tests,coverage]'
+
+      - name: Install optional dependencies
+        if: ${{ !contains(matrix.LABEL, 'minimum_requirement') }}
+        shell: bash
+        run: |
+          pip install -e .'[all]'
 
       - name: Install oldest supported version
         if: ${{ contains(matrix.LABEL, 'oldest') }}

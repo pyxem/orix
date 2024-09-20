@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
@@ -46,11 +45,6 @@ from orix.vector import AxAngle, Homochoric, Vector3d
 )
 def quaternion(request):
     return Quaternion(request.param)
-
-
-@pytest.fixture
-def identity():
-    return Quaternion((1, 0, 0, 0))
 
 
 @pytest.fixture(
@@ -105,8 +99,8 @@ class TestQuaternion:
         assert np.allclose(q1.c, qa * sc - qb * sd + qc * sa + qd * sb)
         assert np.allclose(q1.d, qa * sd + qb * sc - qc * sb + qd * sa)
 
-    def test_mul_identity(self, quaternion, identity):
-        assert np.allclose((quaternion * identity).data, quaternion.data)
+    def test_mul_identity(self, quaternion):
+        assert np.allclose((quaternion * Quaternion.identity()).data, quaternion.data)
 
     def test_no_multiplicative_inverse(self, quaternion, something):
         q1 = quaternion * something
@@ -162,10 +156,21 @@ class TestQuaternion:
         ],
     )
     def test_multiply_vector(self, quaternion, vector, expected):
-        q = Quaternion(quaternion)
-        v = Vector3d(vector)
-        v_new = q * v
-        assert np.allclose(v_new.data, expected)
+        Q1 = Quaternion(quaternion)
+        v1 = Vector3d(vector)
+        v2 = Q1 * v1
+        assert np.allclose(v2.data, expected)
+
+    def test_multiply_vector_float32(self):
+        Q1 = Quaternion.random()
+        v1 = Vector3d.random()
+
+        Q2 = Quaternion(Q1)
+        Q2._data = Q2._data.astype(np.float32)
+
+        v2 = Q1 * v1
+        v3 = Q2 * v1
+        assert np.allclose(v3.data, v2.data, atol=1e-6)
 
     def test_abcd_properties(self):
         quat = Quaternion([2, 2, 2, 2])
