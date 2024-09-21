@@ -23,7 +23,7 @@ orix is released under the GPL v3 license.
 .. |build_status| image:: https://github.com/pyxem/orix/workflows/build/badge.svg
    :target: https://github.com/pyxem/orix/actions/workflows/build.yml
 
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.10+-blue.svg
    :target: https://www.python.org/downloads/
 
 .. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=develop

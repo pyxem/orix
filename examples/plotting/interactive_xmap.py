@@ -85,7 +85,7 @@ def select_point(xmap: CrystalMap, rgb_all: np.ndarray) -> tuple[int, int]:
         plt.imshow(rgb_dp_2d)
         plt.plot(x, y, "+", c="k", markersize=15, markeredgewidth=3)
         plt.title(
-            f"Phase: {phase_name}, Euler angles: $(\phi_1, \Phi, \phi_2)$ = {eu_str}"
+            rf"Phase: {phase_name}, Euler angles: $(\phi_1, \Phi, \phi_2)$ = {eu_str}"
         )
         plt.draw()
 
