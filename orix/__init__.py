@@ -1,4 +1,4 @@
-__version__ = "0.14.dev0"
+__version__ = "0.13.1"
 # Sorted by line contributions (ideally excluding lines in notebook files)
 __credits__ = [
     "Håkon Wiik Ånes",
