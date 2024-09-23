@@ -6,6 +6,13 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
+2024-09-25 - version 0.13.2
+===========================
+
+Added
+-----
+- Compatibility with NumPy v2.0.
+
 2024-09-20 - version 0.13.1
 ===========================
 
