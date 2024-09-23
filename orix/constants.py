@@ -40,7 +40,7 @@ eps12 = 1e-12
 try:
     # Added in NumPy 1.25.0
     from numpy.exceptions import VisibleDeprecationWarning
-except ImportError:
+except ImportError:  # pragma: no cover
     # Removed in NumPy 2.0.0
     from numpy import VisibleDeprecationWarning
 
