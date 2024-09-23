@@ -18,6 +18,7 @@
 import numpy as np
 import pytest
 
+from orix.constants import VisibleDeprecationWarning
 from orix.crystal_map import CrystalMap, Phase
 from orix.io import load, loadang, save
 from orix.io.plugins.ang import (
@@ -76,7 +77,7 @@ from orix.tests.conftest import (
     indirect=["angfile_astar"],
 )
 def test_loadang(angfile_astar, expected_data):
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         loaded_data = loadang(angfile_astar)
     assert np.allclose(loaded_data.data, expected_data)
 
