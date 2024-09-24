@@ -35,4 +35,14 @@ for pkg in optional_deps:
 eps9 = 1e-9
 eps12 = 1e-12
 
+# TODO: Remove and use numpy.exceptions.VisibleDeprecationWarning once
+# NumPy 1.25 is minimal supported version
+try:
+    # Added in NumPy 1.25.0
+    from numpy.exceptions import VisibleDeprecationWarning
+except ImportError:  # pragma: no cover
+    # Removed in NumPy 2.0.0
+    from numpy import VisibleDeprecationWarning
+
+
 del optional_deps
