@@ -27,6 +27,7 @@ from h5py import File
 import numpy as np
 import pytest
 
+from orix.constants import VisibleDeprecationWarning
 from orix.crystal_map import Phase, PhaseList
 from orix.io import _overwrite_or_not, _plugin_from_manufacturer, load, loadctf, save
 from orix.io.plugins import bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
@@ -151,6 +152,6 @@ def test_loadctf():
     fname = "temp.ctf"
     np.savetxt(fname, z)
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         _ = loadctf(fname)
     os.remove(fname)

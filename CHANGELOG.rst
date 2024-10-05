@@ -24,6 +24,13 @@ Deprecated
 Fixed
 -----
 
+2024-09-25 - version 0.13.2
+===========================
+
+Added
+-----
+- Compatibility with NumPy v2.0.
+
 2024-09-20 - version 0.13.1
 ===========================
 

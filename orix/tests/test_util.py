@@ -17,10 +17,10 @@
 
 import warnings
 
-import numpy as np
 import pytest
 
 from orix._util import deprecated, deprecated_argument
+from orix.constants import VisibleDeprecationWarning
 
 
 class TestDeprecateFunctionOrProperty:
@@ -58,7 +58,7 @@ class TestDeprecateFunctionOrProperty:
 
         my_foo = Foo()
 
-        with pytest.warns(np.VisibleDeprecationWarning) as record:
+        with pytest.warns(VisibleDeprecationWarning) as record:
             assert my_foo.bar_func1(4) == 5
         desired_msg = (
             "Function `bar_func1()` is deprecated and will be removed in version 0.8. "
@@ -72,7 +72,7 @@ class TestDeprecateFunctionOrProperty:
             f"   {desired_msg}"
         )
 
-        with pytest.warns(np.VisibleDeprecationWarning) as record2:
+        with pytest.warns(VisibleDeprecationWarning) as record2:
             assert my_foo.bar_func2(4) == 6
         desired_msg2 = "Function `bar_func2()` is deprecated."
         assert str(record2[0].message) == desired_msg2
@@ -84,7 +84,7 @@ class TestDeprecateFunctionOrProperty:
             f"   {desired_msg2}"
         )
 
-        with pytest.warns(np.VisibleDeprecationWarning) as record3:
+        with pytest.warns(VisibleDeprecationWarning) as record3:
             assert my_foo.bar_prop == 1
         desired_msg3 = (
             "Property `bar_prop` is deprecated and will be removed in version 1.4. "
@@ -123,7 +123,7 @@ class TestDeprecateArgument:
             assert my_foo.bar_arg(b=1) == {"b": 1}
 
         # Warns
-        with pytest.warns(np.VisibleDeprecationWarning) as record2:
+        with pytest.warns(VisibleDeprecationWarning) as record2:
             assert my_foo.bar_arg(a=2) == {"a": 2}
         assert str(record2[0].message) == (
             r"Argument `a` is deprecated and will be removed in version 1.4. "
@@ -132,7 +132,7 @@ class TestDeprecateArgument:
         )
 
         # Warns with alternative
-        with pytest.warns(np.VisibleDeprecationWarning) as record3:
+        with pytest.warns(VisibleDeprecationWarning) as record3:
             assert my_foo.bar_arg_alt(a=3) == {"a": 3}
         assert str(record3[0].message) == (
             r"Argument `a` is deprecated and will be removed in version 1.4. "
