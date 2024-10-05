@@ -48,7 +48,8 @@ jobs:
         include:
           - os: ubuntu-latest
             python-version: '3.10'
-            DEPENDENCIES: diffpy.structure==3.0.2 matplotlib==3.6.1
+            # Matplotlib 3.6.1 is not compatible with NumPy v2
+            DEPENDENCIES: diffpy.structure==3.0.2 matplotlib==3.6.1 "numpy<2"
             LABEL: -oldest
           - os: ubuntu-latest
             python-version: '3.12'
