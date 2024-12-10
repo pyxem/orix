@@ -117,8 +117,9 @@ class Rotation(Quaternion):
             return Q
         if isinstance(other, Vector3d):
             v = Quaternion(self) * other
-            improper = (self.improper * np.ones(other.shape)).astype(bool)
-            v[improper] = -v[improper]
+            if np.any(self.improper):
+                improper = (self.improper * np.ones(other.shape)).astype(bool)
+                v[improper] = -v[improper]
             return v
         if isinstance(other, int) or isinstance(other, list):  # abs(1)
             other = np.atleast_1d(other).astype(int)
