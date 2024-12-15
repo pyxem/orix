@@ -17,14 +17,18 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 from diffpy.structure.spacegroups import GetSpaceGroup
-import matplotlib.pyplot as plt
+import matplotlib.figure as mfigure
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
 from orix.vector import Vector3d
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orix.quaternion import Orientation
+    from orix.vector import FundamentalSector
 
 
 class Symmetry(Rotation):
@@ -63,22 +67,22 @@ class Symmetry(Rotation):
     @property
     def is_proper(self) -> bool:
         """Return whether this group contains only proper rotations."""
-        return np.all(np.equal(self.improper, 0))
+        return bool(np.all(np.equal(self.improper, 0)))
 
     @property
-    def subgroups(self) -> List[Symmetry]:
+    def subgroups(self) -> list[Symmetry]:
         """Return the list groups that are subgroups of this group."""
         return [g for g in _groups if g._tuples <= self._tuples]
 
     @property
-    def proper_subgroups(self) -> List[Symmetry]:
+    def proper_subgroups(self) -> list[Symmetry]:
         """Return the list of proper groups that are subgroups of this
         group.
         """
         return [g for g in self.subgroups if g.is_proper]
 
     @property
-    def proper_subgroup(self) -> Union[List[Symmetry], Symmetry]:
+    def proper_subgroup(self) -> Symmetry:
         """Return the largest proper group of this subgroup."""
         subgroups = self.proper_subgroups
         if len(subgroups) == 0:
@@ -152,7 +156,7 @@ class Symmetry(Rotation):
         return region
 
     @property
-    def system(self) -> Union[str, None]:
+    def system(self) -> str | None:
         """Return which of the seven crystal systems this symmetry
         belongs to.
 
@@ -187,7 +191,7 @@ class Symmetry(Rotation):
         return tuples
 
     @property
-    def fundamental_sector(self) -> "orix.vector.FundamentalSector":
+    def fundamental_sector(self) -> "FundamentalSector":
         """Return the fundamental sector describing the inverse pole
         figure given by the point group name.
 
@@ -258,7 +262,7 @@ class Symmetry(Rotation):
         return fs
 
     @property
-    def _primary_axis_order(self) -> Union[int, None]:
+    def _primary_axis_order(self) -> int | None:
         """Return the order of primary rotation axis for the proper
         subgroup.
 
@@ -351,7 +355,7 @@ class Symmetry(Rotation):
         generators = [g for g in self.subgroups if g in other.subgroups]
         return Symmetry.from_generators(*generators)
 
-    def __hash__(self) -> hash:
+    def __hash__(self) -> int:
         return hash(self.name.encode() + self.data.tobytes() + self.improper.tobytes())
 
     # ------------------------ Class methods ------------------------- #
@@ -404,7 +408,7 @@ class Symmetry(Rotation):
 
     # --------------------- Other public methods --------------------- #
 
-    def get_axis_orders(self) -> Dict[Vector3d, int]:
+    def get_axis_orders(self) -> dict[Vector3d, int]:
         s = self[self.angle > 0]
         if s.size == 0:
             return {}
@@ -413,7 +417,7 @@ class Symmetry(Rotation):
             for a, b in zip(*np.unique(s.axis.data, axis=0, return_counts=True))
         }
 
-    def get_highest_order_axis(self) -> Tuple[Vector3d, np.ndarray]:
+    def get_highest_order_axis(self) -> tuple[Vector3d, np.ndarray]:
         axis_orders = self.get_axis_orders()
         if len(axis_orders) == 0:
             return Vector3d.zvector(), np.inf
@@ -424,7 +428,7 @@ class Symmetry(Rotation):
         return axes, highest_order
 
     def fundamental_zone(self) -> Vector3d:
-        from orix.vector import AxAngle, SphericalRegion
+        from orix.vector import SphericalRegion
 
         symmetry = self.antipodal
         symmetry = symmetry[symmetry.angle > 0]
@@ -459,10 +463,10 @@ class Symmetry(Rotation):
 
     def plot(
         self,
-        orientation: "orix.quaternion.Orientation" = None,
-        reproject_scatter_kwargs: Optional[dict] = None,
+        orientation: "Orientation | None" = None,
+        reproject_scatter_kwargs: dict | None = None,
         **kwargs,
-    ) -> plt.Figure:
+    ) -> mfigure.Figure | None:
         """Stereographic projection of symmetry operations.
 
         The upper hemisphere of the stereographic projection is shown.
@@ -824,7 +828,7 @@ point_group_aliases = {
 }
 
 
-def _get_laue_group_name(name: str) -> Union[str, None]:
+def _get_laue_group_name(name: str) -> str | None:
     if name in ["1", "-1"]:
         return "-1"
     elif name in ["2", "211", "121", "112", "m11", "1m1", "11m", "2/m"]:
