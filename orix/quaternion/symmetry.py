@@ -818,11 +818,13 @@ def get_point_group(space_group_number: int, proper: bool = False) -> Symmetry:
 # Point group alias mapping. This is needed because in EDAX TSL OIM
 # Analysis 7.2, e.g. point group 432 is entered as 43.
 # Used when reading a phase's point group from an EDAX ANG file header
-point_group_aliases = {
+_EDAX_POINT_GROUP_ALIASES = {
     "121": ["20"],
     "2/m": ["2"],
     "222": ["22"],
     "422": ["42"],
+    "321": ["32"],
+    "622": ["62"],
     "432": ["43"],
     "m-3m": ["m3m"],
 }
