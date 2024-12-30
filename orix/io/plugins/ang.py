@@ -30,7 +30,7 @@ import numpy as np
 from orix import __version__
 from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
 from orix.quaternion import Rotation
-from orix.quaternion.symmetry import point_group_aliases
+from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES
 
 __all__ = ["file_reader", "file_writer"]
 
@@ -594,9 +594,9 @@ def _get_header_from_phases(xmap: CrystalMap) -> str:
         else:
             proper_point_group = phase.point_group.proper_subgroup
             point_group_name = proper_point_group.name
-            for key, alias in point_group_aliases.items():
+            for key, aliases in _EDAX_POINT_GROUP_ALIASES.items():
                 if point_group_name == key:
-                    point_group_name = alias[0]
+                    point_group_name = aliases[0]
                     break
         header += (
             f"Phase {phase_id}\n"

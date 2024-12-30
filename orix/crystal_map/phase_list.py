@@ -31,10 +31,10 @@ import matplotlib.colors as mcolors
 import numpy as np
 
 from orix.quaternion.symmetry import (
+    _EDAX_POINT_GROUP_ALIASES,
     Symmetry,
     _groups,
     get_point_group,
-    point_group_aliases,
 )
 from orix.vector import Miller, Vector3d
 
@@ -229,9 +229,9 @@ class Phase:
         if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):
-            for correct, aliases in point_group_aliases.items():
+            for key, aliases in _EDAX_POINT_GROUP_ALIASES.items():
                 if value in aliases:
-                    value = correct
+                    value = key
                     break
             for point_group in _groups:
                 if value == point_group.name:
