@@ -1,5 +1,5 @@
 ##
-## Copyright 2018-2024 the orix developers
+## Copyright 2019-2025 the orix developers
 ##
 ## This file is part of orix.
 ##
@@ -10,11 +10,12 @@
 ##
 ## orix is distributed in the hope that it will be useful,
 ## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 ## GNU General Public License for more details.
 ##
 ## You should have received a copy of the GNU General Public License
-## along with orix.  If not, see <http://www.gnu.org/licenses/>.##
+## along with orix. If not, see <http://www.gnu.org/licenses/>.
+##
 repos:
   - repo: https://github.com/psf/black
     rev: 24.10.0
@@ -35,7 +36,10 @@ repos:
     hooks:
         - id: licenseheaders
           args: ["-t", ".license.tmpl", "-cy", "-n", "orix", "-f"]
+# https://pre-commit.ci/#configuration
 ci:
   # Don't run automatically on PRs, instead add the comment
   # "pre-commit.ci autofix" on a pull request to manually trigger auto-fixing
   autofix_prs: false
+  # TODO: Remove skip once (nearly) all files are formatted with the license template
+  skip: [licenseheaders]
