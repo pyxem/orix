@@ -30,3 +30,6 @@ globally (in the ``conda`` environment)::
 
 This installs all necessary development dependencies, including those for running tests
 and building documentation.
+
+Finally, please insteall the pre-commit hooks as described in the :doc:`/dev/code_style`
+guide.

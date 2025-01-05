@@ -24,6 +24,13 @@ Deprecated
 Fixed
 -----
 
+2025-01-01 - version 0.13.3
+===========================
+
+Fixed
+-----
+- Handle all EDAX TSL point group aliases.
+
 2024-09-25 - version 0.13.2
 ===========================
 
@@ -252,7 +259,7 @@ Added
 - Seven methods for sampling unit vectors from regular grids on *S2* via
   ``orix.sampling.sample_S2()``.
 - Calculation of the Inverse Pole Density Function (IPDF), ie. pole density in the
-  crystal point group fundamental sector, through 
+  crystal point group fundamental sector, through
   ``InversePoleFigurePlot.pole_density_function()``.
 - The ``orix.measure`` module has been introduced. The ``measure`` module is related to
   quantification of orientation and vector data.
@@ -440,7 +447,7 @@ Deprecated
 - Setting (Mis)Orientation symmetry via ``set_symmetry()`` is deprecated in 0.8, in
   favour of setting it directly via a ``symmetry.setter``, and will be removed in 0.9.
   Use ``map_into_symmetry_reduced_zone()`` instead.
- 
+
 Removed
 -------
 - ``StereographicPlot`` methods ``azimuth_grid()`` and ``polar_grid()``.

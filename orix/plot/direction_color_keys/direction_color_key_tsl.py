@@ -1,3 +1,4 @@
+#
 # Copyright 2018-2024 the orix developers
 #
 # This file is part of orix.
@@ -13,9 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
-
-from typing import Optional, Tuple, Union
+# along with orix.  If not, see <http://www.gnu.org/licenses/>.#
 
 from matplotlib.figure import Figure
 import numpy as np
@@ -33,42 +32,39 @@ from orix.vector import Vector3d
 
 
 class DirectionColorKeyTSL(DirectionColorKey):
-    """Assign colors to (crystal) directions rotated by crystal
-    orientations and projected into an inverse pole figure, according to
-    the Laue symmetry of the crystal.
+    """Assign colors to crystal directions in a fundamental sector given
+    by one of the eleven Laue symmetries.
 
-    This is based on the TSL color key implemented in MTEX.
+    Parameters
+    ----------
+    symmetry
+        Crystal symmetry. If a non-Laue symmetry is given, the
+        corresponding Laue symmetry is used.
+
+    Notes
+    -----
+    Coloring is based on the EDAX TSL color key as implemented in MTEX.
     """
 
     def __init__(self, symmetry: Symmetry) -> None:
-        """Create an inverse pole figure (IPF) color key to color
-        crystal directions according to a Laue symmetry's fundamental
-        sector (IPF).
-
-        Parameters
-        ----------
-        symmetry
-            (Laue) symmetry of the crystal. If a non-Laue symmetry
-            is given, the Laue symmetry of that symmetry will be used.
-        """
         laue_symmetry = symmetry.laue
         super().__init__(laue_symmetry)
 
     def direction2color(self, direction: Vector3d) -> np.ndarray:
-        """Return an RGB color per orientation given a Laue symmetry
-        and a sample direction.
+        """Return an RGB color per (crystal) direction.
 
         Plot the inverse pole figure color key with :meth:`plot`.
 
         Parameters
         ----------
         direction
-            Directions to color.
+            Crystal directions to color. Each direction is rotated to
+            the fundamental sector of the Laue symmetry.
 
         Returns
         -------
         rgb
-            Color array of shape ``direction.shape + (3,)``.
+            Color array of shape direction.shape + (3,).
         """
         laue_group = self.symmetry
         h = direction.in_fundamental_sector(laue_group)
@@ -78,11 +74,10 @@ class DirectionColorKeyTSL(DirectionColorKey):
 
     def _create_rgba_grid(
         self, alpha: float = 1.0, return_extent: bool = False
-    ) -> Union[
-        np.ndarray,
-        Tuple[np.ndarray, Tuple[Tuple[float, float], Tuple[float, float]]],
-    ]:
-        """Create the 2d colormap used to represent crystal directions.
+    ) -> (
+        np.ndarray | tuple[np.ndarray, tuple[tuple[float, float], tuple[float, float]]]
+    ):
+        """Return the 2D colormap used to represent crystal directions.
 
         Parameters
         ----------
@@ -107,7 +102,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         sector = laue_group.fundamental_sector
 
         v = sample_S2(2)
-        v2 = Vector3d(np.row_stack((v[v <= sector].data, sector.edges.data)))
+        v2 = Vector3d(np.vstack((v[v <= sector].data, sector.edges.data)))
 
         rgb = self.direction2color(v2)
         r, g, b = rgb.T
@@ -144,18 +139,18 @@ class DirectionColorKeyTSL(DirectionColorKey):
         else:
             return rgba_grid
 
-    def plot(self, return_figure: bool = False) -> Optional[Figure]:
+    def plot(self, return_figure: bool = False) -> Figure | None:
         """Plot the inverse pole figure color key.
 
         Parameters
         ----------
         return_figure
-            Whether to return the figure. Default is ``False``.
+            Whether to return the figure. Default is False.
 
         Returns
         -------
         figure
-            Color key figure, returned if ``return_figure=True``.
+            Color key figure, returned if *return_figure* is True.
         """
         from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
 
