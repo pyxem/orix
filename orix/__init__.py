@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2024 the orix developers
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -10,12 +10,15 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.#
-__version__ = "0.13.3"
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
+
+__version__ = "0.14.dev3"
+
 # Sorted by line contributions (ideally excluding lines in notebook files)
 __credits__ = [
     "Håkon Wiik Ånes",
