@@ -74,6 +74,7 @@ dev = [
     "black[jupyter]",
     "hatch",
     "isort                          >= 5.10",
+    "licenseheaders",
     "outdated",
     "pre-commit                     >= 1.16",
     "orix[doc,tests,coverage]",

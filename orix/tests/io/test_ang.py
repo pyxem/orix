@@ -608,7 +608,7 @@ class TestAngWriter:
         del pl[-1]
         assert xmap_reload.phases.names == pl.names
 
-    @pytest.mark.parametrize("point_group", ["432", "121", "222"])
+    @pytest.mark.parametrize("point_group", ["432", "121", "222", "321", "622"])
     def test_point_group_aliases(self, crystal_map, tmp_path, point_group):
         crystal_map.phases[0].point_group = point_group
         fname = tmp_path / "test_point_group_aliases.ang"
