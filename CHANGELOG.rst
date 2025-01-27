@@ -11,6 +11,7 @@ Unreleased
 
 Added
 -----
+- Added ``Phase.expand_asymmetric_unit()`` to add all symmetrically equivalent atoms to the structure.
 
 Changed
 -------
