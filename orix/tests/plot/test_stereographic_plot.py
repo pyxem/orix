@@ -210,7 +210,7 @@ class TestStereographicPlot:
             assert ax.format_coord(x, y) == (
                 "\N{GREEK SMALL LETTER PHI}={:.2f}\N{GREEK SMALL LETTER PI} "
                 "({:.2f}\N{DEGREE SIGN}), "
-                "\N{GREEK SMALL LETTER theta}={:.2f}\N{GREEK SMALL LETTER PI} "
+                "\N{GREEK SMALL LETTER THETA}={:.2f}\N{GREEK SMALL LETTER PI} "
                 "({:.2f}\N{DEGREE SIGN})"
             ).format(a / np.pi, np.rad2deg(a), p / np.pi, np.rad2deg(p))
 

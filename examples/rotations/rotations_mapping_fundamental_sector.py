@@ -7,7 +7,7 @@ This example shows how to sample rotations :math:`\mathbf{R}` that when rotating
 vector :math:`\mathbf{v_z} = (0, 0, 1)`, the resulting vectors cover the fundamental
 sector of a given Laue class.
 
-We show this by comparing the vectors we get by: 
+We show this by comparing the vectors we get by:
 
 1. Sampling rotations for *4/mmm* and then rotating :math:`\mathbf{v_z}`
 2. Sampling all of *S2* but only keeping those within the corresponding fundamental

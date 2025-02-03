@@ -1023,7 +1023,7 @@ def _check_UVTW(UVTW: np.ndarray) -> None:
 
 
 def _get_indices_from_highest(
-    highest_indices: Union[list, tuple, np.ndarray]
+    highest_indices: Union[list, tuple, np.ndarray],
 ) -> np.ndarray:
     """Return a list of coordinates from a set of highest indices.
 

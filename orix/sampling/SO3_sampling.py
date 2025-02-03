@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Functions supporting grid generation within rotation space, *SO(3)*.
-"""
+"""Functions supporting grid generation within rotation space, *SO(3)*."""
 
 from typing import Optional, Union
 
