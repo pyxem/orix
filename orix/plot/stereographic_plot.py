@@ -146,7 +146,7 @@ class StereographicPlot(maxes.Axes):
             return (
                 "\N{GREEK SMALL LETTER PHI}={:.2f}\N{GREEK SMALL LETTER PI} "
                 "({:.2f}\N{DEGREE SIGN}), "
-                "\N{GREEK SMALL LETTER theta}={:.2f}\N{GREEK SMALL LETTER PI} "
+                "\N{GREEK SMALL LETTER THETA}={:.2f}\N{GREEK SMALL LETTER PI} "
                 "({:.2f}\N{DEGREE SIGN})"
             ).format(azimuth / np.pi, azimuth_deg, polar / np.pi, polar_deg)
 
