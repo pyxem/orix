@@ -285,7 +285,7 @@ class CrystalMap:
 
         # Set whether measurements are indexed
         is_indexed = np.ones(data_size, dtype=bool)
-        is_indexed[np.where(phase_id == -1)] = False
+        is_indexed[phase_id == -1] = False
 
         # Add "not_indexed" to phase list and ensure not indexed points
         # have correct phase ID
