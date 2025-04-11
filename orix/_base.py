@@ -162,7 +162,23 @@ class Object3d:
 
     @classmethod
     def random(cls, shape: Union[int, tuple] = 1) -> Object3d:
-        """Create object with random data.
+        """Create object with uniformly distributed random data.
+
+        For objects that map to the surfaces of n-dimensional unit spheres
+        (unit vectors, quaternions, octonions, etc), randomly sampling values
+        for each axis gives a non-uniform sampling that coalesces near the
+        poles. One proper method is to instead sample an n-dimensional
+        gaussian distribution for each axis, then normalize the result.
+
+        For Vector3d objects, this would produce a uniform sampling of the 2D
+        surface of the 3D unit sphere.
+
+        For Rotation objects, this would be a uniform sampling of the 3D
+        surface of the 4D quaterion unit sphere.
+
+        Note that this is not the only definition of a "random" sample, but is
+        the one most commonly appropriate when discussing vectors and rotations
+        in crystallography
 
         Parameters
         ----------
@@ -175,12 +191,7 @@ class Object3d:
             Object with random data.
         """
         n = int(np.prod(shape))
-        obj = []
-        while len(obj) < n:
-            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
-            r2 = np.sum(np.square(r), axis=1)
-            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
-            obj += list(r)
+        obj = np.random.normal(size=[n, cls.dim])
         obj = cls(np.array(obj[:n]))
         obj = obj.unit
         obj = obj.reshape(shape)
