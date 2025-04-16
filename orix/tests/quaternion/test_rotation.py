@@ -550,15 +550,49 @@ class TestFromToMatrix:
         assert np.allclose(om1, om2)
 
 
-class TestFromScipyRotation:
-    """These test address the Rotation.from_scipy_rotation()."""
+class TestToFromScipyRotation:
+    """These test address Rotation.from_scipy_rotation() and
+    Rotation.to_scipy_rotation().
+
+    For the first two checks, exploit the fact that both scipy and orix allow
+    for the definition of rotation objects using an identical passive
+    zxz Bunge angle convention.
+
+    Additionally, this tests agreement by multiple methods to help ensure
+    actual agreement. the first test uses angular deviation, the second
+    uses actual quaternion values and the third compares rotation matrices.
+    """
 
     def test_from_scipy_rotation(self):
         euler = np.deg2rad([15, 32, 41])
         reference_rot = Rotation.from_euler(euler)
         scipy_rot = SciPyRotation.from_euler("ZXZ", euler)  # Bunge convention
-        quat = Rotation.from_scipy_rotation(scipy_rot)
-        assert np.allclose(reference_rot.angle_with(quat), 0)
+        rot = Rotation.from_scipy_rotation(scipy_rot)
+        assert np.allclose(reference_rot.angle_with(rot), 0)
+
+    def test_to_scipy_rotation(self):
+        euler = np.deg2rad([56, 22, 11])
+        scipy_ref = SciPyRotation.from_euler("ZXZ", euler)  # Bunge convention
+        rot = Rotation.from_euler(euler)
+        scipy_rot = rot.to_scipy_rotation()
+        assert np.allclose(scipy_rot.as_quat() - scipy_ref.as_quat())
+
+    def test_to_from_scipy_gives_same_rotation(self):
+        # use the Fibonacci series to generate some repeatable pseudo-random
+        # quaternions.
+        seq = [0, 1]
+        for i in range(198):
+            seq.append(sum(seq[-2:]))
+        data = np.array(seq).reshape(50, 4) % np.exp(1)
+        # use the rotation function to normalize the data
+        rot = Rotation(data.astype(float))
+        # test to-from
+        to_from_rot = Rotation.from_scipy_rotation(rot.to_scipy_rotation())
+        assert np.allclose(rot.data, to_from_rot.data)
+        # and test from-to
+        sp_rot = SciPyRotation.from_quat(rot.data)
+        from_to_rot = Rotation.from_scipy_rotation(sp_rot).to_scipy_rotation()
+        assert np.allclose(sp_rot.as_matrix(), from_to_rot.as_matrix())
 
 
 class TestFromAlignVectors:
