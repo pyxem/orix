@@ -575,7 +575,7 @@ class TestToFromScipyRotation:
         scipy_ref = SciPyRotation.from_euler("ZXZ", euler)  # Bunge convention
         rot = Rotation.from_euler(euler)
         scipy_rot = rot.to_scipy_rotation()
-        assert np.allclose(scipy_rot.as_quat() - scipy_ref.as_quat())
+        assert np.allclose(scipy_rot.as_quat(), scipy_ref.as_quat())
 
     def test_to_from_scipy_gives_same_rotation(self):
         # use the Fibonacci series to generate some repeatable pseudo-random
