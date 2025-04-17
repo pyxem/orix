@@ -959,7 +959,7 @@ class Quaternion(Object3d):
         Notes
         -----
         SciPy by default uses the Active rotation convention, as opposed to
-        ORIX's Passive standard. Thus, the quaternion rotatation in orix:
+        ORIX's Passive standard. Thus, the quaternion rotation in orix:
         :math: `q_{orix} = [q_0, q_1, q_2, q_3]`
         becomes the following in scipy:
         :math: `q_{SciPy} = [q_1, q_2, q_3, q_0]`
