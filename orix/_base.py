@@ -174,7 +174,7 @@ class Object3d:
         surface of the 3D unit sphere.
 
         For Rotation objects, this would be a uniform sampling of the 3D
-        surface of the 4D quaterion unit sphere.
+        surface of the 4D quaternion unit sphere.
 
         Note that this is not the only definition of a "random" sample, but is
         the one most commonly appropriate when discussing vectors and rotations
