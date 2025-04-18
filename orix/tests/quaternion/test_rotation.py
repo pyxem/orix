@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
+import warnings
+
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation as SciPyRotation
@@ -550,6 +552,17 @@ class TestFromToMatrix:
         assert np.allclose(om1, om2)
 
 
+@pytest.fixture
+def fib_data():
+    # First use the Fibonacci series to generate some repeatable
+    # pseudo-random quaternions for reuse in the following tests
+    seq = [0, 1]
+    for i in range(198):
+        seq.append(sum(seq[-2:]))
+    fib_data = (np.array(seq).reshape(50, 4) % np.exp(1)).astype(float)
+    return fib_data
+
+
 class TestToFromScipyRotation:
     """These test address Rotation.from_scipy_rotation() and
     Rotation.to_scipy_rotation().
@@ -577,15 +590,8 @@ class TestToFromScipyRotation:
         scipy_rot = rot.to_scipy_rotation()
         assert np.allclose(scipy_rot.as_quat(), scipy_ref.as_quat())
 
-    def test_to_from_scipy_gives_same_rotation(self):
-        # use the Fibonacci series to generate some repeatable pseudo-random
-        # quaternions.
-        seq = [0, 1]
-        for i in range(198):
-            seq.append(sum(seq[-2:]))
-        data = np.array(seq).reshape(50, 4) % np.exp(1)
-        # use the rotation function to normalize the data
-        rot = Rotation(data.astype(float))
+    def test_to_from_scipy_gives_same_rotation(self, fib_data):
+        rot = Rotation(fib_data)
         # test to-from
         to_from_rot = Rotation.from_scipy_rotation(rot.to_scipy_rotation())
         assert np.allclose(rot.data, to_from_rot.data)
@@ -593,6 +599,17 @@ class TestToFromScipyRotation:
         sp_rot = SciPyRotation.from_quat(rot.data)
         from_to_rot = Rotation.from_scipy_rotation(sp_rot).to_scipy_rotation()
         assert np.allclose(sp_rot.as_matrix(), from_to_rot.as_matrix())
+
+    def test_to_scipy_converts_Nd_to_1d(self, fib_data):
+        rot = Rotation(fib_data.reshape(5, 2, 5, 4))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            rot.to_scipy_rotation()
+            # check this threw a warning
+            assert len(w) == 1
+            # check the warning thrown included words from the custom warning
+            # message for converting Nd orix arrays to 1d scipy rotations.
+            assert "greater than" in str(w[-1].message)
 
 
 class TestFromAlignVectors:
