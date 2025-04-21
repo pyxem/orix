@@ -30,7 +30,7 @@ import numpy as np
 from orix import __version__
 from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
 from orix.quaternion import Rotation
-from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES
+from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES, get_point_group
 
 __all__ = ["file_reader", "file_writer"]
 
@@ -41,7 +41,7 @@ writes = True
 writes_this = CrystalMap
 
 
-def file_reader(filename: str) -> CrystalMap:
+def file_reader(filename: str, autogen_names: Optional[bool] = True) -> CrystalMap:
     """Return a crystal map from a file in EDAX TLS's .ang format.
 
     The map in the input is assumed to be 2D.
@@ -74,7 +74,7 @@ def file_reader(filename: str) -> CrystalMap:
         header = _get_header(f)
 
     # Phase information, potentially empty
-    phases = _get_phases_from_header(header)
+    phases, formulas = _get_phases_from_header(header)
     phases["structures"] = []
     lattice_constants = phases.pop("lattice_constants")
     for name, abcABG in zip(phases["names"], lattice_constants):
@@ -105,6 +105,28 @@ def file_reader(filename: str) -> CrystalMap:
 
     # Add phase list to dictionary
     data_dict["phase_list"] = PhaseList(**phases)
+    # if requested, use the phase formula and point group to
+    # autogenerate a name for each phase.
+    pl = data_dict["phase_list"]
+    if autogen_names and len(formulas) == len(phases['ids']):
+        # PhaseList does an auto-reordering, so track the change.
+        remap = np.stack([
+        np.where(pl.ids==np.array(x)) for x in phases['ids']
+        ])[:, 0, 0]
+        unique, count = np.unique(formulas, return_counts=True)
+        if np.max(count) == 1  and len(unique) == len(phases['ids']):
+            print("changing phase names from {} to {}".format(
+                  phases['names'],formulas))
+            phases['names']=formulas
+            data_dict["phase_list"] = PhaseList(**phases)
+        # Otherwise, name them based off the formula and point group
+        else:
+            for i,j  in enumerate(pl.ids):
+                pg_name = pl[j].point_group.name
+                new_name = str(np.array(formulas)[remap[i]]) + "-" +pg_name
+                print("Changing default phase name {} to {}".format(
+                    pl[j].name, new_name))
+                pl[j].name= new_name
 
     # Set which data points are not indexed
     # TODO: Add not-indexed convention for ASTAR INDEX
@@ -304,20 +326,24 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
 
 
 def _get_phases_from_header(header: List[str]) -> dict:
-    """Return phase names and symmetries detected in an .ang file
-    header.
+    """Parse a .ang header to extract a best guess of the phase names,
+    symmetries, and chemical formula for each phase
+
 
     Parameters
     ----------
-    header
+    header : List[str]
         List with header lines as individual elements.
 
     Returns
     -------
-    phase_dict
+    phase_dict: dict
         Dictionary with the following keys (and types): "ids" (int),
         "names" (str), "point_groups" (str), "lattice_constants" (list
         of floats).
+
+    formulas: list[str]
+        List of the chemical formula for each phase
 
     Notes
     -----
@@ -355,10 +381,12 @@ def _get_phases_from_header(header: List[str]) -> dict:
 
     n_phases = len(phases["names"])
 
-    # Use formulas in place of material names if they are all valid
+    # Pop out the formula information, which can optionally be used later to
+    # rename the phses
     formulas = phases.pop("formulas")
-    if len(formulas) == n_phases and all([len(name) for name in formulas]):
-        phases["names"] = formulas
+
+    # if len(formulas) == n_phases and all([len(name) for name in formulas]):
+    #     phases["names"] = formulas
 
     # Ensure each phase has an ID (hopefully found in the header)
     phase_ids = [int(i) for i in phases["ids"]]
@@ -370,7 +398,7 @@ def _get_phases_from_header(header: List[str]) -> dict:
         phase_ids += [i for i in range(next_id, next_id + n_left)]
     phases["ids"] = phase_ids
 
-    return phases
+    return phases, formulas
 
 
 def file_writer(

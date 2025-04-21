@@ -446,7 +446,7 @@ class TestAngReader:
 
     @pytest.mark.parametrize(
         "header_phase_part, expected_names, expected_point_groups, "
-        "expected_lattice_constants, expected_phase_id",
+        "expected_lattice_constants, expected_phase_id, expected_formula",
         [
             (
                 [
@@ -470,6 +470,7 @@ class TestAngReader:
                 ["43", "m3m"],
                 [[3.52, 3.52, 3.52, 90, 90, 90], [3.52, 3.52, 3.52, 90, 90, 90]],
                 [42, 43],
+                ["Al"]
             ),
         ],
     )
@@ -480,6 +481,7 @@ class TestAngReader:
         expected_point_groups,
         expected_lattice_constants,
         expected_phase_id,
+        expected_formula,
     ):
         # Create header from parts
         header = [
@@ -501,8 +503,9 @@ class TestAngReader:
             "#",
             "# GRID: SqrGrid#",
         ]
-        phases = _get_phases_from_header(header)
+        phases, formulas = _get_phases_from_header(header)
 
+        assert formulas == expected_formula
         assert phases["names"] == expected_names
         assert phases["point_groups"] == expected_point_groups
         assert np.allclose(phases["lattice_constants"], expected_lattice_constants)
