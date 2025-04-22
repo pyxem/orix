@@ -163,7 +163,7 @@ def sdss_ferrite_austenite(allow_download: bool = False, **kwargs) -> CrystalMap
     >>> xmap.plot(overlay="dp")
     """
     fname = _fetch("sdss/sdss_ferrite_austenite.ang", allow_download)
-    xmap = io.load(fname, **kwargs)
+    xmap = io.load(fname, **kwargs, autogen_names=False)
     xmap.phases["austenite/austenite"].name = "austenite"
     xmap.phases["ferrite/ferrite"].name = "ferrite"
     return xmap
