@@ -555,7 +555,7 @@ class TestAngReader:
                 ["Ti", "Ti"],
                 ["Ti", "Ti"],
                 ["Ti", "Ti", "Ti"],
-                ["Ti", "Fe",],
+                ["Ti", "Fe"],
                 ["Ti", "Ti", "Fe", "FeC", "XX"],
                 [],
             ]
