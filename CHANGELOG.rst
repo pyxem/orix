@@ -12,8 +12,11 @@ Unreleased
 Added
 -----
 
+
 Changed
 -------
+- .ang files now allow optional rewriting of phase names based on elements and
+point group, as opposed to automatically  overwriting names 
 
 Removed
 -------
@@ -23,7 +26,7 @@ Deprecated
 
 Fixed
 -----
-
+- running 'pytests' is not faster and has options for parallel testing.
 2025-01-01 - version 0.13.3
 ===========================
 

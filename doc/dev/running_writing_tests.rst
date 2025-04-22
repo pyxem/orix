@@ -22,8 +22,9 @@ Some useful :doc:`fixtures <pytest:explanation/fixtures>` are available in the
 
 To run the tests::
 
-   pytest --cov --pyargs orix
+   pytest --cov --pyargs orix -n auto
 
+The ``-n auto`` is an optional flag to enable parallelized testing. 
 The ``--cov`` flag makes :doc:`coverage.py <coverage:index>` print a nice report.
 For an even nicer presentation, you can use ``coverage.py`` directly::
 

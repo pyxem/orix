@@ -108,25 +108,27 @@ def file_reader(filename: str, autogen_names: Optional[bool] = True) -> CrystalM
     # if requested, use the phase formula and point group to
     # autogenerate a name for each phase.
     pl = data_dict["phase_list"]
-    if autogen_names and len(formulas) == len(phases['ids']):
+    if autogen_names and len(formulas) == len(phases["ids"]):
         # PhaseList does an auto-reordering, so track the change.
-        remap = np.stack([
-        np.where(pl.ids==np.array(x)) for x in phases['ids']
-        ])[:, 0, 0]
+        remap = np.stack([np.where(pl.ids == np.array(x)) for x in phases["ids"]])[
+            :, 0, 0
+        ]
         unique, count = np.unique(formulas, return_counts=True)
-        if np.max(count) == 1  and len(unique) == len(phases['ids']):
-            print("changing phase names from {} to {}".format(
-                  phases['names'],formulas))
-            phases['names']=formulas
+        if np.max(count) == 1 and len(unique) == len(phases["ids"]):
+            print(
+                "changing phase names from {} to {}".format(phases["names"], formulas)
+            )
+            phases["names"] = formulas
             data_dict["phase_list"] = PhaseList(**phases)
         # Otherwise, name them based off the formula and point group
         else:
-            for i,j  in enumerate(pl.ids):
+            for i, j in enumerate(pl.ids):
                 pg_name = pl[j].point_group.name
-                new_name = str(np.array(formulas)[remap[i]]) + "-" +pg_name
-                print("Changing default phase name {} to {}".format(
-                    pl[j].name, new_name))
-                pl[j].name= new_name
+                new_name = str(np.array(formulas)[remap[i]]) + "-" + pg_name
+                print(
+                    "Changing default phase name {} to {}".format(pl[j].name, new_name)
+                )
+                pl[j].name = new_name
 
     # Set which data points are not indexed
     # TODO: Add not-indexed convention for ASTAR INDEX
