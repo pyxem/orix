@@ -11,6 +11,8 @@ Unreleased
 
 Added
 -----
+- Added the ``@pytest.mark.slow`` marker for slow tests.  Using ``pytest . --run-slow`` will
+  run all tests, including slow ones.
 
 Changed
 -------
