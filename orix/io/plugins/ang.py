@@ -391,9 +391,6 @@ def _get_phases_from_header(header: List[str]) -> dict:
     # rename the phases
     formulas = phases.pop("formulas")
 
-    # if len(formulas) == n_phases and all([len(name) for name in formulas]):
-    #     phases["names"] = formulas
-
     # Ensure each phase has an ID (hopefully found in the header)
     phase_ids = [int(i) for i in phases["ids"]]
     if not len(phase_ids):
