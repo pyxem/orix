@@ -14,6 +14,8 @@ Added
 
 Changed
 -------
+- For speed and space reasons, vectors and quaternions are now randomly
+  generated using a gaussian method as opposed to rejection-based sampling.
 
 Removed
 -------
