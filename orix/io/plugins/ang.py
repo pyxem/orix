@@ -150,7 +150,7 @@ def _autogen_phase_names(phase_list, formulas, ids):
     print("autogenerating phase names...")
     for i, j in enumerate(phase_list.ids):
         print(
-            "Changing Phase {} name from '{}' to '{}".format(
+            "Changing Phase {} name from '{}' to '{}'".format(
                 j, phase_list[j].name, names[i]
             )
         )
@@ -388,7 +388,7 @@ def _get_phases_from_header(header: List[str]) -> dict:
     n_phases = len(phases["names"])
 
     # Pop out the formula information, which can optionally be used later to
-    # rename the phses
+    # rename the phases
     formulas = phases.pop("formulas")
 
     # if len(formulas) == n_phases and all([len(name) for name in formulas]):
