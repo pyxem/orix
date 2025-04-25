@@ -11,6 +11,9 @@ Unreleased
 
 Added
 -----
+- Can now convert Quaternions and Rotations to scipy.spatial.transform.Rotation 
+  objects via Quaterion.to_scipy_rotation. This also works with Orientations 
+  and Misorientations, albiet with a loss of symmetry information.
 
 Changed
 -------

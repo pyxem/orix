@@ -945,6 +945,53 @@ class Quaternion(Object3d):
         ho = Homochoric(ho)
         return ho
 
+    def to_scipy_rotation(self) -> SciPyRotation:
+        r"""Return the unit quaternions as
+        :class:`scipy.spatial.transform.Rotation` objects used in scipy's
+        spatial module.
+
+        Returns
+        -------
+        SciPy_Rotation
+            a Rotation object generated from the unit quaternion data
+            (i.e, unaffected by symmetry, phase, or length).
+
+        Notes
+        -----
+        SciPy by default uses the Active rotation convention along with the
+        vector-scalar quaternion definition, as opposed to ORIX's passive,
+        scalar-vector convention. Thus, the following quaternion in orix:
+        :math: `q_{orix} = [q_0, q_1, q_2, q_3]`
+        represents the same operations as the following quaternion in scipy:
+        :math: `q_{SciPy} = [-q_1, -q_2, -q_3, q_0]`
+
+        See the function description for Quaternion.from_scipy_rotation
+        for an example of how these differing parameterizations still produce
+        identical rotation operations.
+
+        Additionally, note that Orix enforces :math: `q_0 >= 0` whereas
+        SciPy does not. Thus, the operation
+
+        >>> Quaternion.from_scipy_rotation(r).to_scipy_rotation.as_quat()
+
+        will produce an identical rotation operation, but not
+        necessarily an idential quaternion. Look up "quaternion double cover"
+        for more information on why this occurs.
+
+        Finally, ORIX supports N-dimensional arrays, whereas SciPy
+        currently supports only 1-dimensional vectors. Thus, this function
+        will also flatten arrays when converting to SciPy Rotations.
+        """
+        if self.ndim > 1:
+            warnings.warn(
+                "\n    {} dimension greater than 1. ".format(self.__class__.__name__)
+                + "Flattening into a 1-dimensional vector"
+            )
+            self = self.flatten()
+        inverter = np.array([[-1, -1, -1, 1]])
+        scipy_rot_data = self.unit.data[:, (1, 2, 3, 0)] * inverter
+        return SciPyRotation.from_quat(scipy_rot_data)
+
     # --------------------- Other public methods --------------------- #
 
     def dot(self, other: Quaternion) -> np.ndarray:
