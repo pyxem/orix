@@ -211,19 +211,13 @@ def test_get_random_sample(test_object3d):
 
 @pytest.mark.parametrize("test_object3d", [2, 3, 4], indirect=["test_object3d"])
 def test_random(test_object3d):
-    # a note for future testers: Testing if samples taken from a non-euclidean
-    # space are randomly distributed is difficult. A potentially more robust
-    # method than the one below is to project the random samples into a
-    # equi-volume  Euclidean projection, then test for uniformity.
-    # If/when orix adds quaternion.to_cubochoric, this would be a good test to
-    # add. It could theoretically be done in homochoric, but the curved bounds
-    # make it difficult. Also, either version would only test quaternions,
-    # not 2D and 3D vectors.
-    # Instead, this test creates 1000 objects and tests if their angular
-    # distributions from one another are roughly uniform. This isn't truly the
-    # same as random, but it's close and it tests against the majority
-    # of common sampling errors. Additionally, it works for any hypersphere
-    # surface (vectors and octonions, for example).
+    # A note to future devs: This test does not truly test for randomness,
+    # which is difficult to do in non-euclidean spaces. Instead, it tests all
+    # elements have roughly the same distributions of distances from all other
+    # elements. This works for all objects mapping to hyperspheres (2D/3D
+    # vectors, quaternions, octonions, etc), and catches the majority of
+    # common sampling mistakes. It also makes sure the distributions are not
+    # perfectly identical, as weould happen in a regularly spaced grid.
     data = test_object3d.random(1000).data
     dist = np.tensordot(data, data, axes=(-1, -1))
     # average distance between every object and all others
@@ -234,3 +228,5 @@ def test_random(test_object3d):
     # is low (ie, the distributions are, within reason, identical)
     assert dist_means.std() / dist_means.mean() < 0.05
     assert dist_stds.std() / dist_stds.mean() < 0.05
+    assert dist_means.std() / dist_means.mean() > 1e-7
+    assert dist_stds.std() / dist_stds.mean() > 1e-7
