@@ -14,6 +14,8 @@ Added
 - Can now convert Quaternions and Rotations to scipy.spatial.transform.Rotation 
   objects via Quaterion.to_scipy_rotation. This also works with Orientations 
   and Misorientations, albiet with a loss of symmetry information.
+- ``ignore_zero`` option for ``Vector3d.unique`` to allow all-zero elements, which were
+  previously discarded. Discarding is still enabled by default.
 
 Changed
 -------
