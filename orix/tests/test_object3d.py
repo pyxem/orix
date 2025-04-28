@@ -184,7 +184,7 @@ def test_flatten(object3d):
 
 @pytest.mark.parametrize("test_object3d", [1], indirect=["test_object3d"])
 def test_unique(test_object3d):
-    o3d = test_object3d([[1], [1], [2], [3], [3]])
+    o3d = test_object3d([[1], [1], [2], [3], [3], [0]])
     unique = o3d.unique()
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
     unique, idx = o3d.unique(return_index=True)
@@ -197,6 +197,11 @@ def test_unique(test_object3d):
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
     assert np.allclose(idx, [0, 2, 3])
     assert np.allclose(inv, [0, 0, 1, 2, 2])
+    unique, idx, inv = o3d.unique(
+        return_index=True, return_inverse=True, ignore_zero=False
+    )
+    assert np.allclose(idx, [5, 0, 2, 3])
+    assert np.allclose(inv, [1, 1, 2, 3, 3, 0])
 
 
 @pytest.mark.parametrize("test_object3d", [4], indirect=["test_object3d"])

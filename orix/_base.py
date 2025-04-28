@@ -195,7 +195,12 @@ class Object3d:
         obj._data = self._data.T.reshape(real_dim, -1).T
         return obj
 
-    def unique(self, return_index: bool = False, return_inverse: bool = False) -> Union[
+    def unique(
+        self,
+        return_index: bool = False,
+        return_inverse: bool = False,
+        ignore_zero: bool = True,
+    ) -> Union[
         Tuple[Object3d, np.ndarray, np.ndarray],
         Tuple[Object3d, np.ndarray],
         Object3d,
@@ -205,7 +210,7 @@ class Object3d:
 
         Unless overridden, this method returns the numerically unique
         entries. It also removes zero-entries which are assumed to be
-        degenerate.
+        degenerate, unless ``ignore_zero`` is ``False``.
 
         Parameters
         ----------
@@ -215,6 +220,8 @@ class Object3d:
         return_inverse
             If ``True``, will also return the indices to reconstruct the
             (flattened) data from the unique data.
+        ignore_zero
+            If ``True``, remove any all-zero elements.
 
         Returns
         -------
@@ -228,7 +235,8 @@ class Object3d:
             ``return_inverse=True``.
         """
         data = self.flatten()._data.round(10)
-        data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
+        if ignore_zero:
+            data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
         _, idx, inv = np.unique(data, axis=0, return_index=True, return_inverse=True)
         obj = self.__class__(data[np.sort(idx), : self.dim])
         obj._data = data[np.sort(idx)]
