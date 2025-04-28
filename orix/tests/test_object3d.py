@@ -217,7 +217,7 @@ def test_random(test_object3d):
     # elements. This works for all objects mapping to hyperspheres (2D/3D
     # vectors, quaternions, octonions, etc), and catches the majority of
     # common sampling mistakes. It also makes sure the distributions are not
-    # perfectly identical, as weould happen in a regularly spaced grid.
+    # perfectly identical, as would happen in a regularly spaced grid.
     data = test_object3d.random(1000).data
     dist = np.tensordot(data, data, axes=(-1, -1))
     # average distance between every object and all others
