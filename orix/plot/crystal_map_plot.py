@@ -20,13 +20,20 @@ from typing import List, Optional
 from matplotlib.axes import Axes
 import matplotlib.colorbar as mbar
 from matplotlib.image import AxesImage
+from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 from matplotlib.projections import register_projection
 import matplotlib.pyplot as plt
-from matplotlib_scalebar.dimension import _Dimension
-from matplotlib_scalebar.scalebar import ScaleBar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+
+
+try:
+    from matplotlib_scalebar.dimension import _Dimension
+    from matplotlib_scalebar.scalebar import ScaleBar
+    MPL_SB_INSTALLED = True
+except ImportError:
+    MPL_SB_INSTALLED = False
 
 
 class CrystalMapPlot(Axes):
@@ -191,6 +198,8 @@ class CrystalMapPlot(Axes):
         """Add a scalebar to the axes instance and return it.
 
         The scalebar is also available as an attribute :attr:`scalebar`.
+        Requires installing the optional package `matplotlib-scalebar`
+        (see below for details)
 
         Parameters
         ----------
@@ -216,37 +225,56 @@ class CrystalMapPlot(Axes):
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap, scalebar=False)
         >>> sbar = ax.add_scalebar(xmap, location=4, frameon=False)
+
+        NOTES
+        ------
+        This function requires the package `matplotlib-scalebar`, which is an
+        optional package in orix and not automatically installed. it can be
+        easily installed for example from pip as:
+            `pip install matplotlib-scalebar`
+        After which point, this function will work properly upon reloading.
         """
-        # Get whether z, y or x
-        last_axis = crystal_map.ndim - 1
-        horizontal = crystal_map._coordinate_axes[last_axis]
-
-        # Set a reasonable unit dimension
-        scan_unit = crystal_map.scan_unit
-        if scan_unit == "px":
-            dim = "pixel-length"
-        elif scan_unit[-1] == "m":
-            dim = "si-length"  # Default
+        # Check whether the optional module matplotlib_scalebar is available
+        if not MPL_SB_INSTALLED:
+            # create an empty dummy bar
+            ImportWarning(
+                "The optional package matplotlib-scalebar is not installed" +
+                ", and thus no scalebar will be added to this plot. It can" +
+                " be installed with 'pip install matplotlib-scalebar'.")
+            bar = Line2D([], [], color='none', label='')
         else:
-            dim = _Dimension(scan_unit)
+            # create a matplotlib_scalebar object
+            # Get whether z, y or x
+            last_axis = crystal_map.ndim - 1
+            horizontal = crystal_map._coordinate_axes[last_axis]
 
-        # Set up arguments to AnchoredSizeBar() if not already present in kwargs
-        d = dict(
-            pad=0.2,
-            sep=3,
-            border_pad=0.5,
-            location="lower left",
-            box_alpha=0.6,
-            dimension=dim,
-        )
-        [kwargs.setdefault(k, v) for k, v in d.items()]
+            # Set a reasonable unit dimension
+            scan_unit = crystal_map.scan_unit
+            if scan_unit == "px":
+                dim = "pixel-length"
+            elif scan_unit[-1] == "m":
+                dim = "si-length"  # Default
+            else:
+                dim = _Dimension(scan_unit)
 
-        # Create scalebar
-        bar = ScaleBar(
-            dx=crystal_map._step_sizes[horizontal],
-            units=crystal_map.scan_unit,
-            **kwargs,
-        )
+            # Set up arguments to AnchoredSizeBar() if not already present
+            # in kwargs
+            d = dict(
+                pad=0.2,
+                sep=3,
+                border_pad=0.5,
+                location="lower left",
+                box_alpha=0.6,
+                dimension=dim,
+                )
+            [kwargs.setdefault(k, v) for k, v in d.items()]
+
+            # Create scalebar
+            bar = ScaleBar(
+                dx=crystal_map._step_sizes[horizontal],
+                units=crystal_map.scan_unit,
+                **kwargs,
+                )
         self.axes.add_artist(bar)
         self.scalebar = bar
 

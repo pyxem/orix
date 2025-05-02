@@ -107,7 +107,6 @@ Package                                          Purpose
 :doc:`diffpy.structure <diffpy.structure:index>` Handling of crystal structures
 :doc:`h5py <h5py:index>`                         Read/write of HDF5 files
 :doc:`matplotlib <matplotlib:index>`             Visualization
-`matplotlib-scalebar`_                           Scale bar for crystal map plots
 :doc:`numba <numba:index>`                       CPU acceleration
 :doc:`numpy <numpy:index>`                       Handling of N-dimensional arrays
 :doc:`pooch <pooch:api/index>`                   Downloading and caching of datasets
@@ -119,11 +118,12 @@ Package                                          Purpose
 
 Some functionality requires optional dependencies:
 
-=================== ===========================================
-Package             Purpose                                    
-=================== ===========================================
-`numpy-quaternion`_ Faster quaternion and vector multiplication
-=================== ===========================================
+======================== ===========================================
+Package                  Purpose                                    
+======================== ===========================================
+`numpy-quaternion`_      Faster quaternion and vector multiplication
+`matplotlib-scalebar`_   Scale bar for crystal map plots
+======================== ===========================================
 
 .. _numpy-quaternion: https://quaternion.readthedocs.io/en/stable/
 

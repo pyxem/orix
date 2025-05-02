@@ -28,7 +28,6 @@ dependencies = [
     "diffpy.structure       >= 3.0.2",
     "h5py",
     "matplotlib             >= 3.6.1",
-    "matplotlib-scalebar",
     "numba",
     "numpy",
     "pooch                  >= 0.13",
@@ -42,6 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = [  # NB! Update constants.py if this list is updated!
+    "matplotlib-scalebar",
     "numpy-quaternion",
 ]
 doc = [
