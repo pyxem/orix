@@ -27,10 +27,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-
 try:
     from matplotlib_scalebar.dimension import _Dimension
     from matplotlib_scalebar.scalebar import ScaleBar
+
     MPL_SB_INSTALLED = True
 except ImportError:
     MPL_SB_INSTALLED = False
@@ -238,10 +238,11 @@ class CrystalMapPlot(Axes):
         if not MPL_SB_INSTALLED:
             # create an empty dummy bar
             ImportWarning(
-                "The optional package matplotlib-scalebar is not installed" +
-                ", and thus no scalebar will be added to this plot. It can" +
-                " be installed with 'pip install matplotlib-scalebar'.")
-            bar = Line2D([], [], color='none', label='')
+                "The optional package matplotlib-scalebar is not installed"
+                + ", and thus no scalebar will be added to this plot. It can"
+                + " be installed with 'pip install matplotlib-scalebar'."
+            )
+            bar = Line2D([], [], color="none", label="")
         else:
             # create a matplotlib_scalebar object
             # Get whether z, y or x
@@ -266,7 +267,7 @@ class CrystalMapPlot(Axes):
                 location="lower left",
                 box_alpha=0.6,
                 dimension=dim,
-                )
+            )
             [kwargs.setdefault(k, v) for k, v in d.items()]
 
             # Create scalebar
@@ -274,7 +275,7 @@ class CrystalMapPlot(Axes):
                 dx=crystal_map._step_sizes[horizontal],
                 units=crystal_map.scan_unit,
                 **kwargs,
-                )
+            )
         self.axes.add_artist(bar)
         self.scalebar = bar
 
