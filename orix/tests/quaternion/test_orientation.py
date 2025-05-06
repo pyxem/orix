@@ -333,6 +333,7 @@ class TestMisorientation:
         distance2 = m2.get_distance_matrix()
         assert distance2.shape == 2 * shape
 
+    @pytest.mark.slow
     def test_get_distance_matrix_progressbar_chunksize(self):
         m = Misorientation.random((5, 15, 4))
         angle1 = m.get_distance_matrix(chunk_size=5)
@@ -590,6 +591,7 @@ class TestOrientation:
         angles3 = o.get_distance_matrix(degrees=True)
         assert np.allclose(np.rad2deg(angles_numpy), angles3)
 
+    @pytest.mark.slow
     def test_get_distance_matrix_lazy_parameters(self):
         shape = (5, 15, 4)
         rng = np.random.default_rng()

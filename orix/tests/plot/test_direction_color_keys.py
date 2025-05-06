@@ -47,6 +47,7 @@ class TestDirectionColorKeyTSL:
             [symmetry.Th, (415, 415, 4)],
         ],
     )
+    @pytest.mark.slow
     def test_rgba_grid_shape(self, symmetry, expected_shape):
         ckey = IPFColorKeyTSL(symmetry)
         ckey_direction = ckey.direction_color_key
@@ -64,6 +65,7 @@ class TestDirectionColorKeyTSL:
             [symmetry.Th, (0.0, 0.414), (0.0, 0.414)],
         ],
     )
+    @pytest.mark.slow
     def test_rgba_grid_limits(self, symmetry, expected_xlim, expected_ylim):
         ckey = IPFColorKeyTSL(symmetry)
         ckey_direction = ckey.direction_color_key
@@ -81,6 +83,7 @@ class TestDirectionColorKeyTSL:
         "symmetry",
         [symmetry.C2, symmetry.D6, symmetry.Oh],
     )
+    @pytest.mark.slow
     def test_rgba_grid_alpha(self, symmetry):
         ckey = IPFColorKeyTSL(symmetry)
         ckey_direction = ckey.direction_color_key
