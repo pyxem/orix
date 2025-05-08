@@ -162,7 +162,23 @@ class Object3d:
 
     @classmethod
     def random(cls, shape: Union[int, tuple] = 1) -> Object3d:
-        """Create object with random data.
+        """Create object with uniformly distributed random data.
+
+        For objects that map to the surfaces of n-dimensional unit spheres
+        (unit vectors, quaternions, octonions, etc), randomly sampling values
+        for each axis gives a non-uniform sampling that coalesces near the
+        poles. One proper method is to instead sample an n-dimensional
+        gaussian distribution for each axis, then normalize the result.
+
+        For Vector3d objects, this would produce a uniform sampling of the 2D
+        surface of the 3D unit sphere.
+
+        For Rotation objects, this would be a uniform sampling of the 3D
+        surface of the 4D quaternion unit sphere.
+
+        Note that this is not the only definition of a "random" sample, but is
+        the one most commonly appropriate when discussing vectors and rotations
+        in crystallography
 
         Parameters
         ----------
@@ -175,12 +191,7 @@ class Object3d:
             Object with random data.
         """
         n = int(np.prod(shape))
-        obj = []
-        while len(obj) < n:
-            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
-            r2 = np.sum(np.square(r), axis=1)
-            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
-            obj += list(r)
+        obj = np.random.normal(size=[n, cls.dim])
         obj = cls(np.array(obj[:n]))
         obj = obj.unit
         obj = obj.reshape(shape)
@@ -195,7 +206,12 @@ class Object3d:
         obj._data = self._data.T.reshape(real_dim, -1).T
         return obj
 
-    def unique(self, return_index: bool = False, return_inverse: bool = False) -> Union[
+    def unique(
+        self,
+        return_index: bool = False,
+        return_inverse: bool = False,
+        ignore_zero: bool = True,
+    ) -> Union[
         Tuple[Object3d, np.ndarray, np.ndarray],
         Tuple[Object3d, np.ndarray],
         Object3d,
@@ -205,7 +221,7 @@ class Object3d:
 
         Unless overridden, this method returns the numerically unique
         entries. It also removes zero-entries which are assumed to be
-        degenerate.
+        degenerate, unless ``ignore_zero`` is ``False``.
 
         Parameters
         ----------
@@ -215,6 +231,8 @@ class Object3d:
         return_inverse
             If ``True``, will also return the indices to reconstruct the
             (flattened) data from the unique data.
+        ignore_zero
+            If ``True``, remove any all-zero elements.
 
         Returns
         -------
@@ -228,7 +246,8 @@ class Object3d:
             ``return_inverse=True``.
         """
         data = self.flatten()._data.round(10)
-        data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
+        if ignore_zero:
+            data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
         _, idx, inv = np.unique(data, axis=0, return_index=True, return_inverse=True)
         obj = self.__class__(data[np.sort(idx), : self.dim])
         obj._data = data[np.sort(idx)]

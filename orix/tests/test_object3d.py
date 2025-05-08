@@ -184,7 +184,7 @@ def test_flatten(object3d):
 
 @pytest.mark.parametrize("test_object3d", [1], indirect=["test_object3d"])
 def test_unique(test_object3d):
-    o3d = test_object3d([[1], [1], [2], [3], [3]])
+    o3d = test_object3d([[1], [1], [2], [3], [3], [0]])
     unique = o3d.unique()
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
     unique, idx = o3d.unique(return_index=True)
@@ -197,6 +197,11 @@ def test_unique(test_object3d):
     assert np.allclose(unique.data.flatten(), [1, 2, 3])
     assert np.allclose(idx, [0, 2, 3])
     assert np.allclose(inv, [0, 0, 1, 2, 2])
+    unique, idx, inv = o3d.unique(
+        return_index=True, return_inverse=True, ignore_zero=False
+    )
+    assert np.allclose(idx, [5, 0, 2, 3])
+    assert np.allclose(inv, [1, 1, 2, 3, 3, 0])
 
 
 @pytest.mark.parametrize("test_object3d", [4], indirect=["test_object3d"])
@@ -207,3 +212,26 @@ def test_get_random_sample(test_object3d):
 
     with pytest.raises(ValueError, match="Cannot draw a sample greater than 20"):
         _ = o3d.get_random_sample(21)
+
+
+@pytest.mark.parametrize("test_object3d", [2, 3, 4], indirect=["test_object3d"])
+def test_random(test_object3d):
+    # A note to future devs: This test does not truly test for randomness,
+    # which is difficult to do in non-euclidean spaces. Instead, it tests all
+    # elements have roughly the same distributions of distances from all other
+    # elements. This works for all objects mapping to hyperspheres (2D/3D
+    # vectors, quaternions, octonions, etc), and catches the majority of
+    # common sampling mistakes. It also makes sure the distributions are not
+    # perfectly identical, as would happen in a regularly spaced grid.
+    data = test_object3d.random(1000).data
+    dist = np.tensordot(data, data, axes=(-1, -1))
+    # average distance between every object and all others
+    dist_means = np.abs(dist).mean(axis=1)
+    # standard deviation in distances betwen every object and all others
+    dist_stds = dist.std(axis=1)
+    # assert the deviation in the mean and std for all 1000 distributions
+    # is low (ie, the distributions are, within reason, identical)
+    assert dist_means.std() / dist_means.mean() < 0.05
+    assert dist_stds.std() / dist_stds.mean() < 0.05
+    assert dist_means.std() / dist_means.mean() > 1e-7
+    assert dist_stds.std() / dist_stds.mean() > 1e-7
