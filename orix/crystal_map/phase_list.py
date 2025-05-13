@@ -48,6 +48,8 @@ ALL_COLORS.update(mcolors.XKCD_COLORS)
 class Phase:
     """Name, symmetry, and color of a phase in a crystallographic map.
 
+    If the first parameter is a :code:`Phase` instance, a copy is made
+
     Parameters
     ----------
     name
@@ -95,12 +97,21 @@ class Phase:
 
     def __init__(
         self,
-        name: str | None = None,
+        name: str | "Phase" | None = None,
         space_group: int | SpaceGroup | None = None,
         point_group: int | str | Symmetry | None = None,
         structure: Structure | None = None,
         color: str | None = None,
     ) -> None:
+        if isinstance(name, Phase):
+            return Phase.__init__(
+                self,
+                name.name,
+                name.space_group,
+                name.point_group,
+                name.structure.copy(),
+                name.color,
+            )
         self.structure = structure if structure is not None else Structure()
         if name is not None:
             self.name = name
