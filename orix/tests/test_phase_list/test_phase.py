@@ -95,11 +95,11 @@ class TestPhase:
 
     def test_copy_constructor_phase(self):
         p1 = Phase(
-            "test", 
-            225, 
-            "m-3m", 
+            "test",
+            225,
+            "m-3m",
             Structure(
-                [Atom("Al", (0, 0, 0))], 
+                [Atom("Al", (0, 0, 0))],
                 Lattice(10, 10, 10, 90, 90, 90),
             ),
         )
