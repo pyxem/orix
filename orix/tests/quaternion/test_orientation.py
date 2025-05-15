@@ -25,7 +25,7 @@ from scipy.spatial.transform import Rotation as SciPyRotation
 # isort: off
 from orix.crystal_map import Phase
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
-from orix.quaternion import Misorientation, Orientation, Rotation
+from orix.quaternion import Misorientation, Orientation, Quaternion, Rotation
 from orix.quaternion.symmetry import (
     C1,
     C2,
@@ -53,6 +53,29 @@ def vector(request):
 @pytest.fixture(params=[(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)])
 def orientation(request):
     return Orientation(request.param)
+
+
+def test_quaternion_subclasses_copy_constructor_casting():
+    """Test casting to parent classes with copy constructor"""
+    data = [0.5, 0.5, 0.5, 0.5]
+    q1 = Quaternion(data)
+    r1 = Rotation(data)
+    m1 = Misorientation(data)
+    o1 = Orientation(data)
+
+    assert Quaternion(r1) == q1
+    assert Quaternion(m1) == q1
+    assert Quaternion(o1) == q1
+
+    assert Rotation(m1) == r1
+    assert Rotation(o1) == r1
+
+    assert Misorientation(o1) == m1
+
+    assert Quaternion(q1) is not q1
+    assert Rotation(r1) is not r1
+    assert Misorientation(m1) is not m1
+    assert Orientation(o1) is not o1
 
 
 @pytest.mark.parametrize(
