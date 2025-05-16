@@ -16,15 +16,26 @@
 # along with orix.  If not, see <http://www.gnu.org/licenses/>.
 
 import matplotlib.pyplot as plt
-from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 import pytest
 
-from orix.crystal_map import CrystalMap, Phase, PhaseList, create_coordinate_arrays
+from orix.crystal_map import (
+    CrystalMap,
+    Phase,
+    PhaseList,
+    create_coordinate_arrays,
+)
 from orix.crystal_map.crystal_map import _data_slices_from_coordinates
 from orix.plot import CrystalMapPlot
 from orix.quaternion import Orientation, Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
+
+try:
+    from matplotlib_scalebar import scalebar
+
+    MPL_SB_INSTALLED = True
+except ImportError:
+    MPL_SB_INSTALLED = False
 
 # Note that many parts of the CrystalMap() class are tested while
 # testing IO and the Phase() and PhaseList() classes
@@ -201,8 +212,18 @@ class TestCrystalMap:
         "crystal_map_input, phase_names, phase_ids, desired_phase_names",
         [
             (((7, 4), (1, 1), 1, [0]), ["a", "b", "c"], [0, 1, 2], ["a"]),
-            (((7, 4), (1, 1), 1, [0, 1]), ["a", "b", "c"], [0, 2, 1], ["a", "c"]),
-            (((7, 4), (1, 1), 1, [0, 2]), ["a", "b", "c"], [0, 2, 1], ["a", "b"]),
+            (
+                ((7, 4), (1, 1), 1, [0, 1]),
+                ["a", "b", "c"],
+                [0, 2, 1],
+                ["a", "c"],
+            ),
+            (
+                ((7, 4), (1, 1), 1, [0, 2]),
+                ["a", "b", "c"],
+                [0, 2, 1],
+                ["a", "b"],
+            ),
             (((7, 4), (1, 1), 1, [3]), ["a", "b", "c"], [0, 2, 1], ["a"]),
         ],
         indirect=["crystal_map_input"],
@@ -1036,7 +1057,12 @@ class TestCrystalMapShape:
         indirect=["crystal_map_input"],
     )
     def test_data_slice_from_coordinates_masked(
-        self, crystal_map_input, slices, expected_size, expected_shape, expected_slices
+        self,
+        crystal_map_input,
+        slices,
+        expected_size,
+        expected_shape,
+        expected_slices,
     ):
         xmap = CrystalMap(**crystal_map_input)
 
@@ -1102,11 +1128,6 @@ class TestCrystalMapPlotMethod:
         fig1 = xmap.plot(return_figure=True)
         assert isinstance(fig1.axes[0], CrystalMapPlot)
 
-        sbar1 = fig1.axes[0].artists[0]
-        assert isinstance(sbar1, ScaleBar)
-        assert sbar1.dimension.base_units == xmap.scan_unit
-        assert sbar1.location == 3  # "lower left"
-
         prop = np.arange(xmap.size)
         location = "upper right"
         fig2 = xmap.plot(
@@ -1121,8 +1142,14 @@ class TestCrystalMapPlotMethod:
         assert ax2._xmargin == 0
         assert ax2._ymargin == 0
 
-        sbar2 = fig2.axes[0].artists[0]
-        assert sbar2.location == 1  # "upper right"
+        # Run checks for scalebar only if matplotlib_scalebar is installed
+        if MPL_SB_INSTALLED:
+            sbar1 = fig1.axes[0].artists[0]
+            assert isinstance(sbar1, ScaleBar)
+            assert sbar1.dimension.base_units == xmap.scan_unit
+            assert sbar1.location == 3  # "lower left"
+            sbar2 = fig2.axes[0].artists[0]
+            assert sbar2.location == 1  # "upper right"
 
         plt.close("all")
 

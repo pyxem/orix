@@ -192,13 +192,11 @@ class CrystalMapPlot(Axes):
 
         return im
 
-    def add_scalebar(
-        self, crystal_map: "orix.crystal_map.CrystalMap", **kwargs
-    ) -> ScaleBar:
+    def add_scalebar(self, crystal_map: "orix.crystal_map.CrystalMap", **kwargs):
         """Add a scalebar to the axes instance and return it.
 
         The scalebar is also available as an attribute :attr:`scalebar`.
-        Requires installing the optional package `matplotlib-scalebar`
+        Note, this function requires `matplotlib-scalebar`
         (see below for details)
 
         Parameters
@@ -230,17 +228,20 @@ class CrystalMapPlot(Axes):
         ------
         This function requires the package `matplotlib-scalebar`, which is an
         optional package in orix and not automatically installed. it can be
-        easily installed for example from pip as:
+        installed from pip as:
             `pip install matplotlib-scalebar`
-        After which point, this function will work properly upon reloading.
+        After which point, this function will work properly upon reloading. it
+        can also be installed automatically when installing orix using the
+        `all` decorator:
+            'pip install orix['all']'
         """
         # Check whether the optional module matplotlib_scalebar is available
         if not MPL_SB_INSTALLED:
             # create an empty dummy bar
             ImportWarning(
-                "The optional package matplotlib-scalebar is not installed"
-                + ", and thus no scalebar will be added to this plot. It can"
-                + " be installed with 'pip install matplotlib-scalebar'."
+                "matplotlib-scalebar is not installed and thus no scalebar "
+                + "was added. This package can be installed using "
+                + "'pip install matplotlib-scalebar'."
             )
             bar = Line2D([], [], color="none", label="")
         else:

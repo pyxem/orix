@@ -19,12 +19,19 @@ import copy
 
 import matplotlib.colorbar as mbar
 import matplotlib.pyplot as plt
-from matplotlib_scalebar import scalebar
 import numpy as np
 import pytest
 
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.plot import CrystalMapPlot
+
+try:
+    from matplotlib_scalebar import scalebar
+
+    MPL_SB_INSTALLED = True
+except ImportError:
+    MPL_SB_INSTALLED = False
+
 
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"
@@ -158,7 +165,8 @@ class TestCrystalMapPlot:
 
         assert isinstance(ax.colorbar, mbar.Colorbar)
         assert ax.colorbar.ax.get_ylabel() == "score"
-        assert isinstance(ax.scalebar, scalebar.ScaleBar)
+        if MPL_SB_INSTALLED:
+            assert isinstance(ax.scalebar, scalebar.ScaleBar)
 
         plt.close("all")
 
@@ -296,7 +304,12 @@ class TestCrystalMapPlotUtilities:
         assert ax._xmargin == margin_before
         assert ax._ymargin == margin_before
 
-        expected_subplot_params = (0.88, 0.11, 0.9, 0.125)  # top, bottom, right, left
+        expected_subplot_params = (
+            0.88,
+            0.11,
+            0.9,
+            0.125,
+        )  # top, bottom, right, left
         subplot_params = fig.subplotpars
         assert (
             subplot_params.top,
@@ -337,7 +350,11 @@ class TestCrystalMapPlotUtilities:
 
     @pytest.mark.parametrize(
         "cmap, label, position",
-        [("viridis", "a", "right"), ("cividis", "b", "left"), ("inferno", "c", "top")],
+        [
+            ("viridis", "a", "right"),
+            ("cividis", "b", "left"),
+            ("inferno", "c", "top"),
+        ],
     )
     def test_add_colorbar(self, crystal_map, cmap, label, position):
         fig = plt.figure()
@@ -436,6 +453,9 @@ class TestStatusBar:
         plt.close("all")
 
 
+@pytest.mark.skipif(
+    not (MPL_SB_INSTALLED), reason="matplotlib_scalebar is not installed"
+)
 class TestScalebar:
     @pytest.mark.parametrize(
         "crystal_map_input, scalebar_properties",
