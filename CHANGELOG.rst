@@ -16,6 +16,7 @@ Added
   and Misorientations, albiet with a loss of symmetry information.
 - ``ignore_zero`` option for ``Vector3d.unique`` to allow all-zero elements, which were
   previously discarded. Discarding is still enabled by default.
+- Added copy constructors to ``Phase``, ``PhaseList`` and ``CrystalMap``.
 
 Changed
 -------
