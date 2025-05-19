@@ -364,7 +364,7 @@ class Phase:
         function.
         """
         return copy.deepcopy(self)
-    
+
     def expand_asymmetric_unit(self) -> None:
         """Expand the atom positions using the space group symmetry.
 
@@ -399,23 +399,23 @@ class Phase:
         xyz = diffpy_structure.xyz
         diffpy_structure.clear()
 
-        eau = ExpandAsymmetricUnit(
-            self.space_group,
-            xyz
-        )
+        eau = ExpandAsymmetricUnit(self.space_group, xyz)
         for atom, new_positions in zip(self.structure, eau.expandedpos):
             for pos in new_positions:
                 new_atom = copy.deepcopy(atom)
                 new_atom.xyz = pos
                 # Only add new atom if not already present
                 for present_atom in diffpy_structure:
-                    if present_atom.element == new_atom.element and np.allclose(present_atom.xyz, new_atom.xyz):
+                    if present_atom.element == new_atom.element and np.allclose(
+                        present_atom.xyz, new_atom.xyz
+                    ):
                         break
                 else:
                     diffpy_structure.append(new_atom)
-        
+
         # This handles conversion back to correct alignment
         self.structure = diffpy_structure
+
 
 class PhaseList:
     """A list of phases in a crystallographic map.
