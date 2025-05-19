@@ -365,7 +365,7 @@ class Phase:
         """
         return copy.deepcopy(self)
 
-    def expand_asymmetric_unit(self) -> None:
+    def expand_asymmetric_unit(self) -> Phase:
         """Expand the atom positions using the space group symmetry.
 
         Examples
@@ -414,7 +414,9 @@ class Phase:
                     diffpy_structure.append(new_atom)
 
         # This handles conversion back to correct alignment
-        self.structure = diffpy_structure
+        out = Phase(self)
+        out.structure = diffpy_structure
+        return out
 
 
 class PhaseList:

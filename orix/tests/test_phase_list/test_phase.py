@@ -476,21 +476,25 @@ class TestPhase:
         s = Structure(lattice=lattice, atoms=atoms)
         phase = Phase(structure=s, space_group=spacegroup)
         base = phase.structure.lattice.base.copy()
-        phase.expand_asymmetric_unit()
-        assert np.array_equal(base, phase.structure.lattice.base)
-        assert len(phase.structure) == len(expected_atom_positions)
+        exp = phase.expand_asymmetric_unit()
+        assert np.array_equal(base, exp.structure.lattice.base)
+        assert len(exp.structure) == len(expected_atom_positions)
         # Don't assume order is preserved
-        assert set(tuple(xyz.round(5).tolist()) for xyz in phase.structure.xyz) == set(
+        assert set(tuple(xyz.round(5).tolist()) for xyz in exp.structure.xyz) == set(
             expected_atom_positions
         )
 
         # Check that expanding again makes no difference
-        phase.expand_asymmetric_unit()
-        assert np.array_equal(base, phase.structure.lattice.base)
-        assert len(phase.structure) == len(expected_atom_positions)
-        assert set(tuple(xyz.round(5).tolist()) for xyz in phase.structure.xyz) == set(
+        exp2 = exp.expand_asymmetric_unit()
+        assert np.array_equal(base, exp2.structure.lattice.base)
+        assert len(exp2.structure) == len(expected_atom_positions)
+        assert set(tuple(xyz.round(5).tolist()) for xyz in exp2.structure.xyz) == set(
             expected_atom_positions
         )
+
+        # Check that original phase was preserved
+        assert len(phase.structure) == len(atoms)
+        assert np.array_equal(phase.structure.lattice.base, base)
 
     @pytest.mark.parametrize(
         ["cif_file_content", "expected_atom_count"],
@@ -819,8 +823,8 @@ class TestPhase:
         # Asymmetric unit is automatically expanded when read from cif
         assert len(phase.structure) == expected_atom_count
         # Expand just in case
-        phase.expand_asymmetric_unit()
-        assert len(phase.structure) == expected_atom_count
+        exp = phase.expand_asymmetric_unit()
+        assert len(exp.structure) == expected_atom_count
 
     def test_expand_asymmetric_unit_raise_if_no_point_group(self):
         phase = Phase()
