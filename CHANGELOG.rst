@@ -31,10 +31,14 @@ Changed
 
 Removed
 -------
-
+- ``verbose`` parameter in ``reduce()``
+  (replacing ``map_into_symmetry_reduced_zone()``).
+  
 Deprecated
 ----------
-
+- ``map_into_symmetry_reduced_zone()`` is deprecated since 0.14 and will be removed in
+  0.15. Use ``reduce()`` instead.
+  
 Fixed
 -----
 - minor speedups to 'pytest'

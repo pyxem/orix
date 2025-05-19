@@ -31,6 +31,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 from tqdm import tqdm
 
+from orix._util import deprecated
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
@@ -340,6 +341,7 @@ class Misorientation(Rotation):
 
         return self.__class__(equivalent).flatten()
 
+    @deprecated(since="0.14", removal="0.15", alternative="reduce")
     def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> Misorientation:
         """Return equivalent transformations which have the smallest
         angle of rotation as a new misorientation.
@@ -381,6 +383,53 @@ class Misorientation(Rotation):
                 break
         o_inside._symmetry = (Gl, Gr)
         return o_inside
+
+    def reduce(self) -> Misorientation:
+        """Return equivalent transformations which have the smallest
+        angle of rotation as a new misorientation.
+
+        Parameters
+        ----------
+        verbose
+            Whether to print a progressbar. Default is ``False``.
+
+        Returns
+        -------
+        M
+            A new misorientation object with the assigned symmetry.
+
+        Examples
+        --------
+        >>> from orix.quaternion.symmetry import C4, C2
+        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
+        >>> M = Misorientation(data)
+        >>> M.symmetry = (C4, C2)
+        >>> M.reduce()
+        Misorientation (2,) 4, 2
+        [[-0.7071  0.7071  0.      0.    ]
+        [ 0.      1.      0.      0.    ]]
+        """
+        # create an itertool object for iterating over every
+        # combination of left and right symmetry operations
+        Gl, Gr = self._symmetry
+        symmetry_pairs = iproduct(Gl, Gr)
+
+        # Define a Fundamental Zone (fz). for every misorientation, there
+        # is one and only one combination in `symmetry_pairs` that rotates
+        # it into the fz.
+        fz = OrientationRegion.from_symmetry(Gl, Gr)
+        reduced = self.__class__.identity(self.shape)
+        outside = np.ones(self.shape, dtype=bool)
+        # apply transformations to unreduced misorientations and save the
+        # reduced ones to `reduced` until all are inside the fz
+        for gl, gr in symmetry_pairs:
+            o_transformed = gl * self[outside] * gr
+            reduced[outside] = o_transformed
+            outside = ~(reduced < fz)
+            if not np.any(outside):
+                break
+        reduced._symmetry = (Gl, Gr)
+        return reduced
 
     def scatter(
         self,
