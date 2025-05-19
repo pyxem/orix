@@ -148,7 +148,7 @@ class Phase:
             value = copy.deepcopy(value)
             # Ensure atom positions are expressed in the new basis
             value.placeInLattice(Lattice(base=new_matrix))
-            # Store old lattice for sanitise
+            # Store old lattice for expand_asymmetric_unit
             self._diffpy_lattice = old_matrix
             if value.title == "" and hasattr(self, "_structure"):
                 value.title = self.name
