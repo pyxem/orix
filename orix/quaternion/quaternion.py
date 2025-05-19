@@ -247,6 +247,16 @@ class Quaternion(Object3d):
     # ------------------------ Class methods ------------------------- #
 
     @classmethod
+    def random(cls, shape: Union[int, tuple] = 1) -> Quaternion:
+        quat = super().random(shape)
+        quat.data[:, 0] = np.abs(quat.data[:, 0])
+        return quat
+
+        O = super().__invert__()
+        O.symmetry = self.symmetry
+        return O
+
+    @classmethod
     def from_axes_angles(
         cls,
         axes: np.ndarray | Vector3d | tuple | list,
@@ -684,6 +694,58 @@ class Quaternion(Object3d):
             del out[1]
 
         return out[0] if len(out) == 1 else tuple(out)
+
+    @classmethod
+    def from_path_ends(
+        cls, waypoints: Quaternion, close_loop: bool = False, steps: int = 100
+    ) -> Quaternion:
+        """Return Quaternions tracing the shortest path between two or more
+        consecutive waypoints.
+
+        Parameters
+        ----------
+        waypoints : Quaternion
+            Two or more quaternions that define waypoints along a path through
+            rotation space (SO3).
+        close_loop : bool, optional
+            Option to add a final trip from the last waypoint back to the
+            first, thus closing the loop. Default is False.
+        steps : int, optional
+        Number of points to return along the path between each pair of
+        waypoints. The default is 100.
+
+        Returns
+        -------
+        path :Quaternion
+            quaternions that map out a path between the given waypoints.
+
+        Notes
+        -----
+        This method can use Orientations and Misorientations as inputs, and
+        will return an object of the same class. However, symmetry is ignored
+        when determining the shortest routes.
+        """
+        waypoints = waypoints.flatten()
+        n = waypoints.size
+        if not close_loop:
+            n = n - 1
+
+        path_list = []
+        for i in range(n):
+            # get start and end for this leg of the trip
+            q1 = waypoints[i]
+            q2 = waypoints[(i + 1) % (waypoints.size)]
+            # find the ax/ang describing the trip between points
+            ax, ang = _conversions.qu2ax((~q1 * q2).data)
+            # get 100 steps along the trip and add them to the journey
+            trip = Quaternion.from_axes_angles(ax, np.linspace(0, ang, steps))
+            path_list.append((q1 * (trip.flatten())).data)
+        path_data = np.concatenate(path_list, axis=0)
+        path = waypoints.__class__(path_data)
+        # copy the symmetry if it exists
+        if hasattr(waypoints, "_symmetry"):
+            path._symmetry = waypoints._symmetry
+        return path
 
     @classmethod
     def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
