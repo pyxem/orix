@@ -821,3 +821,8 @@ class TestPhase:
         # Expand just in case
         phase.expand_asymmetric_unit()
         assert len(phase.structure) == expected_atom_count
+
+    def test_expand_asymmetric_unit_raise_if_no_point_group(self):
+        phase = Phase()
+        with pytest.raises(ValueError, match="Space group must be set"):
+            phase.expand_asymmetric_unit()
