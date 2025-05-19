@@ -199,7 +199,7 @@ class TestQuaternion:
         with pytest.raises(TypeError):
             _ = quaternion * "cant-multiply-by-this"
 
-    @pytest.mark.parametrize("shape", [(2, 3), (4, 5, 6), (1, 5), (11,)])
+    @pytest.mark.parametrize("shape", [(2, 3), (3, 4, 5), (1, 5), (7,)])
     def test_outer(self, shape):
         rng = np.random.default_rng()
         new_shape = shape + (4,)

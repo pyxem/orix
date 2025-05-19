@@ -38,7 +38,7 @@ from orix.vector import Vector3d
 
 @pytest.fixture(scope="session")
 def sample():
-    return uniform_SO3_sample(2, method="haar_euler")
+    return uniform_SO3_sample(4, method="haar_euler")
 
 
 @pytest.fixture(scope="session")
@@ -129,9 +129,9 @@ class TestUniformSO3:
         """Checks that doubling resolution doubles density (8-fold
         counts).
         """
-        lower = uniform_SO3_sample(4, method="haar_euler")
+        lower = uniform_SO3_sample(8, method="haar_euler")
         x, y = lower.size * 8, sample.size
-        assert np.isclose(x, y, rtol=0.025)
+        assert np.isclose(x, y, rtol=0.05)
 
 
 class TestGetSampleLocal:

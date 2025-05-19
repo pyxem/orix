@@ -358,7 +358,7 @@ class TestMisorientation:
 
     @pytest.mark.slow
     def test_get_distance_matrix_progressbar_chunksize(self):
-        m = Misorientation.random((5, 15, 4))
+        m = Misorientation.random((3, 5, 4))
         angle1 = m.get_distance_matrix(chunk_size=5)
         angle2 = m.get_distance_matrix(chunk_size=10, progressbar=False)
         assert np.allclose(angle1, angle2)

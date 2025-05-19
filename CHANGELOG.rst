@@ -20,8 +20,11 @@ Added
   previously discarded. Discarding is still enabled by default.
 - Added copy constructors to ``Phase``, ``PhaseList`` and ``CrystalMap``.
 
+
 Changed
 -------
+- .ang files now allow optional rewriting of phase names based on elements and
+point group, as opposed to automatically  overwriting names 
 - For speed and space reasons, vectors and quaternions are now randomly
   generated using a gaussian method as opposed to rejection-based sampling.
 
@@ -33,6 +36,7 @@ Deprecated
 
 Fixed
 -----
+- minor speedups to 'pytest'
 
 2025-01-01 - version 0.13.3
 ===========================
