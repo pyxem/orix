@@ -366,7 +366,7 @@ class Phase:
         return copy.deepcopy(self)
 
     def expand_asymmetric_unit(self) -> Phase:
-        """Expand the atom positions using the space group symmetry.
+        """Return new instance with all symmetrically equivalent atoms.
 
         Examples
         --------
@@ -379,8 +379,8 @@ class Phase:
         )
         >>> phase.structure
         [Si   0.000000 0.000000 1.000000 1.0000]
-        >>> phase.expand_asymmetric_unit()
-        >>> phase.structure
+        >>> expanded = phase.expand_asymmetric_unit()
+        >>> expanded.structure
         [Si   0.000000 0.000000 0.000000 1.0000,
          Si   0.000000 0.500000 0.500000 1.0000,
          Si   0.500000 0.500000 0.000000 1.0000,
