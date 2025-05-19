@@ -93,6 +93,27 @@ class TestPhase:
         else:
             assert p.structure == Structure()
 
+    def test_copy_constructor_phase(self):
+        p1 = Phase(
+            "test",
+            225,
+            "m-3m",
+            Structure(
+                [Atom("Al", (0, 0, 0))],
+                Lattice(10, 10, 10, 90, 90, 90),
+            ),
+        )
+        p2 = Phase(p1)
+
+        assert p1 is not p2
+        assert repr(p1) == repr(p2)
+        assert p1.structure is not p2.structure
+        assert p1.structure[0].element == p2.structure[0].element
+        assert tuple(p1.structure[0].xyz) == tuple(p2.structure[0].xyz)
+        assert p1.structure[0] is not p2.structure[0]
+        assert p1.structure.lattice.abcABG() == p2.structure.lattice.abcABG()
+        assert p1.structure.lattice is not p2.structure.lattice
+
     @pytest.mark.parametrize("name", [None, "al", 1, np.arange(2)])
     def test_set_phase_name(self, name):
         p = Phase(name=name)

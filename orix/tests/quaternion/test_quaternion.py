@@ -223,6 +223,7 @@ class TestQuaternion:
         assert qo_dask2.shape == 2 * shape
         assert np.allclose(qo_numpy.data, qo_dask2.data)
 
+    @pytest.mark.slow
     def test_outer_lazy_chunk_size(self):
         shape = (5, 15, 4)
         rng = np.random.default_rng()
