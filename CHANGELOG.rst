@@ -36,7 +36,8 @@ Deprecated
 
 Fixed
 -----
-- running 'pytests' is not faster and has options for parallel testing.
+- minor speedups to 'pytest'
+
 2025-01-01 - version 0.13.3
 ===========================
 
