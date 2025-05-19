@@ -22,8 +22,9 @@ Some useful :doc:`fixtures <pytest:explanation/fixtures>` are available in the
 
 To run the tests::
 
-   pytest --cov --pyargs orix
+  pytest --cov --pyargs orix -n auto
 
+The ``-n auto`` is an optional flag to enable parallelized testing. 
 The ``--cov`` flag makes :doc:`coverage.py <coverage:index>` print a nice report.
 For an even nicer presentation, you can use ``coverage.py`` directly::
 
@@ -32,6 +33,17 @@ For an even nicer presentation, you can use ``coverage.py`` directly::
 Coverage can then be inspected in the browser by opening ``htmlcov/index.html``.
 
 We strive for 100% test coverage of lines when all dependencies are installed.
+
+If you have a test that takes a long time to run, you can mark it to skip it from running by default:
+
+.. code-block::
+    @pytest.mark.slow
+    def test_slow_function():
+        pass
+
+Then you can run the tests with the ``--runslow`` option to skip slow tests::
+
+    pytest --runslow
 
 Docstring examples are tested with :doc:`pytest <pytest:how-to/doctest>` as well.
 :mod:`numpy` and :mod:`matplotlib.pyplot` should not be imported in examples as they are

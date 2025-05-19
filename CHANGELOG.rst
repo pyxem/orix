@@ -11,6 +11,8 @@ Unreleased
 
 Added
 -----
+- Added the ``@pytest.mark.slow`` marker for slow tests.  Using ``pytest . --run-slow`` will
+  run all tests, including slow ones.
 - Can now convert Quaternions and Rotations to scipy.spatial.transform.Rotation 
   objects via Quaterion.to_scipy_rotation. This also works with Orientations 
   and Misorientations, albiet with a loss of symmetry information.
