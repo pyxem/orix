@@ -48,10 +48,13 @@ ALL_COLORS.update(mcolors.XKCD_COLORS)
 class Phase:
     """Name, symmetry, and color of a phase in a crystallographic map.
 
+    If the first parameter is a :code:`Phase` instance, a copy is made
+
     Parameters
     ----------
     name
         Phase name. Overwrites the name in the ``structure`` object.
+        If this parameter is a :code:`Phase`, a copy is made.
     space_group
         Space group describing the symmetry operations resulting from
         associating the point group with a Bravais lattice, according
@@ -95,12 +98,21 @@ class Phase:
 
     def __init__(
         self,
-        name: str | None = None,
+        name: str | "Phase" | None = None,
         space_group: int | SpaceGroup | None = None,
         point_group: int | str | Symmetry | None = None,
         structure: Structure | None = None,
         color: str | None = None,
     ) -> None:
+        if isinstance(name, Phase):
+            return Phase.__init__(
+                self,
+                name.name,
+                name.space_group,
+                name.point_group,
+                name.structure.copy(),
+                name.color,
+            )
         self.structure = structure if structure is not None else Structure()
         if name is not None:
             self.name = name
@@ -358,11 +370,14 @@ class PhaseList:
 
     Each phase in the list must have a unique phase id and name.
 
+    If the first parameter is a :code:`PhaseList`, a copy is made
+
     Parameters
     ----------
     phases
         A list or dict of phases or a single phase. The other
         arguments are ignored if this is passed.
+        If a :code:`PhaseList` is given, a copy is made.
     names
         Phase names. Overwrites the names in the ``structure`` objects.
     space_groups
@@ -436,7 +451,7 @@ class PhaseList:
 
     def __init__(
         self,
-        phases: Phase | list[Phase] | dict[int, Phase] | None = None,
+        phases: Phase | list[Phase] | dict[int, Phase] | "PhaseList" | None = None,
         names: str | list[str] | None = None,
         space_groups: int | SpaceGroup | list[int | SpaceGroup] | None = None,
         point_groups: str | int | Symmetry | list[str | int | Symmetry] | None = None,
@@ -445,6 +460,16 @@ class PhaseList:
         structures: Structure | list[Structure] | None = None,
     ) -> None:
         """Create a new phase list."""
+        if isinstance(phases, PhaseList):
+            return PhaseList.__init__(
+                self,
+                names=phases.names,
+                space_groups=phases.space_groups,
+                point_groups=phases.point_groups,
+                colors=phases.colors,
+                ids=phases.ids,
+                structures=phases.structures,
+            )
         d = {}
         if isinstance(phases, list):
             try:

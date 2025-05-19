@@ -46,6 +46,12 @@ class TestCrystalMap:
         assert isinstance(xmap.rotations, Rotation)
         assert np.allclose(xmap.rotations.data, rotations.data)
 
+    def test_init_with_instance(self, rotations):
+        xmap1 = CrystalMap(rotations)
+        xmap2 = CrystalMap(xmap1)
+        assert xmap1.rotations == xmap2.rotations
+        assert xmap1 is not xmap2
+
     def test_init_with_invalid_rotations(self, rotations):
         with pytest.raises(ValueError):
             _ = CrystalMap(rotations=rotations.data)
