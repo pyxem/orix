@@ -421,3 +421,61 @@ class TestPhase:
         phase2 = Phase(structure=structure)
         assert np.allclose(phase1.structure.lattice.base, phase2.structure.lattice.base)
         assert np.allclose(phase1.structure.xyz, phase2.structure.xyz)
+
+    @pytest.mark.parametrize(
+        ["lattice", "atoms", "spacegroup", "expected_atom_positions"],
+        [
+            [
+                # P1
+                Lattice(1, 1, 1, 90, 90, 90),
+                [
+                    Atom("C", [0, 0, 0]),
+                ],
+                1,
+                [(0, 0, 0)]
+            ],
+            [
+                # Fd3m
+                Lattice(1, 1, 1, 90, 90, 90),
+                [
+                    Atom("C", [0, 0, 0]),
+                ],
+                227,
+                [
+                    (0, 0, 0),
+                    (0, 0.5, 0.5),
+                    (0.5, 0, 0.5),
+                    (0.5, 0.5, 0),
+                    (0.25, 0.25, 0.25),
+                    (0.25, 0.75, 0.75),
+                    (0.75, 0.25, 0.75),
+                    (0.75, 0.75, 0.25)
+                ]
+            ],
+            [
+                # P63/mmc (graphite)
+                Lattice(2, 2, 3, 90, 90, 120),
+                [
+                    Atom("C", [0, 0, 0.25]),
+                    Atom("C", [1/3, 2/3, 0.75]),
+                ],
+                194,
+                # Orix conventions make 1/3 -> 0.57735...
+                [
+                    (0, 0, 0.25),
+                    (0, 0, 0.75),
+                    (0.57735, 0.57735, 0.75),
+                    (0.57735, 0, 0.25),
+                ]
+            ],
+        ],
+    )
+    def test_expand_asymmetric_unit(self, lattice, atoms, spacegroup, expected_atom_positions):
+        s = Structure(lattice=lattice, atoms=atoms)
+        phase = Phase(structure=s, space_group=spacegroup)
+        base = phase.structure.lattice.base.copy()
+        phase.expand_asymmetric_unit()
+        assert np.array_equal(base, phase.structure.lattice.base)
+        assert len(phase.structure) == len(expected_atom_positions)
+        # Don't assume order is preserved
+        assert set(tuple(xyz.round(5).tolist()) for xyz in phase.structure.xyz) == set(expected_atom_positions)
