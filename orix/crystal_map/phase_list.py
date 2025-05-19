@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Generator
 import warnings
 
-from diffpy.structure import Structure, Lattice
+from diffpy.structure import Lattice, Structure
 from diffpy.structure.parsers import p_cif
 from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
 from diffpy.structure.symmetryutilities import ExpandAsymmetricUnit
