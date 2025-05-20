@@ -162,6 +162,7 @@ Fixed
 - Previously, ``Phase`` did not adjust atom positions when forcing
   ``Phase.structure.lattice.base`` to use the crystal axes alignment ``e1 || a``,
   ``e3 || c*``. This is now fixed.
+- ``IPFCOlorKeyTSL.plot`` now produces properly labeled plot axes.
 
 2023-03-14 - version 0.11.1
 ===========================
