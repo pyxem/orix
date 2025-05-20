@@ -223,6 +223,9 @@ class InversePoleFigurePlot(StereographicPlot):
         """Add appropriately placed and nicely formatted crystal
         direction labels [uvw] or [UVTW] to the sector corners.
         """
+        # use symmetry.fundamental_sector to get consistent fundamental
+        # sector definitions that align with section 2.4 of this paper:
+        # https://onlinelibrary.wiley.com/doi/abs/10.1107/S1600576716012942
         fs = self._symmetry.fundamental_sector
         vertices = fs.vertices
         if vertices.size > 0:
@@ -230,6 +233,15 @@ class InversePoleFigurePlot(StereographicPlot):
 
             # Nicely formatted labels for crystal directions
             labels = _get_ipf_axes_labels(vertices, self._symmetry)
+            if self._symmetry.system in ["trigonal", "hexagonal"]:
+                # trigonal and hexagonal are given in xyz here, and need
+                # to be converted to uvw, then UVTW to make the labels
+                # show up correctly.
+                sq2hex = np.array(
+                    [[1, 0, 0], [1 / np.sqrt(3), np.sqrt(4 / 3), 0], [0, 0, 1]]
+                )
+                label_v = vertices.data.dot(sq2hex)
+                labels = _get_ipf_axes_labels(label_v, self._symmetry)
             x, y = self._projection.vector2xy(vertices)
 
             x_edge, y_edge = self._edge_patch.get_path().vertices.T
