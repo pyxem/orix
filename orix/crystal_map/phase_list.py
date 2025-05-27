@@ -24,9 +24,10 @@ from pathlib import Path
 from typing import Generator
 import warnings
 
-from diffpy.structure import Structure
+from diffpy.structure import Lattice, Structure
 from diffpy.structure.parsers import p_cif
 from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
+from diffpy.structure.symmetryutilities import ExpandAsymmetricUnit
 import matplotlib.colors as mcolors
 import numpy as np
 
@@ -146,9 +147,9 @@ class Phase:
             new_matrix = _new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
             value = copy.deepcopy(value)
             # Ensure atom positions are expressed in the new basis
-            old_xyz_cartn = value.xyz_cartn
-            value.lattice.setLatBase(new_matrix)
-            value.xyz_cartn = old_xyz_cartn
+            value.placeInLattice(Lattice(base=new_matrix))
+            # Store old lattice for expand_asymmetric_unit
+            self._diffpy_lattice = old_matrix
             if value.title == "" and hasattr(self, "_structure"):
                 value.title = self.name
             self._structure = value
@@ -363,6 +364,59 @@ class Phase:
         function.
         """
         return copy.deepcopy(self)
+
+    def expand_asymmetric_unit(self) -> Phase:
+        """Return new instance with all symmetrically equivalent atoms.
+
+        Examples
+        --------
+        >>> phase = Phase(
+            structure=Structure(
+                atoms = [Atom("Si", xyz=(0, 0, 1))],
+                lattice=Lattice(4.04, 4.04, 4.04, 90, 90, 90)
+            ),
+            space_group=227,
+        )
+        >>> phase.structure
+        [Si   0.000000 0.000000 1.000000 1.0000]
+        >>> expanded = phase.expand_asymmetric_unit()
+        >>> expanded.structure
+        [Si   0.000000 0.000000 0.000000 1.0000,
+         Si   0.000000 0.500000 0.500000 1.0000,
+         Si   0.500000 0.500000 0.000000 1.0000,
+         Si   0.500000 0.000000 0.500000 1.0000,
+         Si   0.750000 0.250000 0.750000 1.0000,
+         Si   0.250000 0.250000 0.250000 1.0000,
+         Si   0.250000 0.750000 0.750000 1.0000,
+         Si   0.750000 0.750000 0.250000 1.0000]
+        """
+        if self.space_group is None:
+            raise ValueError("Space group must be set")
+
+        # Ensure atom positions are expressed in diffpy's convention
+        diffpy_structure = self.structure.copy()
+        diffpy_structure.placeInLattice(Lattice(base=self._diffpy_lattice))
+        xyz = diffpy_structure.xyz
+        diffpy_structure.clear()
+
+        eau = ExpandAsymmetricUnit(self.space_group, xyz)
+        for atom, new_positions in zip(self.structure, eau.expandedpos):
+            for pos in new_positions:
+                new_atom = copy.deepcopy(atom)
+                new_atom.xyz = pos
+                # Only add new atom if not already present
+                for present_atom in diffpy_structure:
+                    if present_atom.element == new_atom.element and np.allclose(
+                        present_atom.xyz, new_atom.xyz
+                    ):
+                        break
+                else:
+                    diffpy_structure.append(new_atom)
+
+        # This handles conversion back to correct alignment
+        out = Phase(self)
+        out.structure = diffpy_structure
+        return out
 
 
 class PhaseList:
