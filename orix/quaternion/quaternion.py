@@ -505,9 +505,7 @@ class Quaternion(Object3d):
 
         eu = np.atleast_2d(euler)
         if np.any(np.abs(eu) > 4 * np.pi):
-            warnings.warn(
-                "Angles are quite high, did you forget to set degrees=True?"
-            )
+            warnings.warn("Angles are quite high, did you forget to set degrees=True?")
 
         Q = _conversions.eu2qu(eu)
         Q = cls(Q)
@@ -546,9 +544,7 @@ class Quaternion(Object3d):
         # Verify the input can be interpreted as an array of (3, 3) arrays
         om = np.atleast_2d(matrix)
         if om.shape[-2:] != (3, 3):
-            raise ValueError(
-                "the last two dimensions of 'matrix' must be (3, 3)"
-            )
+            raise ValueError("the last two dimensions of 'matrix' must be (3, 3)")
 
         Q = _conversions.om2qu(om)
         Q = cls(Q)
@@ -752,9 +748,7 @@ class Quaternion(Object3d):
         return path
 
     @classmethod
-    def triple_cross(
-        cls, q1: Quaternion, q2: Quaternion, q3: Quaternion
-    ) -> Quaternion:
+    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
         """Pointwise cross product of three quaternions.
 
         Parameters
@@ -1201,9 +1195,7 @@ class Quaternion(Object3d):
                     qu12 = np.outer(qu1, qu2).reshape(*qu1.shape, *qu2.shape)
                     qu = quaternion.as_float_array(qu12)
                 else:  # pragma: no cover
-                    Q12 = Quaternion(self).reshape(-1, 1) * other.reshape(
-                        1, -1
-                    )
+                    Q12 = Quaternion(self).reshape(-1, 1) * other.reshape(1, -1)
                     qu = Q12.data.reshape(*self.shape, *other.shape, 4)
             return other.__class__(qu)
         elif isinstance(other, Vector3d):
@@ -1376,9 +1368,7 @@ class Quaternion(Object3d):
 
 
 @nb.guvectorize("(n)->(n)", cache=True)
-def qu_conj_gufunc(
-    qu: np.ndarray, qu2: np.ndarray
-) -> None:  # pragma: no cover
+def qu_conj_gufunc(qu: np.ndarray, qu2: np.ndarray) -> None:  # pragma: no cover
     qu2[0] = qu[0]
     qu2[1] = -qu[1]
     qu2[2] = -qu[2]
@@ -1389,23 +1379,13 @@ def qu_conj_gufunc(
 def qu_multiply_gufunc(
     qu1: np.ndarray, qu2: np.ndarray, qu12: np.ndarray
 ) -> None:  # pragma: no cover
-    qu12[0] = (
-        qu1[0] * qu2[0] - qu1[1] * qu2[1] - qu1[2] * qu2[2] - qu1[3] * qu2[3]
-    )
-    qu12[1] = (
-        qu1[1] * qu2[0] + qu1[0] * qu2[1] - qu1[3] * qu2[2] + qu1[2] * qu2[3]
-    )
-    qu12[2] = (
-        qu1[2] * qu2[0] + qu1[3] * qu2[1] + qu1[0] * qu2[2] - qu1[1] * qu2[3]
-    )
-    qu12[3] = (
-        qu1[3] * qu2[0] - qu1[2] * qu2[1] + qu1[1] * qu2[2] + qu1[0] * qu2[3]
-    )
+    qu12[0] = qu1[0] * qu2[0] - qu1[1] * qu2[1] - qu1[2] * qu2[2] - qu1[3] * qu2[3]
+    qu12[1] = qu1[1] * qu2[0] + qu1[0] * qu2[1] - qu1[3] * qu2[2] + qu1[2] * qu2[3]
+    qu12[2] = qu1[2] * qu2[0] + qu1[3] * qu2[1] + qu1[0] * qu2[2] - qu1[1] * qu2[3]
+    qu12[3] = qu1[3] * qu2[0] - qu1[2] * qu2[1] + qu1[1] * qu2[2] + qu1[0] * qu2[3]
 
 
-def qu_multiply(
-    qu1: np.ndarray, qu2: np.ndarray
-) -> np.ndarray:  # pragma: no cover
+def qu_multiply(qu1: np.ndarray, qu2: np.ndarray) -> np.ndarray:  # pragma: no cover
     shape = np.broadcast_shapes(qu1.shape, qu2.shape)
     if not np.issubdtype(qu1.dtype, np.float64):
         qu1 = qu1.astype(np.float64)
@@ -1430,9 +1410,7 @@ def qu_rotate_vec_gufunc(
     v2[2] = z - c * tx + b * ty + a * tz
 
 
-def qu_rotate_vec(
-    qu: np.ndarray, v: np.ndarray
-) -> np.ndarray:  # pragma: no cover
+def qu_rotate_vec(qu: np.ndarray, v: np.ndarray) -> np.ndarray:  # pragma: no cover
     qu = np.atleast_2d(qu)
     v = np.atleast_2d(v)
     shape = np.broadcast_shapes(qu.shape[:-1], v.shape[:-1]) + (3,)

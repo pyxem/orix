@@ -78,9 +78,7 @@ class TestQuaternion:
         assert np.allclose((-quaternion).data, (-quaternion.data))
 
     def test_norm(self, quaternion):
-        assert np.allclose(
-            quaternion.norm, (quaternion.data**2).sum(axis=-1) ** 0.5
-        )
+        assert np.allclose(quaternion.norm, (quaternion.data**2).sum(axis=-1) ** 0.5)
 
     def test_unit(self, quaternion):
         assert np.allclose(quaternion.unit.norm, 1)
@@ -104,9 +102,7 @@ class TestQuaternion:
         assert np.allclose(q1.d, qa * sd + qb * sc - qc * sb + qd * sa)
 
     def test_mul_identity(self, quaternion):
-        assert np.allclose(
-            (quaternion * Quaternion.identity()).data, quaternion.data
-        )
+        assert np.allclose((quaternion * Quaternion.identity()).data, quaternion.data)
 
     def test_no_multiplicative_inverse(self, quaternion, something):
         q1 = quaternion * something
@@ -197,9 +193,7 @@ class TestQuaternion:
         assert qa.size == 2 * q.size
 
     def test_edgecase_outer(self, quaternion):
-        with pytest.raises(
-            NotImplementedError, match="This operation is currently "
-        ):
+        with pytest.raises(NotImplementedError, match="This operation is currently "):
             _ = quaternion.outer([3, 2])
 
     def test_failing_mul(self, quaternion):
@@ -304,9 +298,7 @@ class TestQuaternion:
         q = Quaternion(abcd)
         # not Quaternion or Vector3d
         other = np.random.rand(7, 3)
-        with pytest.raises(
-            TypeError, match="Other must be Quaternion or Vector3d"
-        ):
+        with pytest.raises(TypeError, match="Other must be Quaternion or Vector3d"):
             q._outer_dask(other)
 
     def test_from_align_vectors(self):
@@ -326,12 +318,8 @@ class TestQuaternion:
         error = out[1]
         assert error == 0
 
-        _, sens_mat = Quaternion.from_align_vectors(
-            v1, v2, return_sensitivity=True
-        )
-        assert np.allclose(
-            sens_mat, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]])
-        )
+        _, sens_mat = Quaternion.from_align_vectors(v1, v2, return_sensitivity=True)
+        assert np.allclose(sens_mat, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0.5]]))
 
         out = Quaternion.from_align_vectors(
             v1, v2, return_rmsd=True, return_sensitivity=True
@@ -405,9 +393,7 @@ class TestToFromEuler:
         assert np.allclose((q_l2c * q_c2l).data, [1, 0, 0, 0])
 
     def test_direction_kwarg_dumb(self, eu):
-        with pytest.raises(
-            ValueError, match="The chosen direction is not one of "
-        ):
+        with pytest.raises(ValueError, match="The chosen direction is not one of "):
             _ = Quaternion.from_euler(eu, direction="dumb_direction")
 
     def test_edge_cases_to_euler(self):
@@ -418,25 +404,19 @@ class TestToFromEuler:
         _ = q.to_euler()
 
     def test_passing_degrees_warns(self):
-        with pytest.warns(
-            UserWarning, match="Angles are quite high, did you forget "
-        ):
+        with pytest.warns(UserWarning, match="Angles are quite high, did you forget "):
             q = Quaternion.from_euler([90, 0, 0])
             assert np.allclose(q.data, [0.5253, 0, 0, -0.8509], atol=1e-4)
 
 
 class TestFromToMatrix:
     def test_to_matrix(self):
-        q = Quaternion(
-            [[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]]
-        )
+        q = Quaternion([[1, 0, 0, 0], [3, 0, 0, 0], [0, 1, 0, 0], [0, 2, 0, 0]])
         om = np.array(
             [np.eye(3), np.eye(3), np.diag([1, -1, -1]), np.diag([1, -1, -1])]
         )
         # Shapes are handled correctly
-        assert np.allclose(
-            q.reshape(2, 2).unit.to_matrix(), om.reshape(2, 2, 3, 3)
-        )
+        assert np.allclose(q.reshape(2, 2).unit.to_matrix(), om.reshape(2, 2, 3, 3))
 
         q2 = Quaternion(
             [
@@ -450,18 +430,13 @@ class TestFromToMatrix:
         # Inverse equal to transpose
         assert all(np.allclose(np.linalg.inv(i), i.T) for i in om_from_q2)
         # Cross product of any two rows gives the third
-        assert all(
-            np.allclose(np.cross(i[:, 0], i[:, 1]), i[:, 2])
-            for i in om_from_q2
-        )
+        assert all(np.allclose(np.cross(i[:, 0], i[:, 1]), i[:, 2]) for i in om_from_q2)
         # Sum of squares of any column or row equals unity
         assert np.allclose(np.sum(np.square(om_from_q2), axis=1), 1)  # Rows
         assert np.allclose(np.sum(np.square(om_from_q2), axis=2), 1)  # Columns
 
     def test_from_matrix(self):
-        q = Quaternion(
-            [[1, 0, 0, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]]
-        )
+        q = Quaternion([[1, 0, 0, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]])
         ident = np.identity(3)
         rot_180x = np.diag([1, -1, -1])
         om = np.array([ident, 2 * ident, rot_180x, 2 * rot_180x])
@@ -505,9 +480,7 @@ class TestFromToMatrix:
         q = Quaternion.from_matrix([i.R for i in sg225.symop_list])
         assert not np.isnan(q.data).any()
 
-    def test_from_matrix_raises(
-        self, quaternions_conversions, orientation_matrices
-    ):
+    def test_from_matrix_raises(self, quaternions_conversions, orientation_matrices):
         qu = Quaternion.from_matrix(orientation_matrices).data
         assert np.allclose(qu, quaternions_conversions, atol=1e-4)
         with pytest.raises(ValueError, match="(3, 3)"):
@@ -527,16 +500,12 @@ class TestFromToAxesAngles:
             rotations = rotations.__class__(rotations.data[..., np.newaxis, :])
         ax = AxAngle.from_rotation(rotations)
         Q1 = Quaternion.from_axes_angles(ax.axis.data, ax.angle)
-        Q2 = Quaternion.from_axes_angles(
-            ax.axis, np.rad2deg(ax.angle), degrees=True
-        )
+        Q2 = Quaternion.from_axes_angles(ax.axis, np.rad2deg(ax.angle), degrees=True)
         assert np.allclose(Q1.data, Q2.data)
 
     def test_to_axes_angles(self, quaternions_conversions, axis_angle_pairs):
         ax = Quaternion(quaternions_conversions).to_axes_angles()
-        assert np.allclose(
-            np.deg2rad(ax.angle), axis_angle_pairs[:, 3], atol=4
-        )
+        assert np.allclose(np.deg2rad(ax.angle), axis_angle_pairs[:, 3], atol=4)
 
     def test_from_axes_angles_empty(self):
         q = Quaternion.from_axes_angles([], [])
@@ -548,16 +517,12 @@ class TestFromToRodrigues:
     Rodrigues and Rodrigues-Frank vectors.
     """
 
-    def test_from_to_rodrigues(
-        self, quaternions_conversions, rodrigues_vectors
-    ):
+    def test_from_to_rodrigues(self, quaternions_conversions, rodrigues_vectors):
         axes = rodrigues_vectors[..., :3]
         angles = rodrigues_vectors[..., 3]
 
         q1 = Quaternion(quaternions_conversions)
-        with pytest.warns(
-            UserWarning, match="Highest angle is greater than 179.999 "
-        ):
+        with pytest.warns(UserWarning, match="Highest angle is greater than 179.999 "):
             q2 = Quaternion.from_rodrigues(axes, angles)
         assert np.allclose(q1.data, q2.data, atol=1e-4)
         ro = q1.to_rodrigues(frank=True)
@@ -567,9 +532,7 @@ class TestFromToRodrigues:
             _ = Quaternion.from_rodrigues([1e15, 1e15, 1e10])
         with pytest.warns(UserWarning, match="Max."):
             _ = Quaternion.from_rodrigues([0, 0, 1e-16])
-        with pytest.raises(
-            ValueError, match="Final dimension of vector array must be"
-        ):
+        with pytest.raises(ValueError, match="Final dimension of vector array must be"):
             Quaternion.from_rodrigues([1, 2, 3, 4])
 
     def test_from_rodrigues_empty(self):
@@ -582,9 +545,7 @@ class TestFromToHomochoric:
     homochoric vectors.
     """
 
-    def test_from_to_homochoric(
-        self, homochoric_vectors, quaternions_conversions
-    ):
+    def test_from_to_homochoric(self, homochoric_vectors, quaternions_conversions):
         ho1 = homochoric_vectors
         ho2 = Vector3d(ho1)
         ho3 = Homochoric(ho1)
@@ -598,9 +559,7 @@ class TestFromToHomochoric:
         assert np.allclose(q1.data, quaternions_conversions, atol=1e-4)
         assert np.allclose(q2.data, quaternions_conversions, atol=1e-4)
         assert np.allclose(q3.data, quaternions_conversions, atol=1e-4)
-        assert np.allclose(
-            q4.data, quaternions_conversions.reshape(2, 5, 4), atol=1e-4
-        )
+        assert np.allclose(q4.data, quaternions_conversions.reshape(2, 5, 4), atol=1e-4)
 
         assert np.allclose(ho1, q1.to_homochoric().data, atol=1e-4)
         assert np.allclose(ho1, q2.to_homochoric().data, atol=1e-4)
@@ -608,9 +567,7 @@ class TestFromToHomochoric:
         assert np.allclose(ho4, q4.to_homochoric().data, atol=1e-4)
 
     def test_from_homochoric_raises(self):
-        with pytest.raises(
-            ValueError, match="Final dimension of vector array must be"
-        ):
+        with pytest.raises(ValueError, match="Final dimension of vector array must be"):
             Quaternion.from_homochoric([1, 2])
 
     def test_from_homochoric_empty(self):
