@@ -1002,6 +1002,7 @@ def get_point_groups(subset: str = "unique"):
             C2,
             # Orthorhombic
             D2,
+            D4,
             # Tetragonal
             C4,
             # Trigonal
@@ -1015,7 +1016,26 @@ def get_point_groups(subset: str = "unique"):
             O,
         ]
     elif subset == "laue":
-        return [x * Ci for x in get_point_groups("proper")]
+        return [
+            # Triclinic
+            Ci,
+            # Monoclinic
+            C2h,
+            # Orthorhombic
+            D2h,
+            D4h,
+            # Tetragonal
+            C4h,
+            # Trigonal
+            C3i,
+            D3d,
+            # Hexagonal
+            C6h,
+            D6h,
+            # cubic
+            Th,
+            Oh,
+        ]
     elif subset == "proper_all":
         return [
             # Triclinic
@@ -1238,30 +1258,26 @@ _EDAX_POINT_GROUP_ALIASES = {
 
 
 def _get_laue_group_name(name: str) -> str | None:
-    if name in ["1", "-1"]:
-        return "-1"
-    elif name in ["2", "211", "121", "112", "m11", "1m1", "11m", "2/m"]:
-        return "2/m"
-    elif name in ["222", "mm2", "mmm"]:
-        return "mmm"
-    elif name in ["4", "-4", "4/m"]:
-        return "4/m"
-    elif name in ["422", "4mm", "-42m", "4/mmm"]:
-        return "4/mmm"
-    elif name in ["3", "-3"]:
-        return "-3"
-    elif name in ["321", "312", "32", "3m", "-3m"]:
-        return "-3m"
-    elif name in ["6", "-6", "6/m"]:
-        return "6/m"
-    elif name in ["6mm", "-6m2", "6/mmm", "622"]:
-        return "6/mmm"
-    elif name in ["23", "m-3"]:
-        return "m-3"
-    elif name in ["432", "-43m", "m-3m"]:
-        return "m-3m"
-    else:
-        return None
+    # search through all the point groups defined in orix for one with a
+    # matching name.
+    valid_name = False
+    for g in get_point_groups("all_repeated"):
+        if g.name == name:
+            valid_name = True
+            break
+    if valid_name == False:
+        raise ValueError("{} is not a valid point group name")
+    # add an inversion to get the laue group.
+    g_laue = _get_unique_symmetry_elements(g, Ci)
+    # find a laue group with matching operators
+    for laue in get_point_groups("laue"):
+        # first check for length
+        if g_laue.shape != laue.shape:
+            continue
+        # then check for identical operators (regardless of order)
+        if np.min(g_laue.outer(laue).angle ** 2, 1).max() < 1e-4:
+            return laue.name
+    raise ValueError("Could not find Laue group name for {}".format(g.name))
 
 
 def _get_unique_symmetry_elements(

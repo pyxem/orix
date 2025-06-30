@@ -913,7 +913,8 @@ class TestLaueGroup:
         assert D6h.laue.name == "6/mmm"
         assert Th.laue.name == "m-3"
         assert Oh.laue.name == "m-3m"
-        assert Symmetry(((1, 0, 0, 0), (1, 1, 0, 0))).laue.name is None
+        with pytest.raises(ValueError):
+            Symmetry(((1, 0, 0, 0), (1, 1, 0, 0))).laue.name
 
 
 class TestEulerFundamentalRegion:
