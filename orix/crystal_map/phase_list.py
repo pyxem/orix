@@ -34,8 +34,8 @@ import numpy as np
 from orix.quaternion.symmetry import (
     _EDAX_POINT_GROUP_ALIASES,
     Symmetry,
-    _groups,
     get_point_group,
+    get_point_groups,
 )
 from orix.vector import Miller, Vector3d
 
@@ -239,6 +239,7 @@ class Phase:
     @point_group.setter
     def point_group(self, value: int | str | Symmetry | None) -> None:
         """Set the point group."""
+        groups = get_point_groups("all_repeated")
         if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):
@@ -246,7 +247,7 @@ class Phase:
                 if value in aliases:
                     value = key
                     break
-            for point_group in _groups:
+            for point_group in groups:
                 if value == point_group.name:
                     value = point_group
                     break
@@ -564,7 +565,13 @@ class PhaseList:
             max_entries = max(
                 [
                     len(i) if i is not None else 0
-                    for i in [names, space_groups, point_groups, ids, structures]
+                    for i in [
+                        names,
+                        space_groups,
+                        point_groups,
+                        ids,
+                        structures,
+                    ]
                 ]
             )
 
