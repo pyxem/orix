@@ -89,11 +89,11 @@ def test_quaternion_subclasses_copy_constructor_casting():
         # 7pi/12 -C2-> # 7pi/12
         ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
         # 7pi/12 -C3-> # 7pi/12
-        ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
+        ([(0.6088, 0, 0, 0.7934)], C3, [(0.9914, 0, 0, -0.1305)]),
         # 7pi/12 -C4-> # pi/12
-        ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
+        ([(0.6088, 0, 0, 0.7934)], C4, [(0.9914, 0, 0, 0.1305)]),
         # 7pi/12 -O-> # pi/12
-        ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
+        ([(0.6088, 0, 0, 0.7934)], O, [(0.9914, 0, 0, 0.1305)]),
     ],
     indirect=["orientation"],
 )
@@ -297,7 +297,8 @@ def test_symmetry_property_wrong_type_orientation():
 
 
 @pytest.mark.parametrize(
-    "error_type, value", [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)]
+    "error_type, value",
+    [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)],
 )
 def test_symmetry_property_wrong_type_misorientation(error_type, value):
     mori = Misorientation.random((3, 2))
@@ -309,7 +310,9 @@ def test_symmetry_property_wrong_type_misorientation(error_type, value):
     "error_type, value",
     [(ValueError, (C1,)), (ValueError, (C1, C2, C1))],
 )
-def test_symmetry_property_wrong_number_of_values_misorientation(error_type, value):
+def test_symmetry_property_wrong_number_of_values_misorientation(
+    error_type, value
+):
     o = Misorientation.random((3, 2))
     with pytest.raises(error_type, match="Value must be a 2-tuple"):
         # less than 2 Symmetry
@@ -502,13 +505,15 @@ class TestOrientationInitialization:
         )
         o1 = Orientation.from_matrix(om)
         assert np.allclose(
-            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape(4, 4)
+            o1.data,
+            np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape(4, 4),
         )
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_matrix(om, symmetry=Oh)
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(
-            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4)
+            o2.data,
+            np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4),
         )
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
@@ -595,7 +600,9 @@ class TestOrientationInitialization:
 
 
 class TestOrientation:
-    @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
+    @pytest.mark.parametrize(
+        "symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh]
+    )
     def test_get_distance_matrix(self, symmetry):
         q = [(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)]
         o = Orientation(q, symmetry=symmetry)
@@ -622,11 +629,15 @@ class TestOrientation:
         o = Orientation(abcd)
 
         angle1 = o.get_distance_matrix(lazy=True, chunk_size=5)
-        angle2 = o.get_distance_matrix(lazy=True, chunk_size=10, progressbar=False)
+        angle2 = o.get_distance_matrix(
+            lazy=True, chunk_size=10, progressbar=False
+        )
 
         assert np.allclose(angle1.data, angle2.data)
 
-    @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
+    @pytest.mark.parametrize(
+        "symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh]
+    )
     def test_angle_with_outer(self, symmetry):
         shape = (5,)
         o = Orientation.random(shape)
@@ -673,7 +684,9 @@ class TestOrientation:
         assert awo_o12s.shape == awo_r12.shape
         assert not np.allclose(awo_o12s, awo_r12)
 
-    @pytest.mark.parametrize("symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh])
+    @pytest.mark.parametrize(
+        "symmetry", [C1, C2, C3, C4, D2, D3, D6, T, O, Oh]
+    )
     def test_angle_with(self, symmetry):
         q = [(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)]
         r = Rotation(q)
@@ -708,7 +721,9 @@ class TestOrientation:
         )
         assert (fig_axangle.get_size_inches() == fig_size).all()
         assert isinstance(fig_axangle.axes[0], AxAnglePlot)
-        fig_rodrigues = orientation.scatter(projection="rodrigues", return_figure=True)
+        fig_rodrigues = orientation.scatter(
+            projection="rodrigues", return_figure=True
+        )
         assert isinstance(fig_rodrigues.axes[0], RodriguesPlot)
 
         # Add multiple axes to figure, one at a time
@@ -801,7 +816,9 @@ class TestOrientation:
         for pg in _proper_groups:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
-            assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+            assert np.all(
+                np.max(ori.in_euler_fundamental_region(), axis=0) <= region
+            )
 
     def test_inverse(self):
         O1 = Orientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], D6)
