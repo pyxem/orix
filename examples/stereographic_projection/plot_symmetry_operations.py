@@ -97,9 +97,7 @@ for i, pg in enumerate(point_groups):
                 f = np.around(2 * np.pi / min_ang).astype(int)
             c = colors[f]
             if axis.z[0] ** 2 > 1e-4:
-                ax[i].symmetry_marker(
-                    (pg * axis), fold=f, s=s, color=c, inner="dot"
-                )
+                ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c, inner="dot")
             else:
                 ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c)
 
@@ -110,9 +108,7 @@ for i, pg in enumerate(point_groups):
             f = np.around(2 * np.pi / min_ang).astype(int)
             c = colors[f]
             if axis.z[0] ** 2 > 1e-4:
-                ax[i].symmetry_marker(
-                    (pg * axis), fold=f, s=s, color=c, inner="half"
-                )
+                ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c, inner="half")
             else:
                 ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c)
             decorated_axes.append(axis * 1)
