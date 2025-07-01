@@ -255,9 +255,7 @@ class Symmetry(Rotation):
             # Taken from MTEX
             center = Vector3d([0.707558, -0.000403, 0.706655])
         elif name in ["m-3", "432"]:
-            n = Vector3d(
-                np.vstack([vx.data, [0, -1, 1], [-1, 0, 1], vy.data, vz.data])
-            )
+            n = Vector3d(np.vstack([vx.data, [0, -1, 1], [-1, 0, 1], vy.data, vz.data]))
             # Taken from MTEX
             center = Vector3d([0.349928, 0.348069, 0.869711])
         elif name == "-43m":
@@ -365,9 +363,7 @@ class Symmetry(Rotation):
         return Symmetry.from_generators(*generators)
 
     def __hash__(self) -> int:
-        return hash(
-            self.name.encode() + self.data.tobytes() + self.improper.tobytes()
-        )
+        return hash(self.name.encode() + self.data.tobytes() + self.improper.tobytes())
 
     # ------------------------ Class methods ------------------------- #
 
@@ -425,9 +421,7 @@ class Symmetry(Rotation):
             return {}
         return {
             Vector3d(a): b + 1
-            for a, b in zip(
-                *np.unique(s.axis.data, axis=0, return_counts=True)
-            )
+            for a, b in zip(*np.unique(s.axis.data, axis=0, return_counts=True))
         }
 
     def get_highest_order_axis(self) -> tuple[Vector3d, np.ndarray]:
@@ -673,15 +667,9 @@ D4h = Symmetry.from_generators(C4h, Csx, Csy)
 D4h.name = "4/mmm"
 
 # 3-fold rotations
-C3x = Symmetry(
-    [(1, 0, 0, 0), (0.5, 0.75**0.5, 0, 0), (0.5, -(0.75**0.5), 0, 0)]
-)
-C3y = Symmetry(
-    [(1, 0, 0, 0), (0.5, 0, 0.75**0.5, 0), (0.5, 0, -(0.75**0.5), 0)]
-)
-C3z = Symmetry(
-    [(1, 0, 0, 0), (0.5, 0, 0, 0.75**0.5), (0.5, 0, 0, -(0.75**0.5))]
-)
+C3x = Symmetry([(1, 0, 0, 0), (0.5, 0.75**0.5, 0, 0), (0.5, -(0.75**0.5), 0, 0)])
+C3y = Symmetry([(1, 0, 0, 0), (0.5, 0, 0.75**0.5, 0), (0.5, 0, -(0.75**0.5), 0)])
+C3z = Symmetry([(1, 0, 0, 0), (0.5, 0, 0, 0.75**0.5), (0.5, 0, 0, -(0.75**0.5))])
 C3 = Symmetry(C3z)
 C3.name = "3"
 
