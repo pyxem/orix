@@ -890,6 +890,48 @@ def test_equality(symmetry):
     assert Rotation(symmetry) == symmetry
 
 
+@pytest.mark.parametrize(
+    ["subset", "length", "proper_count"],
+    [
+        ["unique", 32, 11],
+        ["all", 37, 14],
+        ["all_repeated", 44, 17],
+        ["proper", 11, 11],
+        ["proper_all", 14, 14],
+        ["laue", 11, 0],
+        ["procedural", 32, 11],
+    ],
+)
+def test_get_point_groups(subset, length, proper_count):
+    # check that we get the expected number of proper and total point groups.
+    group = get_point_groups(subset)
+    assert len(group) == length
+    assert np.sum([x.is_proper for x in group]) == proper_count
+
+
+def test_get_point_groups_unique():
+    group = get_point_groups()
+    # this is just a check to see if each element is unique, and if there are
+    # 32 of them.
+    assert np.all(
+        np.sum(
+            [
+                [
+                    _get_unique_symmetry_elements(a, b) == b
+                    and _get_unique_symmetry_elements(a, b) == a
+                    for a in group
+                ]
+                for b in group
+            ],
+            1,
+        )
+        == np.ones(32)
+    )
+    # additional test that nonsense returns nonsense
+    with pytest.raises(ValueError):
+        get_point_groups("banana")
+
+
 class TestLaueGroup:
     def test_crystal_system(self):
         assert Ci.system == "triclinic"
