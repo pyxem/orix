@@ -23,17 +23,7 @@ import numpy as np
 import pytest
 
 from orix import plot
-
-# fmt: off
-# isort: off
-from orix.plot.stereographic_plot import (
-    TwoFoldMarker,
-    ThreeFoldMarker,
-    FourFoldMarker,
-    SixFoldMarker,
-)
-# isort: on
-# fmt: on
+from orix.plot.stereographic_plot import SymmetryMarker
 from orix.quaternion import symmetry
 from orix.vector import Vector3d
 
@@ -182,7 +172,8 @@ class TestStereographicPlot:
         plt.close("all")
 
     @pytest.mark.parametrize(
-        "hemisphere, pole, hemi_str", [("uPPer", -1, "upper"), ("loweR", 1, "lower")]
+        "hemisphere, pole, hemi_str",
+        [("uPPer", -1, "upper"), ("loweR", 1, "lower")],
     )
     def test_hemisphere_pole(self, hemisphere, pole, hemi_str):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
@@ -296,83 +287,34 @@ class TestStereographicPlot:
 
 
 class TestSymmetryMarker:
-    def test_properties(self):
-        v2fold = Vector3d([[1, 0, 1], [0, 1, 1]])
-        marker2fold = TwoFoldMarker(v2fold)
-        assert np.allclose(v2fold.data, marker2fold._vector.data)
-        assert marker2fold.fold == 2
-        assert marker2fold.n == 2
-        assert np.allclose(marker2fold.size, [1.55, 1.55], atol=1e-2)
-        assert isinstance(marker2fold._marker[0], mpath.Path)
-
-        v3fold = Vector3d([1, 1, 1])
-        marker3fold = ThreeFoldMarker(v3fold, size=5)
-        assert np.allclose(v3fold.data, marker3fold._vector.data)
-        assert marker3fold.fold == 3
-        assert marker3fold.n == 1
-        assert np.allclose(marker3fold.size, 5)
-
-        # Iterating over markers
-        for i, (vec, mark, size) in enumerate(marker3fold):
-            assert np.allclose(vec.data, v3fold[i].data)
-            assert np.allclose(mark, (3, 0, 45 + 90))
-            assert size == 5
-
-        v4fold = Vector3d([[0, 0, 1], [1, 0, 0], [0, 1, 0]])
-        marker4fold = FourFoldMarker(v4fold, size=11)
-        assert np.allclose(v4fold.data, marker4fold._vector.data)
-        assert marker4fold.fold == 4
-        assert marker4fold.n == 3
-        assert np.allclose(marker4fold.size, [11, 11, 11])
-        assert marker4fold._marker == ["D"] * 3
-
-        marker6fold = SixFoldMarker([0, 0, 1], size=15)
-        assert isinstance(marker6fold._vector, Vector3d)
-        assert np.allclose(marker6fold._vector.data, [0, 0, 1])
-        assert marker6fold.fold == 6
-        assert marker6fold.n == 1
-        assert marker6fold.size == 15
-        assert marker6fold._marker == ["h"]
-
-        plt.close("all")
+    @pytest.mark.parametrize("v_data", [[0, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]])
+    @pytest.mark.parametrize("folds", [1, 2, 3, 4, 6])
+    @pytest.mark.parametrize("fill", ["fill", "dot", "half"])
+    def test_main_properties(self, v_data, folds, fill):
+        v = Vector3d(v_data)
+        marker = SymmetryMarker(v, folds=folds, inner=fill)
+        assert np.allclose(v.data, marker._vector.data)
+        assert marker._folds == folds
+        assert marker._inner_shape == fill
+        assert (marker.angle_deg - (np.rad2deg(v.azimuth) + 90)) ** 2 < 1e-4
 
     def test_plot_symmetry_marker(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax.stereographic_grid(False)
         marker_size = 500
 
-        v4fold = Vector3d([[0, 0, 1], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
-        ax.symmetry_marker(v4fold, fold=4, c="C4", s=marker_size)
-
-        v3fold = Vector3d([[1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1]])
-        ax.symmetry_marker(v3fold, fold=3, c="C3", s=marker_size)
-
-        v2fold = Vector3d(
-            [
-                [1, 0, 1],
-                [0, 1, 1],
-                [-1, 0, 1],
-                [0, -1, 1],
-                [1, 1, 0],
-                [-1, -1, 0],
-                [-1, 1, 0],
-                [1, -1, 0],
-            ]
-        )
-        ax.symmetry_marker(v2fold, fold=2, c="C2", s=marker_size)
-
-        ax.symmetry_marker([0, 0, 1], fold=6, s=marker_size)
+        v = Vector3d([[1, 0, 0], [0, 1, 1]])
+        for i in [1, 2, 3, 4, 6]:
+            ax.symmetry_marker(v[0], fold=i, s=marker_size, color="k")
+            ax.symmetry_marker(v[1], fold=i, inner="dot", s=marker_size)
+            ax.symmetry_marker(v, fold=1, inner="dot", color="C1", s=marker_size)
+        for i in [4, 6]:
+            ax.symmetry_marker(v, fold=i, inner="half", s=marker_size)
 
         markers = ax.collections
-        assert len(markers) == 18
-        assert np.allclose(markers[0]._sizes, marker_size)
-        assert np.allclose(markers[-1]._sizes, marker_size)
-        assert np.allclose(markers[0]._facecolors, mcolors.to_rgba("C4"))
-        assert np.allclose(markers[5]._facecolors, mcolors.to_rgba("C3"))
-        assert np.allclose(markers[-2]._facecolors, mcolors.to_rgba("C2"))
-        assert np.allclose(markers[-1]._facecolors, mcolors.to_rgba("C0"))
+        assert len(markers) == 43
 
-        with pytest.raises(ValueError, match="Can only plot 2"):
+        with pytest.raises(ValueError, match="Can only plot 1"):
             ax.symmetry_marker([0, 0, 1], fold=5)
 
         plt.close("all")
@@ -432,8 +374,14 @@ class TestDrawCircle:
         assert len(ax[1].lines) == 3
         assert ax[0].lines[0]._path._vertices.shape == (upper_steps, 2)
         assert ax[1].lines[0]._path._vertices.shape == (lower_steps, 2)
-        assert ax[1].lines[1]._path._vertices.shape == (lower_steps // 2 + 1, 2)
-        assert ax[1].lines[1]._path._vertices.shape == (lower_steps // 2 + 1, 2)
+        assert ax[1].lines[1]._path._vertices.shape == (
+            lower_steps // 2 + 1,
+            2,
+        )
+        assert ax[1].lines[1]._path._vertices.shape == (
+            lower_steps // 2 + 1,
+            2,
+        )
 
         plt.close("all")
 
@@ -482,7 +430,8 @@ class TestDrawCircle:
     def test_pdf_args_raises(self):
         fig, ax = plt.subplots(subplot_kw=dict(projection="stereographic"))
         with pytest.raises(
-            TypeError, match="If one argument is passed it must be an instance of "
+            TypeError,
+            match="If one argument is passed it must be an instance of ",
         ):
             ax.pole_density_function("test")
 

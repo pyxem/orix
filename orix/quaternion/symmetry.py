@@ -1060,7 +1060,7 @@ def get_point_groups(subset: str = "unique"):
             T,
             O,
         ]
-    elif subset == "SoM":
+    elif subset == "procedural":
         return [
             # Cyclic
             C1,
@@ -1105,7 +1105,7 @@ def get_point_groups(subset: str = "unique"):
             Oh,
         ]
     else:
-        ValueError("{} is not a valid subset option".format(subset))
+        raise ValueError("{} is not a valid subset option".format(subset))
 
 
 def get_distinguished_points(s1: Symmetry, s2: Symmetry = C1) -> Rotation:
@@ -1276,8 +1276,8 @@ def _get_laue_group_name(name: str) -> str | None:
             continue
         # then check for identical operators (regardless of order)
         if np.min(g_laue.outer(laue).angle ** 2, 1).max() < 1e-4:
-            return laue.name
-    raise ValueError("Could not find Laue group name for {}".format(g.name))
+            if np.min(g_laue.outer(laue).angle ** 2, 0).max() < 1e-4:
+                return laue.name
 
 
 def _get_unique_symmetry_elements(
