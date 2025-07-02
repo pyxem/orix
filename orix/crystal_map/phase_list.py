@@ -144,9 +144,7 @@ class Phase:
         if isinstance(value, Structure):
             # Ensure correct alignment
             old_matrix = value.lattice.base
-            new_matrix = _new_structure_matrix_from_alignment(
-                old_matrix, x="a", z="c*"
-            )
+            new_matrix = _new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
             value = copy.deepcopy(value)
             # Ensure atom positions are expressed in the new basis
             value.placeInLattice(Lattice(base=new_matrix))
@@ -156,9 +154,7 @@ class Phase:
                 value.title = self.name
             self._structure = value
         else:
-            raise ValueError(
-                f"{value} must be a diffpy.structure.Structure object."
-            )
+            raise ValueError(f"{value} must be a diffpy.structure.Structure object.")
 
     @property
     def name(self) -> str:
@@ -407,9 +403,8 @@ class Phase:
                 new_atom.xyz = pos
                 # Only add new atom if not already present
                 for present_atom in diffpy_structure:
-                    if (
-                        present_atom.element == new_atom.element
-                        and np.allclose(present_atom.xyz, new_atom.xyz)
+                    if present_atom.element == new_atom.element and np.allclose(
+                        present_atom.xyz, new_atom.xyz
                     ):
                         break
                 else:
@@ -507,14 +502,10 @@ class PhaseList:
 
     def __init__(
         self,
-        phases: (
-            Phase | list[Phase] | dict[int, Phase] | "PhaseList" | None
-        ) = None,
+        phases: Phase | list[Phase] | dict[int, Phase] | "PhaseList" | None = None,
         names: str | list[str] | None = None,
         space_groups: int | SpaceGroup | list[int | SpaceGroup] | None = None,
-        point_groups: (
-            str | int | Symmetry | list[str | int | Symmetry] | None
-        ) = None,
+        point_groups: str | int | Symmetry | list[str | int | Symmetry] | None = None,
         colors: str | list[str] | None = None,
         ids: int | list[int] | np.ndarray | None = None,
         structures: Structure | list[Structure] | None = None,
@@ -751,9 +742,7 @@ class PhaseList:
                     matching_phase_id = phase_id
                     break
             if matching_phase_id is None:
-                raise KeyError(
-                    f"{key} is not among the phase names {self.names}."
-                )
+                raise KeyError(f"{key} is not among the phase names {self.names}.")
             else:
                 self._dict.pop(matching_phase_id)
         else:
@@ -770,13 +759,10 @@ class PhaseList:
 
         # Ensure attributes set to None are treated OK
         names = ["None" if not i else i for i in self.names]
-        sg_names = [
-            "None" if not i else i.short_name for i in self.space_groups
-        ]
+        sg_names = ["None" if not i else i.short_name for i in self.space_groups]
         pg_names = ["None" if not i else i.name for i in self.point_groups]
         ppg_names = [
-            "None" if not i else i.proper_subgroup.name
-            for i in self.point_groups
+            "None" if not i else i.proper_subgroup.name for i in self.point_groups
         ]
 
         # Determine column widths (allowing PhaseList to be empty)
@@ -794,12 +780,8 @@ class PhaseList:
         representation = (
             "{:{align}{width}}  ".format("Id", width=id_len, align=align)
             + "{:{align}{width}}  ".format("Name", width=name_len, align=align)
-            + "{:{align}{width}}  ".format(
-                "Space group", width=sg_len, align=align
-            )
-            + "{:{align}{width}}  ".format(
-                "Point group", width=pg_len, align=align
-            )
+            + "{:{align}{width}}  ".format("Space group", width=sg_len, align=align)
+            + "{:{align}{width}}  ".format("Point group", width=pg_len, align=align)
             + "{:{align}{width}}  ".format(
                 "Proper point group", width=ppg_len, align=align
             )
