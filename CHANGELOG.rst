@@ -24,7 +24,7 @@ Added
 Changed
 -------
 - .ang files now allow optional rewriting of phase names based on elements and
-point group, as opposed to automatically  overwriting names 
+  point group, as opposed to automatically  overwriting names 
 - For speed and space reasons, vectors and quaternions are now randomly
   generated using a gaussian method as opposed to rejection-based sampling.
 
