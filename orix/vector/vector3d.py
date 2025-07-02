@@ -332,7 +332,7 @@ class Vector3d(Object3d):
     def __rtruediv__(self, other: Any):
         raise ValueError("Division by a vector is undefined")
 
-    # ------------------------ Class methods ------------------------- #
+    # ------------------------ Class methods ------------------------ #
 
     @classmethod
     def from_polar(
