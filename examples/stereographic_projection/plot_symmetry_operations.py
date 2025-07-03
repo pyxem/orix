@@ -85,7 +85,7 @@ for i, pg in enumerate(point_groups):
             min_ang = np.abs(pg[r_mask * axis_mask].angle).min()
             f = np.around(2 * np.pi / min_ang).astype(int)
             c = colors[f]
-            ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c)
+            ax[i].symmetry_marker((pg * axis), folds=f, s=s, color=c)
             decorated_axes.append(axis * 1)
         # if there is an inversion center, plot the appropriate symbol
         elif np.any(i_mask):
@@ -97,9 +97,11 @@ for i, pg in enumerate(point_groups):
                 f = np.around(2 * np.pi / min_ang).astype(int)
             c = colors[f]
             if axis.z[0] ** 2 > 1e-4:
-                ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c, inner="dot")
+                ax[i].symmetry_marker(
+                    (pg * axis), folds=f, s=s, color=c, modifier="inv"
+                )
             else:
-                ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c)
+                ax[i].symmetry_marker((pg * axis), folds=f, s=s, color=c)
 
             decorated_axes.append(axis * 1)
         # the other option (besides empty) is a rotoinversion
@@ -108,7 +110,9 @@ for i, pg in enumerate(point_groups):
             f = np.around(2 * np.pi / min_ang).astype(int)
             c = colors[f]
             if axis.z[0] ** 2 > 1e-4:
-                ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c, inner="half")
+                ax[i].symmetry_marker(
+                    (pg * axis), folds=f, s=s, color=c, modifier="roto"
+                )
             else:
                 ax[i].symmetry_marker((pg * axis), fold=f, s=s, color=c)
             decorated_axes.append(axis * 1)
@@ -129,4 +133,4 @@ for i, pg in enumerate(point_groups):
         mask = np.abs(two_folds.dot_outer(dax_unique)).max(axis=1) < 0.99
         new_two_folds = two_folds[mask]
         symm_two_folds = pg.outer(new_two_folds).flatten().unique()
-        ax[i].symmetry_marker(symm_two_folds, fold=2, s=s, color="g")
+        ax[i].symmetry_marker(symm_two_folds, folds=2, s=s, color="g")
