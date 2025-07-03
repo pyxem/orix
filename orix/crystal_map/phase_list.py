@@ -371,13 +371,10 @@ class Phase:
 
         Examples
         --------
-        >>> phase = Phase(
-            structure=Structure(
-                atoms = [Atom("Si", xyz=(0, 0, 1))],
-                lattice=Lattice(4.04, 4.04, 4.04, 90, 90, 90)
-            ),
-            space_group=227,
-        )
+        >>> atoms = [Atom("Si", xyz=(0, 0, 1))]
+        >>> lattice = Lattice(4.04, 4.04, 4.04, 90, 90, 90)
+        >>> structure = Structure(atoms = atoms,lattice=lattice)
+        >>> phase = Phase(structure=structure, space_group=227)
         >>> phase.structure
         [Si   0.000000 0.000000 1.000000 1.0000]
         >>> expanded = phase.expand_asymmetric_unit()

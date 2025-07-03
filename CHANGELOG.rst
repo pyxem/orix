@@ -20,11 +20,12 @@ Added
   previously discarded. Discarding is still enabled by default.
 - Added copy constructors to ``Phase``, ``PhaseList`` and ``CrystalMap``.
 - Added ``Phase.expand_asymmetric_unit()`` to add all symmetrically equivalent atoms to the structure.
+- Added element-wise to indexing to ``Vector3d`` class and subclasses
 
 Changed
 -------
 - .ang files now allow optional rewriting of phase names based on elements and
-point group, as opposed to automatically  overwriting names 
+  point group, as opposed to automatically  overwriting names 
 - For speed and space reasons, vectors and quaternions are now randomly
   generated using a gaussian method as opposed to rejection-based sampling.
 
