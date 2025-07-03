@@ -23,7 +23,7 @@ import numpy as np
 import pytest
 
 from orix import plot
-from orix.plot.stereographic_plot import SymmetryMarker
+from orix.plot.stereographic_plot import _SymmetryMarker
 from orix.quaternion import symmetry
 from orix.vector import Vector3d
 
@@ -289,14 +289,19 @@ class TestStereographicPlot:
 class TestSymmetryMarker:
     @pytest.mark.parametrize("v_data", [[0, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]])
     @pytest.mark.parametrize("folds", [1, 2, 3, 4, 6])
-    @pytest.mark.parametrize("fill", ["fill", "dot", "half"])
-    def test_main_properties(self, v_data, folds, fill):
+    @pytest.mark.parametrize("modifier", ["none", "roto", "inv"])
+    def test_main_properties(self, v_data, folds, modifier):
         v = Vector3d(v_data)
-        marker = SymmetryMarker(v, folds=folds, inner=fill)
+        marker = _SymmetryMarker(v, folds=folds, modifier=modifier)
         assert np.allclose(v.data, marker._vector.data)
         assert marker._folds == folds
-        assert marker._inner_shape == fill
+        assert marker._inner_shape == modifier
         assert (marker.angle_deg - (np.rad2deg(v.azimuth) + 90)) ** 2 < 1e-4
+        # check errors
+        with pytest.raises(ValueError, match="Folds must"):
+            _SymmetryMarker([0, 0, 1], folds=5)
+        with pytest.raises(ValueError, match="Modifier must"):
+            _SymmetryMarker([0, 0, 1], modifier="banana")
 
     def test_plot_symmetry_marker(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
@@ -305,17 +310,14 @@ class TestSymmetryMarker:
 
         v = Vector3d([[1, 0, 0], [0, 1, 1]])
         for i in [1, 2, 3, 4, 6]:
-            ax.symmetry_marker(v[0], fold=i, s=marker_size, color="k")
-            ax.symmetry_marker(v[1], fold=i, inner="dot", s=marker_size)
-            ax.symmetry_marker(v, fold=1, inner="dot", color="C1", s=marker_size)
+            ax.symmetry_marker(v[0], folds=i, s=marker_size, color="k")
+            ax.symmetry_marker(v[1], folds=i, modifier="inv", s=marker_size)
+            ax.symmetry_marker(v, folds=1, modifier="inv", color="C1", s=marker_size)
         for i in [4, 6]:
-            ax.symmetry_marker(v, fold=i, inner="half", s=marker_size)
+            ax.symmetry_marker(v, folds=i, modifier="roto", s=marker_size)
 
         markers = ax.collections
         assert len(markers) == 43
-
-        with pytest.raises(ValueError, match="Can only plot 1"):
-            ax.symmetry_marker([0, 0, 1], fold=5)
 
         plt.close("all")
 

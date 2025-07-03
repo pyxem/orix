@@ -19,8 +19,8 @@
 plotting :class:`~orix.vector.Vector3d`.
 """
 
-from copy import deepcopy
-from typing import Any, List, Optional, Tuple, Union
+from copy import copy, deepcopy
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -633,7 +633,7 @@ class StereographicPlot(maxes.Axes):
                 self.collections[index_polar].remove()
             self._stereographic_grid = False
 
-    def symmetry_marker(self, v: Vector3d, fold: int, inner="fill", **kwargs):
+    def symmetry_marker(self, v: Vector3d, folds: int, modifier="none", **kwargs):
         """Plot symmetry marker(s).
 
         Parameters
@@ -645,22 +645,25 @@ class StereographicPlot(maxes.Axes):
         **kwargs
             Keyword arguments passed to :meth:`scatter`.
         """
-        if fold not in [1, 2, 3, 4, 6]:
-            raise ValueError("Can only plot 1-, 2-, 3-, 4- or 6-fold elements.")
-
-        marker = SymmetryMarker(v, size=kwargs.pop("s", 1), folds=fold, inner=inner)
+        marker = _SymmetryMarker(
+            v, size=kwargs.pop("s", 1), folds=folds, modifier=modifier
+        )
 
         new_kwargs = dict(zorder=ZORDER["symmetry_marker"], clip_on=False)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
 
         for vec, marker, marker_size in marker:
-            if fold == 1:
+            if folds == 1:
                 marker_size = marker_size / 2
-            if inner != "fill":
-                bg_kwargs = deepcopy(kwargs)
+            # It is not (currently) possible to make two-tone markers using custom-
+            # defined Path objects in matplotlib. Instead, for inversion and
+            # rotoinversion markers, a background white dot is plotted first, whereas
+            # the top markers themselves have empty interiors.
+            if modifier != "none":
+                bg_kwargs = copy(kwargs)
                 if "color" in bg_kwargs:
-                    bg_kwargs.pop("color")
+                    _ = bg_kwargs.pop("color")
                 self.scatter(vec, color="w", s=marker_size * 0.5, **bg_kwargs)
             self.scatter(vec, marker=marker, s=marker_size, **kwargs)
 
@@ -974,48 +977,55 @@ def _order_in_hemisphere(polar: np.ndarray, pole: int) -> Union[np.ndarray, None
     return order
 
 
-class SymmetryMarker:
-    """
-    Symmetry element markers to plot in stereographic representations of
-    crystallographic point groups.
+class _SymmetryMarker:
+    """A class for creating Symmetry element markers. Intended for making
+    stereographic plots of the crystallographic point groups.
 
     Intended to be used indirectly in
     :func:`~orix.plot.StereographicPlot.symmetry_marker`.
 
     Parameters
     ----------
-    v (Vector3d object)
-        Vector3d object used for placing marker in StereographicPlot
-
-    size (int or float)
-        value passed to matplotlib to determine relative marker size
-
-    folds (integer)
-        rotational symmetry (typically 1, 2, 3, 4, or 6) for the
-        symmetry marker to represent with it's shape (circle, elliplse,
-        triangle, square, or hex)'
-
-    inner ('fill' or 'dot' or 'half')
-        The shape to put inside the symmetry marker to express additional
-        symmetry information 'fill' adds nothing, 'dot' adds the dot
-        traditionally used for inversion centers and mirrors, and 'half' adds
-        an empty polygon with half as many folds as the marker within the
-        marker, such as what is used for rotoinversions.
+    v
+        Vector(s) giving the positions of markers in a stereographic plot
+    size
+        Value(s) passed to matplotlib to determine relative marker size
+    folds
+        The rotational symmetry (typically 1, 2, 3, 4, or 6) that determines the
+        symmetry marker's shape(circle, elliplse, triangle, square, or hex)'.
+    modifier
+        Determines what alterations, if any, should be added to the marker. "none" or
+        None will add nothing. "roto" will add a white rotoinversion symbol inside
+        the marker, which for even-fold rotations is a polygon with half as many
+        corners, and for an odd-fold rotation is a white dot. "inv" will add
+        an inversion symbol, which is a white dot. The default is "none".
     """
 
     def __init__(
         self,
-        v: Union[Vector3d, np.ndarray, list, tuple],
+        v: Vector3d | np.ndarray | list | tuple,
         size: int = 1,
-        folds=2,
-        inner="fill",
+        folds: Literal[1, 2, 3, 4, 6] = 2,
+        modifier: Literal["none", "roto", "inv"] = "none",
     ):
-        assert np.isin(folds, [1, 2, 3, 4, 6])
-        assert np.isin(inner, ["fill", "dot", "half"])
+        fold_opt = [1, 2, 3, 4, 6]
+        if folds not in fold_opt:
+            # NOTE: If anyone is interested insupoorting 5-fold, 7-fold,etc. rotations
+            # in the future, be aware you will also need to modify the affine rotation
+            # applied at the end of the self._marker property based on your axis
+            # choices, or the markers will not properly align.
+            raise ValueError(
+                f"Folds must be one of {', '.join(map(str, fold_opt))}, not {folds}"
+            )
+        mod_opt = ["none", "roto", "inv"]
+        if modifier not in mod_opt:
+            raise ValueError(
+                f"Modifier must be one of {', '.join(map(str, mod_opt))}, not {modifier}"
+            )
         self._vector = Vector3d(v)
         self._size = size
         self._folds = folds
-        self._inner_shape = inner
+        self._inner_shape = modifier
 
     @property
     def angle_deg(self) -> np.ndarray:
@@ -1023,8 +1033,9 @@ class SymmetryMarker:
         return np.rad2deg(self._vector.azimuth) + 90
 
     @property
-    def size(self) -> np.ndarray:
-        """Multiplicity of each symmetry marker."""
+    def multiplicity(self) -> np.ndarray:
+        """Multiplicity of each symmetry marker, ie, how many  symmetrically
+        equivalent markers will be plotted."""
         return np.ones(self.n) * self._size
 
     @property
@@ -1033,11 +1044,18 @@ class SymmetryMarker:
         return self._vector.size
 
     def __iter__(self):
-        for v, marker, size in zip(self._vector, self._marker, self.size):
+        """Dunder function for iterating through multiple markers defined within a
+        single _SymmetryMarker Class.
+
+        For example, if a _SymmetryMarker is created with 4 vertices, this allows for
+        iteration over those vertices in a 'for' loop."""
+        for v, marker, size in zip(self._vector, self._marker, self.multiplicity):
             yield v, marker, size
 
     @property
-    def _marker(self):
+    def _marker(self) -> mpath.Path:
+        """Returns a matplotlib Path object that describes the symmetry marker's
+        shape"""
         azimuth = self._vector.azimuth
         # pre-define inner cirle (reused)
         inner_circle = mpath.Path.circle((0, 0), 0.5)
@@ -1053,7 +1071,7 @@ class SymmetryMarker:
             circle = mpath.Path.circle((0, 0), 0.75)
             vert = np.copy(circle.vertices)
             code = circle.codes
-            if self._inner_shape == "dot":
+            if self._inner_shape == "inv":
                 verts = np.concatenate([vert, i_vert[::-1]])
                 codes = np.concatenate([code, i_code])
                 marker = mpath.Path(verts, codes)
@@ -1066,12 +1084,12 @@ class SymmetryMarker:
         else:
             # if it's not 2-fold, just use a default polygon
             marker = mpath.Path.unit_regular_polygon(self._folds)
-        if self._inner_shape == "dot":
+        if self._inner_shape == "inv":
             # add the inner circle
             verts = np.concatenate([marker.vertices, i_vert[::-1]])
             codes = np.concatenate([marker.codes, i_code])
             marker = mpath.Path(verts, codes)
-        elif self._inner_shape == "half":
+        elif self._inner_shape == "roto":
             # add an inner shape with half the folds
             vert = np.copy(marker.vertices)
             code = np.copy(marker.codes)
