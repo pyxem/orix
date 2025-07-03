@@ -78,7 +78,11 @@ def test_neg(vector):
 @pytest.mark.parametrize(
     "vector, other, expected",
     [
-        ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[2, 4, 6], [-2, 0, 2]]),
+        (
+            [1, 2, 3],
+            Vector3d([[1, 2, 3], [-3, -2, -1]]),
+            [[2, 4, 6], [-2, 0, 2]],
+        ),
         ([1, 2, 3], [4], [5, 6, 7]),
         ([1, 2, 3], 0.5, [1.5, 2.5, 3.5]),
         ([1, 2, 3], [-1, 2], [[0, 1, 2], [3, 4, 5]]),
@@ -106,7 +110,11 @@ def test_add_raises(vector, other):
 @pytest.mark.parametrize(
     "vector, other, expected",
     [
-        ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), [[0, 0, 0], [4, 4, 4]]),
+        (
+            [1, 2, 3],
+            Vector3d([[1, 2, 3], [-3, -2, -1]]),
+            [[0, 0, 0], [4, 4, 4]],
+        ),
         ([1, 2, 3], [4], [-3, -2, -1]),
         ([1, 2, 3], 0.5, [0.5, 1.5, 2.5]),
         ([1, 2, 3], [-1, 2], [[2, 3, 4], [-1, 0, 1]]),
@@ -202,6 +210,23 @@ def test_div_raises(vector, other, error_type):
 def test_rdiv_raises():
     with pytest.raises(ValueError):
         _ = 1 / Vector3d.xvector()
+
+
+def test_eq():
+    v = Vector3d.zvector()
+    s1 = symmetry.D3
+    s2 = symmetry.C6
+    s3 = symmetry.O
+    # check element-wise comparison
+    assert np.all((v == s1.axis) == [True, True, False, False, False, False])
+    assert np.all((v == s2.axis) == [True, True, False, True, False, True])
+    # check that two lists compare per-row
+    assert np.all((s1.axis == s2.axis) == [1, 1, 1, 0, 0, 0])
+    # check incorrectly sized things compare as a flat falsse
+    assert not (s1 == s3)
+    # check that things that aren't vectors treat vector comparison as array
+    # comparison.
+    assert np.all((v == 1) == [0, 0, 1])
 
 
 def test_dot(vector, something):
@@ -608,7 +633,12 @@ class TestSphericalCoordinates:
         "v, polar_desired, azimuth_desired, radial_desired",
         [
             (Vector3d((0.5, 0.5, 0.707107)), np.pi / 4, np.pi / 4, 1),
-            (Vector3d((-0.75, -0.433013, -0.5)), 2 * np.pi / 3, 7 * np.pi / 6, 1),
+            (
+                Vector3d((-0.75, -0.433013, -0.5)),
+                2 * np.pi / 3,
+                7 * np.pi / 6,
+                1,
+            ),
         ],
     )
     def test_to_polar(self, v, polar_desired, azimuth_desired, radial_desired):
@@ -661,7 +691,14 @@ class TestGetCircle:
 
 class TestPlotting:
     v = Vector3d(
-        [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 0, -1], [-1, 0, -1], [-1, -1, -1]]
+        [
+            [0, 0, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+            [0, 0, -1],
+            [-1, 0, -1],
+            [-1, -1, -1],
+        ]
     )
 
     def test_scatter(self):
@@ -765,7 +802,10 @@ class TestPlotting:
 
         # Normal scatter: half of the vectors are shown
         fig1 = v.scatter(return_figure=True)
-        assert fig1.axes[0].collections[0].get_offsets().shape == (v.size // 2, 2)
+        assert fig1.axes[0].collections[0].get_offsets().shape == (
+            v.size // 2,
+            2,
+        )
 
         # Reproject: all of the vectors are shown
         fig2 = v.scatter(reproject=True, return_figure=True, c="r")

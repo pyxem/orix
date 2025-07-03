@@ -332,6 +332,15 @@ class Vector3d(Object3d):
     def __rtruediv__(self, other: Any):
         raise ValueError("Division by a vector is undefined")
 
+    def __eq__(self, other: Any):
+        if isinstance(other, Vector3d):
+            return np.all(self.data == other.data, axis=-1)
+        else:
+            return self.data == other
+
+    def __hash__(self):
+        return id(self)
+
     # ------------------------ Class methods ------------------------- #
 
     @classmethod
@@ -819,7 +828,9 @@ class Vector3d(Object3d):
         return v2
 
     def get_circle(
-        self, opening_angle: Union[float, np.ndarray] = np.pi / 2, steps: int = 100
+        self,
+        opening_angle: Union[float, np.ndarray] = np.pi / 2,
+        steps: int = 100,
     ) -> Vector3d:
         r"""Get vectors delineating great or small circle(s) with a
         given ``opening_angle`` about each vector.

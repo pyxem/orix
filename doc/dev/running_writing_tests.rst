@@ -34,9 +34,10 @@ Coverage can then be inspected in the browser by opening ``htmlcov/index.html``.
 
 We strive for 100% test coverage of lines when all dependencies are installed.
 
-If you have a test that takes a long time to run, you can mark it to skip it from running by default:
+If you have a test that takes a long time to run, you can mark it to skip it from running by default
 
-.. code-block::
+.. code-block:: Python
+
     @pytest.mark.slow
     def test_slow_function():
         pass
