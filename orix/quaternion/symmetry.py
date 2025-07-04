@@ -19,9 +19,9 @@
 
 from __future__ import annotations
 
+from copy import copy
 from typing import TYPE_CHECKING, Union
 
-from copy import copy
 from diffpy.structure.spacegroups import GetSpaceGroup
 import matplotlib.figure as mfigure
 import numpy as np
