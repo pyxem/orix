@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Union
 
+from copy import copy
 from diffpy.structure.spacegroups import GetSpaceGroup
 import matplotlib.figure as mfigure
 import numpy as np
@@ -415,6 +416,76 @@ class Symmetry(Rotation):
 
     # --------------------- Other public methods --------------------- #
 
+    def get_symmetry_markers(self) -> list:
+        mirror_list = []
+        marker_list = []
+        has_inversion = False
+        # create masks to sort out which elements are what.
+        # proper elements
+        p_mask = ~self.improper
+        # mirror planes
+        m_mask = (np.abs(self.angle - np.pi) < 1e-4) * self.improper
+        # rotations (both proper and improper)
+        r_mask = np.abs(self.angle) > 1e-4
+        # rotoinversions
+        roto_mask = r_mask * ~p_mask * ~m_mask
+        # the inversion symmetry
+        i_mask = (~r_mask) * self.improper
+
+        # Find the unique axis familes. For the standard crystallographic point
+        # groups, this will be <100>, <110>, and/or <111>.
+        axis_families = (self.axis.in_fundamental_sector(self)).unique()
+        # to avoid repetition, look at only the unique fundamental representations
+        # of the possible symmetry elements (ie, no need to look at [111] and [11-1])
+        fs_axes = self.axis.in_fundamental_sector(self)
+        # change the axis of the identity and (if present) inversion elements to
+        # [0,0,0], as neither have markers (inversion only modifies other markers)
+        fs_axes[p_mask * ~r_mask] = np.zeros(3)
+        if np.sum(i_mask) > 0:
+            has_inversion = True
+            fs_axes[i_mask] = np.zeros(3)
+
+        # iterate through each primary axis and find what elements to add
+        for axis in axis_families:
+            axis_mask = np.sum(np.abs((fs_axes - axis).data), 1) < 1e-4
+            # check for mirrors
+            if np.any(m_mask * axis_mask):
+                mirror_list.append(copy(axis))
+            # if there are no rotations, continue to the next axis.
+            if np.sum(axis_mask * r_mask) == 0:
+                continue
+            # check to see if there are only proper rotations
+            if np.all(p_mask[axis_mask]):
+                min_ang = np.abs(self[axis_mask].angle).min()
+                f = np.around(2 * np.pi / min_ang).astype(int)
+                marker_list.append([copy(axis), f, "none"])
+            # If there is also an inversion, append the appropriate symbol
+            elif has_inversion:
+                min_ang = np.abs(self[r_mask * axis_mask].angle).min()
+                f = np.around(2 * np.pi / min_ang).astype(int)
+                marker_list.append([copy(axis), f, "inv"])
+            # The only othero option is improper rotations and no inversion, which
+            # is a rotoinversion.
+            else:
+                min_ang = np.abs(self[roto_mask * axis_mask].angle).min()
+                f = np.around(2 * np.pi / min_ang).astype(int)
+
+        # Three-fold rotations around the 111 create <011> mirror planes, which for
+        # ease we will add in by hand.
+        if np.any(axis_families.dot(Vector3d([1, 1, 1])) > 1.73):
+            mirror_list.append(Vector3d([0, 1, 1]))
+
+        # Finally, the combination of inversion center and mirror planes
+        # creates 2-fold symmetries not on the primary axes. Let's add in any
+        # that didn't already get included from other operations
+        if np.sum(m_mask) > 1 and has_inversion:
+            current_markers = Vector3d([x[0].data for x in marker_list])
+            two_folds = self[m_mask].in_fundamental_sector(self)
+            mask = np.abs(two_folds.dot_outer(current_markers)).max(axis=1) < 0.99
+            new_two_folds = two_folds[mask]
+            for ntf in new_two_folds:
+                marker_list.append([copy(ntf), 2])
+
     def get_axis_orders(self) -> dict[Vector3d, int]:
         s = self[self.angle > 0]
         if s.size == 0:
@@ -542,7 +613,7 @@ class Symmetry(Rotation):
 # NOTE: ORIX uses Schoenflies symbols to define point groups. This is partly
 # because the notation is short and always starts with a letter (ie, they
 # make convenient python variables), and partly because it helps limit
-# accidental misinterpretation of of Herman-Mauguin symbols as space group
+# accidental misinterpretation of Herman-Mauguin symbols as space group
 # numbers. For example. "222" could be interpreted as SG#222 == Pn-3n, or
 # as PG'222'== D3.  there are similar examples with 2, 3, 4, 32, etc.
 
