@@ -56,7 +56,7 @@ for i, pg in enumerate(point_groups):
     # create masks to sort out which elements are rotations, mirrors,
     # inversions, and rotoinversions
     p_mask = ~pg.improper
-    m_mask = (np.abs(pg.angle - np.pi) < 1e-4) * pg.improper
+    m_mask = (np.abs(pg.angle) - np.pi < 1e-4) * pg.improper
     r_mask = pg.angle**2 > 1e-4
     roto_mask = r_mask * ~p_mask * ~m_mask
     i_mask = (~r_mask) * pg.improper
