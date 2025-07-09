@@ -236,7 +236,7 @@ class Phase:
     @point_group.setter
     def point_group(self, value: int | str | Symmetry | None) -> None:
         """Set the point group."""
-        groups = PointGroups._pg_sets["all_repeated"]
+        groups = PointGroups._pg_sets["permutations_repeated"]
         if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):

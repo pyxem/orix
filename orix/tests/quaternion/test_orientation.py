@@ -37,14 +37,14 @@ from orix.quaternion.symmetry import (
     T,
     O,
     Oh,
-    get_point_groups,
+    PointGroups,
 )
 from orix.vector import Miller, Vector3d
 # isort: on
 # fmt: on
 
-groups = get_point_groups("all")
-proper_groups = get_point_groups("proper")
+groups = PointGroups.get_set("permutations_repeated")
+proper_groups = PointGroups.get_set("proper_groups")
 
 
 @pytest.fixture

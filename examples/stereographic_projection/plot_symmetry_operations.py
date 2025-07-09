@@ -27,15 +27,19 @@ groups using `PointGroups.get()`
 import matplotlib.pyplot as plt
 import orix.plot
 from orix.quaternion.symmetry import PointGroups
+from orix.vector import Vector3d
 
 # create a list of the 32 crystallographic point groups
 point_groups = PointGroups.get_set("procedural")
 
+# prepare the plots
 fig, ax = plt.subplots(
     4, 8, subplot_kw={"projection": "stereographic"}, figsize=[14, 10]
 )
 ax = ax.flatten()
 
+# create a vector to mirror over axes
+v = Vector3d.from_polar(65, 80, degrees=True)
 # Iterate through the 32 Point groups
 for i, pg in enumerate(point_groups):
-    pg.plot_elements(plt_axis=ax[i], itoc_style=True)
+    pg.plot(asymetric_vector=v, plt_axis=ax[i], itoc_style=True)
