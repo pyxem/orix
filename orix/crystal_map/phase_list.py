@@ -31,7 +31,7 @@ from diffpy.structure.symmetryutilities import ExpandAsymmetricUnit
 import matplotlib.colors as mcolors
 import numpy as np
 
-from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES, Symmetry, PointGroups
+from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES, PointGroups, Symmetry
 from orix.vector import Miller, Vector3d
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
