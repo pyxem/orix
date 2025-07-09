@@ -31,12 +31,7 @@ from diffpy.structure.symmetryutilities import ExpandAsymmetricUnit
 import matplotlib.colors as mcolors
 import numpy as np
 
-from orix.quaternion.symmetry import (
-    _EDAX_POINT_GROUP_ALIASES,
-    Symmetry,
-    get_point_group,
-    get_point_groups,
-)
+from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES, Symmetry, PointGroups
 from orix.vector import Miller, Vector3d
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
@@ -232,14 +227,14 @@ class Phase:
             Point group.
         """
         if self.space_group is not None:
-            return get_point_group(self.space_group.number)
+            return PointGroups.from_space_group(self.space_group.number)
         else:
             return self._point_group
 
     @point_group.setter
     def point_group(self, value: int | str | Symmetry | None) -> None:
         """Set the point group."""
-        groups = get_point_groups("all_repeated")
+        groups = PointGroups._pg_sets["all_repeated"]
         if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):
