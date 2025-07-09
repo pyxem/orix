@@ -664,7 +664,7 @@ class StereographicPlot(maxes.Axes):
                 bg_kwargs = copy(kwargs)
                 if "color" in bg_kwargs:
                     _ = bg_kwargs.pop("color")
-                self.scatter(vec, color="w", s=marker_size * 0.5, **bg_kwargs)
+                self.scatter(vec, color="w", s=marker_size * 0.2, **bg_kwargs)
             self.scatter(vec, marker=marker, s=marker_size, **kwargs)
 
         # TODO: Find a way to control padding, so that markers aren't
@@ -995,10 +995,10 @@ class _SymmetryMarker:
         symmetry marker's shape(circle, elliplse, triangle, square, or hex)'.
     modifier
         Determines what alterations, if any, should be added to the marker. "none" or
-        None will add nothing. "roto" will add a white rotoinversion symbol inside
-        the marker, which for even-fold rotations is a polygon with half as many
-        corners, and for an odd-fold rotation is a white dot. "inv" will add
-        an inversion symbol, which is a white dot. The default is "none".
+        None will add nothing. "rotoinversion" will add a white rotoinversion symbol
+        inside the marker, which for even-fold rotations is a polygon with half as
+        many corners, and for an odd-fold rotation is a white dot. "inversion" will
+        add an inversion symbol, which is a white dot. The default is "none".
     """
 
     def __init__(
@@ -1006,7 +1006,9 @@ class _SymmetryMarker:
         v: Vector3d | np.ndarray | list | tuple,
         size: int = 1,
         folds: Literal[1, 2, 3, 4, 6] = 2,
-        modifier: Literal["none", "roto", "inv"] = "none",
+        modifier: Literal[
+            None, "none", "rotation", "rotoinversion", "inversion"
+        ] = "none",
     ):
         fold_opt = [1, 2, 3, 4, 6]
         if folds not in fold_opt:
@@ -1017,7 +1019,7 @@ class _SymmetryMarker:
             raise ValueError(
                 f"Folds must be one of {', '.join(map(str, fold_opt))}, not {folds}"
             )
-        mod_opt = ["none", "roto", "inv"]
+        mod_opt = [None, "none", "rotation", "rotoinversion", "inversion"]
         if modifier not in mod_opt:
             raise ValueError(
                 f"Modifier must be one of {', '.join(map(str, mod_opt))}, not {modifier}"
@@ -1067,11 +1069,11 @@ class _SymmetryMarker:
         e_vert[:, 1] = e_vert[:, 1] * ((1 - e_vert[:, 0] ** 2) ** 0.5) * 0.35
         if self._folds == 1:
             # return either a normal circle, or a cirle with a dot in the
-            # center if this also anie, inversion center
+            # center if this also an inversion center
             circle = mpath.Path.circle((0, 0), 0.75)
             vert = np.copy(circle.vertices)
             code = circle.codes
-            if self._inner_shape == "inv":
+            if self._inner_shape == "inversion":
                 verts = np.concatenate([vert, i_vert[::-1]])
                 codes = np.concatenate([code, i_code])
                 marker = mpath.Path(verts, codes)
@@ -1084,12 +1086,12 @@ class _SymmetryMarker:
         else:
             # if it's not 2-fold, just use a default polygon
             marker = mpath.Path.unit_regular_polygon(self._folds)
-        if self._inner_shape == "inv":
+        if self._inner_shape == "inversion":
             # add the inner circle
             verts = np.concatenate([marker.vertices, i_vert[::-1]])
             codes = np.concatenate([marker.codes, i_code])
             marker = mpath.Path(verts, codes)
-        elif self._inner_shape == "roto":
+        elif self._inner_shape == "rotoinversion":
             # add an inner shape with half the folds
             vert = np.copy(marker.vertices)
             code = np.copy(marker.codes)
