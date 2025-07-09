@@ -1368,8 +1368,8 @@ class PointGroups(list):
         # If the name still cannot be found, return a ValueError
         except ValueError:
             raise ValueError(
-                f"'name' must be one of {", ".join(map(str, pg_dict.keys()))},"
-                + f" {", ".join(map(str, pg_dict_s.keys()))}, or must be a string or "
+                f"'name' must be one of {', '.join(map(str, pg_dict.keys()))},"
+                + f" {', '.join(map(str, pg_dict_s.keys()))}, or must be a string or "
                 + "integer recognized by diffpy.structure.spacegroups.GetSpaceGroup"
                 + f". name = '{name}' is not a valid value."
             )
