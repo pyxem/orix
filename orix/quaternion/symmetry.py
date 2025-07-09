@@ -75,7 +75,7 @@ class Symmetry(Rotation):
     @property
     def subgroups(self) -> list[Symmetry]:
         """Return the list groups that are subgroups of this group."""
-        groups = PointGroups._pg_sets["all"]
+        groups = PointGroups._pg_sets["permutations"]
         return [g for g in groups if g._tuples <= self._tuples]
 
     @property
@@ -418,8 +418,7 @@ class Symmetry(Rotation):
     # --------------------- Other public methods --------------------- #
 
     def _get_symmetry_elements(self) -> list:
-        """
-        Returns all the crystallographically unique axes and their associated
+        """Returns all the crystallographically unique axes and their associated
         symmetry elements (mirrors, rotations, rotoinversions, etc).
 
         Returns
@@ -519,22 +518,11 @@ class Symmetry(Rotation):
                 elements.append(
                     (copy(axis), m_flag, 1, "none"),
                 )
-        # Finally, 3-fold rotations around the 111 create <110> mirrors, and
-        # inversion combined with mirror planes can create 2-fold symmetries
-        # not on the primary axis. These we can add by hand if they are missing.
+        # Finally, 3-fold rotations around the 111 create <110> mirrors
+        # not on the primary axes. These we can add by hand.
         if np.any(np.abs(Vector3d([1, 1, 1]).angle_with(self.axis)) < 1e-4):
-            catch = False
             v = Vector3d([0, 1, 1]).in_fundamental_sector(self)
-            for i, e in enumerate(elements):
-                if np.abs(v.data - e[0].data).sum() < 1e-4:
-                    elements[i][1] = True
-                    catch = True
-                    break
-            if catch is False:
-                elements.append(
-                    (v, True, 1, "none"),
-                )
-
+            elements.append((v, True, 1, "none"))
         # split the list of lists into 4 variables.
         axes = [x[0] for x in elements]
         is_mirror = [x[1] for x in elements]
@@ -543,6 +531,7 @@ class Symmetry(Rotation):
         return axes, is_mirror, s_type, folds
 
     def get_axis_orders(self) -> dict[Vector3d, int]:
+        """Return a dictionary of every rotation axis and it's order (ie, folds)"""
         s = self[self.angle > 0]
         if s.size == 0:
             return {}
@@ -552,6 +541,7 @@ class Symmetry(Rotation):
         }
 
     def get_highest_order_axis(self) -> tuple[Vector3d, np.ndarray]:
+        """Return the highest order rotational axis and it's order (ie, folds)"""
         axis_orders = self.get_axis_orders()
         if len(axis_orders) == 0:
             return Vector3d.zvector(), np.inf
@@ -595,22 +585,97 @@ class Symmetry(Rotation):
         sr = SphericalRegion(n.unique())
         return sr
 
-    def plot_elements(
+    def plot(
         self,
-        color_dict: dict = {},
-        symmetry_color: str | None = None,
-        mirror_color: str | None = None,
-        s: float = 160,
-        mirror_lw: float = 1,
-        plt_axis: plt.Axes | None = None,
-        return_figure: bool = False,
-        itoc_style: bool = True,
+        asymetric_vector: Vector3d | None = None,
         show_name: bool = True,
-    ):
+        plt_axis: plt.Axes | None = None,
+        return_figure: bool = True,
+        marker_dict: dict = {},
+        marker_size: float = 150.0,
+        mirror_width: float = 2.0,
+        asymetric_vector_dict: dict = {},
+        asymmetric_vector_size: float = 10.0,
+        itoc_style=True,
+    ) -> plt.Figure | None:
+        """Creates a stereographic projection of symmetry operations in the group.
+        Can also plot symmetrically equivalent variations of orientations or vectors
+        to demonstrate the effect of symmetry operations.
+
+        Parameters
+        ----------
+        asymetric_vector
+            A marker will be added at the stereographic projection of this vector,
+            along with all it's symmetrically equivalent rotations. By default, no
+            vector will be plotted, and only rotation and mirror markers will be added
+            to the plot.
+        show_name
+            If True, add both the Schoenflies and Hermann-Mauguin names of the point
+            group to the title.
+        plt_axis
+            The matplotlib.Axis object into which to add the stereographic plot.
+            If None is passed, a new figure and axis will be generated.
+        return_figure
+            If True, return the figure containing the plotting axis.
+        marker_dict
+            A dictionary of arguments to modify how the symmetry markers are
+            generated. The following options are the overwritable defaults:
+                  1: 'black'   <-- 1-fold marker color
+                  2: 'green'   <-- 2-fold marker color
+                  3: 'red'     <-- 3-fold marker color
+                  4: 'purple'  <-- 4-fold marker color
+                  6: 'magenta' <-- 6-fold marker color
+                  'm': 'blue'  <-- 1-fold marker color
+        marker_size
+            The size of the rotational makers to be added to the plot. This is
+            equivalent to the argument "s" in matplotlib.scatter
+        mirror_width
+            The width of the line used to draw the mirror planes. This is
+            equivalent to the argument "linewidth" in matplotlib.plot
+        asymetric_vector_dict
+            A dictionary of arguments to modify the asymetric_vector markers.
+            The following options are the overwritable defaults:
+                'upper_color': 'black' < -- Upper hemisphere marker color
+                'lower_color': 'grey' < -- Lower hemisphere marker color
+                'upper_marker': '+' < -- Upper hemisphere marker shape
+                'lower_marker': 'o' < -- Lower hemisphere marker shape
+        asymmetric_vector_size
+            size of the markers used to plot the asymetric vector markers.
+        itoc_style
+            If True, the plot will follow the ITOC convention of not placing redundant
+            inversion symbols on rotation markers perpendicular to the viewing
+            direction.
+
+        Returns
+        -------
+        fig
+            The created figure, returned if ``return_figure=True`` is
+            passed as a keyword argument.
+
+        Notes
+        -----
+
+        If users wish to have more control over their plots, this function can be used
+        to modify an existing plot, like so:
+
+        >>> import matplotlib.pyplot as plt
+        >>> pg_Oh = PointGroups.get('m-3m')
+        >>> v = Vector3d.random(10)
+        >>> v_symm = pg_Oh.outer(v).flatten()
+        >>> fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "stereographic"})
+        >>> pg_Oh.plot(plt_axis=ax, show_name = False)
+        >>> ax.set_title("my cool custom title")
+        >>> ax.scatter(v_symm)
+
+        In this way, keword arguments related to the plot, the title, the scattered
+        vector markers, and/or the symmetry markers can be individually altered as
+        desired.
+
+        """
         # import orix.plot so matplotlib knows what the stereographic projection is.
         import orix.plot
 
-        # dictionary of default colors
+        # dictionary of default colors for the symmetry markers.
         colors = {
             1: "black",
             2: "green",
@@ -619,23 +684,17 @@ class Symmetry(Rotation):
             6: "magenta",
             "m": "blue",
         }
-        # if a symmetry or mirror color was passed in, reset default values.
-        if symmetry_color is not None:
-            for i in [1, 2, 3, 4, 6]:
-                colors[i] = symmetry_color
-        if mirror_color is not None:
-            colors["m"] = mirror_color
         # after resetting defaults, update color choices passed in via color_dict
-        colors.update(color_dict)
+        colors.update(marker_dict)
         # if the user did not pass in an axis, generate one
         if plt_axis is None:
             fig, plt_axis = plt.subplots(subplot_kw={"projection": "stereographic"})
         else:
             fig = plt_axis.get_figure()
 
-        # add titles and labels if requested
+        # add a default title if requested
         if show_name:
-            plt_axis.set_title(self._s_name + "  |  " + self.name)
+            plt_axis.set_title(self._s_name + "   ( " + self.name + " )")
 
         # determine the  symnmetry elements and plot them.
         elements = self._get_symmetry_elements()
@@ -644,7 +703,7 @@ class Symmetry(Rotation):
             if m:
                 for mv in (self * v).unique():
                     m_circ = mv.get_circle()
-                    plt_axis.plot(m_circ, color=colors["m"], linewidth=mirror_lw)
+                    plt_axis.plot(m_circ, color=colors["m"], linewidth=mirror_width)
             # plot each symmetrically equivalent rotation element only once
             c = colors[f]
             if f > 1:
@@ -656,96 +715,54 @@ class Symmetry(Rotation):
                     is_perp = np.abs(z_ang - (np.pi / 2)) < 1e-4
                     if itoc_style and is_perp:
                         plt_axis.symmetry_marker(
-                            sv, folds=f, s=s, color=c, modifier=None
+                            sv, folds=f, s=marker_size, color=c, modifier=None
                         )
                     else:
-                        plt_axis.symmetry_marker(sv, folds=f, s=s, color=c, modifier=t)
+                        plt_axis.symmetry_marker(
+                            sv, folds=f, s=marker_size, color=c, modifier=t
+                        )
             # if this is the primary axis and there is no rotation but an inversion
             # (ie, this is symmetry.Ci, the `-1` PG), add the appropriate marker.
             elif f == 1 and np.abs(v.angle_with(Vector3d.zvector())) < 1e-4:
                 if t != "inversion":
                     continue
                 for sv in (self * v).unique():
-                    plt_axis.symmetry_marker(sv, folds=f, s=s, color=c, modifier=t)
+                    plt_axis.symmetry_marker(
+                        sv, folds=f, s=marker_size, color=c, modifier=t
+                    )
+
+        # plot asymmetric markers if requested.
+        if asymetric_vector is not None:
+            v_symm = self.outer(asymetric_vector).flatten()
+            vdict = {
+                "upper_color": "black",
+                "lower_color": "grey",
+                "upper_marker": "+",
+                "lower_marker": "o",
+            }
+            vdict.update(asymetric_vector_dict)
+            mask = v_symm.z >= 0
+            plt_axis.scatter(
+                -1 * v_symm[~mask],
+                marker=vdict["lower_marker"],
+                c=vdict["lower_color"],
+            )
+            plt_axis.scatter(
+                v_symm[mask],
+                marker=vdict["upper_marker"],
+                c=vdict["upper_color"],
+            )
+
         # return the figure if requested
         if return_figure:
             return fig
-
-    def plot(
-        self,
-        orientation: "Orientation | None" = None,
-        reproject_scatter_kwargs: dict | None = None,
-        **kwargs,
-    ) -> plt.Figure | None:
-        """Stereographic projection of symmetry operations.
-
-        The upper hemisphere of the stereographic projection is shown.
-        Vectors on the lower hemisphere are shown after reprojection
-        onto the upper hemisphere.
-
-        Parameters
-        ----------
-        orientation
-            The symmetry operations are applied to this orientation
-            before plotting. The default value uses an orientation
-            optimized to show symmetry elements.
-        reproject_scatter_kwargs
-            Dictionary of keyword arguments for the reprojected scatter
-            points which is passed to
-            :meth:`~orix.plot.StereographicPlot.scatter`, which passes
-            these on to :meth:`matplotlib.axes.Axes.scatter`. The
-            default marker style for reprojected vectors is "+". Values
-            used for vector(s) on the visible hemisphere are used unless
-            another value is passed here.
-        **kwargs
-            Keyword arguments passed to
-            :meth:`~orix.plot.StereographicPlot.scatter`, which passes
-            these on to :meth:`matplotlib.axes.Axes.scatter`.
-
-        Returns
-        -------
-        fig
-            The created figure, returned if ``return_figure=True`` is
-            passed as a keyword argument.
-        """
-        if orientation is None:
-            # orientation chosen to mimic stereographic projections as
-            # shown: http://xrayweb.chem.ou.edu/notes/symmetry.html
-            orientation = Rotation.from_axes_angles((-1, 8, 1), np.deg2rad(65))
-        if not isinstance(orientation, Rotation):
-            raise TypeError("Orientation must be a Rotation instance.")
-        orientation = self.outer(orientation)
-
-        kwargs.setdefault("return_figure", False)
-        return_figure = kwargs.pop("return_figure")
-
-        if reproject_scatter_kwargs is None:
-            reproject_scatter_kwargs = {}
-        reproject_scatter_kwargs.setdefault("marker", "+")
-        reproject_scatter_kwargs.setdefault("label", "lower")
-
-        v = orientation * Vector3d.zvector()
-
-        figure = v.scatter(
-            return_figure=True,
-            axes_labels=[r"$e_1$", r"$e_2$", None],
-            label="upper",
-            reproject=True,
-            reproject_scatter_kwargs=reproject_scatter_kwargs,
-            **kwargs,
-        )
-        # add symmetry name to figure title
-        figure.suptitle(f"${self.name}$")
-
-        if return_figure:
-            return figure
 
 
 # ---------------- Proceedural definitions of Point Groups ---------------- #
 # NOTE: ORIX uses Schoenflies symbols to define point groups. This is partly
 # because the notation is short and always starts with a letter (ie, they
 # make convenient python variables), and partly because it helps limit
-# accidental misinterpretation of Herman-Mauguin symbols as space group
+# accidental misinterpretation of Hermann-Mauguin symbols as space group
 # numbers. For example. "222" could be interpreted as SG#222 == Pn-3n, or
 # as PG'222'== D3.  there are similar examples with 2, 3, 4, 32, etc.
 
@@ -969,7 +986,7 @@ Oh._s_name = "Oh"
 class PointGroups(list):
     # make a lookup table of common subsets of Point Groups
     _pg_sets = {
-        "all_repeated": [
+        "permutations_repeated": [
             # Triclinic
             C1,
             Ci,
@@ -1022,7 +1039,7 @@ class PointGroups(list):
             Td,
             Oh,
         ],
-        "all": [
+        "permutations": [
             # Triclinic
             C1,
             Ci,
@@ -1068,7 +1085,7 @@ class PointGroups(list):
             Td,
             Oh,
         ],
-        "unique": [
+        "groups": [
             # Triclinic
             C1,
             Ci,
@@ -1109,7 +1126,7 @@ class PointGroups(list):
             Td,
             Oh,
         ],
-        "proper": [
+        "proper_groups": [
             # Triclinic
             C1,
             # Monoclinic
@@ -1122,6 +1139,29 @@ class PointGroups(list):
             # Trigonal
             C3,
             D3,
+            # Hexagonal
+            C6,
+            D6,
+            # cubic
+            T,
+            O,
+        ],
+        "proper_permutations": [
+            # Triclinic
+            C1,
+            # Monoclinic
+            C2,
+            C2x,
+            C2y,
+            # Orthorhombic
+            D2,
+            # Tetragonal
+            C4,
+            # Trigonal
+            C3,
+            D3,
+            D3x,
+            D3y,
             # Hexagonal
             C6,
             D6,
@@ -1148,29 +1188,6 @@ class PointGroups(list):
             # cubic
             Th,
             Oh,
-        ],
-        "proper_all": [
-            # Triclinic
-            C1,
-            # Monoclinic
-            C2,
-            C2x,
-            C2y,
-            # Orthorhombic
-            D2,
-            # Tetragonal
-            C4,
-            # Trigonal
-            C3,
-            D3,
-            D3x,
-            D3y,
-            # Hexagonal
-            C6,
-            D6,
-            # cubic
-            T,
-            O,
         ],
         "procedural": [
             # Cyclic
@@ -1217,7 +1234,9 @@ class PointGroups(list):
         ],
     }
     _subset_names = _pg_sets.keys()
-    _point_group_names = dict([(x.name, x) for x in _pg_sets["all_repeated"]]).keys()
+    _point_group_names = dict(
+        [(x.name, x) for x in _pg_sets["permutations_repeated"]]
+    ).keys()
 
     _spacegroup2pointgroup_dict = {
         "PG1": {"proper": C1, "improper": C1},
@@ -1276,16 +1295,16 @@ class PointGroups(list):
             a crystallographic class.
         """
         if not isinstance(symmetry_list, list):
-            ValueError("'symmetry_list' must be a list of Symmetry objects")
-        if not np.all([isinstance(x, Symmetry) for x in symmetry_list]):
-            ValueError("'symmetry_list' must be a list of Symmetry objects")
-        super().__init__()
-        self.extend(symmetry_list)
+            raise ValueError("'symmetry_list' must be a list of Symmetry objects")
+        elif not np.all([isinstance(x, Symmetry) for x in symmetry_list]):
+            raise ValueError("'symmetry_list' must be a list of Symmetry objects")
+        else:
+            self.extend(symmetry_list)
 
     def __repr__(self):
         str_data = (
-            "| Name  | System     | HM     | Laue  | Proper |n"
-            + "=" * 47
+            "| Name  | System      | HM     | Laue  | Proper |\n"
+            + "=" * 48
             + "\n"
             + "\n".join(
                 [
@@ -1293,7 +1312,7 @@ class PointGroups(list):
                     + "| ".join(
                         [
                             x._s_name.ljust(6),
-                            x.system.ljust(12),
+                            x.system.ljust(13),
                             x.name.ljust(6),
                             x.laue.name.ljust(6),
                             x.proper_subgroup.name.ljust(7),
@@ -1313,7 +1332,7 @@ class PointGroups(list):
         return an associated Symmetry object.
 
         This is done by first checking the labels defined in orix, which includes
-        Herman-Mauguin ('m3m' or '2', etc.) and Shoenflies ('C6' or D3h', etc.).
+        Hermann-Mauguin ('m3m' or '2', etc.) and Shoenflies ('C6' or D3h', etc.).
 
         If it cannot find a match in either list, it will attempt to look up the
         space group name using diffpy's GetSpaceGroup, and relate that back
@@ -1322,7 +1341,7 @@ class PointGroups(list):
          Parameters
         ----------
         name : string in PointGroups._point_group_names
-            either the Herman-Maugin or Shoenflies name for a crystallographic
+            either the Hermann-Maugin or Shoenflies name for a crystallographic
             point gorup.
 
         Returns
@@ -1331,20 +1350,21 @@ class PointGroups(list):
             an object of Class `Symmetry` representing the requested
             crystallographic point group.
         """
-        # check the 'unique' list first, then 'all', then 'all_repeated' first.
+        # check the 'groups' list first, then 'permutations',
+        # then 'permutations_repeated'.
         print(vars().keys())
-        for subset in ["unique", "all", "all_repeated"]:
+        for subset in ["groups", "permutations", "permutations_repeated"]:
             pgs = PointGroups._pg_sets[subset]
             pg_dict = dict([(x.name, x) for x in pgs])
-            if name.lower() in pg_dict.keys():
+            if str(name).lower() in pg_dict.keys():
                 return pg_dict[name.lower()]
             # repeat check with Shoenflies notation
             pg_dict_s = dict([(x._s_name.lower(), x) for x in pgs])
-            if name.lower() in pg_dict_s.keys():
+            if str(name).lower() in pg_dict_s.keys():
                 return pg_dict_s[name.lower()]
         # If the name doesn't exist in orix, try diffpy
         try:
-            PointGroups.from_space_group(name)
+            return PointGroups.from_space_group(name)
         # If the name still cannot be found, return a ValueError
         except ValueError:
             raise ValueError(
@@ -1412,7 +1432,7 @@ class PointGroups(list):
             return PointGroups._spacegroup2pointgroup_dict[pgn]["improper"]
 
     @classmethod
-    def get_set(self, name: Literal[PointGroups._subset_names] = "unique"):
+    def get_set(self, name: Literal[PointGroups._subset_names] = "groups"):
         """
         returns different subsets of the 32 crystallographic point groups. By
         default, this returns all 32 in the order they appear in the
@@ -1422,17 +1442,17 @@ class PointGroups(list):
         ----------
         subset : str, optional
             the point group list to return. The options are as follows:
-                "unique" (default):
+                "groups" (default):
                     All 32 point groups in the order they appear in ITOC's space groups.
                     Thus, they are grouped by crystal system and Laue class
-                "all":
+                "permutations":
                     All 32 points groups, plus common axis-specific permutations
                     for non-centrosymmetric groups (ie, C2 plus C2x and C2y) for
                     a total of 37 point group projections. These
                     are given in the same order as ITOC Table 10.2.2
-                "all_repeated":
+                "permutations_repeated":
                     The 37 point group projections, plus the redundant Schonflies
-                    and Herman-Mauguin group names. For example, both Ci and S2
+                    and Hermann-Mauguin group names. For example, both Ci and S2
                     are included, as well as D3 =="32" and D3x == "321". NOTE:
                     this means several of the entries symmetrically identical.
                 "proper":
@@ -1493,13 +1513,13 @@ def get_distinguished_points(s1: Symmetry, s2: Symmetry = C1) -> Rotation:
 @deprecated(
     since="0.14",
     removal="0.15",
-    alternative="PointGroup.get_from_space_group",
+    alternative="PointGroups.from_space_group",
 )
 def get_point_group(space_group_number: int, proper: bool = False) -> Symmetry:
-    r"""
+    """
     This function has been moved to the PointGroups class
     """
-    return PointGroups.get_from_space_group(space_group_number, proper)
+    return PointGroups.from_space_group(space_group_number, proper)
 
 
 # Point group alias mapping. This is needed because in EDAX TSL OIM
@@ -1521,12 +1541,19 @@ def _get_laue_group_name(name: str) -> str | None:
     # search through all the point groups defined in orix for one with a
     # matching name.
     valid_name = False
-    for g in PointGroups._pg_sets["all_repeated"]:
+    for g in PointGroups._pg_sets["permutations_repeated"]:
         if g.name == name:
             valid_name = True
             break
-    if valid_name == False:
+    if valid_name is False:
         raise ValueError(f"{name} is not a valid point group name")
+    # if the matching point group as a Schoenflies name that ends in an x,y, or z,
+    # it's a permutation of a point group. trade it for an unpermutated one.
+    if np.isin(g._s_name[-1], ["x", "y", "z"]):
+        s_name = g._s_name[:-1]
+        for g in PointGroups._pg_sets["permutations_repeated"]:
+            if g._s_name == s_name:
+                break
     # add an inversion to get the laue group.
     g_laue = _get_unique_symmetry_elements(g, Ci)
     # find a laue group with matching operators
@@ -1538,7 +1565,6 @@ def _get_laue_group_name(name: str) -> str | None:
         if np.min(g_laue.outer(laue).angle ** 2, 1).max() < 1e-4:
             if np.min(g_laue.outer(laue).angle ** 2, 0).max() < 1e-4:
                 return laue.name
-    return ""
 
 
 def _get_unique_symmetry_elements(

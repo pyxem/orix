@@ -34,15 +34,16 @@ from orix.quaternion.symmetry import (
     C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
     T, Th, O, Td, Oh,  # cubic
-    spacegroup2pointgroup_dict,
-    get_point_groups,
+    PointGroups,
     _get_unique_symmetry_elements
 )
 # isort: on
 # fmt: on
 from orix.vector import Vector3d
 
-_groups = get_point_groups("all")
+# fmt: onfrom orix.vector import Vector3d
+
+_groups = PointGroups.get_set("permutations")
 
 
 @pytest.fixture(params=[(1, 2, 3)])
@@ -58,13 +59,13 @@ def all_symmetries(request):
 @pytest.mark.parametrize(
     "symmetry, vector, expected",
     [
-        (Ci, (1, 2, 3), [(1, 2, 3), (-1, -2, -3)]),
-        (Csx, (1, 2, 3), [(1, 2, 3), (-1, 2, 3)]),
-        (Csy, (1, 2, 3), [(1, 2, 3), (1, -2, 3)]),
-        (Csz, (1, 2, 3), [(1, 2, 3), (1, 2, -3)]),
-        (C2, (1, 2, 3), [(1, 2, 3), (-1, -2, 3)]),
+        (PointGroups.get("Ci"), (1, 2, 3), [(1, 2, 3), (-1, -2, -3)]),
+        (PointGroups.get("Csx"), (1, 2, 3), [(1, 2, 3), (-1, 2, 3)]),
+        (PointGroups.get("Csy"), (1, 2, 3), [(1, 2, 3), (1, -2, 3)]),
+        (PointGroups.get("Csz"), (1, 2, 3), [(1, 2, 3), (1, 2, -3)]),
+        (PointGroups.get("C2"), (1, 2, 3), [(1, 2, 3), (-1, -2, 3)]),
         (
-            C2v,
+            PointGroups.get("C2v"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -74,7 +75,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            C4v,
+            PointGroups.get("C4v"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -88,7 +89,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            D4,
+            PointGroups.get("D4"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -102,7 +103,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            C6,
+            PointGroups.get("C6"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -114,7 +115,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            Td,
+            PointGroups.get("Td"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -144,7 +145,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            Oh,
+            PointGroups.get("Oh"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -442,14 +443,15 @@ def test_no_symm_fundamental_zone():
 
 def test_get_point_group():
     """Makes sure all the ints from 1 to 230 give answers."""
+    sg2pg = PointGroups._spacegroup2pointgroup_dict
     for sg_number in np.arange(1, 231):
         proper_pg = get_point_group(sg_number, proper=True)
         assert proper_pg in [C1, C2, C3, C4, C6, D2, D3, D4, D6, O, T]
 
         sg = GetSpaceGroup(sg_number)
         pg = get_point_group(sg_number, proper=False)
-        assert proper_pg == spacegroup2pointgroup_dict[sg.point_group_name]["proper"]
-        assert pg == spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
+        assert proper_pg == sg2pg[sg.point_group_name]["proper"]
+        assert pg == sg2pg[sg.point_group_name]["improper"]
 
 
 def test_unique_symmetry_elements_subgroups(all_symmetries):
@@ -516,33 +518,67 @@ def test_hash_persistence():
     assert all(h1a == h2a for h1a, h2a in zip(h1, h2))
 
 
-@pytest.mark.parametrize("pg", [C1, C4, Oh])
-def test_symmetry_plot(pg):
+@pytest.mark.parametrize(
+    "pg, n_elements",
+    [
+        (C1, 2),
+        (Ci, 4),
+        (S4, 4),
+        (S6, 4),
+        (D3, 16),
+        (T, 30),
+        (Th, 20),
+        (O, 52),
+        (Td, 20),
+        (Oh, 36),
+    ],
+)
+def test_symmetry_plot(pg, n_elements):
+    plt.close("all")
     fig = pg.plot(return_figure=True)
 
     assert isinstance(fig, plt.Figure)
     assert len(fig.axes) == 1
     ax = fig.axes[0]
+    assert len(ax.collections) == n_elements
 
-    c0 = ax.collections[0]
-    assert len(c0.get_offsets()) == np.count_nonzero(~pg.improper)
-    assert c0.get_label().lower() == "upper"
-    if not pg.is_proper:
-        c1 = ax.collections[1]
-        assert len(c1.get_offsets()) == np.count_nonzero(pg.improper)
-        assert c1.get_label().lower() == "lower"
-
-    assert len(ax.texts) == 2
-    assert ax.texts[0].get_text() == "$e_1$"
-    assert ax.texts[1].get_text() == "$e_2$"
-
+    fig, plt_axis = plt.subplots(subplot_kw={"projection": "stereographic"})
+    v = Vector3d.from_polar(0.5, 0.3)
+    v_symm = pg.outer(v)
+    pg.plot(v, plt_axis=plt_axis)
+    c1 = plt_axis.collections[-1]
+    c2 = plt_axis.collections[-2]
+    assert len(c1.get_offsets()) == np.sum(v_symm.z >= 0)
+    if pg.size > 1:
+        assert len(c2.get_offsets()) == np.sum(v_symm.z < 0)
     plt.close("all")
 
 
-@pytest.mark.parametrize("symmetry", [C1, C4, Oh])
-def test_symmetry_plot_raises(symmetry):
-    with pytest.raises(TypeError, match="Orientation must be a Rotation instance"):
-        _ = symmetry.plot(return_figure=True, orientation="test")
+class TestPointGroups:
+    def test_repr(self):
+        pg_list = PointGroups.get_set("permutations_repeated")
+        assert len(pg_list) == 44
+        pg_list = PointGroups.get_set("GROUPS")
+        assert len(pg_list) == 32
+        docs = pg_list.__repr__()
+        lines = docs.split("\n")
+        assert len(lines) == 34
+        for l in lines[2:]:
+            assert len(l.split()) == 11
+
+    def test_init_checks(self):
+        with pytest.raises(ValueError):
+            x = PointGroups("banana")
+        with pytest.raises(ValueError):
+            x = PointGroups(["banana"])
+
+    def test_get(self):
+        assert PointGroups.get("c1").laue.name == "-1"
+        assert PointGroups.get("C1").laue.name == "-1"
+        assert PointGroups.get("32").laue.name == "-3m"
+        assert PointGroups.get(230).laue.name == "m-3m"
+        with pytest.raises(ValueError):
+            x = PointGroups.get("banana")
 
 
 class TestFundamentalSectorFromSymmetry:
@@ -893,24 +929,24 @@ def test_equality(symmetry):
 @pytest.mark.parametrize(
     ["subset", "length", "proper_count"],
     [
-        ["unique", 32, 11],
-        ["all", 37, 14],
-        ["all_repeated", 44, 17],
-        ["proper", 11, 11],
-        ["proper_all", 14, 14],
+        ["groups", 32, 11],
+        ["permutations", 37, 14],
+        ["permutations_repeated", 44, 17],
+        ["proper_groups", 11, 11],
+        ["proper_permutations", 14, 14],
         ["laue", 11, 0],
         ["procedural", 32, 11],
     ],
 )
 def test_get_point_groups(subset, length, proper_count):
     # check that we get the expected number of proper and total point groups.
-    group = get_point_groups(subset)
+    group = PointGroups.get_set(subset)
     assert len(group) == length
     assert np.sum([x.is_proper for x in group]) == proper_count
 
 
 def test_get_point_groups_unique():
-    group = get_point_groups()
+    group = PointGroups.get_set("groups")
     # this is just a check to see if each element is unique, and if there are
     # 32 of them.
     assert np.all(
@@ -929,7 +965,7 @@ def test_get_point_groups_unique():
     )
     # additional test that nonsense returns nonsense
     with pytest.raises(ValueError):
-        get_point_groups("banana")
+        PointGroups.get_set("banana")
 
 
 class TestLaueGroup:

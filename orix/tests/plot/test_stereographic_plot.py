@@ -289,7 +289,7 @@ class TestStereographicPlot:
 class TestSymmetryMarker:
     @pytest.mark.parametrize("v_data", [[0, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]])
     @pytest.mark.parametrize("folds", [1, 2, 3, 4, 6])
-    @pytest.mark.parametrize("modifier", ["none", "roto", "inv"])
+    @pytest.mark.parametrize("modifier", [None, "none", "rotoinversion", "inversion"])
     def test_main_properties(self, v_data, folds, modifier):
         v = Vector3d(v_data)
         marker = _SymmetryMarker(v, folds=folds, modifier=modifier)
@@ -311,10 +311,12 @@ class TestSymmetryMarker:
         v = Vector3d([[1, 0, 0], [0, 1, 1]])
         for i in [1, 2, 3, 4, 6]:
             ax.symmetry_marker(v[0], folds=i, s=marker_size, color="k")
-            ax.symmetry_marker(v[1], folds=i, modifier="inv", s=marker_size)
-            ax.symmetry_marker(v, folds=1, modifier="inv", color="C1", s=marker_size)
+            ax.symmetry_marker(v[1], folds=i, modifier="inversion", s=marker_size)
+            ax.symmetry_marker(
+                v, folds=1, modifier="inversion", color="C1", s=marker_size
+            )
         for i in [4, 6]:
-            ax.symmetry_marker(v, folds=i, modifier="roto", s=marker_size)
+            ax.symmetry_marker(v, folds=i, modifier="rotoinversion", s=marker_size)
 
         markers = ax.collections
         assert len(markers) == 43
