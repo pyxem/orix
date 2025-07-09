@@ -1,3 +1,22 @@
+#
+# Copyright 2019-2025 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
+
 # Configuration file for the Sphinx documentation app.
 # See the documentation for a full list of configuration options:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
@@ -66,7 +85,7 @@ intersphinx_mapping = {
     "pytest": ("https://docs.pytest.org/en/stable", None),
     "python": ("https://docs.python.org/3", None),
     "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
-    "readthedocs": ("https://docs.readthedocs.io/en/stable", None),
+    "readthedocs": ("https://docs.readthedocs.com/platform/stable/objects.inv", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master", None),
