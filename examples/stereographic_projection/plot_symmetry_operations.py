@@ -4,7 +4,7 @@ Plot symmetry operations
 ========================
 
 This example shows how stereographic projections with symmetry operators can be
-automatically generated using orix for the 32 crystallographic point groups.
+automatically generated for the 32 crystallographic point groups.
 
 The ordering follows the one given in section 9.2 of "Structures of Materials"
 (DeGraef et.al, 2nd edition, 2012), starting with the cyclic groups, then the
