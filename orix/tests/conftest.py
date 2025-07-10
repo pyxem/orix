@@ -51,6 +51,7 @@ def pytest_addoption(parser):
     )
 
 
+# Markers are defined in package configuration
 MARKERS = ["slow"]
 
 
