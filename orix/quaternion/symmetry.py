@@ -1486,7 +1486,7 @@ class PointGroups(list):
             return PointGroups(self._pg_sets[name.lower()])
         # if the name doesn't exist, return a ValueError
         raise ValueError(
-            f"'name' must be one of {", ".join(map(str, pg_opts))}, not '{name}'"
+            f"'name' must be one of {', '.join(map(str, pg_opts))}, not '{name}'"
         )
 
 
