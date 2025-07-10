@@ -110,7 +110,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --pyargs orix --runslow --reruns 2 -n 2 --cov=orix
+          pytest --pyargs orix --slow --reruns 2 -n 2 --cov=orix
 
       - name: Generate line coverage
         if: ${{ matrix.os == 'ubuntu-latest' }}
