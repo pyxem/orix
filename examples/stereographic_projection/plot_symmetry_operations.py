@@ -25,6 +25,7 @@ groups using `PointGroups.get()`
 """
 
 import matplotlib.pyplot as plt
+
 import orix.plot
 from orix.quaternion.symmetry import PointGroups
 from orix.vector import Vector3d
