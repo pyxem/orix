@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import annotations
 
@@ -21,7 +23,7 @@ from collections import OrderedDict
 import copy
 from itertools import islice
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Self
 import warnings
 
 from diffpy.structure import Lattice, Structure
@@ -37,7 +39,8 @@ from orix.quaternion.symmetry import (
     _groups,
     get_point_group,
 )
-from orix.vector import Miller, Vector3d
+from orix.vector.miller import Miller
+from orix.vector.vector3d import Vector3d
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
@@ -333,7 +336,7 @@ class Phase:
         )
 
     @classmethod
-    def from_cif(cls, filename: str | Path) -> Phase:
+    def from_cif(cls, filename: str | Path) -> Self:
         """Return a new phase from a CIF file using
         :mod:`diffpy.structure`'s CIF file parser.
 
@@ -359,25 +362,33 @@ class Phase:
             warnings.warn(f"Could not read space group from CIF file {path!r}")
         return cls(name, space_group, structure=structure)
 
-    def deepcopy(self) -> Phase:
+    def deepcopy(self) -> Self:
         """Return a deep copy using :py:func:`~copy.deepcopy`
         function.
         """
         return copy.deepcopy(self)
 
-    def expand_asymmetric_unit(self) -> Phase:
-        """Return new instance with all symmetrically equivalent atoms.
+    def expand_asymmetric_unit(self) -> Self:
+        """Return a new phase with all symmetrically equivalent atoms.
+
+        Returns
+        -------
+        expanded_phase
+            New phase with the a :attr:`structure` with the unit cell
+            filled with symmetrically equivalent atoms.
 
         Examples
         --------
+        >>> from diffpy.structure import Atom, Lattice, Structure
+        >>> import orix.crystal_map as ocm
         >>> atoms = [Atom("Si", xyz=(0, 0, 1))]
         >>> lattice = Lattice(4.04, 4.04, 4.04, 90, 90, 90)
         >>> structure = Structure(atoms = atoms,lattice=lattice)
-        >>> phase = Phase(structure=structure, space_group=227)
+        >>> phase = ocm.Phase(structure=structure, space_group=227)
         >>> phase.structure
         [Si   0.000000 0.000000 1.000000 1.0000]
-        >>> expanded = phase.expand_asymmetric_unit()
-        >>> expanded.structure
+        >>> expanded_phase = phase.expand_asymmetric_unit()
+        >>> expanded_phase.structure
         [Si   0.000000 0.000000 0.000000 1.0000,
          Si   0.000000 0.500000 0.500000 1.0000,
          Si   0.500000 0.500000 0.000000 1.0000,
@@ -411,9 +422,10 @@ class Phase:
                     diffpy_structure.append(new_atom)
 
         # This handles conversion back to correct alignment
-        out = Phase(self)
-        out.structure = diffpy_structure
-        return out
+        expanded_phase = self.__class__(self)
+        expanded_phase.structure = diffpy_structure
+
+        return expanded_phase
 
 
 class PhaseList:
