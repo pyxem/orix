@@ -76,17 +76,6 @@ def temp_ang_file(tmpdir):
         yield f
 
 
-@pytest.fixture(params=["h5"])
-def temp_file_path(request, tmpdir):
-    """Temporary file in a temporary directory for use when tests need
-    to write, and sometimes read again, data to, and from, a file.
-    """
-    ext = request.param
-    fname = tmpdir.join(f"data_temp.{ext}")
-    with open(fname, mode="w+") as f:
-        yield f
-
-
 ANGFILE_TSL_HEADER = r"""# TEM_PIXperUM          1.000000
 # x-star                0.413900
 # y-star                0.729100

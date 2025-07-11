@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from diffpy.structure.spacegroups import GetSpaceGroup
 from h5py import File
@@ -22,7 +24,7 @@ import pytest
 
 from orix import __version__ as orix_version
 from orix.crystal_map import CrystalMap, Phase
-from orix.io import load, save
+import orix.io as oio
 from orix.io.plugins.orix_hdf5 import (
     atom2dict,
     crystalmap2dict,
@@ -42,10 +44,12 @@ from orix.tests.io.test_io import assert_dictionaries_are_equal
 
 
 class TestOrixHDF5Plugin:
-    def test_file_writer(self, crystal_map, temp_file_path):
-        save(filename=temp_file_path, object2write=crystal_map)
+    def test_file_writer(self, crystal_map, tmp_path):
+        fname = tmp_path / "test.h5"
 
-        with File(temp_file_path) as f:
+        oio.save(filename=fname, object2write=crystal_map)
+
+        with File(fname) as f:
             assert f["manufacturer"][()][0].decode() == "orix"
             assert f["version"][()][0].decode() == orix_version
 
@@ -57,10 +61,12 @@ class TestOrixHDF5Plugin:
         ],
         indirect=["crystal_map_input"],
     )
-    def test_write_read_masked(self, crystal_map_input, temp_file_path):
+    def test_write_read_masked(self, crystal_map_input, tmp_path):
+        fname = tmp_path / "test.h5"
+
         xmap = CrystalMap(**crystal_map_input)
-        save(filename=temp_file_path, object2write=xmap[xmap.x > 2])
-        xmap2 = load(temp_file_path)
+        oio.save(filename=fname, object2write=xmap[xmap.x > 2])
+        xmap2 = oio.load(fname)
 
         assert xmap2.size != xmap.size
         with pytest.raises(ValueError, match="operands could not be broadcast"):
@@ -70,13 +76,14 @@ class TestOrixHDF5Plugin:
         assert xmap2.size == xmap.size
         assert np.allclose(xmap2.x, xmap.x)
 
-    def test_file_writer_raises(self, temp_file_path, crystal_map):
+    def test_file_writer_raises(self, crystal_map, tmp_path):
+        fname = tmp_path / "test.h5"
         with pytest.raises(OSError, match="Cannot write to the already open file "):
-            with File(temp_file_path, mode="w") as _:
-                save(temp_file_path, crystal_map, overwrite=True)
+            with File(fname, mode="w") as _:
+                oio.save(fname, crystal_map, overwrite=True)
 
-    def test_dict2hdf5group(self, temp_file_path):
-        with File(temp_file_path, mode="w") as f:
+    def test_dict2hdf5group(self, tmp_path):
+        with File(tmp_path / "test.h5", mode="w") as f:
             group = f.create_group(name="a_group")
             with pytest.warns(UserWarning, match="The orix HDF5 writer could not"):
                 dict2hdf5group(
@@ -141,9 +148,11 @@ class TestOrixHDF5Plugin:
         assert np.allclose(lattice1["baserot"], lattice2["baserot"])
         assert_dictionaries_are_equal(structure_dict["atoms"], this_dict["atoms"])
 
-    def test_file_reader(self, crystal_map, temp_file_path):
-        save(filename=temp_file_path, object2write=crystal_map)
-        xmap2 = load(filename=temp_file_path)
+    def test_file_reader(self, crystal_map, tmp_path):
+        fname = tmp_path / "test.h5"
+
+        oio.save(filename=fname, object2write=crystal_map)
+        xmap2 = oio.load(filename=fname)
         assert_dictionaries_are_equal(crystal_map.__dict__, xmap2.__dict__)
 
     def test_dict2crystalmap(self, crystal_map):
@@ -207,7 +216,7 @@ class TestOrixHDF5Plugin:
         assert str(atom.element) == str(atom2.element)
         assert np.allclose(atom.xyz, atom2.xyz)
 
-    def test_write_read_nd_crystalmap_properties(self, temp_file_path, crystal_map):
+    def test_write_read_nd_crystalmap_properties(self, crystal_map, tmp_path):
         """Crystal map properties with more than one value in each point
         (e.g. top matching scores from dictionary indexing) can be written
         and read from file correctly.
@@ -225,8 +234,9 @@ class TestOrixHDF5Plugin:
         prop3d = np.arange(map_size * 4).reshape(prop3d_shape)
         xmap.prop[prop3d_name] = prop3d
 
-        save(filename=temp_file_path, object2write=xmap)
-        xmap2 = load(temp_file_path)
+        fname = tmp_path / "test.h5"
+        oio.save(filename=fname, object2write=xmap)
+        xmap2 = oio.load(fname)
 
         assert np.allclose(xmap2.prop[prop2d_name], xmap.prop[prop2d_name])
         assert np.allclose(xmap2.prop[prop3d_name], xmap.prop[prop3d_name])
