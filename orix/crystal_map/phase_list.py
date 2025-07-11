@@ -23,7 +23,7 @@ from collections import OrderedDict
 import copy
 from itertools import islice
 from pathlib import Path
-from typing import Generator, Self
+from typing import Generator
 import warnings
 
 from diffpy.structure import Lattice, Structure
@@ -336,7 +336,7 @@ class Phase:
         )
 
     @classmethod
-    def from_cif(cls, filename: str | Path) -> Self:
+    def from_cif(cls, filename: str | Path) -> Phase:
         """Return a new phase from a CIF file using
         :mod:`diffpy.structure`'s CIF file parser.
 
@@ -362,13 +362,13 @@ class Phase:
             warnings.warn(f"Could not read space group from CIF file {path!r}")
         return cls(name, space_group, structure=structure)
 
-    def deepcopy(self) -> Self:
+    def deepcopy(self) -> Phase:
         """Return a deep copy using :py:func:`~copy.deepcopy`
         function.
         """
         return copy.deepcopy(self)
 
-    def expand_asymmetric_unit(self) -> Self:
+    def expand_asymmetric_unit(self) -> Phase:
         """Return a new phase with all symmetrically equivalent atoms.
 
         Returns

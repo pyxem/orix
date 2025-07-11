@@ -19,7 +19,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Self
+from typing import Any
 import warnings
 
 import dask.array as da
@@ -171,12 +171,12 @@ class Quaternion(Object3d):
         return 2 * np.nan_to_num(np.arccos(np.abs(self.a)))
 
     @property
-    def antipodal(self) -> Self:
+    def antipodal(self) -> Quaternion:
         """Return the quaternion and its antipodal."""
         return self.__class__(np.stack([self.data, -self.data]))
 
     @property
-    def conj(self) -> Self:
+    def conj(self) -> Quaternion:
         r"""Return the conjugate of the quaternion
         :math:`Q^{*} = a - bi - cj - dk`.
         """
@@ -194,10 +194,10 @@ class Quaternion(Object3d):
 
     # ------------------------ Dunder methods ------------------------ #
 
-    def __invert__(self) -> Self:
+    def __invert__(self) -> Quaternion:
         return self.__class__(self.conj.data / (self.norm**2)[..., np.newaxis])
 
-    def __mul__(self, other: Quaternion | Vector3d) -> Self | Vector3d:
+    def __mul__(self, other: Quaternion | Vector3d) -> Quaternion | Vector3d:
         if isinstance(other, Quaternion):
             if installed["numpy-quaternion"]:
                 import quaternion
@@ -230,7 +230,7 @@ class Quaternion(Object3d):
                 return other.__class__(v)
         return NotImplemented
 
-    def __neg__(self) -> Self:
+    def __neg__(self) -> Quaternion:
         return self.__class__(-self.data)
 
     def __eq__(self, other: Any | Quaternion) -> bool:
@@ -252,7 +252,7 @@ class Quaternion(Object3d):
         axes: np.ndarray | Vector3d | tuple | list,
         angles: np.ndarray | tuple | list | float,
         degrees: bool = False,
-    ) -> Self:
+    ) -> Quaternion:
         r"""Create unit quaternions from axis-angle pairs
         :math:`(\hat{\mathbf{n}}, \omega)`
         :cite:`rowenhorst2015consistent`.
@@ -302,7 +302,7 @@ class Quaternion(Object3d):
     @classmethod
     def from_homochoric(
         cls, ho: Vector3d | Homochoric | np.ndarray | tuple | list
-    ) -> Self:
+    ) -> Quaternion:
         r"""Create unit quaternions from homochoric vectors
         :math:`\mathbf{h}` :cite:`rowenhorst2015consistent`.
 
@@ -349,7 +349,7 @@ class Quaternion(Object3d):
         cls,
         ro: np.ndarray | Vector3d | tuple | list,
         angles: np.ndarray | tuple | list | float | None = None,
-    ) -> Self:
+    ) -> Quaternion:
         r"""Create unit quaternions from three-component Rodrigues
         vectors :math:`\hat{\mathbf{n}}` or four-component
         Rodrigues-Frank vectors :math:`\mathbf{\rho}`
@@ -452,7 +452,7 @@ class Quaternion(Object3d):
         euler: np.ndarray | tuple | list,
         direction: str = "lab2crystal",
         degrees: bool = False,
-    ) -> Self:
+    ) -> Quaternion:
         """Create unit quaternions from Euler angle sets
         :cite:`rowenhorst2015consistent`.
 
@@ -506,7 +506,7 @@ class Quaternion(Object3d):
         return Q
 
     @classmethod
-    def from_matrix(cls, matrix: np.ndarray | tuple | list) -> Self:
+    def from_matrix(cls, matrix: np.ndarray | tuple | list) -> Quaternion:
         """Create unit quaternions from orientation matrices
         :cite:`rowenhorst2015consistent`.
 
@@ -542,7 +542,7 @@ class Quaternion(Object3d):
         return Q
 
     @classmethod
-    def from_scipy_rotation(cls, rotation: SciPyRotation) -> Self:
+    def from_scipy_rotation(cls, rotation: SciPyRotation) -> Quaternion:
         """Create unit quaternions from
         :class:`scipy.spatial.transform.Rotation`.
 
@@ -611,10 +611,10 @@ class Quaternion(Object3d):
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
     ) -> (
-        Self
-        | tuple[Self, float]
-        | tuple[Self, np.ndarray]
-        | tuple[Self, float, np.ndarray]
+        Quaternion
+        | tuple[Quaternion, float]
+        | tuple[Quaternion, np.ndarray]
+        | tuple[Quaternion, float, np.ndarray]
     ):
         """Estimate a quaternion to optimally align two sets of vectors.
 
@@ -686,7 +686,7 @@ class Quaternion(Object3d):
         return out[0] if len(out) == 1 else tuple(out)
 
     @classmethod
-    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Self:
+    def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
         """Pointwise cross product of three quaternions.
 
         Parameters
@@ -744,7 +744,7 @@ class Quaternion(Object3d):
         return Q
 
     @classmethod
-    def identity(cls, shape: int | tuple = (1,)) -> Self:
+    def identity(cls, shape: int | tuple = (1,)) -> Quaternion:
         """Create identity quaternions.
 
         Parameters
@@ -1058,7 +1058,7 @@ class Quaternion(Object3d):
         dots = np.tensordot(self.data, other.data, axes=(-1, -1))
         return dots
 
-    def mean(self) -> Self:
+    def mean(self) -> Quaternion:
         """Return the mean quaternion with unitary weights.
 
         Returns
@@ -1083,7 +1083,7 @@ class Quaternion(Object3d):
         lazy: bool = False,
         chunk_size: int = 20,
         progressbar: bool = True,
-    ) -> Self | Vector3d:
+    ) -> Quaternion | Vector3d:
         """Return the outer products of the quaternions and the other
         quaternions or vectors.
 
@@ -1166,7 +1166,7 @@ class Quaternion(Object3d):
                 "with `other` of type `Quaternion` or `Vector3d`"
             )
 
-    def inv(self) -> Self:
+    def inv(self) -> Quaternion:
         r"""Return the inverse quaternions
         :math:`Q^{-1} = a - bi - cj - dk`.
         """

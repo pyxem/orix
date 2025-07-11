@@ -36,8 +36,6 @@ dependencies = [
     "pycifrw",
     "scipy",
     "tqdm",
-    # TODO: Remove once Python >= 3.11
-    "typing_extensions",
 ]
 
 [project.optional-dependencies]

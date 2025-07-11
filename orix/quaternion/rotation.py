@@ -19,7 +19,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Self
+from typing import Any
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
@@ -97,7 +97,7 @@ class Rotation(Quaternion):
         self._data[..., -1] = value
 
     @property
-    def antipodal(self) -> Self:
+    def antipodal(self) -> Rotation:
         """Return the rotation and its antipodal."""
         R = self.__class__(np.stack([self.data, -self.data]))
         R.improper = self.improper
@@ -107,7 +107,7 @@ class Rotation(Quaternion):
 
     def __mul__(
         self, other: Rotation | Quaternion | Vector3d | np.ndarray | int | list
-    ) -> Self | Quaternion | Vector3d:
+    ) -> Rotation | Quaternion | Vector3d:
         # Combine rotations self * other as first other, then self
         if isinstance(other, Rotation):
             Q = Quaternion(self) * Quaternion(other)
@@ -133,17 +133,17 @@ class Rotation(Quaternion):
                 return R
         return NotImplemented
 
-    def __neg__(self) -> Self:
+    def __neg__(self) -> Rotation:
         R = self.__class__(self.data)
         R.improper = np.logical_not(self.improper)
         return R
 
-    def __getitem__(self, key) -> Self:
+    def __getitem__(self, key) -> Rotation:
         R = super().__getitem__(key)
         R.improper = self.improper[key]
         return R
 
-    def __invert__(self) -> Self:
+    def __invert__(self) -> Rotation:
         R = super().__invert__()
         R.improper = self.improper
         return R
@@ -168,7 +168,7 @@ class Rotation(Quaternion):
         shape: int | tuple = (1,),
         alpha: float = 1.0,
         reference: Rotation | list | tuple = (1, 0, 0, 0),
-    ) -> Self:
+    ) -> Rotation:
         """Return random rotations with a simplified Von Mises-Fisher
         distribution.
 
@@ -208,7 +208,9 @@ class Rotation(Quaternion):
         return_index: bool = False,
         return_inverse: bool = False,
         antipodal: bool = True,
-    ) -> Self | tuple[Self, np.ndarray] | tuple[Self, np.ndarray, np.ndarray]:
+    ) -> (
+        Rotation | tuple[Rotation, np.ndarray] | tuple[Rotation, np.ndarray, np.ndarray]
+    ):
         """Return the unique rotations from these rotations.
 
         Two rotations are not unique if they have the same propriety
@@ -345,7 +347,7 @@ class Rotation(Quaternion):
         lazy: bool = False,
         chunk_size: int = 20,
         progressbar: bool = True,
-    ) -> Self | Vector3d:
+    ) -> Rotation | Vector3d:
         """Return the outer rotation products of the rotations and the
         other rotations or vectors.
 
@@ -390,7 +392,7 @@ class Rotation(Quaternion):
 
         return R
 
-    def flatten(self) -> Self:
+    def flatten(self) -> Rotation:
         """Return a new rotation instance collapsed into one dimension.
 
         Returns
