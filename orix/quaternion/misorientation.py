@@ -388,11 +388,6 @@ class Misorientation(Rotation):
         """Return equivalent transformations which have the smallest
         angle of rotation as a new misorientation.
 
-        Parameters
-        ----------
-        verbose
-            Whether to print a progressbar. Default is ``False``.
-
         Returns
         -------
         M

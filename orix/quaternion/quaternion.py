@@ -247,14 +247,10 @@ class Quaternion(Object3d):
     # ------------------------ Class methods ------------------------- #
 
     @classmethod
-    def random(cls, shape: Union[int, tuple] = 1) -> Quaternion:
+    def random(cls, shape: int | tuple = 1) -> Quaternion:
         quat = super().random(shape)
         quat.data[:, 0] = np.abs(quat.data[:, 0])
         return quat
-
-        O = super().__invert__()
-        O.symmetry = self.symmetry
-        return O
 
     @classmethod
     def from_axes_angles(
@@ -697,22 +693,22 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_path_ends(
-        cls, waypoints: Quaternion, close_loop: bool = False, steps: int = 100
+        cls, points: Quaternion, closed: bool = False, steps: int = 100
     ) -> Quaternion:
-        """Return Quaternions tracing the shortest path between two or more
-        consecutive waypoints.
+        """Return quaternions tracing the shortest path between two or more
+        consecutive points.
 
         Parameters
         ----------
-        waypoints : Quaternion
+        points
             Two or more quaternions that define waypoints along a path through
             rotation space (SO3).
-        close_loop : bool, optional
+        closed
             Option to add a final trip from the last waypoint back to the
-            first, thus closing the loop. Default is False.
-        steps : int, optional
-        Number of points to return along the path between each pair of
-        waypoints. The default is 100.
+            first, thus closing the loop. The default is False.
+        steps
+            Number of quaternions to return along the path between each
+            pair of waypoints. The default is 100.
 
         Returns
         -------
@@ -721,30 +717,30 @@ class Quaternion(Object3d):
 
         Notes
         -----
-        This method can use Orientations and Misorientations as inputs, and
-        will return an object of the same class. However, symmetry is ignored
-        when determining the shortest routes.
+        This method can use :class:Orientation and :class:Misorientation as
+        inputs and will return an object of the same class. However,
+        symmetry is ignored when determining the shortest routes.
         """
-        waypoints = waypoints.flatten()
-        n = waypoints.size
-        if not close_loop:
+        points = points.flatten()
+        n = points.size
+        if not closed:
             n = n - 1
 
         path_list = []
         for i in range(n):
             # get start and end for this leg of the trip
-            q1 = waypoints[i]
-            q2 = waypoints[(i + 1) % (waypoints.size)]
+            q1 = points[i]
+            q2 = points[(i + 1) % (points.size)]
             # find the ax/ang describing the trip between points
             ax, ang = _conversions.qu2ax((~q1 * q2).data)
             # get 'steps=n' steps along the trip and add them to the journey
             trip = Quaternion.from_axes_angles(ax, np.linspace(0, ang, steps))
             path_list.append((q1 * (trip.flatten())).data)
         path_data = np.concatenate(path_list, axis=0)
-        path = waypoints.__class__(path_data)
+        path = points.__class__(path_data)
         # copy the symmetry if it exists
-        if hasattr(waypoints, "_symmetry"):
-            path._symmetry = waypoints._symmetry
+        if hasattr(points, "_symmetry"):
+            path._symmetry = points._symmetry
         return path
 
     @classmethod
