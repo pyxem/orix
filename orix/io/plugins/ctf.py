@@ -76,17 +76,13 @@ def file_reader(filename: str) -> CrystalMap:
     quality), respectively.
 
     Description of error codes provided in CTF file
-    ==========   =================================================
-    error        Description
-    ==========   =================================================
-    0            Success
-    1            Low band contrast
-    2            Low band slope
-    3            No solution
-    4            High MAD
-    5            Not yet analysed (job cancelled before point!)
-    6            Unexpected error (excepts etc.)
-    ==========   =================================================
+    0 Success
+    1 Low band contrast
+    2 Low band slope
+    3 No solution
+    4 High MAD
+    5 Not yet analysed (job cancelled before point!)
+    6 Unexpected error (excepts etc.)
     """
     with open(filename, "r") as f:
         header, data_starting_row, vendor = _get_header(f)
