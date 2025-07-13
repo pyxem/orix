@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -29,7 +31,13 @@ import pytest
 
 from orix.constants import VisibleDeprecationWarning
 from orix.crystal_map import Phase, PhaseList
-from orix.io import _overwrite_or_not, _plugin_from_manufacturer, load, loadctf, save
+from orix.io._io import (
+    _overwrite_or_not,
+    _plugin_from_manufacturer,
+    load,
+    loadctf,
+    save,
+)
 from orix.io.plugins import bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
 from orix.quaternion import Rotation
 
