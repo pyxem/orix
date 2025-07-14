@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Reader of a crystal map from a file in the Channel Text File (CTF)
 format.
@@ -21,14 +23,14 @@ format.
 
 from io import TextIOWrapper
 import re
-from typing import Dict, List, Tuple
+from typing import Any
 
 from diffpy.structure import Lattice, Structure
 import numpy as np
 
-from orix.crystal_map import CrystalMap, PhaseList
-from orix.crystal_map.crystal_map import _data_slices_from_coordinates
-from orix.quaternion import Rotation
+from orix.crystal_map.crystal_map import CrystalMap, _data_slices_from_coordinates
+from orix.crystal_map.phase_list import PhaseList
+from orix.quaternion.rotation import Rotation
 
 __all__ = ["file_reader"]
 
@@ -45,8 +47,8 @@ def file_reader(filename: str) -> CrystalMap:
 
     The map in the input is assumed to be 2D.
 
-    Many vendors/programs produce a .ctf files. Files from the following
-    vendors/programs are tested:
+    Many vendors/programs can write a .ctf file. Files from the
+    following vendors/programs are tested:
 
     * Oxford Instruments AZtec
     * Bruker Esprit
@@ -75,14 +77,14 @@ def file_reader(filename: str) -> CrystalMap:
     DP (dot product), OSM (orientation similarity metric), and IQ (image
     quality), respectively.
 
-    Description of error codes provided in CTF file
-    0 Success
-    1 Low band contrast
-    2 Low band slope
-    3 No solution
-    4 High MAD
-    5 Not yet analysed (job cancelled before point!)
-    6 Unexpected error (excepts etc.)
+    Description of error codes provided in CTF file:
+    - 0: Success
+    - 1: Low BC
+    - 2: Low BS
+    - 3: No solution
+    - 4: High MAD
+    - 5: Not yet analyzed (job cancelled before point)
+    - 6: Unexpected error (exceptions etc.)
     """
     with open(filename, "r") as f:
         header, data_starting_row, vendor = _get_header(f)
@@ -152,7 +154,7 @@ def file_reader(filename: str) -> CrystalMap:
     return CrystalMap(**data_dict)
 
 
-def _get_header(file: TextIOWrapper) -> Tuple[List[str], int, List[str]]:
+def _get_header(file: TextIOWrapper) -> tuple[list[str], int, str]:
     """Return file header, row number of start of data in file, and the
     detected vendor(s).
 
@@ -197,12 +199,15 @@ def _get_header(file: TextIOWrapper) -> Tuple[List[str], int, List[str]]:
         i += 1
         line = file.readline()
 
-    vendor = vendor[0] if len(vendor) == 1 else "oxford_or_bruker"
+    if len(vendor) == 1:
+        vendor = vendor[0]
+    else:
+        vendor = "oxford_or_bruker"
 
     return header, i + 1, vendor
 
 
-def _get_phases_from_header(header: List[str]) -> dict:
+def _get_phases_from_header(header: list[str]) -> dict[str, list]:
     """Return phase names and symmetries detected in a .ctf file header.
 
     Parameters
@@ -231,7 +236,7 @@ def _get_phases_from_header(header: List[str]) -> dict:
         "space_groups": [],
         "lattice_constants": [],
     }
-    for i, line in enumerate(header):
+    for line_number, line in enumerate(header):
         if line.startswith("Phases"):
             break
 
@@ -252,12 +257,12 @@ def _get_phases_from_header(header: List[str]) -> dict:
         "m-3m",
     ]
 
-    for j in range(n_phases):
-        phase_data = header[i + 1 + j].split("\t")
-        phases["ids"].append(j + 1)
+    for i in range(n_phases):
+        phase_data = header[line_number + 1 + i].split("\t")
+        phases["ids"].append(i + 1)
         abcABG = ";".join(phase_data[:2])
         abcABG = abcABG.split(";")
-        abcABG = [float(i.replace(",", ".")) for i in abcABG]
+        abcABG = [float(lat.replace(",", ".")) for lat in abcABG]
         phases["lattice_constants"].append(abcABG)
         phases["names"].append(phase_data[2])
         laue_id = int(phase_data[3])
@@ -270,7 +275,7 @@ def _get_phases_from_header(header: List[str]) -> dict:
     return phases
 
 
-def _fix_astar_coords(header: List[str], data_dict: dict) -> dict:
+def _fix_astar_coords(header: list[str], data_dict: dict[str, Any]) -> dict[str, Any]:
     """Return the data dictionary with coordinate arrays possibly fixed
     for ASTAR Index files.
 
@@ -310,7 +315,7 @@ def _fix_astar_coords(header: List[str], data_dict: dict) -> dict:
     return data_dict
 
 
-def _get_xy_step(header: List[str]) -> Dict[str, float]:
+def _get_xy_step(header: list[str]) -> dict[str, float]:
     pattern_step = re.compile(r"(?<=[XY]Step[\t\s])(.*)")
     steps = {"x": None, "y": None}
     for line in header:
@@ -324,7 +329,7 @@ def _get_xy_step(header: List[str]) -> Dict[str, float]:
     return steps
 
 
-def _get_xy_cells(header: List[str]) -> Dict[str, int]:
+def _get_xy_cells(header: list[str]) -> dict[str, int]:
     pattern_cells = re.compile(r"(?<=[XY]Cells[\t\s])(.*)")
     cells = {"x": None, "y": None}
     for line in header:
