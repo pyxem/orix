@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Three-dimensional quantities.
 
@@ -24,23 +26,8 @@ the rotation axis of a quaternion or the normal to the bounding planes
 of a spherical region.
 """
 
-# fmt: off
-# isort: off
-from orix.vector.vector3d import Vector3d
-from orix.vector.spherical_region import SphericalRegion
-# isort: on
-# fmt: on
-from orix.vector.fundamental_sector import FundamentalSector
-from orix.vector.miller import Miller
-from orix.vector.neo_euler import AxAngle, Homochoric, NeoEuler, Rodrigues
+import lazy_loader
 
-__all__ = [
-    "AxAngle",
-    "FundamentalSector",
-    "Homochoric",
-    "Miller",
-    "NeoEuler",
-    "Rodrigues",
-    "SphericalRegion",
-    "Vector3d",
-]
+__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
+
+del lazy_loader
