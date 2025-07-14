@@ -23,7 +23,7 @@ format.
 
 from io import TextIOWrapper
 import re
-from typing import Any
+from typing import Any, Literal
 
 from diffpy.structure import Lattice, Structure
 import numpy as np
@@ -154,9 +154,11 @@ def file_reader(filename: str) -> CrystalMap:
     return CrystalMap(**data_dict)
 
 
-def _get_header(file: TextIOWrapper) -> tuple[list[str], int, str]:
-    """Return file header, row number of start of data in file, and the
-    detected vendor(s).
+def _get_header(
+    file: TextIOWrapper,
+) -> tuple[list[str], int, Literal["oxford_or_bruker", "emsoft", "astar", "mtex"]]:
+    """Return file header, row number for the first line with data, and
+    the detected vendor.
 
     Parameters
     ----------
@@ -166,17 +168,16 @@ def _get_header(file: TextIOWrapper) -> tuple[list[str], int, str]:
     Returns
     -------
     header
-        List with header lines as individual elements.
+        List with header lines.
     data_starting_row
-        The starting row number for the data lines
+        Row number for the first line with data.
     vendor
-        Vendor detected based on some header pattern. Default is to
-        assume Oxford/Bruker, ``"oxford_or_bruker"`` (assuming no
-        difference between the two vendor's CTF formats). Other options
-        are ``"emsoft"``, ``"astar"``, and ``"mtex"``.
+        Detected vendor. Default is to assume Oxford or Bruker,
+        "oxford_or_bruker" (assuming identical CTF formatting). Other
+        options are "emsoft", "astar", and "mtex".
     """
     vendor = []
-    vendor_pattern = {
+    vendor_patterns = {
         "emsoft": re.compile(
             (
                 r"EMsoft v\. ([A-Za-z0-9]+(_[A-Za-z0-9]+)+); BANDS=pattern index, "
@@ -187,16 +188,19 @@ def _get_header(file: TextIOWrapper) -> tuple[list[str], int, str]:
         "mtex": re.compile("(?<=)Created from mtex"),
     }
 
+    # Keep header lines and any matching vendor patterns (potentially
+    # more than one)
     header = []
     line = file.readline()
-    i = 0
-    # Prevent endless loop by not reading past 1 000 lines
-    while not line.startswith("Phase\tX\tY") and i < 1_000:
-        for k, v in vendor_pattern.items():
-            if v.search(line):
+    data_starting_row = 0
+    max_header_lines = 1_000
+    while data_starting_row < max_header_lines and not line.startswith("Phase\tX\tY"):
+        for k, v in vendor_patterns.items():
+            match = v.search(line)
+            if match is not None:
                 vendor.append(k)
         header.append(line.rstrip())
-        i += 1
+        data_starting_row += 1
         line = file.readline()
 
     if len(vendor) == 1:
@@ -204,22 +208,20 @@ def _get_header(file: TextIOWrapper) -> tuple[list[str], int, str]:
     else:
         vendor = "oxford_or_bruker"
 
-    return header, i + 1, vendor
+    return header, data_starting_row + 1, vendor
 
 
 def _get_phases_from_header(header: list[str]) -> dict[str, list]:
-    """Return phase names and symmetries detected in a .ctf file header.
+    """Return phase names and symmetries detected in a CTF file header.
 
     Parameters
     ----------
     header
-        List with header lines as individual elements.
-    vendor
-        Vendor of the file.
+        List with header lines.
 
     Returns
     -------
-    phase_dict
+    phases_dict
         Dictionary with the following keys (and types): "ids" (int),
         "names" (str), "space_groups" (int), "point_groups" (str),
         "lattice_constants" (list of floats).
@@ -229,11 +231,11 @@ def _get_phases_from_header(header: list[str]) -> dict[str, list]:
     This function has been tested with files from the following vendor's
     formats: Oxford AZtec HKL v5/v6 and EMsoft v4/v5.
     """
-    phases = {
+    phases_dict = {
         "ids": [],
         "names": [],
-        "point_groups": [],
         "space_groups": [],
+        "point_groups": [],
         "lattice_constants": [],
     }
     for line_number, line in enumerate(header):
@@ -242,37 +244,36 @@ def _get_phases_from_header(header: list[str]) -> dict[str, list]:
 
     n_phases = int(line.split("\t")[1])
 
-    # Laue classes
-    laue_ids = [
-        "-1",
-        "2/m",
-        "mmm",
-        "4/m",
-        "4/mmm",
-        "-3",
-        "-3m",
-        "6/m",
-        "6/mmm",
-        "m3",
-        "m-3m",
-    ]
+    laue_ids = {
+        1: "-1",
+        2: "2/m",
+        3: "mmm",
+        4: "4/m",
+        5: "4/mmm",
+        6: "-3",
+        7: "-3m",
+        8: "6/m",
+        9: "6/mmm",
+        10: "m3",
+        11: "m-3m",
+    }
 
     for i in range(n_phases):
         phase_data = header[line_number + 1 + i].split("\t")
-        phases["ids"].append(i + 1)
+        phases_dict["ids"].append(i + 1)
         abcABG = ";".join(phase_data[:2])
         abcABG = abcABG.split(";")
         abcABG = [float(lat.replace(",", ".")) for lat in abcABG]
-        phases["lattice_constants"].append(abcABG)
-        phases["names"].append(phase_data[2])
+        phases_dict["lattice_constants"].append(abcABG)
+        phases_dict["names"].append(phase_data[2])
         laue_id = int(phase_data[3])
-        phases["point_groups"].append(laue_ids[laue_id - 1])
+        phases_dict["point_groups"].append(laue_ids[laue_id])
         sg = int(phase_data[4])
         if sg == 0:
             sg = None
-        phases["space_groups"].append(sg)
+        phases_dict["space_groups"].append(sg)
 
-    return phases
+    return phases_dict
 
 
 def _fix_astar_coords(header: list[str], data_dict: dict[str, Any]) -> dict[str, Any]:
