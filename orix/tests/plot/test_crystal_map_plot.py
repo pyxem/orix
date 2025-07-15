@@ -22,16 +22,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+import orix
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.plot import CrystalMapPlot
 
-try:
-    from matplotlib_scalebar import scalebar
-
-    MPL_SB_INSTALLED = True
-except ImportError:
-    MPL_SB_INSTALLED = False
-
+if orix.constants.installed["matplotlib-scalebar"]:
+    import matplotlib_scalebar
 
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"
@@ -165,8 +161,8 @@ class TestCrystalMapPlot:
 
         assert isinstance(ax.colorbar, mbar.Colorbar)
         assert ax.colorbar.ax.get_ylabel() == "score"
-        if MPL_SB_INSTALLED:
-            assert isinstance(ax.scalebar, scalebar.ScaleBar)
+        if orix.constants.installed["matplotlib-scalebar"]:
+            assert isinstance(ax.scalebar, matplotlib_scalebar.scalebar.ScaleBar)
 
         plt.close("all")
 
@@ -304,12 +300,8 @@ class TestCrystalMapPlotUtilities:
         assert ax._xmargin == margin_before
         assert ax._ymargin == margin_before
 
-        expected_subplot_params = (
-            0.88,
-            0.11,
-            0.9,
-            0.125,
-        )  # top, bottom, right, left
+        # top, bottom, right, left
+        expected_subplot_params = (0.88, 0.11, 0.9, 0.125)
         subplot_params = fig.subplotpars
         assert (
             subplot_params.top,
@@ -454,7 +446,8 @@ class TestStatusBar:
 
 
 @pytest.mark.skipif(
-    not (MPL_SB_INSTALLED), reason="matplotlib_scalebar is not installed"
+    not orix.constants.installed["matplotlib-scalebar"],
+    reason="matplotlib_scalebar is not installed",
 )
 class TestScalebar:
     @pytest.mark.parametrize(

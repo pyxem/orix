@@ -27,13 +27,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-try:
+import orix
+
+if orix.constants.installed["matplotlib-scalebar"]:
     from matplotlib_scalebar.dimension import _Dimension
     from matplotlib_scalebar.scalebar import ScaleBar
-
-    MPL_SB_INSTALLED = True
-except ImportError:
-    MPL_SB_INSTALLED = False
 
 
 class CrystalMapPlot(Axes):
@@ -192,12 +190,12 @@ class CrystalMapPlot(Axes):
 
         return im
 
-    def add_scalebar(self, crystal_map: "orix.crystal_map.CrystalMap", **kwargs):
+    def add_scalebar(
+        self, crystal_map: "orix.crystal_map.CrystalMap", **kwargs
+    ) -> "ScaleBar":
         """Add a scalebar to the axes instance and return it.
 
         The scalebar is also available as an attribute :attr:`scalebar`.
-        Note, this function requires `matplotlib-scalebar`
-        (see below for details)
 
         Parameters
         ----------
@@ -236,7 +234,7 @@ class CrystalMapPlot(Axes):
             'pip install orix['all']'
         """
         # Check whether the optional module matplotlib_scalebar is available
-        if not MPL_SB_INSTALLED:
+        if not orix.constants.installed["matplotlib-scalebar"]:
             # create an empty dummy bar
             ImportWarning(
                 "matplotlib-scalebar is not installed and thus no scalebar "

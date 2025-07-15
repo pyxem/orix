@@ -20,7 +20,7 @@
 from importlib.metadata import version
 
 # NB! Update project config file if this list is updated!
-optional_deps: list[str] = ["numpy-quaternion"]
+optional_deps: list[str] = ["numpy-quaternion", "matplotlib-scalebar"]
 installed: dict[str, bool] = {}
 for pkg in optional_deps:
     try:

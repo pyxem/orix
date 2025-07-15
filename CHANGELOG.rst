@@ -21,7 +21,6 @@ Changed
 -------
 - For speed and space reasons, vectors and quaternions are now randomly
   generated using a gaussian method as opposed to rejection-based sampling.
-
 - Due to dependency issues, matplotlib_scalebar as been moved from a
   required dependency to an optional one.
 
