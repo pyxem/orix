@@ -9,6 +9,10 @@ imported.
 For example, Numba functions not used in the functionality imported by the user are not
 compiled, and libraries not used are not imported.
 
+Another notable benefit to lazy loading is reduced import times for downstream packages.
+In most cases, they only use parts of our functionality, and will thus not have to
+import other parts they are not using.
+
 New imports go in the ``__init__.pyi`` "stub files", *not* in the ``__init__.py`` files.
 Basically, nothing should go in the ``__init__.py`` files except the lazy loading
 functionality.
