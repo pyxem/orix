@@ -27,7 +27,7 @@ functionality::
      del lazy_loader
 
 The returns from lazy loader are:
-- ``__getattr__``: get a name defined by the module
+- ``__getattr__``: function to access names defined by the module
 - ``__dir__``: list of names a module defines
 - ``__all__``: list of module, class, or function names that should be imported when
   ``from package import *`` is encountered
