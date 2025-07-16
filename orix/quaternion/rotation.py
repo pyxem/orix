@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,23 +10,24 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import annotations
 
-from typing import Any, Tuple, Union
+from typing import Any
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
 import numpy as np
 from scipy.special import hyp0f1
 
-from orix.quaternion import Quaternion
-from orix.vector import Vector3d
+from orix.quaternion.quaternion import Quaternion
+from orix.vector.vector3d import Vector3d
 
 
 class Rotation(Quaternion):
@@ -73,7 +75,7 @@ class Rotation(Quaternion):
     True
     """
 
-    def __init__(self, data: Union[np.ndarray, Rotation, list, tuple]):
+    def __init__(self, data: np.ndarray | Rotation | list | tuple) -> None:
         super().__init__(data)
         self._data = np.concatenate((self.data, np.zeros(self.shape + (1,))), axis=-1)
         if isinstance(data, Rotation):
@@ -104,8 +106,8 @@ class Rotation(Quaternion):
     # ------------------------ Dunder methods ------------------------ #
 
     def __mul__(
-        self, other: Union[Rotation, Quaternion, Vector3d, np.ndarray, int, list]
-    ):
+        self, other: Rotation | Quaternion | Vector3d | np.ndarray | int | list
+    ) -> Rotation | Quaternion | Vector3d:
         # Combine rotations self * other as first other, then self
         if isinstance(other, Rotation):
             Q = Quaternion(self) * Quaternion(other)
@@ -146,7 +148,7 @@ class Rotation(Quaternion):
         R.improper = self.improper
         return R
 
-    def __eq__(self, other: Union[Any, Rotation]) -> bool:
+    def __eq__(self, other: Any | Rotation) -> bool:
         """Check if the rotations have equal shapes and values."""
         if (
             isinstance(other, Rotation)
@@ -163,9 +165,9 @@ class Rotation(Quaternion):
     @classmethod
     def random_vonmises(
         cls,
-        shape: Union[int, tuple] = (1,),
+        shape: int | tuple = (1,),
         alpha: float = 1.0,
-        reference: Union[list, tuple, Rotation] = (1, 0, 0, 0),
+        reference: Rotation | list | tuple = (1, 0, 0, 0),
     ) -> Rotation:
         """Return random rotations with a simplified Von Mises-Fisher
         distribution.
@@ -206,11 +208,9 @@ class Rotation(Quaternion):
         return_index: bool = False,
         return_inverse: bool = False,
         antipodal: bool = True,
-    ) -> Union[
-        Rotation,
-        Tuple[Rotation, np.ndarray],
-        Tuple[Rotation, np.ndarray, np.ndarray],
-    ]:
+    ) -> (
+        Rotation | tuple[Rotation, np.ndarray] | tuple[Rotation, np.ndarray, np.ndarray]
+    ):
         """Return the unique rotations from these rotations.
 
         Two rotations are not unique if they have the same propriety
@@ -343,11 +343,11 @@ class Rotation(Quaternion):
 
     def outer(
         self,
-        other: Union[Rotation, Vector3d],
+        other: Rotation | Vector3d,
         lazy: bool = False,
         chunk_size: int = 20,
         progressbar: bool = True,
-    ) -> Union[Rotation, Vector3d]:
+    ) -> Rotation | Vector3d:
         """Return the outer rotation products of the rotations and the
         other rotations or vectors.
 

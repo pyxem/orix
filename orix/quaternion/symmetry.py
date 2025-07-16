@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import annotations
 
@@ -24,11 +26,11 @@ import matplotlib.figure as mfigure
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.vector import Vector3d
+from orix.vector.vector3d import Vector3d
 
 if TYPE_CHECKING:  # pragma: no cover
-    from orix.quaternion import Orientation
-    from orix.vector import FundamentalSector
+    from orix.quaternion.orientation import Orientation
+    from orix.vector.fundamental_sector import FundamentalSector
 
 
 class Symmetry(Rotation):
