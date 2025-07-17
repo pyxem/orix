@@ -173,6 +173,7 @@ class Symmetry(Rotation):
         system
             ``None`` is returned if the symmetry name is not recognized.
         """
+        # fmt: off
         name = self.name
         if name in ["1", "-1"]:
             return "triclinic"
@@ -190,6 +191,7 @@ class Symmetry(Rotation):
             return "cubic"
         else:
             return None
+        # fmt: on
 
     @property
     def _tuples(self) -> set:
@@ -416,6 +418,119 @@ class Symmetry(Rotation):
         return generator
 
     # --------------------- Other public methods --------------------- #
+
+    def _get_symmetry_elements(self) -> list:
+        """Returns all the crystallographically unique axes and their associated
+        symmetry elements (mirrors, rotations, rotoinversions, etc).
+
+        Returns
+        -------
+        axes Vector3d
+            Vector(s) that are each either parallel to an axis of rotation or
+            perpendicular to a mirror plane, or both.
+        is_mirror bool
+            Indicates whether each primary_axis is or is not perpendicular to a
+            mirror plane
+        s_type str ("inversion", "rotoinversion", "rotation", or"none")
+            Indicates whether the rotational symmetry associated with the axis
+            contains an inversion, a rotoinversion, purely rotational, or just an
+            1-fold axis perpendicular to a mirror.
+        folds
+            Indicats the order of the rotational symmetry (1,2,3,4, or 6)
+
+        Notes
+        -------
+        This function does not return ALL the axes and angles,
+        (that function would be `Symmetry.to_axes_angles`), nor does it return
+        the minimum generating elements. Instead, it returns all the primary axes
+        plus information about the rotations, inversions, and/or mirrors associated
+        with each.
+        """
+        # create masks to sort out which elements are what.
+        # proper elements
+        p_mask = ~self.improper
+        # mirror planes
+        m_mask = (np.abs(np.abs(self.angle) - np.pi) < 1e-4) * self.improper
+        # rotations (both proper and improper)
+        r_mask = np.abs(self.angle) > 1e-4
+        # rotoinversions
+        roto_mask = r_mask * ~p_mask * ~m_mask
+        # the inversion symmetry
+        i_mask = (~r_mask) * self.improper
+        if np.sum(i_mask) > 0:
+            has_inversion = True
+        else:
+            has_inversion = False
+
+        elements = []
+        # Find the unique axis familes.
+        axis_families = (self.axis.in_fundamental_sector(self)).unique()
+
+        # iterate through each primary axis and find what elements to add
+        for axis in axis_families:
+            # mask out just axes elements in the fundamental sector to avoid repeats
+            axis_mask = (
+                np.sum(np.abs((self.axis.in_fundamental_sector(self) - axis).data), 1)
+                < 1e-4
+            )
+            m_flag = False
+            folds = 0
+            s_type = "empty"
+            # check for mirrors
+            if np.any(m_mask * axis_mask):
+                m_flag = True
+            # check to see if there are only proper rotations
+            if np.all(p_mask[axis_mask]):
+                # This might just be the identity.
+                if not np.any(r_mask * axis_mask):
+                    elements.append(
+                        (copy(axis), m_flag, 1, "none"),
+                    )
+                    continue
+                min_ang = np.abs(self[r_mask * axis_mask].angle).min()
+                folds = np.around(2 * np.pi / min_ang).astype(int)
+                elements.append(
+                    (copy(axis), m_flag, folds, "rotation"),
+                )
+                continue
+            # Check if there is a rotation with an inversion
+            elif has_inversion:
+                # this might just be the 1-fold inversion center
+                if not np.any(r_mask * axis_mask):
+                    elements.append(
+                        (copy(axis), m_flag, 1, "inversion"),
+                    )
+                    continue
+                min_ang = np.abs(self[r_mask * axis_mask].angle).min()
+                folds = np.around(2 * np.pi / min_ang).astype(int)
+                elements.append(
+                    (copy(axis), m_flag, folds, "inversion"),
+                )
+                continue
+            # the only other important option is a rotoinversion
+            elif np.any(roto_mask[axis_mask]):
+                min_ang = np.abs(self[roto_mask * axis_mask].angle).min()
+                folds = np.around(2 * np.pi / min_ang).astype(int)
+                elements.append(
+                    (copy(axis), m_flag, folds, "rotoinversion"),
+                )
+                continue
+            # if it it not a rotational symmetry of any type, it's a mirror
+            else:
+                elements.append(
+                    (copy(axis), m_flag, 1, "none"),
+                )
+        # Finally, 3-fold rotations around the 111 create <110> mirrors
+        # not on the primary axes. These we can add by hand.
+        if np.any(np.abs(Vector3d([1, 1, 1]).angle_with(self.axis)) < 1e-4):
+            v = Vector3d([0, 1, 1]).in_fundamental_sector(self)
+            elements.append((v, True, 1, "none"))
+        # split the list of lists into 4 variables.
+        axes = [x[0] for x in elements]
+        is_mirror = [x[1] for x in elements]
+        s_type = [x[3] for x in elements]
+        folds = [x[2] for x in elements]
+        return axes, is_mirror, s_type, folds
 
     def get_axis_orders(self) -> dict[Vector3d, int]:
         """Return a dictionary of every rotation axis and it's order (ie, folds)"""
@@ -777,6 +892,33 @@ class Symmetry(Rotation):
         folds = [x[3] for x in elements]
         return axes, is_mirror, s_type, folds
 
+
+# ---------------- Proceedural definitions of Point Groups ---------------- #
+# NOTE: ORIX uses Schoenflies symbols to define point groups. This is partly
+# because the notation is short and always starts with a letter (ie, they
+# make convenient python variables), and partly because it helps limit
+# accidental misinterpretation of Hermann-Mauguin symbols as space group
+# numbers. For example. "222" could be interpreted as SG#222 == Pn-3n, or
+# as PG'222'== D3.  there are similar examples with 2, 3, 4, 32, etc.
+
+# Additionally, there are 43 crystallographically valid Schonflies group
+# notations, but only 32 unique ones, meaning certain point groups have
+# redundant representations in Schonflies notation(S4==C4i, Ci==S2, S6==C3i,
+# and C2==D1, for example). The International Tables of Crystallography,
+# Volume A, Section 12.1 defines the 32 standard representations, but a few of
+# the commonly used redundant ones are given below for convenience.
+
+# Finally, while there are 32 Point groups, ITOC names several additional
+# projections for the non-centrosymmetric groups (ie, using x and/or y as the
+# rotation axis instead of z). These are included below as well, following
+# the ITOC naming convention (for example, a 2-fold cyclic rotation around
+# the x axis instead of the z axis is called C2x.)
+
+# For more details on how point groups can be generated, the following three
+# resources lay out three different but equally valid approaches:
+#    1)"Structure of Materials", De Graef et al, Section 9.2
+#    2)"International Tables of Crystallography: Volume A" Section 12.1
+#    3)"Crystallogrpahic Texture and Group Representations", Chi-Sing Man,Ch2
 
 # ---------------- Proceedural definitions of Point Groups ---------------- #
 # NOTE: ORIX uses Schoenflies symbols to define point groups. This is partly

@@ -978,8 +978,8 @@ def _order_in_hemisphere(polar: np.ndarray, pole: int) -> Union[np.ndarray, None
 
 
 class _SymmetryMarker:
-    """A class for creating Symmetry element markers. Intended for
-    making stereographic plots of the crystallographic point groups.
+    """A class for creating Symmetry element markers. Intended for making
+    stereographic plots of the crystallographic point groups.
 
     Intended to be used indirectly in
     :func:`~orix.plot.StereographicPlot.symmetry_marker`.
@@ -1003,6 +1003,7 @@ class _SymmetryMarker:
         polygon with half as many corners as the marker, and for an
         odd-fold rotation is a white dot. "inversion" will add an
         inversion symbol, which is a white dot. The default is None.
+
     """
 
     def __init__(
