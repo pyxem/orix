@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from h5py import File
 
@@ -22,12 +24,13 @@ from orix.io.plugins._h5ebsd import hdf5group2dict
 
 
 class TestH5ebsd:
-    def test_hdf5group2dict_update_dict(self, temp_file_path, crystal_map):
+    def test_hdf5group2dict_update_dict(self, tmp_path, crystal_map):
         """Can read datasets from an HDF5 file into an existing
         dictionary.
         """
-        save(temp_file_path, crystal_map)
-        with File(temp_file_path, mode="r") as f:
+        fname = tmp_path / "test.h5"
+        save(fname, crystal_map)
+        with File(fname, mode="r") as f:
             this_dict = {"hello": "there"}
             this_dict = hdf5group2dict(f["crystal_map"], dictionary=this_dict)
             assert this_dict["hello"] == "there"

@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 import numpy as np
 import pytest
@@ -371,23 +373,24 @@ class TestAngReader:
     def test_get_header(self, temp_ang_file):
         temp_ang_file.write(ANGFILE_ASTAR_HEADER)
         temp_ang_file.close()
-        assert _get_header(open(temp_ang_file.name)) == [
-            "# File created from ACOM RES results",
-            "# ni-dislocations.res",
-            "#     ".rstrip(),
-            "#     ".rstrip(),
-            "# MaterialName      Nickel",
-            "# Formula",
-            "# Symmetry          43",
-            "# LatticeConstants  3.520  3.520  3.520  90.000  90.000  90.000",
-            "# NumberFamilies    4",
-            "# hklFamilies       1  1  1 1 0.000000",
-            "# hklFamilies       2  0  0 1 0.000000",
-            "# hklFamilies       2  2  0 1 0.000000",
-            "# hklFamilies       3  1  1 1 0.000000",
-            "#",
-            "# GRID: SqrGrid#",
-        ]
+        with open(temp_ang_file.name) as f:
+            assert _get_header(f) == [
+                "# File created from ACOM RES results",
+                "# ni-dislocations.res",
+                "#     ".rstrip(),
+                "#     ".rstrip(),
+                "# MaterialName      Nickel",
+                "# Formula",
+                "# Symmetry          43",
+                "# LatticeConstants  3.520  3.520  3.520  90.000  90.000  90.000",
+                "# NumberFamilies    4",
+                "# hklFamilies       1  1  1 1 0.000000",
+                "# hklFamilies       2  0  0 1 0.000000",
+                "# hklFamilies       2  2  0 1 0.000000",
+                "# hklFamilies       3  1  1 1 0.000000",
+                "#",
+                "# GRID: SqrGrid#",
+            ]
 
     @pytest.mark.parametrize(
         "expected_vendor, expected_columns, vendor_header",
@@ -419,7 +422,8 @@ class TestAngReader:
 
         temp_ang_file.write(vendor_header)
         temp_ang_file.close()
-        header = _get_header(open(temp_ang_file.name))
+        with open(temp_ang_file.name) as f:
+            header = _get_header(f)
         vendor, column_names = _get_vendor_columns(header, n_cols_file)
 
         assert vendor == expected_vendor
@@ -429,7 +433,8 @@ class TestAngReader:
     def test_get_vendor_columns_unknown(self, temp_ang_file, n_cols_file):
         temp_ang_file.write("Look at me!\nI'm Mr. .ang file!\n")
         temp_ang_file.close()
-        header = _get_header(open(temp_ang_file.name))
+        with open(temp_ang_file.name) as f:
+            header = _get_header(f)
         with pytest.warns(UserWarning, match=f"Number of columns, {n_cols_file}, "):
             vendor, column_names = _get_vendor_columns(header, n_cols_file)
             assert vendor == "unknown"
