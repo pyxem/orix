@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,15 +10,16 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 import warnings
 
 import dask.array as da
@@ -29,7 +31,9 @@ from scipy.spatial.transform import Rotation as SciPyRotation
 from orix._base import Object3d
 from orix.constants import installed
 from orix.quaternion import _conversions
-from orix.vector import AxAngle, Homochoric, Miller, Rodrigues, Vector3d
+from orix.vector.miller import Miller
+from orix.vector.neo_euler import AxAngle, Homochoric, Rodrigues
+from orix.vector.vector3d import Vector3d
 
 
 class Quaternion(Object3d):
@@ -193,9 +197,7 @@ class Quaternion(Object3d):
     def __invert__(self) -> Quaternion:
         return self.__class__(self.conj.data / (self.norm**2)[..., np.newaxis])
 
-    def __mul__(
-        self, other: Union[Quaternion, Vector3d]
-    ) -> Union[Quaternion, Vector3d]:
+    def __mul__(self, other: Quaternion | Vector3d) -> Quaternion | Vector3d:
         if isinstance(other, Quaternion):
             if installed["numpy-quaternion"]:
                 import quaternion
@@ -231,7 +233,7 @@ class Quaternion(Object3d):
     def __neg__(self) -> Quaternion:
         return self.__class__(-self.data)
 
-    def __eq__(self, other: Union[Any, Quaternion]) -> bool:
+    def __eq__(self, other: Any | Quaternion) -> bool:
         """Check if quaternions have equal shapes and components."""
         if (
             isinstance(other, Quaternion)
@@ -247,8 +249,8 @@ class Quaternion(Object3d):
     @classmethod
     def from_axes_angles(
         cls,
-        axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list, float],
+        axes: np.ndarray | Vector3d | tuple | list,
+        angles: np.ndarray | tuple | list | float,
         degrees: bool = False,
     ) -> Quaternion:
         r"""Create unit quaternions from axis-angle pairs
@@ -299,8 +301,7 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_homochoric(
-        cls,
-        ho: Union[Vector3d, Homochoric, np.ndarray, tuple, list],
+        cls, ho: Vector3d | Homochoric | np.ndarray | tuple | list
     ) -> Quaternion:
         r"""Create unit quaternions from homochoric vectors
         :math:`\mathbf{h}` :cite:`rowenhorst2015consistent`.
@@ -346,8 +347,8 @@ class Quaternion(Object3d):
     @classmethod
     def from_rodrigues(
         cls,
-        ro: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list, float, None] = None,
+        ro: np.ndarray | Vector3d | tuple | list,
+        angles: np.ndarray | tuple | list | float | None = None,
     ) -> Quaternion:
         r"""Create unit quaternions from three-component Rodrigues
         vectors :math:`\hat{\mathbf{n}}` or four-component
@@ -448,7 +449,7 @@ class Quaternion(Object3d):
     @classmethod
     def from_euler(
         cls,
-        euler: Union[np.ndarray, tuple, list],
+        euler: np.ndarray | tuple | list,
         direction: str = "lab2crystal",
         degrees: bool = False,
     ) -> Quaternion:
@@ -505,7 +506,7 @@ class Quaternion(Object3d):
         return Q
 
     @classmethod
-    def from_matrix(cls, matrix: Union[np.ndarray, tuple, list]) -> Quaternion:
+    def from_matrix(cls, matrix: np.ndarray | tuple | list) -> Quaternion:
         """Create unit quaternions from orientation matrices
         :cite:`rowenhorst2015consistent`.
 
@@ -552,8 +553,12 @@ class Quaternion(Object3d):
 
         Returns
         -------
-        quaternion
+        Q
             Quaternions.
+
+        See Also
+        --------
+        to_scipy_rotation
 
         Notes
         -----
@@ -600,17 +605,17 @@ class Quaternion(Object3d):
     @classmethod
     def from_align_vectors(
         cls,
-        other: Union[Vector3d, tuple, list],
-        initial: Union[Vector3d, tuple, list],
-        weights: Optional[np.ndarray] = None,
+        other: Vector3d | tuple | list,
+        initial: Vector3d | tuple | list,
+        weights: np.ndarray | None = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
-    ) -> Union[
-        Quaternion,
-        Tuple[Quaternion, float],
-        Tuple[Quaternion, np.ndarray],
-        Tuple[Quaternion, float, np.ndarray],
-    ]:
+    ) -> (
+        Quaternion
+        | tuple[Quaternion, float]
+        | tuple[Quaternion, np.ndarray]
+        | tuple[Quaternion, float, np.ndarray]
+    ):
         """Estimate a quaternion to optimally align two sets of vectors.
 
         This method wraps
@@ -739,7 +744,7 @@ class Quaternion(Object3d):
         return Q
 
     @classmethod
-    def identity(cls, shape: Union[int, tuple] = (1,)) -> Quaternion:
+    def identity(cls, shape: int | tuple = (1,)) -> Quaternion:
         """Create identity quaternions.
 
         Parameters
@@ -836,7 +841,7 @@ class Quaternion(Object3d):
         ax = AxAngle(axes * angles)
         return ax
 
-    def to_rodrigues(self, frank: bool = False) -> Union[Rodrigues, np.ndarray]:
+    def to_rodrigues(self, frank: bool = False) -> Rodrigues | np.ndarray:
         r"""Return the unit quaternions as Rodrigues or Rodrigues-Frank
          vectors :cite:`rowenhorst2015consistent`.
 
@@ -946,45 +951,44 @@ class Quaternion(Object3d):
         return ho
 
     def to_scipy_rotation(self) -> SciPyRotation:
-        r"""Return the unit quaternions as
-        :class:`scipy.spatial.transform.Rotation` objects used in scipy's
-        spatial module.
+        r"""Return unit quaternions as a SciPy rotation.
 
         Returns
         -------
-        SciPy_Rotation
-            a Rotation object generated from the unit quaternion data
-            (i.e, unaffected by symmetry, phase, or length).
+        scipy_rotation
+            A SciPy rotation (flattened) given by the unit quaternions
+            without considering any symmetry.
+
+        See Also
+        --------
+        from_scipy_rotation
 
         Notes
         -----
-        SciPy by default uses the Active rotation convention along with the
-        vector-scalar quaternion definition, as opposed to ORIX's passive,
-        scalar-vector convention. Thus, the following quaternion in orix:
-        :math: `q_{orix} = [q_0, q_1, q_2, q_3]`
-        represents the same operations as the following quaternion in scipy:
-        :math: `q_{SciPy} = [-q_1, -q_2, -q_3, q_0]`
+        SciPy by default uses the active rotation interpretation along
+        with the vector-scalar quaternion definition, as opposed to
+        orix's passive one, scalar-vector interpretation. Thus, the
+        following quaternion in orix,
+        :math:`Q_{orix} = [q_0, q_1, q_2, q_3]` represents the same
+        transformation as the following quaternion in SciPy:
+        :math:`Q_{SciPy} = [-q_1, -q_2, -q_3, q_0]`
 
-        See the function description for Quaternion.from_scipy_rotation
-        for an example of how these differing parameterizations still produce
-        identical rotation operations.
+        See the function description for :meth:`from_scipy_rotation` for
+        an example of how these differing parameterizations still
+        produce identical transformations.
 
-        Additionally, note that Orix enforces :math: `q_0 >= 0` whereas
-        SciPy does not. Thus, the operation
+        Additionally, note that orix enforces :math:`Q_0 \geq 0` whereas
+        SciPy does not. Thus, the operation::
 
-        >>> Quaternion.from_scipy_rotation(r).to_scipy_rotation.as_quat()
+            Quaternion.from_scipy_rotation(r).to_scipy_rotation.as_quat()
 
-        will produce an identical rotation operation, but not
-        necessarily an idential quaternion. Look up "quaternion double cover"
-        for more information on why this occurs.
-
-        Finally, ORIX supports N-dimensional arrays, whereas SciPy
-        currently supports only 1-dimensional vectors. Thus, this function
-        will also flatten arrays when converting to SciPy Rotations.
+        will produce an identical transformation, but not necessarily an
+        idential quaternion. Look up "quaternion double cover" for more
+        information on why this occurs.
         """
         if self.ndim > 1:
             warnings.warn(
-                "\n    {} dimension greater than 1. ".format(self.__class__.__name__)
+                f"\n    {self.__class__.__name__} dimension greater than 1. "
                 + "Flattening into a 1-dimensional vector"
             )
             self = self.flatten()
@@ -1075,11 +1079,11 @@ class Quaternion(Object3d):
 
     def outer(
         self,
-        other: Union[Quaternion, Vector3d],
+        other: Quaternion | Vector3d,
         lazy: bool = False,
         chunk_size: int = 20,
         progressbar: bool = True,
-    ) -> Union[Quaternion, Vector3d]:
+    ) -> Quaternion | Vector3d:
         """Return the outer products of the quaternions and the other
         quaternions or vectors.
 
@@ -1171,7 +1175,7 @@ class Quaternion(Object3d):
     # -------------------- Other private methods --------------------- #
 
     def _outer_dask(
-        self, other: Union[Quaternion, Vector3d], chunk_size: int = 20
+        self, other: Quaternion | Vector3d, chunk_size: int = 20
     ) -> da.Array:
         """Compute the product of every quaternion in this instance to
         every quaternion or vector in another instance, returned as a

@@ -3,11 +3,12 @@ Run and write tests
 
 All functionality in orix is tested with :doc:`pytest <pytest:index>`.
 The tests reside in a ``tests`` module.
-Tests are short methods that call functions in ``orix`` and compare resulting output
-values with known answers.
+Tests are short methods that call functions in orix and compare resulting output values
+with known answers.
+
 Install necessary dependencies to run the tests::
 
-   pip install --editable ".[tests]"
+    pip install -e ".[tests]"
 
 Some useful :doc:`fixtures <pytest:explanation/fixtures>` are available in the
 ``conftest.py`` file.
@@ -22,29 +23,28 @@ Some useful :doc:`fixtures <pytest:explanation/fixtures>` are available in the
 
 To run the tests::
 
-  pytest --cov --pyargs orix -n auto
+    pytest --cov --pyargs orix -n auto
 
-The ``-n auto`` is an optional flag to enable parallelized testing. 
-The ``--cov`` flag makes :doc:`coverage.py <coverage:index>` print a nice report.
-For an even nicer presentation, you can use ``coverage.py`` directly::
+The ``-n auto`` is an optional flag to enable parallelized testing with
+:doc:`pytest-xdist <pytest-xdist:index>`.
+We aim to cover all lines when all :ref:`dependencies` are installed.
+The ``--cov`` flag makes :doc:`coverage.py <coverage:index>` print a nice coverage
+report.
+For an even nicer presentation, you can use coverage.py directly::
 
-   coverage html
+    coverage html
 
 Coverage can then be inspected in the browser by opening ``htmlcov/index.html``.
 
-We strive for 100% test coverage of lines when all dependencies are installed.
-
-If you have a test that takes a long time to run, you can mark it to skip it from running by default
-
-.. code-block:: Python
+If a test takes a long time to run, you can mark it to skip it from running by default::
 
     @pytest.mark.slow
     def test_slow_function():
-        pass
+        ...
 
-Then you can run the tests with the ``--runslow`` option to skip slow tests::
+To run tests marked as slow, add the flag when running pytest::
 
-    pytest --runslow
+    pytest --slow
 
 Docstring examples are tested with :doc:`pytest <pytest:how-to/doctest>` as well.
 :mod:`numpy` and :mod:`matplotlib.pyplot` should not be imported in examples as they are

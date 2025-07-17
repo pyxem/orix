@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -73,11 +75,11 @@ class TestGeneralIO:
         with pytest.raises(IOError, match=f"No filename matches '{fname}'."):
             _ = load(fname)
 
-    @pytest.mark.parametrize("temp_file_path", ["ktf"], indirect=["temp_file_path"])
-    def test_load_unsupported_format(self, temp_file_path):
-        np.savetxt(temp_file_path, X=np.random.rand(100, 8))
-        with pytest.raises(IOError, match=f"Could not read "):
-            _ = load(temp_file_path)
+    def test_load_unsupported_format(self, tmp_path):
+        fname = tmp_path / "unsupported_file.ktf"
+        np.savetxt(fname, X=np.random.rand(100, 8))
+        with pytest.raises(IOError, match="Could not read "):
+            _ = load(fname)
 
     @pytest.mark.parametrize(
         "manufacturer, expected_plugin",
@@ -88,61 +90,62 @@ class TestGeneralIO:
             ("Oxford", None),
         ],
     )
-    def test_plugin_from_manufacturer(
-        self, temp_file_path, manufacturer, expected_plugin
-    ):
+    def test_plugin_from_manufacturer(self, manufacturer, expected_plugin, tmp_path):
         h5ebsd_plugin_list = [bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5]
-        with File(temp_file_path, mode="w") as f:
+        fname = tmp_path / "test.h5"
+        with File(fname, mode="w") as f:
             f.create_dataset(name="Manufacturer", data=manufacturer)
             assert (
-                _plugin_from_manufacturer(temp_file_path, plugins=h5ebsd_plugin_list)
+                _plugin_from_manufacturer(fname, plugins=h5ebsd_plugin_list)
                 is expected_plugin
             )
 
-    def test_overwrite_or_not(self, crystal_map, temp_file_path):
-        save(temp_file_path, crystal_map)
+    def test_overwrite_or_not(self, crystal_map, tmp_path):
+        fname = tmp_path / "test.h5"
+        save(fname, crystal_map)
         with pytest.warns(UserWarning, match="Not overwriting, since your terminal "):
-            _overwrite_or_not(temp_file_path)
+            _overwrite_or_not(fname)
 
     @pytest.mark.parametrize(
         "answer, expected", [("y", True), ("n", False), ("m", None)]
     )
-    def test_overwrite_or_not_input(
-        self, crystal_map, temp_file_path, answer, expected
-    ):
-        save(temp_file_path, crystal_map)
+    def test_overwrite_or_not_input(self, crystal_map, answer, expected, tmp_path):
+        fname = tmp_path / "test.h5"
+        save(fname, crystal_map)
         if answer == "m":
             with replace_stdin(StringIO(answer)):
                 with pytest.raises(EOFError):
-                    _overwrite_or_not(temp_file_path)
+                    _overwrite_or_not(fname)
         else:
             with replace_stdin(StringIO(answer)):
-                assert _overwrite_or_not(temp_file_path) is expected
+                assert _overwrite_or_not(fname) is expected
 
-    @pytest.mark.parametrize("temp_file_path", ["angs", "hdf4", "h6"])
-    def test_save_unsupported_raises(self, temp_file_path, crystal_map):
-        _, ext = os.path.splitext(temp_file_path)
+    @pytest.mark.parametrize("ext", ["angs", "hdf4", "h6"])
+    def test_save_unsupported_raises(self, ext, crystal_map, tmp_path):
+        fname = tmp_path / f"test.{ext}"
         with pytest.raises(IOError, match=f"'{ext}' does not correspond to any "):
-            save(temp_file_path, crystal_map)
+            save(fname, crystal_map)
 
-    def test_save_overwrite_raises(self, temp_file_path, crystal_map):
+    def test_save_overwrite_raises(self, crystal_map, tmp_path):
         with pytest.raises(ValueError, match="`overwrite` parameter can only be "):
-            save(temp_file_path, crystal_map, overwrite=1)
+            save(tmp_path / "test.h5", crystal_map, overwrite=1)
 
     @pytest.mark.parametrize(
         "overwrite, expected_phase_name", [(True, "hepp"), (False, "")]
     )
     def test_save_overwrite(
-        self, temp_file_path, crystal_map, overwrite, expected_phase_name
+        self, crystal_map, overwrite, expected_phase_name, tmp_path
     ):
+        fname = tmp_path / "test.h5"
+
         assert crystal_map.phases[0].name == ""
-        save(temp_file_path, crystal_map)
-        assert os.path.isfile(temp_file_path) is True
+        save(fname, crystal_map)
+        assert os.path.isfile(fname) is True
 
         crystal_map.phases[0].name = "hepp"
-        save(temp_file_path, crystal_map, overwrite=overwrite)
+        save(fname, crystal_map, overwrite=overwrite)
 
-        crystal_map2 = load(temp_file_path)
+        crystal_map2 = load(fname)
         assert crystal_map2.phases[0].name == expected_phase_name
 
 

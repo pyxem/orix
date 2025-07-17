@@ -35,8 +35,6 @@ dependencies = [
     "pycifrw",
     "scipy",
     "tqdm",
-    # TODO: Remove once Python >= 3.11
-    "typing_extensions",
 ]
 
 [project.optional-dependencies]
@@ -49,7 +47,8 @@ doc = [
     "memory_profiler",
     "nbconvert                      >= 7.16.4",
     "nbsphinx                       >= 0.7",
-    "numpydoc",
+    # Restriction due to https://github.com/pyxem/orix/issues/570
+    "numpydoc != 1.9.0",
     "pydata-sphinx-theme",
     "scikit-image",
     "scikit-learn",
@@ -100,11 +99,15 @@ addopts = [
     "-ra",
     "--ignore=doc/_static/img/colormap_banners/create_colormap_banners.py",
     "--ignore=examples/*/*.py",
+    "--strict-markers",
 ]
 doctest_optionflags = "NORMALIZE_WHITESPACE"
 filterwarnings = [
     "ignore:Deprecated call to `pkg_resources:DeprecationWarning",
     "ignore:pkg_resources is deprecated as an API:DeprecationWarning",
+]
+markers = [
+    "slow: mark test as slow",
 ]
 
 [tool.isort]
