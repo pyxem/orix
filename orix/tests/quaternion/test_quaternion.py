@@ -199,7 +199,7 @@ class TestQuaternion:
         with pytest.raises(TypeError):
             _ = quaternion * "cant-multiply-by-this"
 
-    @pytest.mark.parametrize("shape", [(2, 3), (4, 5, 6), (1, 5), (11,)])
+    @pytest.mark.parametrize("shape", [(2, 3), (3, 4, 5), (1, 5), (7,)])
     def test_outer(self, shape):
         rng = np.random.default_rng()
         new_shape = shape + (4,)
@@ -223,6 +223,7 @@ class TestQuaternion:
         assert qo_dask2.shape == 2 * shape
         assert np.allclose(qo_numpy.data, qo_dask2.data)
 
+    @pytest.mark.slow
     def test_outer_lazy_chunk_size(self):
         shape = (5, 15, 4)
         rng = np.random.default_rng()

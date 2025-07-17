@@ -204,7 +204,7 @@ class CrystalMap:
 
     def __init__(
         self,
-        rotations: Rotation,
+        rotations: "Rotation | CrystalMap",
         phase_id: Optional[np.ndarray] = None,
         x: Optional[np.ndarray] = None,
         y: Optional[np.ndarray] = None,
@@ -213,6 +213,18 @@ class CrystalMap:
         scan_unit: Optional[str] = "px",
         is_in_data: Optional[np.ndarray] = None,
     ):
+        if isinstance(rotations, CrystalMap):
+            return CrystalMap.__init__(
+                self,
+                rotations.rotations,
+                rotations.phase_id,
+                rotations.x,
+                rotations.y,
+                rotations.phases,
+                rotations.prop,
+                rotations.scan_unit,
+                rotations.is_in_data,
+            )
         # Set rotations
         if not isinstance(rotations, Rotation):
             raise ValueError(

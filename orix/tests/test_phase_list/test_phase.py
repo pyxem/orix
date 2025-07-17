@@ -93,6 +93,27 @@ class TestPhase:
         else:
             assert p.structure == Structure()
 
+    def test_copy_constructor_phase(self):
+        p1 = Phase(
+            "test",
+            225,
+            "m-3m",
+            Structure(
+                [Atom("Al", (0, 0, 0))],
+                Lattice(10, 10, 10, 90, 90, 90),
+            ),
+        )
+        p2 = Phase(p1)
+
+        assert p1 is not p2
+        assert repr(p1) == repr(p2)
+        assert p1.structure is not p2.structure
+        assert p1.structure[0].element == p2.structure[0].element
+        assert tuple(p1.structure[0].xyz) == tuple(p2.structure[0].xyz)
+        assert p1.structure[0] is not p2.structure[0]
+        assert p1.structure.lattice.abcABG() == p2.structure.lattice.abcABG()
+        assert p1.structure.lattice is not p2.structure.lattice
+
     @pytest.mark.parametrize("name", [None, "al", 1, np.arange(2)])
     def test_set_phase_name(self, name):
         p = Phase(name=name)
@@ -400,3 +421,545 @@ class TestPhase:
         phase2 = Phase(structure=structure)
         assert np.allclose(phase1.structure.lattice.base, phase2.structure.lattice.base)
         assert np.allclose(phase1.structure.xyz, phase2.structure.xyz)
+
+    @pytest.mark.parametrize(
+        ["lattice", "atoms", "spacegroup", "expected_atom_positions"],
+        [
+            [
+                # P1
+                Lattice(1, 1, 1, 90, 90, 90),
+                [
+                    Atom("C", [0, 0, 0]),
+                ],
+                1,
+                [(0, 0, 0)],
+            ],
+            [
+                # Fd3m
+                Lattice(1, 1, 1, 90, 90, 90),
+                [
+                    Atom("C", [0, 0, 0]),
+                ],
+                227,
+                [
+                    (0, 0, 0),
+                    (0, 0.5, 0.5),
+                    (0.5, 0, 0.5),
+                    (0.5, 0.5, 0),
+                    (0.25, 0.25, 0.25),
+                    (0.25, 0.75, 0.75),
+                    (0.75, 0.25, 0.75),
+                    (0.75, 0.75, 0.25),
+                ],
+            ],
+            [
+                # P63/mmc (graphite)
+                Lattice(2, 2, 3, 90, 90, 120),
+                [
+                    Atom("C", [0, 0, 0.25]),
+                    Atom("C", [1 / 3, 2 / 3, 0.75]),
+                ],
+                194,
+                [
+                    (0.0, 0.0, 0.25),
+                    (0.0, 0.0, 0.75),
+                    (0.66666667, 0.33333333, 0.25),
+                    (0.33333333, 0.66666667, 0.75),
+                ],
+            ],
+            [
+                # https://legacy.materialsproject.org/materials/mp-669458/
+                Lattice(
+                    8.66993200,
+                    14.96934800,
+                    22.00995998,
+                    90.00000000,
+                    91.10362966,
+                    90.00000000,
+                ),
+                [
+                    Atom("Cs", (0.00142500, 0.33215200, 0.07744700)),
+                    Atom("Cs", (0.00000000, 0.00278300, 0.75000000)),
+                    Atom("Bi", (0.01120750, 0.33477050, 0.65575800)),
+                    Atom("I", (0.02018650, 0.16620050, 0.58287400)),
+                    Atom("I", (0.23071400, 0.07939400, 0.41065700)),
+                    Atom("I", (0.23081650, 0.41698250, 0.92495100)),
+                    Atom("I", (0.24771900, 0.24833100, 0.24318300)),
+                    Atom("I", (0.00000000, 0.49719300, 0.25000000)),
+                ],
+                15,
+                [
+                    (0.50000000, 0.50278300, 0.75000000),
+                    (0.49857500, 0.83215200, 0.42255300),
+                    (0.50000000, 0.49721700, 0.25000000),
+                    (0.49857500, 0.16784800, 0.92255300),
+                    (0.50142500, 0.16784800, 0.57744700),
+                    (0.50142500, 0.83215200, 0.07744700),
+                    (0.00000000, 0.00278300, 0.75000000),
+                    (0.99857500, 0.33215200, 0.42255300),
+                    (0.00000000, 0.99721700, 0.25000000),
+                    (0.99857500, 0.66784800, 0.92255300),
+                    (0.00142500, 0.66784800, 0.57744700),
+                    (0.00142500, 0.33215200, 0.07744700),
+                    (0.48879250, 0.83477050, 0.84424200),
+                    (0.51120750, 0.16522950, 0.15575800),
+                    (0.48879250, 0.16522950, 0.34424200),
+                    (0.51120750, 0.83477050, 0.65575800),
+                    (0.98879250, 0.33477050, 0.84424200),
+                    (0.01120750, 0.66522950, 0.15575800),
+                    (0.98879250, 0.66522950, 0.34424200),
+                    (0.01120750, 0.33477050, 0.65575800),
+                    (0.73081650, 0.08301750, 0.42495100),
+                    (0.26918350, 0.91698250, 0.57504900),
+                    (0.74771900, 0.25166900, 0.74318300),
+                    (0.52018650, 0.33379950, 0.08287400),
+                    (0.52018650, 0.66620050, 0.58287400),
+                    (0.73081650, 0.91698250, 0.92495100),
+                    (0.47981350, 0.66620050, 0.91712600),
+                    (0.23071400, 0.92060600, 0.91065700),
+                    (0.25228100, 0.74833100, 0.25681700),
+                    (0.25228100, 0.25166900, 0.75681700),
+                    (0.47981350, 0.33379950, 0.41712600),
+                    (0.74771900, 0.74833100, 0.24318300),
+                    (0.50000000, 0.00280700, 0.75000000),
+                    (0.76928600, 0.92060600, 0.58934300),
+                    (0.23071400, 0.07939400, 0.41065700),
+                    (0.76928600, 0.07939400, 0.08934300),
+                    (0.50000000, 0.99719300, 0.25000000),
+                    (0.26918350, 0.08301750, 0.07504900),
+                    (0.23081650, 0.58301750, 0.42495100),
+                    (0.76918350, 0.41698250, 0.57504900),
+                    (0.24771900, 0.75166900, 0.74318300),
+                    (0.02018650, 0.83379950, 0.08287400),
+                    (0.02018650, 0.16620050, 0.58287400),
+                    (0.23081650, 0.41698250, 0.92495100),
+                    (0.97981350, 0.16620050, 0.91712600),
+                    (0.73071400, 0.42060600, 0.91065700),
+                    (0.75228100, 0.24833100, 0.25681700),
+                    (0.75228100, 0.75166900, 0.75681700),
+                    (0.97981350, 0.83379950, 0.41712600),
+                    (0.24771900, 0.24833100, 0.24318300),
+                    (0.00000000, 0.50280700, 0.75000000),
+                    (0.26928600, 0.42060600, 0.58934300),
+                    (0.73071400, 0.57939400, 0.41065700),
+                    (0.26928600, 0.57939400, 0.08934300),
+                    (0.00000000, 0.49719300, 0.25000000),
+                    (0.76918350, 0.58301750, 0.07504900),
+                ],
+            ],
+        ],
+    )
+    def test_expand_asymmetric_unit(
+        self, lattice, atoms, spacegroup, expected_atom_positions
+    ):
+        s = Structure(lattice=lattice, atoms=atoms)
+        phase = Phase(structure=s, space_group=spacegroup)
+        base = phase.structure.lattice.base.copy()
+        exp = phase.expand_asymmetric_unit()
+        assert np.array_equal(base, exp.structure.lattice.base)
+        assert len(exp.structure) == len(expected_atom_positions)
+        # Check atom positions in ORIGINAL lattice alignment
+        # Doing the check in orix's alignment makes independently computing expected sites difficult
+        s = exp.structure.copy()
+        s.placeInLattice(Lattice(base=phase._diffpy_lattice))
+        # Use set to avoid having to ensure the order is the same
+        assert set(tuple(xyz.round(8).tolist()) for xyz in s.xyz) == set(
+            expected_atom_positions
+        )
+
+        # Check that expanding again makes no difference
+        exp2 = exp.expand_asymmetric_unit()
+        assert np.array_equal(base, exp2.structure.lattice.base)
+        assert len(exp2.structure) == len(expected_atom_positions)
+        s = exp2.structure.copy()
+        s.placeInLattice(Lattice(base=phase._diffpy_lattice))
+        assert set(tuple(xyz.round(8).tolist()) for xyz in s.xyz) == set(
+            expected_atom_positions
+        )
+
+        # Check that original phase was preserved
+        assert len(phase.structure) == len(atoms)
+        assert np.array_equal(phase.structure.lattice.base, base)
+
+    @pytest.mark.parametrize(
+        ["cif_file_content", "expected_atom_count"],
+        [
+            (
+                # P1
+                """
+                # generated using pymatgen
+                data_Si
+                _symmetry_space_group_name_H-M   P1
+                _cell_length_a   5.46872800
+                _cell_length_b   5.46872800
+                _cell_length_c   5.46872800
+                _cell_angle_alpha   90.00000000
+                _cell_angle_beta   90.00000000
+                _cell_angle_gamma   90.00000000
+                _symmetry_Int_Tables_number   1
+                _chemical_formula_structural   Si
+                _chemical_formula_sum   Si1
+                _cell_volume   163.55317139
+                loop_
+                _symmetry_equiv_pos_site_id
+                _symmetry_equiv_pos_as_xyz
+                1  'x, y, z'
+                loop_
+                _atom_site_type_symbol
+                _atom_site_label
+                _atom_site_fract_x
+                _atom_site_fract_y
+                _atom_site_fract_z
+                _atom_site_occupancy
+                Si  Si0  0.00000000  0.00000000  0.50000000  1
+                """.lstrip(),
+                1,
+            ),
+            (
+                # Graphite, two atoms in asymmetric -> 4 in expanded
+                """
+                # generated using pymatgen
+                data_C
+                _symmetry_space_group_name_H-M   P6_3/mmc
+                _cell_length_a   2.46772414
+                _cell_length_b   2.46772414
+                _cell_length_c   8.68503800
+                _cell_angle_alpha   90.00000000
+                _cell_angle_beta   90.00000000
+                _cell_angle_gamma   120.00000000
+                _symmetry_Int_Tables_number   194
+                _chemical_formula_structural   C
+                _chemical_formula_sum   C4
+                _cell_volume   45.80317400
+                _cell_formula_units_Z   4
+                loop_
+                _symmetry_equiv_pos_site_id
+                _symmetry_equiv_pos_as_xyz
+                1  'x, y, z'
+                2  '-x, -y, -z'
+                3  'x-y, x, z+1/2'
+                4  '-x+y, -x, -z+1/2'
+                5  '-y, x-y, z'
+                6  'y, -x+y, -z'
+                7  '-x, -y, z+1/2'
+                8  'x, y, -z+1/2'
+                9  '-x+y, -x, z'
+                10  'x-y, x, -z'
+                11  'y, -x+y, z+1/2'
+                12  '-y, x-y, -z+1/2'
+                13  '-y, -x, -z+1/2'
+                14  'y, x, z+1/2'
+                15  '-x, -x+y, -z'
+                16  'x, x-y, z'
+                17  '-x+y, y, -z+1/2'
+                18  'x-y, -y, z+1/2'
+                19  'y, x, -z'
+                20  '-y, -x, z'
+                21  'x, x-y, -z+1/2'
+                22  '-x, -x+y, z+1/2'
+                23  'x-y, -y, -z'
+                24  '-x+y, y, z'
+                loop_
+                _atom_site_type_symbol
+                _atom_site_label
+                _atom_site_symmetry_multiplicity
+                _atom_site_fract_x
+                _atom_site_fract_y
+                _atom_site_fract_z
+                _atom_site_occupancy
+                C  C0  2  0.00000000  0.00000000  0.25000000  1
+                C  C1  2  0.33333333  0.66666667  0.75000000  1
+                """.lstrip(),
+                4,
+            ),
+            (
+                # Si Fd3m. 1 asymmetric -> 8 expanded
+                """
+                # generated using pymatgen
+                data_Si
+                _symmetry_space_group_name_H-M   Fd-3m
+                _cell_length_a   5.46872800
+                _cell_length_b   5.46872800
+                _cell_length_c   5.46872800
+                _cell_angle_alpha   90.00000000
+                _cell_angle_beta   90.00000000
+                _cell_angle_gamma   90.00000000
+                _symmetry_Int_Tables_number   227
+                _chemical_formula_structural   Si
+                _chemical_formula_sum   Si8
+                _cell_volume   163.55317139
+                _cell_formula_units_Z   8
+                loop_
+                _symmetry_equiv_pos_site_id
+                _symmetry_equiv_pos_as_xyz
+                1  'x, y, z'
+                2  '-y+1/4, x+3/4, z+3/4'
+                3  '-x, -y, z'
+                4  'y+1/4, -x+3/4, z+3/4'
+                5  'x, -y, -z'
+                6  '-y+1/4, -x+3/4, -z+3/4'
+                7  '-x, y, -z'
+                8  'y+1/4, x+3/4, -z+3/4'
+                9  'z, x, y'
+                10  'z+1/4, -y+3/4, x+3/4'
+                11  'z, -x, -y'
+                12  'z+1/4, y+3/4, -x+3/4'
+                13  '-z, x, -y'
+                14  '-z+1/4, -y+3/4, -x+3/4'
+                15  '-z, -x, y'
+                16  '-z+1/4, y+3/4, x+3/4'
+                17  'y, z, x'
+                18  'x+1/4, z+3/4, -y+3/4'
+                19  '-y, z, -x'
+                20  '-x+1/4, z+3/4, y+3/4'
+                21  '-y, -z, x'
+                22  '-x+1/4, -z+3/4, -y+3/4'
+                23  'y, -z, -x'
+                24  'x+1/4, -z+3/4, y+3/4'
+                25  '-x+1/4, -y+3/4, -z+3/4'
+                26  'y, -x, -z'
+                27  'x+1/4, y+3/4, -z+3/4'
+                28  '-y, x, -z'
+                29  '-x+1/4, y+3/4, z+3/4'
+                30  'y, x, z'
+                31  'x+1/4, -y+3/4, z+3/4'
+                32  '-y, -x, z'
+                33  '-z+1/4, -x+3/4, -y+3/4'
+                34  '-z, y, -x'
+                35  '-z+1/4, x+3/4, y+3/4'
+                36  '-z, -y, x'
+                37  'z+1/4, -x+3/4, y+3/4'
+                38  'z, y, x'
+                39  'z+1/4, x+3/4, -y+3/4'
+                40  'z, -y, -x'
+                41  '-y+1/4, -z+3/4, -x+3/4'
+                42  '-x, -z, y'
+                43  'y+1/4, -z+3/4, x+3/4'
+                44  'x, -z, -y'
+                45  'y+1/4, z+3/4, -x+3/4'
+                46  'x, z, y'
+                47  '-y+1/4, z+3/4, x+3/4'
+                48  '-x, z, -y'
+                49  'x+1/2, y+1/2, z'
+                50  '-y+3/4, x+1/4, z+3/4'
+                51  '-x+1/2, -y+1/2, z'
+                52  'y+3/4, -x+1/4, z+3/4'
+                53  'x+1/2, -y+1/2, -z'
+                54  '-y+3/4, -x+1/4, -z+3/4'
+                55  '-x+1/2, y+1/2, -z'
+                56  'y+3/4, x+1/4, -z+3/4'
+                57  'z+1/2, x+1/2, y'
+                58  'z+3/4, -y+1/4, x+3/4'
+                59  'z+1/2, -x+1/2, -y'
+                60  'z+3/4, y+1/4, -x+3/4'
+                61  '-z+1/2, x+1/2, -y'
+                62  '-z+3/4, -y+1/4, -x+3/4'
+                63  '-z+1/2, -x+1/2, y'
+                64  '-z+3/4, y+1/4, x+3/4'
+                65  'y+1/2, z+1/2, x'
+                66  'x+3/4, z+1/4, -y+3/4'
+                67  '-y+1/2, z+1/2, -x'
+                68  '-x+3/4, z+1/4, y+3/4'
+                69  '-y+1/2, -z+1/2, x'
+                70  '-x+3/4, -z+1/4, -y+3/4'
+                71  'y+1/2, -z+1/2, -x'
+                72  'x+3/4, -z+1/4, y+3/4'
+                73  '-x+3/4, -y+1/4, -z+3/4'
+                74  'y+1/2, -x+1/2, -z'
+                75  'x+3/4, y+1/4, -z+3/4'
+                76  '-y+1/2, x+1/2, -z'
+                77  '-x+3/4, y+1/4, z+3/4'
+                78  'y+1/2, x+1/2, z'
+                79  'x+3/4, -y+1/4, z+3/4'
+                80  '-y+1/2, -x+1/2, z'
+                81  '-z+3/4, -x+1/4, -y+3/4'
+                82  '-z+1/2, y+1/2, -x'
+                83  '-z+3/4, x+1/4, y+3/4'
+                84  '-z+1/2, -y+1/2, x'
+                85  'z+3/4, -x+1/4, y+3/4'
+                86  'z+1/2, y+1/2, x'
+                87  'z+3/4, x+1/4, -y+3/4'
+                88  'z+1/2, -y+1/2, -x'
+                89  '-y+3/4, -z+1/4, -x+3/4'
+                90  '-x+1/2, -z+1/2, y'
+                91  'y+3/4, -z+1/4, x+3/4'
+                92  'x+1/2, -z+1/2, -y'
+                93  'y+3/4, z+1/4, -x+3/4'
+                94  'x+1/2, z+1/2, y'
+                95  '-y+3/4, z+1/4, x+3/4'
+                96  '-x+1/2, z+1/2, -y'
+                97  'x+1/2, y, z+1/2'
+                98  '-y+3/4, x+3/4, z+1/4'
+                99  '-x+1/2, -y, z+1/2'
+                100  'y+3/4, -x+3/4, z+1/4'
+                101  'x+1/2, -y, -z+1/2'
+                102  '-y+3/4, -x+3/4, -z+1/4'
+                103  '-x+1/2, y, -z+1/2'
+                104  'y+3/4, x+3/4, -z+1/4'
+                105  'z+1/2, x, y+1/2'
+                106  'z+3/4, -y+3/4, x+1/4'
+                107  'z+1/2, -x, -y+1/2'
+                108  'z+3/4, y+3/4, -x+1/4'
+                109  '-z+1/2, x, -y+1/2'
+                110  '-z+3/4, -y+3/4, -x+1/4'
+                111  '-z+1/2, -x, y+1/2'
+                112  '-z+3/4, y+3/4, x+1/4'
+                113  'y+1/2, z, x+1/2'
+                114  'x+3/4, z+3/4, -y+1/4'
+                115  '-y+1/2, z, -x+1/2'
+                116  '-x+3/4, z+3/4, y+1/4'
+                117  '-y+1/2, -z, x+1/2'
+                118  '-x+3/4, -z+3/4, -y+1/4'
+                119  'y+1/2, -z, -x+1/2'
+                120  'x+3/4, -z+3/4, y+1/4'
+                121  '-x+3/4, -y+3/4, -z+1/4'
+                122  'y+1/2, -x, -z+1/2'
+                123  'x+3/4, y+3/4, -z+1/4'
+                124  '-y+1/2, x, -z+1/2'
+                125  '-x+3/4, y+3/4, z+1/4'
+                126  'y+1/2, x, z+1/2'
+                127  'x+3/4, -y+3/4, z+1/4'
+                128  '-y+1/2, -x, z+1/2'
+                129  '-z+3/4, -x+3/4, -y+1/4'
+                130  '-z+1/2, y, -x+1/2'
+                131  '-z+3/4, x+3/4, y+1/4'
+                132  '-z+1/2, -y, x+1/2'
+                133  'z+3/4, -x+3/4, y+1/4'
+                134  'z+1/2, y, x+1/2'
+                135  'z+3/4, x+3/4, -y+1/4'
+                136  'z+1/2, -y, -x+1/2'
+                137  '-y+3/4, -z+3/4, -x+1/4'
+                138  '-x+1/2, -z, y+1/2'
+                139  'y+3/4, -z+3/4, x+1/4'
+                140  'x+1/2, -z, -y+1/2'
+                141  'y+3/4, z+3/4, -x+1/4'
+                142  'x+1/2, z, y+1/2'
+                143  '-y+3/4, z+3/4, x+1/4'
+                144  '-x+1/2, z, -y+1/2'
+                145  'x, y+1/2, z+1/2'
+                146  '-y+1/4, x+1/4, z+1/4'
+                147  '-x, -y+1/2, z+1/2'
+                148  'y+1/4, -x+1/4, z+1/4'
+                149  'x, -y+1/2, -z+1/2'
+                150  '-y+1/4, -x+1/4, -z+1/4'
+                151  '-x, y+1/2, -z+1/2'
+                152  'y+1/4, x+1/4, -z+1/4'
+                153  'z, x+1/2, y+1/2'
+                154  'z+1/4, -y+1/4, x+1/4'
+                155  'z, -x+1/2, -y+1/2'
+                156  'z+1/4, y+1/4, -x+1/4'
+                157  '-z, x+1/2, -y+1/2'
+                158  '-z+1/4, -y+1/4, -x+1/4'
+                159  '-z, -x+1/2, y+1/2'
+                160  '-z+1/4, y+1/4, x+1/4'
+                161  'y, z+1/2, x+1/2'
+                162  'x+1/4, z+1/4, -y+1/4'
+                163  '-y, z+1/2, -x+1/2'
+                164  '-x+1/4, z+1/4, y+1/4'
+                165  '-y, -z+1/2, x+1/2'
+                166  '-x+1/4, -z+1/4, -y+1/4'
+                167  'y, -z+1/2, -x+1/2'
+                168  'x+1/4, -z+1/4, y+1/4'
+                169  '-x+1/4, -y+1/4, -z+1/4'
+                170  'y, -x+1/2, -z+1/2'
+                171  'x+1/4, y+1/4, -z+1/4'
+                172  '-y, x+1/2, -z+1/2'
+                173  '-x+1/4, y+1/4, z+1/4'
+                174  'y, x+1/2, z+1/2'
+                175  'x+1/4, -y+1/4, z+1/4'
+                176  '-y, -x+1/2, z+1/2'
+                177  '-z+1/4, -x+1/4, -y+1/4'
+                178  '-z, y+1/2, -x+1/2'
+                179  '-z+1/4, x+1/4, y+1/4'
+                180  '-z, -y+1/2, x+1/2'
+                181  'z+1/4, -x+1/4, y+1/4'
+                182  'z, y+1/2, x+1/2'
+                183  'z+1/4, x+1/4, -y+1/4'
+                184  'z, -y+1/2, -x+1/2'
+                185  '-y+1/4, -z+1/4, -x+1/4'
+                186  '-x, -z+1/2, y+1/2'
+                187  'y+1/4, -z+1/4, x+1/4'
+                188  'x, -z+1/2, -y+1/2'
+                189  'y+1/4, z+1/4, -x+1/4'
+                190  'x, z+1/2, y+1/2'
+                191  '-y+1/4, z+1/4, x+1/4'
+                192  '-x, z+1/2, -y+1/2'
+                loop_
+                _atom_site_type_symbol
+                _atom_site_label
+                _atom_site_symmetry_multiplicity
+                _atom_site_fract_x
+                _atom_site_fract_y
+                _atom_site_fract_z
+                _atom_site_occupancy
+                Si  Si0  8  0.00000000  0.00000000  0.50000000  1
+                """.lstrip(),
+                8,
+            ),
+            (
+                # https://legacy.materialsproject.org/materials/mp-669458/
+                """
+                # generated using pymatgen
+                data_Cs3Bi2I9
+                _symmetry_space_group_name_H-M   C2/c
+                _cell_length_a   8.66993200
+                _cell_length_b   14.96934800
+                _cell_length_c   22.00995998
+                _cell_angle_alpha   90.00000000
+                _cell_angle_beta   91.10362966
+                _cell_angle_gamma   90.00000000
+                _symmetry_Int_Tables_number   15
+                _chemical_formula_structural   Cs3Bi2I9
+                _chemical_formula_sum   'Cs12 Bi8 I36'
+                _cell_volume   2855.99377941
+                _cell_formula_units_Z   4
+                loop_
+                _symmetry_equiv_pos_site_id
+                _symmetry_equiv_pos_as_xyz
+                1  'x, y, z'
+                2  '-x, -y, -z'
+                3  '-x, y, -z+1/2'
+                4  'x, -y, z+1/2'
+                5  'x+1/2, y+1/2, z'
+                6  '-x+1/2, -y+1/2, -z'
+                7  '-x+1/2, y+1/2, -z+1/2'
+                8  'x+1/2, -y+1/2, z+1/2'
+                loop_
+                _atom_site_type_symbol
+                _atom_site_label
+                _atom_site_symmetry_multiplicity
+                _atom_site_fract_x
+                _atom_site_fract_y
+                _atom_site_fract_z
+                _atom_site_occupancy
+                Cs  Cs0  8  0.00142500  0.33215200  0.07744700  1
+                Cs  Cs1  4  0.00000000  0.00278300  0.75000000  1
+                Bi  Bi2  8  0.01120750  0.33477050  0.65575800  1
+                I  I3  8  0.02018650  0.16620050  0.58287400  1
+                I  I4  8  0.23071400  0.07939400  0.41065700  1
+                I  I5  8  0.23081650  0.41698250  0.92495100  1
+                I  I6  8  0.24771900  0.24833100  0.24318300  1
+                I  I7  4  0.00000000  0.49719300  0.25000000  1
+                """.lstrip(),
+                # Sum the multiplicities from the cif
+                8 + 4 + 8 + 8 + 8 + 8 + 8 + 4,
+            ),
+        ],
+    )
+    def test_expand_asymmetric_unit_from_cif(
+        self, cif_file_content, expected_atom_count, tmp_path
+    ):
+        filepath = tmp_path / "tmp.cif"
+        with open(filepath, "w") as file:
+            file.write(cif_file_content)
+        phase = Phase.from_cif(filepath)
+        # Asymmetric unit is automatically expanded when read from cif
+        assert len(phase.structure) == expected_atom_count
+        # Expand just in case
+        exp = phase.expand_asymmetric_unit()
+        assert len(exp.structure) == expected_atom_count
+
+    def test_expand_asymmetric_unit_raise_if_no_point_group(self):
+        phase = Phase()
+        with pytest.raises(ValueError, match="Space group must be set"):
+            phase.expand_asymmetric_unit()

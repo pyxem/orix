@@ -72,6 +72,21 @@ class TestPhaseList:
         assert pl.colors == [p.color]
         assert pl.colors_rgb == [p.color_rgb]
 
+    def test_init_phaselist_from_phaselist(self):
+        p1 = Phase(name="austenite", point_group="432", color="C2")
+        pl1 = PhaseList(p1)
+        pl2 = PhaseList(pl1)
+
+        assert pl1 is not pl2
+        assert pl1[pl1.ids[0]] is not pl2[pl2.ids[0]]
+        assert pl1.names == pl2.names
+        assert pl1.point_groups == pl2.point_groups
+        assert pl1.space_groups == pl2.space_groups
+        assert pl1.colors == pl2.colors
+        assert pl1.colors_rgb == pl2.colors_rgb
+        assert pl1.structures == pl2.structures
+        assert pl1.structures[0] is not pl2.structures[0]
+
     @pytest.mark.parametrize(
         (
             "names, space_groups, point_groups, colors, phase_ids, desired_names, "
