@@ -34,6 +34,7 @@ from .sample_generators import (
     get_sample_reduced_fundamental,
 )
 
+# Lazily imported in module init
 __all__ = [
     "get_sample_fundamental",
     "get_sample_reduced_fundamental",

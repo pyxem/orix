@@ -21,6 +21,7 @@ from .crystal_map import CrystalMap, create_coordinate_arrays
 from .crystal_map_properties import CrystalMapProperties
 from .phase_list import Phase, PhaseList
 
+# Lazily imported in module init
 __all__ = [
     "create_coordinate_arrays",
     "CrystalMap",

@@ -27,6 +27,7 @@ from .fundamental_sector import FundamentalSector
 from .miller import Miller
 from .neo_euler import AxAngle, Homochoric, NeoEuler, Rodrigues
 
+# Lazily imported in module init
 __all__ = [
     "AxAngle",
     "FundamentalSector",

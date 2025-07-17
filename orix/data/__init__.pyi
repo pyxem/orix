@@ -19,6 +19,7 @@
 
 from ._data import sdss_austenite, sdss_ferrite_austenite, ti_orientations
 
+# Lazily imported in module init
 __all__ = [
     "sdss_austenite",
     "sdss_ferrite_austenite",

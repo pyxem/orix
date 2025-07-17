@@ -23,6 +23,7 @@ from .orientation_region import OrientationRegion, get_proper_groups
 from .rotation import Rotation, von_mises
 from .symmetry import Symmetry, get_distinguished_points, get_point_group
 
+# Lazily imported in module init
 __all__ = [
     # Classes
     "Misorientation",

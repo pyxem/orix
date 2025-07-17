@@ -27,6 +27,7 @@ from .stereographic_plot import StereographicPlot
 # Must be imported below StereographicPlot since it imports it
 from .inverse_pole_figure_plot import InversePoleFigurePlot  # isort: skip
 
+# Lazily imported in module init
 __all__ = [
     # Classes
     "AxAnglePlot",

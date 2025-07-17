@@ -19,4 +19,5 @@
 
 from .pole_density_function import pole_density_function
 
+# Lazily imported in module init
 __all__ = ["pole_density_function"]

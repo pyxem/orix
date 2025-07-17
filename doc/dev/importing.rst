@@ -28,19 +28,19 @@ By using stub files, static type checkers (e.g. in a more advanced editor) are a
 read these files and infer information about the modules and functions (specifically,
 their parameter and return "types"), without actually loading the modules themselves.
 
-No imports should go in the ``__init__.py`` files except the lazy loading
-functionality::
+No imports should go in the ``__init__.py`` files except the lazy loading::
 
-     import lazy_loader
+    import lazy_loader
 
-     __getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
+    # Imports from stub file (see contributor guide for details)
+    __getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
 
-     del lazy_loader
+    del lazy_loader
 
 The returns from lazy loader are:
 - ``__getattr__``: function to access names defined by the module
 - ``__dir__``: list of names a module defines
-- ``__all__``: list of module, class, or function names that should be imported when
+- ``__all__``: list of module, class, and function names that should be imported when
   ``from package import *`` is encountered
 
 We delete the lazy loader import at the end to prevent importing it from our modules.

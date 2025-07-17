@@ -19,6 +19,7 @@
 
 from .stereographic import InverseStereographicProjection, StereographicProjection
 
+# Lazily imported in module init
 __all__ = [
     "InverseStereographicProjection",
     "StereographicProjection",

@@ -19,6 +19,7 @@
 
 from ._io import load, loadang, loadctf, save
 
+# Lazily imported in module init
 __all__ = [
     "loadang",
     "loadctf",
