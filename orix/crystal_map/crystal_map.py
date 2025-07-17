@@ -927,7 +927,7 @@ class CrystalMap:
         self,
         value: Union[np.ndarray, str, None] = None,
         overlay: Union[str, np.ndarray, None] = None,
-        scalebar: bool = True,
+        scalebar: bool | None = None,
         scalebar_properties: Optional[dict] = None,
         legend: bool = True,
         legend_properties: Optional[dict] = None,
@@ -955,8 +955,11 @@ class CrystalMap:
             alpha (RGBA) channel. The property range is adjusted for
             maximum contrast. Not used if not given.
         scalebar
-            Whether to add a scalebar (default is ``True``) along the
-            horizontal map dimension.
+            Whether to add a scalebar along the horizontal map dimension.
+            Default is None, which will attempt to create a scalebar only
+            if the necessary subpackage matplotlib_scalebar is detected.
+            Passing True or False will force the addition or exclusion
+            of a scalebar, respectively.
         scalebar_properties
             Keyword arguments passed to
             :class:`matplotlib_scalebar.scalebar.ScaleBar`.
