@@ -978,8 +978,8 @@ def _order_in_hemisphere(polar: np.ndarray, pole: int) -> Union[np.ndarray, None
 
 
 class _SymmetryMarker:
-    """A class for creating Symmetry element markers. Intended for making
-    stereographic plots of the crystallographic point groups.
+    """A class for creating Symmetry element markers. Intended for
+    making stereographic plots of the crystallographic point groups.
 
     Intended to be used indirectly in
     :func:`~orix.plot.StereographicPlot.symmetry_marker`.
@@ -987,18 +987,22 @@ class _SymmetryMarker:
     Parameters
     ----------
     v
-        Vector(s) giving the positions of markers in a stereographic plot
+        Vector(s) giving marker positions in the stereographic plot.
     size
-        Value(s) passed to matplotlib to determine relative marker size
+        Value(s) passed to matplotlib to determine relative marker
+        size.
     folds
-        The rotational symmetry (typically 1, 2, 3, 4, or 6) that determines the
-        symmetry marker's shape(circle, elliplse, triangle, square, or hex)'.
+        The rotational symmetry (typically 1, 2, 3, 4, or 6) that
+        determines the symmetry marker's shape
+        (circle, elliplse, triangle, square, or hex).
     modifier
-        Determines what alterations, if any, should be added to the marker. "none" or
-        None will add nothing. "rotoinversion" will add a white rotoinversion symbol
-        inside the marker, which for even-fold rotations is a polygon with half as
-        many corners, and for an odd-fold rotation is a white dot. "inversion" will
-        add an inversion symbol, which is a white dot. The default is "none".
+        Determines what alterations, if any, should be added to
+        the marker. None (the default)  or "rotation" will add
+        nothing. "rotoinversion" will add a white rotoinversion
+        symbol inside the marker, which for even-fold rotations is a
+        polygon with half as many corners as the marker, and for an
+        odd-fold rotation is a white dot. "inversion" will add an
+        inversion symbol, which is a white dot. The default is None.
     """
 
     def __init__(
@@ -1006,9 +1010,7 @@ class _SymmetryMarker:
         v: Vector3d | np.ndarray | list | tuple,
         size: int = 1,
         folds: Literal[1, 2, 3, 4, 6] = 2,
-        modifier: Literal[
-            None, "none", "rotation", "rotoinversion", "inversion"
-        ] = "none",
+        modifier: Literal[None, "rotation", "rotoinversion", "inversion"] = None,
     ):
         fold_opt = [1, 2, 3, 4, 6]
         if folds not in fold_opt:
@@ -1022,7 +1024,8 @@ class _SymmetryMarker:
         mod_opt = [None, "none", "rotation", "rotoinversion", "inversion"]
         if modifier not in mod_opt:
             raise ValueError(
-                f"Modifier must be one of {', '.join(map(str, mod_opt))}, not {modifier}"
+                f"Modifier must be one of {', '.join(map(str, mod_opt))},"
+                + "not {modifier}"
             )
         self._vector = Vector3d(v)
         self._size = size
@@ -1045,7 +1048,7 @@ class _SymmetryMarker:
         """Number of symmetry markers."""
         return self._vector.size
 
-    def __iter__(self):
+    def __iter__(self) -> [Vector3d, mpath.Path, np.float64]:
         """Dunder function for iterating through multiple markers defined within a
         single _SymmetryMarker Class.
 
