@@ -26,9 +26,6 @@ import orix
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.plot import CrystalMapPlot
 
-if orix.constants.installed["matplotlib-scalebar"]:
-    import matplotlib_scalebar
-
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"
 
@@ -162,9 +159,22 @@ class TestCrystalMapPlot:
         assert isinstance(ax.colorbar, mbar.Colorbar)
         assert ax.colorbar.ax.get_ylabel() == "score"
         if orix.constants.installed["matplotlib-scalebar"]:
+            import matplotlib_scalebar
+
             assert isinstance(ax.scalebar, matplotlib_scalebar.scalebar.ScaleBar)
 
         plt.close("all")
+
+    def test_matplotlib_scalebar_warning(self, crystal_map, monkeypatch):
+        xmap = crystal_map
+        fig = xmap.plot(return_figure=True, colorbar=True, colorbar_label="score")
+        ax = fig.axes[0]
+
+        assert isinstance(ax.colorbar, mbar.Colorbar)
+
+        monkeypatch.setitem(orix.constants.installed, "matplotlib-scalebar", False)
+        with pytest.raises(ImportWarning, match="matplotlib-scalebar"):
+            ax.add_scalebar(xmap)
 
 
 class TestCrystalMapPlotUtilities:

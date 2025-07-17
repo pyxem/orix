@@ -31,9 +31,6 @@ from orix.plot import CrystalMapPlot
 from orix.quaternion import Orientation, Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
 
-if orix.constants.installed["matplotlib-scalebar"]:
-    import matplotlib_scalebar
-
 # Note that many parts of the CrystalMap() class are tested while
 # testing IO and the Phase() and PhaseList() classes
 
@@ -1140,7 +1137,9 @@ class TestCrystalMapPlotMethod:
         assert ax2._ymargin == 0
 
         # Run checks for scalebar only if matplotlib_scalebar is installed
-        if matplotlib_scalebar:
+        if orix.constants.installed["matplotlib-scalebar"]:
+            import matplotlib_scalebar
+
             sbar1 = fig1.axes[0].artists[0]
             assert isinstance(sbar1, matplotlib_scalebar.scalebar.ScaleBar)
             assert sbar1.dimension.base_units == xmap.scan_unit

@@ -1,4 +1,4 @@
-# Copyright 2018-2024 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,13 +9,13 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from matplotlib.axes import Axes
 import matplotlib.colorbar as mbar
@@ -28,10 +28,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
 import orix
-
-if orix.constants.installed["matplotlib-scalebar"]:
-    from matplotlib_scalebar.dimension import _Dimension
-    from matplotlib_scalebar.scalebar import ScaleBar
 
 
 class CrystalMapPlot(Axes):
@@ -224,25 +220,23 @@ class CrystalMapPlot(Axes):
 
         NOTES
         ------
-        This function requires the package `matplotlib-scalebar`, which is an
-        optional package in orix and not automatically installed. it can be
-        installed from pip as:
-            `pip install matplotlib-scalebar`
-        After which point, this function will work properly upon reloading. it
-        can also be installed automatically when installing orix using the
-        `all` decorator:
-            'pip install orix['all']'
+        This function requires `matplotlib-scalebar` to be installed.
+        Please see the :doc:`installation guide <user/installation>`
+        for details.
         """
         # Check whether the optional module matplotlib_scalebar is available
         if not orix.constants.installed["matplotlib-scalebar"]:
             # create an empty dummy bar
-            ImportWarning(
+            raise ImportWarning(
                 "matplotlib-scalebar is not installed and thus no scalebar "
                 + "was added. This package can be installed using "
                 + "'pip install matplotlib-scalebar'."
             )
             bar = Line2D([], [], color="none", label="")
         else:
+            from matplotlib_scalebar.dimension import _Dimension
+            from matplotlib_scalebar.scalebar import ScaleBar
+
             # create a matplotlib_scalebar object
             # Get whether z, y or x
             last_axis = crystal_map.ndim - 1
