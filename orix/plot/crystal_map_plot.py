@@ -43,7 +43,7 @@ class CrystalMapPlot(Axes):
         self,
         crystal_map: "orix.crystal_map.CrystalMap",
         value: Optional[np.ndarray] = None,
-        scalebar: bool = True,
+        scalebar: bool | None = None,
         scalebar_properties: Optional[dict] = None,
         legend: bool = True,
         legend_properties: Optional[dict] = None,
@@ -63,8 +63,11 @@ class CrystalMapPlot(Axes):
             Attribute array to plot. If value is ``None`` (default), a
             phase map is plotted.
         scalebar
-            Whether to add a scalebar (default is ``True``) along the
-            horizontal map dimension.
+            Whether to add a scalebar along the horizontal map dimension.
+            Default is None, which will attempt to create a scalebar only
+            if the necessary subpackage matplotlib_scalebar is detected.
+            Passing True or False will force the addition or exclusion
+            of a scalebar, respectively.
         scalebar_properties
             Dictionary of keyword arguments passed to
             :class:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
@@ -175,6 +178,8 @@ class CrystalMapPlot(Axes):
             self._add_legend(patches, **legend_properties)
 
         # Scalebar
+        if scalebar is None:
+            scalebar = orix.constants.installed["matplotlib-scalebar"]
         if scalebar:
             if scalebar_properties is None:
                 scalebar_properties = {}
@@ -224,15 +229,15 @@ class CrystalMapPlot(Axes):
         Please see the :doc:`installation guide <user/installation>`
         for details.
         """
-        # Check whether the optional module matplotlib_scalebar is available
+        # Check whether the optional module matplotlib_scalebar is available,
+        # and if not, throw an error.
         if not orix.constants.installed["matplotlib-scalebar"]:
-            # create an empty dummy bar
-            raise ImportWarning(
-                "matplotlib-scalebar is not installed and thus no scalebar "
-                + "was added. This package can be installed using "
-                + "'pip install matplotlib-scalebar'."
+            raise ImportError(
+                "The optional python package matplotlib-scalebar is not"
+                + "installed and thus a scalebar cannot be drawn. See"
+                + "the orix installation guide for details:"
+                + "https://orix.readthedocs.io/en/stable/user/installation"
             )
-            bar = Line2D([], [], color="none", label="")
         else:
             from matplotlib_scalebar.dimension import _Dimension
             from matplotlib_scalebar.scalebar import ScaleBar
@@ -269,10 +274,10 @@ class CrystalMapPlot(Axes):
                 units=crystal_map.scan_unit,
                 **kwargs,
             )
-        self.axes.add_artist(bar)
-        self.scalebar = bar
+            self.axes.add_artist(bar)
+            self.scalebar = bar
 
-        return bar
+            return bar
 
     def add_overlay(self, crystal_map: "orix.crystal_map.CrystalMap", item: str):
         """Use a crystal map property as gray scale values of a phase

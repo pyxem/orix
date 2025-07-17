@@ -164,17 +164,27 @@ class TestCrystalMapPlot:
             assert isinstance(ax.scalebar, matplotlib_scalebar.scalebar.ScaleBar)
 
         plt.close("all")
+        # check that passing False into the scalebar gives a plot with no scalebar
+        fig = xmap.plot(return_figure=True, scalebar=False)
+        ax = fig.axes[0]
+        assert isinstance(ax.scalebar, type(None))
 
-    def test_matplotlib_scalebar_warning(self, crystal_map, monkeypatch):
+    def test_matplotlib_scalebar_errors(self, crystal_map, monkeypatch):
+        # Test that default plots do what you would expect without
+        # matplotlib-scalebar installed.
         xmap = crystal_map
         fig = xmap.plot(return_figure=True, colorbar=True, colorbar_label="score")
         ax = fig.axes[0]
-
         assert isinstance(ax.colorbar, mbar.Colorbar)
-
+        # Check that adding a scalebar explicitly returns an error.
         monkeypatch.setitem(orix.constants.installed, "matplotlib-scalebar", False)
-        with pytest.raises(ImportWarning, match="matplotlib-scalebar"):
+        with pytest.raises(ImportError, match="The optional"):
             ax.add_scalebar(xmap)
+        # Check that forcing a scalebar through .plot also returns an error
+        plt.close("all")
+        with pytest.raises(ImportError, match="The optional"):
+            fig = xmap.plot(scalebar=True)
+        plt.close("all")
 
 
 class TestCrystalMapPlotUtilities:
