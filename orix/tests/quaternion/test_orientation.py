@@ -441,6 +441,34 @@ class TestMisorientation:
         with pytest.raises(TypeError, match="Value must be a 2-tuple of"):
             _ = Misorientation.from_scipy_rotation(r_scipy, Oh)
 
+    def test_from_path_ends(self):
+        """check from_path_ends returns what you would expect and
+        preserves symmetry information."""
+        q = Quaternion.random(10)
+        r = Rotation.random(10)
+        o = Orientation.random(10, Oh)
+        m = Misorientation.random(10, [D3, Oh])
+
+        # make sure the result is the correct class.
+        a = Quaternion.from_path_ends(q)
+        b = Rotation.from_path_ends(q)
+        c = Orientation.from_path_ends(r)
+        d = Quaternion.from_path_ends(o)
+        e = Orientation.from_path_ends(q)
+        f = Misorientation.from_path_ends(m)
+        g = Orientation.from_path_ends(o)
+        assert isinstance(a, Quaternion)
+        assert isinstance(b, Rotation)
+        assert isinstance(c, Orientation)
+        assert isinstance(d, Quaternion)
+        assert isinstance(e, Orientation)
+        assert isinstance(f, Misorientation)
+        assert isinstance(g, Orientation)
+
+        # make sure symmetry information is preserved.
+        assert f.symmetry == m.symmetry
+        assert g.symmetry == o.symmetry
+
     def test_inverse(self):
         M1 = Misorientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], (Oh, D6))
         M2 = ~M1

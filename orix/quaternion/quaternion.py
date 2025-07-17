@@ -695,17 +695,17 @@ class Quaternion(Object3d):
     def from_path_ends(
         cls, points: Quaternion, closed: bool = False, steps: int = 100
     ) -> Quaternion:
-        """Return quaternions tracing the shortest path between two or more
-        consecutive points.
+        """Return quaternions tracing the shortest path between two or
+        more consecutive points.
 
         Parameters
         ----------
         points
-            Two or more quaternions that define waypoints along a path through
-            rotation space (SO3).
+            Two or more quaternions that define waypoints along a path
+            through rotation space (SO3).
         closed
-            Option to add a final trip from the last waypoint back to the
-            first, thus closing the loop. The default is False.
+            Option to add a final trip from the last waypoint back to
+            the first, thus closing the loop. The default is False.
         steps
             Number of quaternions to return along the path between each
             pair of waypoints. The default is 100.
@@ -713,13 +713,8 @@ class Quaternion(Object3d):
         Returns
         -------
         path :Quaternion
-            quaternions that map out a path between the given waypoints.
+            quaternions that map a path between the given waypoints.
 
-        Notes
-        -----
-        This method can use :class:Orientation and :class:Misorientation as
-        inputs and will return an object of the same class. However,
-        symmetry is ignored when determining the shortest routes.
         """
         points = points.flatten()
         n = points.size
@@ -737,10 +732,7 @@ class Quaternion(Object3d):
             trip = Quaternion.from_axes_angles(ax, np.linspace(0, ang, steps))
             path_list.append((q1 * (trip.flatten())).data)
         path_data = np.concatenate(path_list, axis=0)
-        path = points.__class__(path_data)
-        # copy the symmetry if it exists
-        if hasattr(points, "_symmetry"):
-            path._symmetry = points._symmetry
+        path = cls(path_data)
         return path
 
     @classmethod
