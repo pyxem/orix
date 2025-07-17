@@ -267,6 +267,38 @@ class Misorientation(Rotation):
         return M
 
     @classmethod
+    def from_path_ends(
+        cls, points: Misorientation, closed: bool = False, steps: int = 100
+    ) -> Misorientation:
+        """Return (mis)orientations tracing the shortest path between
+        two or more consecutive points.
+
+        Parameters
+        ----------
+        points
+            Two or more (mis)orientations that define waypoints along
+            a path through rotation space (SO3).
+        closed
+            Option to add a final trip from the last waypoint back to
+            the first, thus closing the loop. The default is False.
+        steps
+            Number of (mis)orientations to return along the path
+            between each pair of waypoints. The default is 100.
+
+        Returns
+        -------
+        path :Quaternion
+            quaternions that map a path between the given waypoints.
+
+        """
+        out = super().from_path_ends(points=points, closed=closed, steps=steps)
+        path = cls(out.data)
+        # copy the symmetry if it exists.
+        if hasattr(points, "_symmetry"):
+            path._symmetry = points._symmetry
+        return path
+
+    @classmethod
     def random(
         cls,
         shape: Union[int, tuple] = 1,

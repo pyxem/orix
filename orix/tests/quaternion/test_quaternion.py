@@ -352,7 +352,7 @@ class TestQuaternion:
             )
         )
         path = Quaternion.from_path_ends(waypoints)
-        loop = Quaternion.from_path_ends(waypoints, close_loop=True, steps=11)
+        loop = Quaternion.from_path_ends(waypoints, closed=True, steps=11)
         # check the sizes are as expected
         assert path.shape == (1100,)
         assert loop.shape == (132,)
