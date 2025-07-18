@@ -321,6 +321,39 @@ def test_symmetry_property_wrong_number_of_values_misorientation(error_type, val
         o.symmetry = value
 
 
+def test_from_path_ends():
+    """check from_path_ends returns what you would expect and
+    preserves symmetry information.
+
+    In particular, ensure the class of the returned object matches the class
+    used for creating it, NOT the class of the object passed in.
+    """
+    q = Quaternion.random(10)
+    r = Rotation.random(10)
+    o = Orientation.random(10, Oh)
+    m = Misorientation.random(10, [D3, Oh])
+
+    # make sure the result is the correct class.
+    a = Quaternion.from_path_ends(q)
+    b = Rotation.from_path_ends(q)
+    c = Orientation.from_path_ends(r)
+    d = Quaternion.from_path_ends(o)
+    e = Orientation.from_path_ends(q)
+    f = Misorientation.from_path_ends(m)
+    g = Orientation.from_path_ends(o)
+    assert isinstance(a, Quaternion)
+    assert isinstance(b, Rotation)
+    assert isinstance(c, Orientation)
+    assert isinstance(d, Quaternion)
+    assert isinstance(e, Orientation)
+    assert isinstance(f, Misorientation)
+    assert isinstance(g, Orientation)
+
+    # make sure symmetry information is preserved.
+    assert f.symmetry == m.symmetry
+    assert g.symmetry == o.symmetry
+
+
 class TestMisorientation:
     def test_get_distance_matrix(self):
         """Compute distance between every misorientation in an instance
@@ -442,32 +475,9 @@ class TestMisorientation:
             _ = Misorientation.from_scipy_rotation(r_scipy, Oh)
 
     def test_from_path_ends(self):
-        """check from_path_ends returns what you would expect and
-        preserves symmetry information."""
-        q = Quaternion.random(10)
-        r = Rotation.random(10)
-        o = Orientation.random(10, Oh)
-        m = Misorientation.random(10, [D3, Oh])
-
-        # make sure the result is the correct class.
-        a = Quaternion.from_path_ends(q)
-        b = Rotation.from_path_ends(q)
-        c = Orientation.from_path_ends(r)
-        d = Quaternion.from_path_ends(o)
-        e = Orientation.from_path_ends(q)
-        f = Misorientation.from_path_ends(m)
-        g = Orientation.from_path_ends(o)
-        assert isinstance(a, Quaternion)
-        assert isinstance(b, Rotation)
-        assert isinstance(c, Orientation)
-        assert isinstance(d, Quaternion)
-        assert isinstance(e, Orientation)
-        assert isinstance(f, Misorientation)
-        assert isinstance(g, Orientation)
-
-        # make sure symmetry information is preserved.
-        assert f.symmetry == m.symmetry
-        assert g.symmetry == o.symmetry
+        # generate paths with misorientations to check symmetry copying
+        wp_m = Misorientation(data=np.eye(4)[2:], symmetry=[Oh, C3])
+        assert Misorientation.from_path_ends(wp_m)._symmetry == (Oh, C3)
 
     def test_inverse(self):
         M1 = Misorientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], (Oh, D6))
@@ -627,14 +637,6 @@ class TestOrientationInitialization:
         # Raises an appropriate error message
         with pytest.raises(TypeError, match="Value must be an instance of"):
             _ = Orientation.from_scipy_rotation(r_scipy, (Oh, Oh))
-
-    def test_from_path_ends(self):
-        # generate paths with misorientations and orientations to check
-        # symmetry copying
-        wp_o = Orientation(data=np.eye(4)[:2], symmetry=Oh)
-        wp_m = Misorientation(data=np.eye(4)[2:], symmetry=[Oh, C3])
-        assert Orientation.from_path_ends(wp_o)._symmetry == (C1, Oh)
-        assert Misorientation.from_path_ends(wp_m)._symmetry == (Oh, C3)
 
 
 class TestOrientation:
@@ -845,6 +847,11 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+
+    def test_from_path_ends(self):
+        # generate paths with orientations to check symmetry copying
+        wp_o = Orientation(data=np.eye(4)[:2], symmetry=Oh)
+        assert Orientation.from_path_ends(wp_o)._symmetry == (C1, Oh)
 
     def test_inverse(self):
         O1 = Orientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], D6)
