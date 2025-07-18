@@ -13,7 +13,7 @@ application of mirror planes and secondary rotational symmetries until all 32
 groups are made.
 
 The plots themselves as well as their labels follow the standards given in
-Table 10.2.2 of the "International Tables of Crystallography, Volume A" (ITOC).
+Table 10.2.2 of the "International Tables for Crystallography, Volume A" (ITC).
 Both the nomenclature and marker styles thus differ slightly from some textbooks, as
 there are some arbitrary convention choices in both Schoenflies notation and marker
 styles.
@@ -33,6 +33,9 @@ from orix.vector import Vector3d
 # create a list of the 32 crystallographic point groups
 point_groups = PointGroups.get_set("procedural")
 
+# show the table of symmetry information
+print(point_groups)
+
 # prepare the plots
 fig, ax = plt.subplots(
     4, 8, subplot_kw={"projection": "stereographic"}, figsize=[14, 10]
@@ -43,4 +46,4 @@ ax = ax.flatten()
 v = Vector3d.from_polar(65, 80, degrees=True)
 # Iterate through the 32 Point groups
 for i, pg in enumerate(point_groups):
-    pg.plot(asymetric_vector=v, plt_axis=ax[i], itoc_style=True)
+    pg.plot(asymmetric_vector=v, ax=ax[i])

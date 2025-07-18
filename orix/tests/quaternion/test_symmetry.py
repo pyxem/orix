@@ -23,6 +23,7 @@ import numpy as np
 import pytest
 
 from orix.quaternion import Rotation, Symmetry, get_point_group
+from orix.quaternion.symmetry import _spacegroup2pointgroup_dict
 
 # fmt: off
 # isort: off
@@ -443,15 +444,14 @@ def test_no_symm_fundamental_zone():
 
 def test_get_point_group():
     """Makes sure all the ints from 1 to 230 give answers."""
-    sg2pg = PointGroups._spacegroup2pointgroup_dict
     for sg_number in np.arange(1, 231):
         proper_pg = get_point_group(sg_number, proper=True)
         assert proper_pg in [C1, C2, C3, C4, C6, D2, D3, D4, D6, O, T]
 
         sg = GetSpaceGroup(sg_number)
         pg = get_point_group(sg_number, proper=False)
-        assert proper_pg == sg2pg[sg.point_group_name]["proper"]
-        assert pg == sg2pg[sg.point_group_name]["improper"]
+        assert proper_pg == _spacegroup2pointgroup_dict[sg.point_group_name]["proper"]
+        assert pg == _spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
 
 
 def test_unique_symmetry_elements_subgroups(all_symmetries):
@@ -545,7 +545,7 @@ def test_symmetry_plot(pg, n_elements):
     fig, plt_axis = plt.subplots(subplot_kw={"projection": "stereographic"})
     v = Vector3d.from_polar(0.5, 0.3)
     v_symm = pg.outer(v)
-    pg.plot(v, plt_axis=plt_axis)
+    pg.plot(v, ax=plt_axis)
     c1 = plt_axis.collections[-1]
     c2 = plt_axis.collections[-2]
     assert len(c1.get_offsets()) == np.sum(v_symm.z >= 0)
@@ -566,12 +566,6 @@ class TestPointGroups:
         for l in lines[2:]:
             assert len(l.split()) == 11
 
-    def test_init_checks(self):
-        with pytest.raises(ValueError):
-            x = PointGroups("banana")
-        with pytest.raises(ValueError):
-            x = PointGroups(["banana"])
-
     def test_get(self):
         assert PointGroups.get("c1").laue.name == "-1"
         assert PointGroups.get("C1").laue.name == "-1"
@@ -579,6 +573,23 @@ class TestPointGroups:
         assert PointGroups.get(230).laue.name == "m-3m"
         with pytest.raises(ValueError):
             x = PointGroups.get("banana")
+
+    def test_init(self):
+        for method in [Oh, [Oh], [D3, C6, O], "groups"]:
+            pgs = PointGroups(method)
+            assert isinstance(pgs, PointGroups)
+        with pytest.raises(ValueError, match="'name' must be one of"):
+            pgs = PointGroups("banana")
+        with pytest.raises(ValueError, match="All entries"):
+            pgs = PointGroups([Oh, "banana"])
+        with pytest.raises(ValueError, match="All entries"):
+            pgs = PointGroups(["banana"])
+        with pytest.raises(ValueError, match="symmetry list must"):
+            pgs = PointGroups(33)
+
+    def test_other_functions(self):
+        pgs = PointGroups()
+        assert isinstance(pgs.to_list(), list)
 
 
 class TestFundamentalSectorFromSymmetry:
