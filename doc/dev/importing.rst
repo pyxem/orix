@@ -1,32 +1,32 @@
 Importing
 =========
 
-To keep the time for importing modules, such as :mod:`quaternion`, we use
-`lazy_loader <https://scientific-python.org/specs/spec-0001/#lazy_loader>`__ (`GitHub
-README <https://github.com/scientific-python/lazy-loader>`__).
+To keep the time for importing modules (such as :mod:`~orix.quaternion`) low, we use
+`lazy_loader <https://scientific-python.org/specs/spec-0001/#lazy_loader>`__.
 In practice, this means that when a user imports a module, class, or function, only the
 functionality necessary is imported and cached, while "untouched" functionality is not
 imported.
 
-For example, :mod:`numba`` functions not used in the functionality imported by the user
-are not compiled, and libraries not used are not imported.
-For example, quaternion module and classes in it (:class:`Orientation`,
-:class:`Rotation`, etc.) based on it use functions leveraging Numba to quickly convert
-to and from different conventions, such as :meth:`Orientation.from_euler` or
-:meth:`Orientation.to_rodrigues`.
-These are fast, but require compilation before first use, which can take time.
-Since it is unlikely that a script would require all these functions, it makes sense to
-only compile those needed, as they are needed.
-Lazy loading takes care of this so users do not, thus speeding up imports.
+For example, when not lazy loading, all functions to be compiled with
+:doc:`Numba <numba:index>` are compiled upon loading of most orix modules.
+For example, quaternion module classes (:class:`~orix.quaternion.Orientation`,
+:class:`~orix.quaternion.Rotation`, etc.) use functions leveraging Numba to quickly
+convert to and from different conventions, such as
+:meth:`~orix.quaternion.Orientation.from_euler` and
+:meth:`~orix.quaternion.Orientation.to_rodrigues`.
+These are fast, but require compilation before first use, which can take some time.
+However, a user's script most likely does not need all these functions.
+It makes sense, therefore, to only compile those needed, as they are needed.
+Lazy loading takes care of this for the user, thus speeding up imports.
 
 This time saving is also passed on to downsteam packages that import orix.
-In most cases, this results in faster import times without any additional work from
-downstream developers.
+In most cases, this results in faster import times without additional work for
+developers of these packages.
 
 New imports go in the ``__init__.pyi`` "stub files", *not* in the ``__init__.py`` files.
-By using stub files, static type checkers (e.g. in a more advanced editor) are able to
-read these files and infer information about the modules and functions (specifically,
-their parameter and return "types"), without actually loading the modules themselves.
+By using stub files, static type checkers (e.g. in an advanced editor) are able to read
+these files and infer information about the modules and functions (specifically, their
+parameter and return "types"), without actually loading the modules themselves.
 
 No imports should go in the ``__init__.py`` files except the lazy loading::
 
@@ -37,10 +37,17 @@ No imports should go in the ``__init__.py`` files except the lazy loading::
 
     del lazy_loader
 
-The returns from lazy loader are:
+The returns from lazy-loader are:
+
 - ``__getattr__``: function to access names defined by the module
 - ``__dir__``: list of names a module defines
 - ``__all__``: list of module, class, and function names that should be imported when
   ``from package import *`` is encountered
 
-We delete the lazy loader import at the end to prevent importing it from our modules.
+We delete the lazy loader import at the end to prevent the possibility of importing it
+from orix' modules.
+
+Resources:
+
+- `Lazy loading rationale <https://scientific-python.org/specs/spec-0001>`__
+- `lazy-loader on GitHub <https://github.com/scientific-python/lazy-loader>`__
