@@ -362,6 +362,18 @@ class TestQuaternion:
         assert np.all(np.std(path_spacing, axis=1) < 1e-12)
         assert np.all(np.std(loop_spacing, axis=1) < 1e-12)
 
+    def test_from_path_ends_fiber(self):
+        # check that a linear path in quaternion space follows an explicitly defined
+        # fiber along the same path.
+        # this ensures the path is the shortest distance in SO3 space, (as opposed
+        # to rodrigues or quaternion space) and also evenly spaced along the path.
+        Q1 = Quaternion.identity()
+        Q2 = Quaternion.from_axes_angles([1, 1, 1], 60, degrees=True)
+        Q12 = Quaternion.stack((Q1, Q2))
+        Q_path1 = Quaternion.from_axes_angles([1, 1, 1], np.arange(59), degrees=True)
+        Q_path2 = Quaternion.from_path_ends(Q12, steps=Q_path1.size)
+        assert np.allclose(Q_path1.dot(Q_path2), 1, atol=1e-3)
+
     def test_equality(self):
         Q1 = Quaternion.from_axes_angles([1, 1, 1], -np.pi / 3)
         Q2 = Quaternion.from_axes_angles([1, 1, 1], np.pi / 3)
