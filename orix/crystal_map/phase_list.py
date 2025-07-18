@@ -35,12 +35,11 @@ import numpy as np
 
 from orix.quaternion.symmetry import (
     _EDAX_POINT_GROUP_ALIASES,
+    PointGroups,
     Symmetry,
-    _groups,
-    get_point_group,
+    _point_groups_dictionary,
 )
-from orix.vector.miller import Miller
-from orix.vector.vector3d import Vector3d
+from orix.vector import Miller, Vector3d
 
 # All named Matplotlib colors (tableau and xkcd already lower case hex)
 ALL_COLORS = mcolors.TABLEAU_COLORS
@@ -235,13 +234,14 @@ class Phase:
             Point group.
         """
         if self.space_group is not None:
-            return get_point_group(self.space_group.number)
+            return PointGroups.from_space_group(self.space_group.number)
         else:
             return self._point_group
 
     @point_group.setter
     def point_group(self, value: int | str | Symmetry | None) -> None:
         """Set the point group."""
+        groups = _point_groups_dictionary["permutations_repeated"]
         if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):
@@ -249,7 +249,7 @@ class Phase:
                 if value in aliases:
                     value = key
                     break
-            for point_group in _groups:
+            for point_group in groups:
                 if value == point_group.name:
                     value = point_group
                     break

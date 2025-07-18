@@ -37,12 +37,14 @@ from orix.quaternion.symmetry import (
     T,
     O,
     Oh,
-    _groups,
-    _proper_groups,
+    PointGroups,
 )
-from orix.vector import Miller, Vector3d 
+from orix.vector import Miller, Vector3d
 # isort: on
 # fmt: on
+
+groups = PointGroups.get_set("permutations_repeated")
+proper_groups = PointGroups.get_set("proper_groups")
 
 
 @pytest.fixture
@@ -89,11 +91,11 @@ def test_quaternion_subclasses_copy_constructor_casting():
         # 7pi/12 -C2-> # 7pi/12
         ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
         # 7pi/12 -C3-> # 7pi/12
-        ([(0.6088, 0, 0, 0.7934)], C3, [(-0.9914, 0, 0, 0.1305)]),
+        ([(0.6088, 0, 0, 0.7934)], C3, [(0.9914, 0, 0, -0.1305)]),
         # 7pi/12 -C4-> # pi/12
-        ([(0.6088, 0, 0, 0.7934)], C4, [(-0.9914, 0, 0, -0.1305)]),
+        ([(0.6088, 0, 0, 0.7934)], C4, [(0.9914, 0, 0, 0.1305)]),
         # 7pi/12 -O-> # pi/12
-        ([(0.6088, 0, 0, 0.7934)], O, [(-0.9914, 0, 0, -0.1305)]),
+        ([(0.6088, 0, 0, 0.7934)], O, [(0.9914, 0, 0, 0.1305)]),
     ],
     indirect=["orientation"],
 )
@@ -297,7 +299,8 @@ def test_symmetry_property_wrong_type_orientation():
 
 
 @pytest.mark.parametrize(
-    "error_type, value", [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)]
+    "error_type, value",
+    [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)],
 )
 def test_symmetry_property_wrong_type_misorientation(error_type, value):
     mori = Misorientation.random((3, 2))
@@ -363,7 +366,7 @@ class TestMisorientation:
         angle2 = m.get_distance_matrix(chunk_size=10, progressbar=False)
         assert np.allclose(angle1, angle2)
 
-    @pytest.mark.parametrize("symmetry", _groups[:-1])
+    @pytest.mark.parametrize("symmetry", groups[:-1])
     def test_get_distance_matrix_equal_explicit_calculation(self, symmetry):
         # do not test Oh, as this takes ~4 GB
         m = Misorientation.random((5,))
@@ -502,13 +505,15 @@ class TestOrientationInitialization:
         )
         o1 = Orientation.from_matrix(om)
         assert np.allclose(
-            o1.data, np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape(4, 4)
+            o1.data,
+            np.array([1, 0, 0, 0] * 2 + [0, 1, 0, 0] * 2).reshape(4, 4),
         )
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_matrix(om, symmetry=Oh)
         o2 = o2.map_into_symmetry_reduced_zone()
         assert np.allclose(
-            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4)
+            o2.data,
+            np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4),
         )
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
@@ -798,7 +803,7 @@ class TestOrientation:
                 (-0.3874, 0.6708, -0.1986, 0.6004),
             )
         )
-        for pg in _proper_groups:
+        for pg in proper_groups:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)

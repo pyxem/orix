@@ -23,6 +23,7 @@ import numpy as np
 import pytest
 
 from orix.quaternion import Rotation, Symmetry, get_point_group
+from orix.quaternion.symmetry import _spacegroup2pointgroup_dict
 
 # fmt: off
 # isort: off
@@ -34,11 +35,16 @@ from orix.quaternion.symmetry import (
     C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
     T, Th, O, Td, Oh,  # cubic
-    spacegroup2pointgroup_dict, _groups, _get_unique_symmetry_elements
+    PointGroups,
+    _get_unique_symmetry_elements
 )
 # isort: on
 # fmt: on
 from orix.vector import Vector3d
+
+# fmt: onfrom orix.vector import Vector3d
+
+_groups = PointGroups.get_set("permutations")
 
 
 @pytest.fixture(params=[(1, 2, 3)])
@@ -54,23 +60,23 @@ def all_symmetries(request):
 @pytest.mark.parametrize(
     "symmetry, vector, expected",
     [
-        (Ci, (1, 2, 3), [(1, 2, 3), (-1, -2, -3)]),
-        (Csx, (1, 2, 3), [(1, 2, 3), (-1, 2, 3)]),
-        (Csy, (1, 2, 3), [(1, 2, 3), (1, -2, 3)]),
-        (Csz, (1, 2, 3), [(1, 2, 3), (1, 2, -3)]),
-        (C2, (1, 2, 3), [(1, 2, 3), (-1, -2, 3)]),
+        (PointGroups.get("Ci"), (1, 2, 3), [(1, 2, 3), (-1, -2, -3)]),
+        (PointGroups.get("Csx"), (1, 2, 3), [(1, 2, 3), (-1, 2, 3)]),
+        (PointGroups.get("Csy"), (1, 2, 3), [(1, 2, 3), (1, -2, 3)]),
+        (PointGroups.get("Csz"), (1, 2, 3), [(1, 2, 3), (1, 2, -3)]),
+        (PointGroups.get("C2"), (1, 2, 3), [(1, 2, 3), (-1, -2, 3)]),
         (
-            C2v,
+            PointGroups.get("C2v"),
             (1, 2, 3),
             [
                 (1, 2, 3),
+                (-1, -2, 3),
+                (-1, 2, 3),
                 (1, -2, 3),
-                (1, -2, -3),
-                (1, 2, -3),
             ],
         ),
         (
-            C4v,
+            PointGroups.get("C4v"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -84,7 +90,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            D4,
+            PointGroups.get("D4"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -98,7 +104,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            C6,
+            PointGroups.get("C6"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -110,7 +116,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            Td,
+            PointGroups.get("Td"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -140,7 +146,7 @@ def all_symmetries(request):
             ],
         ),
         (
-            Oh,
+            PointGroups.get("Oh"),
             (1, 2, 3),
             [
                 (1, 2, 3),
@@ -276,8 +282,8 @@ def test_is_proper(symmetry, expected):
     "symmetry, expected",
     [
         (C1, [C1]),
-        (D2, [C1, C2x, C2y, C2z, D2]),
-        (C6v, [C1, Csx, Csy, C2z, C3, C3v, C6, C6v]),
+        (D2, [C1, C2, C2x, C2y, D2]),
+        (C6v, [C1, C2, Csx, Csy, C2v, C3, C3v, C6, C6v]),
     ],
 )
 def test_subgroups(symmetry, expected):
@@ -288,8 +294,8 @@ def test_subgroups(symmetry, expected):
     "symmetry, expected",
     [
         (C1, [C1]),
-        (D2, [C1, C2x, C2y, C2z, D2]),
-        (C6v, [C1, C2z, C3, C6]),
+        (D2, [C1, C2x, C2y, C2, D2]),
+        (C6v, [C1, C2, C3, C6]),
     ],
 )
 def test_proper_subgroups(symmetry, expected):
@@ -305,7 +311,7 @@ def test_proper_subgroups(symmetry, expected):
         (Cs, C1),
         (C2h, C2),
         (D2, D2),
-        (C2v, C2x),
+        (C2v, C2z),
         (C4, C4),
         (C4h, C4),
         (C3h, C3),
@@ -444,8 +450,8 @@ def test_get_point_group():
 
         sg = GetSpaceGroup(sg_number)
         pg = get_point_group(sg_number, proper=False)
-        assert proper_pg == spacegroup2pointgroup_dict[sg.point_group_name]["proper"]
-        assert pg == spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
+        assert proper_pg == _spacegroup2pointgroup_dict[sg.point_group_name]["proper"]
+        assert pg == _spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
 
 
 def test_unique_symmetry_elements_subgroups(all_symmetries):
@@ -512,33 +518,78 @@ def test_hash_persistence():
     assert all(h1a == h2a for h1a, h2a in zip(h1, h2))
 
 
-@pytest.mark.parametrize("pg", [C1, C4, Oh])
-def test_symmetry_plot(pg):
+@pytest.mark.parametrize(
+    "pg, n_elements",
+    [
+        (C1, 2),
+        (Ci, 4),
+        (S4, 4),
+        (S6, 4),
+        (D3, 16),
+        (T, 30),
+        (Th, 20),
+        (O, 52),
+        (Td, 20),
+        (Oh, 36),
+    ],
+)
+def test_symmetry_plot(pg, n_elements):
+    plt.close("all")
     fig = pg.plot(return_figure=True)
 
     assert isinstance(fig, plt.Figure)
     assert len(fig.axes) == 1
     ax = fig.axes[0]
+    assert len(ax.collections) == n_elements
 
-    c0 = ax.collections[0]
-    assert len(c0.get_offsets()) == np.count_nonzero(~pg.improper)
-    assert c0.get_label().lower() == "upper"
-    if not pg.is_proper:
-        c1 = ax.collections[1]
-        assert len(c1.get_offsets()) == np.count_nonzero(pg.improper)
-        assert c1.get_label().lower() == "lower"
-
-    assert len(ax.texts) == 2
-    assert ax.texts[0].get_text() == "$e_1$"
-    assert ax.texts[1].get_text() == "$e_2$"
-
+    fig, plt_axis = plt.subplots(subplot_kw={"projection": "stereographic"})
+    v = Vector3d.from_polar(0.5, 0.3)
+    v_symm = pg.outer(v)
+    pg.plot(v, ax=plt_axis)
+    c1 = plt_axis.collections[-1]
+    c2 = plt_axis.collections[-2]
+    assert len(c1.get_offsets()) == np.sum(v_symm.z >= 0)
+    if pg.size > 1:
+        assert len(c2.get_offsets()) == np.sum(v_symm.z < 0)
     plt.close("all")
 
 
-@pytest.mark.parametrize("symmetry", [C1, C4, Oh])
-def test_symmetry_plot_raises(symmetry):
-    with pytest.raises(TypeError, match="Orientation must be a Rotation instance"):
-        _ = symmetry.plot(return_figure=True, orientation="test")
+class TestPointGroups:
+    def test_repr(self):
+        pg_list = PointGroups.get_set("permutations_repeated")
+        assert len(pg_list) == 44
+        pg_list = PointGroups.get_set("GROUPS")
+        assert len(pg_list) == 32
+        docs = pg_list.__repr__()
+        lines = docs.split("\n")
+        assert len(lines) == 34
+        for l in lines[2:]:
+            assert len(l.split()) == 11
+
+    def test_get(self):
+        assert PointGroups.get("c1").laue.name == "-1"
+        assert PointGroups.get("C1").laue.name == "-1"
+        assert PointGroups.get("32").laue.name == "-3m"
+        assert PointGroups.get(230).laue.name == "m-3m"
+        with pytest.raises(ValueError):
+            x = PointGroups.get("banana")
+
+    def test_init(self):
+        for method in [Oh, [Oh], [D3, C6, O], "groups"]:
+            pgs = PointGroups(method)
+            assert isinstance(pgs, PointGroups)
+        with pytest.raises(ValueError, match="'name' must be one of"):
+            pgs = PointGroups("banana")
+        with pytest.raises(ValueError, match="All entries"):
+            pgs = PointGroups([Oh, "banana"])
+        with pytest.raises(ValueError, match="All entries"):
+            pgs = PointGroups(["banana"])
+        with pytest.raises(ValueError, match="symmetry list must"):
+            pgs = PointGroups(33)
+
+    def test_other_functions(self):
+        pgs = PointGroups()
+        assert isinstance(pgs.to_list(), list)
 
 
 class TestFundamentalSectorFromSymmetry:
@@ -595,9 +646,9 @@ class TestFundamentalSectorFromSymmetry:
     def test_fundamental_sector_c2v(self):
         pg = C2v  # mm2
         fs = pg.fundamental_sector
-        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0]])
-        assert np.allclose(fs.vertices.data, [[1, 0, 0], [-1, 0, 0]])
-        assert np.allclose(fs.center.data, [[0, 0.5, 0.5]])
+        assert np.allclose(fs.data, [[1, 0, 0], [0, 1, 0]])
+        assert np.allclose(fs.vertices.data, [[0, 0, -1], [0, 0, 1]])
+        assert np.allclose(fs.center.data, [[0.5, 0.5, 0]])
 
     def test_fundamental_sector_d2h(self):
         pg = D2h  # mmm
@@ -645,10 +696,13 @@ class TestFundamentalSectorFromSymmetry:
         pg = D2d  # -42m
         fs = pg.fundamental_sector
         assert np.allclose(
-            fs.data, [[0, 0, 1], [0.7071, 0.7071, 0], [0.7071, -0.7071, 0]], atol=1e-4
+            fs.data,
+            [[0, 0, 1], [0.7071, 0.7071, 0], [0.7071, -0.7071, 0]],
+            atol=1e-4,
         )
         assert np.allclose(
-            fs.vertices.data, [[0.7071, -0.7071, 0], [0, 0, 1], [0.7071, 0.7071, 0]]
+            fs.vertices.data,
+            [[0.7071, -0.7071, 0], [0, 0, 1], [0.7071, 0.7071, 0]],
         )
         assert np.allclose(fs.center.data, [[0.4714, 0, 1 / 3]], atol=1e-4)
 
@@ -659,7 +713,9 @@ class TestFundamentalSectorFromSymmetry:
             fs.data, [[0, 0, 1], [0, 1, 0], [0.7071, -0.7071, 0]], atol=1e-4
         )
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.7071, 0.7071, 0]], atol=1e-4
+            fs.vertices.data,
+            [[1, 0, 0], [0, 0, 1], [0.7071, 0.7071, 0]],
+            atol=1e-4,
         )
         assert np.allclose(fs.center.data, [[0.569, 0.2357, 1 / 3]], atol=1e-3)
 
@@ -675,7 +731,9 @@ class TestFundamentalSectorFromSymmetry:
         fs = pg.fundamental_sector
         assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, 0.5, 0]], atol=1e-3)
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]], atol=1e-4
+            fs.vertices.data,
+            [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]],
+            atol=1e-4,
         )
         assert np.allclose(fs.center.data, [[1 / 6, 0.2887, 1 / 3]], atol=1e-4)
 
@@ -684,7 +742,9 @@ class TestFundamentalSectorFromSymmetry:
         fs = pg.fundamental_sector
         assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, 0.5, 0]], atol=1e-3)
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]], atol=1e-4
+            fs.vertices.data,
+            [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]],
+            atol=1e-4,
         )
         assert np.allclose(fs.center.data, [[1 / 6, 0.2887, 1 / 3]], atol=1e-4)
 
@@ -702,7 +762,9 @@ class TestFundamentalSectorFromSymmetry:
             fs.data, [[0, 0, 1], [0.5, 0.866, 0], [0.5, -0.866, 0]], atol=1e-3
         )
         assert np.allclose(
-            fs.vertices.data, [[0.866, -0.5, 0], [0, 0, 1], [0.866, 0.5, 0]], atol=1e-3
+            fs.vertices.data,
+            [[0.866, -0.5, 0], [0, 0, 1], [0.866, 0.5, 0]],
+            atol=1e-3,
         )
         assert np.allclose(fs.center.data, [[0.577, 0, 1 / 3]], atol=1e-3)
 
@@ -718,7 +780,9 @@ class TestFundamentalSectorFromSymmetry:
         fs = pg.fundamental_sector
         assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, 0.5, 0]], atol=1e-3)
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]], atol=1e-3
+            fs.vertices.data,
+            [[1, 0, 0], [0, 0, 1], [-0.5, 0.866, 0]],
+            atol=1e-3,
         )
         assert np.allclose(fs.center.data, [[1 / 6, 0.2887, 1 / 3]], atol=1e-4)
 
@@ -727,7 +791,9 @@ class TestFundamentalSectorFromSymmetry:
         fs = pg.fundamental_sector
         assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]], atol=1e-3
+            fs.vertices.data,
+            [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]],
+            atol=1e-3,
         )
         assert np.allclose(fs.center.data, [[0.5, 0.2887, 1 / 3]], atol=1e-4)
 
@@ -736,7 +802,9 @@ class TestFundamentalSectorFromSymmetry:
         fs = pg.fundamental_sector
         assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]], atol=1e-3
+            fs.vertices.data,
+            [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]],
+            atol=1e-3,
         )
         assert np.allclose(fs.center.data, [[0.5, 0.2887, 1 / 3]], atol=1e-4)
 
@@ -752,7 +820,9 @@ class TestFundamentalSectorFromSymmetry:
         fs = pg.fundamental_sector
         assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.866, -0.5, 0]], atol=1e-3)
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]], atol=1e-3
+            fs.vertices.data,
+            [[1, 0, 0], [0, 0, 1], [0.5, 0.866, 0]],
+            atol=1e-3,
         )
         assert np.allclose(fs.center.data, [[0.5, 0.2887, 1 / 3]], atol=1e-4)
 
@@ -761,7 +831,9 @@ class TestFundamentalSectorFromSymmetry:
         fs = pg.fundamental_sector
         assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0], [0.5, -0.866, 0]], atol=1e-3)
         assert np.allclose(
-            fs.vertices.data, [[1, 0, 0], [0, 0, 1], [0.866, 0.5, 0]], atol=1e-3
+            fs.vertices.data,
+            [[1, 0, 0], [0, 0, 1], [0.866, 0.5, 0]],
+            atol=1e-3,
         )
         assert np.allclose(fs.center.data, [[0.622, 0.1667, 1 / 3]], atol=1e-4)
 
@@ -771,7 +843,12 @@ class TestFundamentalSectorFromSymmetry:
         assert np.allclose(fs.data, [[1, 1, 0], [1, -1, 0], [0, -1, 1], [0, 1, 1]])
         assert np.allclose(
             fs.vertices.data,
-            [[0, 0, 1], [0.5774, 0.5774, 0.5774], [1, 0, 0], [0.5774, -0.5774, 0.5774]],
+            [
+                [0, 0, 1],
+                [0.5774, 0.5774, 0.5774],
+                [1, 0, 0],
+                [0.5774, -0.5774, 0.5774],
+            ],
             atol=1e-4,
         )
         assert np.allclose(fs.center.data, [[0.7076, -0.0004, 0.7067]], atol=1e-4)
@@ -860,6 +937,48 @@ def test_equality(symmetry):
     assert Rotation(symmetry) == symmetry
 
 
+@pytest.mark.parametrize(
+    ["subset", "length", "proper_count"],
+    [
+        ["groups", 32, 11],
+        ["permutations", 37, 14],
+        ["permutations_repeated", 44, 17],
+        ["proper_groups", 11, 11],
+        ["proper_permutations", 14, 14],
+        ["laue", 11, 0],
+        ["procedural", 32, 11],
+    ],
+)
+def test_get_point_groups(subset, length, proper_count):
+    # check that we get the expected number of proper and total point groups.
+    group = PointGroups.get_set(subset)
+    assert len(group) == length
+    assert np.sum([x.is_proper for x in group]) == proper_count
+
+
+def test_get_point_groups_unique():
+    group = PointGroups.get_set("groups")
+    # this is just a check to see if each element is unique, and if there are
+    # 32 of them.
+    assert np.all(
+        np.sum(
+            [
+                [
+                    _get_unique_symmetry_elements(a, b) == b
+                    and _get_unique_symmetry_elements(a, b) == a
+                    for a in group
+                ]
+                for b in group
+            ],
+            1,
+        )
+        == np.ones(32)
+    )
+    # additional test that nonsense returns nonsense
+    with pytest.raises(ValueError):
+        PointGroups.get_set("banana")
+
+
 class TestLaueGroup:
     def test_crystal_system(self):
         assert Ci.system == "triclinic"
@@ -883,7 +1002,8 @@ class TestLaueGroup:
         assert D6h.laue.name == "6/mmm"
         assert Th.laue.name == "m-3"
         assert Oh.laue.name == "m-3m"
-        assert Symmetry(((1, 0, 0, 0), (1, 1, 0, 0))).laue.name is None
+        with pytest.raises(ValueError):
+            Symmetry(((1, 0, 0, 0), (1, 1, 0, 0))).laue.name
 
 
 class TestEulerFundamentalRegion:
@@ -919,7 +1039,7 @@ class TestEulerFundamentalRegion:
         # All point groups provide a region
         for pg in _groups:
             angles = pg.euler_fundamental_region
-            if pg.name in ["1", "-1", "2", "m11", "1m1", "11m"]:
+            if pg.name in ["1", "-1", "m11", "1m1", "11m", "m"]:
                 assert np.allclose(angles, (360, 180, 360))
             else:
                 assert not np.allclose(angles, (360, 180, 360))

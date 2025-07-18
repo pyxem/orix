@@ -22,10 +22,16 @@ import pytest
 from orix.crystal_map import Phase
 from orix.quaternion import Orientation, symmetry
 from orix.vector import Miller
-from orix.vector.miller import _round_indices, _transform_space, _UVTW2uvw, _uvw2UVTW
+from orix.vector.miller import (
+    _round_indices,
+    _transform_space,
+    _UVTW2uvw,
+    _uvw2UVTW,
+)
 
 TRIGONAL_PHASE = Phase(
-    point_group="321", structure=Structure(lattice=Lattice(4.9, 4.9, 5.4, 90, 90, 120))
+    point_group="321",
+    structure=Structure(lattice=Lattice(4.9, 4.9, 5.4, 90, 90, 120)),
 )
 TETRAGONAL_LATTICE = Lattice(0.5, 0.5, 1, 90, 90, 90)
 TETRAGONAL_PHASE = Phase(
@@ -482,7 +488,8 @@ class TestMillerBravais:
         nround = n.round()
         assert np.allclose(nround.UVTW, [3, 3, -6, 11])
         assert np.allclose(
-            [nround.U[0], nround.V[0], nround.T[0], nround.W[0]], [3, 3, -6, 11]
+            [nround.U[0], nround.V[0], nround.T[0], nround.W[0]],
+            [3, 3, -6, 11],
         )
 
         # Examples from MTEX' documentation:
@@ -833,18 +840,18 @@ class TestMillerPointGroupsOrthorhombic(TestMillerPointGroups):
             m.symmetrise(unique=False).hkl,
             [
                 [ 0,  0,  1],
-                [ 0,  0, -1],
-                [ 0,  0, -1],
+                [ 0,  0,  1],
+                [ 0,  0,  1],
                 [ 0,  0,  1],
 
                 [ 0,  1,  1],
-                [ 0, -1, -1],
-                [ 0,  1, -1],
+                [ 0, -1,  1],
+                [ 0,  1,  1],
                 [ 0, -1,  1],
 
                 [ 1,  1,  1],
-                [ 1, -1, -1],
-                [ 1,  1, -1],
+                [-1, -1,  1],
+                [-1,  1,  1],
                 [ 1, -1,  1],
             ],
         )
@@ -853,23 +860,20 @@ class TestMillerPointGroupsOrthorhombic(TestMillerPointGroups):
             m_unique.hkl,
             [
                 [ 0,  0,  1],
-                [ 0,  0, -1],
 
                 [ 0,  1,  1],
-                [ 0, -1, -1],
-                [ 0,  1, -1],
                 [ 0, -1,  1],
 
                 [ 1,  1,  1],
-                [ 1, -1, -1],
-                [ 1,  1, -1],
+                [-1, -1,  1],
+                [-1,  1,  1],
                 [ 1, -1,  1],
             ],
         )
         # fmt: on
 
         mult = m.multiplicity
-        assert np.allclose(mult, [2, 4, 4])
+        assert np.allclose(mult, [1, 2, 4])
         assert np.sum(mult) == m_unique.size
 
     def test_group_2overm_2overm_2overm(self):

@@ -20,7 +20,12 @@ from matplotlib_scalebar.scalebar import ScaleBar
 import numpy as np
 import pytest
 
-from orix.crystal_map import CrystalMap, Phase, PhaseList, create_coordinate_arrays
+from orix.crystal_map import (
+    CrystalMap,
+    Phase,
+    PhaseList,
+    create_coordinate_arrays,
+)
 from orix.crystal_map.crystal_map import _data_slices_from_coordinates
 from orix.plot import CrystalMapPlot
 from orix.quaternion import Orientation, Rotation
@@ -207,8 +212,18 @@ class TestCrystalMap:
         "crystal_map_input, phase_names, phase_ids, desired_phase_names",
         [
             (((7, 4), (1, 1), 1, [0]), ["a", "b", "c"], [0, 1, 2], ["a"]),
-            (((7, 4), (1, 1), 1, [0, 1]), ["a", "b", "c"], [0, 2, 1], ["a", "c"]),
-            (((7, 4), (1, 1), 1, [0, 2]), ["a", "b", "c"], [0, 2, 1], ["a", "b"]),
+            (
+                ((7, 4), (1, 1), 1, [0, 1]),
+                ["a", "b", "c"],
+                [0, 2, 1],
+                ["a", "c"],
+            ),
+            (
+                ((7, 4), (1, 1), 1, [0, 2]),
+                ["a", "b", "c"],
+                [0, 2, 1],
+                ["a", "b"],
+            ),
             (((7, 4), (1, 1), 1, [3]), ["a", "b", "c"], [0, 2, 1], ["a"]),
         ],
         indirect=["crystal_map_input"],
@@ -660,9 +675,9 @@ class TestCrystalMapOrientations:
         "point_group, rotation, expected_orientation",
         [
             (C2, [(0.6088, 0, 0, 0.7934)], [(-0.7934, 0, 0, 0.6088)]),
-            (C3, [(0.6088, 0, 0, 0.7934)], [(-0.9914, 0, 0, 0.1305)]),
-            (C4, [(0.6088, 0, 0, 0.7934)], [(-0.9914, 0, 0, -0.1305)]),
-            (O, [(0.6088, 0, 0, 0.7934)], [(-0.9914, 0, 0, -0.1305)]),
+            (C3, [(0.6088, 0, 0, 0.7934)], [(0.9914, 0, 0, -0.1305)]),
+            (C4, [(0.6088, 0, 0, 0.7934)], [(0.9914, 0, 0, 0.1305)]),
+            (O, [(0.6088, 0, 0, 0.7934)], [(0.9914, 0, 0, 0.1305)]),
         ],
     )
     def test_orientations_symmetry(self, point_group, rotation, expected_orientation):
@@ -1042,7 +1057,12 @@ class TestCrystalMapShape:
         indirect=["crystal_map_input"],
     )
     def test_data_slice_from_coordinates_masked(
-        self, crystal_map_input, slices, expected_size, expected_shape, expected_slices
+        self,
+        crystal_map_input,
+        slices,
+        expected_size,
+        expected_shape,
+        expected_slices,
     ):
         xmap = CrystalMap(**crystal_map_input)
 

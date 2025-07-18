@@ -19,8 +19,8 @@
 plotting :class:`~orix.vector.Vector3d`.
 """
 
-from copy import deepcopy
-from typing import Any, List, Optional, Tuple, Union
+from copy import copy, deepcopy
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -29,20 +29,14 @@ import matplotlib.patches as mpatches
 import matplotlib.path as mpath
 import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
+import matplotlib.transforms as mtransforms
 import numpy as np
 
-# fmt: off
-# isort: off
 from orix.measure import pole_density_function
-from orix.plot._symmetry_marker import (
-    TwoFoldMarker,
-    ThreeFoldMarker,
-    FourFoldMarker,
-    SixFoldMarker,
+from orix.projections import (
+    InverseStereographicProjection,
+    StereographicProjection,
 )
-# isort: on
-# fmt: on
-from orix.projections import InverseStereographicProjection, StereographicProjection
 from orix.vector import FundamentalSector, Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
 
@@ -458,7 +452,12 @@ class StereographicPlot(maxes.Axes):
             other_hemisphere = {"upper": "lower", "lower": "upper"}
             self._hemisphere = other_hemisphere[self._hemisphere]
             for i, c in enumerate(circles):
-                self.plot(c.azimuth, c.polar, color=color2[i], **reproject_plot_kwargs)
+                self.plot(
+                    c.azimuth,
+                    c.polar,
+                    color=color2[i],
+                    **reproject_plot_kwargs,
+                )
             self._hemisphere = other_hemisphere[self._hemisphere]
 
     def restrict_to_sector(
@@ -518,7 +517,11 @@ class StereographicPlot(maxes.Axes):
         self.patches[0].set_visible(False)
 
         if show_edges:
-            for k, v in [("facecolor", "none"), ("edgecolor", "k"), ("linewidth", 1)]:
+            for k, v in [
+                ("facecolor", "none"),
+                ("edgecolor", "k"),
+                ("linewidth", 1),
+            ]:
                 kwargs.setdefault(k, v)
             patch = mpatches.PathPatch(
                 mpath.Path(np.column_stack([x, y]), closed=True),
@@ -630,34 +633,38 @@ class StereographicPlot(maxes.Axes):
                 self.collections[index_polar].remove()
             self._stereographic_grid = False
 
-    def symmetry_marker(self, v: Vector3d, fold: int, **kwargs):
-        """Plot 2-, 3- 4- or 6-fold symmetry marker(s).
+    def symmetry_marker(self, v: Vector3d, folds: int, modifier="none", **kwargs):
+        """Plot symmetry marker(s).
 
         Parameters
         ----------
         v
             Position of the marker(s) to plot.
         fold
-            Which symmetry element to plot, can be either 2, 3, 4 or 6.
+            Which symmetry element to plot, can be either 1, 2, 3, 4 or 6.
         **kwargs
             Keyword arguments passed to :meth:`scatter`.
         """
-        if fold not in [2, 3, 4, 6]:
-            raise ValueError("Can only plot 2-, 3-, 4- or 6-fold elements.")
-
-        marker_classes = {
-            "2": TwoFoldMarker,
-            "3": ThreeFoldMarker,
-            "4": FourFoldMarker,
-            "6": SixFoldMarker,
-        }
-        marker = marker_classes[str(fold)](v, size=kwargs.pop("s", 1))
+        marker = _SymmetryMarker(
+            v, size=kwargs.pop("s", 1), folds=folds, modifier=modifier
+        )
 
         new_kwargs = dict(zorder=ZORDER["symmetry_marker"], clip_on=False)
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
 
         for vec, marker, marker_size in marker:
+            if folds == 1:
+                marker_size = marker_size / 2
+            # It is not (currently) possible to make two-tone markers using custom-
+            # defined Path objects in matplotlib. Instead, for inversion and
+            # rotoinversion markers, a background white dot is plotted first, whereas
+            # the top markers themselves have empty interiors.
+            if modifier != "none":
+                bg_kwargs = copy(kwargs)
+                if "color" in bg_kwargs:
+                    _ = bg_kwargs.pop("color")
+                self.scatter(vec, color="w", s=marker_size * 0.2, **bg_kwargs)
             self.scatter(vec, marker=marker, s=marker_size, **kwargs)
 
         # TODO: Find a way to control padding, so that markers aren't
@@ -968,3 +975,145 @@ def _order_in_hemisphere(polar: np.ndarray, pole: int) -> Union[np.ndarray, None
         order = np.roll(order, shift=-(indices[-1] + 1))
 
     return order
+
+
+class _SymmetryMarker:
+    """A class for creating Symmetry element markers. Intended for making
+    stereographic plots of the crystallographic point groups.
+
+    Intended to be used indirectly in
+    :func:`~orix.plot.StereographicPlot.symmetry_marker`.
+
+    Parameters
+    ----------
+    v
+        Vector(s) giving marker positions in the stereographic plot.
+    size
+        Value(s) passed to matplotlib to determine relative marker
+        size.
+    folds
+        The rotational symmetry (typically 1, 2, 3, 4, or 6) that
+        determines the symmetry marker's shape
+        (circle, elliplse, triangle, square, or hex).
+    modifier
+        Determines what alterations, if any, should be added to
+        the marker. None (the default)  or "rotation" will add
+        nothing. "rotoinversion" will add a white rotoinversion
+        symbol inside the marker, which for even-fold rotations is a
+        polygon with half as many corners as the marker, and for an
+        odd-fold rotation is a white dot. "inversion" will add an
+        inversion symbol, which is a white dot. The default is None.
+
+    """
+
+    def __init__(
+        self,
+        v: Vector3d | np.ndarray | list | tuple,
+        size: int = 1,
+        folds: Literal[1, 2, 3, 4, 6] = 2,
+        modifier: Literal[None, "rotation", "rotoinversion", "inversion"] = None,
+    ):
+        fold_opt = [1, 2, 3, 4, 6]
+        if folds not in fold_opt:
+            # NOTE: If anyone is interested insupoorting 5-fold, 7-fold,etc. rotations
+            # in the future, be aware you will also need to modify the affine rotation
+            # applied at the end of the self._marker property based on your axis
+            # choices, or the markers will not properly align.
+            raise ValueError(
+                f"Folds must be one of {', '.join(map(str, fold_opt))}, not {folds}"
+            )
+        mod_opt = [None, "none", "rotation", "rotoinversion", "inversion"]
+        if modifier not in mod_opt:
+            raise ValueError(
+                f"Modifier must be one of {', '.join(map(str, mod_opt))},"
+                + "not {modifier}"
+            )
+        self._vector = Vector3d(v)
+        self._size = size
+        self._folds = folds
+        self._inner_shape = modifier
+
+    @property
+    def angle_deg(self) -> np.ndarray:
+        """Position in degrees."""
+        return np.rad2deg(self._vector.azimuth) + 90
+
+    @property
+    def multiplicity(self) -> np.ndarray:
+        """Multiplicity of each symmetry marker, ie, how many  symmetrically
+        equivalent markers will be plotted."""
+        return np.ones(self.n) * self._size
+
+    @property
+    def n(self) -> int:
+        """Number of symmetry markers."""
+        return self._vector.size
+
+    def __iter__(self) -> [Vector3d, mpath.Path, np.float64]:
+        """Dunder function for iterating through multiple markers defined within a
+        single _SymmetryMarker Class.
+
+        For example, if a _SymmetryMarker is created with 4 vertices, this allows for
+        iteration over those vertices in a 'for' loop."""
+        for v, marker, size in zip(self._vector, self._marker, self.multiplicity):
+            yield v, marker, size
+
+    @property
+    def _marker(self) -> mpath.Path:
+        """Returns a matplotlib Path object that describes the symmetry marker's
+        shape"""
+        azimuth = self._vector.azimuth
+        # pre-define inner cirle (reused)
+        inner_circle = mpath.Path.circle((0, 0), 0.5)
+        i_vert = np.copy(inner_circle.vertices)
+        i_code = inner_circle.codes
+        # pre-define 2-fold ellipse (reused)
+        e_vert = np.copy(i_vert * 2)
+        e_code = np.copy(i_code)
+        e_vert[:, 1] = e_vert[:, 1] * ((1 - e_vert[:, 0] ** 2) ** 0.5) * 0.35
+        if self._folds == 1:
+            # return either a normal circle, or a cirle with a dot in the
+            # center if this also an inversion center
+            circle = mpath.Path.circle((0, 0), 0.75)
+            vert = np.copy(circle.vertices)
+            code = circle.codes
+            if self._inner_shape == "inversion":
+                verts = np.concatenate([vert, i_vert[::-1]])
+                codes = np.concatenate([code, i_code])
+                marker = mpath.Path(verts, codes)
+            else:
+                marker = mpath.Path(vert, code)
+            return [marker.deepcopy() for ang in azimuth]
+        if self._folds == 2:
+            # use the ellipse defined above
+            marker = mpath.Path(e_vert, e_code)
+        else:
+            # if it's not 2-fold, just use a default polygon
+            marker = mpath.Path.unit_regular_polygon(self._folds)
+        if self._inner_shape == "inversion":
+            # add the inner circle
+            verts = np.concatenate([marker.vertices, i_vert[::-1]])
+            codes = np.concatenate([marker.codes, i_code])
+            marker = mpath.Path(verts, codes)
+        elif self._inner_shape == "rotoinversion":
+            # add an inner shape with half the folds
+            vert = np.copy(marker.vertices)
+            code = np.copy(marker.codes)
+            if self._folds == 4:
+                inner = mpath.Path(e_vert, e_code)
+            else:
+                inner = mpath.Path.unit_regular_polygon(int(self._folds / 2))
+            i_vert = np.copy(inner.vertices[::-1])
+            i_code = np.copy(inner.codes)
+            verts = np.concatenate([vert, i_vert])
+            codes = np.concatenate([code, i_code])
+            marker = mpath.Path(verts, codes)
+        # rotate each marker to align with local symmetry lines
+        # icons are not, by default, properly aligned. Let's fix that.
+        if self._folds == 3:
+            azimuth -= np.pi / 2
+            azimuth[self._vector.polar > 1e-6] -= np.pi / 2
+
+        trans = [mtransforms.Affine2D().rotate(a + (np.pi / 2)) for a in azimuth]
+
+        return [marker.deepcopy().transformed(i) for i in trans]
