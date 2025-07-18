@@ -1544,7 +1544,7 @@ class PointGroups(list):
             return _spacegroup2pointgroup_dict[pgn]["improper"]
 
     @classmethod
-    def get_set(self, name: Literal[PointGroups._subset_names] = "groups"):
+    def get_set(self, name: Literal[PointGroups.subset_names] = "groups"):
         """
         returns different subsets of the 32 crystallographic point groups.
         By default, this returns all 32 in the order they appear in the
