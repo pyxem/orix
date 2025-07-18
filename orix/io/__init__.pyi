@@ -17,13 +17,12 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Projections of :class:`~orix.vector.Vector3d` to various other
-representations.
-"""
+from ._io import load, loadang, loadctf, save
 
-import lazy_loader
-
-# Imports from stub file (see contributor guide for details)
-__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
-
-del lazy_loader
+# Lazily imported in module init
+__all__ = [
+    "loadang",
+    "loadctf",
+    "load",
+    "save",
+]
