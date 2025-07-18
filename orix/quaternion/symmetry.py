@@ -1028,7 +1028,7 @@ C6v.name = "6mm"
 C6v._schoenflies = "C6v"
 D3h = Symmetry.from_generators(C3, C2y, Csz)
 D3h.name = "-6m2"
-D3h._schoenflies = "-D3h"
+D3h._schoenflies = "D3h"
 D6h = Symmetry.from_generators(D6, Csz)
 D6h.name = "6/mmm"
 D6h._schoenflies = "D6h"
@@ -1395,7 +1395,7 @@ class PointGroups(list):
     def __repr__(self):
         str_data = (
             "| Name  | System      | HM     | Laue  | Proper |\n"
-            + "=" * 48
+            + "=" * 49
             + "\n"
             + "\n".join(
                 [
