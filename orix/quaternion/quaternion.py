@@ -701,7 +701,7 @@ class Quaternion(Object3d):
         Parameters
         ----------
         points
-            Two or more quaternions that define waypoints along a path
+            Two or more quaternions that define points along a path
             through rotation space (SO3).
         closed
             Option to add a final trip from the last waypoint back to
@@ -712,7 +712,7 @@ class Quaternion(Object3d):
 
         Returns
         -------
-        path :Quaternion
+        path
             quaternions that map a path between the given waypoints.
 
         """
