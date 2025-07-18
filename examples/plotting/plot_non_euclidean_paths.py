@@ -9,12 +9,12 @@ This example shows how to use the `from_path_ends` functions from
 respective non-Euclidean spaces.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
-from orix.quaternion import Orientation, Rotation
-from orix.quaternion.symmetry import Oh, D3
-from orix.vector import Vector3d
+import numpy as np
 
+from orix.quaternion import Orientation, Rotation
+from orix.quaternion.symmetry import D3, Oh
+from orix.vector import Vector3d
 
 fig = plt.figure()
 
@@ -75,7 +75,9 @@ fiber_path.scatter(figure=fig, position=[2, 2, 3], marker=">", c=np.arange(200))
 
 # plot vectors
 ax4 = plt.subplot(2, 2, 4, projection="stereographic")
-vector_points = Vector3d(np.array([[-1,0,0],[0,1,0.1],[1,0,0.2],[0,-1,0.3],[-1,0,0.4]]))
+vector_points = Vector3d(
+    np.array([[-1, 0, 0], [0, 1, 0.1], [1, 0, 0.2], [0, -1, 0.3], [-1, 0, 0.4]])
+)
 
-vector_path = Vector3d.from_path_ends(vector_points,steps = 200)
+vector_path = Vector3d.from_path_ends(vector_points, steps=200)
 ax4.scatter(vector_path, figure=fig, marker=">", c=np.arange(vector_path.size))
