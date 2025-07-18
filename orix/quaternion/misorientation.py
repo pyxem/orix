@@ -287,9 +287,8 @@ class Misorientation(Rotation):
 
         Returns
         -------
-        path :Quaternion
+        path
             quaternions that map a path between the given waypoints.
-
         """
         out = super().from_path_ends(points=points, closed=closed, steps=steps)
         path = cls(out.data)

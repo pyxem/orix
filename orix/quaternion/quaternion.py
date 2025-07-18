@@ -714,7 +714,6 @@ class Quaternion(Object3d):
         -------
         path
             quaternions that map a path between the given waypoints.
-
         """
         points = points.flatten()
         n = points.size
