@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Tools for handling a crystallographic map of orientations, crystal
 phases and key properties associated with every spatial coordinate in a
@@ -23,14 +25,9 @@ All map properties with a value in each data point are stored as 1D
 arrays.
 """
 
-from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
-from orix.crystal_map.crystal_map_properties import CrystalMapProperties
-from orix.crystal_map.phase_list import Phase, PhaseList
+import lazy_loader
 
-__all__ = [
-    "create_coordinate_arrays",
-    "CrystalMap",
-    "CrystalMapProperties",
-    "Phase",
-    "PhaseList",
-]
+# Imports from stub file (see contributor guide for details)
+__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
+
+del lazy_loader
