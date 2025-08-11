@@ -17,13 +17,24 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Projections of :class:`~orix.vector.Vector3d` to various other
-representations.
-"""
+from .quaternion import Quaternion  # isort: skip
+from .orientation import Misorientation, Orientation
+from .orientation_region import OrientationRegion, get_proper_groups
+from .rotation import Rotation, von_mises
+from .symmetry import Symmetry, get_distinguished_points, get_point_group
 
-import lazy_loader
-
-# Imports from stub file (see contributor guide for details)
-__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
-
-del lazy_loader
+# Lazily imported in module init
+__all__ = [
+    # Classes
+    "Misorientation",
+    "Orientation",
+    "OrientationRegion",
+    "Quaternion",
+    "Rotation",
+    "Symmetry",
+    # Functions
+    "get_distinguished_points",
+    "get_point_group",
+    "get_proper_groups",
+    "von_mises",
+]

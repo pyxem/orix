@@ -27,6 +27,7 @@ dependencies = [
     "dask[array]",
     "diffpy.structure       >= 3.0.2",
     "h5py",
+    "lazy_loader",
     "matplotlib             >= 3.6.1",
     "numba",
     "numpy",

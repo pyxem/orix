@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2019-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 import os
 
@@ -21,6 +23,7 @@ import pytest
 
 from orix import data
 from orix.crystal_map import CrystalMap
+from orix.data._data import _fetcher
 from orix.quaternion import Orientation, symmetry
 
 
@@ -43,7 +46,7 @@ class TestData:
     def test_load_raises(self):
         """Raises desired error message."""
         name = "sdss/sdss_ferrite_austenite.ang"
-        file = data._fetcher.path / name
+        file = _fetcher.path / name
 
         # Remove file (dangerous!)
         removed = False

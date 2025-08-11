@@ -17,13 +17,24 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Projections of :class:`~orix.vector.Vector3d` to various other
-representations.
-"""
+# fmt: off
+# isort: off
+from .vector3d import Vector3d
+from .spherical_region import SphericalRegion
+# isort: on
+# fmt: on
+from .fundamental_sector import FundamentalSector
+from .miller import Miller
+from .neo_euler import AxAngle, Homochoric, NeoEuler, Rodrigues
 
-import lazy_loader
-
-# Imports from stub file (see contributor guide for details)
-__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
-
-del lazy_loader
+# Lazily imported in module init
+__all__ = [
+    "AxAngle",
+    "FundamentalSector",
+    "Homochoric",
+    "Miller",
+    "NeoEuler",
+    "Rodrigues",
+    "SphericalRegion",
+    "Vector3d",
+]
