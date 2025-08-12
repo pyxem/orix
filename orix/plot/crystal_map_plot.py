@@ -27,7 +27,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-import orix
+from orix.constants import installed as orix_installed
+from orix.constants import verify_dependency_or_raise
 
 
 class CrystalMapPlot(Axes):
@@ -179,7 +180,7 @@ class CrystalMapPlot(Axes):
 
         # Scalebar
         if scalebar is None:
-            scalebar = orix.constants.installed["matplotlib-scalebar"]
+            scalebar = orix_installed["matplotlib-scalebar"]
         if scalebar:
             if scalebar_properties is None:
                 scalebar_properties = {}
@@ -223,61 +224,54 @@ class CrystalMapPlot(Axes):
         >>> im = ax.plot_map(xmap, scalebar=False)
         >>> sbar = ax.add_scalebar(xmap, location=4, frameon=False)
 
-        NOTES
+        Notes
         ------
         This function requires `matplotlib-scalebar` to be installed.
         Please see the :doc:`installation guide <user/installation>`
         for details.
         """
-        # Check whether the optional module matplotlib_scalebar is available,
-        # and if not, throw an error.
-        if not orix.constants.installed["matplotlib-scalebar"]:
-            raise ImportError(
-                "The optional python package matplotlib-scalebar is not"
-                + "installed and thus a scalebar cannot be drawn. See"
-                + "the orix installation guide for details:"
-                + "https://orix.readthedocs.io/en/stable/user/installation"
-            )
+        # Verify the necessary optional package is installed.
+        verify_dependency_or_raise("matplotlib-scalebar", "Adding a scalebar")
+        # if so, import the necessary modules.
+        from matplotlib_scalebar.dimension import _Dimension
+        from matplotlib_scalebar.scalebar import ScaleBar
+
+        # create a matplotlib_scalebar object
+        # Get whether z, y or x
+        last_axis = crystal_map.ndim - 1
+        horizontal = crystal_map._coordinate_axes[last_axis]
+
+        # Set a reasonable unit dimension
+        scan_unit = crystal_map.scan_unit
+        if scan_unit == "px":
+            dim = "pixel-length"
+        elif scan_unit[-1] == "m":
+            dim = "si-length"  # Default
         else:
-            from matplotlib_scalebar.dimension import _Dimension
-            from matplotlib_scalebar.scalebar import ScaleBar
+            dim = _Dimension(scan_unit)
 
-            # create a matplotlib_scalebar object
-            # Get whether z, y or x
-            last_axis = crystal_map.ndim - 1
-            horizontal = crystal_map._coordinate_axes[last_axis]
+        # Set up arguments to AnchoredSizeBar() if not already present
+        # in kwargs
+        d = dict(
+            pad=0.2,
+            sep=3,
+            border_pad=0.5,
+            location="lower left",
+            box_alpha=0.6,
+            dimension=dim,
+        )
+        [kwargs.setdefault(k, v) for k, v in d.items()]
 
-            # Set a reasonable unit dimension
-            scan_unit = crystal_map.scan_unit
-            if scan_unit == "px":
-                dim = "pixel-length"
-            elif scan_unit[-1] == "m":
-                dim = "si-length"  # Default
-            else:
-                dim = _Dimension(scan_unit)
+        # Create scalebar
+        bar = ScaleBar(
+            dx=crystal_map._step_sizes[horizontal],
+            units=crystal_map.scan_unit,
+            **kwargs,
+        )
+        self.axes.add_artist(bar)
+        self.scalebar = bar
 
-            # Set up arguments to AnchoredSizeBar() if not already present
-            # in kwargs
-            d = dict(
-                pad=0.2,
-                sep=3,
-                border_pad=0.5,
-                location="lower left",
-                box_alpha=0.6,
-                dimension=dim,
-            )
-            [kwargs.setdefault(k, v) for k, v in d.items()]
-
-            # Create scalebar
-            bar = ScaleBar(
-                dx=crystal_map._step_sizes[horizontal],
-                units=crystal_map.scan_unit,
-                **kwargs,
-            )
-            self.axes.add_artist(bar)
-            self.scalebar = bar
-
-            return bar
+        return bar
 
     def add_overlay(self, crystal_map: "orix.crystal_map.CrystalMap", item: str):
         """Use a crystal map property as gray scale values of a phase

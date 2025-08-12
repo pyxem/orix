@@ -1,4 +1,4 @@
-# Copyright 2018-2024 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +9,11 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
 
 import copy
 
@@ -178,11 +178,18 @@ class TestCrystalMapPlot:
         assert isinstance(ax.colorbar, mbar.Colorbar)
         # Check that adding a scalebar explicitly returns an error.
         monkeypatch.setitem(orix.constants.installed, "matplotlib-scalebar", False)
-        with pytest.raises(ImportError, match="The optional"):
+        with pytest.raises(
+            ImportError,
+            match="Adding a scalebar requires that matplotlib-scalebar is installed",
+        ):
             ax.add_scalebar(xmap)
         # Check that forcing a scalebar through .plot also returns an error
         plt.close("all")
-        with pytest.raises(ImportError, match="The optional"):
+        monkeypatch.setitem(orix.constants.installed, "matplotlib-scalebar", False)
+        with pytest.raises(
+            ImportError,
+            match="Adding a scalebar requires that matplotlib-scalebar is installed",
+        ):
             fig = xmap.plot(scalebar=True)
         plt.close("all")
 

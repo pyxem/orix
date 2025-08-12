@@ -1,4 +1,4 @@
-# Copyright 2018-2024 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,16 +9,17 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
 
 """Constants and such useful across modules."""
 
 from importlib.metadata import version
 
+# ============ Optional Dependencies ============ #
 # NB! Update project config file if this list is updated!
 optional_deps: list[str] = ["numpy-quaternion", "matplotlib-scalebar"]
 installed: dict[str, bool] = {}
@@ -29,12 +30,32 @@ for pkg in optional_deps:
     except ImportError:  # pragma: no cover
         installed[pkg] = False
 
+
+def verify_dependency_or_raise(package: str, reason: str) -> None:
+    """A convenience function for asserting if an optional dependency
+    is available. If not, it produces an ImportError message.
+
+    Parameters
+    ----------
+    package : str
+        The optional dependency being checked for.
+    reason : str
+        A short description of the feature that requires the dependency.
+    """
+    if not installed[package]:
+        msg = reason + f" requires that {package} is installed"
+        raise ImportError(msg)
+
+
+# ============ Tolerances ============ #
+
 # Typical tolerances for comparisons in need of a precision. We
 # generally use the highest precision possible (allowed by testing on
 # different OS and Python versions).
 eps9 = 1e-9
 eps12 = 1e-12
 
+# ============ Version-Dependent Imports ============ #
 # TODO: Remove and use numpy.exceptions.VisibleDeprecationWarning once
 # NumPy 1.25 is minimal supported version
 try:
