@@ -13,19 +13,20 @@ Added
 -----
 - Added the ``@pytest.mark.slow`` marker for slow tests.  Using ``pytest . --run-slow`` will
   run all tests, including slow ones.
-- Can now convert Quaternions and Rotations to scipy.spatial.transform.Rotation 
-  objects via Quaterion.to_scipy_rotation. This also works with Orientations 
+- Can now convert Quaternions and Rotations to scipy.spatial.transform.Rotation
+  objects via Quaterion.to_scipy_rotation. This also works with Orientations
   and Misorientations, albiet with a loss of symmetry information.
 - ``ignore_zero`` option for ``Vector3d.unique`` to allow all-zero elements, which were
   previously discarded. Discarding is still enabled by default.
 - Added copy constructors to ``Phase``, ``PhaseList`` and ``CrystalMap``.
 - Added ``Phase.expand_asymmetric_unit()`` to add all symmetrically equivalent atoms to the structure.
 - Added element-wise to indexing to ``Vector3d`` class and subclasses
+- Add explicit support for Python 3.13.
 
 Changed
 -------
 - .ang files now allow optional rewriting of phase names based on elements and
-  point group, as opposed to automatically  overwriting names 
+  point group, as opposed to automatically  overwriting names
 - For speed and space reasons, vectors and quaternions are now randomly
   generated using a gaussian method as opposed to rejection-based sampling.
 
