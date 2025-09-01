@@ -63,7 +63,9 @@ doc = [
 tests = [
     "numpydoc",
     "pytest                         >= 5.4",
-    "pytest-rerunfailures",
+    # TODO: Remove once a new release fixing
+    # https://github.com/pytest-dev/pytest-rerunfailures/issues/302 is available.
+    "pytest-rerunfailures           < 16.0",
     "pytest-xdist",
 ]
 coverage = [
