@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
-
 """Generation of spherical grids in *S2*."""
 
 from functools import partial
-from typing import Callable, List, Mapping, Optional, Tuple
+from typing import Callable
 
 import numpy as np
 
@@ -31,12 +30,12 @@ from orix.sampling._polyhedral_sampling import (
     _edge_grid_spherified_edge_cube,
     _sample_length_equidistant,
 )
-from orix.vector import Vector3d
+from orix.vector.vector3d import Vector3d
 
 
 def _remove_pole_duplicates(
     azimuth: np.ndarray, polar: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Remove duplicate directions at the North (polar = 0) and South
     (polar = pi) poles from the grid on S2. In each case the direction
     with azimuth = 0 is kept.
@@ -68,7 +67,7 @@ def _sample_S2_uv_mesh_coordinates(
     hemisphere: str = "both",
     offset: float = 0,
     azimuth_endpoint: bool = False,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Get spherical coordinates for UV mesh points on unit sphere *S2*.
 
     For more information see the docstring for
@@ -194,9 +193,9 @@ def _sample_S2_equal_area_coordinates(
     resolution: float,
     hemisphere: str = "both",
     azimuth_endpoint: bool = False,
-    azimuth_range: Optional[Tuple[float, float]] = None,
-    polar_range: Optional[Tuple[float, float]] = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+    azimuth_range: tuple[float, float] | None = None,
+    polar_range: tuple[float, float] | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """Get spherical coordinates for equal area mesh points on unit
     sphere *S2*.
 
@@ -460,7 +459,7 @@ def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
     return Vector3d(all_points.T).unit
 
 
-def sample_S2_random_mesh(resolution: float, seed: Optional[int] = None) -> Vector3d:
+def sample_S2_random_mesh(resolution: float, seed: int | None = None) -> Vector3d:
     """Return vectors of a random mesh on *S2*.
 
     Parameters
@@ -551,7 +550,7 @@ def sample_S2_icosahedral_mesh(resolution: float) -> Vector3d:
     return Vector3d(vertices).unit
 
 
-_sampling_method_registry: Mapping[str, Callable] = {
+_sampling_method_registry: dict[str, Callable] = {
     "uv": sample_S2_uv_mesh,
     "equal_area": sample_S2_equal_area_mesh,
     "normalized_cube": partial(sample_S2_cube_mesh, grid_type="normalized"),
@@ -563,7 +562,7 @@ _sampling_method_registry: Mapping[str, Callable] = {
     "hexagonal": sample_S2_hexagonal_mesh,
     "random": sample_S2_random_mesh,
 }
-sample_S2_methods: List[str] = []
+sample_S2_methods: list[str] = []
 _sampling_S2_method_names = set()
 for sampling_name, sampling_method in _sampling_method_registry.items():
     sample_S2_methods.append(sampling_name)
