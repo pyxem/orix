@@ -17,8 +17,6 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import Tuple, Union
-
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 import numpy as np
@@ -31,11 +29,11 @@ class Arrow3D(FancyArrowPatch):
     https://stackoverflow.com/a/22867877/12063126.
     """
 
-    def __init__(self, xs, ys, zs, *args, **kwargs):
+    def __init__(self, xs, ys, zs, *args, **kwargs) -> None:
         super().__init__((0, 0), (0, 0), *args, **kwargs)
         self._verts3d = xs, ys, zs
 
-    def do_3d_projection(self, renderer=None):
+    def do_3d_projection(self, renderer=None) -> np.ndarray:
         xs3d, ys3d, zs3d = self._verts3d
         xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
@@ -43,8 +41,8 @@ class Arrow3D(FancyArrowPatch):
 
 
 def format_labels(
-    v: Union[list, tuple, np.ndarray],
-    brackets: Tuple[str, str] = ("", ""),
+    v: list | tuple | np.ndarray,
+    brackets: tuple[str, str] = ("", ""),
     use_latex: bool = True,
 ) -> np.ndarray:
     r"""Return formatted vector integer labels.

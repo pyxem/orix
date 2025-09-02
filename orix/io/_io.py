@@ -19,7 +19,7 @@
 
 import os
 from pathlib import Path
-from typing import Optional, Union
+from types import ModuleType
 from warnings import warn
 
 from h5py import File, is_hdf5
@@ -76,7 +76,7 @@ def loadctf(file_string: str) -> Rotation:
     return Rotation.from_euler(euler)
 
 
-def load(filename: Union[str, Path], **kwargs) -> CrystalMap:
+def load(filename: str | Path, **kwargs) -> CrystalMap:
     """Load data from a supported file format listed in
     :doc:`orix.io.plugins`.
 
@@ -99,7 +99,7 @@ def load(filename: Union[str, Path], **kwargs) -> CrystalMap:
 
     # Find matching reader for file extension
     extension = os.path.splitext(filename)[1][1:]
-    readers = []
+    readers: list[ModuleType] = []
     for plugin in plugin_list:
         if extension.lower() in plugin.file_extensions:
             readers.append(plugin)
@@ -115,10 +115,14 @@ def load(filename: Union[str, Path], **kwargs) -> CrystalMap:
     else:
         reader = readers[0]
 
+    # TODO: Handle case where reader is None
+
     return reader.file_reader(filename, **kwargs)
 
 
-def _plugin_from_manufacturer(filename: str, plugins: list):
+def _plugin_from_manufacturer(
+    filename: str, plugins: list[ModuleType]
+) -> ModuleType | None:
     """Return the correct plugin based on the manufacturer listed in a
     top group named 'Manufacturer' in an HDF5 file.
 
@@ -153,11 +157,11 @@ def _plugin_from_manufacturer(filename: str, plugins: list):
 
 
 def save(
-    filename: Union[str, Path],
+    filename: str | Path,
     object2write: CrystalMap,
-    overwrite: Optional[bool] = None,
+    overwrite: bool | None = None,
     **kwargs,
-):
+) -> None:
     """Write data to a supported file format listed in
     :doc:`orix.io.plugins`.
 

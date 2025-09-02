@@ -17,14 +17,24 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 from matplotlib import projections
+import matplotlib.collections as mcollections
+import matplotlib.figure as mfigure
 from matplotlib.gridspec import SubplotSpec
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
+import numpy as np
 
-from orix.vector import AxAngle, Rodrigues
+from orix.vector.neo_euler import AxAngle, Rodrigues
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orix.quaternion.misorientation import Misorientation
+    from orix.quaternion.orientation_region import OrientationRegion
+    from orix.quaternion.rotation import Rotation
 
 
 class RotationPlot(Axes3D):
@@ -35,9 +45,9 @@ class RotationPlot(Axes3D):
 
     def transform(
         self,
-        xs: Union["Misorientation", "OrientationRegion", "Rotation"],
-        fundamental_zone: Optional["OrientationRegion"] = None,
-    ):
+        xs: "Misorientation | OrientationRegion | Rotation",
+        fundamental_zone: "OrientationRegion | None" = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Prepare (mis)orientations or rotations for plotting.
 
         Parameters
@@ -74,8 +84,11 @@ class RotationPlot(Axes3D):
         return x, y, z
 
     def scatter(
-        self, xs: Union["Misorientation", "Rotation"], fundamental_zone=None, **kwargs
-    ):
+        self,
+        xs: "Misorientation | Rotation",
+        fundamental_zone: "OrientationRegion | None" = None,
+        **kwargs,
+    ) -> mcollections.PathCollection:
         """Create a scatter plot.
 
         Parameters
@@ -91,11 +104,11 @@ class RotationPlot(Axes3D):
         x, y, z = self.transform(xs, fundamental_zone=fundamental_zone)
         return super().scatter(x, y, z, **kwargs)
 
-    def plot(self, xs, **kwargs):
+    def plot(self, xs, **kwargs) -> list[mlines.Line2D]:
         x, y, z = self.transform(xs)
         return super().plot(x, y, z, **kwargs)
 
-    def plot_wireframe(self, xs, **kwargs):
+    def plot_wireframe(self, xs, **kwargs) -> Line3DCollection:
         d = dict(color="gray", alpha=0.5, linewidth=0.5, rcount=30, ccount=30)
         for k, v in d.items():
             kwargs.setdefault(k, v)
@@ -104,7 +117,7 @@ class RotationPlot(Axes3D):
 
     def _get_region_extent(
         self, fundamental_region: "OrientationRegion"
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         """Return the maximum angles in x, y, z of the fundamental
         region.
 
@@ -119,7 +132,9 @@ class RotationPlot(Axes3D):
         x, y, z = self.transform(fundamental_region)
         return x.max(), y.max(), z.max()
 
-    def _correct_aspect_ratio(self, fundamental_region, set_limits=True):
+    def _correct_aspect_ratio(
+        self, fundamental_region: "OrientationRegion", set_limits: bool = True
+    ) -> None:
         """Correct the aspect ratio of the axis according to the
         extent of the boundaries of the fundamental region.
 
@@ -157,11 +172,11 @@ projections.register_projection(AxAnglePlot)
 
 
 def _setup_rotation_plot(
-    figure: Optional[plt.Figure] = None,
+    figure: mfigure.Figure | None = None,
     projection: str = "axangle",
-    position: Union[int, tuple, SubplotSpec, None] = (1, 1, 1),
-    figure_kwargs: Optional[dict] = None,
-) -> Tuple[plt.Figure, Union[AxAnglePlot, RodriguesPlot]]:
+    position: int | tuple | SubplotSpec | None = (1, 1, 1),
+    figure_kwargs: dict | None = None,
+) -> tuple[mfigure.Figure, AxAnglePlot | RodriguesPlot]:
     """Return a figure and rotation plot axis of the correct type.
 
     This is a convenience method used in e.g.

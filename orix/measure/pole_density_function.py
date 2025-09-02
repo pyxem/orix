@@ -17,26 +17,24 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import Optional, Tuple, Union
-
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from orix.projections import StereographicProjection
-from orix.quaternion import Symmetry
-from orix.vector import Vector3d
+from orix.projections.stereographic import StereographicProjection
+from orix.quaternion.symmetry import Symmetry
+from orix.vector.vector3d import Vector3d
 
 
 def pole_density_function(
-    *args: Union[np.ndarray, Vector3d],
+    *args: np.ndarray | Vector3d,
     resolution: float = 1,
     sigma: float = 5,
-    weights: Optional[np.ndarray] = None,
+    weights: np.ndarray | None = None,
     hemisphere: str = "upper",
-    symmetry: Optional[Symmetry] = None,
+    symmetry: Symmetry | None = None,
     log: bool = False,
     mrd: bool = True,
-) -> Tuple[np.ma.MaskedArray, Tuple[np.ndarray, np.ndarray]]:
+) -> tuple[np.ma.MaskedArray, tuple[np.ndarray, np.ndarray]]:
     """Compute the Pole Density Function (PDF) of vectors in the
     stereographic projection. See :cite:`rohrer2004distribution`.
 

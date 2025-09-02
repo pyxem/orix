@@ -17,21 +17,20 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import Optional, Union
-
 import numpy as np
 
-from orix.quaternion import OrientationRegion, Rotation, Symmetry
-from orix.quaternion.symmetry import C1, get_point_group
-from orix.sampling import sample_S2
+from orix.quaternion.orientation_region import OrientationRegion
+from orix.quaternion.rotation import Rotation
+from orix.quaternion.symmetry import C1, Symmetry, get_point_group
+from orix.sampling.S2_sampling import sample_S2
 from orix.sampling.SO3_sampling import _three_uniform_samples_method, uniform_SO3_sample
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 
 def get_sample_fundamental(
-    resolution: Union[int, float] = 2,
-    point_group: Optional[Symmetry] = None,
-    space_group: Optional[int] = None,
+    resolution: float | int = 2.0,
+    point_group: Symmetry | None = None,
+    space_group: int | None = None,
     method: str = "cubochoric",
     **kwargs,
 ) -> Rotation:
@@ -93,9 +92,9 @@ def get_sample_fundamental(
 
 
 def get_sample_local(
-    resolution: Union[int, float] = 2,
-    center: Optional[Rotation] = None,
-    grid_width: Union[int, float] = 10,
+    resolution: float | int = 2.0,
+    center: Rotation | None = None,
+    grid_width: int | float = 10,
     method: str = "cubochoric",
     **kwargs,
 ) -> Rotation:
@@ -146,7 +145,7 @@ def get_sample_local(
     return rot
 
 
-def _remove_larger_than_angle(rot: Rotation, max_angle: Union[int, float]) -> Rotation:
+def _remove_larger_than_angle(rot: Rotation, max_angle: int | float) -> Rotation:
     """Remove large angle rotations from a sample of rotations.
 
     Parameters
@@ -171,8 +170,8 @@ def _remove_larger_than_angle(rot: Rotation, max_angle: Union[int, float]) -> Ro
 
 def get_sample_reduced_fundamental(
     resolution: float = 2,
-    method: Optional[str] = None,
-    point_group: Optional[Symmetry] = None,
+    method: str | None = None,
+    point_group: Symmetry | None = None,
 ) -> Rotation:
     r"""Return a grid of rotations that rotate the Z-vector (0, 0, 1)
     into the fundamental sector of a point group's Laue group.

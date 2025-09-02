@@ -24,13 +24,13 @@ Meant to be used indirectly in
 :func:`~orix.plot.StereographicPlot.symmetry_marker`.
 """
 
-from typing import Union
+from typing import Generator
 
 import matplotlib.path as mpath
 import matplotlib.transforms as mtransforms
 import numpy as np
 
-from orix.vector import Vector3d
+from orix.vector.vector3d import Vector3d
 
 
 class SymmetryMarker:
@@ -45,7 +45,7 @@ class SymmetryMarker:
     fold = None
     _marker = None
 
-    def __init__(self, v: Union[Vector3d, np.ndarray, list, tuple], size: int = 1):
+    def __init__(self, v: Vector3d | np.ndarray | list | tuple, size: int = 1) -> None:
         self._vector = Vector3d(v)
         self._size = size
 
@@ -64,7 +64,7 @@ class SymmetryMarker:
         """Number of symmetry markers."""
         return self._vector.size
 
-    def __iter__(self):
+    def __iter__(self) -> Generator:
         for v, marker, size in zip(self._vector, self._marker, self.size):
             yield v, marker, size
 
@@ -83,7 +83,7 @@ class TwoFoldMarker(SymmetryMarker):
         return self._size / np.sqrt(radial)
 
     @property
-    def _marker(self):
+    def _marker(self) -> list[mpath.Path]:
         # Make an ellipse path (https://matplotlib.org/stable/api/path_api.html)
         circle = mpath.Path.circle()
         verts = np.copy(circle.vertices)  # Paths considered immutable
@@ -103,7 +103,7 @@ class ThreeFoldMarker(SymmetryMarker):
     fold = 3
 
     @property
-    def _marker(self):
+    def _marker(self) -> list[tuple[int, int, float]]:
         return [(3, 0, angle) for angle in self.angle_deg]
 
 
@@ -113,7 +113,7 @@ class FourFoldMarker(SymmetryMarker):
     fold = 4
 
     @property
-    def _marker(self):
+    def _marker(self) -> list[str]:
         return ["D"] * self.n
 
 
@@ -123,5 +123,5 @@ class SixFoldMarker(SymmetryMarker):
     fold = 6
 
     @property
-    def _marker(self):
+    def _marker(self) -> list[str]:
         return ["h"] * self.n

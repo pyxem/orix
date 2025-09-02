@@ -19,17 +19,17 @@
 
 """Functions supporting grid generation within rotation space, *SO(3)*."""
 
-from typing import Optional, Union
+from typing import Literal
 
 import numpy as np
 
-from orix.quaternion import Rotation
+from orix.quaternion.rotation import Rotation
 from orix.sampling._cubochoric_sampling import cubochoric_sampling
 
 
 def uniform_SO3_sample(
-    resolution: Union[int, float],
-    method: str = "cubochoric",
+    resolution: int | float,
+    method: Literal["cubochoric", "haar_euler", "quaternion"] = "cubochoric",
     unique: bool = True,
     **kwargs,
 ) -> Rotation:
@@ -84,10 +84,12 @@ def uniform_SO3_sample(
         return _three_uniform_samples_method(resolution, unique)
     elif method == "cubochoric":
         return cubochoric_sampling(resolution=resolution, **kwargs)
+    else:
+        raise ValueError(f"Unknown SO3 sampling method {method!r}")
 
 
 def _three_uniform_samples_method(
-    resolution: Union[int, float], unique: bool, max_angle: Optional[float] = None
+    resolution: int | float, unique: bool, max_angle: float | None = None
 ) -> Rotation:
     """Returns rotations that are evenly spaced according to the Haar
     measure on *SO(3)*.
@@ -156,7 +158,7 @@ def _three_uniform_samples_method(
     return q
 
 
-def _euler_angles_haar_measure(resolution: Union[int, float], unique: bool) -> Rotation:
+def _euler_angles_haar_measure(resolution: int | float, unique: bool) -> Rotation:
     """Returns rotations that are evenly spaced according to the Haar
     measure on *SO(3)* using the Euler angle parameterization.
 
@@ -195,7 +197,7 @@ def _euler_angles_haar_measure(resolution: Union[int, float], unique: bool) -> R
 
 
 def _resolution_to_num_steps(
-    resolution: Union[int, float], even_only: bool = False, odd_only: bool = False
+    resolution: int | float, even_only: bool = False, odd_only: bool = False
 ) -> int:
     """Convert a ``resolution`` to number of steps when sampling
     orientations on a linear axis.

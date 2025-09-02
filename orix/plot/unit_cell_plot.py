@@ -22,14 +22,18 @@ orientation.
 """
 
 from itertools import combinations, product
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from diffpy.structure import Lattice, Structure
+import matplotlib.figure as mfigure
 import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.plot._util import Arrow3D
-from orix.vector import Vector3d
+from orix.vector.vector3d import Vector3d
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orix.quaternion.rotation import Rotation
 
 
 def _calculate_basic_unit_cell_vertices(vectors: np.ndarray) -> np.ndarray:
@@ -73,10 +77,10 @@ def _plot_unit_cell(
     rotation: "Rotation",
     c: str = "tab:blue",
     axes_length: float = 0.5,
-    structure: Optional[Structure] = None,
+    structure: Structure | None = None,
     crystal_axes_loc: str = "origin",
     **arrow_kwargs,
-) -> plt.Figure:
+) -> mfigure.Figure:
     """Plot the unit cell orientation, showing the sample and crystal
     reference frames.
 
