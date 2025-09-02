@@ -23,10 +23,10 @@ from .S2_sampling import (
     sample_S2_equal_area_mesh,
     sample_S2_hexagonal_mesh,
     sample_S2_icosahedral_mesh,
+    sample_S2_methods,
     sample_S2_random_mesh,
     sample_S2_uv_mesh,
 )
-from .S2_sampling import sampling_methods as sample_S2_methods
 from .SO3_sampling import uniform_SO3_sample
 from .sample_generators import (
     get_sample_fundamental,
