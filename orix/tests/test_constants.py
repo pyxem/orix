@@ -17,16 +17,20 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from orix import constants
+import pytest
 
-from .conftest import skipif_numpy_quaternion_missing, skipif_numpy_quaternion_present
+from orix.constants import installed
 
 
 class TestConstants:
-    @skipif_numpy_quaternion_present
+    @pytest.mark.skipif(
+        installed["numpy-quaternion"], reason="numpy-quaternion is installed"
+    )
     def test_numpy_quaternion_not_installed(self):
-        assert not constants.installed["numpy-quaternion"]
+        assert not installed["numpy-quaternion"]
 
-    @skipif_numpy_quaternion_missing
+    @pytest.mark.skipif(
+        not installed["numpy-quaternion"], reason="numpy-quaternion is installed"
+    )
     def test_numpy_quaternion_installed(self):
-        assert constants.installed["numpy-quaternion"]
+        assert installed["numpy-quaternion"]

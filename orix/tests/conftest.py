@@ -22,7 +22,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.constants import installed
 from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
 from orix.crystal_map.phase_list import PhaseList
 from orix.quaternion.rotation import Rotation
@@ -35,14 +34,6 @@ def pytest_sessionstart(session):
 
 
 # -------------------- Control of test selection --------------------- #
-
-skipif_numpy_quaternion_present = pytest.mark.skipif(
-    installed["numpy-quaternion"], reason="numpy-quaternion installed"
-)
-
-skipif_numpy_quaternion_missing = pytest.mark.skipif(
-    not installed["numpy-quaternion"], reason="numpy-quaternion not installed"
-)
 
 
 def pytest_addoption(parser):
