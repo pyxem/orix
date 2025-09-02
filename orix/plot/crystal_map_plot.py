@@ -24,7 +24,6 @@ import matplotlib.colorbar as mbar
 from matplotlib.image import AxesImage
 import matplotlib.patches as mpatches
 from matplotlib.projections import register_projection
-import matplotlib.pyplot as plt
 from matplotlib_scalebar.dimension import _Dimension
 from matplotlib_scalebar.scalebar import ScaleBar
 from mpl_toolkits.axes_grid1 import make_axes_locatable

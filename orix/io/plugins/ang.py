@@ -32,7 +32,7 @@ import numpy as np
 from orix import __version__
 from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
 from orix.quaternion import Rotation
-from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES, get_point_group
+from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES
 
 __all__ = ["file_reader", "file_writer"]
 
