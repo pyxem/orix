@@ -22,9 +22,19 @@
 :class:`~orix.quaternion.Orientation`,
 :class:`~orix.quaternion.Misorientation`, and
 :class:`~orix.crystal_map.CrystalMap`.
-"""
 
+NOTE: While lazy loading is preferred, the following six classes
+are explicitly imported in order to populate matplotlib.projections
+"""
 import lazy_loader
+
+from orix.plot.crystal_map_plot import CrystalMapPlot
+from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
+from orix.plot.stereographic_plot import StereographicPlot
+
+# Must be imported below StereographicPlot since it imports it
+from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot  # isort: skip
+
 
 # Imports from stub file (see contributor guide for details)
 __getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
