@@ -333,25 +333,48 @@ def test_from_path_ends():
     o = Orientation.random(10, Oh)
     m = Misorientation.random(10, [D3, Oh])
 
-    # make sure the result is the correct class.
+    # Quaternion sanity checks
     a = Quaternion.from_path_ends(q)
-    b = Rotation.from_path_ends(q)
-    c = Orientation.from_path_ends(r)
-    d = Quaternion.from_path_ends(o)
-    e = Orientation.from_path_ends(q)
-    f = Misorientation.from_path_ends(m)
-    g = Orientation.from_path_ends(o)
     assert isinstance(a, Quaternion)
-    assert isinstance(b, Rotation)
-    assert isinstance(c, Orientation)
+    b = Quaternion.from_path_ends(r)
+    assert isinstance(b, Quaternion)
+    c = Quaternion.from_path_ends(o)
+    assert isinstance(c, Quaternion)
+    d = Quaternion.from_path_ends(m)
     assert isinstance(d, Quaternion)
-    assert isinstance(e, Orientation)
-    assert isinstance(f, Misorientation)
-    assert isinstance(g, Orientation)
 
-    # make sure symmetry information is preserved.
-    assert f.symmetry == m.symmetry
-    assert g.symmetry == o.symmetry
+    # Rotation sanity checks
+    a = Rotation.from_path_ends(q)
+    assert isinstance(a, Rotation)
+    b = Rotation.from_path_ends(r)
+    assert isinstance(b, Rotation)
+    c = Rotation.from_path_ends(o)
+    assert isinstance(c, Rotation)
+    d = Rotation.from_path_ends(m)
+    assert isinstance(d, Rotation)
+
+    # Misorientation sanity checks
+    with pytest.raises(TypeError, match="Points must be a Misorientation"):
+        a = Misorientation.from_path_ends(q)
+    with pytest.raises(TypeError, match="Points must be a Misorientation"):
+        b = Misorientation.from_path_ends(r)
+    c = Misorientation.from_path_ends(o)
+    assert isinstance(c, Misorientation)
+    d = Misorientation.from_path_ends(m)
+    assert isinstance(d, Misorientation)
+    assert c.symmetry[1] == o.symmetry
+    assert d.symmetry == m.symmetry
+
+    # Orientation sanity checks
+    with pytest.raises(TypeError, match="Points must be an Orientation"):
+        a = Orientation.from_path_ends(q)
+    with pytest.raises(TypeError, match="Points must be an Orientation"):
+        b = Orientation.from_path_ends(r)
+    c = Orientation.from_path_ends(o)
+    assert c.symmetry == o.symmetry
+    assert isinstance(c, Orientation)
+    with pytest.raises(TypeError, match="Points must be an Orientation"):
+        d = Orientation.from_path_ends(m)
 
 
 class TestMisorientation:
