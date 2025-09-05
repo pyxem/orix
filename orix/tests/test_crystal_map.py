@@ -674,6 +674,7 @@ class TestCrystalMapOrientations:
 
         o = xmap.orientations
         o = o.map_into_symmetry_reduced_zone()
+        o = o.reduce()
 
         o1 = Orientation(r)
         o1.symmetry = point_group

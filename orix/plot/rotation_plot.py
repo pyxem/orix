@@ -24,7 +24,7 @@ from matplotlib.gridspec import SubplotSpec
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from orix.vector import AxAngle, Rodrigues
+from orix.vector import AxAngle, Homochoric, Rodrigues
 
 
 class RotationPlot(Axes3D):
@@ -62,7 +62,7 @@ class RotationPlot(Axes3D):
                 raise TypeError("fundamental_zone is not an OrientationRegion object.")
             # if any in xs are out of fundamental_zone, calculate symmetry reduction
             if not (xs < fundamental_zone).all():
-                xs = xs.map_into_symmetry_reduced_zone()
+                xs = xs.reduce()
 
         if isinstance(xs, Rotation):
             if isinstance(xs, OrientationRegion):
@@ -152,8 +152,16 @@ class AxAnglePlot(RotationPlot):
     transformation_class = AxAngle
 
 
+class HomochoricPlot(RotationPlot):
+    """Plot rotations in a axis-angle space."""
+
+    name = "homochoric"
+    transformation_class = Homochoric
+
+
 projections.register_projection(RodriguesPlot)
 projections.register_projection(AxAnglePlot)
+projections.register_projection(HomochoricPlot)
 
 
 def _setup_rotation_plot(
@@ -161,7 +169,7 @@ def _setup_rotation_plot(
     projection: str = "axangle",
     position: Union[int, tuple, SubplotSpec, None] = (1, 1, 1),
     figure_kwargs: Optional[dict] = None,
-) -> Tuple[plt.Figure, Union[AxAnglePlot, RodriguesPlot]]:
+) -> Tuple[plt.Figure, Union[AxAnglePlot, RodriguesPlot, HomochoricPlot]]:
     """Return a figure and rotation plot axis of the correct type.
 
     This is a convenience method used in e.g.

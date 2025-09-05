@@ -102,7 +102,7 @@ class Orientation(Misorientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             M = Misorientation(self * ~other).squeeze()
             M.symmetry = (self.symmetry, other.symmetry)
-            return M.map_into_symmetry_reduced_zone()
+            return M.reduce()
         return NotImplemented
 
     # ------------------------ Class methods ------------------------- #
@@ -772,8 +772,8 @@ class Orientation(Misorientation):
         ----------
         projection
             Which orientation space to plot orientations in, either
-            "axangle" (default), "rodrigues" or "ipf" (inverse pole
-            figure).
+            "axangle" (default), ``"rodrigues"``, ``"homochoric"``,
+            or ``"ipf"`` (inverse pole figure).
         figure
             If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
             :class:`~orix.plot.RodriguesPlot` is added to the figure in

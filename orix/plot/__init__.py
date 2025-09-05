@@ -29,7 +29,12 @@ are explicitly imported in order to populate matplotlib.projections
 import lazy_loader
 
 from orix.plot.crystal_map_plot import CrystalMapPlot
-from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
+from orix.plot.rotation_plot import (
+    AxAnglePlot,
+    HomochoricPlot,
+    RodriguesPlot,
+    RotationPlot,
+)
 from orix.plot.stereographic_plot import StereographicPlot
 
 # Must be imported below StereographicPlot since it imports it

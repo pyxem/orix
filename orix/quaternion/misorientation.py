@@ -397,7 +397,7 @@ class Misorientation(Rotation):
         >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
         >>> M = Misorientation(data)
         >>> M.symmetry = (C4, C2)
-        >>> M.map_into_symmetry_reduced_zone()
+        >>> M.reduce()
         Misorientation (2,) 4, 2
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
@@ -479,7 +479,8 @@ class Misorientation(Rotation):
         ----------
         projection
             Which misorientation space to plot misorientations in,
-            either ``"axangle"`` (default) or ``"rodrigues"``.
+            either ``"axangle"`` (default), ``"rodrigues"``, or
+            ``"homochoric"``.
         figure
             If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
             :class:`~orix.plot.RodriguesPlot` is added to the figure in
