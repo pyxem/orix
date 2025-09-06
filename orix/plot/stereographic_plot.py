@@ -89,15 +89,26 @@ class StereographicPlot(maxes.Axes):
         hemisphere: str = "upper",
         azimuth_resolution: int | float = 10,
         polar_resolution: int | float = 10,
+        lat_resolution: int | float = 2,
+        long_resolution: int | float = 2,
+        lat_resolution_major: int | float | None = 10,
+        long_resolution_major: int | float | None = 10,
+        wulff_net_cap: int | float = 10,
         **kwargs,
     ) -> None:
         """Create an axis for plotting :class:`~orix.vector.Vector3d`."""
         self.hemisphere = hemisphere
         self._azimuth_resolution = azimuth_resolution
         self._polar_resolution = polar_resolution
+        self._lat_resolution = lat_resolution
+        self._long_resolution = long_resolution
+        self._lat_resolution_major = lat_resolution_major
+        self._long_resolution_major = long_resolution_major
+        self._wulff_net_cap = wulff_net_cap
 
-        # Custom attribute to keep track of whether grid is on or off
+        # Custom attribute to keep track of whether grids are on or off
         self._stereographic_grid = None
+        self._wulff_net_grid = None
 
         super().__init__(*args, **kwargs)
 
@@ -632,6 +643,84 @@ class StereographicPlot(maxes.Axes):
                 self.collections[index_polar].remove()
             self._stereographic_grid = False
 
+    def wulff_net(
+        self,
+        show_grid: bool | None = None,
+        lat_resolution: float = None,
+        long_resolution: float = None,
+        lat_resolution_major: float | None = None,
+        long_resolution_major: float | None = None,
+        wulff_net_cap: float | None = None,
+        linewidth_ratio: bool = True,
+    ):
+        """Turn a wulff net grid on or off, and set spacing in degrees
+        for the major and minor axes.
+
+        Parameters
+        ----------
+        show_grid
+            Whether to show grid lines. If any keyword arguments are
+            passed, this is set to ``True``. If not given and there are
+            no keyword arguments, the grid lines are toggled.
+        lat_resolution
+            latitudinal (up and down) grid spacing in degrees.
+            This can also be set upon initialization of the axes by
+            passing ``lat_resolution`` to ``subplot_kw``. If none is given,
+            it will use the most recently stored value (2 degrees by default)
+        long_resolution
+            longitudinal (left and right) grid spacing in degrees.
+            This can also be set upon initialization of the axes by
+            passing ``long_resolution`` to ``subplot_kw``. If none is given,
+            it will use the most recently stored value (2 degrees by default)
+        lat_resolution_major
+            Identical to lat_resolution, but for the major grid lines
+            (10 degree increments by default).
+        long_resolution_major
+            Identical to long_resolution, but for the major grid lines
+            (10 degree increments by default).
+        wulff_net_cap
+            The angular spread of the cap around the north and south poles
+            of the plot in degrees, within which longitudinal lines are
+            not drawn. If None, the most recently stored value will be used
+            (10 degrees by default)
+        linewidth_ratio
+            ratio between the thickness of the major and minor grid lines.
+            Minor grid line properties are determined by the
+            ``grid.linewidth`` parameter in matplotlib.rcParams, the same
+            way ``matplotlib.axes.Axes.grid`` objects are.
+            Major grid lines are then set relative to the minor values.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.grid
+        """
+        # check for three cases where a new grid should be plotted
+        if (
+            show_grid is None
+            and self._wulff_net_grid in [None, False]
+            or show_grid is None
+            and (lat_resolution is not None or long_resolution is not None)
+            or show_grid is True
+        ) and hasattr(self, "patch"):
+            # if so, plot them
+            self._lat_grid(lat_resolution, lat_resolution_major, linewidth_ratio)
+            self._long_grid(
+                long_resolution, long_resolution_major, linewidth_ratio, wulff_net_cap
+            )
+            self._wulff_net_grid = True
+        elif show_grid in [None, False] and self._wulff_net_grid is True:
+            # Remove grid
+            for query in [
+                "sa_lat_grid",
+                "sa_lat_grid_major",
+                "sa_long_grid",
+                "sa_long_grid_major",
+            ]:
+                has, idx = self._has_collection(query, self.collections)
+                if has:
+                    self.collections[idx].remove()
+            self._wulff_net_grid = False
+
     def symmetry_marker(self, v: Vector3d, fold: int, **kwargs) -> None:
         """Plot 2-, 3- 4- or 6-fold symmetry marker(s).
 
@@ -665,6 +754,9 @@ class StereographicPlot(maxes.Axes):
         # TODO: Find a way to control padding, so that markers aren't
         #  clipped
 
+    # =============================================== #
+    #      Internal functions for creating grids      #
+    # =============================================== #
     def _azimuth_grid(self, resolution: float | None = None) -> None:
         """Set the azimuth grid resolution in degrees.
 
@@ -711,14 +803,6 @@ class StereographicPlot(maxes.Axes):
         if has_sector:
             lines_collection.set_clip_path(self.patches[sector_index])
         self.add_collection(lines_collection)
-
-    @staticmethod
-    def _has_collection(label: str, collections: Any) -> tuple[bool, int]:
-        labels = [c.get_label() for c in collections]
-        for i in range(len(labels)):
-            if label == labels[i]:
-                return True, i
-        return False, -1
 
     def _polar_grid(self, resolution: float | None = None) -> None:
         """Set the polar grid resolution in degrees.
@@ -774,6 +858,200 @@ class StereographicPlot(maxes.Axes):
         if has_sector:
             circles_collection.set_clip_path(self.patches[sector_index])
         self.add_collection(circles_collection)
+
+    def _lat_grid(
+        self,
+        lat_resolution: float | int | None = None,
+        lat_resolution_major: float | int | None = None,
+        lat_major_minor_ratio: float | int = 2,
+    ):
+        """Set the major and minor latitudinal grids. Intended to be called
+        as part of ``StereographicPlot.wulff_net()``
+
+        Parameters
+        ----------
+        lat_resolution
+            minor latitudinal grid resolution in degrees.
+            This can also be set upon initialization of the axes by
+            passing ``lat_resolution`` to ``subplot_kw``.
+
+        lat_resolution_major
+            major latitudinal grid resolution in degrees.
+            This can also be set upon initialization of the axes by
+            passing ``lat_resolution_major`` to ``subplot_kw``.
+            If 0, no major grid lines will be added.
+
+        lat_major_minor_ratio
+            ratio between the thickness of the major and minor grid lines.
+
+        """
+        # overwrite defaults, which essentially saves the values so future calls
+        # of "self.wulff_net() turn the newly defined grid on and off, instead of
+        # defaulting to the original values.
+        if lat_resolution is not None:
+            self._lat_resolution = lat_resolution
+        if lat_resolution_major is not None:
+            self._lat_resolution_major = lat_resolution_major
+
+        # remove previous lat grids if they exist
+        exists, index = self._has_collection("sa_lat_grid_major", self.collections)
+        if exists:
+            self.collections[index].remove()
+        exists, index = self._has_collection("sa_lat_grid", self.collections)
+        if exists:
+            self.collections[index].remove()
+
+        # create property dictionaries for both major and minor axes
+        kwargs = dict(
+            linewidth=rcParams["grid.linewidth"],
+            linestyle=rcParams["grid.linestyle"],
+            alpha=rcParams["grid.alpha"],
+            edgecolors=rcParams["grid.color"],
+            facecolors="none",
+            antialiased=True,
+            zorder=ZORDER["grid"],
+        )
+        kwargs_major = dict()
+        kwargs_major.update(kwargs)
+        kwargs_major["linewidth"] = kwargs["linewidth"] * 2
+
+        def res2latlines(res):
+            bottom = np.arange(-res, -90, -res)[::-1]
+            top = np.arange(0, 90, res)
+            ticks = np.hstack([bottom, top])
+            v_lats = Vector3d.xvector().rotate(angle=np.radians(ticks))
+            lat_deltas = np.linspace(0, np.pi, 100, True)
+            v_lines = [v.rotate([0, -1, 0], lat_deltas) for v in v_lats]
+            xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
+            return xy_lines
+
+        if self._lat_resolution_major > 0:
+            lc_major = mcollections.LineCollection(
+                res2latlines(self._lat_resolution_major),
+                label="sa_lat_grid_major",
+                **kwargs_major,
+            )
+
+        lc_minor = mcollections.LineCollection(
+            res2latlines(self._lat_resolution), label="sa_lat_grid", **kwargs
+        )
+
+        # clip the grid to the fundamental sector subsection, if one is defined
+        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
+        if has_sector:
+            if self._lat_resolution_major > 0:
+                lc_major.set_clip_path(self.patches[sector_index])
+            lc_minor.set_clip_path(self.patches[sector_index])
+        # add the collections to the plot
+        self.add_collection(lc_minor)
+        if self._lat_resolution_major > 0:
+            self.add_collection(lc_major)
+
+    def _long_grid(
+        self,
+        long_resolution: float | int | None = None,
+        long_resolution_major: float | int | None = None,
+        long_major_minor_ratio: float | int = 2,
+        wulff_net_cap: float | None = None,
+    ):
+        """Set the major and minor longitudinal grids. Intended to be called
+        as part of ``StereographicPlot.wulff_net()``
+
+        Parameters
+        ----------
+        long_resolution
+            minor longitudinal grid resolution in degrees.
+            This can also be set upon initialization of the axes by
+            passing ``laong_resolution`` to ``subplot_kw``.
+
+        long_resolution_major
+            major longitudinal grid resolution in degrees.
+            This can also be set upon initialization of the axes by
+            passing ``long_resolution_major`` to ``subplot_kw``.
+
+        long_major_minor_ratio
+            ratio between the thickness of the major and minor grid lines.
+
+        """
+        # overwrite defaults, which essentially saves the values so future calls
+        # of "self.wolf_net() turn the newly defined grid on and off, instead of
+        # defaulting to the original values.
+        if long_resolution is not None:
+            self._long_resolution = long_resolution
+        if long_resolution_major is not None:
+            self._long_resolution_major = long_resolution_major
+        if wulff_net_cap is not None:
+            self._wulff_net_cap = wulff_net_cap
+
+        # remove previous long grids if they exist
+        exists, index = self._has_collection("sa_long_grid_major", self.collections)
+        if exists:
+            self.collections[index].remove()
+        exists, index = self._has_collection("sa_long_grid", self.collections)
+        if exists:
+            self.collections[index].remove()
+
+        # create property dictionaries for both major and minor axes
+        kwargs = dict(
+            linewidth=rcParams["grid.linewidth"],
+            linestyle=rcParams["grid.linestyle"],
+            alpha=rcParams["grid.alpha"],
+            edgecolors=rcParams["grid.color"],
+            facecolors="none",
+            antialiased=True,
+            zorder=ZORDER["grid"],
+        )
+        kwargs_major = dict()
+        kwargs_major.update(kwargs)
+        kwargs_major["linewidth"] = kwargs["linewidth"] * 2
+
+        def res2llonglines(res, cap):
+            left = np.arange(90, 0 - res, -res)[::-1]
+            right = np.arange(90 + res, 180 + res, res)
+            ticks = np.hstack([left, right])
+            v_longs = Vector3d.xvector().rotate([0, 1, 0], np.radians(-ticks))
+            long_deltas = np.radians(np.linspace(90 - cap, -90 + cap, 100, True))
+            v_lines = [
+                v.rotate(v.rotate([0, 1, 0], np.pi / 2), long_deltas) for v in v_longs
+            ]
+            xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
+            return xy_lines
+
+        if self._long_resolution_major > 0:
+            lc_major = mcollections.LineCollection(
+                res2llonglines(self._long_resolution_major, self._wulff_net_cap),
+                label="sa_long_grid_major",
+                **kwargs_major,
+            )
+
+        lc_minor = mcollections.LineCollection(
+            res2llonglines(self._long_resolution, self._wulff_net_cap),
+            label="sa_long_grid",
+            **kwargs,
+        )
+
+        # clip the grid to the fundamental sector subsection, if one is defined
+        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
+        if has_sector:
+            if self._long_resolution_major > 0:
+                lc_major.set_clip_path(self.patches[sector_index])
+            lc_minor.set_clip_path(self.patches[sector_index])
+        # add the collections to the plot
+        self.add_collection(lc_minor)
+        if self._long_resolution_major > 0:
+            self.add_collection(lc_major)
+
+    # =============================================== #
+    #            Other Internal functions             #
+    # =============================================== #
+
+    @staticmethod
+    def _has_collection(label, collections):
+        labels = [c.get_label() for c in collections]
+        for i in range(len(labels)):
+            if label == labels[i]:
+                return True, i
+        return False, -1
 
     def _prepare_to_call_inherited_method(
         self,

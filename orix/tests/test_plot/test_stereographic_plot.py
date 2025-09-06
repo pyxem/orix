@@ -107,7 +107,7 @@ class TestStereographicPlot:
 
         plt.close("all")
 
-    def test_grids(self):
+    def test_stereo_grids(self):
         azimuth_res = 10
         polar_res = 15
         _, ax = plt.subplots(
@@ -133,6 +133,42 @@ class TestStereographicPlot:
         assert len(ax.collections) == 2
         assert all([coll.get_alpha() for coll in ax.collections])
 
+        plt.close("all")
+
+    def test_wulff_grids(self):
+        lat_res = 11
+        long_res = 3.431
+        _, ax = plt.subplots(
+            subplot_kw=dict(
+                projection=PROJ_NAME,
+                lat_resolution=lat_res,
+                long_resolution=long_res,
+            )
+        )
+        assert ax._lat_resolution == lat_res
+        assert ax._long_resolution == long_res
+
+        ax.wulff_net()
+        assert ax._lat_resolution == lat_res
+        assert ax._long_resolution == long_res
+
+        alpha = 0.5
+        with plt.rc_context({"grid.alpha": alpha}):
+            ax.wulff_net(lat_resolution=1, long_resolution=3, wulff_net_cap=11)
+        assert ax._azimuth_resolution == 10
+        assert ax._polar_resolution == 10
+        assert ax._lat_resolution == 1
+        assert ax._long_resolution == 3
+        assert ax._wulff_net_cap == 11
+
+        assert len(ax.collections) == 6
+        ax.stereographic_grid()
+        assert all([coll.get_alpha() for coll in ax.collections])
+        assert len(ax.collections) == 4
+        ax.wulff_net()
+        assert len(ax.collections) == 0
+        ax.wulff_net(long_resolution_major=0, lat_resolution_major=0)
+        assert len(ax.collections) == 2
         plt.close("all")
 
     def test_set_labels(self):
@@ -513,6 +549,8 @@ class TestRestrictToFundamentalSector:
         assert ax3[0].patches[1].get_label() == "sa_sector"
 
         # Ensure grid lines are clipped by sector
+        ax3[0].wulff_net(True)
+        ax3[0].wulff_net(False)
         ax3[0].stereographic_grid(False)
         ax3[0].stereographic_grid(True)
 
