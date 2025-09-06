@@ -105,6 +105,7 @@ class StereographicPlot(maxes.Axes):
         self._lat_resolution_major = lat_resolution_major
         self._long_resolution_major = long_resolution_major
         self._wulff_net_cap = wulff_net_cap
+        self._wulff_net_linewidth_ratio = 2
 
         # Custom attribute to keep track of whether grids are on or off
         self._stereographic_grid = None
@@ -651,7 +652,7 @@ class StereographicPlot(maxes.Axes):
         lat_resolution_major: float | None = None,
         long_resolution_major: float | None = None,
         wulff_net_cap: float | None = None,
-        linewidth_ratio: bool = True,
+        linewidth_ratio: float | int = 2,
     ):
         """Turn a wulff net grid on or off, and set spacing in degrees
         for the major and minor axes.
@@ -863,7 +864,7 @@ class StereographicPlot(maxes.Axes):
         self,
         lat_resolution: float | int | None = None,
         lat_resolution_major: float | int | None = None,
-        lat_major_minor_ratio: float | int = 2,
+        linewidth_ratio: float | int = 2,
     ):
         """Set the major and minor latitudinal grids. Intended to be called
         as part of ``StereographicPlot.wulff_net()``
@@ -874,14 +875,12 @@ class StereographicPlot(maxes.Axes):
             minor latitudinal grid resolution in degrees.
             This can also be set upon initialization of the axes by
             passing ``lat_resolution`` to ``subplot_kw``.
-
         lat_resolution_major
             major latitudinal grid resolution in degrees.
             This can also be set upon initialization of the axes by
             passing ``lat_resolution_major`` to ``subplot_kw``.
             If 0, no major grid lines will be added.
-
-        lat_major_minor_ratio
+        linewidth_ratio
             ratio between the thickness of the major and minor grid lines.
 
         """
@@ -892,6 +891,8 @@ class StereographicPlot(maxes.Axes):
             self._lat_resolution = lat_resolution
         if lat_resolution_major is not None:
             self._lat_resolution_major = lat_resolution_major
+        if linewidth_ratio is not None:
+            self._wulff_net_linewidth_ratio = linewidth_ratio
 
         # remove previous lat grids if they exist
         exists, index = self._has_collection("sa_lat_grid_major", self.collections)
@@ -913,7 +914,9 @@ class StereographicPlot(maxes.Axes):
         )
         kwargs_major = dict()
         kwargs_major.update(kwargs)
-        kwargs_major["linewidth"] = kwargs["linewidth"] * 2
+        kwargs_major["linewidth"] = (
+            kwargs["linewidth"] * self._wulff_net_linewidth_ratio
+        )
 
         def res2latlines(res):
             bottom = np.arange(-res, -90, -res)[::-1]
@@ -951,7 +954,7 @@ class StereographicPlot(maxes.Axes):
         self,
         long_resolution: float | int | None = None,
         long_resolution_major: float | int | None = None,
-        long_major_minor_ratio: float | int = 2,
+        linewidth_ratio: float | int = 2,
         wulff_net_cap: float | None = None,
     ):
         """Set the major and minor longitudinal grids. Intended to be called
@@ -963,13 +966,11 @@ class StereographicPlot(maxes.Axes):
             minor longitudinal grid resolution in degrees.
             This can also be set upon initialization of the axes by
             passing ``laong_resolution`` to ``subplot_kw``.
-
         long_resolution_major
             major longitudinal grid resolution in degrees.
             This can also be set upon initialization of the axes by
             passing ``long_resolution_major`` to ``subplot_kw``.
-
-        long_major_minor_ratio
+        linewidth_ratio
             ratio between the thickness of the major and minor grid lines.
 
         """
@@ -980,6 +981,8 @@ class StereographicPlot(maxes.Axes):
             self._long_resolution = long_resolution
         if long_resolution_major is not None:
             self._long_resolution_major = long_resolution_major
+        if linewidth_ratio is not None:
+            self._wulff_net_linewidth_ratio = linewidth_ratio
         if wulff_net_cap is not None:
             self._wulff_net_cap = wulff_net_cap
 
@@ -1003,7 +1006,9 @@ class StereographicPlot(maxes.Axes):
         )
         kwargs_major = dict()
         kwargs_major.update(kwargs)
-        kwargs_major["linewidth"] = kwargs["linewidth"] * 2
+        kwargs_major["linewidth"] = (
+            kwargs["linewidth"] * self._wulff_net_linewidth_ratio
+        )
 
         def res2llonglines(res, cap):
             left = np.arange(90, 0 - res, -res)[::-1]
