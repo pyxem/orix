@@ -704,8 +704,10 @@ class StereographicPlot(maxes.Axes):
             or show_grid is True
         ):
             # if so, plot them
-            self._lat_grid(lat_resolution, lat_resolution_major, linewidth_ratio)
-            self._long_grid(
+            self._latitudinal_grid(
+                lat_resolution, lat_resolution_major, linewidth_ratio
+            )
+            self._longitudinal_grid(
                 long_resolution, long_resolution_major, linewidth_ratio, wulff_net_cap
             )
             self._wulff_net_grid = True
@@ -755,9 +757,8 @@ class StereographicPlot(maxes.Axes):
         # TODO: Find a way to control padding, so that markers aren't
         #  clipped
 
-    # =============================================== #
-    #      Internal functions for creating grids      #
-    # =============================================== #
+    # ----------- Internal functions for controlling grids ----------- #
+
     def _azimuth_grid(self, resolution: float | None = None) -> None:
         """Set the azimuth grid resolution in degrees.
 
@@ -860,7 +861,7 @@ class StereographicPlot(maxes.Axes):
             circles_collection.set_clip_path(self.patches[sector_index])
         self.add_collection(circles_collection)
 
-    def _lat_grid(
+    def _latitudinal_grid(
         self,
         lat_resolution: float | int | None = None,
         lat_resolution_major: float | int | None = None,
@@ -951,7 +952,7 @@ class StereographicPlot(maxes.Axes):
         if self._lat_resolution_major > 0:
             self.add_collection(lc_major)
 
-    def _long_grid(
+    def _longitudinal_grid(
         self,
         long_resolution: float | int | None = None,
         long_resolution_major: float | int | None = None,
@@ -1048,9 +1049,7 @@ class StereographicPlot(maxes.Axes):
         if self._long_resolution_major > 0:
             self.add_collection(lc_major)
 
-    # =============================================== #
-    #            Other Internal functions             #
-    # =============================================== #
+    # -------------------- Other internal methods -------------------- #
 
     @staticmethod
     def _has_collection(label, collections):
