@@ -139,7 +139,7 @@ class StereographicPlot(maxes.Axes):
                 radius=1,
                 facecolor="none",
                 edgecolor="k",
-                label="sa_circle",
+                label=self._get_label("border"),
                 zorder=ZORDER["border"],
             )
         )
@@ -536,12 +536,12 @@ class StereographicPlot(maxes.Axes):
                 kwargs.setdefault(k, v)
             patch = mpatches.PathPatch(
                 mpath.Path(np.column_stack([x, y]), closed=True),
-                label="sa_sector",
+                label=self._get_label("sector"),
                 **kwargs,
             )
             self.add_patch(patch)
             self.set_clip_path(patch)
-            labels = ["sa_azimuth_grid", "sa_polar_grid"]
+            labels = [self._get_label("azimuth_grid"), self._get_label("polar_grid")]
             for c in self.collections:
                 if c.get_label() in labels:
                     c.set_clip_path(patch)
@@ -631,10 +631,10 @@ class StereographicPlot(maxes.Axes):
         elif show_grid in [None, False] and self._stereographic_grid is True:
             # Remove grid
             has_azimuth, index_azimuth = self._has_collection(
-                "sa_azimuth_grid", self.collections
+                self._get_label("azimuth_grid"), self.collections
             )
             has_polar, index_polar = self._has_collection(
-                "sa_polar_grid", self.collections
+                self._get_label("polar_grid"), self.collections
             )
             if has_azimuth:
                 if index_polar > index_azimuth:
@@ -711,10 +711,10 @@ class StereographicPlot(maxes.Axes):
             self._wulff_net_grid = True
         elif show_grid in [None, False] and self._wulff_net_grid is True:
             for query in [
-                "sa_lat_grid",
-                "sa_lat_grid_major",
-                "sa_long_grid",
-                "sa_long_grid_major",
+                self._get_label("latitudinal_grid"),
+                self._get_label("latitudinal_grid_major"),
+                self._get_label("longitudinal_grid"),
+                self._get_label("longitudinal_grid_major"),
             ]:
                 has, idx = self._has_collection(query, self.collections)
                 if has:
@@ -792,13 +792,15 @@ class StereographicPlot(maxes.Axes):
             zorder=ZORDER["grid"],
         )
 
-        label = "sa_azimuth_grid"
+        label = self._get_label("azimuth_grid")
         lines = np.stack(((x_start, x_end), (y_start, y_end))).T
         lines_collection = mcollections.LineCollection(lines, label=label, **kwargs)
         has_collection, index = self._has_collection(label, self.collections)
         if has_collection:
             self.collections[index].remove()
-        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
+        has_sector, sector_index = self._has_collection(
+            self._get_label("sector"), self.patches
+        )
         if has_sector:
             lines_collection.set_clip_path(self.patches[sector_index])
         self.add_collection(lines_collection)
@@ -842,7 +844,7 @@ class StereographicPlot(maxes.Axes):
         circles = []
         for r in radii:
             circles.append(mpatches.Circle(radius=r, **kwargs))
-        label = "sa_polar_grid"
+        label = self._get_label("polar_grid")
         circles_collection = mcollections.PatchCollection(
             circles,
             label=label,
@@ -853,7 +855,9 @@ class StereographicPlot(maxes.Axes):
         has_collection, index = self._has_collection(label, self.collections)
         if has_collection:
             self.collections[index].remove()
-        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
+        has_sector, sector_index = self._has_collection(
+            self._get_label("sector"), self.patches
+        )
         if has_sector:
             circles_collection.set_clip_path(self.patches[sector_index])
         self.add_collection(circles_collection)
@@ -891,11 +895,13 @@ class StereographicPlot(maxes.Axes):
             self._wulff_net_linewidth_ratio = linewidth_ratio
 
         has_collection, index = self._has_collection(
-            "sa_lat_grid_major", self.collections
+            self._get_label("latitudinal_grid_major"), self.collections
         )
         if has_collection:
             self.collections[index].remove()
-        has_collection, index = self._has_collection("sa_lat_grid", self.collections)
+        has_collection, index = self._has_collection(
+            self._get_label("latitudinal_grid"), self.collections
+        )
         if has_collection:
             self.collections[index].remove()
 
@@ -914,20 +920,24 @@ class StereographicPlot(maxes.Axes):
             return xy_lines
 
         lc_minor = mcollections.LineCollection(
-            res2latlines(self._lat_resolution), label="sa_lat_grid", **kwargs_minor
+            res2latlines(self._lat_resolution),
+            label=self._get_label("latitudinal_grid"),
+            **kwargs_minor,
         )
 
         lc_major: None | mcollections.LineCollection = None
         if self._lat_resolution_major > 0:
             lc_major = mcollections.LineCollection(
                 res2latlines(self._lat_resolution_major),
-                label="sa_lat_grid_major",
+                label=self._get_label("latitudinal_grid_major"),
                 **kwargs_major,
             )
 
         # Clip the grid to the fundamental sector subsection, if one is
         # defined
-        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
+        has_sector, sector_index = self._has_collection(
+            self._get_label("sector"), self.patches
+        )
         if has_sector:
             lc_minor.set_clip_path(self.patches[sector_index])
             if lc_major is not None:
@@ -972,11 +982,13 @@ class StereographicPlot(maxes.Axes):
             self._wulff_net_cap = wulff_net_cap
 
         has_collection, index = self._has_collection(
-            "sa_long_grid_major", self.collections
+            self._get_label("longitudinal_grid_major"), self.collections
         )
         if has_collection:
             self.collections[index].remove()
-        has_collection, index = self._has_collection("sa_long_grid", self.collections)
+        has_collection, index = self._has_collection(
+            self._get_label("longitudinal_grid"), self.collections
+        )
         if has_collection:
             self.collections[index].remove()
 
@@ -998,7 +1010,7 @@ class StereographicPlot(maxes.Axes):
 
         lc_minor = mcollections.LineCollection(
             res2llonglines(self._long_resolution, self._wulff_net_cap),
-            label="sa_long_grid",
+            label=self._get_label("longitudinal_grid"),
             **kwargs_minor,
         )
 
@@ -1006,13 +1018,15 @@ class StereographicPlot(maxes.Axes):
         if self._long_resolution_major > 0:
             lc_major = mcollections.LineCollection(
                 res2llonglines(self._long_resolution_major, self._wulff_net_cap),
-                label="sa_long_grid_major",
+                label=self._get_label("longitudinal_grid_major"),
                 **kwargs_major,
             )
 
         # Clip the grid to the fundamental sector subsection, if one is
         # defined
-        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
+        has_sector, sector_index = self._has_collection(
+            self._get_label("sector"), self.patches
+        )
         if has_sector:
             lc_minor.set_clip_path(self.patches[sector_index])
             if lc_major is not None:
@@ -1023,6 +1037,10 @@ class StereographicPlot(maxes.Axes):
             self.add_collection(lc_major)
 
     # -------------------- Other internal methods -------------------- #
+
+    @staticmethod
+    def _get_label(name: str) -> str:
+        return f"_stereographic_{name}"
 
     @staticmethod
     def _has_collection(label, collections):

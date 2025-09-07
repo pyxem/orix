@@ -546,7 +546,7 @@ class TestRestrictToFundamentalSector:
         _, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
         ax3[0].restrict_to_sector(symmetry.C6.fundamental_sector)
         assert not np.allclose(vertices[:10], ax3[0].patches[0].get_verts()[:10])
-        assert ax3[0].patches[1].get_label() == "sa_sector"
+        assert ax3[0].patches[1].get_label() == "_stereographic_sector"
 
         # Ensure grid lines are clipped by sector
         ax3[0].wulff_net(True)
@@ -561,14 +561,14 @@ class TestRestrictToFundamentalSector:
         ax4.restrict_to_sector(fs)
         upper_patches4 = ax4.patches
         assert len(upper_patches4) == 2
-        assert upper_patches4[1].get_label() == "sa_sector"
+        assert upper_patches4[1].get_label() == "_stereographic_sector"
 
         _, ax5 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax5.hemisphere = "lower"
         ax5.restrict_to_sector(fs)
         lower_patches4 = ax5.patches
         assert len(lower_patches4) == 1
-        assert lower_patches4[0].get_label() == "sa_circle"
+        assert lower_patches4[0].get_label() == "_stereographic_border"
         assert np.allclose(vertices, lower_patches4[0].get_verts())
 
         # No lines are added to lower hemisphere, only the upper
@@ -611,7 +611,7 @@ class TestRestrictToFundamentalSector:
 
         ax.restrict_to_sector(symmetry.Oh.fundamental_sector, show_edges=False)
         assert len(ax.patches) == 1
-        assert ax.patches[0].get_label() == "sa_circle"
+        assert ax.patches[0].get_label() == "_stereographic_border"
 
         plt.close("all")
 
