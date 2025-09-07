@@ -17,10 +17,11 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matplotlib.projections as mprojections
 import numpy as np
 import pytest
 
-from orix import plot
+from orix.plot import format_labels, register_projections
 from orix.vector import Vector3d
 
 
@@ -60,12 +61,34 @@ class TestFormatVectorLabels:
     def test_format_vector_labels(self, kwargs, desired):
         v = Vector3d([[1, 1, 1], [-2, 0, 1], [4, 0, 0], [-4, 0, 0]])
         v = v.reshape(2, 2)
-        labels = plot.format_labels(v.data, **kwargs)
+        labels = format_labels(v.data, **kwargs)
         assert labels.shape == (2, 2)
         assert labels.flatten().tolist() == desired
 
     def test_format_vector_labels_4(self):
-        assert all(
-            plot.format_labels([[1, 2, 3, 4], [1.1, 2.2, 3.3, 4.51]])
-            == np.array(["$1234$", "$1235$"], dtype="U6")
-        )
+        labels = [[1, 2, 3, 4], [1.1, 2.2, 3.3, 4.51]]
+        formatted = format_labels(labels)
+        expected_formatted = np.array(["$1234$", "$1235$"], dtype="U6")
+        assert all(formatted == expected_formatted)
+
+
+class TestRegisterProjections:
+    def test_register_projections(self):
+        # This check only passes if our custom projections are not
+        # already registered via a side-effect by importing orix.plot:
+        #
+        # known_projections1 = mprojections.get_projection_names()
+        # assert "stereographic" not in known_projections1
+
+        register_projections()
+        known_projections2 = mprojections.get_projection_names()
+
+        custom_projections = [
+            "axangle",
+            "ipf",
+            "plot_map",
+            "rodrigues",
+            "stereographic",
+        ]
+        for proj in custom_projections:
+            assert proj in known_projections2
