@@ -654,48 +654,47 @@ class StereographicPlot(maxes.Axes):
         wulff_net_cap: float | int | None = None,
         linewidth_ratio: float | int = 2,
     ) -> None:
-        """Turn a wulff net grid on or off, and set spacing in degrees
-        for the major and minor axes.
+        """Turn a wulff net grid on or off, and set the grid resolution
+        in degrees.
 
         Parameters
         ----------
         show_grid
             Whether to show grid lines. If any keyword arguments are
-            passed, this is set to ``True``. If not given and there are
-            no keyword arguments, the grid lines are toggled.
+            passed, this is set to True. If not given and there are no
+            keyword arguments, the grid lines are toggled.
         lat_resolution
-            latitudinal (up and down) grid spacing in degrees.
-            This can also be set upon initialization of the axes by
-            passing ``lat_resolution`` to ``subplot_kw``. If none is given,
-            it will use the most recently stored value (2 degrees by default)
+            Latitudinal (up and down) grid spacing in degrees. This can
+            also be set upon initialization of the axes by passing
+            *lat_resolution* to *subplot_kw*. If not given, the
+            current resolution is used (2 degrees by default).
         long_resolution
-            longitudinal (left and right) grid spacing in degrees.
-            This can also be set upon initialization of the axes by
-            passing ``long_resolution`` to ``subplot_kw``. If none is given,
-            it will use the most recently stored value (2 degrees by default)
+            Longitudinal (left and right) grid spacing in degrees. This
+            can also be set upon initialization of the axes by passing
+            *long_resolution* to *subplot_kw*. If not given, the
+            current resolution is used (2 degrees by default).
         lat_resolution_major
-            Identical to lat_resolution, but for the major grid lines
-            (10 degree increments by default).
+            Identical to *lat_resolution*, but for the major grid lines
+            (10 degrees resolution by default).
         long_resolution_major
-            Identical to long_resolution, but for the major grid lines
-            (10 degree increments by default).
+            Identical to *long_resolution*, but for the major grid lines
+            (10 degrees resolution by default).
         wulff_net_cap
-            The angular spread of the cap around the north and south poles
-            of the plot in degrees, within which longitudinal lines are
-            not drawn. If None, the most recently stored value will be used
-            (10 degrees by default)
+            The angular spread of the cap around the north and south
+            poles of the plot in degrees, within which longitudinal
+            lines are not drawn. If not given, the current resolution is
+            used (10 degrees by default).
         linewidth_ratio
-            ratio between the thickness of the major and minor grid lines.
-            Minor grid line properties are determined by the
-            ``grid.linewidth`` parameter in matplotlib.rcParams, the same
-            way ``matplotlib.axes.Axes.grid`` objects are.
+            Ratio between the thickness of the major and minor grid
+            lines. Minor grid line properties are determined by the
+            "grid.linewidth" parameter in Matplotlib's rcParams, the
+            same way :meth:`matplotlib.axes.Axes.grid` objects are.
             Major grid lines are then set relative to the minor values.
 
         See Also
         --------
         matplotlib.axes.Axes.grid
         """
-        # check for three cases where a new grid should be plotted
         if (
             show_grid is None
             and self._wulff_net_grid in [None, False]
@@ -703,7 +702,6 @@ class StereographicPlot(maxes.Axes):
             and (lat_resolution is not None or long_resolution is not None)
             or show_grid is True
         ):
-            # if so, plot them
             self._latitudinal_grid(
                 lat_resolution, lat_resolution_major, linewidth_ratio
             )
@@ -712,7 +710,6 @@ class StereographicPlot(maxes.Axes):
             )
             self._wulff_net_grid = True
         elif show_grid in [None, False] and self._wulff_net_grid is True:
-            # Remove grid
             for query in [
                 "sa_lat_grid",
                 "sa_lat_grid_major",
