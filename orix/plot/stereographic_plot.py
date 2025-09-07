@@ -91,8 +91,8 @@ class StereographicPlot(maxes.Axes):
         polar_resolution: int | float = 10,
         lat_resolution: int | float = 2,
         long_resolution: int | float = 2,
-        lat_resolution_major: int | float | None = 10,
-        long_resolution_major: int | float | None = 10,
+        lat_resolution_major: int | float = 10,
+        long_resolution_major: int | float = 10,
         wulff_net_cap: int | float = 10,
         **kwargs,
     ) -> None:
@@ -647,13 +647,13 @@ class StereographicPlot(maxes.Axes):
     def wulff_net(
         self,
         show_grid: bool | None = None,
-        lat_resolution: float = None,
-        long_resolution: float = None,
-        lat_resolution_major: float | None = None,
-        long_resolution_major: float | None = None,
-        wulff_net_cap: float | None = None,
+        lat_resolution: float | int | None = None,
+        long_resolution: float | int | None = None,
+        lat_resolution_major: float | int | None = None,
+        long_resolution_major: float | int | None = None,
+        wulff_net_cap: float | int | None = None,
         linewidth_ratio: float | int = 2,
-    ):
+    ) -> None:
         """Turn a wulff net grid on or off, and set spacing in degrees
         for the major and minor axes.
 
@@ -865,24 +865,25 @@ class StereographicPlot(maxes.Axes):
         lat_resolution: float | int | None = None,
         lat_resolution_major: float | int | None = None,
         linewidth_ratio: float | int = 2,
-    ):
-        """Set the major and minor latitudinal grids. Intended to be called
-        as part of ``StereographicPlot.wulff_net()``
+    ) -> None:
+        """Set the major and minor latitudinal grids.
+
+        Intended to be called by :meth:`wulff_net`.
 
         Parameters
         ----------
         lat_resolution
-            minor latitudinal grid resolution in degrees.
-            This can also be set upon initialization of the axes by
-            passing ``lat_resolution`` to ``subplot_kw``.
+            Minor latitudinal grid resolution in degrees. This can also
+            be set upon initialization of the axes by passing
+            *lat_resolution* to *subplot_kw*.
         lat_resolution_major
-            major latitudinal grid resolution in degrees.
-            This can also be set upon initialization of the axes by
-            passing ``lat_resolution_major`` to ``subplot_kw``.
-            If 0, no major grid lines will be added.
+            Major latitudinal grid resolution in degrees. This can also
+            be set upon initialization of the axes by passing
+            *lat_resolution_major* to *subplot_kw*. If 0, no major grid
+            lines will be added.
         linewidth_ratio
-            ratio between the thickness of the major and minor grid lines.
-
+            Ratio between the thickness of the major and minor grid
+            lines.
         """
         # overwrite defaults, which essentially saves the values so future calls
         # of "self.wulff_net() turn the newly defined grid on and off, instead of
@@ -956,23 +957,24 @@ class StereographicPlot(maxes.Axes):
         long_resolution_major: float | int | None = None,
         linewidth_ratio: float | int = 2,
         wulff_net_cap: float | None = None,
-    ):
-        """Set the major and minor longitudinal grids. Intended to be called
-        as part of ``StereographicPlot.wulff_net()``
+    ) -> None:
+        """Set the major and minor longitudinal grids.
+
+        Intended to be called by :meth:`wulff_net`.
 
         Parameters
         ----------
         long_resolution
-            minor longitudinal grid resolution in degrees.
-            This can also be set upon initialization of the axes by
-            passing ``laong_resolution`` to ``subplot_kw``.
+            Minor longitudinal grid resolution in degrees. This can also
+            be set upon initialization of the axes by passing
+            *long_resolution* to *subplot_kw*.
         long_resolution_major
-            major longitudinal grid resolution in degrees.
-            This can also be set upon initialization of the axes by
-            passing ``long_resolution_major`` to ``subplot_kw``.
+            Major longitudinal grid resolution in degrees. This can also
+            be set upon initialization of the axes by passing
+            *long_resolution_major* to *subplot_kw*.
         linewidth_ratio
-            ratio between the thickness of the major and minor grid lines.
-
+            Ratio between the thickness of the major and minor grid
+            lines.
         """
         # overwrite defaults, which essentially saves the values so future calls
         # of "self.wolf_net() turn the newly defined grid on and off, instead of
