@@ -886,9 +886,6 @@ class StereographicPlot(maxes.Axes):
             Ratio between the thickness of the major and minor grid
             lines.
         """
-        # overwrite defaults, which essentially saves the values so future calls
-        # of "self.wulff_net() turn the newly defined grid on and off, instead of
-        # defaulting to the original values.
         if lat_resolution is not None:
             self._lat_resolution = lat_resolution
         if lat_resolution_major is not None:
@@ -896,28 +893,17 @@ class StereographicPlot(maxes.Axes):
         if linewidth_ratio is not None:
             self._wulff_net_linewidth_ratio = linewidth_ratio
 
-        # remove previous lat grids if they exist
-        exists, index = self._has_collection("sa_lat_grid_major", self.collections)
-        if exists:
+        has_collection, index = self._has_collection(
+            "sa_lat_grid_major", self.collections
+        )
+        if has_collection:
             self.collections[index].remove()
-        exists, index = self._has_collection("sa_lat_grid", self.collections)
-        if exists:
+        has_collection, index = self._has_collection("sa_lat_grid", self.collections)
+        if has_collection:
             self.collections[index].remove()
 
-        # create property dictionaries for both major and minor axes
-        kwargs = dict(
-            linewidth=rcParams["grid.linewidth"],
-            linestyle=rcParams["grid.linestyle"],
-            alpha=rcParams["grid.alpha"],
-            edgecolors=rcParams["grid.color"],
-            facecolors="none",
-            antialiased=True,
-            zorder=ZORDER["grid"],
-        )
-        kwargs_major = dict()
-        kwargs_major.update(kwargs)
-        kwargs_major["linewidth"] = (
-            kwargs["linewidth"] * self._wulff_net_linewidth_ratio
+        kwargs_minor, kwargs_major = _get_kwargs_for_wulff_net_grids(
+            self._wulff_net_linewidth_ratio
         )
 
         def res2latlines(res):
@@ -930,6 +916,11 @@ class StereographicPlot(maxes.Axes):
             xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
             return xy_lines
 
+        lc_minor = mcollections.LineCollection(
+            res2latlines(self._lat_resolution), label="sa_lat_grid", **kwargs_minor
+        )
+
+        lc_major: None | mcollections.LineCollection = None
         if self._lat_resolution_major > 0:
             lc_major = mcollections.LineCollection(
                 res2latlines(self._lat_resolution_major),
@@ -937,19 +928,16 @@ class StereographicPlot(maxes.Axes):
                 **kwargs_major,
             )
 
-        lc_minor = mcollections.LineCollection(
-            res2latlines(self._lat_resolution), label="sa_lat_grid", **kwargs
-        )
-
-        # clip the grid to the fundamental sector subsection, if one is defined
+        # Clip the grid to the fundamental sector subsection, if one is
+        # defined
         has_sector, sector_index = self._has_collection("sa_sector", self.patches)
         if has_sector:
-            if self._lat_resolution_major > 0:
-                lc_major.set_clip_path(self.patches[sector_index])
             lc_minor.set_clip_path(self.patches[sector_index])
-        # add the collections to the plot
+            if lc_major is not None:
+                lc_major.set_clip_path(self.patches[sector_index])
+
         self.add_collection(lc_minor)
-        if self._lat_resolution_major > 0:
+        if lc_major is not None:
             self.add_collection(lc_major)
 
     def _longitudinal_grid(
@@ -977,9 +965,6 @@ class StereographicPlot(maxes.Axes):
             Ratio between the thickness of the major and minor grid
             lines.
         """
-        # overwrite defaults, which essentially saves the values so future calls
-        # of "self.wolf_net() turn the newly defined grid on and off, instead of
-        # defaulting to the original values.
         if long_resolution is not None:
             self._long_resolution = long_resolution
         if long_resolution_major is not None:
@@ -989,28 +974,17 @@ class StereographicPlot(maxes.Axes):
         if wulff_net_cap is not None:
             self._wulff_net_cap = wulff_net_cap
 
-        # remove previous long grids if they exist
-        exists, index = self._has_collection("sa_long_grid_major", self.collections)
-        if exists:
+        has_collection, index = self._has_collection(
+            "sa_long_grid_major", self.collections
+        )
+        if has_collection:
             self.collections[index].remove()
-        exists, index = self._has_collection("sa_long_grid", self.collections)
-        if exists:
+        has_collection, index = self._has_collection("sa_long_grid", self.collections)
+        if has_collection:
             self.collections[index].remove()
 
-        # create property dictionaries for both major and minor axes
-        kwargs = dict(
-            linewidth=rcParams["grid.linewidth"],
-            linestyle=rcParams["grid.linestyle"],
-            alpha=rcParams["grid.alpha"],
-            edgecolors=rcParams["grid.color"],
-            facecolors="none",
-            antialiased=True,
-            zorder=ZORDER["grid"],
-        )
-        kwargs_major = dict()
-        kwargs_major.update(kwargs)
-        kwargs_major["linewidth"] = (
-            kwargs["linewidth"] * self._wulff_net_linewidth_ratio
+        kwargs_minor, kwargs_major = _get_kwargs_for_wulff_net_grids(
+            self._wulff_net_linewidth_ratio
         )
 
         def res2llonglines(res, cap):
@@ -1025,6 +999,13 @@ class StereographicPlot(maxes.Axes):
             xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
             return xy_lines
 
+        lc_minor = mcollections.LineCollection(
+            res2llonglines(self._long_resolution, self._wulff_net_cap),
+            label="sa_long_grid",
+            **kwargs_minor,
+        )
+
+        lc_major: None | mcollections.LineCollection = None
         if self._long_resolution_major > 0:
             lc_major = mcollections.LineCollection(
                 res2llonglines(self._long_resolution_major, self._wulff_net_cap),
@@ -1032,21 +1013,16 @@ class StereographicPlot(maxes.Axes):
                 **kwargs_major,
             )
 
-        lc_minor = mcollections.LineCollection(
-            res2llonglines(self._long_resolution, self._wulff_net_cap),
-            label="sa_long_grid",
-            **kwargs,
-        )
-
-        # clip the grid to the fundamental sector subsection, if one is defined
+        # Clip the grid to the fundamental sector subsection, if one is
+        # defined
         has_sector, sector_index = self._has_collection("sa_sector", self.patches)
         if has_sector:
-            if self._long_resolution_major > 0:
-                lc_major.set_clip_path(self.patches[sector_index])
             lc_minor.set_clip_path(self.patches[sector_index])
-        # add the collections to the plot
+            if lc_major is not None:
+                lc_major.set_clip_path(self.patches[sector_index])
+
         self.add_collection(lc_minor)
-        if self._long_resolution_major > 0:
+        if lc_major is not None:
             self.add_collection(lc_major)
 
     # -------------------- Other internal methods -------------------- #
@@ -1254,3 +1230,21 @@ def _order_in_hemisphere(polar: np.ndarray, pole: int) -> np.ndarray | None:
         order = np.roll(order, shift=-(indices[-1] + 1))
 
     return order
+
+
+def _get_kwargs_for_wulff_net_grids(
+    linewidth_ratio: float,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    kwargs_minor = {
+        "linewidth": rcParams["grid.linewidth"],
+        "linestyle": rcParams["grid.linestyle"],
+        "alpha": rcParams["grid.alpha"],
+        "edgecolors": rcParams["grid.color"],
+        "facecolors": "none",
+        "antialiased": True,
+        "zorder": ZORDER["grid"],
+    }
+    kwargs_major = {}
+    kwargs_major.update(kwargs_minor)
+    kwargs_major["linewidth"] = kwargs_minor["linewidth"] * linewidth_ratio
+    return kwargs_minor, kwargs_major
