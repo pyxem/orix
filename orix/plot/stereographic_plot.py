@@ -624,7 +624,7 @@ class StereographicPlot(maxes.Axes):
             or show_grid is None
             and (azimuth_resolution is not None or polar_resolution is not None)
             or show_grid is True
-        ) and hasattr(self, "patch"):
+        ):
             self._azimuth_grid(azimuth_resolution)
             self._polar_grid(polar_resolution)
             self._stereographic_grid = True
@@ -702,7 +702,7 @@ class StereographicPlot(maxes.Axes):
             or show_grid is None
             and (lat_resolution is not None or long_resolution is not None)
             or show_grid is True
-        ) and hasattr(self, "patch"):
+        ):
             # if so, plot them
             self._lat_grid(lat_resolution, lat_resolution_major, linewidth_ratio)
             self._long_grid(
