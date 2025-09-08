@@ -89,27 +89,23 @@ class StereographicPlot(maxes.Axes):
         hemisphere: str = "upper",
         azimuth_resolution: int | float = 10,
         polar_resolution: int | float = 10,
-        lat_resolution: int | float = 2,
-        long_resolution: int | float = 2,
-        lat_resolution_major: int | float = 10,
-        long_resolution_major: int | float = 10,
-        wulff_net_cap: int | float = 10,
         **kwargs,
     ) -> None:
         """Create an axis for plotting :class:`~orix.vector.Vector3d`."""
         self.hemisphere = hemisphere
-        self._azimuth_resolution = azimuth_resolution
-        self._polar_resolution = polar_resolution
-        self._lat_resolution = lat_resolution
-        self._long_resolution = long_resolution
-        self._lat_resolution_major = lat_resolution_major
-        self._long_resolution_major = long_resolution_major
-        self._wulff_net_cap = wulff_net_cap
-        self._wulff_net_linewidth_ratio = 2
 
-        # Custom attribute to keep track of whether grids are on or off
+        # Custom attributes to keep track of whether grids are on or off,
+        # as well as the spacings to use when drawing them.
         self._stereographic_grid = None
         self._wulff_net_grid = None
+        self._azimuth_resolution = azimuth_resolution
+        self._polar_resolution = polar_resolution
+        self._lat_resolution = 2
+        self._long_resolution = 2
+        self._lat_resolution_major = 10
+        self._long_resolution_major = 10
+        self._wulff_net_cap = 10
+        self._wulff_net_linewidth_ratio = 2
 
         super().__init__(*args, **kwargs)
 
@@ -664,15 +660,12 @@ class StereographicPlot(maxes.Axes):
             passed, this is set to True. If not given and there are no
             keyword arguments, the grid lines are toggled.
         lat_resolution
-            Latitudinal (up and down) grid spacing in degrees. This can
-            also be set upon initialization of the axes by passing
-            *lat_resolution* to *subplot_kw*. If not given, the
-            current resolution is used (2 degrees by default).
+            Latitudinal (up and down) grid spacing in degrees.If not
+            given, the current resolution is used (2 degrees by default).
         long_resolution
-            Longitudinal (left and right) grid spacing in degrees. This
-            can also be set upon initialization of the axes by passing
-            *long_resolution* to *subplot_kw*. If not given, the
-            current resolution is used (2 degrees by default).
+            Longitudinal (left and right) grid spacing in degrees. If
+            not given, the current resolution is used (2 degrees by
+            default).
         lat_resolution_major
             Identical to *lat_resolution*, but for the major grid lines
             (10 degrees resolution by default).
@@ -875,14 +868,10 @@ class StereographicPlot(maxes.Axes):
         Parameters
         ----------
         lat_resolution
-            Minor latitudinal grid resolution in degrees. This can also
-            be set upon initialization of the axes by passing
-            *lat_resolution* to *subplot_kw*.
+            Minor latitudinal grid resolution in degrees.
         lat_resolution_major
-            Major latitudinal grid resolution in degrees. This can also
-            be set upon initialization of the axes by passing
-            *lat_resolution_major* to *subplot_kw*. If 0, no major grid
-            lines will be added.
+            Major latitudinal grid resolution in degrees. If 0, no
+            major grid lines will be added.
         linewidth_ratio
             Ratio between the thickness of the major and minor grid
             lines.
@@ -961,13 +950,10 @@ class StereographicPlot(maxes.Axes):
         Parameters
         ----------
         long_resolution
-            Minor longitudinal grid resolution in degrees. This can also
-            be set upon initialization of the axes by passing
-            *long_resolution* to *subplot_kw*.
+            Minor longitudinal grid resolution in degrees.
         long_resolution_major
-            Major longitudinal grid resolution in degrees. This can also
-            be set upon initialization of the axes by passing
-            *long_resolution_major* to *subplot_kw*.
+            Major longitudinal grid resolution in degrees. If 0, no
+            major grid lines will be added.
         linewidth_ratio
             Ratio between the thickness of the major and minor grid
             lines.
