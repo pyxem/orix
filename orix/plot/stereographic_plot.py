@@ -898,18 +898,20 @@ class StereographicPlot(maxes.Axes):
             self._wulff_net_linewidth_ratio
         )
 
-        def res2latlines(res):
+        def res2latlines(res, rotation_pole):
             bottom = np.arange(-res, -90, -res)[::-1]
             top = np.arange(0, 90, res)
             ticks = np.hstack([bottom, top])
             v_lats = Vector3d.xvector().rotate(angle=np.radians(ticks))
             lat_deltas = np.linspace(0, np.pi, 100, True)
-            v_lines = [v.rotate([0, -1, 0], lat_deltas) for v in v_lats]
+            v_lines = [v.rotate(rotation_pole, lat_deltas) for v in v_lats]
             xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
             return xy_lines
 
+        rotation_pole = [0, self.pole, 0]
+
         lc_minor = mcollections.LineCollection(
-            res2latlines(self._lat_resolution),
+            res2latlines(self._lat_resolution, rotation_pole),
             label=self._get_label("latitudinal_grid"),
             **kwargs_minor,
         )
@@ -917,7 +919,7 @@ class StereographicPlot(maxes.Axes):
         lc_major: None | mcollections.LineCollection = None
         if self._lat_resolution_major > 0:
             lc_major = mcollections.LineCollection(
-                res2latlines(self._lat_resolution_major),
+                res2latlines(self._lat_resolution_major, rotation_pole),
                 label=self._get_label("latitudinal_grid_major"),
                 **kwargs_major,
             )
@@ -982,11 +984,11 @@ class StereographicPlot(maxes.Axes):
             self._wulff_net_linewidth_ratio
         )
 
-        def res2llonglines(res, cap):
+        def res2llonglines(res, cap, rotation_pole):
             left = np.arange(90, 0 - res, -res)[::-1]
             right = np.arange(90 + res, 180 + res, res)
             ticks = np.hstack([left, right])
-            v_longs = Vector3d.xvector().rotate([0, 1, 0], np.radians(-ticks))
+            v_longs = Vector3d.xvector().rotate(rotation_pole, np.radians(-ticks))
             long_deltas = np.radians(np.linspace(90 - cap, -90 + cap, 100, True))
             v_lines = [
                 v.rotate(v.rotate([0, 1, 0], np.pi / 2), long_deltas) for v in v_longs
@@ -994,8 +996,9 @@ class StereographicPlot(maxes.Axes):
             xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
             return xy_lines
 
+        rotation_pole = [0, -self.pole, 0]
         lc_minor = mcollections.LineCollection(
-            res2llonglines(self._long_resolution, self._wulff_net_cap),
+            res2llonglines(self._long_resolution, self._wulff_net_cap, rotation_pole),
             label=self._get_label("longitudinal_grid"),
             **kwargs_minor,
         )
@@ -1003,7 +1006,9 @@ class StereographicPlot(maxes.Axes):
         lc_major: None | mcollections.LineCollection = None
         if self._long_resolution_major > 0:
             lc_major = mcollections.LineCollection(
-                res2llonglines(self._long_resolution_major, self._wulff_net_cap),
+                res2llonglines(
+                    self._long_resolution_major, self._wulff_net_cap, rotation_pole
+                ),
                 label=self._get_label("longitudinal_grid_major"),
                 **kwargs_major,
             )

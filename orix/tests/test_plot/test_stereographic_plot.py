@@ -141,14 +141,10 @@ class TestStereographicPlot:
         _, ax = plt.subplots(
             subplot_kw=dict(
                 projection=PROJ_NAME,
-                lat_resolution=lat_res,
-                long_resolution=long_res,
             )
         )
-        assert ax._lat_resolution == lat_res
-        assert ax._long_resolution == long_res
 
-        ax.wulff_net()
+        ax.wulff_net(True, lat_res, long_res)
         assert ax._lat_resolution == lat_res
         assert ax._long_resolution == long_res
 
@@ -170,6 +166,22 @@ class TestStereographicPlot:
         ax.wulff_net(long_resolution_major=0, lat_resolution_major=0)
         assert len(ax.collections) == 2
         plt.close("all")
+
+        # Check the grids plot appropriately for both hemispheres.
+        fig, ax = fig, ax = plt.subplots(
+            1, 2, subplot_kw=dict(projection="stereographic")
+        )
+        ax[0].hemisphere = "upper"
+        ax[1].hemisphere = "lower"
+        ax[0].wulff_net()
+        ax[1].wulff_net()
+        for axis in ax:
+            for c in axis.collections:
+                if "lat" in c.get_label() and "major" in c.get_label():
+                    equator = c.get_paths()[8].vertices
+                    max_delta = np.abs(np.max(equator[1:, 0] - equator[:-1, 0]))
+                    # if the maximum spacing is too big, the projection is wrong
+                    assert max_delta < 0.1
 
     def test_set_labels(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
