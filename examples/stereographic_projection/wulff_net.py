@@ -21,40 +21,50 @@
 Wulff net
 =========
 
-This example shows how to draw a Wulff net in the stereographic projection with great
-and small circles.
+Some examples for how a Wulff net can be added to any stereographic plot in
+ORIX.
 """
 
+import matplotlib.collections as mcollctions
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import plot
-from orix.vector import Vector3d
-
-n = int(90 / 2)  # Degree / net resolution
-steps = 500
-kwargs = dict(linewidth=0.25, color="k")
-
-polar = np.linspace(0, 0.5 * np.pi, num=n)
-v_right = Vector3d.from_polar(azimuth=np.zeros(n), polar=polar)
-v_left = Vector3d.from_polar(azimuth=np.ones(n) * np.pi, polar=polar)
-v010 = Vector3d.zero(shape=(n,))
-v010.y = 1
-v010_opposite = -v010
+from orix.plot import StereographicPlot
+from orix.quaternion.symmetry import C6
+from orix.vector.vector3d import Vector3d
 
 fig, ax = plt.subplots(
-    figsize=(5, 5), subplot_kw=dict(projection="stereographic"), layout="tight"
+    figsize=[6, 4], nrows=1, ncols=2, subplot_kw=dict(projection="stereographic")
 )
-ax.stereographic_grid(False)
-ax.draw_circle(v_right, steps=steps, **kwargs)
-ax.draw_circle(v_left, steps=steps, **kwargs)
-ax.draw_circle(v010, opening_angle=polar, steps=steps, **kwargs)
-ax.draw_circle(v010_opposite, opening_angle=polar, steps=steps, **kwargs)
-for label, azimuth, va, ha, offset in zip(
-    ["B", "M''", "A", "M'"],
-    np.array([0, 0.5, 1, 1.5]) * np.pi,
-    ["center", "bottom", "center", "top"],
-    ["left", "center", "right", "center"],
-    [(0.02, 0), (0, 0.02), (-0.02, 0), (0, -0.02)],
-):
-    ax.text(azimuth, 0.5 * np.pi, s=label, offset=offset, c="r", va=va, ha=ha)
+
+# display a standard Wulff net with 2 degree minor markers and 10 degree
+# major markers, with 10 degree caps at the tops and bottoms.
+ax[0].wulff_net()
+
+# The grid spacing can also be changed or turned on and off, similar to ax.grid
+# in matplotlib. Here, the latitudinal grid is set to 3 degrees (15 degrees for
+# major grid lines), and the longitudinal to 9 degrees (45 degrees for major grid
+# lines)
+
+ax[1].wulff_net(True, 3, 9, 15, 45, 15)
+# Turn it off
+ax[0].wulff_net()
+# Then turn it back on, with the previously defined grid spacing saved.
+ax[0].wulff_net()
+ax[0].set_title("Standard")
+ax[1].set_title("Custom")
+plt.tight_layout()
+
+# This also works for subsections, such as fundamental sectors.
+fig = plt.figure()
+ax = fig.add_subplot(projection="stereographic")
+ax.restrict_to_sector(C6.fundamental_sector)
+ax.wulff_net()
+# Add some manual labels. the XY coordinates can be set by using either a single
+# vector, or a polar-azimuth pair. Both methods are showb below for a 6-fold
+# crystal.
+ax.text(Vector3d([0, 0, 1]), s="[001]", offset=[0, -0.04], c="r")
+ax.text(Vector3d([1, 0, 0]).unit, s="[100]", offset=[0, -0.04], c="g")
+ax.text(np.pi / 3, np.pi / 2, s="[010]", offset=[-0, 0], c="b")
+ax.set_title("C6 symmetry\n\n")
+plt.tight_layout()
