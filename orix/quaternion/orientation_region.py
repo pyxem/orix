@@ -20,15 +20,14 @@
 from __future__ import annotations
 
 import itertools
-from typing import Tuple
 
 import numpy as np
 
 from orix import constants
-from orix.quaternion import Quaternion
+from orix.quaternion.quaternion import Quaternion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, get_distinguished_points
-from orix.vector import Rodrigues
+from orix.vector.neo_euler import Rodrigues
 
 
 def _get_large_cell_normals(s1, s2):
@@ -57,7 +56,7 @@ def _get_large_cell_normals(s1, s2):
     return normals
 
 
-def get_proper_groups(Gl: Symmetry, Gr: Symmetry) -> Tuple[Symmetry, Symmetry]:
+def get_proper_groups(Gl: Symmetry, Gr: Symmetry) -> tuple[Symmetry, Symmetry]:
     """Return the appropriate groups for the asymmetric domain
     calculation.
 
@@ -190,7 +189,7 @@ class OrientationRegion(Rotation):
         surface = np.any(np.isclose(r.dot_outer(self), 0), axis=1)
         return r[surface]
 
-    def faces(self) -> list:
+    def faces(self) -> list[Rotation]:
         normals = Rotation(self)
         vertices = self.vertices()
         faces = []

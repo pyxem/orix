@@ -135,6 +135,10 @@ class TestUniformSO3:
         x, y = lower.size * 8, sample.size
         assert np.isclose(x, y, rtol=0.05)
 
+    def test_uniform_so3_sampling_raises(self):
+        with pytest.raises(ValueError, match="Unknown SO3 sampling method 'abc'"):
+            uniform_SO3_sample(8, "abc")
+
 
 class TestGetSampleLocal:
     @pytest.mark.parametrize(

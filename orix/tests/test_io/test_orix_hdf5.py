@@ -40,7 +40,6 @@ from orix.io.plugins.orix_hdf5 import (
     phaselist2dict,
     structure2dict,
 )
-from orix.tests.io.test_io import assert_dictionaries_are_equal
 
 
 class TestOrixHDF5Plugin:
@@ -90,7 +89,7 @@ class TestOrixHDF5Plugin:
                     dictionary={"a": [np.array(24.5)], "c": set()}, group=group
                 )
 
-    def test_crystalmap2dict(self, crystal_map_input):
+    def test_crystalmap2dict(self, crystal_map_input, assert_equal_dictionaries_func):
         xmap = CrystalMap(**crystal_map_input)
         xmap_dict = crystalmap2dict(xmap)
 
@@ -98,26 +97,26 @@ class TestOrixHDF5Plugin:
         cm_dict2 = crystalmap2dict(xmap, dictionary=this_dict)
 
         cm_dict2.pop("hello")
-        assert_dictionaries_are_equal(xmap_dict, cm_dict2)
+        assert_equal_dictionaries_func(xmap_dict, cm_dict2)
 
         assert np.allclose(xmap_dict["data"]["x"], crystal_map_input["x"])
         assert xmap_dict["header"]["y_step"] == xmap.dy
 
-    def test_phaselist2dict(self, phase_list):
+    def test_phaselist2dict(self, phase_list, assert_equal_dictionaries_func):
         pl_dict = phaselist2dict(phase_list)
         this_dict = {"hello": "there"}
         this_dict = phaselist2dict(phase_list, dictionary=this_dict)
         this_dict.pop("hello")
 
-        assert_dictionaries_are_equal(pl_dict, this_dict)
+        assert_equal_dictionaries_func(pl_dict, this_dict)
 
-    def test_phase2dict(self, phase_list):
+    def test_phase2dict(self, phase_list, assert_equal_dictionaries_func):
         phase_dict = phase2dict(phase_list[0])
         this_dict = {"hello": "there"}
         this_dict = phase2dict(phase_list[0], dictionary=this_dict)
         this_dict.pop("hello")
 
-        assert_dictionaries_are_equal(phase_dict, this_dict)
+        assert_equal_dictionaries_func(phase_dict, this_dict)
 
     def test_phase2dict_spacegroup(self):
         """Space group is written to dict as an int or "None"."""
@@ -135,7 +134,7 @@ class TestOrixHDF5Plugin:
         phase_dict3 = phase2dict(phase)
         assert phase_dict3["space_group"] == "None"
 
-    def test_structure2dict(self, phase_list):
+    def test_structure2dict(self, phase_list, assert_equal_dictionaries_func):
         structure = phase_list[0].structure
         structure_dict = structure2dict(structure)
         this_dict = {"hello": "there"}
@@ -146,18 +145,18 @@ class TestOrixHDF5Plugin:
         lattice2 = this_dict["lattice"]
         assert np.allclose(lattice1["abcABG"], lattice2["abcABG"])
         assert np.allclose(lattice1["baserot"], lattice2["baserot"])
-        assert_dictionaries_are_equal(structure_dict["atoms"], this_dict["atoms"])
+        assert_equal_dictionaries_func(structure_dict["atoms"], this_dict["atoms"])
 
-    def test_file_reader(self, crystal_map, tmp_path):
+    def test_file_reader(self, tmp_path, crystal_map, assert_equal_dictionaries_func):
         fname = tmp_path / "test.h5"
 
         oio.save(filename=fname, object2write=crystal_map)
         xmap2 = oio.load(filename=fname)
-        assert_dictionaries_are_equal(crystal_map.__dict__, xmap2.__dict__)
+        assert_equal_dictionaries_func(crystal_map.__dict__, xmap2.__dict__)
 
-    def test_dict2crystalmap(self, crystal_map):
+    def test_dict2crystalmap(self, crystal_map, assert_equal_dictionaries_func):
         xmap2 = dict2crystalmap(crystalmap2dict(crystal_map))
-        assert_dictionaries_are_equal(crystal_map.__dict__, xmap2.__dict__)
+        assert_equal_dictionaries_func(crystal_map.__dict__, xmap2.__dict__)
 
     def test_dict2phaselist(self, phase_list):
         phase_list2 = dict2phaselist(phaselist2dict(phase_list))

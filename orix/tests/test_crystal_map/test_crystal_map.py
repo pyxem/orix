@@ -952,18 +952,16 @@ class TestCrystalMapRepresentation:
 
         assert repr(xmap[xmap.phase_id == -1]) == "No data."
 
+        # fmt: off
         assert repr(xmap) == (
-            "Phase  Orientations  Name  Space group  Point group  Proper point group  "
-            "Color\n"
-            "    0    10 (83.3%)     a        Im-3m         m-3m                 432  "
-            "    r\n"
-            "    1      1 (8.3%)     b         P432          432                 432  "
-            "    g\n"
-            "    2      1 (8.3%)     c           P3            3                   3  "
-            "    b\n"
+            "Phase  Orientations  Name  Space group  Point group  Proper point group  Color\n"
+            "    0    10 (83.3%)     a        Im-3m         m-3m                 432      r\n"
+            "    1      1 (8.3%)     b         P432          432                 432      g\n"
+            "    2      1 (8.3%)     c           P3            3                   3      b\n"
             "Properties: iq\n"
             "Scan unit: nm"
         )
+        # fmt: on
 
 
 class TestCrystalMapCopying:

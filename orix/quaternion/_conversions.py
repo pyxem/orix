@@ -21,8 +21,6 @@
 :cite:`rowenhorst2015consistent`, accelerated with Numba.
 """
 
-from typing import Tuple
-
 import numba as nb
 import numpy as np
 
@@ -637,7 +635,7 @@ def qu2ax_2d(qu: np.ndarray) -> np.ndarray:
     return ax
 
 
-def qu2ax(qu: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def qu2ax(qu: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """N-dimensional wrapper for qu2ax_2d, see the docstring of that
     function for further details.
 

@@ -40,10 +40,11 @@ corresponding Euler angles from the location of the click.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import data, plot
 from orix.crystal_map import CrystalMap
+from orix.data import sdss_ferrite_austenite
+from orix.plot import IPFColorKeyTSL
 
-xmap = data.sdss_ferrite_austenite(allow_download=True)
+xmap = sdss_ferrite_austenite(allow_download=True)
 print(xmap)
 
 pg_laue = xmap.phases[1].point_group.laue
@@ -51,7 +52,7 @@ O_au = xmap["austenite"].orientations
 O_fe = xmap["ferrite"].orientations
 
 # Get IPF colors
-ipf_key = plot.IPFColorKeyTSL(pg_laue)
+ipf_key = IPFColorKeyTSL(pg_laue)
 rgb_au = ipf_key.orientation2color(O_au)
 rgb_fe = ipf_key.orientation2color(O_fe)
 

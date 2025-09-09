@@ -22,7 +22,7 @@ plotting :class:`~orix.vector.Vector3d`.
 """
 
 from copy import deepcopy
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any
 
 from matplotlib import rcParams
 import matplotlib.axes as maxes
@@ -87,10 +87,10 @@ class StereographicPlot(maxes.Axes):
         self,
         *args,
         hemisphere: str = "upper",
-        azimuth_resolution: Union[int, float] = 10,
-        polar_resolution: Union[int, float] = 10,
+        azimuth_resolution: int | float = 10,
+        polar_resolution: int | float = 10,
         **kwargs,
-    ):
+    ) -> None:
         """Create an axis for plotting :class:`~orix.vector.Vector3d`."""
         self.hemisphere = hemisphere
         self._azimuth_resolution = azimuth_resolution
@@ -106,7 +106,7 @@ class StereographicPlot(maxes.Axes):
         self.set_aspect("equal", adjustable="box", anchor="C")
         self.clear()
 
-    def clear(self):
+    def clear(self) -> None:
         super().clear()
 
         self.xaxis.set_ticks_position("none")
@@ -136,7 +136,7 @@ class StereographicPlot(maxes.Axes):
         self.grid(False)
         self.stereographic_grid(rcParams["axes.grid"])
 
-    def format_coord(self, x, y):
+    def format_coord(self, x: float, y: float) -> str:
         if np.sqrt(np.sum(np.square([x, y]))) > 1:
             return ""
         else:
@@ -154,9 +154,9 @@ class StereographicPlot(maxes.Axes):
 
     def plot(
         self,
-        *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        *args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
         **kwargs,
-    ):
+    ) -> None:
         """Draw straight lines between vectors.
 
         This method overwrites :meth:`matplotlib.axes.Axes.plot`, see
@@ -186,9 +186,9 @@ class StereographicPlot(maxes.Axes):
 
     def scatter(
         self,
-        *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        *args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
         **kwargs,
-    ):
+    ) -> None:
         """A scatter plot of vectors.
 
         This method overwrites :meth:`matplotlib.axes.Axes.scatter`, see
@@ -234,10 +234,10 @@ class StereographicPlot(maxes.Axes):
 
     def text(
         self,
-        *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
-        offset: Optional[Tuple[float, float]] = None,
+        *args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
+        offset: tuple[float, float] | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """Add text to the axes.
 
         This method overwrites :meth:`matplotlib.axes.Axes.text`, see
@@ -285,7 +285,7 @@ class StereographicPlot(maxes.Axes):
         return self._hemisphere
 
     @hemisphere.setter
-    def hemisphere(self, value: str):
+    def hemisphere(self, value: str) -> None:
         """Set hemisphere to plot."""
         value = value.lower()
         if value in ["upper", "lower"]:
@@ -305,23 +305,23 @@ class StereographicPlot(maxes.Axes):
         return {"upper": -1, "lower": 1}[self.hemisphere]
 
     @property
-    def _projection(self):
+    def _projection(self) -> StereographicProjection:
         return StereographicProjection(self.pole)
 
     @property
-    def _inverse_projection(self):
+    def _inverse_projection(self) -> InverseStereographicProjection:
         return InverseStereographicProjection(self.pole)
 
     def pole_density_function(
         self,
-        *args: Union[np.ndarray, Vector3d],
-        resolution: float = 1,
-        sigma: float = 5,
+        *args: np.ndarray | Vector3d,
+        resolution: float = 1.0,
+        sigma: float = 5.0,
         log: bool = False,
         colorbar: bool = True,
-        weights: Optional[np.ndarray] = None,
+        weights: np.ndarray | None = None,
         **kwargs: Any,
-    ):
+    ) -> None:
         """Compute the Pole Density Function (PDF) of vectors in the
         stereographic projection. See :cite:`rohrer2004distribution`.
 
@@ -379,13 +379,13 @@ class StereographicPlot(maxes.Axes):
 
     def draw_circle(
         self,
-        *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
-        opening_angle: Union[float, np.ndarray] = np.pi / 2,
+        *args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
+        opening_angle: float | np.ndarray = np.pi / 2,
         steps: int = 100,
         reproject: bool = False,
-        reproject_plot_kwargs: Optional[dict] = None,
+        reproject_plot_kwargs: dict | None = None,
         **kwargs,
-    ):
+    ) -> None:
         r"""Draw great or small circles with a given `opening_angle` to
         one or multiple vectors.
 
@@ -469,7 +469,7 @@ class StereographicPlot(maxes.Axes):
         pad: float = 1.3,
         show_edges: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Restrict the stereographic axis to a
         :class:`~orix.vector.FundamentalSector`, typically obtained from
         :attr:`~orix.quaternion.Symmetry.fundamental_sector`.
@@ -534,7 +534,7 @@ class StereographicPlot(maxes.Axes):
                 if c.get_label() in labels:
                     c.set_clip_path(patch)
 
-    def show_hemisphere_label(self, **kwargs):
+    def show_hemisphere_label(self, **kwargs) -> None:
         """Add a hemisphere label (``"upper"``/``"lower"``) to the upper
         left of the plot.
 
@@ -554,11 +554,11 @@ class StereographicPlot(maxes.Axes):
 
     def set_labels(
         self,
-        xlabel: Union[str, bool, None] = "x",
-        ylabel: Union[str, bool, None] = "y",
-        zlabel: Union[str, bool, None] = "z",
+        xlabel: str | bool | None = "x",
+        ylabel: str | bool | None = "y",
+        zlabel: str | bool | None = "z",
         **kwargs,
-    ):
+    ) -> None:
         """Set the reference frame's axes labels.
 
         Parameters
@@ -580,10 +580,10 @@ class StereographicPlot(maxes.Axes):
 
     def stereographic_grid(
         self,
-        show_grid: Optional[bool] = None,
-        azimuth_resolution: Optional[float] = None,
-        polar_resolution: Optional[float] = None,
-    ):
+        show_grid: bool | None = None,
+        azimuth_resolution: float | None = None,
+        polar_resolution: float | None = None,
+    ) -> None:
         """Turn a stereographic grid on or off, and set the azimuth and
         polar grid resolution in degrees.
 
@@ -632,7 +632,7 @@ class StereographicPlot(maxes.Axes):
                 self.collections[index_polar].remove()
             self._stereographic_grid = False
 
-    def symmetry_marker(self, v: Vector3d, fold: int, **kwargs):
+    def symmetry_marker(self, v: Vector3d, fold: int, **kwargs) -> None:
         """Plot 2-, 3- 4- or 6-fold symmetry marker(s).
 
         Parameters
@@ -665,7 +665,7 @@ class StereographicPlot(maxes.Axes):
         # TODO: Find a way to control padding, so that markers aren't
         #  clipped
 
-    def _azimuth_grid(self, resolution: Optional[float] = None):
+    def _azimuth_grid(self, resolution: float | None = None) -> None:
         """Set the azimuth grid resolution in degrees.
 
         Parameters
@@ -713,14 +713,14 @@ class StereographicPlot(maxes.Axes):
         self.add_collection(lines_collection)
 
     @staticmethod
-    def _has_collection(label, collections):
+    def _has_collection(label: str, collections: Any) -> tuple[bool, int]:
         labels = [c.get_label() for c in collections]
         for i in range(len(labels)):
             if label == labels[i]:
                 return True, i
         return False, -1
 
-    def _polar_grid(self, resolution: Optional[float] = None):
+    def _polar_grid(self, resolution: float | None = None) -> None:
         """Set the polar grid resolution in degrees.
 
         Parameters
@@ -777,12 +777,12 @@ class StereographicPlot(maxes.Axes):
 
     def _prepare_to_call_inherited_method(
         self,
-        args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
         kwargs: dict,
-        new_kwargs: Optional[dict] = None,
+        new_kwargs: dict | None = None,
         sort: bool = False,
-        offset: Tuple[float, float] = None,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
+        offset: tuple[float, float] | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
         """Prepare arguments and keyword arguments passed to methods in
         :class:`StereographicPlot` inherited from
         :class:`matplotlib.axes.Axes`.
@@ -821,10 +821,10 @@ class StereographicPlot(maxes.Axes):
 
     def _pretransform_input(
         self,
-        values: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        values: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
         sort: bool = False,
-        offset: Optional[Tuple[float, float]] = None,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        offset: tuple[float, float] | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Return arrays of (X, Y) from input data.
 
         Parameters
@@ -891,7 +891,7 @@ mprojections.register_projection(StereographicPlot)
 
 
 def _get_array_of_values(
-    value: Union[str, float, List[str], List[float]], visible: np.ndarray
+    value: str | float | list[str] | list[float], visible: np.ndarray
 ) -> np.ndarray:
     """Return a usable array of ``value`` with the correct size
     even though ``value`` doesn't have as many elements as
@@ -942,7 +942,7 @@ def _is_visible(polar: np.ndarray, pole: int) -> np.ndarray:
         return polar >= np.pi / 2
 
 
-def _order_in_hemisphere(polar: np.ndarray, pole: int) -> Union[np.ndarray, None]:
+def _order_in_hemisphere(polar: np.ndarray, pole: int) -> np.ndarray | None:
     """Return order of vectors based on polar angles, so that the ones
     corresponding to vectors visible in this hemisphere are shifted to
     the start of the arrays.

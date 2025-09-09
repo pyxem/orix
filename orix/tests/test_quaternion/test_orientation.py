@@ -42,7 +42,7 @@ from orix.quaternion.symmetry import (
     _groups,
     _proper_groups,
 )
-from orix.vector import Miller, Vector3d 
+from orix.vector import Miller, Vector3d
 # isort: on
 # fmt: on
 

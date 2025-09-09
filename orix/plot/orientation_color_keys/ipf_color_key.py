@@ -18,10 +18,9 @@
 #
 
 import abc
-from typing import Optional
 
-from orix.quaternion import Symmetry
-from orix.vector import Vector3d
+from orix.quaternion.symmetry import Symmetry
+from orix.vector.vector3d import Vector3d
 
 
 class IPFColorKey(abc.ABC):
@@ -37,7 +36,7 @@ class IPFColorKey(abc.ABC):
     direction
     """
 
-    def __init__(self, symmetry: Symmetry, direction: Optional[Vector3d] = None):
+    def __init__(self, symmetry: Symmetry, direction: Vector3d | None = None) -> None:
         self.symmetry = symmetry
         if direction is None:
             direction = Vector3d.zvector()

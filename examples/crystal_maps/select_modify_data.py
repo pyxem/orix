@@ -32,8 +32,6 @@ There are five ways to select data:
     5. Boolean indexing
 """
 
-from typing import List, Union
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -41,9 +39,7 @@ from orix import plot
 from orix.crystal_map import CrystalMap, Phase
 
 
-def plot_id(
-    xmaps: Union[CrystalMap, List[CrystalMap]], titles: Union[str, List[str]]
-) -> None:
+def plot_id(xmaps: CrystalMap | list[CrystalMap], titles: str | list[str]) -> None:
     """Convenience function to plot at most four crystal maps showing
     rows, columns and IDs of each map point.
     """

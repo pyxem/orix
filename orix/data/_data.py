@@ -22,11 +22,12 @@ from pathlib import Path
 import numpy as np
 import pooch
 
-from orix import __version__, io
+from orix import __version__
 from orix.crystal_map.crystal_map import CrystalMap
 from orix.data._registry import registry_hashes, registry_urls
-from orix.quaternion import symmetry
+from orix.io._io import load
 from orix.quaternion.orientation import Orientation
+from orix.quaternion.symmetry import D6
 
 _fetcher = pooch.create(
     path=pooch.os_cache("orix"),
@@ -101,7 +102,7 @@ def sdss_austenite(allow_download: bool = False, **kwargs) -> CrystalMap:
     >>> xmap.plot(ipf_key.orientation2color(xmap.orientations), overlay="RefinedDotProducts")
     """
     fname = _fetch("sdss/sdss_austenite.h5", allow_download)
-    return io.load(fname, **kwargs)
+    return load(fname, **kwargs)
 
 
 def sdss_ferrite_austenite(allow_download: bool = False, **kwargs) -> CrystalMap:
@@ -146,7 +147,7 @@ def sdss_ferrite_austenite(allow_download: bool = False, **kwargs) -> CrystalMap
     >>> xmap.plot(overlay="dp")
     """
     fname = _fetch("sdss/sdss_ferrite_austenite.ang", allow_download)
-    xmap = io.load(fname, **kwargs, autogen_names=False)
+    xmap = load(fname, **kwargs, autogen_names=False)
     xmap.phases["austenite/austenite"].name = "austenite"
     xmap.phases["ferrite/ferrite"].name = "ferrite"
     return xmap
@@ -196,4 +197,4 @@ def ti_orientations(allow_download: bool = False) -> Orientation:
     """
     fname = _fetch("ti_orientations/ti_orientations.ctf", allow_download)
     euler = np.loadtxt(fname, skiprows=1, usecols=(0, 1, 2))
-    return Orientation.from_euler(np.deg2rad(euler), symmetry.D6)
+    return Orientation.from_euler(np.deg2rad(euler), D6)

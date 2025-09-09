@@ -17,19 +17,17 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import Optional
-
 from h5py import File, Group
 import numpy as np
 
-from orix.crystal_map import CrystalMap
+from orix.crystal_map.crystal_map import CrystalMap
 
 
 def hdf5group2dict(
     group: Group,
-    dictionary: Optional[dict] = None,
+    dictionary: dict | None = None,
     recursive: bool = False,
-    dont_read: Optional[list] = None,
+    dont_read: list[str] | None = None,
 ) -> dict:
     """Return a dictionary with values from datasets in a group in an
     opened HDF5 file.
@@ -100,7 +98,7 @@ class H5ebsdFile:
     phase_list = None
     scan_unit = None
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str) -> None:
         self.filename = filename
 
     @property
@@ -108,7 +106,7 @@ class H5ebsdFile:
         """Number of map points."""
         return int(np.prod(self.map_shape))
 
-    def open(self, **kwargs):
+    def open(self, **kwargs) -> None:
         """Open the HDF5 file.
 
         Parameters
@@ -119,7 +117,7 @@ class H5ebsdFile:
         mode = kwargs.pop("mode", "r")
         self.file = File(self.filename, mode=mode, **kwargs)
 
-    def close(self):
+    def close(self) -> None:
         """Close the HDF5 file."""
         self.file.close()
 
@@ -164,7 +162,7 @@ class H5ebsdFile:
             scan_unit=self.scan_unit,
         )
 
-    def set_scan_group_names(self):
+    def set_scan_group_names(self) -> None:
         """Set name of scan HDF5 groups in top group as a list of
         strings.
         """

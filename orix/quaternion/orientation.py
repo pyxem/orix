@@ -19,21 +19,21 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
 import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
 from diffpy.structure import Structure
+import matplotlib.figure as mfigure
 from matplotlib.gridspec import SubplotSpec
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix.quaternion.misorientation import Misorientation
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import Miller, Vector3d
+from orix.vector.miller import Miller
+from orix.vector.vector3d import Vector3d
 
 
 class Orientation(Misorientation):
@@ -68,7 +68,7 @@ class Orientation(Misorientation):
         return self._symmetry[1]
 
     @symmetry.setter
-    def symmetry(self, value: Symmetry):
+    def symmetry(self, value: Symmetry) -> None:
         if not isinstance(value, Symmetry):
             raise TypeError("Value must be an instance of orix.quaternion.Symmetry.")
         self._symmetry = (C1, value)
@@ -110,8 +110,8 @@ class Orientation(Misorientation):
     @classmethod
     def from_euler(
         cls,
-        euler: Union[np.ndarray, tuple, list],
-        symmetry: Optional[Symmetry] = None,
+        euler: np.ndarray | tuple | list,
+        symmetry: Symmetry | None = None,
         direction: str = "lab2crystal",
         degrees: bool = False,
     ) -> Orientation:
@@ -149,15 +149,15 @@ class Orientation(Misorientation):
         cls,
         other: Miller,
         initial: Vector3d,
-        weights: Optional[np.ndarray] = None,
+        weights: np.ndarray | None = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
-    ) -> Union[
-        Orientation,
-        Tuple[Orientation, float],
-        Tuple[Orientation, np.ndarray],
-        Tuple[Orientation, float, np.ndarray],
-    ]:
+    ) -> (
+        Orientation
+        | tuple[Orientation, float]
+        | tuple[Orientation, np.ndarray]
+        | tuple[Orientation, float, np.ndarray]
+    ):
         """Create an estimated orientation to optimally align vectors in
         the crystal and sample reference frames.
 
@@ -236,7 +236,7 @@ class Orientation(Misorientation):
 
     @classmethod
     def from_matrix(
-        cls, matrix: np.ndarray, symmetry: Optional[Symmetry] = None
+        cls, matrix: np.ndarray, symmetry: Symmetry | None = None
     ) -> Orientation:
         """Create orientations from orientation matrices
         :cite:`rowenhorst2015consistent`.
@@ -262,9 +262,9 @@ class Orientation(Misorientation):
     @classmethod
     def from_axes_angles(
         cls,
-        axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list, float],
-        symmetry: Optional[Symmetry] = None,
+        axes: np.ndarray | Vector3d | tuple | list,
+        angles: np.ndarray | tuple | list | float,
+        symmetry: Symmetry | None = None,
         degrees: bool = False,
     ) -> Orientation:
         """Create orientations from axis-angle pairs
@@ -304,7 +304,7 @@ class Orientation(Misorientation):
 
     @classmethod
     def from_scipy_rotation(
-        cls, rotation: SciPyRotation, symmetry: Optional[Symmetry] = None
+        cls, rotation: SciPyRotation, symmetry: Symmetry | None = None
     ) -> Orientation:
         """Return orientation(s) from
         :class:`scipy.spatial.transform.Rotation`.
@@ -348,7 +348,7 @@ class Orientation(Misorientation):
 
     @classmethod
     def random(
-        cls, shape: Union[int, tuple] = 1, symmetry: Optional[Symmetry] = None
+        cls, shape: int | tuple[int, ...] = 1, symmetry: Symmetry | None = None
     ) -> Orientation:
         """Create random orientations.
 
@@ -624,10 +624,10 @@ class Orientation(Misorientation):
         c: str = "tab:blue",
         return_figure: bool = False,
         axes_length: float = 0.5,
-        structure: Optional[Structure] = None,
+        structure: Structure | None = None,
         crystal_axes_loc: str = "origin",
         **arrow_kwargs,
-    ) -> plt.Figure:
+    ) -> mfigure.Figure | None:
         """Plot the unit cell orientation, showing the sample and
         crystal reference frames.
 
@@ -720,15 +720,15 @@ class Orientation(Misorientation):
     def scatter(
         self,
         projection: str = "axangle",
-        figure: Optional[plt.Figure] = None,
-        position: Union[int, Tuple[int], SubplotSpec] = (1, 1, 1),
+        figure: mfigure.Figure | None = None,
+        position: int | tuple[int, int, int] | SubplotSpec = (1, 1, 1),
         return_figure: bool = False,
-        wireframe_kwargs: Optional[dict] = None,
-        size: Optional[int] = None,
-        direction: Optional[Vector3d] = None,
-        figure_kwargs: Optional[dict] = None,
+        wireframe_kwargs: dict | None = None,
+        size: int | None = None,
+        direction: Vector3d | None = None,
+        figure_kwargs: dict | None = None,
         **kwargs,
-    ) -> plt.Figure:
+    ) -> mfigure.Figure | None:
         """Plot orientations in axis-angle space, the Rodrigues
         fundamental zone, or an inverse pole figure (IPF) given a sample
         direction.

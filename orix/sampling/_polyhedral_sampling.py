@@ -17,8 +17,6 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import List, Tuple
-
 import numpy as np
 from scipy.spatial import cKDTree
 
@@ -28,7 +26,7 @@ def _get_start_and_end_index(
     include_start: bool,
     include_end: bool,
     positive_and_negative: bool,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     if positive_and_negative:
         start = -number_of_steps
     else:
@@ -111,9 +109,7 @@ def _edge_grid_spherified_corner_cube(resolution: float) -> np.ndarray:
 
 
 def _compose_from_faces(
-    corners: np.ndarray,
-    faces: List[Tuple[int, int, int]],
-    n: int,
+    corners: np.ndarray, faces: list[tuple[int, int, int]], n: int
 ) -> np.ndarray:
     """Refine a grid starting from a platonic solid; adapted from
     :mod:`meshzoo` :cite:`meshzoo`.
@@ -170,10 +166,7 @@ def _compose_from_faces(
     return np.concatenate(vertices)
 
 
-def _get_first_nearest_neighbors(
-    points: np.ndarray,
-    leaf_size: int = 50,
-) -> np.ndarray:
+def _get_first_nearest_neighbors(points: np.ndarray, leaf_size: int = 50) -> np.ndarray:
     """Get array of first nearest neighbor points for all points in a
     point cloud.
 
@@ -202,8 +195,7 @@ def _get_first_nearest_neighbors(
 
 
 def _get_angles_between_nn_gridpoints(
-    vertices: np.ndarray,
-    leaf_size: int = 50,
+    vertices: np.ndarray, leaf_size: int = 50
 ) -> np.ndarray:
     """Return angles between all nearest neighbor grid points on unit
     sphere.
@@ -218,10 +210,7 @@ def _get_angles_between_nn_gridpoints(
     return angles
 
 
-def _get_max_grid_angle(
-    vertices: np.ndarray,
-    leaf_size: int = 50,
-) -> np.ndarray:
+def _get_max_grid_angle(vertices: np.ndarray, leaf_size: int = 50) -> np.ndarray:
     """Get the maximum angle between nearest neighbor grid points on a
     unit sphere.
     """

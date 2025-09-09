@@ -17,20 +17,16 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from collections import OrderedDict
 from contextlib import contextmanager
 from io import StringIO
-from numbers import Number
 import os
 import sys
 
-from diffpy.structure import Structure
 from h5py import File
 import numpy as np
 import pytest
 
 from orix.constants import VisibleDeprecationWarning
-from orix.crystal_map import Phase, PhaseList
 from orix.io._io import (
     _overwrite_or_not,
     _plugin_from_manufacturer,
@@ -39,7 +35,6 @@ from orix.io._io import (
     save,
 )
 from orix.io.plugins import bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
-from orix.quaternion import Rotation
 
 
 @contextmanager
@@ -48,31 +43,6 @@ def replace_stdin(target):
     sys.stdin = target
     yield
     sys.stdin = orig
-
-
-def assert_dictionaries_are_equal(input_dict, output_dict):
-    for key in output_dict.keys():
-        output_value = output_dict[key]
-        input_value = input_dict[key]
-        if isinstance(output_value, (dict, OrderedDict)):
-            assert_dictionaries_are_equal(input_value, output_value)
-        else:
-            if isinstance(output_value, (np.ndarray, Number)):
-                assert np.allclose(input_value, output_value)
-            elif isinstance(output_value, Rotation):
-                assert np.allclose(input_value.to_euler(), output_value.to_euler())
-            elif isinstance(output_value, Phase):
-                assert_dictionaries_are_equal(
-                    input_value.__dict__, output_value.__dict__
-                )
-            elif isinstance(output_value, PhaseList):
-                assert_dictionaries_are_equal(input_value._dict, output_value._dict)
-            elif isinstance(output_value, Structure):
-                assert np.allclose(output_value.xyz, input_value.xyz)
-                assert str(output_value.element) == str(input_value.element)
-                assert np.allclose(output_value.occupancy, input_value.occupancy)
-            else:
-                assert input_value == output_value
 
 
 class TestGeneralIO:
