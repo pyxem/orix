@@ -11,6 +11,8 @@ Unreleased
 
 Added
 -----
+- Wulff nets can be added to stereographic plots and customized using
+  :meth:`~orix.plot.stereographic_plot.StereographicPlot.wulff_net()`.
 - Conversion of :class:`~orix.quaternion.Orientation`,
   :class:`~orix.quaternion.Misorientation`, :class:`~orix.quaternion.Rotation`, and
   :class:`~orix.quaternion.Quaternion` to :class:`scipy.spatial.transform.Rotation` via
