@@ -25,6 +25,8 @@ import pytest
 from orix.measure import pole_density_function
 from orix.quaternion import symmetry
 from orix.vector import Vector3d
+from orix.measure.pole_density_function import _cube_gnom_coordinates
+from orix.sampling.S2_sampling import sample_S2_equiangle_cube_mesh_face_centers
 
 
 @pytest.fixture(
@@ -158,3 +160,53 @@ class TestMeasurePoleDensityFunction:
             ValueError, match="`azimuth` and `polar` angles have 0 size"
         ):
             pole_density_function(v)
+
+
+class TestGnomCubeRouties:
+
+    def test_corner_edge_assignment():
+        """ Make sire we get useable result for corner-cases.
+        """
+        corners = Vector3d(
+            [[1, 1, 1],
+            [1, 1, -1],
+            [1, -1, 1],
+            [1, -1, -1],
+            [-1, 1, 1],
+            [-1, 1, -1],
+            [-1, -1, 1],
+            [-1, -1, -1],]
+            )
+
+        edges = Vector3d(
+            [[0, 1, 1],
+            [0, 1, -1],
+            [0, -1, 1],
+            [0, -1, -1],
+            [1, 0, 1],
+            [1, 0, -1],
+            [-1, 0, 1],
+            [-1, 0, -1],
+            [1, 1, 0],
+            [1, -1, 0],
+            [-1, 1, 0],
+            [-1, -1, 0],]
+            )
+
+        c_index, c_coordinates = _cube_gnom_coordinates(corners)
+        e_index, e_coordinates = _cube_gnom_coordinates(edges)
+
+        assert np.all(c_index == [0, 5, 0, 3, 2, 1, 4, 1,])
+        assert np.all(e_index == [2, 5, 4, 3, 0, 5, 4, 1, 0, 3, 2, 1,])
+
+    def test_grid_correct_mapping():
+        """ Make sure grids get assigned correct faces and coordinates.
+        """
+        faces_grid = sample_S2_equiangle_cube_mesh_face_centers(15)
+        index_faces, corrdinates_faces = _cube_gnom_coordinates(faces_grid)
+
+        exp_coords = np.array([-0.65449847, -0.39269908, -0.13089969, 0.13089969, 0.39269908, 0.65449847])
+        for face_index in range(6):
+            assert np.all(index_faces[face_index] == face_index)
+            assert np.allclose(corrdinates_faces[0, face_index], exp_coords[:, np.newaxis])
+            assert np.allclose(corrdinates_faces[1, face_index], exp_coords[np.newaxis, :])

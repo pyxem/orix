@@ -222,3 +222,110 @@ def pole_density_function(
         hist = np.log(hist + 1)
 
     return hist, (x, y)
+
+
+def _cube_gnom_coordinates(vectors: Vector3d) -> tuple[np.ndarray[int], np.ndarray[float]]:
+    """ Assigns an index (0 to 5) to an array of ```Vector3d```
+    assigning them each to a face of a cube in the followiung way:
+
+    Index 0 is positive x face. (Includes +x+y and +x+z edges.)
+    Index 1 is negative x face. (Includes -x-y and -x-z edges.)
+    Index 2 is positive y face. (Includes +y+z and +y-x edges.)
+    Index 3 is negative y face. (Includes -y-z and -y+x edges.)
+    Index 4 is positive z face. (Includes -y+z and -x+z edges.)
+    Index 5 is negative z face. (Includes +y-z and +x-z edges.)
+
+    The two "extra" corners are assignes to Index 0 and Index 1 respectively.
+
+    Then each point is given 2D coordinates on the respective
+    faces. Coordinates are in angles wrt. cube edges.
+    """
+
+    if np.any(vectors.norm == 0.0):
+        #TODO  Ask the maintainers what they normally do here.
+        raise ZeroDivisionError
+
+    # Assign face index to each vector
+    face_index = np.zeros(vectors.shape, dtype=int)
+
+    indx = np.all([vectors.x >= vectors.y,
+                   vectors.x >= -vectors.y,
+                   vectors.x >= vectors.z,
+                   vectors.x >= -vectors.z,], axis=0)
+    face_index[indx] = 0
+
+    indx = np.all([vectors.x <= vectors.y,
+                   vectors.x <= -vectors.y,
+                   vectors.x <= vectors.z,
+                   vectors.x <= -vectors.z,], axis=0)
+    face_index[indx] = 1
+
+    indx = np.all([vectors.y > vectors.x,
+                   vectors.y >= -vectors.x,
+                   vectors.y >= vectors.z,
+                   vectors.y > -vectors.z,], axis = 0)
+    face_index[indx] = 2
+
+    indx = np.all([vectors.y < vectors.x,
+                   vectors.y <= -vectors.x,
+                   vectors.y <= vectors.z,
+                   vectors.y < -vectors.z,], axis = 0)
+    face_index[indx] = 3
+
+    indx = np.all([vectors.z > vectors.x,
+                   vectors.z >= -vectors.x,
+                   vectors.z > vectors.y,
+                   vectors.z >= -vectors.y,], axis = 0)
+    face_index[indx] = 4
+
+    indx = np.all([vectors.z < vectors.x,
+                   vectors.z <= -vectors.x,
+                   vectors.z < vectors.y,
+                   vectors.z <= -vectors.y,], axis = 0)
+    face_index[indx] = 5
+
+
+    # Assign coordinates
+    coordinates = np.zeros((2,) + vectors.shape)
+    unit_vectors = vectors.unit
+
+    #  Comment: no need for np.arctan2. We are sure that the denominator is non-zero
+    #  so np.arctan should be faster.
+
+    this_face = face_index == 0
+    coordinates[0, this_face] =\
+        np.arctan(unit_vectors.y[this_face] / unit_vectors.x[this_face])
+    coordinates[1, this_face] =\
+        np.arctan(unit_vectors.z[this_face] / unit_vectors.x[this_face])
+
+    this_face = face_index == 1
+    coordinates[0, this_face] =\
+        np.arctan(-unit_vectors.y[this_face] / unit_vectors.x[this_face])
+    coordinates[1, this_face] =\
+        np.arctan(-unit_vectors.z[this_face] / unit_vectors.x[this_face])
+
+    this_face = face_index == 2
+    coordinates[0, this_face] =\
+        np.arctan(unit_vectors.x[this_face] / unit_vectors.y[this_face])
+    coordinates[1, this_face] =\
+        np.arctan(unit_vectors.z[this_face] / unit_vectors.y[this_face])
+
+    this_face = face_index == 3
+    coordinates[0, this_face] =\
+        np.arctan(-unit_vectors.x[this_face] / unit_vectors.y[this_face])
+    coordinates[1, this_face] =\
+        np.arctan(-unit_vectors.z[this_face] / unit_vectors.y[this_face])
+
+    this_face = face_index == 4
+    coordinates[0, this_face] =\
+        np.arctan(unit_vectors.x[this_face] / unit_vectors.z[this_face])
+    coordinates[1, this_face] =\
+        np.arctan(unit_vectors.y[this_face] / unit_vectors.z[this_face])
+
+    this_face = face_index == 5
+    coordinates[0, this_face] =\
+        np.arctan(-unit_vectors.x[this_face] / unit_vectors.z[this_face])
+    coordinates[1, this_face] =\
+        np.arctan(-unit_vectors.y[this_face] / unit_vectors.z[this_face])
+
+    return face_index, coordinates
