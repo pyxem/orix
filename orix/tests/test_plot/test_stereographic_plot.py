@@ -107,7 +107,7 @@ class TestStereographicPlot:
 
         plt.close("all")
 
-    def test_grids(self):
+    def test_stereo_grids(self):
         azimuth_res = 10
         polar_res = 15
         _, ax = plt.subplots(
@@ -134,6 +134,54 @@ class TestStereographicPlot:
         assert all([coll.get_alpha() for coll in ax.collections])
 
         plt.close("all")
+
+    def test_wulff_grids(self):
+        lat_res = 11
+        long_res = 3.431
+        _, ax = plt.subplots(
+            subplot_kw=dict(
+                projection=PROJ_NAME,
+            )
+        )
+
+        ax.wulff_net(True, lat_res, long_res)
+        assert ax._lat_resolution == lat_res
+        assert ax._long_resolution == long_res
+
+        alpha = 0.5
+        with plt.rc_context({"grid.alpha": alpha}):
+            ax.wulff_net(lat_resolution=1, long_resolution=3, wulff_net_cap=11)
+        assert ax._azimuth_resolution == 10
+        assert ax._polar_resolution == 10
+        assert ax._lat_resolution == 1
+        assert ax._long_resolution == 3
+        assert ax._wulff_net_cap == 11
+
+        assert len(ax.collections) == 6
+        ax.stereographic_grid()
+        assert all([coll.get_alpha() for coll in ax.collections])
+        assert len(ax.collections) == 4
+        ax.wulff_net()
+        assert len(ax.collections) == 0
+        ax.wulff_net(long_resolution_major=0, lat_resolution_major=0)
+        assert len(ax.collections) == 2
+        plt.close("all")
+
+        # Check the grids plot appropriately for both hemispheres.
+        fig, ax = fig, ax = plt.subplots(
+            1, 2, subplot_kw=dict(projection="stereographic")
+        )
+        ax[0].hemisphere = "upper"
+        ax[1].hemisphere = "lower"
+        ax[0].wulff_net()
+        ax[1].wulff_net()
+        for axis in ax:
+            for c in axis.collections:
+                if "lat" in c.get_label() and "major" in c.get_label():
+                    equator = c.get_paths()[8].vertices
+                    max_delta = np.abs(np.max(equator[1:, 0] - equator[:-1, 0]))
+                    # if the maximum spacing is too big, the projection is wrong
+                    assert max_delta < 0.1
 
     def test_set_labels(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
@@ -510,9 +558,11 @@ class TestRestrictToFundamentalSector:
         _, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
         ax3[0].restrict_to_sector(symmetry.C6.fundamental_sector)
         assert not np.allclose(vertices[:10], ax3[0].patches[0].get_verts()[:10])
-        assert ax3[0].patches[1].get_label() == "sa_sector"
+        assert ax3[0].patches[1].get_label() == "_stereographic_sector"
 
         # Ensure grid lines are clipped by sector
+        ax3[0].wulff_net(True)
+        ax3[0].wulff_net(False)
         ax3[0].stereographic_grid(False)
         ax3[0].stereographic_grid(True)
 
@@ -523,14 +573,14 @@ class TestRestrictToFundamentalSector:
         ax4.restrict_to_sector(fs)
         upper_patches4 = ax4.patches
         assert len(upper_patches4) == 2
-        assert upper_patches4[1].get_label() == "sa_sector"
+        assert upper_patches4[1].get_label() == "_stereographic_sector"
 
         _, ax5 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax5.hemisphere = "lower"
         ax5.restrict_to_sector(fs)
         lower_patches4 = ax5.patches
         assert len(lower_patches4) == 1
-        assert lower_patches4[0].get_label() == "sa_circle"
+        assert lower_patches4[0].get_label() == "_stereographic_border"
         assert np.allclose(vertices, lower_patches4[0].get_verts())
 
         # No lines are added to lower hemisphere, only the upper
@@ -573,7 +623,7 @@ class TestRestrictToFundamentalSector:
 
         ax.restrict_to_sector(symmetry.Oh.fundamental_sector, show_edges=False)
         assert len(ax.patches) == 1
-        assert ax.patches[0].get_label() == "sa_circle"
+        assert ax.patches[0].get_label() == "_stereographic_border"
 
         plt.close("all")
 

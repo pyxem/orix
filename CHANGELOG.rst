@@ -11,20 +11,22 @@ Unreleased
 
 Added
 -----
+- A customizable Wulff net can be added to a stereographic plot using
+  :meth:`~orix.plot.StereographicPlot.wulff_net`.
 - Conversion of :class:`~orix.quaternion.Orientation`,
   :class:`~orix.quaternion.Misorientation`, :class:`~orix.quaternion.Rotation`, and
   :class:`~orix.quaternion.Quaternion` to :class:`scipy.spatial.transform.Rotation` via
-  :meth:`~orix.quaternion.Quaterion.to_scipy_rotation`.
+  :meth:`~orix.quaternion.Quaternion.to_scipy_rotation`.
 - Allow controlling whether to keep zero-vectors in
-  :meth:`orix.vector3d.Vector3d.unique` with a new ``ignore_zero`` parameter.
+  :meth:`~orix.vector.Vector3d.unique` with a new ``ignore_zero`` parameter.
   Previous behavior, to discard them, is still default.
 - If a :class:`~orix.crystal_map.Phase`, :class:`~orix.crystal_map.PhaseList`, or a
   :class:`~orix.crystal_map.CrystalMap` is passed to their own constructors, a copy is
   returned.
 - Added :meth:`~orix.crystal_map.Phase.expand_asymmetric_unit` to add all symmetrically
   equivalent atoms to the structure in a new phase.
-- Element-wise indexing into :class:`~orix.vector3d.Vector3d` and subclasses, such as
-  :class:`~orix.vector3d.Miller`.
+- Element-wise indexing into :class:`~orix.vector.Vector3d` and subclasses, such as
+  :class:`~orix.vector.Miller`.
 - Explicit support for Python 3.13.
 - Dependency on `lazy-loader`.
 
@@ -33,7 +35,7 @@ Changed
 - The \*.ang file reader accepts a boolean parameter ``autogen_names`` via
   :func:`~orix.io.load` that allows rewriting phase names in the returned crystal map
   based on elements and point groups, as opposed to automatically overwriting names.
-- Generation of random :class:`~orix.vector3d.Vector3d` and
+- Generation of random :class:`~orix.vector.Vector3d` and
   :class:`~orix.quaternion.Quaternion` (and its subclasses) via ``random()`` now uses a
   Gaussian method as opposed to rejection-based sampling.
   This is faster and uses less memory.

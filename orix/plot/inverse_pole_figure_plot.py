@@ -27,7 +27,7 @@ from typing import Any
 
 import matplotlib.axes as maxes
 from matplotlib.figure import Figure
-from matplotlib.patches import PathPatch
+import matplotlib.patches as mpatches
 import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
 import numpy as np
@@ -97,10 +97,14 @@ class InversePoleFigurePlot(StereographicPlot):
         self._add_crystal_direction_labels()
 
     @property
-    def _edge_patch(self) -> PathPatch:
+    def _edge_patch(self) -> mpatches.Patch:
         """Easy access to the fundamental sector border patch."""
         patches = self.patches
-        return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
+        return patches[
+            self._has_collection(label=self._get_label("sector"), collections=patches)[
+                1
+            ]
+        ]
 
     def pole_density_function(
         self,
