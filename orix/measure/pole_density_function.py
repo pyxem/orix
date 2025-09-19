@@ -23,7 +23,7 @@ from scipy.ndimage import gaussian_filter
 from orix.projections.stereographic import StereographicProjection
 from orix.quaternion.symmetry import Symmetry
 from orix.vector.vector3d import Vector3d
-
+from scipy.interpolate import RegularGridInterpolator
 
 def pole_density_function(
     *args: np.ndarray | Vector3d,
@@ -88,7 +88,6 @@ def pole_density_function(
     from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
 
     hemisphere = hemisphere.lower()
-
     poles = {"upper": -1, "lower": 1}
     sp = StereographicProjection(poles[hemisphere])
 
@@ -114,36 +113,89 @@ def pole_density_function(
         # initial sampling is performed at half the angular resolution
         resolution /= 2
 
-    azimuth, polar, _ = v.to_polar()
+    # azimuth, polar, _ = v.to_polar()
+    face_index_array, face_coordinates = _cube_gnom_coordinates(v)
     # np.histogram2d expects 1d arrays
-    azimuth, polar = np.ravel(azimuth), np.ravel(polar)
-    if not azimuth.size:
-        raise ValueError("`azimuth` and `polar` angles have 0 size.")
+    face_index_array = face_index_array.ravel()
+    face_coordinate_1 = face_coordinates[0].ravel()
+    face_coordinate_2 = face_coordinates[1].ravel()
 
-    # Generate equal area mesh on S2
+    bins = int(90 / resolution)
+    bin_edges = np.linspace(-np.pi/4, np.pi/4, bins+1)
+    hist = np.zeros((6, bins, bins))
+    for face_index in range(6):
+        this_face = face_index_array == face_index
+        hist[face_index], _ = np.histogramdd(
+                (face_coordinate_1[this_face], face_coordinate_2[this_face]),
+                bins=(bin_edges, bin_edges),
+            )
+
+    # Bins are not all same solid angle area, so we need to normalize.
+    if mrd:
+        bin_middles = np.linspace(-np.pi/4 + np.pi/4/bins, np.pi/4 - np.pi/4/bins, bins)
+        y_ang, z_ang = np.meshgrid(bin_middles, bin_middles)
+        solid_angle_term = 1 / (np.tan(y_ang)**2 + np.tan(z_ang)**2 + 1)/\
+            (np.cos(y_ang)*np.cos(z_ang)) / (1 - 0.5*(np.sin(z_ang) * np.sin(y_ang))**2)
+        solid_angle_term *= 1 / 6 / np.sum(solid_angle_term)
+        solid_angle_term *= v.size
+        hist = hist / solid_angle_term[np.newaxis, ...]
+
+    # TODO: If the plot resolution is very high, and the smoothing kernel is very broad
+    # this blurring has bad performance. In those cases, overwrite the users choice
+    # for resolution, and then upsample in the end.
+
+    if sigma/resolution > 20 and resolution<1.0:
+        print('Performance is bad when smoothing-kernel is much larger than\
+         the resoltion. Consider using a lower resolution.')
+
+    if sigma != 0.0:
+        # If smoothing is only a bit, du 60 small steps, otherwise do a max step-size
+        if (sigma / resolution)**2 <= 20:
+            N = 60
+            t = 1 / N * (sigma / resolution)**2
+        else:
+            t = 1 / 3
+            N = int(1 / t * (sigma / resolution)**2)
+
+        hist = _smooth_gnom_cube_histograms(hist, t, N)
+
+    # TODO For now, avoid touching the plotting code, by returning the
+    # expected format. I will have a deep dive in the plotting later.
     azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
-        resolution,
-        hemisphere=hemisphere,
+        1,
+        hemisphere='upper',
         azimuth_endpoint=True,
     )
+    azimuth_coords
     azimuth_grid, polar_grid = np.meshgrid(azimuth_coords, polar_coords, indexing="ij")
-    # generate histogram in angular space
-    hist, *_ = np.histogram2d(
-        azimuth,
-        polar,
-        bins=(azimuth_coords, polar_coords),
-        density=False,
-        weights=weights,
-    )
 
-    # "wrap" along azimuthal axis, "reflect" along polar axis
-    mode = ("wrap", "reflect")
-    # apply broadening in angular space
-    hist = gaussian_filter(hist, sigma / resolution, mode=mode)
+    azimuth_center_grid, polar_center_grid = np.meshgrid(
+        azimuth_coords[:-1] + np.diff(azimuth_coords) / 2,
+        polar_coords[:-1] + np.diff(polar_coords) / 2,
+        indexing="ij",
+    )
+    v_center_grid = Vector3d.from_polar(
+        azimuth=azimuth_center_grid, polar=polar_center_grid
+    ).unit
+
+    grid_face_index, grid_face_coords = _cube_gnom_coordinates(v_center_grid)
+    hist_grid = np.zeros(v_center_grid.shape)
+    bin_middles = np.linspace(-np.pi/4 + np.pi/4/bins, np.pi/4 - np.pi/4/bins, bins)
+
+    for face_index in range(6):
+        interpolator = RegularGridInterpolator((bin_middles, bin_middles), hist[face_index], bounds_error=False, fill_value=None)
+        this_face = grid_face_index == face_index
+        hist_grid[this_face] = interpolator(grid_face_coords[:, this_face].T)
+
+    hist = hist_grid
+
+    # TODO: I don't understand how symmetrization is done. Could just sum over
+    # rotated histograms instead.
 
     # In the case of inverse pole figure, accumulate all values outside
     # of the point group fundamental sector back into correct bin within
     # fundamental sector
+
     if symmetry is not None:
         # compute histogram bin centers in azimuth and polar coords
         azimuth_center_grid, polar_center_grid = np.meshgrid(
@@ -201,6 +253,10 @@ def pole_density_function(
         # calculate bin vertices
         x, y = sp.vector2xy(v_res2_grid)
         x, y = x.reshape(v_res2_grid.shape), y.reshape(v_res2_grid.shape)
+
+        # This was missing before
+        hist = hist / symmetry.size
+
     else:
         # all points valid in stereographic projection
         hist = np.ma.array(hist, mask=np.zeros_like(hist, dtype=bool))
@@ -208,14 +264,6 @@ def pole_density_function(
         v_grid = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
         x, y = sp.vector2xy(v_grid)
         x, y = x.reshape(v_grid.shape), y.reshape(v_grid.shape)
-
-    # Normalize by the average number of counts per cell on the
-    # unit sphere to calculate in terms of Multiples of Random
-    # Distribution (MRD). See :cite:`rohrer2004distribution`.
-    # as `hist` is a masked array, only valid (unmasked) values are
-    # used in this computation
-    if mrd:
-        hist = hist / hist.mean()
 
     if log:
         # +1 to avoid taking the log of 0
@@ -235,10 +283,10 @@ def _cube_gnom_coordinates(vectors: Vector3d) -> tuple[np.ndarray[int], np.ndarr
     Index 4 is positive z face. (Includes -y+z and -x+z edges.)
     Index 5 is negative z face. (Includes +y-z and +x-z edges.)
 
-    The two "extra" corners are assignes to Index 0 and Index 1 respectively.
+    The two "extra" corners are assigned to Index 0 and Index 1 respectively.
 
     Then each point is given 2D coordinates on the respective
-    faces. Coordinates are in angles wrt. cube edges.
+    faces. Coordinates are in angles wrt. cube face center-lines.
     """
 
     if np.any(vectors.norm == 0.0):
@@ -329,3 +377,50 @@ def _cube_gnom_coordinates(vectors: Vector3d) -> tuple[np.ndarray[int], np.ndarr
         np.arctan(-unit_vectors.y[this_face] / unit_vectors.z[this_face])
 
     return face_index, coordinates
+
+
+def _smooth_gnom_cube_histograms(histograms, step_parameter, iterations=1):
+    """ Histograms shape is (6, n_nbins, n_bins) and edge connectivity
+    is as according to the rest of this file.
+    """
+    sub_histogram_shape = histograms[0][0].shape
+    output_histogram = np.copy(histograms)
+    diffused_weight = np.zeros(histograms.shape)
+
+    for n in range(iterations):
+
+        diffused_weight[...] = 0
+
+        # Diffuse on faces
+        for face_index in range(6):
+
+            diffused_weight[face_index, 1:, :] += output_histogram[face_index, :-1, :]
+            diffused_weight[face_index, :-1, :] += output_histogram[face_index, 1:, :]
+            diffused_weight[face_index, :, 1:] += output_histogram[face_index, :, :-1]
+            diffused_weight[face_index, :, :-1] += output_histogram[face_index, :, 1:]
+
+
+        connected_edge_pairs = (
+            ((2, slice(None), -1), (4, slice(None), -1)),  # +y+z
+            ((3, slice(None), -1), (4, slice(None), 0)),  # -y+z
+            ((2, slice(None), 0), (5, slice(None), -1)),  # +y-z
+            ((3, slice(None), 0), (5, slice(None), 0)),  # -y-z
+            ((0, slice(None), -1), (4, -1, slice(None))),  # +x+z
+            ((1, slice(None), -1), (4, 0, slice(None))),  # -x+z
+            ((0, slice(None), 0), (5, -1, slice(None))),  # +x-z
+            ((1, slice(None), 0), (5, 0, slice(None))),  # -x-z
+            ((0, -1, slice(None)), (2, -1, slice(None))),  # +x+y
+            ((1, -1, slice(None)), (2, 0, slice(None))),  # -x+y
+            ((0, 0, slice(None)), (3, -1, slice(None))),  # +x-y
+            ((1, 0, slice(None)), (3, 0, slice(None))),  # -x-y
+        )
+
+        for edge_1, edge_2 in connected_edge_pairs:
+            diffused_weight[edge_1] +=output_histogram[edge_2]
+            diffused_weight[edge_2] +=output_histogram[edge_1]
+
+        # Add to output
+        output_histogram = (1-step_parameter)*output_histogram\
+            + diffused_weight/4*step_parameter
+
+    return output_histogram

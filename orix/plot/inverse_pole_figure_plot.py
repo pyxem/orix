@@ -109,7 +109,7 @@ class InversePoleFigurePlot(StereographicPlot):
     def pole_density_function(
         self,
         *args: np.ndarray | Vector3d,
-        resolution: float = 0.25,
+        resolution: float = 1.0,
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
