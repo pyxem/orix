@@ -24,6 +24,7 @@ from orix.projections.stereographic import StereographicProjection
 from orix.quaternion.symmetry import Symmetry
 from orix.vector.vector3d import Vector3d
 from scipy.interpolate import RegularGridInterpolator
+from orix.sampling.S2_sampling import _sample_S2_uv_mesh_coordinates
 
 def pole_density_function(
     *args: np.ndarray | Vector3d,
@@ -85,7 +86,6 @@ def pole_density_function(
     orix.plot.StereographicPlot.pole_density_function
     orix.vector.Vector3d.pole_density_function
     """
-    from orix.sampling.S2_sampling import _sample_S2_equal_area_coordinates
 
     hemisphere = hemisphere.lower()
     poles = {"upper": -1, "lower": 1}
@@ -106,29 +106,49 @@ def pole_density_function(
             "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
         )
 
-    if symmetry is not None:
-        v = v.in_fundamental_sector(symmetry)
-        # To help with aliasing after reprojection into point group
-        # fundamental sector in the inverse pole figure case, the
-        # initial sampling is performed at half the angular resolution
-        resolution /= 2
+    # IF we blur by a lot, save some compute time by doing the histograms
+    # at lower resolution.
+    if resolution < 0.2 * sigma and resolution < 1.0:
+        histogram_resolution = 0.2 * sigma
+        plot_resolution = resolution
+    else:
+        histogram_resolution = resolution
+        plot_resolution = resolution
 
-    # azimuth, polar, _ = v.to_polar()
-    face_index_array, face_coordinates = _cube_gnom_coordinates(v)
-    # np.histogram2d expects 1d arrays
-    face_index_array = face_index_array.ravel()
-    face_coordinate_1 = face_coordinates[0].ravel()
-    face_coordinate_2 = face_coordinates[1].ravel()
-
-    bins = int(90 / resolution)
+    # Do actual histogramming
+    bins = int(90 / histogram_resolution)
     bin_edges = np.linspace(-np.pi/4, np.pi/4, bins+1)
     hist = np.zeros((6, bins, bins))
-    for face_index in range(6):
-        this_face = face_index_array == face_index
-        hist[face_index], _ = np.histogramdd(
-                (face_coordinate_1[this_face], face_coordinate_2[this_face]),
-                bins=(bin_edges, bin_edges),
-            )
+
+    if symmetry is None:
+        face_index_array, face_coordinates = _cube_gnom_coordinates(v)
+        face_index_array = face_index_array.ravel()
+        face_coordinate_1 = face_coordinates[0].ravel()
+        face_coordinate_2 = face_coordinates[1].ravel()
+
+        for face_index in range(6):
+            this_face = face_index_array == face_index
+            hist[face_index] = np.histogramdd(
+                    (face_coordinate_1[this_face], face_coordinate_2[this_face]),
+                    bins=(bin_edges, bin_edges),
+                )[0]
+
+    # Explicit symmetrization
+    elif symmetry is not None:
+        for rotation in symmetry:
+
+            face_index_array, face_coordinates = _cube_gnom_coordinates(rotation*v)
+            face_index_array = face_index_array.ravel()
+            face_coordinate_1 = face_coordinates[0].ravel()
+            face_coordinate_2 = face_coordinates[1].ravel()
+            for face_index in range(6):
+                this_face = face_index_array == face_index
+                hist[face_index] += np.histogramdd(
+                    (face_coordinate_1[this_face], face_coordinate_2[this_face]),
+                    bins=(bin_edges, bin_edges),
+                )[0] / symmetry.size
+
+
 
     # Bins are not all same solid angle area, so we need to normalize.
     if mrd:
@@ -140,130 +160,56 @@ def pole_density_function(
         solid_angle_term *= v.size
         hist = hist / solid_angle_term[np.newaxis, ...]
 
-    # TODO: If the plot resolution is very high, and the smoothing kernel is very broad
-    # this blurring has bad performance. In those cases, overwrite the users choice
-    # for resolution, and then upsample in the end.
-
-    if sigma/resolution > 20 and resolution<1.0:
-        print('Performance is bad when smoothing-kernel is much larger than\
-         the resoltion. Consider using a lower resolution.')
-
+    # Smoothing
     if sigma != 0.0:
         # If smoothing is only a bit, du 60 small steps, otherwise do a max step-size
-        if (sigma / resolution)**2 <= 20:
+        if (sigma / histogram_resolution)**2 <= 20:
             N = 60
-            t = 1 / N * (sigma / resolution)**2
+            t = 1 / N * (sigma / histogram_resolution)**2
         else:
             t = 1 / 3
-            N = int(1 / t * (sigma / resolution)**2)
+            N = int(1 / t * (sigma / histogram_resolution)**2)
 
         hist = _smooth_gnom_cube_histograms(hist, t, N)
 
-    # TODO For now, avoid touching the plotting code, by returning the
-    # expected format. I will have a deep dive in the plotting later.
-    azimuth_coords, polar_coords = _sample_S2_equal_area_coordinates(
-        1,
+
+
+    # Make plot grid
+    azimuth_coords, polar_coords = _sample_S2_uv_mesh_coordinates(
+        plot_resolution,
         hemisphere='upper',
         azimuth_endpoint=True,
     )
-    azimuth_coords
     azimuth_grid, polar_grid = np.meshgrid(azimuth_coords, polar_coords, indexing="ij")
-
     azimuth_center_grid, polar_center_grid = np.meshgrid(
         azimuth_coords[:-1] + np.diff(azimuth_coords) / 2,
         polar_coords[:-1] + np.diff(polar_coords) / 2,
         indexing="ij",
     )
-    v_center_grid = Vector3d.from_polar(
+
+    v_grid = Vector3d.from_polar(
         azimuth=azimuth_center_grid, polar=polar_center_grid
     ).unit
+    v_grid_vertexes = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
 
-    grid_face_index, grid_face_coords = _cube_gnom_coordinates(v_center_grid)
-    hist_grid = np.zeros(v_center_grid.shape)
+    if symmetry is not None:
+
+        v_grid = v_grid.in_fundamental_sector(symmetry)
+        v_grid_vertexes = v_grid_vertexes.in_fundamental_sector(symmetry)
+
+    # Interpolation from histograms to plot grid
+    grid_face_index, grid_face_coords = _cube_gnom_coordinates(v_grid)
+    hist_grid = np.zeros(v_grid.shape)
     bin_middles = np.linspace(-np.pi/4 + np.pi/4/bins, np.pi/4 - np.pi/4/bins, bins)
-
     for face_index in range(6):
         interpolator = RegularGridInterpolator((bin_middles, bin_middles), hist[face_index], bounds_error=False, fill_value=None)
         this_face = grid_face_index == face_index
         hist_grid[this_face] = interpolator(grid_face_coords[:, this_face].T)
-
     hist = hist_grid
 
-    # TODO: I don't understand how symmetrization is done. Could just sum over
-    # rotated histograms instead.
-
-    # In the case of inverse pole figure, accumulate all values outside
-    # of the point group fundamental sector back into correct bin within
-    # fundamental sector
-
-    if symmetry is not None:
-        # compute histogram bin centers in azimuth and polar coords
-        azimuth_center_grid, polar_center_grid = np.meshgrid(
-            azimuth_coords[:-1] + np.diff(azimuth_coords) / 2,
-            polar_coords[:-1] + np.diff(polar_coords) / 2,
-            indexing="ij",
-        )
-        v_center_grid = Vector3d.from_polar(
-            azimuth=azimuth_center_grid, polar=polar_center_grid
-        ).unit
-        # fold back in into fundamental sector
-        v_center_grid_fs = v_center_grid.in_fundamental_sector(symmetry)
-        azimuth_center_fs, polar_center_fs, _ = v_center_grid_fs.to_polar()
-        azimuth_center_fs = azimuth_center_fs.ravel()
-        polar_center_fs = polar_center_fs.ravel()
-
-        # Generate coorinates with user-defined resolution.
-        # When `symmetry` is defined, the initial grid was calculated
-        # with `resolution = resolution / 2`
-        azimuth_coords_res2, polar_coords_res2 = _sample_S2_equal_area_coordinates(
-            2 * resolution,
-            hemisphere=hemisphere,
-            azimuth_endpoint=True,
-        )
-        azimuth_res2_grid, polar_res2_grid = np.meshgrid(
-            azimuth_coords_res2, polar_coords_res2, indexing="ij"
-        )
-        v_res2_grid = Vector3d.from_polar(
-            azimuth=azimuth_res2_grid, polar=polar_res2_grid
-        )
-
-        # calculate histogram values for vectors folded back into
-        # fundamental sector
-        i = np.digitize(azimuth_center_fs, azimuth_coords_res2[1:-1])
-        j = np.digitize(polar_center_fs, polar_coords_res2[1:-1])
-        # recompute histogram
-        temp = np.zeros((azimuth_coords_res2.size - 1, polar_coords_res2.size - 1))
-        # add hist data to new histogram without buffering
-        np.add.at(temp, (i, j), hist.ravel())
-
-        # get new histogram bins centers to compute histogram mask
-        azimuth_center_res2_grid, polar_center_res2_grid = np.meshgrid(
-            azimuth_coords_res2[:-1] + np.ediff1d(azimuth_coords_res2) / 2,
-            polar_coords_res2[:-1] + np.ediff1d(polar_coords_res2) / 2,
-            indexing="ij",
-        )
-        v_center_res2_grid = Vector3d.from_polar(
-            azimuth=azimuth_center_res2_grid, polar=polar_center_res2_grid
-        ).unit
-
-        # compute histogram data array as masked array
-        hist = np.ma.array(
-            temp, mask=~(v_center_res2_grid <= symmetry.fundamental_sector)
-        )
-        # calculate bin vertices
-        x, y = sp.vector2xy(v_res2_grid)
-        x, y = x.reshape(v_res2_grid.shape), y.reshape(v_res2_grid.shape)
-
-        # This was missing before
-        hist = hist / symmetry.size
-
-    else:
-        # all points valid in stereographic projection
-        hist = np.ma.array(hist, mask=np.zeros_like(hist, dtype=bool))
-        # calculate bin vertices
-        v_grid = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
-        x, y = sp.vector2xy(v_grid)
-        x, y = x.reshape(v_grid.shape), y.reshape(v_grid.shape)
+    # Transform grdi to mystery coordinates used by plotting routine
+    x, y = sp.vector2xy(v_grid_vertexes)
+    x, y = x.reshape(v_grid_vertexes.shape), y.reshape(v_grid_vertexes.shape)
 
     if log:
         # +1 to avoid taking the log of 0
