@@ -392,6 +392,96 @@ def sample_S2_cube_mesh(
     return Vector3d(np.vstack((bottom, top, east, west, south, north, m_c))).unit
 
 
+def sample_S2_equiangle_cube_mesh_vertexes(
+    resolution: float, grid_type: str = "spherified_corner"
+) -> Vector3d:
+    """Return vectors of the vertices of an equi-angle gnomonic mesh on
+    a unit sphere *S2*. Same grid as ``sample_S2_cube_mesh`` with
+    ``grid_type="spherified_edge"`` but includes duplicate entries at edges and
+    corners.
+
+    Parameters
+    ----------
+    resolution
+        Angle between neighbour grid points, in degrees.
+    grid_type
+        Type of cube grid: ``"normalized"``, ``"spherified_edge"`` or
+        ``"spherified_corner"``.
+
+    Returns
+    -------
+    vec
+        3D array of Vectors that sample the unit sphere. First dimension is
+        the index of the cube face. Second two form a rectangular grid on
+        the respective face.
+    """
+
+    bins_along_edge = int(90 / resolution)
+    bin_edges = np.linspace(-np.pi/4, np.pi/4, bins_along_edge+1)
+
+    dim_1, dim_2  = np.meshgrid(np.tan(bin_edges), np.tan(bin_edges))
+    norm_term = np.sqrt(dim_1**2 + dim_2**2 + 1)
+    dim_1 /= norm_term
+    dim_2 /= norm_term
+    dim_3 = np.ones((bins_along_edge+1, bins_along_edge+1)) / norm_term
+
+    data = np.zeros((6, bins_along_edge+1, bins_along_edge+1, 3))
+
+    # Assign points on each edge
+    data[0, ...] = np.stack([dim_3, dim_2, dim_1], axis=-1)
+    data[1, ...] = np.stack([-dim_3, dim_2, dim_1], axis=-1)
+    data[2, ...] = np.stack([dim_2, dim_3, dim_1], axis=-1)
+    data[3, ...] = np.stack([dim_2, -dim_3, dim_1], axis=-1)
+    data[4, ...] = np.stack([dim_2, dim_1, dim_3], axis=-1)
+    data[5, ...] = np.stack([dim_2, dim_1, -dim_3], axis=-1)
+
+    return Vector3d(data=data)
+
+
+def sample_S2_equiangle_cube_mesh_face_centers(
+    resolution: float, grid_type: str = "spherified_corner"
+) -> Vector3d:
+    """Return vectors of the face_centers of an equi-angle gnomonic mesh on
+    a unit sphere *S2*. Similar to ``sample_S2_cube_mesh`` but does not include
+    edges and corners.
+
+    Parameters
+    ----------
+    resolution
+        Angle between neighbour grid points, in degrees.
+    grid_type
+        Type of cube grid: ``"normalized"``, ``"spherified_edge"`` or
+        ``"spherified_corner"``.
+
+    Returns
+    -------
+    vec
+        3D array of Vectors that sample the unit sphere. First dimension is
+        the index of the cube face. Second two form a rectangular grid on
+        the respective face.
+    """
+
+    bins = int(90 / resolution)
+    bin_middles = np.linspace(-np.pi/4+np.pi/4/bins, np.pi/4-np.pi/4/bins, bins)
+    dim_1, dim_2  = np.meshgrid(np.tan(bin_middles), np.tan(bin_middles))
+    norm_term = np.sqrt(dim_1**2 + dim_2**2 + 1)
+    dim_1 /= norm_term
+    dim_2 /= norm_term
+    dim_3 = np.ones((bins, bins)) / norm_term
+
+    data = np.zeros((6, bins, bins, 3))
+
+    # Assign points on each edge
+    data[0, ...] = np.stack([dim_3, dim_2, dim_1], axis=-1)
+    data[1, ...] = np.stack([-dim_3, dim_2, dim_1], axis=-1)
+    data[2, ...] = np.stack([dim_2, dim_3, dim_1], axis=-1)
+    data[3, ...] = np.stack([dim_2, -dim_3, dim_1], axis=-1)
+    data[4, ...] = np.stack([dim_2, dim_1, dim_3], axis=-1)
+    data[5, ...] = np.stack([dim_2, dim_1, -dim_3], axis=-1)
+
+    return Vector3d(data=data)
+
+
 def sample_S2_hexagonal_mesh(resolution: float) -> Vector3d:
     """Return vectors of a hexagonal bipyramid mesh projected on a unit
     sphere *S2*.
