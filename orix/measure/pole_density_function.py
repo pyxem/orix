@@ -36,11 +36,12 @@ def pole_density_function(
     log: bool = False,
     mrd: bool = True,
 ) -> tuple[np.ma.MaskedArray, tuple[np.ndarray, np.ndarray]]:
-    """Compute the Pole Density Function (PDF) of vectors in the
-    stereographic projection. See :cite:`rohrer2004distribution`.
+    """Compute the Pole Density Function (PDF) of vectors on a
+    cubed-sphere grid and return a map in polar coordinates for
+    plotting.
 
-    If ``symmetry`` is defined then the PDF is folded back into the
-    point group fundamental sector and accumulated.
+    If ``symmetry`` is defined then the PDF is symmetrizes and the
+    density map is returned only on the fundamental sector.
 
     Parameters
     ----------
@@ -106,6 +107,12 @@ def pole_density_function(
             "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
         )
 
+    if v.size == 0:
+        raise ValueError
+
+    if np.any(v.norm) == 0.0:
+        raise ValueError
+
     # IF we blur by a lot, save some compute time by doing the histograms
     # at lower resolution.
     if resolution < 0.2 * sigma and resolution < 1.0:
@@ -128,9 +135,11 @@ def pole_density_function(
 
         for face_index in range(6):
             this_face = face_index_array == face_index
+            w = weights[this_face] if weights is not None else None
             hist[face_index] = np.histogramdd(
                     (face_coordinate_1[this_face], face_coordinate_2[this_face]),
                     bins=(bin_edges, bin_edges),
+                    weights=w,
                 )[0]
 
     # Explicit symmetrization
@@ -143,12 +152,12 @@ def pole_density_function(
             face_coordinate_2 = face_coordinates[1].ravel()
             for face_index in range(6):
                 this_face = face_index_array == face_index
+                w = weights[this_face] if weights is not None else None
                 hist[face_index] += np.histogramdd(
                     (face_coordinate_1[this_face], face_coordinate_2[this_face]),
                     bins=(bin_edges, bin_edges),
+                    weights=w,
                 )[0] / symmetry.size
-
-
 
     # Bins are not all same solid angle area, so we need to normalize.
     if mrd:
@@ -157,7 +166,10 @@ def pole_density_function(
         solid_angle_term = 1 / (np.tan(y_ang)**2 + np.tan(z_ang)**2 + 1)/\
             (np.cos(y_ang)*np.cos(z_ang)) / (1 - 0.5*(np.sin(z_ang) * np.sin(y_ang))**2)
         solid_angle_term *= 1 / 6 / np.sum(solid_angle_term)
-        solid_angle_term *= v.size
+        if weights is not None:
+            solid_angle_term *= np.sum(weights)
+        else:
+            solid_angle_term *= v.size
         hist = hist / solid_angle_term[np.newaxis, ...]
 
     # Smoothing
@@ -171,8 +183,6 @@ def pole_density_function(
             N = int(1 / t * (sigma / histogram_resolution)**2)
 
         hist = _smooth_gnom_cube_histograms(hist, t, N)
-
-
 
     # Make plot grid
     azimuth_coords, polar_coords = _sample_S2_uv_mesh_coordinates(
@@ -193,7 +203,7 @@ def pole_density_function(
     v_grid_vertexes = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
 
     if symmetry is not None:
-
+        mask=~(v_grid <= symmetry.fundamental_sector)
         v_grid = v_grid.in_fundamental_sector(symmetry)
         v_grid_vertexes = v_grid_vertexes.in_fundamental_sector(symmetry)
 
@@ -206,6 +216,12 @@ def pole_density_function(
         this_face = grid_face_index == face_index
         hist_grid[this_face] = interpolator(grid_face_coords[:, this_face].T)
     hist = hist_grid
+
+    # Mask out points outside funamental region if symmetry is given.
+    if symmetry is not None:
+        hist = np.ma.array(hist, mask=mask)
+    else:
+        hist = np.ma.array(hist, mask=np.zeros_like(hist, dtype=bool))
 
     # Transform grdi to mystery coordinates used by plotting routine
     x, y = sp.vector2xy(v_grid_vertexes)
@@ -233,11 +249,12 @@ def _cube_gnom_coordinates(vectors: Vector3d) -> tuple[np.ndarray[int], np.ndarr
 
     Then each point is given 2D coordinates on the respective
     faces. Coordinates are in angles wrt. cube face center-lines.
+    Always ordered with increasing coordinates.
+    First coordinate comes first x -> y -> z.
     """
 
     if np.any(vectors.norm == 0.0):
-        #TODO  Ask the maintainers what they normally do here.
-        raise ZeroDivisionError
+        raise ValueError
 
     # Assign face index to each vector
     face_index = np.zeros(vectors.shape, dtype=int)
