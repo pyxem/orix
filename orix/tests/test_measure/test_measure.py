@@ -21,14 +21,14 @@ import numpy as np
 import pytest
 
 from orix.measure import pole_density_function
-from orix.quaternion import symmetry
-from orix.vector import Vector3d
 from orix.measure.pole_density_function import _cube_gnom_coordinates
+from orix.quaternion import symmetry
 from orix.sampling.S2_sampling import (
-    sample_S2_equiangle_cube_mesh_face_centers,
     _sample_S2_uv_mesh_coordinates,
+    sample_S2_equiangle_cube_mesh_face_centers,
     sample_S2_random_mesh,
 )
+from orix.vector import Vector3d
 
 
 @pytest.fixture(

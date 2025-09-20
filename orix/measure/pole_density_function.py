@@ -18,12 +18,12 @@
 #
 
 import numpy as np
+from scipy.interpolate import RegularGridInterpolator
 
 from orix.projections.stereographic import StereographicProjection
-from orix.quaternion.symmetry import Symmetry, C1
-from orix.vector.vector3d import Vector3d
-from scipy.interpolate import RegularGridInterpolator
+from orix.quaternion.symmetry import C1, Symmetry
 from orix.sampling.S2_sampling import _sample_S2_uv_mesh_coordinates
+from orix.vector.vector3d import Vector3d
 
 
 def pole_density_function(
