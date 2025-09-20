@@ -20,9 +20,15 @@
 import matplotlib.projections as mprojections
 
 from .crystal_map_plot import CrystalMapPlot
-from .inverse_pole_figure_plot import InversePoleFigurePlot
 from .rotation_plot import AxAnglePlot, RodriguesPlot
 from .stereographic_plot import StereographicPlot
+
+# Inverse pole figure plot class must be imported below stereographic
+# plot class, since the former imports the latter
+# isort: off
+from .inverse_pole_figure_plot import InversePoleFigurePlot
+
+# isort: on
 
 
 def register_projections() -> None:

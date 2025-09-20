@@ -16,25 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
-
 """Extensions of Matplotlib's projections framework for plotting
 :class:`~orix.vector.Vector3d`, :class:`~orix.quaternion.Rotation`,
 :class:`~orix.quaternion.Orientation`,
 :class:`~orix.quaternion.Misorientation`, and
 :class:`~orix.crystal_map.CrystalMap`.
-
-NOTE: While lazy loading is preferred, the following six classes
-are explicitly imported in order to populate matplotlib.projections
 """
+
 import lazy_loader
 
-from orix.plot.crystal_map_plot import CrystalMapPlot
-from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
-from orix.plot.stereographic_plot import StereographicPlot
+from orix.plot._plot import register_projections
 
-# Must be imported below StereographicPlot since it imports it
-from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot  # isort: skip
-
+# TODO: Remove this call once relying on the old side-effect of
+# importing orix.plot to register these projections has little-to-no
+# consequence
+register_projections()
 
 # Imports from stub file (see contributor guide for details)
 __getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
