@@ -86,21 +86,24 @@ class TestMeasurePoleDensityFunction:
             assert np.allclose(mean_value, 1.0, rtol=0.01)
 
     def test_pole_density_function_log(self):
-        v = Vector3d.random(11_234)
+        # v = Vector3d.random(11_234)
+        v = sample_S2_random_mesh(1.0, seed=230)
 
         hist1, _ = pole_density_function(v, log=False)
         hist2, _ = pole_density_function(v, log=True)
         assert not np.allclose(hist1, hist2)
 
     def test_pole_density_function_sigma(self):
-        v = Vector3d.random(11_234)
+        # v = Vector3d.random(11_234)
+        v = sample_S2_random_mesh(1.0, seed=230)
 
         hist1, _ = pole_density_function(v, sigma=2.5)
         hist2, _ = pole_density_function(v, sigma=5)
         assert not np.allclose(hist1, hist2)
 
     def test_pole_density_function_weights(self):
-        v = Vector3d.random(11_234)
+        # v = Vector3d.random(11_234)
+        v = sample_S2_random_mesh(1.0, seed=230)
         v.z[v.z < 0] *= -1
 
         hist0, _ = pole_density_function(v, weights=None)
