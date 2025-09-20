@@ -28,7 +28,7 @@ from orix.sampling.S2_sampling import (
     sample_S2_equiangle_cube_mesh_face_centers,
     _sample_S2_uv_mesh_coordinates,
     sample_S2_random_mesh,
-    )
+)
 
 
 @pytest.fixture(
@@ -76,21 +76,20 @@ class TestMeasurePoleDensityFunction:
         # Make plot grid
         _, polar_coords = _sample_S2_uv_mesh_coordinates(
             resolution,
-            hemisphere='upper',
+            hemisphere="upper",
             azimuth_endpoint=True,
         )
         polar_coords = polar_coords[:-1] + np.diff(polar_coords) / 2
         solid_angle = np.abs(np.sin(polar_coords))[np.newaxis, :]
 
-        for sigma in [2*resolution, 5*resolution]:
+        for sigma in [2 * resolution, 5 * resolution]:
             hist, _ = pole_density_function(
                 v,
                 symmetry=pg,
                 resolution=resolution,
                 sigma=sigma,
-                )
-            mean_value = np.sum(solid_angle*hist) / \
-                np.sum(solid_angle*~hist.mask)
+            )
+            mean_value = np.sum(solid_angle * hist) / np.sum(solid_angle * ~hist.mask)
             print(mean_value)
             assert np.allclose(mean_value, 1.0, rtol=0.01)
 
@@ -141,8 +140,7 @@ class TestMeasurePoleDensityFunction:
         v = Vector3d.random(100_000)
 
         hist_pdf, _ = pole_density_function(v, weights=None)
-        hist_ipdf, _ = pole_density_function(v, weights=None,
-                                             symmetry=symmetry.C1)
+        hist_ipdf, _ = pole_density_function(v, weights=None, symmetry=symmetry.C1)
 
         # in testing this test passes at tolerance of 1% for 100_000
         # vectors, but raise tolerance to 2% to ensure pass
@@ -152,67 +150,97 @@ class TestMeasurePoleDensityFunction:
         v = Vector3d.empty()
         assert not v.size
 
-        with pytest.raises(
-            ValueError
-        ):
+        with pytest.raises(ValueError):
             pole_density_function(v)
 
 
 class TestGnomCubeRoutines:
 
     def test_corner_edge_assignment(self):
-        """ Make sure we get useable results for corner-cases.
-        """
+        """Make sure we get useable results for corner-cases."""
         corners = Vector3d(
-            [[1, 1, 1],
-             [1, 1, -1],
-             [1, -1, 1],
-             [1, -1, -1],
-             [-1, 1, 1],
-             [-1, 1, -1],
-             [-1, -1, 1],
-             [-1, -1, -1],]
-            )
+            [
+                [1, 1, 1],
+                [1, 1, -1],
+                [1, -1, 1],
+                [1, -1, -1],
+                [-1, 1, 1],
+                [-1, 1, -1],
+                [-1, -1, 1],
+                [-1, -1, -1],
+            ]
+        )
 
         edges = Vector3d(
-            [[0, 1, 1],
-             [0, 1, -1],
-             [0, -1, 1],
-             [0, -1, -1],
-             [1, 0, 1],
-             [1, 0, -1],
-             [-1, 0, 1],
-             [-1, 0, -1],
-             [1, 1, 0],
-             [1, -1, 0],
-             [-1, 1, 0],
-             [-1, -1, 0],]
-            )
+            [
+                [0, 1, 1],
+                [0, 1, -1],
+                [0, -1, 1],
+                [0, -1, -1],
+                [1, 0, 1],
+                [1, 0, -1],
+                [-1, 0, 1],
+                [-1, 0, -1],
+                [1, 1, 0],
+                [1, -1, 0],
+                [-1, 1, 0],
+                [-1, -1, 0],
+            ]
+        )
 
         c_index, c_coordinates = _cube_gnom_coordinates(corners)
         e_index, e_coordinates = _cube_gnom_coordinates(edges)
 
-        assert np.all(c_index == [0, 5, 0, 3, 2, 1, 4, 1,])
-        assert np.all(e_index == [2, 5, 4, 3, 0, 5, 4, 1, 0, 3, 2, 1,])
+        assert np.all(
+            c_index
+            == [
+                0,
+                5,
+                0,
+                3,
+                2,
+                1,
+                4,
+                1,
+            ]
+        )
+        assert np.all(
+            e_index
+            == [
+                2,
+                5,
+                4,
+                3,
+                0,
+                5,
+                4,
+                1,
+                0,
+                3,
+                2,
+                1,
+            ]
+        )
 
     def test_grid_correct_mapping(self):
-        """ Make sure grids get assigned to the correct faces and coordinates.
-        """
+        """Make sure grids get assigned to the correct faces and coordinates."""
         faces_grid = sample_S2_equiangle_cube_mesh_face_centers(15)
         index_faces, corrdinates_faces = _cube_gnom_coordinates(faces_grid)
 
-        exp_coords = np.array([-0.65449847, -0.39269908, -0.13089969,
-                               0.13089969, 0.39269908, 0.65449847])
+        exp_coords = np.array(
+            [-0.65449847, -0.39269908, -0.13089969, 0.13089969, 0.39269908, 0.65449847]
+        )
         for face_index in range(6):
             assert np.all(index_faces[face_index] == face_index)
-            assert np.allclose(corrdinates_faces[0, face_index],
-                               exp_coords[:, np.newaxis])
-            assert np.allclose(corrdinates_faces[1, face_index],
-                               exp_coords[np.newaxis, :])
+            assert np.allclose(
+                corrdinates_faces[0, face_index], exp_coords[:, np.newaxis]
+            )
+            assert np.allclose(
+                corrdinates_faces[1, face_index], exp_coords[np.newaxis, :]
+            )
 
     def test_blurring_kernel(self):
-        """ Check that the smoothing gives us roughly the correct width.
-        """
+        """Check that the smoothing gives us roughly the correct width."""
         vectors = Vector3d(np.array([0.0, 0, 1]))
         for resolution in [0.25, 0.5, 1.0]:
             for s in [5, 10, 20]:
@@ -221,6 +249,6 @@ class TestGnomCubeRoutines:
                     vectors,
                     sigma=sigma,
                     resolution=resolution,
-                    )
+                )
                 assert hist[0, 0] / hist[0, s] > 2.3
                 assert hist[0, 0] / hist[0, s] < 3.0

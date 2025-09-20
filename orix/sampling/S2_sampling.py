@@ -417,15 +417,15 @@ def sample_S2_equiangle_cube_mesh_vertexes(
     """
 
     bins_along_edge = int(90 / resolution)
-    bin_edges = np.linspace(-np.pi/4, np.pi/4, bins_along_edge+1)
+    bin_edges = np.linspace(-np.pi / 4, np.pi / 4, bins_along_edge + 1)
 
-    dim_1, dim_2  = np.meshgrid(np.tan(bin_edges), np.tan(bin_edges))
+    dim_1, dim_2 = np.meshgrid(np.tan(bin_edges), np.tan(bin_edges))
     norm_term = np.sqrt(dim_1**2 + dim_2**2 + 1)
     dim_1 /= norm_term
     dim_2 /= norm_term
-    dim_3 = np.ones((bins_along_edge+1, bins_along_edge+1)) / norm_term
+    dim_3 = np.ones((bins_along_edge + 1, bins_along_edge + 1)) / norm_term
 
-    data = np.zeros((6, bins_along_edge+1, bins_along_edge+1, 3))
+    data = np.zeros((6, bins_along_edge + 1, bins_along_edge + 1, 3))
 
     # Assign points on each edge
     data[0, ...] = np.stack([dim_3, dim_2, dim_1], axis=-1)
@@ -462,8 +462,10 @@ def sample_S2_equiangle_cube_mesh_face_centers(
     """
 
     bins = int(90 / resolution)
-    bin_middles = np.linspace(-np.pi/4+np.pi/4/bins, np.pi/4-np.pi/4/bins, bins)
-    dim_1, dim_2  = np.meshgrid(np.tan(bin_middles), np.tan(bin_middles))
+    bin_middles = np.linspace(
+        -np.pi / 4 + np.pi / 4 / bins, np.pi / 4 - np.pi / 4 / bins, bins
+    )
+    dim_1, dim_2 = np.meshgrid(np.tan(bin_middles), np.tan(bin_middles))
     norm_term = np.sqrt(dim_1**2 + dim_2**2 + 1)
     dim_1 /= norm_term
     dim_2 /= norm_term
