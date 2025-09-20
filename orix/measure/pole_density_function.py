@@ -20,7 +20,7 @@
 import numpy as np
 
 from orix.projections.stereographic import StereographicProjection
-from orix.quaternion.symmetry import Symmetry
+from orix.quaternion.symmetry import Symmetry, C1
 from orix.vector.vector3d import Vector3d
 from scipy.interpolate import RegularGridInterpolator
 from orix.sampling.S2_sampling import _sample_S2_uv_mesh_coordinates
@@ -32,7 +32,7 @@ def pole_density_function(
     sigma: float = 5,
     weights: np.ndarray | None = None,
     hemisphere: str = "upper",
-    symmetry: Symmetry | None = None,
+    symmetry: Symmetry | None = C1,
     log: bool = False,
     mrd: bool = True,
 ) -> tuple[np.ma.MaskedArray, tuple[np.ndarray, np.ndarray]]:
@@ -92,6 +92,10 @@ def pole_density_function(
     poles = {"upper": -1, "lower": 1}
     sp = StereographicProjection(poles[hemisphere])
 
+    # If user explicitly passes symmetry=None
+    if symmetry is None:
+        symmetry = C1
+
     if len(args) == 1:
         v = args[0]
         if not isinstance(v, Vector3d):
@@ -128,40 +132,23 @@ def pole_density_function(
     bin_edges = np.linspace(-np.pi/4, np.pi/4, bins+1)
     hist = np.zeros((6, bins, bins))
 
-    if symmetry is None:
-        face_index_array, face_coordinates = _cube_gnom_coordinates(v)
+    # Explicit symmetrization
+    for rotation in symmetry:
+
+        face_index_array, face_coordinates = \
+            _cube_gnom_coordinates(rotation*v)
         face_index_array = face_index_array.ravel()
         face_coordinate_1 = face_coordinates[0].ravel()
         face_coordinate_2 = face_coordinates[1].ravel()
-
         for face_index in range(6):
             this_face = face_index_array == face_index
             w = weights[this_face] if weights is not None else None
-            hist[face_index] = np.histogramdd(
-                    (face_coordinate_1[this_face],
-                     face_coordinate_2[this_face]),
-                    bins=(bin_edges, bin_edges),
-                    weights=w,
-                )[0]
-
-    # Explicit symmetrization
-    elif symmetry is not None:
-        for rotation in symmetry:
-
-            face_index_array, face_coordinates = \
-                _cube_gnom_coordinates(rotation*v)
-            face_index_array = face_index_array.ravel()
-            face_coordinate_1 = face_coordinates[0].ravel()
-            face_coordinate_2 = face_coordinates[1].ravel()
-            for face_index in range(6):
-                this_face = face_index_array == face_index
-                w = weights[this_face] if weights is not None else None
-                hist[face_index] += np.histogramdd(
-                    (face_coordinate_1[this_face],
-                     face_coordinate_2[this_face]),
-                    bins=(bin_edges, bin_edges),
-                    weights=w,
-                )[0] / symmetry.size
+            hist[face_index] += np.histogramdd(
+                (face_coordinate_1[this_face],
+                    face_coordinate_2[this_face]),
+                bins=(bin_edges, bin_edges),
+                weights=w,
+            )[0] / symmetry.size
 
     # Bins are not all same solid angle area, so we need to normalize.
     if mrd:
@@ -216,10 +203,9 @@ def pole_density_function(
         polar=polar_grid
         ).unit
 
-    if symmetry is not None:
-        mask = ~(v_grid <= symmetry.fundamental_sector)
-        v_grid = v_grid.in_fundamental_sector(symmetry)
-        v_grid_vertexes = v_grid_vertexes.in_fundamental_sector(symmetry)
+    mask = ~(v_grid <= symmetry.fundamental_sector)
+    v_grid = v_grid.in_fundamental_sector(symmetry)
+    v_grid_vertexes = v_grid_vertexes.in_fundamental_sector(symmetry)
 
     # Interpolation from histograms to plot grid
     grid_face_index, grid_face_coords = _cube_gnom_coordinates(v_grid)
@@ -237,11 +223,8 @@ def pole_density_function(
         hist_grid[this_face] = interpolator(grid_face_coords[:, this_face].T)
     hist = hist_grid
 
-    # Mask out points outside funamental region if symmetry is given.
-    if symmetry is not None:
-        hist = np.ma.array(hist, mask=mask)
-    else:
-        hist = np.ma.array(hist, mask=np.zeros_like(hist, dtype=bool))
+    # Mask out points outside funamental region.
+    hist = np.ma.array(hist, mask=mask)
 
     # Transform grdi to mystery coordinates used by plotting routine
     x, y = sp.vector2xy(v_grid_vertexes)

@@ -33,6 +33,7 @@ from orix.sampling.S2_sampling import (
 
 @pytest.fixture(
     params=[
+        None,
         symmetry.D2h,
         symmetry.S6,
         symmetry.D3d,
