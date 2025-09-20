@@ -18,13 +18,13 @@
 #
 
 import numpy as np
-from scipy.ndimage import gaussian_filter
 
 from orix.projections.stereographic import StereographicProjection
 from orix.quaternion.symmetry import Symmetry
 from orix.vector.vector3d import Vector3d
 from scipy.interpolate import RegularGridInterpolator
 from orix.sampling.S2_sampling import _sample_S2_uv_mesh_coordinates
+
 
 def pole_density_function(
     *args: np.ndarray | Vector3d,
@@ -104,7 +104,8 @@ def pole_density_function(
         v = Vector3d.from_polar(*args)
     else:
         raise ValueError(
-            "Accepts only one (Vector3d) or two (azimuth, polar) input arguments."
+            "Accepts only one (Vector3d) or two (azimuth, polar)\
+                input arguments."
         )
 
     if v.size == 0:
@@ -137,7 +138,8 @@ def pole_density_function(
             this_face = face_index_array == face_index
             w = weights[this_face] if weights is not None else None
             hist[face_index] = np.histogramdd(
-                    (face_coordinate_1[this_face], face_coordinate_2[this_face]),
+                    (face_coordinate_1[this_face],
+                     face_coordinate_2[this_face]),
                     bins=(bin_edges, bin_edges),
                     weights=w,
                 )[0]
@@ -146,7 +148,8 @@ def pole_density_function(
     elif symmetry is not None:
         for rotation in symmetry:
 
-            face_index_array, face_coordinates = _cube_gnom_coordinates(rotation*v)
+            face_index_array, face_coordinates = \
+                _cube_gnom_coordinates(rotation*v)
             face_index_array = face_index_array.ravel()
             face_coordinate_1 = face_coordinates[0].ravel()
             face_coordinate_2 = face_coordinates[1].ravel()
@@ -154,17 +157,20 @@ def pole_density_function(
                 this_face = face_index_array == face_index
                 w = weights[this_face] if weights is not None else None
                 hist[face_index] += np.histogramdd(
-                    (face_coordinate_1[this_face], face_coordinate_2[this_face]),
+                    (face_coordinate_1[this_face],
+                     face_coordinate_2[this_face]),
                     bins=(bin_edges, bin_edges),
                     weights=w,
                 )[0] / symmetry.size
 
     # Bins are not all same solid angle area, so we need to normalize.
     if mrd:
-        bin_middles = np.linspace(-np.pi/4 + np.pi/4/bins, np.pi/4 - np.pi/4/bins, bins)
+        bin_middles = np.linspace(-np.pi/4 + np.pi/4/bins,
+                                  np.pi/4 - np.pi/4/bins, bins)
         y_ang, z_ang = np.meshgrid(bin_middles, bin_middles)
-        solid_angle_term = 1 / (np.tan(y_ang)**2 + np.tan(z_ang)**2 + 1)/\
-            (np.cos(y_ang)*np.cos(z_ang)) / (1 - 0.5*(np.sin(z_ang) * np.sin(y_ang))**2)
+        solid_angle_term = 1 / (np.tan(y_ang)**2 + np.tan(z_ang)**2 + 1) / \
+            (np.cos(y_ang)*np.cos(z_ang)) / \
+            (1 - 0.5*(np.sin(z_ang) * np.sin(y_ang))**2)
         solid_angle_term *= 1 / 6 / np.sum(solid_angle_term)
         if weights is not None:
             solid_angle_term *= np.sum(weights)
@@ -174,7 +180,8 @@ def pole_density_function(
 
     # Smoothing
     if sigma != 0.0:
-        # If smoothing is only a bit, du 60 small steps, otherwise do a max step-size
+        # If smoothing is only a bit, du 60 small steps,
+        # otherwise do a max step-size.
         if (sigma / histogram_resolution)**2 <= 20:
             N = 60
             t = 1 / N * (sigma / histogram_resolution)**2
@@ -190,7 +197,11 @@ def pole_density_function(
         hemisphere='upper',
         azimuth_endpoint=True,
     )
-    azimuth_grid, polar_grid = np.meshgrid(azimuth_coords, polar_coords, indexing="ij")
+    azimuth_grid, polar_grid = np.meshgrid(
+        azimuth_coords,
+        polar_coords,
+        indexing="ij",
+        )
     azimuth_center_grid, polar_center_grid = np.meshgrid(
         azimuth_coords[:-1] + np.diff(azimuth_coords) / 2,
         polar_coords[:-1] + np.diff(polar_coords) / 2,
@@ -200,19 +211,28 @@ def pole_density_function(
     v_grid = Vector3d.from_polar(
         azimuth=azimuth_center_grid, polar=polar_center_grid
     ).unit
-    v_grid_vertexes = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
+    v_grid_vertexes = Vector3d.from_polar(
+        azimuth=azimuth_grid,
+        polar=polar_grid
+        ).unit
 
     if symmetry is not None:
-        mask=~(v_grid <= symmetry.fundamental_sector)
+        mask = ~(v_grid <= symmetry.fundamental_sector)
         v_grid = v_grid.in_fundamental_sector(symmetry)
         v_grid_vertexes = v_grid_vertexes.in_fundamental_sector(symmetry)
 
     # Interpolation from histograms to plot grid
     grid_face_index, grid_face_coords = _cube_gnom_coordinates(v_grid)
     hist_grid = np.zeros(v_grid.shape)
-    bin_middles = np.linspace(-np.pi/4 + np.pi/4/bins, np.pi/4 - np.pi/4/bins, bins)
+    bin_middles = np.linspace(-np.pi/4 + np.pi/4/bins,
+                              np.pi/4 - np.pi/4/bins, bins)
     for face_index in range(6):
-        interpolator = RegularGridInterpolator((bin_middles, bin_middles), hist[face_index], bounds_error=False, fill_value=None)
+        interpolator = RegularGridInterpolator(
+            (bin_middles, bin_middles),
+            hist[face_index],
+            bounds_error=False,
+            fill_value=None
+            )
         this_face = grid_face_index == face_index
         hist_grid[this_face] = interpolator(grid_face_coords[:, this_face].T)
     hist = hist_grid
@@ -234,7 +254,8 @@ def pole_density_function(
     return hist, (x, y)
 
 
-def _cube_gnom_coordinates(vectors: Vector3d) -> tuple[np.ndarray[int], np.ndarray[float]]:
+def _cube_gnom_coordinates(vectors: Vector3d)\
+        -> tuple[np.ndarray[int], np.ndarray[float]]:
     """ Assigns an index (0 to 5) to an array of ```Vector3d```
     assigning them each to a face of a cube in the followiung way:
 
@@ -274,35 +295,33 @@ def _cube_gnom_coordinates(vectors: Vector3d) -> tuple[np.ndarray[int], np.ndarr
     indx = np.all([vectors.y > vectors.x,
                    vectors.y >= -vectors.x,
                    vectors.y >= vectors.z,
-                   vectors.y > -vectors.z,], axis = 0)
+                   vectors.y > -vectors.z,], axis=0)
     face_index[indx] = 2
 
     indx = np.all([vectors.y < vectors.x,
                    vectors.y <= -vectors.x,
                    vectors.y <= vectors.z,
-                   vectors.y < -vectors.z,], axis = 0)
+                   vectors.y < -vectors.z,], axis=0)
     face_index[indx] = 3
 
     indx = np.all([vectors.z > vectors.x,
                    vectors.z >= -vectors.x,
                    vectors.z > vectors.y,
-                   vectors.z >= -vectors.y,], axis = 0)
+                   vectors.z >= -vectors.y,], axis=0)
     face_index[indx] = 4
 
     indx = np.all([vectors.z < vectors.x,
                    vectors.z <= -vectors.x,
                    vectors.z < vectors.y,
-                   vectors.z <= -vectors.y,], axis = 0)
+                   vectors.z <= -vectors.y,], axis=0)
     face_index[indx] = 5
-
 
     # Assign coordinates
     coordinates = np.zeros((2,) + vectors.shape)
     unit_vectors = vectors.unit
 
-    #  Comment: no need for np.arctan2. We are sure that the denominator is non-zero
+    #  Comment: no need for np.arctan2. We know denom is pos
     #  so np.arctan should be faster.
-
     this_face = face_index == 0
     coordinates[0, this_face] =\
         np.arctan(unit_vectors.y[this_face] / unit_vectors.x[this_face])
@@ -342,11 +361,14 @@ def _cube_gnom_coordinates(vectors: Vector3d) -> tuple[np.ndarray[int], np.ndarr
     return face_index, coordinates
 
 
-def _smooth_gnom_cube_histograms(histograms, step_parameter, iterations=1):
+def _smooth_gnom_cube_histograms(
+    histograms: np.ndarray[float],
+    step_parameter: float,
+    iterations: int = 1,
+) -> np.ndarray[float]:
     """ Histograms shape is (6, n_nbins, n_bins) and edge connectivity
     is as according to the rest of this file.
     """
-    sub_histogram_shape = histograms[0][0].shape
     output_histogram = np.copy(histograms)
     diffused_weight = np.zeros(histograms.shape)
 
@@ -355,13 +377,11 @@ def _smooth_gnom_cube_histograms(histograms, step_parameter, iterations=1):
         diffused_weight[...] = 0
 
         # Diffuse on faces
-        for face_index in range(6):
-
-            diffused_weight[face_index, 1:, :] += output_histogram[face_index, :-1, :]
-            diffused_weight[face_index, :-1, :] += output_histogram[face_index, 1:, :]
-            diffused_weight[face_index, :, 1:] += output_histogram[face_index, :, :-1]
-            diffused_weight[face_index, :, :-1] += output_histogram[face_index, :, 1:]
-
+        for fi in range(6):
+            diffused_weight[fi, 1:, :] += output_histogram[fi, :-1, :]
+            diffused_weight[fi, :-1, :] += output_histogram[fi, 1:, :]
+            diffused_weight[fi, :, 1:] += output_histogram[fi, :, :-1]
+            diffused_weight[fi, :, :-1] += output_histogram[fi, :, 1:]
 
         connected_edge_pairs = (
             ((2, slice(None), -1), (4, slice(None), -1)),  # +y+z
@@ -379,8 +399,8 @@ def _smooth_gnom_cube_histograms(histograms, step_parameter, iterations=1):
         )
 
         for edge_1, edge_2 in connected_edge_pairs:
-            diffused_weight[edge_1] +=output_histogram[edge_2]
-            diffused_weight[edge_2] +=output_histogram[edge_1]
+            diffused_weight[edge_1] += output_histogram[edge_2]
+            diffused_weight[edge_2] += output_histogram[edge_1]
 
         # Add to output
         output_histogram = (1-step_parameter)*output_histogram\

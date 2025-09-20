@@ -17,8 +17,6 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from copy import deepcopy
-
 import numpy as np
 import pytest
 
@@ -26,8 +24,12 @@ from orix.measure import pole_density_function
 from orix.quaternion import symmetry
 from orix.vector import Vector3d
 from orix.measure.pole_density_function import _cube_gnom_coordinates
-from orix.sampling.S2_sampling import sample_S2_equiangle_cube_mesh_face_centers
-from orix.sampling.S2_sampling import _sample_S2_uv_mesh_coordinates, sample_S2_random_mesh
+from orix.sampling.S2_sampling import (
+    sample_S2_equiangle_cube_mesh_face_centers,
+    _sample_S2_uv_mesh_coordinates,
+    sample_S2_random_mesh,
+    )
+
 
 @pytest.fixture(
     params=[
@@ -80,8 +82,14 @@ class TestMeasurePoleDensityFunction:
         solid_angle = np.abs(np.sin(polar_coords))[np.newaxis, :]
 
         for sigma in [2*resolution, 5*resolution]:
-            hist, _ = pole_density_function(v, symmetry=pg, resolution=resolution, sigma=sigma)
-            mean_value = np.sum(solid_angle*hist) / np.sum(solid_angle*~hist.mask)
+            hist, _ = pole_density_function(
+                v,
+                symmetry=pg,
+                resolution=resolution,
+                sigma=sigma,
+                )
+            mean_value = np.sum(solid_angle*hist) / \
+                np.sum(solid_angle*~hist.mask)
             print(mean_value)
             assert np.allclose(mean_value, 1.0, rtol=0.01)
 
@@ -116,9 +124,10 @@ class TestMeasurePoleDensityFunction:
         # the same because MRD normalizes by average
         assert np.allclose(hist0, hist2)
 
-        #TDOD: Ask about expected behaviour for mrd=False
+        # TDOD: Ask about expected behaviour for mrd=False
         # hist0_counts, _ = pole_density_function(v, weights=None, mrd=False)
-        # hist2_counts, _ = pole_density_function(v, weights=weights2, mrd=False)
+        # hist2_counts, _ = pole_density_function(v, weights=weights2,
+        #                                         mrd=False)
         # not the same because hist values are not normalized
         # assert not np.allclose(hist0_counts, hist2_counts)
 
@@ -131,7 +140,8 @@ class TestMeasurePoleDensityFunction:
         v = Vector3d.random(100_000)
 
         hist_pdf, _ = pole_density_function(v, weights=None)
-        hist_ipdf, _ = pole_density_function(v, weights=None, symmetry=symmetry.C1)
+        hist_ipdf, _ = pole_density_function(v, weights=None,
+                                             symmetry=symmetry.C1)
 
         # in testing this test passes at tolerance of 1% for 100_000
         # vectors, but raise tolerance to 2% to ensure pass
@@ -154,28 +164,28 @@ class TestGnomCubeRoutines:
         """
         corners = Vector3d(
             [[1, 1, 1],
-            [1, 1, -1],
-            [1, -1, 1],
-            [1, -1, -1],
-            [-1, 1, 1],
-            [-1, 1, -1],
-            [-1, -1, 1],
-            [-1, -1, -1],]
+             [1, 1, -1],
+             [1, -1, 1],
+             [1, -1, -1],
+             [-1, 1, 1],
+             [-1, 1, -1],
+             [-1, -1, 1],
+             [-1, -1, -1],]
             )
 
         edges = Vector3d(
             [[0, 1, 1],
-            [0, 1, -1],
-            [0, -1, 1],
-            [0, -1, -1],
-            [1, 0, 1],
-            [1, 0, -1],
-            [-1, 0, 1],
-            [-1, 0, -1],
-            [1, 1, 0],
-            [1, -1, 0],
-            [-1, 1, 0],
-            [-1, -1, 0],]
+             [0, 1, -1],
+             [0, -1, 1],
+             [0, -1, -1],
+             [1, 0, 1],
+             [1, 0, -1],
+             [-1, 0, 1],
+             [-1, 0, -1],
+             [1, 1, 0],
+             [1, -1, 0],
+             [-1, 1, 0],
+             [-1, -1, 0],]
             )
 
         c_index, c_coordinates = _cube_gnom_coordinates(corners)
@@ -190,19 +200,26 @@ class TestGnomCubeRoutines:
         faces_grid = sample_S2_equiangle_cube_mesh_face_centers(15)
         index_faces, corrdinates_faces = _cube_gnom_coordinates(faces_grid)
 
-        exp_coords = np.array([-0.65449847, -0.39269908, -0.13089969, 0.13089969, 0.39269908, 0.65449847])
+        exp_coords = np.array([-0.65449847, -0.39269908, -0.13089969,
+                               0.13089969, 0.39269908, 0.65449847])
         for face_index in range(6):
             assert np.all(index_faces[face_index] == face_index)
-            assert np.allclose(corrdinates_faces[0, face_index], exp_coords[:, np.newaxis])
-            assert np.allclose(corrdinates_faces[1, face_index], exp_coords[np.newaxis, :])
+            assert np.allclose(corrdinates_faces[0, face_index],
+                               exp_coords[:, np.newaxis])
+            assert np.allclose(corrdinates_faces[1, face_index],
+                               exp_coords[np.newaxis, :])
 
     def test_blurring_kernel(self):
         """ Check that the smoothing gives us roughly the correct width.
         """
-        vectors =Vector3d(np.array([0.0, 0, 1]))
+        vectors = Vector3d(np.array([0.0, 0, 1]))
         for resolution in [0.25, 0.5, 1.0]:
             for s in [5, 10, 20]:
                 sigma = resolution * s
-                hist, _ = pole_density_function(vectors, sigma=sigma, resolution=resolution)
+                hist, _ = pole_density_function(
+                    vectors,
+                    sigma=sigma,
+                    resolution=resolution,
+                    )
                 assert hist[0, 0] / hist[0, s] > 2.3
                 assert hist[0, 0] / hist[0, s] < 3.0
