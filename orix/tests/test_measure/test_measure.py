@@ -68,6 +68,12 @@ class TestMeasurePoleDensityFunction:
         assert isinstance(hist2, np.ma.MaskedArray)
         assert hist2.mask.sum() > 0
 
+        hist3, (x3, y3) = pole_density_function(v, hemisphere="lower")
+        assert hist3.shape[0] + 1 == x3.shape[0] == y3.shape[0]
+        assert hist3.shape[1] + 1 == x3.shape[1] == y3.shape[1]
+        assert isinstance(hist3, np.ma.MaskedArray)
+        assert hist3.mask.sum() == 0
+
     @pytest.mark.parametrize("resolution", [0.5, 1.0])
     def test_pole_density_function_mrd_norm(self, point_groups, resolution):
         pg = point_groups

@@ -106,6 +106,7 @@ def pole_density_function(
     elif len(args) == 2:
         # azimuth and polar angles
         v = Vector3d.from_polar(*args)
+
     else:
         raise ValueError(
             "Accepts only one (Vector3d) or two (azimuth, polar)\
@@ -186,7 +187,7 @@ def pole_density_function(
     # Make plot grid
     azimuth_coords, polar_coords = _sample_S2_uv_mesh_coordinates(
         plot_resolution,
-        hemisphere="upper",
+        hemisphere=hemisphere,
         azimuth_endpoint=True,
     )
     azimuth_grid, polar_grid = np.meshgrid(
