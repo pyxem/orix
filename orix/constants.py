@@ -22,7 +22,7 @@
 from importlib.metadata import version
 
 # NB! Update project config file if this list is updated!
-optional_deps: list[str] = ["numpy-quaternion"]
+optional_deps: list[str] = ["matplotlib-scalebar", "numpy-quaternion"]
 installed: dict[str, bool] = {}
 for pkg in optional_deps:
     try:
@@ -30,6 +30,26 @@ for pkg in optional_deps:
         installed[pkg] = True
     except ImportError:  # pragma: no cover
         installed[pkg] = False
+
+
+def verify_dependency_or_raise(package: str, reason: str) -> None:
+    """Raise an informative import error if an optional dependency is
+    not installed.
+
+    Parameters
+    ----------
+    package
+        The optional dependency being checked for.
+    reason
+        A short description of the feature that requires the dependency
+        preceding the string "requires that the *package* is installed".
+    """
+    if not installed[package]:
+        msg = f"{reason} requires that {package} is installed"
+        raise ImportError(msg)
+
+
+# ---------------------------- Tolerances ---------------------------- #
 
 # Typical tolerances for comparisons in need of a precision. We
 # generally use the highest precision possible (allowed by testing on

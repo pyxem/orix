@@ -19,12 +19,12 @@
 
 import copy
 
-import matplotlib.colorbar as mbar
+import matplotlib.colorbar as mcolorbar
 import matplotlib.pyplot as plt
-from matplotlib_scalebar import scalebar
 import numpy as np
 import pytest
 
+from orix.constants import installed
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.plot import CrystalMapPlot
 
@@ -153,14 +153,50 @@ class TestCrystalMapPlot:
 
         plt.close("all")
 
-    def test_properties(self, crystal_map):
-        xmap = crystal_map
-        fig = xmap.plot(return_figure=True, colorbar=True, colorbar_label="score")
+    def test_colorbar_property(self, crystal_map: CrystalMap):
+        label = "score"
+        fig = crystal_map.plot(return_figure=True, colorbar=True, colorbar_label=label)
         ax = fig.axes[0]
 
-        assert isinstance(ax.colorbar, mbar.Colorbar)
-        assert ax.colorbar.ax.get_ylabel() == "score"
-        assert isinstance(ax.scalebar, scalebar.ScaleBar)
+        assert isinstance(ax.colorbar, mcolorbar.Colorbar)
+        assert ax.colorbar.ax.get_ylabel() == label
+
+        # Check that passing False into the colorbar gives a plot with
+        # no colorbar
+        fig = crystal_map.plot(return_figure=True, colorbar=False)
+        ax = fig.axes[0]
+        assert ax.colorbar is None
+
+        plt.close("all")
+
+    @pytest.mark.skipif(
+        not installed["matplotlib-scalebar"], reason="Requires matplotlib-scalebar"
+    )
+    def test_scalebar_property(self, crystal_map):
+        from matplotlib_scalebar.scalebar import ScaleBar
+
+        fig = crystal_map.plot(return_figure=True, scalebar=True)
+        ax = fig.axes[0]
+        assert isinstance(ax.scalebar, ScaleBar)
+
+        # Check that not giving a scalebar parameter also gives a
+        # scalebar
+        fig = crystal_map.plot(return_figure=True)
+        ax = fig.axes[0]
+        assert isinstance(ax.scalebar, ScaleBar)
+
+        plt.close("all")
+
+    @pytest.mark.skipif(
+        installed["matplotlib-scalebar"], reason="matplotlib-scalebar is installed"
+    )
+    def test_scalebar_unavailable(self, crystal_map):
+        fig = crystal_map.plot(return_figure=True)
+        ax = fig.axes[0]
+        assert ax.scalebar is None
+
+        with pytest.raises(ImportError):
+            crystal_map.plot(scalebar=True)
 
         plt.close("all")
 
@@ -298,7 +334,8 @@ class TestCrystalMapPlotUtilities:
         assert ax._xmargin == margin_before
         assert ax._ymargin == margin_before
 
-        expected_subplot_params = (0.88, 0.11, 0.9, 0.125)  # top, bottom, right, left
+        # top, bottom, right, left
+        expected_subplot_params = (0.88, 0.11, 0.9, 0.125)
         subplot_params = fig.subplotpars
         assert (
             subplot_params.top,
@@ -339,7 +376,11 @@ class TestCrystalMapPlotUtilities:
 
     @pytest.mark.parametrize(
         "cmap, label, position",
-        [("viridis", "a", "right"), ("cividis", "b", "left"), ("inferno", "c", "top")],
+        [
+            ("viridis", "a", "right"),
+            ("cividis", "b", "left"),
+            ("inferno", "c", "top"),
+        ],
     )
     def test_add_colorbar(self, crystal_map, cmap, label, position):
         fig = plt.figure()
@@ -438,6 +479,9 @@ class TestStatusBar:
         plt.close("all")
 
 
+@pytest.mark.skipif(
+    not installed["matplotlib-scalebar"], reason="Requires matplotlib-scalebar"
+)
 class TestScalebar:
     @pytest.mark.parametrize(
         "crystal_map_input, scalebar_properties",

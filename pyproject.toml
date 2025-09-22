@@ -30,7 +30,6 @@ dependencies = [
     "h5py",
     "lazy_loader",
     "matplotlib             >= 3.6.1",
-    "matplotlib-scalebar",
     "numba",
     "numpy",
     "pooch                  >= 0.13",
@@ -42,6 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = [  # NB! Update constants.py if this list is updated!
+    "matplotlib-scalebar",
     "numpy-quaternion",
 ]
 doc = [
@@ -64,7 +64,7 @@ doc = [
 tests = [
     "numpydoc",
     "pytest                         >= 5.4",
-    # TODO: Remove once a new release fixing
+    # TODO: Remove restriction once a new release fixing
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/302 is available.
     "pytest-rerunfailures           < 16.0",
     "pytest-xdist",

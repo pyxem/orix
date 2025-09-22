@@ -7,6 +7,7 @@ orix can be installed with `pip <https://pypi.org/project/orix/>`__,
 >= 3.10.
 All alternatives are available on Windows, macOS and Linux.
 
+
 .. _install-with-pip:
 
 With pip
@@ -14,24 +15,34 @@ With pip
 
 orix is availabe from the Python Package Index (PyPI), and can therefore be installed
 with `pip <https://pip.pypa.io/en/stable>`__.
-To install all of orix's functionality, do::
+To install all of orix's functionality, do:
 
-    pip install orix[all]
+.. code-block:: bash
 
-To install only the strictly required dependencies with limited functionality, do::
+    pip install "orix[all]"
+
+(The quotes are needed in a zsh shell on macOS.)
+To install only the strictly required dependencies with limited functionality, do:
+
+.. code-block:: bash
 
     pip install orix
 
 See :ref:`dependencies` for the base and optional dependencies and alternatives for how
 to install these.
 
-To update orix to the latest release::
+To update orix to the latest release:
+
+.. code-block:: bash
 
     pip install --upgrade orix
 
-To install a specific version of orix (say version 0.12.1)::
+To install a specific version of orix (say version 0.12.1):
+
+.. code-block:: bash
 
     pip install orix==0.12.1
+
 
 .. _install-with-anaconda:
 
@@ -41,7 +52,9 @@ With Anaconda
 To install with Anaconda, we recommend you install it in a `conda environment
 <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`__
 with the `Miniconda distribution <https://docs.conda.io/en/latest/miniconda.html>`__.
-To create an environment and activate it, run the following::
+To create an environment and activate it, run the following:
+
+.. code-block:: bash
 
    conda create --name orix-env python=3.12
    conda activate orix-env
@@ -49,24 +62,33 @@ To create an environment and activate it, run the following::
 If you prefer a graphical interface to manage packages and environments, you can install
 the `Anaconda distribution <https://docs.continuum.io/anaconda>`__ instead.
 
-To install all of orix's functionality, do::
+To install all of orix's functionality, do:
+
+.. code-block:: bash
 
     conda install orix --channel conda-forge
 
-To install only the strictly required dependencies with limited functionality, do::
+To install only the strictly required dependencies with limited functionality, do:
+
+.. code-block:: bash
 
     conda install orix-base -c conda-forge
 
 See :ref:`dependencies` for the base and optional dependencies and alternatives for how
 to install these.
 
-To update orix to the latest release::
+To update orix to the latest release:
+
+.. code-block:: bash
 
     conda update orix
 
-To install a specific version of orix (say version 0.12.1)::
+To install a specific version of orix (say version 0.12.1):
+
+.. code-block:: bash
 
     conda install orix==0.12.1 -c conda-forge
+
 
 .. _install-from-source:
 
@@ -106,8 +128,6 @@ This is a list of required package dependencies:
 * `lazy_loader <https://scientific-python.org/specs/spec-0001/#lazy_loader>`__: Lazy
   loading of functions, classes, and modules
 * :doc:`matplotlib <matplotlib:index>`: Visualization
-* `matplotlib-scalebar <https://github.com/ppinard/matplotlib-scalebar>`__: Scale bar
-  for crystal map plots
 * :doc:`numba <numba:index>`: CPU acceleration
 * :doc:`numpy <numpy:index>`: Handling of N-dimensional arrays
 * :doc:`pooch <pooch:api/index>`: Downloading and caching of datasets
@@ -118,6 +138,9 @@ Some functionality requires optional dependencies:
 
 * `numpy-quaternion <https://quaternion.readthedocs.io/en/stable/>`__: Faster quaternion
   and vector multiplication
+* `matplotlib-scalebar <https://github.com/ppinard/matplotlib-scalebar>`__: Scalebar for
+  crystal map plots
 
-Optional dependencies can be installed either with ``pip install orix[all]`` or by
-installing each dependency separately, such as ``pip install orix numpy-quaternion``.
+Optional dependencies can be installed either with ``pip install "orix[all]"`` or by
+installing each dependency separately, such as
+``pip install orix numpy-quaternion matplotlib-scalebar``.

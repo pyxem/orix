@@ -933,7 +933,7 @@ class CrystalMap:
         self,
         value: np.ndarray | str | None = None,
         overlay: str | np.ndarray | None = None,
-        scalebar: bool = True,
+        scalebar: bool | None = None,
         scalebar_properties: dict | None = None,
         legend: bool = True,
         legend_properties: dict | None = None,
@@ -961,8 +961,9 @@ class CrystalMap:
             alpha (RGBA) channel. The property range is adjusted for
             maximum contrast. Not used if not given.
         scalebar
-            Whether to add a scalebar (default is ``True``) along the
-            horizontal map dimension.
+            Whether to add a scalebar along the horizontal map
+            dimension. If not given, a scalebar is added if
+            :mod:`matplotlib-scalebar` is installed.
         scalebar_properties
             Keyword arguments passed to
             :class:`matplotlib_scalebar.scalebar.ScaleBar`.
@@ -1033,9 +1034,9 @@ class CrystalMap:
         import orix.plot.crystal_map_plot
 
         if figure_kwargs is None:
-            figure_kwargs = dict()
+            figure_kwargs = {}
 
-        fig, ax = plt.subplots(subplot_kw=dict(projection="plot_map"), **figure_kwargs)
+        fig, ax = plt.subplots(subplot_kw={"projection": "plot_map"}, **figure_kwargs)
         ax.plot_map(
             self,
             value=value,
@@ -1045,14 +1046,18 @@ class CrystalMap:
             legend_properties=legend_properties,
             **kwargs,
         )
+
         if overlay is not None:
             ax.add_overlay(self, overlay)
+
         if remove_padding:
             ax.remove_padding()
+
         if colorbar:
             if colorbar_properties is None:
                 colorbar_properties = dict()
             ax.add_colorbar(label=colorbar_label, **colorbar_properties)
+
         if return_figure:
             return fig
 

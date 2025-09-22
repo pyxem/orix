@@ -21,7 +21,9 @@ Some useful :doc:`fixtures <pytest:explanation/fixtures>` are available in the
     See the section on the :ref:`data module <adding-data-to-data-module>` for more
     details.
 
-To run the tests::
+To run the tests:
+
+.. code-block:: bash
 
     pytest --cov --pyargs orix -n auto
 
@@ -30,26 +32,34 @@ The ``-n auto`` is an optional flag to enable parallelized testing with
 We aim to cover all lines when all :ref:`dependencies` are installed.
 The ``--cov`` flag makes :doc:`coverage.py <coverage:index>` print a nice coverage
 report.
-For an even nicer presentation, you can use coverage.py directly::
+For an even nicer presentation, you can use coverage.py directly:
+
+.. code-block:: bash
 
     coverage html
 
 Coverage can then be inspected in the browser by opening ``htmlcov/index.html``.
 
-If a test takes a long time to run, you can mark it to skip it from running by default::
+If a test takes a long time to run, you can mark it to skip it from running by default:
+
+.. code-block:: python
 
     @pytest.mark.slow
     def test_slow_function():
         ...
 
-To run tests marked as slow, add the flag when running pytest::
+To run tests marked as slow, add the flag when running pytest:
 
-    pytest --slow
+.. code-block:: bash
+
+    pytest --pyargs orix --slow
 
 Docstring examples are tested with :doc:`pytest <pytest:how-to/doctest>` as well.
 :mod:`numpy` and :mod:`matplotlib.pyplot` should not be imported in examples as they are
 already available in the namespace as ``np`` and ``plt``, respectively.
-The docstring tests can be run from the top directory::
+The docstring tests can be run from the top directory:
+
+.. code-block:: bash
 
     pytest orix --doctest-modules --ignore-glob=orix/tests
 

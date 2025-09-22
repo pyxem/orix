@@ -45,6 +45,7 @@ Changed
   Gaussian method as opposed to rejection-based sampling.
   This is faster and uses less memory.
 - Functions and classes are now loaded lazily with `lazy-loader`.
+- *matplotlib-scalebar* is now an optional dependency.
 
 Removed
 -------
@@ -82,7 +83,7 @@ Added
 Changed
 -------
 - numpy-quaternion is now an optional dependency and will not be installed with ``pip``
-  unless ``pip install orix[all]`` is used.
+  unless ``pip install "orix[all]"`` is used.
 
 Removed
 -------
