@@ -688,14 +688,20 @@ class TestCrystalMapOrientations:
         xmap.phases = PhaseList(Phase("a", point_group=point_group))
 
         o = xmap.orientations
-        o = o.map_into_symmetry_reduced_zone()
+        o = o.reduce()
 
         o1 = Orientation(r)
         o1.symmetry = point_group
-        o1 = o1.map_into_symmetry_reduced_zone()
+        o1 = o1.reduce()
 
         assert np.allclose(o.data, o1.data, atol=1e-3)
         assert np.allclose(o.data, expected_orientation, atol=1e-3)
+
+        # TODO: remove in 0.15
+        o1_old = Orientation(r)
+        o1_old.symmetry = point_group
+        o1_old = o1_old.map_into_symmetry_reduced_zone()
+        assert np.allclose(o.data, o1_old.data, atol=1e-3)
 
     def test_orientations_none_symmetry_raises(self, crystal_map_input):
         xmap = CrystalMap(**crystal_map_input)

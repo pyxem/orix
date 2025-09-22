@@ -46,6 +46,8 @@ Changed
   This is faster and uses less memory.
 - Functions and classes are now loaded lazily with `lazy-loader`.
 - *matplotlib-scalebar* is now an optional dependency.
+- The :class:`~orix.quaternion.Misorientation` function 
+  ``map_into_symmetry_reduced_zone()`` has been renamed to ``reduce()``.
 
 Removed
 -------

@@ -102,7 +102,7 @@ class Orientation(Misorientation):
             # Call to Object3d.squeeze() doesn't carry over symmetry
             M = Misorientation(self * ~other).squeeze()
             M.symmetry = (self.symmetry, other.symmetry)
-            return M.map_into_symmetry_reduced_zone()
+            return M.reduce()
         return NotImplemented
 
     # ------------------------ Class methods ------------------------- #
