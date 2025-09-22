@@ -31,9 +31,15 @@ from .inverse_pole_figure_plot import InversePoleFigurePlot  # isort: skip
 # Lazily imported in module init
 __all__ = [
     # Classes
+    "AxAnglePlot",
+    "CrystalMapPlot",
     "DirectionColorKeyTSL",
     "EulerColorKey",
+    "InversePoleFigurePlot",
     "IPFColorKeyTSL",
+    "RodriguesPlot",
+    "RotationPlot",
+    "StereographicPlot",
     # Functions
     "format_labels",
     "register_projections",
