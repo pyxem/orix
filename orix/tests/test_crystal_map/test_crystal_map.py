@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import orix
+from orix.constants import installed
 from orix.crystal_map import (
     CrystalMap,
     Phase,
@@ -1129,8 +1129,26 @@ class TestCrystalMapPlotMethod:
         assert isinstance(fig1.axes[0], CrystalMapPlot)
 
         prop = np.arange(xmap.size)
+        fig2 = xmap.plot(return_figure=True, remove_padding=True, overlay=prop)
+        ax2 = fig2.axes[0]
+
+        # One effect of "removing padding"
+        assert ax2._xmargin == 0
+        assert ax2._ymargin == 0
+
+        plt.close("all")
+
+    @pytest.mark.skipif(
+        not installed["matplotlib-scalebar"], reason="Requires matplotlib-scalebar"
+    )
+    def test_plot_with_scalebar(self, crystal_map):
+        from matplotlib_scalebar.scalebar import ScaleBar
+
+        fig1 = crystal_map.plot(return_figure=True)
+
+        prop = np.arange(crystal_map.size)
         location = "upper right"
-        fig2 = xmap.plot(
+        fig2 = crystal_map.plot(
             return_figure=True,
             remove_padding=True,
             overlay=prop,
@@ -1142,16 +1160,12 @@ class TestCrystalMapPlotMethod:
         assert ax2._xmargin == 0
         assert ax2._ymargin == 0
 
-        # Run checks for scalebar only if matplotlib_scalebar is installed
-        if orix.constants.installed["matplotlib-scalebar"]:
-            import matplotlib_scalebar
-
-            sbar1 = fig1.axes[0].artists[0]
-            assert isinstance(sbar1, matplotlib_scalebar.scalebar.ScaleBar)
-            assert sbar1.dimension.base_units == xmap.scan_unit
-            assert sbar1.location == 3  # "lower left"
-            sbar2 = fig2.axes[0].artists[0]
-            assert sbar2.location == 1  # "upper right"
+        sbar1 = fig1.axes[0].artists[0]
+        assert isinstance(sbar1, ScaleBar)
+        assert sbar1.dimension.base_units == crystal_map.scan_unit
+        assert sbar1.location == 3  # "lower left"
+        sbar2 = fig2.axes[0].artists[0]
+        assert sbar2.location == 1  # "upper right"
 
         plt.close("all")
 
