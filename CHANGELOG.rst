@@ -29,6 +29,11 @@ Added
   :class:`~orix.vector.Miller`.
 - Explicit support for Python 3.13.
 - Dependency on `lazy-loader`.
+- Function :func:`~orix.plot.register_projections` to register all our custom
+  projections for use in Matplotlib.
+  An example of a custom projection is the :class:`~orix.plot.StereographicPlot`.
+  This function replaces the previous behavior of relying on a side-effect of importing
+  the :mod:`orix.plot` module, which also registered the projections.
 
 Changed
 -------

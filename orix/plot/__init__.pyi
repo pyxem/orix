@@ -17,6 +17,7 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ._plot import register_projections
 from ._util import format_labels
 from .crystal_map_plot import CrystalMapPlot
 from .direction_color_keys import DirectionColorKeyTSL
@@ -30,15 +31,10 @@ from .inverse_pole_figure_plot import InversePoleFigurePlot  # isort: skip
 # Lazily imported in module init
 __all__ = [
     # Classes
-    "AxAnglePlot",
-    "CrystalMapPlot",
     "DirectionColorKeyTSL",
     "EulerColorKey",
-    "InversePoleFigurePlot",
     "IPFColorKeyTSL",
-    "RodriguesPlot",
-    "RotationPlot",
-    "StereographicPlot",
     # Functions
     "format_labels",
+    "register_projections",
 ]
