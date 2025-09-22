@@ -19,7 +19,7 @@
 
 import copy
 
-import matplotlib.colorbar as mbar
+import matplotlib.colorbar as mcolorbar
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -153,47 +153,51 @@ class TestCrystalMapPlot:
 
         plt.close("all")
 
-    def test_properties(self, crystal_map):
-        xmap = crystal_map
-        fig = xmap.plot(return_figure=True, colorbar=True, colorbar_label="score")
+    def test_colorbar_property(self, crystal_map: CrystalMap):
+        label = "score"
+        fig = crystal_map.plot(return_figure=True, colorbar=True, colorbar_label=label)
         ax = fig.axes[0]
 
-        assert isinstance(ax.colorbar, mbar.Colorbar)
-        assert ax.colorbar.ax.get_ylabel() == "score"
-        if installed["matplotlib-scalebar"]:
-            import matplotlib_scalebar
+        assert isinstance(ax.colorbar, mcolorbar.Colorbar)
+        assert ax.colorbar.ax.get_ylabel() == label
 
-            assert isinstance(ax.scalebar, matplotlib_scalebar.scalebar.ScaleBar)
+        # Check that passing False into the colorbar gives a plot with
+        # no colorbar
+        fig = crystal_map.plot(return_figure=True, colorbar=False)
+        ax = fig.axes[0]
+        assert ax.colorbar is None
 
         plt.close("all")
-        # check that passing False into the scalebar gives a plot with no scalebar
-        fig = xmap.plot(return_figure=True, scalebar=False)
-        ax = fig.axes[0]
-        assert isinstance(ax.scalebar, type(None))
 
-    def test_matplotlib_scalebar_errors(self, crystal_map, monkeypatch):
-        # Test that default plots do what you would expect without
-        # matplotlib-scalebar installed.
-        xmap = crystal_map
-        fig = xmap.plot(return_figure=True, colorbar=True, colorbar_label="score")
-        ax = fig.axes[0]
-        assert isinstance(ax.colorbar, mbar.Colorbar)
+    @pytest.mark.skipif(
+        not installed["matplotlib-scalebar"], reason="Requires matplotlib-scalebar"
+    )
+    def test_scalebar_property(self, crystal_map):
+        from matplotlib_scalebar.scalebar import ScaleBar
 
-        # Check that adding a scalebar explicitly returns an error.
-        monkeypatch.setitem(installed, "matplotlib-scalebar", False)
-        with pytest.raises(
-            ImportError,
-            match="Adding a scalebar requires that matplotlib-scalebar is installed",
-        ):
-            ax.add_scalebar(xmap)
-        # Check that forcing a scalebar through .plot also returns an error
+        fig = crystal_map.plot(return_figure=True, scalebar=True)
+        ax = fig.axes[0]
+        assert isinstance(ax.scalebar, ScaleBar)
+
+        # Check that not giving a scalebar parameter also gives a
+        # scalebar
+        fig = crystal_map.plot(return_figure=True)
+        ax = fig.axes[0]
+        assert isinstance(ax.scalebar, ScaleBar)
+
         plt.close("all")
-        monkeypatch.setitem(installed, "matplotlib-scalebar", False)
-        with pytest.raises(
-            ImportError,
-            match="Adding a scalebar requires that matplotlib-scalebar is installed",
-        ):
-            fig = xmap.plot(scalebar=True)
+
+    @pytest.mark.skipif(
+        installed["matplotlib-scalebar"], reason="matplotlib-scalebar is installed"
+    )
+    def test_scalebar_unavailable(self, crystal_map):
+        fig = crystal_map.plot(return_figure=True)
+        ax = fig.axes[0]
+        assert ax.scalebar is None
+
+        with pytest.raises(ImportError):
+            crystal_map.plot(scalebar=True)
+
         plt.close("all")
 
 
@@ -476,7 +480,7 @@ class TestStatusBar:
 
 
 @pytest.mark.skipif(
-    not installed["matplotlib-scalebar"], reason="matplotlib_scalebar is not installed"
+    not installed["matplotlib-scalebar"], reason="Requires matplotlib-scalebar"
 )
 class TestScalebar:
     @pytest.mark.parametrize(

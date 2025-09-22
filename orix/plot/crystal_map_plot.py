@@ -20,7 +20,7 @@
 from typing import TYPE_CHECKING
 
 from matplotlib.axes import Axes
-import matplotlib.colorbar as mbar
+import matplotlib.colorbar as mcolorbar
 from matplotlib.image import AxesImage
 import matplotlib.patches as mpatches
 from matplotlib.projections import register_projection
@@ -40,10 +40,10 @@ class CrystalMapPlot(Axes):
     """Plotting of a :class:`~orix.crystal_map.crystal_map.CrystalMap`."""
 
     name = "plot_map"
-    _data_axes = None
-    _data_shape = None
-    colorbar = None
-    scalebar = None
+    _data_axes: tuple[int, ...] | None = None
+    _data_shape: tuple[int, ...] | None = None
+    colorbar: mcolorbar.Colorbar | None = None
+    scalebar: "ScaleBar | None" = None
 
     def plot_map(
         self,
@@ -315,7 +315,7 @@ class CrystalMapPlot(Axes):
 
         image.set_data(image_data)
 
-    def add_colorbar(self, label: str | None = None, **kwargs) -> mbar.Colorbar:
+    def add_colorbar(self, label: str | None = None, **kwargs) -> mcolorbar.Colorbar:
         """Add an opinionated colorbar to the figure and return it.
 
         The colorbar is also available as an attribute :attr:`colorbar`.
