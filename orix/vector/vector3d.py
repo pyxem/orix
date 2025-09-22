@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,25 +10,30 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
 from orix import constants
 from orix._base import Object3d
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orix.quaternion.symmetry import Symmetry
 
 
 class Vector3d(Object3d):
@@ -144,14 +150,14 @@ class Vector3d(Object3d):
         self.data[..., 2] = value
 
     @property
-    def xyz(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def xyz(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Return the coordinates as three arrays, useful for
         plotting.
         """
         return self.x, self.y, self.z
 
     @property
-    def _tuples(self) -> Set:
+    def _tuples(self) -> set:
         """Return the set of comparable vectors."""
         s = self.flatten()
         tuples = set([tuple(d) for d in s.data])
@@ -234,7 +240,7 @@ class Vector3d(Object3d):
         return self.__class__(-self.data)
 
     def __add__(
-        self, other: Union[int, float, List, Tuple, np.ndarray, Vector3d]
+        self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
             return self.__class__(self.data + other.data)
@@ -248,7 +254,7 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __radd__(self, other: Union[int, float, List, Tuple, np.ndarray]) -> Vector3d:
+    def __radd__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
         if isinstance(other, (int, float)):
             return self.__class__(other + self.data)
         elif isinstance(other, (list, tuple)):
@@ -260,7 +266,7 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __sub__(
-        self, other: Union[int, float, List, Tuple, np.ndarray, Vector3d]
+        self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
             return self.__class__(self.data - other.data)
@@ -274,7 +280,7 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rsub__(self, other: Union[int, float, List, Tuple, np.ndarray]) -> Vector3d:
+    def __rsub__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
         if isinstance(other, (int, float)):
             return self.__class__(other - self.data)
         elif isinstance(other, (list, tuple)):
@@ -286,7 +292,7 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __mul__(
-        self, other: Union[int, float, List, Tuple, np.ndarray, Vector3d]
+        self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
             raise ValueError(
@@ -303,7 +309,7 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rmul__(self, other: Union[int, float, List, Tuple, np.ndarray]) -> Vector3d:
+    def __rmul__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
         if isinstance(other, (int, float)):
             return self.__class__(other * self.data)
         elif isinstance(other, (list, tuple)):
@@ -315,7 +321,7 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __truediv__(
-        self, other: Union[int, float, List, Tuple, np.ndarray, Vector3d]
+        self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
             raise ValueError("Dividing vectors is undefined")
@@ -329,16 +335,16 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rtruediv__(self, other: Any):
+    def __rtruediv__(self, other: Any) -> None:
         raise ValueError("Division by a vector is undefined")
 
-    def __eq__(self, other: Any):
+    def __eq__(self, other: Any) -> np.ndarray:
         if isinstance(other, Vector3d):
             return np.all(self.data == other.data, axis=-1)
         else:
             return self.data == other
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return id(self)
 
     # ------------------------ Class methods ------------------------- #
@@ -346,8 +352,8 @@ class Vector3d(Object3d):
     @classmethod
     def from_polar(
         cls,
-        azimuth: Union[np.ndarray, list, tuple, float],
-        polar: Union[np.ndarray, list, tuple, float],
+        azimuth: np.ndarray | list | tuple | float,
+        polar: np.ndarray | list | tuple | float,
         radial: float = 1.0,
         degrees: bool = False,
     ) -> Vector3d:
@@ -384,7 +390,7 @@ class Vector3d(Object3d):
         return radial * cls(np.stack((x, y, z), axis=-1))
 
     @classmethod
-    def zero(cls, shape: Tuple[int] = (1,)) -> Vector3d:
+    def zero(cls, shape: tuple[int] = (1,)) -> Vector3d:
         """Return zero vectors in the specified shape.
 
         Parameters
@@ -417,7 +423,7 @@ class Vector3d(Object3d):
     @classmethod
     def from_path_ends(
         cls,
-        vectors: Union[list, tuple, Vector3d],
+        vectors: list | tuple | Vector3d,
         close: bool = False,
         steps: int = 100,
     ) -> Vector3d:
@@ -629,8 +635,8 @@ class Vector3d(Object3d):
 
     def rotate(
         self,
-        axis: Union[np.ndarray, Vector3d, None] = None,
-        angle: Union[List[float], float, np.ndarray] = 0,
+        axis: np.ndarray | Vector3d | None = None,
+        angle: list[float] | float | np.ndarray = 0.0,
     ) -> Vector3d:
         """Convenience function for rotating this vector.
 
@@ -673,7 +679,7 @@ class Vector3d(Object3d):
         return R * self
 
     def get_nearest(
-        self, x: Vector3d, inclusive: bool = False, tiebreak: bool = None
+        self, x: Vector3d, inclusive: bool = False, tiebreak: bool | None = None
     ) -> Vector3d:
         """Return the vector in ``x`` with the smallest angle to this
         vector.
@@ -736,7 +742,7 @@ class Vector3d(Object3d):
 
     def to_polar(
         self, degrees: bool = False
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""Return the azimuth :math:`\phi`, polar :math:`\theta`, and
         radial :math:`r` spherical coordinates defined as in the ISO
         31-11 standard :cite:`weisstein2005spherical`.
@@ -828,9 +834,7 @@ class Vector3d(Object3d):
         return v2
 
     def get_circle(
-        self,
-        opening_angle: Union[float, np.ndarray] = np.pi / 2,
-        steps: int = 100,
+        self, opening_angle: float | np.ndarray = np.pi / 2, steps: int = 100
     ) -> Vector3d:
         r"""Get vectors delineating great or small circle(s) with a
         given ``opening_angle`` about each vector.
@@ -879,18 +883,18 @@ class Vector3d(Object3d):
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
-        symmetry: Optional["Symmetry"] = None,
-        weights: Optional[np.ndarray] = None,
-        figure: Optional[Figure] = None,
-        hemisphere: Optional[str] = None,
-        show_hemisphere_label: Optional[bool] = None,
-        grid: Optional[bool] = None,
-        grid_resolution: Optional[Tuple[float, float]] = None,
-        figure_kwargs: Optional[Dict] = None,
-        text_kwargs: Optional[Dict] = None,
+        symmetry: "Symmetry | None" = None,
+        weights: np.ndarray | None = None,
+        figure: Figure | None = None,
+        hemisphere: str | None = None,
+        show_hemisphere_label: bool | None = None,
+        grid: bool | None = None,
+        grid_resolution: tuple[float, float] | None = None,
+        figure_kwargs: dict | None = None,
+        text_kwargs: dict | None = None,
         return_figure: bool = False,
         **kwargs: Any,
-    ) -> Optional[Figure]:
+    ) -> Figure | None:
         """Plot the Inverse Pole Density Function (IPDF) within the
         fundamental sector of a given point group symmetry in the
         stereographic projection.
@@ -1020,18 +1024,18 @@ class Vector3d(Object3d):
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
-        weights: Optional[np.ndarray] = None,
-        figure: Optional[Figure] = None,
-        axes_labels: Optional[List[str]] = None,
-        hemisphere: Optional[str] = None,
-        show_hemisphere_label: Optional[bool] = None,
-        grid: Optional[bool] = None,
-        grid_resolution: Optional[Tuple[float, float]] = None,
-        figure_kwargs: Optional[Dict] = None,
-        text_kwargs: Optional[Dict] = None,
+        weights: np.ndarray | None = None,
+        figure: Figure | None = None,
+        axes_labels: list[str] | None = None,
+        hemisphere: str | None = None,
+        show_hemisphere_label: bool | None = None,
+        grid: bool | None = None,
+        grid_resolution: tuple[float, float] | None = None,
+        figure_kwargs: dict | None = None,
+        text_kwargs: dict | None = None,
         return_figure: bool = False,
         **kwargs: Any,
-    ) -> Optional[Figure]:
+    ) -> Figure | None:
         """Plot the Pole Density Function (PDF) on a given hemisphere
         in the stereographic projection.
 
@@ -1158,20 +1162,20 @@ class Vector3d(Object3d):
     def scatter(
         self,
         projection: str = "stereographic",
-        figure: Optional[Figure] = None,
-        axes_labels: Optional[List[str]] = None,
-        vector_labels: Union[np.ndarray, List[str], None] = None,
-        hemisphere: Optional[str] = None,
+        figure: Figure | None = None,
+        axes_labels: list[str] | None = None,
+        vector_labels: np.ndarray | list[str] | None = None,
+        hemisphere: str | None = None,
         reproject: bool = False,
-        show_hemisphere_label: Optional[bool] = None,
-        grid: Optional[bool] = None,
-        grid_resolution: Optional[Tuple[float, float]] = None,
-        figure_kwargs: Optional[Dict] = None,
-        reproject_scatter_kwargs: Optional[Dict] = None,
-        text_kwargs: Optional[Dict] = None,
+        show_hemisphere_label: bool | None = None,
+        grid: bool | None = None,
+        grid_resolution: tuple[float, float] | None = None,
+        figure_kwargs: dict | None = None,
+        reproject_scatter_kwargs: dict | None = None,
+        text_kwargs: dict | None = None,
         return_figure: bool = False,
         **kwargs: Any,
-    ) -> Optional[Figure]:
+    ) -> Figure | None:
         """Plot vectors in the stereographic projection.
 
         Parameters
@@ -1308,20 +1312,20 @@ class Vector3d(Object3d):
     def draw_circle(
         self,
         projection: str = "stereographic",
-        figure: Optional[Figure] = None,
-        opening_angle: Union[float, np.ndarray] = np.pi / 2,
+        figure: Figure | None = None,
+        opening_angle: float | np.ndarray = np.pi / 2,
         steps: int = 100,
         reproject: bool = False,
-        axes_labels: Optional[List[str]] = None,
-        hemisphere: Optional[str] = None,
-        show_hemisphere_label: Optional[bool] = None,
-        grid: Optional[bool] = None,
-        grid_resolution: Optional[Tuple[float, float]] = None,
-        figure_kwargs: Optional[Dict] = None,
-        reproject_plot_kwargs: Optional[Dict] = None,
+        axes_labels: list[str] | None = None,
+        hemisphere: str | None = None,
+        show_hemisphere_label: bool | None = None,
+        grid: bool | None = None,
+        grid_resolution: tuple[float, float] | None = None,
+        figure_kwargs: dict | None = None,
+        reproject_plot_kwargs: dict | None = None,
         return_figure: bool = False,
         **kwargs: Any,
-    ) -> Optional[Figure]:
+    ) -> Figure | None:
         r"""Draw great or small circles with a given ``opening_angle``
         to to the vectors in the stereographic projection.
 
@@ -1459,16 +1463,25 @@ class Vector3d(Object3d):
     @staticmethod
     def _setup_plot(
         projection: str = "stereographic",
-        figure: Optional[Figure] = None,
-        hemisphere: Optional[str] = None,
-        show_hemisphere_label: Optional[bool] = None,
-        symmetry: Optional["Symmetry"] = None,
-        grid: Optional[bool] = None,
-        grid_resolution: Optional[Tuple[float, float]] = None,
-        figure_kwargs: Optional[Dict] = None,
-        text_kwargs: Optional[Dict] = None,
-        axes_labels: Optional[List[str]] = None,
-    ):
+        figure: Figure | None = None,
+        hemisphere: str | None = None,
+        show_hemisphere_label: bool | None = None,
+        symmetry: "Symmetry | None" = None,
+        grid: bool | None = None,
+        grid_resolution: tuple[float, float] | None = None,
+        figure_kwargs: dict | None = None,
+        text_kwargs: dict | None = None,
+        axes_labels: list[str] | None = None,
+    ) -> tuple[
+        Figure,
+        list[Axes],
+        tuple[str] | tuple[str, str],
+        bool,
+        bool | list[bool],
+        tuple[float, float] | None,
+        dict,
+        list[str | None],
+    ]:
         """Set up a stereographic projection plot.
 
         Parameters
@@ -1581,7 +1594,7 @@ class Vector3d(Object3d):
             grid_resolution = [None] * 2
 
         if text_kwargs is None:
-            text_kwargs = dict()
+            text_kwargs = {}
 
         new_axes_labels = deepcopy(axes_labels)
         if new_axes_labels is None:

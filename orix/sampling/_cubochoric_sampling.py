@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Uniform cubochoric sampling of *SO(3)* :cite:`singh2016orientation`.
 
@@ -25,18 +27,16 @@ for users.
     code. We may change the API at any time with no warning.
 """
 
-from typing import Optional, Union
-
 import numba as nb
 import numpy as np
 
-from orix.quaternion import Rotation
 from orix.quaternion._conversions import ax2qu_single, cu2ro_single, ro2ax_single
+from orix.quaternion.rotation import Rotation
 
 
 def cubochoric_sampling(
-    semi_edge_steps: Optional[int] = None,
-    resolution: Optional[Union[int, float]] = None,
+    semi_edge_steps: int | None = None,
+    resolution: int | float | None = None,
 ) -> Rotation:
     r"""Uniform cubochoric sampling of rotations *SO(3)*
     :cite:`singh2016orientation`.
@@ -75,7 +75,7 @@ def cubochoric_sampling(
 
 
 @nb.jit(cache=True, nogil=True, nopython=True)
-def resolution_to_semi_edge_steps(resolution: Union[int, float]) -> int:
+def resolution_to_semi_edge_steps(resolution: int | float) -> int:
     r"""Calculate the number of grid points :math:`N` along the
     semi-edge of the cubochoric cube given an average disorientation
     between rotations :cite:`singh2016orientation`.

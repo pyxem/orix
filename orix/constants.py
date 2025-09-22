@@ -1,3 +1,4 @@
+#
 # Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
@@ -14,14 +15,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Constants and such useful across modules."""
 
 from importlib.metadata import version
 
-# ============ Optional Dependencies ============ #
 # NB! Update project config file if this list is updated!
-optional_deps: list[str] = ["numpy-quaternion", "matplotlib-scalebar"]
+optional_deps: list[str] = ["matplotlib-scalebar", "numpy-quaternion"]
 installed: dict[str, bool] = {}
 for pkg in optional_deps:
     try:
@@ -32,22 +33,23 @@ for pkg in optional_deps:
 
 
 def verify_dependency_or_raise(package: str, reason: str) -> None:
-    """A convenience function for asserting if an optional dependency
-    is available. If not, it produces an ImportError message.
+    """Raise an informative import error if an optional dependency is
+    not installed.
 
     Parameters
     ----------
-    package : str
+    package
         The optional dependency being checked for.
-    reason : str
-        A short description of the feature that requires the dependency.
+    reason
+        A short description of the feature that requires the dependency
+        preceding the string "requires that the *package* is installed".
     """
     if not installed[package]:
-        msg = reason + f" requires that {package} is installed"
+        msg = f"{reason} requires that {package} is installed"
         raise ImportError(msg)
 
 
-# ============ Tolerances ============ #
+# ---------------------------- Tolerances ---------------------------- #
 
 # Typical tolerances for comparisons in need of a precision. We
 # generally use the highest precision possible (allowed by testing on
@@ -55,7 +57,6 @@ def verify_dependency_or_raise(package: str, reason: str) -> None:
 eps9 = 1e-9
 eps12 = 1e-12
 
-# ============ Version-Dependent Imports ============ #
 # TODO: Remove and use numpy.exceptions.VisibleDeprecationWarning once
 # NumPy 1.25 is minimal supported version
 try:

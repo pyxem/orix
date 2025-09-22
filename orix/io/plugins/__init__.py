@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Input/output plugins.
 
@@ -32,9 +34,11 @@
     orix_hdf5
 """
 
+from types import ModuleType
+
 from orix.io.plugins import ang, bruker_h5ebsd, ctf, emsoft_h5ebsd, orix_hdf5
 
-plugin_list = [
+plugin_list: list[ModuleType] = [
     ang,
     bruker_h5ebsd,
     ctf,

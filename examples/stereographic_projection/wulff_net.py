@@ -1,42 +1,68 @@
+#
+# Copyright 2018-2025 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 """
 =========
 Wulff net
 =========
 
-This example shows how to draw a Wulff net in the stereographic projection with great
-and small circles.
+This example shows how to draw a customized Wulff net in stereographic plots using
+:meth:`~orix.plot.StereographicPlot.wulff_net`
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
 
-from orix import plot
-from orix.vector import Vector3d
+from orix.plot import InversePoleFigurePlot, StereographicPlot
+from orix.quaternion.symmetry import C6h
 
-n = int(90 / 2)  # Degree / net resolution
-steps = 500
-kwargs = dict(linewidth=0.25, color="k")
+########################################################################################
+# Plot two stereographic projections, one with the standard Wulff net, another with a
+# customized net
 
-polar = np.linspace(0, 0.5 * np.pi, num=n)
-v_right = Vector3d.from_polar(azimuth=np.zeros(n), polar=polar)
-v_left = Vector3d.from_polar(azimuth=np.ones(n) * np.pi, polar=polar)
-v010 = Vector3d.zero(shape=(n,))
-v010.y = 1
-v010_opposite = -v010
+fig = plt.figure(figsize=(6, 4), layout="tight")
+ax0 = fig.add_subplot(121, projection="stereographic")
+ax1 = fig.add_subplot(122, projection="stereographic")
 
-fig, ax = plt.subplots(
-    figsize=(5, 5), subplot_kw=dict(projection="stereographic"), layout="tight"
-)
-ax.stereographic_grid(False)
-ax.draw_circle(v_right, steps=steps, **kwargs)
-ax.draw_circle(v_left, steps=steps, **kwargs)
-ax.draw_circle(v010, opening_angle=polar, steps=steps, **kwargs)
-ax.draw_circle(v010_opposite, opening_angle=polar, steps=steps, **kwargs)
-for label, azimuth, va, ha, offset in zip(
-    ["B", "M''", "A", "M'"],
-    np.array([0, 0.5, 1, 1.5]) * np.pi,
-    ["center", "bottom", "center", "top"],
-    ["left", "center", "right", "center"],
-    [(0.02, 0), (0, 0.02), (-0.02, 0), (0, -0.02)],
-):
-    ax.text(azimuth, 0.5 * np.pi, s=label, offset=offset, c="r", va=va, ha=ha)
+# Display a standard Wulff net with 2 degree minor markers and 10 degree
+# major markers, with 10 degree caps at the tops and bottoms.
+ax0.set_title("Standard Wulff net")
+ax0.wulff_net()
+
+# The grid spacing can also be changed or turned on and off, similar to
+# matplotlib.axes.Axes.grid(). Here, the latitudinal grid is set to 3
+# degrees (15 degrees for major grid lines), and the longitudinal to 9
+# degrees (45 degrees for major grid lines).
+ax1.set_title("Custom Wulff net")
+ax1.wulff_net(True, 3, 9, 15, 45, 15)
+
+# Turn it off
+ax1.wulff_net()
+
+# Then turn it back on, with the previously defined grid spacing saved.
+ax1.wulff_net()
+
+########################################################################################
+# The net also displays nicely for inverse pole figures (stereographic projections
+# restricted to a fundamental sector)
+fig = plt.figure(layout="tight")
+ax = fig.add_subplot(projection="ipf", symmetry=C6h)
+
+ax.wulff_net()
+ax.set_title(f"{C6h.name} inverse pole figure", pad=30)
+
+plt.show()

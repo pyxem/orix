@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2025 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -121,7 +121,7 @@ class Symmetry(Rotation):
             return Vector3d.stack(diads).flatten()
 
     @property
-    def euler_fundamental_region(self) -> tuple:
+    def euler_fundamental_region(self) -> tuple[int, int, int]:
         r"""Return the fundamental Euler angle region of the proper
         subgroup.
 

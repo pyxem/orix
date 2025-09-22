@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,27 +10,28 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Reader and writer of a crystal map to and from orix's own HDF5 file
 format.
 """
 
 import copy
-from typing import Optional
 from warnings import warn
 
 from diffpy.structure import Atom, Lattice, Structure
 from h5py import File, Group
 import numpy as np
 
-from orix.crystal_map import CrystalMap, Phase, PhaseList
+from orix.crystal_map.crystal_map import CrystalMap
+from orix.crystal_map.phase_list import Phase, PhaseList
 from orix.io.plugins._h5ebsd import hdf5group2dict
-from orix.quaternion import Rotation
+from orix.quaternion.rotation import Rotation
 
 __all__ = ["file_reader", "file_writer"]
 
@@ -244,7 +246,7 @@ def file_writer(filename: str, crystal_map: CrystalMap, **kwargs):
     f.close()
 
 
-def crystalmap2dict(crystal_map: CrystalMap, dictionary: Optional[dict] = None) -> dict:
+def crystalmap2dict(crystal_map: CrystalMap, dictionary: dict | None = None) -> dict:
     """Get a dictionary from a :class:`~orix.crystal_map.CrystalMap`
     object with ``"data"`` and ``"header"`` keys with values.
 
@@ -336,7 +338,7 @@ def dict2hdf5group(dictionary: dict, group: Group, **kwargs):
         group[key][()] = val
 
 
-def phaselist2dict(phases: PhaseList, dictionary: Optional[dict] = None) -> dict:
+def phaselist2dict(phases: PhaseList, dictionary: dict | None = None) -> dict:
     """Get a dictionary of phases.
 
     Parameters
@@ -358,7 +360,7 @@ def phaselist2dict(phases: PhaseList, dictionary: Optional[dict] = None) -> dict
     return dictionary
 
 
-def phase2dict(phase: Phase, dictionary: Optional[dict] = None) -> dict:
+def phase2dict(phase: Phase, dictionary: dict | None = None) -> dict:
     """Get a dictionary of a phase.
 
     Parameters
@@ -394,7 +396,7 @@ def phase2dict(phase: Phase, dictionary: Optional[dict] = None) -> dict:
     return dictionary
 
 
-def structure2dict(structure: Structure, dictionary: Optional[dict] = None) -> dict:
+def structure2dict(structure: Structure, dictionary: dict | None = None) -> dict:
     """Get a dictionary of a phase's
     :class:`~diffpy.structure.Structure` content.
 
@@ -421,7 +423,7 @@ def structure2dict(structure: Structure, dictionary: Optional[dict] = None) -> d
     return dictionary
 
 
-def lattice2dict(lattice: Lattice, dictionary: Optional[dict] = None) -> dict:
+def lattice2dict(lattice: Lattice, dictionary: dict | None = None) -> dict:
     """Get a dictionary of a structure's
     :class:`~diffpy.structure.Structure.lattice` content.
 
@@ -447,7 +449,7 @@ def lattice2dict(lattice: Lattice, dictionary: Optional[dict] = None) -> dict:
     return dictionary
 
 
-def atom2dict(atom: Atom, dictionary: Optional[dict] = None) -> dict:
+def atom2dict(atom: Atom, dictionary: dict | None = None) -> dict:
     """Get a dictionary of one of a structure's
     :class:`~diffpy.structure.Structure.atoms` content.
 

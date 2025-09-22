@@ -1,3 +1,4 @@
+#
 # Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
@@ -14,17 +15,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
+from __future__ import annotations
 
 import copy
-from typing import Dict, Optional, Tuple, Union
+from typing import Any
 
+import matplotlib.figure as mfigure
 import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
 from orix.crystal_map.phase_list import ALL_COLORS, Phase, PhaseList
-from orix.quaternion import Orientation, Rotation
+from orix.quaternion.orientation import Orientation
+from orix.quaternion.rotation import Rotation
 
 
 class CrystalMap:
@@ -206,14 +211,14 @@ class CrystalMap:
     def __init__(
         self,
         rotations: "Rotation | CrystalMap",
-        phase_id: Optional[np.ndarray] = None,
-        x: Optional[np.ndarray] = None,
-        y: Optional[np.ndarray] = None,
-        phase_list: Optional[PhaseList] = None,
-        prop: Optional[dict] = None,
-        scan_unit: Optional[str] = "px",
-        is_in_data: Optional[np.ndarray] = None,
-    ):
+        phase_id: np.ndarray | None = None,
+        x: np.ndarray | None = None,
+        y: np.ndarray | None = None,
+        phase_list: PhaseList | None = None,
+        prop: dict | None = None,
+        scan_unit: str | None = "px",
+        is_in_data: np.ndarray | None = None,
+    ) -> None:
         if isinstance(rotations, CrystalMap):
             return CrystalMap.__init__(
                 self,
@@ -344,7 +349,7 @@ class CrystalMap:
         return len(self.shape)
 
     @property
-    def x(self) -> Union[None, np.ndarray]:
+    def x(self) -> np.ndarray | None:
         """Return the x coordinates of points in data."""
         if self._x is None or len(np.unique(self._x)) == 1:
             return
@@ -352,7 +357,7 @@ class CrystalMap:
             return self._x[self.is_in_data]
 
     @property
-    def y(self) -> Union[None, np.ndarray]:
+    def y(self) -> np.ndarray | None:
         """Return the y coordinates of points in data."""
         if self._y is None or len(np.unique(self._y)) == 1:
             return
@@ -370,7 +375,7 @@ class CrystalMap:
         return _step_size_from_coordinates(self._y)
 
     @property
-    def row(self) -> Union[None, np.ndarray]:
+    def row(self) -> np.ndarray | None:
         """Return the row coordinate of each point in the data.
 
         Returns ``None`` if :attr:`z` is not ``None``.
@@ -396,7 +401,7 @@ class CrystalMap:
         return rows
 
     @property
-    def col(self) -> Union[None, np.ndarray]:
+    def col(self) -> np.ndarray | None:
         """Return the column coordinate of each point in the data.
 
         Returns ``None`` if :attr:`z` is not ``None``.
@@ -433,7 +438,7 @@ class CrystalMap:
         return self._phase_id[self.is_in_data]
 
     @phase_id.setter
-    def phase_id(self, value: Union[np.ndarray, int]):
+    def phase_id(self, value: np.ndarray | int) -> None:
         """Set phase ID of points in data."""
         self._phase_id[self.is_in_data] = value
         if value == -1 and "not_indexed" not in self.phases.names:
@@ -457,7 +462,7 @@ class CrystalMap:
         return self._phases
 
     @phases.setter
-    def phases(self, value: PhaseList):
+    def phases(self, value: PhaseList) -> None:
         """Set the list of phases."""
         if np.unique(self.phase_id).size > value.size:
             raise ValueError(
@@ -578,17 +583,17 @@ class CrystalMap:
         return self._prop
 
     @property
-    def _coordinates(self) -> dict:
+    def _coordinates(self) -> dict[str, np.ndarray | None]:
         """Return the coordinates of points in the data."""
         return {"y": self.y, "x": self.x}
 
     @property
-    def _all_coordinates(self) -> dict:
+    def _all_coordinates(self) -> dict[str, np.ndarray | None]:
         """Return the coordinates of all points."""
         return {"y": self._y, "x": self._x}
 
     @property
-    def _step_sizes(self) -> dict:
+    def _step_sizes(self) -> dict[str, float | None]:
         """Return the step sizes of dimensions in the data."""
         return {"y": self.dy, "x": self.dx}
 
@@ -598,7 +603,7 @@ class CrystalMap:
         present_coordinates = [k for k, v in self._coordinates.items() if v is not None]
         return {i: coord for i, coord in zip(range(self.ndim), present_coordinates)}
 
-    def __getattr__(self, item):
+    def __getattr__(self, item) -> Any:
         """Return an attribute in the :attr:`prop` dictionary directly
         from the ``CrystalMap`` instance.
 
@@ -611,7 +616,7 @@ class CrystalMap:
         else:
             return object.__getattribute__(self, item)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         """Set a class instance attribute."""
         if hasattr(self, "_prop") and name in self._prop:
             # Calls CrystalMapProperties.__setitem__()
@@ -619,7 +624,7 @@ class CrystalMap:
         else:
             return object.__setattr__(self, name, value)
 
-    def __getitem__(self, key: Union[str, slice, tuple, int, np.ndarray]):
+    def __getitem__(self, key: str | slice | tuple | int | np.ndarray) -> CrystalMap:
         """Get a masked copy of the CrystalMap instance.
 
         See the docstring of ``__init__()`` for examples.
@@ -761,16 +766,16 @@ class CrystalMap:
 
         return representation
 
-    def deepcopy(self) -> "CrystalMap":
+    def deepcopy(self) -> CrystalMap:
         """Return a deep copy using :func:`copy.deepcopy` function."""
         return copy.deepcopy(self)
 
     @classmethod
     def empty(
         cls,
-        shape: Union[None, int, tuple] = None,
-        step_sizes: Union[None, int, tuple] = None,
-    ) -> "CrystalMap":
+        shape: int | tuple[int, int] | tuple[int] | None = None,
+        step_sizes: float | tuple[float] | tuple[float, float] | None = None,
+    ) -> CrystalMap:
         """Return a crystal map of a given 2D shape and step sizes with
         identity rotations.
 
@@ -794,9 +799,9 @@ class CrystalMap:
 
     def get_map_data(
         self,
-        item: Union[str, np.ndarray],
-        decimals: Optional[int] = None,
-        fill_value: Union[int, float, None] = np.nan,
+        item: str | np.ndarray,
+        decimals: int | None = None,
+        fill_value: int | float | None = np.nan,
     ) -> np.ndarray:
         """Return an array of a class instance attribute, with values
         equal to ``False`` in :attr:`self.is_in_data` set to
@@ -926,20 +931,20 @@ class CrystalMap:
 
     def plot(
         self,
-        value: Union[np.ndarray, str, None] = None,
-        overlay: Union[str, np.ndarray, None] = None,
-        scalebar: bool | None = None,
-        scalebar_properties: Optional[dict] = None,
+        value: np.ndarray | str | None = None,
+        overlay: str | np.ndarray | None = None,
+        scalebar: bool = True,
+        scalebar_properties: dict | None = None,
         legend: bool = True,
-        legend_properties: Optional[dict] = None,
+        legend_properties: dict | None = None,
         colorbar: bool = False,
-        colorbar_label: Optional[str] = None,
-        colorbar_properties: Optional[dict] = None,
+        colorbar_label: str | None = None,
+        colorbar_properties: dict | None = None,
         remove_padding: bool = False,
         return_figure: bool = False,
-        figure_kwargs: Optional[dict] = None,
+        figure_kwargs: dict | None = None,
         **kwargs,
-    ) -> plt.Figure:
+    ) -> mfigure.Figure | None:
         r"""Plot a 2D map with any crystallographic map property as map
         values.
 
@@ -1097,8 +1102,8 @@ class CrystalMap:
 
 
 def _data_slices_from_coordinates(
-    coords: Dict[str, np.ndarray], steps: Union[Dict[str, float], None] = None
-) -> Tuple[slice]:
+    coords: dict[str, np.ndarray], steps: dict[str, float] | None = None
+) -> tuple[slice]:
     """Return a list of slices defining the current data extent in all
     directions.
 
@@ -1153,8 +1158,9 @@ def _step_size_from_coordinates(coordinates: np.ndarray) -> float:
 
 
 def create_coordinate_arrays(
-    shape: Optional[tuple] = None, step_sizes: Optional[tuple] = None
-) -> Tuple[dict, int]:
+    shape: tuple[int] | tuple[int, int] | None = None,
+    step_sizes: tuple[float] | tuple[float, float] | None = None,
+) -> tuple[dict, int]:
     """Return flattened coordinate arrays from a given map shape and
     step sizes, suitable for initializing a
     :class:`~orix.crystal_map.CrystalMap`.
