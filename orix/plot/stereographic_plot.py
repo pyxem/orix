@@ -227,6 +227,9 @@ class StereographicPlot(maxes.Axes):
         else:
             key_color = "c"
         c = updated_kwargs.pop(key_color, "C0")
+        if isinstance(c, np.ndarray):
+            if np.issubdtype(c.dtype, np.number):
+                c = np.atleast_2d(c)
         c = _get_array_of_values(value=c, visible=visible)
 
         # Size(s)
@@ -1180,8 +1183,11 @@ def _get_array_of_values(
         of ``True`` elements in ``visible``.
     """
     n = visible.size
-    if not isinstance(value, str) and hasattr(value, "__iter__") and len(value) != n:
-        value = value[0]
+    if hasattr(value, "__iter__"):
+        if n > 1 and len(value) == 1:
+            value = [value] * n
+        elif not isinstance(value, str) and len(value) != n:
+            value = value[0]
     if isinstance(value, str) or not hasattr(value, "__iter__"):
         value = [value] * n
     return np.asarray(value)[visible]

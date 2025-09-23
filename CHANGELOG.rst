@@ -60,7 +60,7 @@ Fixed
 -----
 - :class:`~orix.plot.IPFColorKey` labels for point groups *-3* and *6/m* are now
   correct.
-
+- Multicolor stereographic scatter plots now correctly cast RGB and RGBA color arrays
 
 2025-01-01 - version 0.13.3
 ===========================
