@@ -55,7 +55,10 @@ Deprecated
 
 Fixed
 -----
+-  :class:`~orix.plot.IPFColorKey` automatic labels and shapes have been corrected.
 
+
+``IPFCOlorKeyTSL.plot`` now produces properly labeled plot axes.
 
 2025-01-01 - version 0.13.3
 ===========================

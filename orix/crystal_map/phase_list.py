@@ -117,12 +117,19 @@ class Phase:
                 name.structure.copy(),
                 name.color,
             )
-        self.structure = structure if structure is not None else Structure()
-        if name is not None:
-            self.name = name
         self.space_group = space_group  # Needs to be set before point group
         self.point_group = point_group
         self.color = color if color is not None else "tab:blue"
+        if structure is not None:
+            self.structure = structure
+        elif self.point_group is None:
+            self.structure = Structure()
+        elif np.isin(self.point_group.system, ["trigonal", "hexagonal"]):
+            self.structure = Structure(lattice=Lattice(1, 1, 1, 90, 90, 120))
+        else:
+            self.structure = Structure(lattice=Lattice(1, 1, 1, 90, 90, 90))
+        if name is not None:
+            self.name = name
 
     @property
     def structure(self) -> Structure:

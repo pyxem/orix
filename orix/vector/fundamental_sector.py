@@ -147,9 +147,9 @@ def _closed_edges_in_hemisphere(
     edges: Vector3d, sector: FundamentalSector, pole: int = -1
 ) -> Vector3d:
     if pole == -1:
-        is_outside = edges.polar >= np.pi / 2
+        is_outside = edges.polar >= np.pi / 2 + 1e-6
     else:  # pole == 1
-        is_outside = edges.polar <= np.pi / 2
+        is_outside = edges.polar <= np.pi / 2 + 1e-6
 
     if not np.any(is_outside):
         return edges
