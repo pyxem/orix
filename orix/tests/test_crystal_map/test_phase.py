@@ -22,13 +22,13 @@ import numpy as np
 import pytest
 
 from orix.crystal_map import Phase
-from orix.crystal_map.phase_list import _new_structure_matrix_from_alignment
+from orix.crystal_map._phase import default_lattice, new_structure_matrix_from_alignment
 from orix.quaternion.symmetry import O, Symmetry
 
 
 class TestPhase:
     @pytest.mark.parametrize(
-        "name, point_group, space_group, color, color_alias, color_rgb, structure",
+        "name, point_group, space_group, color, color_name, color_rgb, structure",
         [
             (
                 None,
@@ -39,7 +39,7 @@ class TestPhase:
                 (0.121568, 0.466666, 0.705882),
                 Structure(title="Super", lattice=Lattice(1, 1, 1, 90, 90, 90)),
             ),
-            (None, "1", 1, "blue", "b", (0, 0, 1), Structure()),
+            (None, "1", 1, "blue", "blue", (0, 0, 1), Structure()),
             (
                 "al",
                 "43",
@@ -61,7 +61,7 @@ class TestPhase:
         ],
     )
     def test_init_phase(
-        self, name, point_group, space_group, color, color_alias, color_rgb, structure
+        self, name, point_group, space_group, color, color_name, color_rgb, structure
     ):
         p = Phase(
             name=name,
@@ -87,7 +87,7 @@ class TestPhase:
             point_group = point_group.name
         assert p.point_group.name == point_group
 
-        assert p.color == color_alias
+        assert p.color == color_name
         assert np.allclose(p.color_rgb, color_rgb, atol=1e-6)
 
         if structure is not None:
@@ -299,7 +299,7 @@ class TestPhase:
         # Getting new structure matrix without passing enough parameters
         # raises an error
         with pytest.raises(ValueError, match="At least two of x, y, z must be set."):
-            _ = _new_structure_matrix_from_alignment(lattice.base, x="a")
+            _ = new_structure_matrix_from_alignment(lattice.base, x="a")
 
     def test_triclinic_structure_matrix(self):
         """Update a triclinic structure matrix."""
@@ -316,7 +316,7 @@ class TestPhase:
             atol=1e-3
         )
         assert np.allclose(
-            _new_structure_matrix_from_alignment(lat.base, x="a", z="c*"),
+            new_structure_matrix_from_alignment(lat.base, x="a", z="c*"),
             [
                 [ 2,     0,     0    ],
                 [-1.5,   2.598, 0    ],
@@ -325,7 +325,7 @@ class TestPhase:
             atol=1e-3
         )
         assert np.allclose(
-            _new_structure_matrix_from_alignment(lat.base, x="b", z="c*"),
+            new_structure_matrix_from_alignment(lat.base, x="b", z="c*"),
             [
                 [-1,    -1.732, 0    ],
                 [ 3,     0,     0    ],
@@ -965,3 +965,18 @@ class TestPhase:
         phase = Phase()
         with pytest.raises(ValueError, match="Space group must be set"):
             phase.expand_asymmetric_unit()
+
+    def test_default_lattice(self):
+        for S in ["1", "2", "222", "422", "432"]:
+            phase = Phase(point_group=S)
+            lattice_parameters = phase.structure.lattice.abcABG()
+            assert np.allclose([1, 1, 1, 90, 90, 90], lattice_parameters)
+
+        for S in ["3", "622"]:
+            phase = Phase(point_group=S)
+            lattice_parameters = phase.structure.lattice.abcABG()
+            assert np.allclose([1, 1, 1, 90, 90, 120], lattice_parameters)
+
+    def test_default_lattice_raises(self):
+        with pytest.raises(ValueError, match="Unknown crystal system 'rhombohedral'"):
+            default_lattice("rhombohedral")

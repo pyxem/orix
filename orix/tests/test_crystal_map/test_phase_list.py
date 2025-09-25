@@ -117,7 +117,7 @@ class TestPhaseList:
                 ["al", ""],
                 ["F4132", "Fm-3m"],
                 ["432", "m-3m"],
-                ["r", "tab:blue"],
+                ["red", "tab:blue"],
                 [100, 101],
             ),
             (
@@ -129,7 +129,7 @@ class TestPhaseList:
                 ["", ""],
                 [None, None],
                 [None, None],
-                ["g", "k"],
+                ["green", "black"],
                 [1, 2],
             ),
             (
@@ -197,8 +197,10 @@ class TestPhaseList:
     def test_get_phaselist_colors_rgb(self):
         pl = PhaseList(names=["a", "b", "c"], colors=["r", "g", (0, 0, 1)])
 
-        assert pl.colors == ["r", "g", "b"]
-        assert np.allclose(pl.colors_rgb, [(1.0, 0.0, 0.0), [0, 0.5, 0], (0, 0, 1)])
+        assert pl.colors == ["red", "green", "blue"]
+        assert np.allclose(
+            pl.colors_rgb, [(1.0, 0.0, 0.0), [0, 0.5020, 0], (0, 0, 1)], atol=1e-4
+        )
 
     @pytest.mark.parametrize("n_names", [1, 3])
     def test_get_phaselist_size(self, n_names):
@@ -234,9 +236,9 @@ class TestPhaseList:
             "desired_proper_point_group, desired_color"
         ),
         [
-            (0, "a", "Im-3m", "m-3m", "432", "r"),
-            ("b", "b", "P432", "432", "432", "g"),
-            (slice(2, None, None), "c", "P3", "3", "3", "b"),  # equivalent to pl[2:]
+            (0, "a", "Im-3m", "m-3m", "432", "red"),
+            ("b", "b", "P432", "432", "432", "green"),
+            (slice(2, None, None), "c", "P3", "3", "3", "blue"),  # equivalent to pl[2:]
         ],
     )
     def test_get_phase_from_phaselist(
@@ -264,12 +266,12 @@ class TestPhaseList:
                 slice(0, None, None),
                 ["a", "b", "c"],
                 ["m-3m", "432", "3"],
-                ["r", "g", "b"],
+                ["red", "green", "blue"],
             ),
-            (("a", "b"), ["a", "b"], ["m-3m", "432"], ["r", "g"]),
-            (["a", "b"], ["a", "b"], ["m-3m", "432"], ["r", "g"]),
-            ((0, 2), ["a", "c"], ["m-3m", "3"], ["r", "b"]),
-            ([0, 2], ["a", "c"], ["m-3m", "3"], ["r", "b"]),
+            (("a", "b"), ["a", "b"], ["m-3m", "432"], ["red", "green"]),
+            (["a", "b"], ["a", "b"], ["m-3m", "432"], ["red", "green"]),
+            ((0, 2), ["a", "c"], ["m-3m", "3"], ["red", "blue"]),
+            ([0, 2], ["a", "c"], ["m-3m", "3"], ["red", "blue"]),
         ],
     )
     def test_get_phases_from_phaselist(
@@ -391,7 +393,7 @@ class TestPhaseList:
     def test_iterate_phaselist(self):
         names = ["al", "ni", "sigma"]
         point_groups = [3, 432, "m-3m"]
-        colors = ["g", "b", "r"]
+        colors = ["green", "blue", "red"]
         structures = [
             Structure(),
             Structure(lattice=Lattice(1, 2, 3, 90, 90, 90)),
@@ -420,11 +422,11 @@ class TestPhaseList:
         assert pl2.names == names
 
         phase_list.add(Phase("d", point_group="m-3m"))
-        phase_list["d"].color = "g"
+        phase_list["d"].color = "green"
 
         assert phase_list.names == names + ["d"]
         assert [s.name for s in phase_list.point_groups] == point_groups + ["m-3m"]
-        assert phase_list.colors == colors + ["g"]
+        assert phase_list.colors == colors + ["green"]
 
         assert pl2.names == names
         assert [s.name for s in pl2.point_groups] == point_groups
@@ -443,7 +445,7 @@ class TestPhaseList:
 
     def test_make_not_indexed(self):
         phase_names = ["a", "b", "c"]
-        phase_colors = ["r", "g", "b"]
+        phase_colors = ["red", "green", "blue"]
         pl = PhaseList(names=phase_names, colors=phase_colors, ids=[-1, 0, 1])
 
         assert pl.names == phase_names
@@ -452,7 +454,7 @@ class TestPhaseList:
         pl.add_not_indexed()
 
         phase_names[0] = "not_indexed"
-        phase_colors[0] = "w"
+        phase_colors[0] = "white"
         assert pl.names == phase_names
         assert pl.colors == phase_colors
 

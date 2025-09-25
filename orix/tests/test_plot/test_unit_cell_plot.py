@@ -22,7 +22,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
-from orix.plot._util import Arrow3D
+from orix.plot._util.arrow_3d import Arrow3D
 from orix.plot.unit_cell_plot import (
     _calculate_basic_unit_cell_edges,
     _calculate_basic_unit_cell_vertices,
