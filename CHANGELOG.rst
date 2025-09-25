@@ -55,10 +55,9 @@ Deprecated
 
 Fixed
 -----
--  :class:`~orix.plot.IPFColorKey` automatic labels and shapes have been corrected.
+- :class:`~orix.plot.IPFColorKey` labels for point groups *-3* and *6/m* are now
+  correct.
 
-
-``IPFCOlorKeyTSL.plot`` now produces properly labeled plot axes.
 
 2025-01-01 - version 0.13.3
 ===========================
