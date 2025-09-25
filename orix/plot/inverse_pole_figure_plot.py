@@ -481,6 +481,8 @@ def _get_ipf_axes_labels(vertices: Vector3d, symmetry: Symmetry) -> list[str]:
     m = Miller(xyz=vertices.data, phase=phase)
     if symmetry.system in ["trigonal", "hexagonal"]:
         m.coordinate_format = "UVTW"
+    else:
+        m.coordinate_format = "uvw"
     axes = m.round(max_index=2).coordinates.astype(int)
 
     labels = []
