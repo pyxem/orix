@@ -26,8 +26,10 @@ import matplotlib.figure as mfigure
 import matplotlib.pyplot as plt
 import numpy as np
 
+from orix.crystal_map._phase import Phase
+from orix.crystal_map._phase_list import PhaseList
 from orix.crystal_map.crystal_map_properties import CrystalMapProperties
-from orix.crystal_map.phase_list import ALL_COLORS, Phase, PhaseList
+from orix.plot._util.color import get_named_matplotlib_colors
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.rotation import Rotation
 
@@ -284,7 +286,8 @@ class CrystalMap:
                 # Create new phase list adding the missing phases with
                 # default initial values (but unique colors)
                 phase_dict = {}
-                all_colors = list(ALL_COLORS.keys())
+                all_colors, _ = get_named_matplotlib_colors()
+                all_colors = list(all_colors.keys())
                 all_unique_colors = np.delete(
                     all_colors, np.isin(all_colors, phase_list.colors)
                 )

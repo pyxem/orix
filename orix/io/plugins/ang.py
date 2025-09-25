@@ -29,8 +29,8 @@ from diffpy.structure import Lattice, Structure
 import numpy as np
 
 from orix import __version__
+from orix.crystal_map._phase_list import PhaseList
 from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
-from orix.crystal_map.phase_list import PhaseList
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES
 
