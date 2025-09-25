@@ -57,19 +57,19 @@ def format_labels(
 
     Examples
     --------
-    >>> from orix import plot
+    >>> from orix.plot import format_labels
     >>> from orix.vector import Vector3d
     >>> v = Vector3d([[1, 1, 1], [-2, 0, 1], [4, 0, 0], [-4, 0, 0]])
-    >>> plot.format_labels(v.reshape(2, 2).data)
+    >>> format_labels(v.reshape(2, 2).data)
     array([['$111$', '$\\bar{2}01$'],
            ['$400$', '$\\bar{4}00$']], dtype='<U11')
-    >>> plot.format_labels(v.data, ("[", "]"), use_latex=False).tolist()
+    >>> format_labels(v.data, ("[", "]"), use_latex=False).tolist()
     ['[111]', '[-201]', '[400]', '[-400]']
-    >>> plot.format_labels(v.data, ("{", "}")).tolist()
+    >>> format_labels(v.data, ("{", "}")).tolist()
     ['$\\{111\\}$', '$\\{\\bar{2}01\\}$', '$\\{400\\}$', '$\\{\\bar{4}00\\}$']
-    >>> plot.format_labels(v.data, ("{", "}"), use_latex=False).tolist()
+    >>> format_labels(v.data, ("{", "}"), use_latex=False).tolist()
     ['{111}', '{-201}', '{400}', '{-400}']
-    >>> plot.format_labels(v.data, ("<", ">")).tolist()
+    >>> format_labels(v.data, ("<", ">")).tolist()
     ['$\\left<111\\right>$',
      '$\\left<\\bar{2}01\\right>$',
      '$\\left<400\\right>$',
