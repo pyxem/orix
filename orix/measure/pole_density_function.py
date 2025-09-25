@@ -206,10 +206,6 @@ def pole_density_function(
     ).unit
     v_grid_vertexes = Vector3d.from_polar(azimuth=azimuth_grid, polar=polar_grid).unit
 
-    mask = ~(v_grid <= symmetry.fundamental_sector)
-    v_grid = v_grid.in_fundamental_sector(symmetry)
-    v_grid_vertexes = v_grid_vertexes.in_fundamental_sector(symmetry)
-
     # Interpolation from histograms to plot grid
     grid_face_index, grid_face_coords = _cube_gnom_coordinates(v_grid)
     hist_grid = np.zeros(v_grid.shape)
@@ -228,6 +224,7 @@ def pole_density_function(
     hist = hist_grid
 
     # Mask out points outside funamental region.
+    mask = ~(v_grid <= symmetry.fundamental_sector)
     hist = np.ma.array(hist, mask=mask)
 
     # Transform grdi to mystery coordinates used by plotting routine
