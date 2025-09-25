@@ -32,7 +32,6 @@ import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.crystal_map.phase_list import Phase
 from orix.measure.pole_density_function import pole_density_function
 from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
 from orix.plot.stereographic_plot import ZORDER, StereographicPlot
@@ -475,6 +474,9 @@ def _get_ipf_axes_labels(vertices: Vector3d, symmetry: Symmetry) -> list[str]:
     list of str
         List of strings, with -1 formatted like $\bar{1}$.
     """
+    # Import here to avoid circular import
+    from orix.crystal_map._phase import Phase
+
     phase = Phase(point_group=symmetry)
     if symmetry.system in ["trigonal", "hexagonal"]:
         m = Miller(xyz=vertices.data, phase=phase)

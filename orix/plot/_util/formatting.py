@@ -17,32 +17,14 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from matplotlib.patches import FancyArrowPatch
-from mpl_toolkits.mplot3d import proj3d
+"""Private utilities for formatting text and such in visualization."""
+
 import numpy as np
 
 
-class Arrow3D(FancyArrowPatch):
-    """Matplotlib arrows in 3D with arrowheads.
-
-    Initially taken from this Stack Overflow answer by user CT Zhu
-    https://stackoverflow.com/a/22867877/12063126.
-    """
-
-    def __init__(self, xs, ys, zs, *args, **kwargs) -> None:
-        super().__init__((0, 0), (0, 0), *args, **kwargs)
-        self._verts3d = xs, ys, zs
-
-    def do_3d_projection(self, renderer=None) -> np.ndarray:
-        xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
-        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
-        return np.min(zs)
-
-
 def format_labels(
-    v: list | tuple | np.ndarray,
-    brackets: tuple[str, str] = ("", ""),
+    v: np.ndarray | list | tuple,
+    brackets: tuple[str, str] | None = None,
     use_latex: bool = True,
 ) -> np.ndarray:
     r"""Return formatted vector integer labels.
@@ -55,15 +37,15 @@ def format_labels(
     Parameters
     ----------
     v
-        Vector labels in an array-like with the last dimension having a
-        size of 3 or 4. The labels are rounded to the closets integers
-        before being formatted.
+        Vector labels with the last dimension having a size of 3 or 4.
+        The labels are rounded to the closets integers before being
+        formatted.
     brackets
-        Left and right parentheses. These are typically () or [] when
-        labeling reciprocal (hkl) or direct [uvw] lattice vectors,
-        respectively. If not given, no parentheses are added. If
-        ``use_latex=True``, then the brackets {} and <> will be escaped
-        if given.
+        Left and right parentheses as a tuple of strings. Default is
+        ("(", ")"). These are typically () or [] when labeling
+        reciprocal (hkl) or direct [uvw] lattice vectors, respectively.
+        If not given, no parentheses are added. If *use_latex* is True,
+        the brackets {} and <> will be escaped if given.
     use_latex
         Whether to use LaTeX when formatting the labels. Default is
         True.
@@ -93,6 +75,9 @@ def format_labels(
      '$\\left<400\\right>$',
      '$\\left<\\bar{4}00\\right>$']
     """
+    if brackets is None:
+        brackets = ("", "")
+
     if use_latex:
         start = end = r"$"
         if brackets == ("<", ">"):
@@ -116,5 +101,6 @@ def format_labels(
                 new_label += str(i)
         new_label += brackets[1] + end
         new_labels.append(new_label)
+    new_labels = np.asarray(new_labels).reshape(shape[:-1])
 
-    return np.asarray(new_labels).reshape(shape[:-1])
+    return new_labels
