@@ -55,6 +55,8 @@ Deprecated
 
 Fixed
 -----
+- :class:`~orix.plot.IPFColorKey` labels for point groups *-3* and *6/m* are now
+  correct.
 
 
 2025-01-01 - version 0.13.3

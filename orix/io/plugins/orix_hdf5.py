@@ -28,8 +28,9 @@ from diffpy.structure import Atom, Lattice, Structure
 from h5py import File, Group
 import numpy as np
 
+from orix.crystal_map._phase import Phase
+from orix.crystal_map._phase_list import PhaseList
 from orix.crystal_map.crystal_map import CrystalMap
-from orix.crystal_map.phase_list import Phase, PhaseList
 from orix.io.plugins._h5ebsd import hdf5group2dict
 from orix.quaternion.rotation import Rotation
 

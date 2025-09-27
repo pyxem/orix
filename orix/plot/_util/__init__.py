@@ -17,16 +17,4 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ._phase import Phase
-from ._phase_list import PhaseList
-from .crystal_map import CrystalMap, create_coordinate_arrays
-from .crystal_map_properties import CrystalMapProperties
-
-# Lazily imported in module init
-__all__ = [
-    "create_coordinate_arrays",
-    "CrystalMap",
-    "CrystalMapProperties",
-    "Phase",
-    "PhaseList",
-]
+"""Private utilities used across the plotting module."""

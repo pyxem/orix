@@ -40,46 +40,59 @@ class TestDirectionColorKeyTSL:
         assert rgb2[0].size == rgb2[1].size == 0
 
     @pytest.mark.parametrize(
-        "symmetry, expected_shape",
+        "symmetry, expected_shape, expected_xy_lims, expected_labels",
         [
-            [symmetry.C1, (2000, 2000, 4)],
-            [symmetry.C2, (1000, 2000, 4)],
-            [symmetry.D6, (500, 1000, 4)],
-            [symmetry.Oh, (367, 415, 4)],
-            [symmetry.Th, (415, 415, 4)],
+            [symmetry.C1, (2000, 2000, 4), [(-1.0, 1.0), (-1.0, 1.0)], ""],
+            [symmetry.Ci, (2000, 2000, 4), [(-1.0, 1.0), (-1.0, 1.0)], ""],
+            [
+                symmetry.C2,
+                (1000, 2000, 4),
+                [(-1.0, 1.0), (0.0, 1.0)],
+                "[$1 0 0$][$\\bar{1} 0 0$]",
+            ],
+            [
+                symmetry.S6,
+                (1000, 1500, 4),
+                [(-0.5, 1.0), (0, 1.0)],
+                "[$2 \\bar{1} \\bar{1} 0$][$0 0 0 1$][$\\bar{1} 2 \\bar{1} 0$]",
+            ],
+            [
+                symmetry.D6,
+                (500, 1000, 4),
+                [(0.0, 1.0), (0.0, 0.5)],
+                "[$2 \\bar{1} \\bar{1} 0$][$0 0 0 1$][$1 0 \\bar{1} 0$]",
+            ],
+            [
+                symmetry.Oh,
+                (367, 415, 4),
+                [(0.0, 0.414), (0.0, 0.366)],
+                "[$1 1 1$][$1 0 1$][$0 0 1$]",
+            ],
+            [
+                symmetry.Th,
+                (415, 415, 4),
+                [(0.0, 0.414), (0.0, 0.414)],
+                "[$0 1 1$][$1 1 1$][$1 0 1$][$0 0 1$]",
+            ],
         ],
     )
     @pytest.mark.slow
-    def test_rgba_grid_shape(self, symmetry, expected_shape):
+    def test_rgba_grid(
+        self, symmetry, expected_shape, expected_xy_lims, expected_labels
+    ):
         ckey = IPFColorKeyTSL(symmetry)
-        ckey_direction = ckey.direction_color_key
-        rgb_grid = ckey_direction._create_rgba_grid()
+        ckey_dcc = ckey.direction_color_key
+        rgb_grid, (xlim, ylim) = ckey_dcc._create_rgba_grid(return_extent=True)
+        (x_min, x_max), (y_min, y_max) = xlim, ylim
+        ax = ckey_dcc.plot(True).get_axes()[0]
+        labels = "".join([x.get_text() for x in ax.texts])
         assert isinstance(rgb_grid, np.ndarray)
         assert rgb_grid.shape == expected_shape
-
-    @pytest.mark.parametrize(
-        "symmetry, expected_xlim, expected_ylim",
-        [
-            [symmetry.C1, (-1.0, 1.0), (-1.0, 1.0)],
-            [symmetry.C2, (-1.0, 1.0), (0.0, 1.0)],
-            [symmetry.D6, (0.0, 1.0), (0.0, 0.5)],
-            [symmetry.Oh, (0.0, 0.414), (0.0, 0.366)],
-            [symmetry.Th, (0.0, 0.414), (0.0, 0.414)],
-        ],
-    )
-    @pytest.mark.slow
-    def test_rgba_grid_limits(self, symmetry, expected_xlim, expected_ylim):
-        ckey = IPFColorKeyTSL(symmetry)
-        ckey_direction = ckey.direction_color_key
-        (
-            _,
-            (x_lim, y_lim),
-        ) = ckey_direction._create_rgba_grid(return_extent=True)
-        (x_min, x_max), (y_min, y_max) = x_lim, y_lim
-        assert round(x_min, 3) == round(expected_xlim[0], 3)
-        assert round(x_max, 3) == round(expected_xlim[1], 3)
-        assert round(y_min, 3) == round(expected_ylim[0], 3)
-        assert round(y_max, 3) == round(expected_ylim[1], 3)
+        assert round(x_min, 3) == round(expected_xy_lims[0][0], 3)
+        assert round(x_max, 3) == round(expected_xy_lims[0][1], 3)
+        assert round(y_min, 3) == round(expected_xy_lims[1][0], 3)
+        assert round(y_max, 3) == round(expected_xy_lims[1][1], 3)
+        assert labels == expected_labels
 
     @pytest.mark.parametrize(
         "symmetry",

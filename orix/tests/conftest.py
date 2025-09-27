@@ -27,8 +27,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from orix.crystal_map._phase import Phase
+from orix.crystal_map._phase_list import PhaseList
 from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
-from orix.crystal_map.phase_list import Phase, PhaseList
 from orix.quaternion.rotation import Rotation
 
 # --------------------------- pytest hooks --------------------------- #

@@ -29,7 +29,7 @@ import matplotlib.figure as mfigure
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.plot._util import Arrow3D
+from orix.plot._util.arrow_3d import Arrow3D
 from orix.vector.vector3d import Vector3d
 
 if TYPE_CHECKING:  # pragma: no cover

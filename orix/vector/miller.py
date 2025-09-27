@@ -29,7 +29,7 @@ import numpy as np
 from orix.vector.vector3d import Vector3d
 
 if TYPE_CHECKING:  # pragma: no cover
-    from orix.crystal_map.phase_list import Phase
+    from orix.crystal_map._phase import Phase
     from orix.quaternion.symmetry import Symmetry
 
 
