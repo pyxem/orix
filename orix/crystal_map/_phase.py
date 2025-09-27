@@ -35,6 +35,7 @@ import numpy as np
 from orix.plot._util.color import get_matplotlib_color
 from orix.quaternion.symmetry import (
     _EDAX_POINT_GROUP_ALIASES,
+    VALID_SYSTEMS,
     Symmetry,
     _groups,
     get_point_group,
@@ -58,15 +59,16 @@ class Phase:
     space_group
         Space group describing the symmetry operations resulting from
         associating the point group with a Bravais lattice, according
-        to the International Tables of Crystallography. If not given, it
-        is set to None.
+        to the International Tables for Crystallography. If not given,
+        it is set to None.
     point_group
         Point group describing the symmetry operations of the phase's
-        crystal structure, according to the International Tables of
+        crystal structure, according to the International Tables for
         Crystallography. If neither this or *space_group* is given, it
         is set to None. If not given but *space_group* is, it is derived
         from the space group. If both this and *space_group* is given,
-        the space group must to be derived from the point group.
+        the space group must to be derived from adding translational
+        symmetry to the point group.
     structure
         Unit cell with atoms and a lattice. If not given, a default
         :class:`~diffpy.structure.structure.Structure` compatible with
@@ -483,7 +485,7 @@ def new_structure_matrix_from_alignment(
     return new_matrix
 
 
-def default_lattice(system: str) -> Lattice:
+def default_lattice(system: VALID_SYSTEMS) -> Lattice:
     if system in ["triclinic", "monoclinic", "orthorhombic", "tetragonal", "cubic"]:
         lat = Lattice()
     elif system in ["trigonal", "hexagonal"]:
