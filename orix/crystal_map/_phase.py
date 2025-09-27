@@ -64,7 +64,7 @@ class Phase:
     point_group
         Point group describing the symmetry operations of the phase's
         crystal structure, according to the International Tables for
-        Crystallography. If neither this or *space_group* is given, it
+        Crystallography. If neither this nor *space_group* is given, it
         is set to None. If not given but *space_group* is, it is derived
         from the space group. If both this and *space_group* is given,
         the space group must to be derived from adding translational
