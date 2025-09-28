@@ -98,12 +98,13 @@ class Orientation(Misorientation):
         return f"{self.__class__.__name__} {self.shape} {self.symmetry.name}\n{data}"
 
     def __sub__(self, other: Orientation) -> Misorientation:
-        if isinstance(other, Orientation):
-            # Call to Object3d.squeeze() doesn't carry over symmetry
-            M = Misorientation(self * ~other).squeeze()
-            M.symmetry = (self.symmetry, other.symmetry)
-            return M.reduce()
-        return NotImplemented
+        if not isinstance(other, Orientation):
+            return NotImplemented
+        # Call to Object3d.squeeze() doesn't carry over symmetry
+        M = Misorientation(self * ~other).squeeze()
+        M.symmetry = (self.symmetry, other.symmetry)
+        M = M.reduce()
+        return M
 
     # ------------------------ Class methods ------------------------- #
 
