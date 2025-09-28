@@ -545,8 +545,7 @@ class StereographicPlot(maxes.Axes):
         self.patches[0].set_visible(False)
 
         if show_edges:
-            for k, v in [("facecolor", "none"), ("edgecolor", "k"), ("linewidth", 1)]:
-                kwargs.setdefault(k, v)
+            kwargs = _update_kwargs_for_fundamental_sector_patch(kwargs)
             patch = mpatches.PathPatch(
                 mpath.Path(np.column_stack([x, y]), closed=True),
                 label=self._get_label("sector"),
@@ -1376,3 +1375,9 @@ def _get_color_from_dict(d: dict[str, Any]) -> COLORLIKE:
     else:
         c = "C0"
     return c
+
+
+def _update_kwargs_for_fundamental_sector_patch(d: dict[str, Any]) -> dict[str, Any]:
+    for k, v in [("facecolor", "none"), ("edgecolor", "k"), ("linewidth", 1)]:
+        d.setdefault(k, v)
+    return d

@@ -34,7 +34,11 @@ import numpy as np
 
 from orix.measure.pole_density_function import pole_density_function
 from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
-from orix.plot.stereographic_plot import ZORDER, StereographicPlot
+from orix.plot.stereographic_plot import (
+    ZORDER,
+    StereographicPlot,
+    _update_kwargs_for_fundamental_sector_patch,
+)
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.symmetry import C1, Symmetry
 from orix.vector.miller import Miller
@@ -91,24 +95,18 @@ class InversePoleFigurePlot(StereographicPlot):
             symmetry = C1
         self._symmetry = symmetry
 
-        self.restrict_to_sector(self._symmetry.fundamental_sector)
-
-        # A sector may not have been set, in which case we copy the
-        # equatorial plane border
-        sector_patch = self._get_collection(self._get_label("sector"))
-        if sector_patch is None:
-            border_patch = self._get_collection(self._get_label("border"), self.patches)
-            sector_patch = mpatches.PathPatch(
-                border_patch.get_path(), label=self._get_label("sector")
-            )
-            self.add_patch(sector_patch)
+        self._ensure_fundamental_sector_border_patch()
 
         self._add_crystal_direction_labels()
+
+    # -------------------------- Properties -------------------------- #
 
     @property
     def _edge_patch(self) -> mpatches.Patch:
         """Easy access to the fundamental sector border patch."""
         return self._get_collection(self._get_label("sector"), self.patches)
+
+    # ---------------------------- Methods --------------------------- #
 
     def pole_density_function(
         self,
@@ -230,6 +228,8 @@ class InversePoleFigurePlot(StereographicPlot):
         v = self._inverse_projection.xy2vector(np.min(x), np.max(y))
         self.text(v, s=self.hemisphere, **new_kwargs)
 
+    # ----------------------- Private methods ------------------------ #
+
     def _add_crystal_direction_labels(self) -> None:
         """Add appropriately placed and nicely formatted crystal
         direction labels [uvw] or [UVTW] to the sector corners.
@@ -310,6 +310,25 @@ class InversePoleFigurePlot(StereographicPlot):
         else:  # Orientation
             v = values[0] * self._direction
         return v.in_fundamental_sector(self._symmetry)
+
+    def _ensure_fundamental_sector_border_patch(self):
+        """Ensure a fundamental sector border patch is added to
+        :attr:`patches` with a label given by the default label +
+        "_sector".
+        """
+        self.restrict_to_sector(self._symmetry.fundamental_sector)
+
+        # A sector may not have been set, in which case we copy the
+        # equatorial plane border
+        sector_label = self._get_label("sector")
+        sector_patch = self._get_collection(sector_label)
+        if sector_patch is None:
+            border_patch = self._get_collection(self._get_label("border"), self.patches)
+            kw = _update_kwargs_for_fundamental_sector_patch({})
+            sector_patch = mpatches.PathPatch(
+                border_patch.get_path(), label=sector_label, **kw
+            )
+            self.add_patch(sector_patch)
 
     def plot_ipf_color_key(self, show_title: bool = True) -> None:
         """Plot an IPF color key code on this axis.
