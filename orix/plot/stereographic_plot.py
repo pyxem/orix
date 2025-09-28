@@ -21,6 +21,7 @@
 plotting :class:`~orix.vector.Vector3d`.
 """
 
+from collections.abc import Iterable
 from copy import deepcopy
 from typing import Any
 
@@ -222,24 +223,22 @@ class StereographicPlot(maxes.Axes):
             return
 
         # Color(s)
-        if "color" in updated_kwargs.keys():
-            key_color = "color"
+        for key_color in ["color", "c"]:
+            if key_color in updated_kwargs:
+                c = updated_kwargs.pop(key_color)
+                c = _get_array_of_values(value=c, visible=visible)
+                break
         else:
-            key_color = "c"
-        c = updated_kwargs.pop(key_color, "C0")
-        if isinstance(c, np.ndarray):
-            if np.issubdtype(c.dtype, np.number):
-                c = np.atleast_2d(c)
-        c = _get_array_of_values(value=c, visible=visible)
+            c = None
 
         # Size(s)
-        if "sizes" in updated_kwargs.keys():
-            key_size = "sizes"
+        for key_size in ["sizes", "s"]:
+            if key_size in updated_kwargs:
+                s = updated_kwargs.pop(key_size)
+                s = _get_array_of_values(value=s, visible=visible)
+                break
         else:
-            key_size = "s"
-        s = updated_kwargs.pop(key_size, None)
-        if s is not None:
-            s = _get_array_of_values(value=s, visible=visible)
+            s = None
 
         super().scatter(x, y, c=c, s=s, **updated_kwargs)
 
@@ -1160,12 +1159,12 @@ mprojections.register_projection(StereographicPlot)
 
 
 def _get_array_of_values(
-    value: str | float | list[str] | list[float], visible: np.ndarray
+    value: str | float | list[str] | list[float] | np.ndarray, visible: np.ndarray
 ) -> np.ndarray:
-    """Return a usable array of ``value`` with the correct size
-    even though ``value`` doesn't have as many elements as
-    ``visible.size``, to be iterated over along with ``True`` elements
-    in ``visible``.
+    """Return a usable array of *value* with the correct size, even
+    though *value* doesn't have as many elements as the number of
+    *visible*elements, to be iterated over along with True elements in
+    *visible*.
 
     Parameters
     ----------
@@ -1174,23 +1173,28 @@ def _get_array_of_values(
         Matplotlib routine.
     visible
         Boolean array with as many elements as input vectors, only some
-        of which are visible in the hemisphere (``True``).
+        of which are visible in the hemisphere (True).
 
     Returns
     -------
     array
-        An array populated with ``value`` of a size equal to the number
-        of ``True`` elements in ``visible``.
+        An array populated with *value* of a size equal to the number
+        of True elements in *visible*.
     """
     n = visible.size
-    if hasattr(value, "__iter__"):
-        if n > 1 and len(value) == 1:
-            value = [value] * n
-        elif not isinstance(value, str) and len(value) != n:
-            value = value[0]
-    if isinstance(value, str) or not hasattr(value, "__iter__"):
-        value = [value] * n
-    return np.asarray(value)[visible]
+
+    if isinstance(value, (str, float, int)):
+        out = [value] * n
+        out = np.asarray(out)
+        out = out[visible]
+    elif isinstance(value, Iterable) and isinstance(value[0], str):
+        out = np.asarray(value)
+        out = out[visible]
+    else:
+        out = np.asarray(value)
+        out = out[visible]
+
+    return out
 
 
 def _is_visible(polar: np.ndarray, pole: int) -> np.ndarray:
