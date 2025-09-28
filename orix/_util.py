@@ -19,9 +19,9 @@
 
 """Helper functions and classes for managing orix."""
 
-
 import functools
 import inspect
+from typing import Callable, Literal
 import warnings
 
 from orix.constants import VisibleDeprecationWarning
@@ -40,23 +40,23 @@ class deprecated:
 
     def __init__(
         self,
-        since,
-        removal=None,
-        object_type="function",
-        alternative=None,
-    ):
+        since: str | int | float,
+        removal: str | int | float | None = None,
+        object_type: Literal["function", "property"] = "function",
+        alternative: str | None = None,
+    ) -> None:
         """Visible deprecation warning.
 
         Parameters
         ----------
-        since : str, int or float
+        since
             The release at which this API became deprecated.
-        removal : str, int or float, optional
+        removal
             The expected removal version.
-        object_type : str, optional
+        object_type
             Type of the deprecated object, either "function" (default)
             or "property".
-        alternative : str, optional
+        alternative
             An alternative API that the user may use in place of the
             deprecated API.
         """
@@ -65,7 +65,7 @@ class deprecated:
         self.removal = removal
         self.object_type = object_type
 
-    def __call__(self, func):
+    def __call__(self, func: Callable) -> Callable:
         # Wrap function or property to raise warning when called, and
         # add warning to docstring if function or property is deprecated
 
@@ -88,7 +88,7 @@ class deprecated:
         )
 
         @functools.wraps(func)
-        def wrapped(*args, **kwargs):
+        def wrapped(*args, **kwargs) -> Callable:
             warnings.simplefilter(
                 action="always", category=VisibleDeprecationWarning, append=True
             )
@@ -124,15 +124,21 @@ class deprecated_argument:
     <https://github.com/scikit-image/scikit-image/blob/main/skimage/_shared/utils.py#L115>`_.
     """
 
-    def __init__(self, name, since, removal, alternative=None):
+    def __init__(
+        self,
+        name: str,
+        since: str | int | float,
+        removal: str | int | float,
+        alternative: str | None = None,
+    ) -> None:
         self.name = name
         self.since = since
         self.removal = removal
         self.alternative = alternative
 
-    def __call__(self, func):
+    def __call__(self, func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapped(*args, **kwargs):
+        def wrapped(*args, **kwargs) -> Callable:
             if self.name in kwargs.keys():
                 msg = (
                     f"Argument `{self.name}` is deprecated and will be removed in "
