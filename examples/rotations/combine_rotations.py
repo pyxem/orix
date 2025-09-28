@@ -41,11 +41,13 @@ transformations between rotation representations.
 
 import matplotlib.pyplot as plt
 
-from orix import plot
+from orix.plot import register_projections
 from orix.quaternion import Rotation
 from orix.vector import Vector3d
 
 plt.rcParams.update({"font.size": 12, "grid.alpha": 0.5})
+
+register_projections()  # Register our custom Matplotlib projections
 
 R1 = Rotation.from_axes_angles([1, 1, 1], -120, degrees=True)
 R2 = Rotation.from_axes_angles([1, 1, 0], -180, degrees=True)

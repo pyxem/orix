@@ -35,8 +35,10 @@ There are five ways to select data:
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import plot
 from orix.crystal_map import CrystalMap, Phase
+from orix.plot import register_projections
+
+register_projections()  # Register our custom Matplotlib projections
 
 
 def plot_id(xmaps: CrystalMap | list[CrystalMap], titles: str | list[str]) -> None:

@@ -41,12 +41,14 @@ The band width is assumed to be two times the Bragg angle :math:`\theta`.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import plot
 from orix.crystal_map import Phase
+from orix.plot import format_labels, register_projections
 from orix.quaternion import symmetry
 from orix.vector import Miller
 
 plt.rcParams["font.size"] = 15
+
+register_projections()  # Register our custom Matplotlib projections
 
 # Symmetrically equivalent set of hkl
 g0 = Miller(
@@ -78,7 +80,7 @@ t = t.round().unique()
 t.scatter(
     figure=fig,
     c="none",
-    vector_labels=plot.format_labels(t.coordinates),
+    vector_labels=format_labels(t.coordinates),
     text_kwargs={"va": "center", "bbox": {"fc": "w", "pad": 1, "alpha": 0.75}},
 )
 

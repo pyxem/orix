@@ -27,8 +27,10 @@ This example shows how to draw a customized Wulff net in stereographic plots usi
 
 import matplotlib.pyplot as plt
 
-from orix.plot import InversePoleFigurePlot, StereographicPlot
+from orix.plot import register_projections
 from orix.quaternion.symmetry import C6h
+
+register_projections()  # Register our custom Matplotlib projections
 
 ########################################################################################
 # Plot two stereographic projections, one with the standard Wulff net, another with a

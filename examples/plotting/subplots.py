@@ -32,10 +32,13 @@ maps of two phases, a pole density function (PDF), and a discrete pole figure (P
 
 import matplotlib.pyplot as plt
 
-from orix import data, plot
+from orix.data import sdss_ferrite_austenite
+from orix.plot import IPFColorKeyTSL, register_projections
 from orix.vector import Miller
 
-xmap = data.sdss_ferrite_austenite(allow_download=True)
+register_projections()  # Register our custom Matplotlib projections
+
+xmap = sdss_ferrite_austenite(allow_download=True)
 print(xmap)
 
 pg_m3m = xmap.phases[1].point_group.laue
@@ -43,7 +46,7 @@ O_au = xmap["austenite"].orientations
 O_fe = xmap["ferrite"].orientations
 
 # Orientation colors
-ckey_m3m = plot.IPFColorKeyTSL(pg_m3m)
+ckey_m3m = IPFColorKeyTSL(pg_m3m)
 rgb_au = ckey_m3m.orientation2color(O_au)
 rgb_fe = ckey_m3m.orientation2color(O_fe)
 

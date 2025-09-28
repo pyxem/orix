@@ -40,9 +40,12 @@ transmission electron microscope.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import plot, sampling
+from orix import sampling
+from orix.plot import register_projections
 from orix.quaternion import symmetry
 from orix.vector import Vector3d
+
+register_projections()  # Register our custom Matplotlib projections
 
 # Sample rotations with an average misorientation
 res = 2
