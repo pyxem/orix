@@ -23,7 +23,7 @@ import itertools
 
 import numpy as np
 
-from orix import constants
+from orix._utils import constants
 from orix.quaternion.quaternion import Quaternion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, get_distinguished_points

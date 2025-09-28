@@ -25,7 +25,7 @@ from warnings import warn
 from h5py import File, is_hdf5
 import numpy as np
 
-from orix._util import deprecated
+from orix._utils.deprecation import deprecated
 from orix.crystal_map.crystal_map import CrystalMap
 from orix.io.plugins import plugin_list
 from orix.io.plugins._h5ebsd import hdf5group2dict

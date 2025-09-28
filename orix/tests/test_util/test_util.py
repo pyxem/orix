@@ -21,8 +21,8 @@ import warnings
 
 import pytest
 
-from orix._util import deprecated, deprecated_argument
-from orix.constants import VisibleDeprecationWarning
+from orix._utils.constants import VisibleDeprecationWarning
+from orix._utils.deprecation import deprecated, deprecated_argument
 
 
 class TestDeprecateFunctionOrProperty:

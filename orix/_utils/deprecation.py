@@ -17,14 +17,14 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Helper functions and classes for managing orix."""
+"""Utilities for deprecating methods, functions, and properties."""
 
 import functools
 import inspect
 from typing import Callable, Literal
 import warnings
 
-from orix.constants import VisibleDeprecationWarning
+from orix._utils.constants import VisibleDeprecationWarning
 
 
 class deprecated:
