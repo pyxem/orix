@@ -67,18 +67,19 @@ class TestAxisAnglePlot:
         with pytest.raises(TypeError, match="fundamental_zone is not an "):
             ax.transform(Orientation.random(), fundamental_zone=1)
 
-    def test_rotation_plot_map_into_symmetry_reduced_zone(self):
+    def test_rotation_plot_symmetry_reduction(self):
         # Orientations are (in, out) of D6 fundamental zone
         O = Orientation(((1, 0, 0, 0), (0.5, 0.5, 0.5, 0.5)))
         O.symmetry = D6
         fz = OrientationRegion.from_symmetry(O.symmetry)
         assert np.allclose(O < fz, (True, False))
 
-        # test map_into_symmetry_reduced_zone in RotationPlot.transform
+        # Test rotation to fundamental zone in RotationPlot.transform
         fig = O.scatter(return_figure=True)
         xyz_symmetry = fig.axes[0].collections[1]._offsets3d
 
-        # compute same plot again but with C1 symmetry where both orientations are in C1 FZ
+        # compute same plot again but with C1 symmetry where both
+        # orientations are in C1 FZ
         O.symmetry = C1
         fig2 = O.scatter(return_figure=True)
         xyz = fig2.axes[0].collections[1]._offsets3d
