@@ -23,7 +23,7 @@
 rotated by orientations.
 """
 
-from typing import Any
+from typing import Any, Literal
 
 import matplotlib.axes as maxes
 from matplotlib.figure import Figure
@@ -58,8 +58,8 @@ class InversePoleFigurePlot(StereographicPlot):
         not given, the out of plane direction, sample Z, is used.
     hemisphere
         Which hemisphere(s) to plot the vectors in. If not given,
-        ``"upper"`` is used. Options are ``"upper"``, ``"lower"`` and
-        ``"both"``, which plots two projections side by side.
+        "upper" is used. Options are "upper", "lower" and "both", which
+        plots two projections side by side.
     **kwargs
         Keyword arguments passed to
         :class:`~orix.plot.StereographicPlot`.
@@ -72,7 +72,7 @@ class InversePoleFigurePlot(StereographicPlot):
         *args: Any,
         symmetry: Symmetry | None = None,
         direction: Vector3d | None = None,
-        hemisphere: str | None = None,
+        hemisphere: Literal["upper", "lower", "both"] | None = None,
         **kwargs: Any,
     ) -> None:
         """Create an inverse pole figure axis for plotting
@@ -93,17 +93,22 @@ class InversePoleFigurePlot(StereographicPlot):
 
         self.restrict_to_sector(self._symmetry.fundamental_sector)
 
+        # A sector may not have been set, in which case we copy the
+        # equatorial plane border
+        sector_patch = self._get_collection(self._get_label("sector"))
+        if sector_patch is None:
+            border_patch = self._get_collection(self._get_label("border"), self.patches)
+            sector_patch = mpatches.PathPatch(
+                border_patch.get_path(), label=self._get_label("sector")
+            )
+            self.add_patch(sector_patch)
+
         self._add_crystal_direction_labels()
 
     @property
     def _edge_patch(self) -> mpatches.Patch:
         """Easy access to the fundamental sector border patch."""
-        patches = self.patches
-        return patches[
-            self._has_collection(label=self._get_label("sector"), collections=patches)[
-                1
-            ]
-        ]
+        return self._get_collection(self._get_label("sector"), self.patches)
 
     def pole_density_function(
         self,

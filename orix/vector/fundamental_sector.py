@@ -17,6 +17,8 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from typing import Literal
+
 import numpy as np
 
 from orix.vector import SphericalRegion, Vector3d
@@ -144,7 +146,7 @@ def _order_to_sort_around_center(
 
 
 def _closed_edges_in_hemisphere(
-    edges: Vector3d, sector: FundamentalSector, pole: int = -1
+    edges: Vector3d, sector: FundamentalSector, pole: Literal[1, -1] = -1
 ) -> Vector3d:
     if pole == -1:
         is_outside = edges.polar >= np.pi / 2 + 1e-6
