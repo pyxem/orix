@@ -23,11 +23,12 @@ import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation as SciPyRotation
 
-# fmt: off
-# isort: off
+from orix._utils.constants import VisibleDeprecationWarning
 from orix.crystal_map import Phase
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Quaternion, Rotation
+
+# isort: off
 from orix.quaternion.symmetry import (
     C1,
     C2,
@@ -42,9 +43,9 @@ from orix.quaternion.symmetry import (
     _groups,
     _proper_groups,
 )
-from orix.vector import Miller, Vector3d
+
 # isort: on
-# fmt: on
+from orix.vector import Miller, Vector3d
 
 
 @pytest.fixture
@@ -241,14 +242,6 @@ def test_transpose_2d():
     o1 = Orientation.random_vonmises((11, 3))
     o2 = o1.transpose()
     assert o1.shape == o2.shape[::-1]
-
-
-def test_reduce_verbose():
-    o = Orientation.random()
-    o.symmetry = Oh
-    o1 = o.reduce()
-    o2 = o.reduce(verbose=True)
-    assert np.allclose(o1.data, o2.data)
 
 
 @pytest.mark.parametrize(
@@ -463,6 +456,19 @@ class TestMisorientation:
 
         M3 = Misorientation.random(symmetry=(Oh, D6))
         assert M3.symmetry == (Oh, D6)
+
+    # TODO: Remove after v0.15.0 is released
+    def test_map_into_symmetry_reduced_zone_deprecation_message(self):
+        M = Misorientation.random()
+        M.symmetry = (Oh, Oh)
+        with pytest.warns(
+            VisibleDeprecationWarning,
+            match=(
+                r"Function `map_into_symmetry_reduced_zone\(\)` is deprecated and will "
+                r"be removed in version 0.15. Use `reduce\(\)` instead."
+            ),
+        ):
+            _ = M.map_into_symmetry_reduced_zone()
 
 
 def test_orientation_equality():
@@ -830,3 +836,10 @@ class TestOrientation:
 
         O3 = Orientation.random(symmetry=Oh)
         assert O3.symmetry == Oh
+
+    def test_reduce_verbose(self):
+        o = Orientation.random()
+        o.symmetry = Oh
+        o1 = o.reduce()
+        o2 = o.reduce(verbose=True)
+        assert np.allclose(o1.data, o2.data)
