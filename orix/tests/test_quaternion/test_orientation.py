@@ -103,9 +103,6 @@ def test_set_symmetry(orientation, symmetry, expected):
     o = Orientation(orientation.data, symmetry=symmetry)
     o = o.reduce()
     assert np.allclose(o.data, expected, atol=1e-3)
-    # TODO: remove in 0.15
-    o_old = o.map_into_symmetry_reduced_zone()
-    assert np.allclose(o_old.data, o.data)
 
 
 @pytest.mark.parametrize(
@@ -252,13 +249,6 @@ def test_reduce_verbose():
     o1 = o.reduce()
     o2 = o.reduce(verbose=True)
     assert np.allclose(o1.data, o2.data)
-
-    # TODO: remove in 0.15
-    o = Orientation.random()
-    o.symmetry = Oh
-    o1_old = o.reduce()
-    o2_old = o.map_into_symmetry_reduced_zone(verbose=True)
-    assert np.allclose(o1_old.data, o2_old.data)
 
 
 @pytest.mark.parametrize(

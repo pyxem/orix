@@ -697,11 +697,6 @@ class TestCrystalMapOrientations:
         assert np.allclose(o.data, o1.data, atol=1e-3)
         assert np.allclose(o.data, expected_orientation, atol=1e-3)
 
-        # TODO: remove in 0.15
-        o1_old = Orientation(r)
-        o1_old.symmetry = point_group
-        assert np.allclose(o.data, o1_old.data, atol=1e-3)
-
     def test_orientations_none_symmetry_raises(self, crystal_map_input):
         xmap = CrystalMap(**crystal_map_input)
         assert xmap.phases[:].point_group is None
