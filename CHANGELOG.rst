@@ -61,6 +61,9 @@ Fixed
 - :class:`~orix.plot.IPFColorKey` labels for point groups *-3* and *6/m* are now
   correct.
 - Multicolor stereographic scatter plots now correctly cast RGB and RGBA color arrays
+- Coloring of vectors in :meth:`~orix.plot.StereographicPlot.scatter` and the equivalent
+  vector method now correctly maps colors from RGB(A) arrays.
+
 
 2025-01-01 - version 0.13.3
 ===========================
