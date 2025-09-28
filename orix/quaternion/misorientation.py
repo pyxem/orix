@@ -367,22 +367,7 @@ class Misorientation(Rotation):
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
         """
-        Gl, Gr = self._symmetry
-        symmetry_pairs = iproduct(Gl, Gr)
-        if verbose:
-            symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
-
-        orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
-        o_inside = self.__class__.identity(self.shape)
-        outside = np.ones(self.shape, dtype=bool)
-        for gl, gr in symmetry_pairs:
-            o_transformed = gl * self[outside] * gr
-            o_inside[outside] = o_transformed
-            outside = ~(o_inside < orientation_region)
-            if not np.any(outside):
-                break
-        o_inside._symmetry = (Gl, Gr)
-        return o_inside
+        return self.reduce(verbose)
 
     def reduce(self, verbose: bool = False) -> Misorientation:
         """Return equivalent transformations which have the smallest
