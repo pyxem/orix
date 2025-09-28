@@ -30,6 +30,7 @@ import pytest
 from orix.crystal_map._phase import Phase
 from orix.crystal_map._phase_list import PhaseList
 from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
+from orix.plot import register_projections
 from orix.quaternion.rotation import Rotation
 
 # --------------------------- pytest hooks --------------------------- #
@@ -37,6 +38,7 @@ from orix.quaternion.rotation import Rotation
 
 def pytest_sessionstart(session):
     plt.rcParams["backend"] = "agg"
+    register_projections()
 
 
 # -------------------- Control of test selection --------------------- #

@@ -17,6 +17,7 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
 import pytest
@@ -108,3 +109,29 @@ class TestAxisAnglePlot:
         assert np.allclose(ax.get_xlim(), [-np.pi / 2, np.pi / 2])
 
         plt.close("all")
+
+    def test_scatter_coloring(self):
+        """Ensure various inputs are allowed.
+
+        We cannot validate the colors like for the stereographic plot,
+        as an alpha given by depth is applied in 3D.
+        """
+        Or = Orientation.random(10)
+
+        # Four ways to color vectors
+        c_scalar = np.linspace(0, 1, Or.size)
+        c_rgba = mpl.colormaps["viridis"](c_scalar)
+        c_rgb = np.random.random(Or.size * 3).reshape(Or.size, 3)
+        c_color = "xkcd:salmon"
+
+        # Scalar values
+        _ = Or.scatter(c=c_scalar)
+
+        # Pre-computed RGBA colormapping
+        _ = Or.scatter(c=c_rgba)
+
+        # RGB values
+        _ = Or.scatter(c=c_rgb)
+
+        # Single color
+        _ = Or.scatter(c=c_color)
