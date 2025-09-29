@@ -35,6 +35,7 @@ from orix.quaternion.symmetry import Oh
 from orix.vector import Vector3d
 
 register_projections()  # Register our custom Matplotlib projections
+np.random.seed(2319)  # Create reproducible random data
 
 ########################################################################################
 # Create some random vectors and plot them in the stereographic projection, coloring by:
@@ -71,23 +72,23 @@ _ = ax3.set_title("A single color")
 
 ########################################################################################
 # This also works nicely when coloring (mis)orientations
-Or = Orientation.random(50)
-Or.symmetry = Oh
+ori = Orientation.random(50)
+ori.symmetry = Oh
 
 n = 4
 fig = plt.figure(figsize=(n * 3, n), layout="tight")
 scatter_kwargs = {"projection": "axangle", "figure": fig}
 
-Or.scatter(c=c_scalar, cmap="inferno", position=(1, n, 1), **scatter_kwargs)
+ori.scatter(c=c_scalar, cmap="inferno", position=(1, n, 1), **scatter_kwargs)
 fig.axes[0].set_title("Scalars mapped to colormap")
 
-Or.scatter(c=c_rgba, position=(1, n, 2), **scatter_kwargs)
+ori.scatter(c=c_rgba, position=(1, n, 2), **scatter_kwargs)
 fig.axes[1].set_title("Pre-computed RGBA colormap")
 
-Or.scatter(c=c_rgb, position=(1, n, 3), **scatter_kwargs)
+ori.scatter(c=c_rgb, position=(1, n, 3), **scatter_kwargs)
 fig.axes[2].set_title("Pre-computed RGB values")
 
-Or.scatter(c=c_color, position=(1, n, 4), **scatter_kwargs)
+ori.scatter(c=c_color, position=(1, n, 4), **scatter_kwargs)
 _ = fig.axes[3].set_title("A single color")
 
 plt.show()
