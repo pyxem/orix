@@ -72,7 +72,7 @@ class RotationPlot(Axes3D):
                 raise TypeError("fundamental_zone is not an OrientationRegion object.")
             # if any in xs are out of fundamental_zone, calculate symmetry reduction
             if not (xs < fundamental_zone).all():
-                xs = xs.map_into_symmetry_reduced_zone()
+                xs = xs.reduce()
 
         if isinstance(xs, Rotation):
             if isinstance(xs, OrientationRegion):

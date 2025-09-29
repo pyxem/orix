@@ -52,6 +52,9 @@ Removed
 
 Deprecated
 ----------
+- Method :meth:`~orix.quaternion.Misorientation.map_into_symmetry_reduced_zone` for
+  (mis)orientations have been deprecated in favor of
+  :meth:`~orix.quaternion.Misorientation.reduce` and will be removed in version 0.15.0.
 
 Fixed
 -----

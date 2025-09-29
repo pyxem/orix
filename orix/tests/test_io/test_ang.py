@@ -20,7 +20,7 @@
 import numpy as np
 import pytest
 
-from orix.constants import VisibleDeprecationWarning
+from orix._utils.constants import VisibleDeprecationWarning
 from orix.crystal_map import CrystalMap, Phase, PhaseList
 from orix.io import load, loadang, save
 from orix.io.plugins.ang import (

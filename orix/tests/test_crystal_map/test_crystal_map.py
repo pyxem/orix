@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.constants import installed
+from orix._utils.constants import installed
 from orix.crystal_map import (
     CrystalMap,
     Phase,
@@ -688,11 +688,11 @@ class TestCrystalMapOrientations:
         xmap.phases = PhaseList(Phase("a", point_group=point_group))
 
         o = xmap.orientations
-        o = o.map_into_symmetry_reduced_zone()
+        o = o.reduce()
 
         o1 = Orientation(r)
         o1.symmetry = point_group
-        o1 = o1.map_into_symmetry_reduced_zone()
+        o1 = o1.reduce()
 
         assert np.allclose(o.data, o1.data, atol=1e-3)
         assert np.allclose(o.data, expected_orientation, atol=1e-3)

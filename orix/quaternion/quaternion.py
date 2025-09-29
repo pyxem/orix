@@ -29,7 +29,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix._base import Object3d
-from orix.constants import installed
+from orix._utils.constants import installed
 from orix.quaternion import _conversions
 from orix.vector.miller import Miller
 from orix.vector.neo_euler import AxAngle, Homochoric, Rodrigues

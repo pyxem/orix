@@ -29,8 +29,8 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import constants
 from orix._base import Object3d
+from orix._utils import constants
 
 if TYPE_CHECKING:  # pragma: no cover
     from orix.quaternion.symmetry import Symmetry

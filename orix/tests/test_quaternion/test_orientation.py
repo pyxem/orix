@@ -23,11 +23,12 @@ import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation as SciPyRotation
 
-# fmt: off
-# isort: off
+from orix._utils.constants import VisibleDeprecationWarning
 from orix.crystal_map import Phase
 from orix.plot import AxAnglePlot, InversePoleFigurePlot, RodriguesPlot
 from orix.quaternion import Misorientation, Orientation, Quaternion, Rotation
+
+# isort: off
 from orix.quaternion.symmetry import (
     C1,
     C2,
@@ -42,9 +43,9 @@ from orix.quaternion.symmetry import (
     _groups,
     _proper_groups,
 )
-from orix.vector import Miller, Vector3d
+
 # isort: on
-# fmt: on
+from orix.vector import Miller, Vector3d
 
 
 @pytest.fixture
@@ -101,7 +102,7 @@ def test_quaternion_subclasses_copy_constructor_casting():
 )
 def test_set_symmetry(orientation, symmetry, expected):
     o = Orientation(orientation.data, symmetry=symmetry)
-    o = o.map_into_symmetry_reduced_zone()
+    o = o.reduce()
     assert np.allclose(o.data, expected, atol=1e-3)
 
 
@@ -114,7 +115,7 @@ def test_orientation_persistence(symmetry, vector):
     v = symmetry.outer(vector).flatten()
     o = Orientation.random()
     oc = Orientation(o.data, symmetry=symmetry)
-    oc = oc.map_into_symmetry_reduced_zone()
+    oc = oc.reduce()
     v1 = o * v
     v1 = Vector3d(v1.data.round(4))
     v2 = oc * v
@@ -207,7 +208,7 @@ def test_equivalent(Gl):
     """
     m = Misorientation([1, 1, 1, 1])  # any will do
     m_new = Misorientation(m.data, symmetry=(Gl, C4))
-    m_new = m_new.map_into_symmetry_reduced_zone()
+    m_new = m_new.reduce()
     _ = m_new.equivalent(grain_exchange=True)
 
 
@@ -220,13 +221,13 @@ def test_repr_ori():
     shape = (2, 3)
     o = Orientation.identity(shape)
     o.symmetry = O
-    o = o.map_into_symmetry_reduced_zone()
+    o = o.reduce()
     assert repr(o).split("\n")[0] == f"Orientation {shape} {O.name}"
 
 
 def test_sub():
     o = Orientation([1, 1, 1, 1], symmetry=C4)  # any will do
-    o = o.map_into_symmetry_reduced_zone()
+    o = o.reduce()
     m = o - o
     assert np.allclose(m.data, [1, 0, 0, 0])
 
@@ -243,14 +244,6 @@ def test_transpose_2d():
     assert o1.shape == o2.shape[::-1]
 
 
-def test_map_into_reduced_symmetry_zone_verbose():
-    o = Orientation.random()
-    o.symmetry = Oh
-    o1 = o.map_into_symmetry_reduced_zone()
-    o2 = o.map_into_symmetry_reduced_zone(verbose=True)
-    assert np.allclose(o1.data, o2.data)
-
-
 @pytest.mark.parametrize(
     "shape, expected_shape, axes",
     [((11, 3, 5), (11, 5, 3), (0, 2, 1)), ((11, 3, 5), (3, 5, 11), (1, 2, 0))],
@@ -264,7 +257,7 @@ def test_transpose_3d(shape, expected_shape, axes):
 def test_transpose_symmetry():
     o1 = Orientation.random_vonmises((11, 3))
     o1.symmetry = Oh
-    o1 = o1.map_into_symmetry_reduced_zone()
+    o1 = o1.reduce()
     o2 = o1.transpose()
     assert o1.symmetry == o2.symmetry
 
@@ -464,6 +457,19 @@ class TestMisorientation:
         M3 = Misorientation.random(symmetry=(Oh, D6))
         assert M3.symmetry == (Oh, D6)
 
+    # TODO: Remove after v0.15.0 is released
+    def test_map_into_symmetry_reduced_zone_deprecation_message(self):
+        M = Misorientation.random()
+        M.symmetry = (Oh, Oh)
+        with pytest.warns(
+            VisibleDeprecationWarning,
+            match=(
+                r"Function `map_into_symmetry_reduced_zone\(\)` is deprecated and will "
+                r"be removed in version 0.15. Use `reduce\(\)` instead."
+            ),
+        ):
+            _ = M.map_into_symmetry_reduced_zone()
+
 
 def test_orientation_equality():
     # symmetries must also be the same to be equal
@@ -488,11 +494,11 @@ class TestOrientationInitialization:
         assert np.allclose(o1.data, [0, -0.3827, 0, -0.9239], atol=1e-4)
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_euler(euler, symmetry=Oh)
-        o2 = o2.map_into_symmetry_reduced_zone()
+        o2 = o2.reduce()
         assert np.allclose(o2.data, [0.9239, 0, 0.3827, 0], atol=1e-4)
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
-        o3 = o3.map_into_symmetry_reduced_zone()
+        o3 = o3.reduce()
         assert np.allclose(o3.data, o2.data)
 
         o4 = Orientation.from_euler(np.rad2deg(euler), degrees=True)
@@ -508,13 +514,13 @@ class TestOrientationInitialization:
         )
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_matrix(om, symmetry=Oh)
-        o2 = o2.map_into_symmetry_reduced_zone()
+        o2 = o2.reduce()
         assert np.allclose(
             o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4)
         )
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
-        o3 = o3.map_into_symmetry_reduced_zone()
+        o3 = o3.reduce()
         assert np.allclose(o3.data, o2.data)
 
     def test_from_align_vectors(self):
@@ -601,7 +607,7 @@ class TestOrientation:
     def test_get_distance_matrix(self, symmetry):
         q = [(0.5, 0.5, 0.5, 0.5), (0.5**0.5, 0, 0, 0.5**0.5)]
         o = Orientation(q, symmetry=symmetry)
-        o = o.map_into_symmetry_reduced_zone()
+        o = o.reduce()
         angles_numpy = o.get_distance_matrix()
         assert isinstance(angles_numpy, np.ndarray)
         assert angles_numpy.shape == (2, 2)
@@ -694,7 +700,7 @@ class TestOrientation:
     def test_negate_orientation(self):
         o = Orientation.identity()
         o.symmetry = Oh
-        o = o.map_into_symmetry_reduced_zone()
+        o = o.reduce()
         on = -o
         assert on.symmetry.name == o.symmetry.name
 
@@ -703,7 +709,7 @@ class TestOrientation:
         if pure_misorientation:
             orientation = Misorientation(orientation)
             orientation.symmetry = (C2, D6)
-            orientation = orientation.map_into_symmetry_reduced_zone()
+            orientation = orientation.reduce()
         fig_size = (5, 5)
         fig_axangle = orientation.scatter(
             return_figure=True, figure_kwargs=dict(figsize=fig_size)
@@ -830,3 +836,10 @@ class TestOrientation:
 
         O3 = Orientation.random(symmetry=Oh)
         assert O3.symmetry == Oh
+
+    def test_reduce_verbose(self):
+        o = Orientation.random()
+        o.symmetry = Oh
+        o1 = o.reduce()
+        o2 = o.reduce(verbose=True)
+        assert np.allclose(o1.data, o2.data)

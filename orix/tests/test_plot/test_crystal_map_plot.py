@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.constants import installed
+from orix._utils.constants import installed
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.plot import CrystalMapPlot
 

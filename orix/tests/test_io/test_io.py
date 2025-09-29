@@ -26,7 +26,7 @@ from h5py import File
 import numpy as np
 import pytest
 
-from orix.constants import VisibleDeprecationWarning
+from orix._utils.constants import VisibleDeprecationWarning
 from orix.io._io import (
     _overwrite_or_not,
     _plugin_from_manufacturer,

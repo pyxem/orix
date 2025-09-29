@@ -24,7 +24,7 @@
 import numba as nb
 import numpy as np
 
-from orix import constants
+from orix._utils import constants
 
 
 @nb.njit("int64(float64[:])", cache=True, fastmath=True, nogil=True)
