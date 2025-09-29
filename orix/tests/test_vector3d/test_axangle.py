@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
 import itertools
 
 import numpy as np
@@ -57,34 +58,32 @@ def axangle(request):
     return AxAngle(request.param.data)
 
 
-def test_angle(axangle):
-    assert np.allclose(axangle.angle, axangle.norm)
+class TestAxAngle:
+    def test_angle(self, axangle):
+        assert np.allclose(axangle.angle, axangle.norm)
 
+    def test_axis(self, axangle):
+        assert axangle.axis.shape == axangle.shape
 
-def test_axis(axangle):
-    assert axangle.axis.shape == axangle.shape
+    @pytest.mark.parametrize(
+        "axis, angle, expected_axis",
+        [
+            ((2, 1, 1), np.pi / 4, (0.816496, 0.408248, 0.408248)),
+            (Vector3d((2, 0, 0)), -2 * np.pi, (-1, 0, 0)),
+        ],
+    )
+    def test_from_axes_angles(self, axis, angle, expected_axis):
+        ax1 = AxAngle.from_axes_angles(axis, angle)
+        assert np.allclose(ax1.axis.data, expected_axis)
+        assert np.allclose(ax1.angle, abs(angle))
 
+        ax2 = AxAngle.from_axes_angles(axis, np.rad2deg(angle), degrees=True)
+        assert np.allclose(ax1.data, ax2.data)
 
-@pytest.mark.parametrize(
-    "axis, angle, expected_axis",
-    [
-        ((2, 1, 1), np.pi / 4, (0.816496, 0.408248, 0.408248)),
-        (Vector3d((2, 0, 0)), -2 * np.pi, (-1, 0, 0)),
-    ],
-)
-def test_from_axes_angles(axis, angle, expected_axis):
-    ax1 = AxAngle.from_axes_angles(axis, angle)
-    assert np.allclose(ax1.axis.data, expected_axis)
-    assert np.allclose(ax1.angle, abs(angle))
-
-    ax2 = AxAngle.from_axes_angles(axis, np.rad2deg(angle), degrees=True)
-    assert np.allclose(ax1.data, ax2.data)
-
-
-@pytest.mark.parametrize(
-    "rotation, expected",
-    [(Rotation([1, 0, 0, 0]), [0, 0, 0]), (Rotation([0, 1, 0, 0]), [np.pi, 0, 0])],
-)
-def test_from_rotation(rotation, expected):
-    axangle = AxAngle.from_rotation(rotation)
-    assert np.allclose(axangle.data, expected)
+    @pytest.mark.parametrize(
+        "rot, expected",
+        [(Rotation([1, 0, 0, 0]), [0, 0, 0]), (Rotation([0, 1, 0, 0]), [np.pi, 0, 0])],
+    )
+    def test_from_rotation(self, rot, expected):
+        axangle = AxAngle.from_rotation(rot)
+        assert np.allclose(axangle.data, expected)

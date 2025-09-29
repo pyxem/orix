@@ -17,6 +17,7 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matplotlib as mpl
 from matplotlib.collections import QuadMesh
 import matplotlib.colors as mcolors
 import matplotlib.path as mpath
@@ -61,6 +62,56 @@ class TestStereographicPlot:
             ax.scatter(v[0].azimuth)
 
         plt.close("all")
+
+    @pytest.mark.flaky(reruns=5)
+    def test_scatter_coloring(self):
+        # Marked as flaky since no vectors may be visible
+        v = Vector3d.random(10)
+        visible = v.z >= 0
+
+        # Four ways to color vectors
+        c_scalar = np.linspace(0, 1, v.size)
+        c_rgba = mpl.colormaps["viridis"](c_scalar)
+        c_rgb = np.random.random(v.size * 3).reshape(v.size, 3)
+        c_color = "xkcd:salmon"
+
+        # Scalar values
+        fig0 = v.scatter(c=c_scalar, return_figure=True, label="scatter")
+        fig0.canvas.draw()
+        c0 = fig0.axes[0]._get_collection("scatter").get_facecolor()
+        assert np.allclose(c0, c_rgba[visible])
+
+        # Pre-computed RGBA colormapping
+        fig1 = v.scatter(c=c_rgba, return_figure=True, label="scatter")
+        fig1.canvas.draw()
+        c1 = fig1.axes[0]._get_collection("scatter").get_facecolor()
+        assert np.allclose(c1, c_rgba[visible])
+
+        # RGB values
+        fig2 = v.scatter(c=c_rgb, return_figure=True, label="scatter")
+        fig2.canvas.draw()
+        c2 = fig2.axes[0]._get_collection("scatter").get_facecolor()
+        assert np.allclose(c2[:, :3], c_rgb[visible])
+
+        # Single color
+        fig3 = v.scatter(c=c_color, return_figure=True, label="scatter")
+        fig3.canvas.draw()
+        c3 = fig3.axes[0]._get_collection("scatter").get_facecolor()
+        assert np.allclose(c3, mcolors.to_rgba(c_color))
+
+        # Single color with single alpha
+        fig4 = v.scatter(c=c_color, alpha=0.5, return_figure=True, label="scatter")
+        fig4.canvas.draw()
+        c4 = fig4.axes[0]._get_collection("scatter").get_facecolor()
+        assert np.allclose(c4, mcolors.to_rgba(c_color, 0.5))
+
+        # Single color with varying alpha
+        fig5 = v.scatter(c=c_color, alpha=c_scalar, return_figure=True, label="scatter")
+        fig5.canvas.draw()
+        c5 = fig5.axes[0]._get_collection("scatter").get_facecolor()
+        rgba5 = np.full((v.size, 4), mcolors.to_rgba(c_color))
+        rgba5[:, 3] = c_scalar
+        assert np.allclose(c5, rgba5[visible])
 
     def test_text(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
@@ -168,9 +219,7 @@ class TestStereographicPlot:
         plt.close("all")
 
         # Check the grids plot appropriately for both hemispheres.
-        fig, ax = fig, ax = plt.subplots(
-            1, 2, subplot_kw=dict(projection="stereographic")
-        )
+        _, ax = plt.subplots(1, 2, subplot_kw=dict(projection="stereographic"))
         ax[0].hemisphere = "upper"
         ax[1].hemisphere = "lower"
         ax[0].wulff_net()
@@ -296,7 +345,7 @@ class TestStereographicPlot:
             polar=np.radians([50, 45, 140, 135]),
         )
 
-        fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
+        _, ax = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
         ax[1].hemisphere = "lower"
         x_upper, y_upper, visible_upper = ax[0]._pretransform_input((v,), sort=True)
         x_lower, y_lower, visible_lower = ax[1]._pretransform_input((v,), sort=True)
@@ -429,19 +478,6 @@ class TestSymmetryMarker:
 
 
 class TestDrawCircle:
-    @pytest.mark.parametrize(
-        "value, visible, desired_array",
-        [
-            ("C0", np.array([1, 1, 1, 0, 1], dtype=bool), ["C0"] * 4),
-            (["C0", "C1"], np.array([1, 1, 1, 0, 1], dtype=bool), ["C0"] * 4),
-        ],
-    )
-    def test_get_array_of_values(self, value, visible, desired_array):
-        assert all(
-            plot.stereographic_plot._get_array_of_values(value=value, visible=visible)
-            == desired_array
-        )
-
     @pytest.mark.parametrize(
         "pole, polar, desired_array",
         [

@@ -27,8 +27,10 @@ This example shows how to draw proper symmetry operations :math:`s`
 
 import matplotlib.pyplot as plt
 
-from orix import plot
+from orix.plot import register_projections
 from orix.vector import Vector3d
+
+register_projections()  # Register our custom Matplotlib projections
 
 marker_size = 200
 fig, (ax0, ax1) = plt.subplots(

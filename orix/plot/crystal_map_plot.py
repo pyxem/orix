@@ -228,7 +228,7 @@ class CrystalMapPlot(Axes):
         Notes
         -----
         This function requires `matplotlib-scalebar` to be installed.
-        Please see the :doc:`installation guide <user/installation>`
+        Please see the :doc:`installation guide </user/installation>`
         for details.
         """
         verify_dependency_or_raise("matplotlib-scalebar", "Adding a scalebar")

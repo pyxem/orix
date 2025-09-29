@@ -29,8 +29,11 @@ Matplotlib example
 
 import matplotlib.pyplot as plt
 
-from orix import plot, projections, sampling
+from orix import projections, sampling
+from orix.plot import register_projections
 from orix.vector import Vector3d
+
+register_projections()  # Register our custom Matplotlib projections
 
 # Sample some orientations
 v = sampling.sample_S2(2)

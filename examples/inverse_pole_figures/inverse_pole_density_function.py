@@ -28,8 +28,11 @@ This example shows how to plot an inverse pole density function (IPDF)
 
 import matplotlib.pyplot as plt
 
-from orix import data, plot
+from orix import data
+from orix.plot import register_projections
 from orix.vector import Vector3d
+
+register_projections()  # Register our custom Matplotlib projections
 
 xmap = data.sdss_ferrite_austenite(allow_download=True)
 print(xmap)
