@@ -22,7 +22,7 @@ Crystal reference frame
 =======================
 
 This exampe shows how the crystal and sample reference frames are aligned for a
-class:`~orix.crystal_map.Phase`.
+:class:`~orix.crystal_map.Phase`.
 """
 
 from diffpy.structure import Lattice, Structure
@@ -156,9 +156,11 @@ g_hex.scatter(c=["r", "g", "b"], marker="x", s=300, figure=fig)
 # --------------------------------
 #
 # To see which crystallographic axes the point group symmetry operations rotate about,
-# we can add symmetry operations to the figure
+# we can add symmetry operations to the figure and show it again
 R = Rotation.from_axes_angles([0, 1, 0], -65, degrees=True)
 phase_hex.point_group.plot(figure=fig, orientation=R)
+
+fig
 
 ########################################################################################
 # Converting crystal vectors
@@ -183,3 +185,5 @@ print(np.allclose(t_hex.data, v1))
 
 v2 = np.dot(g_hex.hkl, np.linalg.inv(A).T)
 print(np.allclose(g_hex.data, v2.data))
+
+plt.show()
