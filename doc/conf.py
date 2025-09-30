@@ -85,7 +85,7 @@ intersphinx_mapping = {
     "pytest": ("https://docs.pytest.org/en/stable", None),
     "pytest-xdist": ("https://pytest-xdist.readthedocs.io/en/stable/", None),
     "python": ("https://docs.python.org/3", None),
-    "pyxem": ("https://pyxem.org/en/latest/objects.inv", None),
+    "pyxem": ("https://pyxem.org/en/latest/", None),
     "readthedocs": ("https://docs.readthedocs.com/platform/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
