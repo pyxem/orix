@@ -31,7 +31,11 @@ from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix.quaternion.misorientation import Misorientation
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
+from orix.quaternion.symmetry import (
+    C1,
+    Symmetry,
+    _get_unique_symmetry_elements,
+)
 from orix.vector.miller import Miller
 from orix.vector.vector3d import Vector3d
 
@@ -730,20 +734,21 @@ class Orientation(Misorientation):
         figure_kwargs: dict | None = None,
         **kwargs,
     ) -> mfigure.Figure | None:
-        """Plot orientations in axis-angle space, the Rodrigues
-        fundamental zone, or an inverse pole figure (IPF) given a sample
-        direction.
+        """Plot misorientations in 3D Euclidean space using either
+        a 3D neo-Eulerian projection or a 2D stereographic projection.
 
         Parameters
         ----------
         projection
-            Which orientation space to plot orientations in, either
-            "axangle" (default), "rodrigues" or "ipf" (inverse pole
-            figure).
+            Which projection to use for plotting into Euclidean
+            space. The 3D options "axangle" (default) for a linear
+            scaling, "homochoric" for an equal-volume scaling, or
+            "rodrigues" for an rectilinear scaling. The 2D option
+            is "ipf" to give an inverse pole figure.
         figure
-            If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
-            :class:`~orix.plot.RodriguesPlot` is added to the figure in
-            the position specified by `position`. If not given, a new
+            If given, a new plot axis with the projection specified
+            by ``projection`` is added to the figure in the position
+            specified by ``position``. If not given, a new
             figure is created.
         position
             Where to add the new plot axis. 121 or (1, 2, 1) places it
@@ -756,21 +761,21 @@ class Orientation(Misorientation):
             Keyword arguments passed to
             :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
             :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+            :meth:`orix.plot.AxAnglePlot.plot_wireframe`. Only applies
+            to neu-Eulerian plots.
         size
             If not given, all orientations are plotted. If given, a
             random sample of this `size` of the orientations is plotted.
         direction
             Sample direction to plot with respect to crystal directions.
             If not given, the out of plane direction, sample Z, is used.
-            Only used when plotting IPF(s).
+            Only used when plotting inverse pole figures.
         figure_kwargs
             Dictionary of keyword arguments passed to
             :func:`matplotlib.pyplot.figure` if `figure` is not given.
         **kwargs
-            Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.scatter`,
-            :meth:`orix.plot.RodriguesPlot.scatter`, or
-            :meth:`orix.plot.InversePoleFigurePlot.scatter`.
+            Keyword arguments passed to the orix plotting class set by
+            'position'.
 
         Returns
         -------
@@ -779,7 +784,9 @@ class Orientation(Misorientation):
 
         See Also
         --------
-        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot,
+        orix.plot.AxAnglePlot,
+        orix.plot.RodriguesPlot,
+        orix.plot.HomochoricPlot,
         orix.plot.InversePoleFigurePlot
         """
         if projection.lower() != "ipf":
