@@ -692,6 +692,47 @@ class Quaternion(Object3d):
         return out[0] if len(out) == 1 else tuple(out)
 
     @classmethod
+    def from_path_ends(
+        cls, points: Quaternion, closed: bool = False, steps: int = 100
+    ) -> Quaternion:
+        """Return quaternions tracing the shortest path between two or
+        more consecutive points.
+        Parameters
+        ----------
+        points
+            Two or more quaternions that define points along a path
+            through rotation space (SO3).
+        closed
+            Option to add a final trip from the last waypoint back to
+            the first, thus closing the loop. The default is False.
+        steps
+            Number of quaternions to return along the path between each
+            pair of waypoints. The default is 100.
+        Returns
+        -------
+        path
+            quaternions that map a path between the given waypoints.
+        """
+        points = points.flatten()
+        n = points.size
+        if not closed:
+            n = n - 1
+
+        path_list = []
+        for i in range(n):
+            # get start and end for this leg of the trip
+            q1 = points[i]
+            q2 = points[(i + 1) % (points.size)]
+            # find the ax/ang describing the trip between points
+            ax, ang = _conversions.qu2ax((~q1 * q2).data)
+            # get 'steps=n' steps along the trip and add them to the journey
+            trip = Quaternion.from_axes_angles(ax, np.linspace(0, ang, steps))
+            path_list.append((q1 * (trip.flatten())).data)
+        path_data = np.concatenate(path_list, axis=0)
+        path = cls(path_data)
+        return path
+
+    @classmethod
     def triple_cross(cls, q1: Quaternion, q2: Quaternion, q3: Quaternion) -> Quaternion:
         """Pointwise cross product of three quaternions.
 

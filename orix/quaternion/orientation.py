@@ -353,6 +353,39 @@ class Orientation(Misorientation):
         return O
 
     @classmethod
+    def from_path_ends(
+        cls, points: Orientation, closed: bool = False, steps: int = 100
+    ) -> Misorientation:
+        """Return orientations tracing the shortest path between
+        two or more consecutive points.
+        Parameters
+        ----------
+        points
+            Two or more orientations that define waypoints along
+            a path through rotation space (SO3).
+        closed
+            Option to add a final trip from the last waypoint back to
+            the first, thus closing the loop. The default is False.
+        steps
+            Number of orientations to return along the path
+            between each pair of waypoints. The default is 100.
+        Returns
+        -------
+        path
+            orientations that map a path between the given waypoints.
+        """
+        # Confirm `points` are orientations.
+        if not isinstance(points, Orientation):
+            raise TypeError(
+                f"Points must be an Orientation instance, not of type {type(points)}"
+            )
+        # Create a path through Quaternion space, then reapply the symmetry.
+        out = super().from_path_ends(points=points, closed=closed, steps=steps)
+        path = cls(out.data)
+        path._symmetry = points._symmetry
+        return path
+
+    @classmethod
     def random(
         cls, shape: int | tuple[int, ...] = 1, symmetry: Symmetry | None = None
     ) -> Orientation:
