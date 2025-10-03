@@ -49,6 +49,9 @@ class CrystalMap:
     y
         Map y coordinate of each data point. If not given, the map is
         assumed to be 1D, and it is set to ``None``.
+    z
+        Map z coordinate of each data point. If not given, the map is
+        assumed to be 1D, and it is set to ``None``.
     phase_list
         A list of phases in the data with their with names, space
         groups, point groups, and structures. The order in which the
@@ -208,6 +211,7 @@ class CrystalMap:
         phase_id: Optional[np.ndarray] = None,
         x: Optional[np.ndarray] = None,
         y: Optional[np.ndarray] = None,
+        z: Optional[np.ndarray] = None,
         phase_list: Optional[PhaseList] = None,
         prop: Optional[dict] = None,
         scan_unit: Optional[str] = "px",
@@ -220,6 +224,7 @@ class CrystalMap:
                 rotations.phase_id,
                 rotations.x,
                 rotations.y,
+                rotations.z,
                 rotations.phases,
                 rotations.prop,
                 rotations.scan_unit,
@@ -246,10 +251,11 @@ class CrystalMap:
         self._id = point_id
 
         # Set spatial coordinates
-        if x is None and y is None:
+        if x is None and y is None and z is None:
             x = np.arange(data_size)
         self._x = x
         self._y = y
+        self._z = z
 
         # Create phase list
         # Sorted in ascending order
@@ -357,6 +363,14 @@ class CrystalMap:
             return
         else:
             return self._y[self.is_in_data]
+        
+    @property
+    def z(self) -> Union[None, np.ndarray]:
+        """Return the z coordinates of points in data."""
+        if self._z is None or len(np.unique(self._z)) == 1:
+            return
+        else:
+            return self._z[self.is_in_data]
 
     @property
     def dx(self) -> float:
@@ -367,6 +381,11 @@ class CrystalMap:
     def dy(self) -> float:
         """Return the y coordinate step size."""
         return _step_size_from_coordinates(self._y)
+    
+    @property
+    def dz(self) -> float:
+        """Return the z coordinate step size."""
+        return _step_size_from_coordinates(self._z)
 
     @property
     def row(self) -> Union[None, np.ndarray]:
@@ -377,11 +396,12 @@ class CrystalMap:
         Examples
         --------
         >>> from orix.crystal_map import CrystalMap
-        >>> xmap = CrystalMap.empty((3, 4))
+        >>> xmap = CrystalMap3D.empty((2, 3, 4))
         >>> xmap.row
-        array([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2])
-        >>> xmap[1:3, 1:3].row
-        array([0, 0, 1, 1])
+        array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+               1, 1, 1])
+        >>> xmap[1:3, 1:3, 1:3].row
+        array([1, 1, 1, 1])
         """
         orig_shape = self._original_shape
         if len(orig_shape) == 1:
@@ -389,7 +409,7 @@ class CrystalMap:
                 orig_shape += (1,)
             else:
                 orig_shape = (1,) + orig_shape
-        rows, _ = np.indices(orig_shape)
+        rows, _, _ = np.indices(orig_shape)
         rows = rows.flatten()[self.is_in_data]
         rows -= rows.min()
         return rows
@@ -403,11 +423,12 @@ class CrystalMap:
         Examples
         --------
         >>> from orix.crystal_map import CrystalMap
-        >>> xmap = CrystalMap.empty((3, 4))
+        >>> xxmap = CrystalMap3D.empty((2, 3, 4))
         >>> xmap.col
-        array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3])
-        >>> xmap[1:3, 1:3].col
-        array([0, 1, 0, 1])
+        array([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1, 2,
+               2, 2, 2])
+        >>> xmap[1:3, 1:3, 1:3].col
+        array([1, 1, 2, 2])
         """
         shape = self._original_shape
         if len(shape) == 1:
@@ -415,10 +436,37 @@ class CrystalMap:
                 shape += (1,)
             else:
                 shape = (1,) + shape
-        _, cols = np.indices(shape)
+        _, cols, _ = np.indices(shape)
         cols = cols.flatten()[self.is_in_data]
         cols -= cols.min()
         return cols
+    
+    @property
+    def layer(self) -> Union[None, np.ndarray]:
+        """Return the layer coordinate of each point in the data.
+
+        Returns ``None`` if :attr:`z` is not ``None``.
+
+        Examples
+        --------
+        >>> from orix.crystal_map import CrystalMap
+        >>> xmap = CrystalMap3D.empty((2, 3, 4))
+        >>> xmap.layer
+        array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0,
+               1, 2, 3])
+        >>> xmap[1:3, 1:3, 1:3].layer
+        array([1, 2, 1, 2])
+        """
+        orig_shape = self._original_shape
+        if len(orig_shape) == 1:
+            if self.x is None:
+                orig_shape += (1,)
+            else:
+                orig_shape = (1,) + orig_shape
+        _, _, layers = np.indices(orig_shape)
+        layers = layers.flatten()[self.is_in_data]
+        layers -= layers.min()
+        return layers
 
     @property
     def phase_id(self) -> np.ndarray:
@@ -579,17 +627,17 @@ class CrystalMap:
     @property
     def _coordinates(self) -> dict:
         """Return the coordinates of points in the data."""
-        return {"y": self.y, "x": self.x}
+        return {"z": self.z, "y": self.y, "x": self.x}
 
     @property
     def _all_coordinates(self) -> dict:
         """Return the coordinates of all points."""
-        return {"y": self._y, "x": self._x}
+        return {"z": self._z, "y": self._y, "x": self._x}
 
     @property
     def _step_sizes(self) -> dict:
         """Return the step sizes of dimensions in the data."""
-        return {"y": self.dy, "x": self.dx}
+        return {"z": self.dz, "y": self.dy, "x": self.dx}
 
     @property
     def _coordinate_axes(self) -> dict:
@@ -1115,6 +1163,7 @@ def _data_slices_from_coordinates(
         steps = {
             "x": _step_size_from_coordinates(coords["x"]),
             "y": _step_size_from_coordinates(coords["y"]),
+            "z": _step_size_from_coordinates(coords["z"]),
         }
     slices = []
     for coords, step in zip(coords.values(), steps.values()):
@@ -1125,7 +1174,6 @@ def _data_slices_from_coordinates(
             slices.append(slice(i_min, i_max))
     slices = tuple(slices)
     return slices
-
 
 def _step_size_from_coordinates(coordinates: np.ndarray) -> float:
     """Return step size in input *coordinates* array.
