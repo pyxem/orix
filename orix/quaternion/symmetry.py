@@ -581,7 +581,7 @@ C2h.name = "2/m"
 # Orthorhombic
 D2 = Symmetry.from_generators(C2z, C2x, C2y)
 D2.name = "222"
-C2v = Symmetry.from_generators(C2x, Csz)
+C2v = Symmetry.from_generators(C2z, Csx)
 C2v.name = "mm2"
 D2h = Symmetry.from_generators(Csz, Csx, Csy)
 D2h.name = "mmm"
