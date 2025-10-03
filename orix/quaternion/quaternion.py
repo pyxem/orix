@@ -247,6 +247,12 @@ class Quaternion(Object3d):
     # ------------------------ Class methods ------------------------- #
 
     @classmethod
+    def random(cls, shape: int | tuple = 1) -> Quaternion:
+        quat = super().random(shape)
+        quat.data[:, 0] = np.abs(quat.data[:, 0])
+        return quat
+
+    @classmethod
     def from_axes_angles(
         cls,
         axes: np.ndarray | Vector3d | tuple | list,
