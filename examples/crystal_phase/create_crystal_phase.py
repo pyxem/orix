@@ -32,9 +32,13 @@ from diffpy.structure import Atom, Lattice, Structure
 from orix.crystal_map import Phase
 
 ########################################################################################
-# From a Crystallographic Information File (CIF) file
-
-# phase_ti = Phase.from_cif("Ti.cif")
+# From a Crystallographic Information File (CIF) file.
+#
+# E.g. one for titanium from an online repository like the Americam Mineralogist
+# Crystal Structure Database:
+# https://rruff.geo.arizona.edu/AMS/download.php?id=13417.cif&down=text
+# phase_ti = Phase.from_cif("ti.cif")
+# print(phase_ti)
 
 ########################################################################################
 # From a space group (note that the point group is derived)
