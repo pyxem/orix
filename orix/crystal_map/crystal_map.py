@@ -1106,7 +1106,7 @@ class CrystalMap:
         if return_figure:
             return fig
         
-    def _xmap_slice_from_axis(self, axis: int, layer: int):
+    def _xmap_slice_from_axis(self, axis: int, layer: int) -> "CrystalMap":
         return self[(slice(None),) * (axis % self.ndim) + (slice(layer, layer+1),)]
 
     def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
