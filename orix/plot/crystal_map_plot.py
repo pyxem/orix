@@ -47,6 +47,8 @@ class CrystalMapPlot(Axes):
         legend: bool = True,
         legend_properties: Optional[dict] = None,
         override_status_bar: bool = False,
+        axis: Optional[int] = None,
+        layer: Optional[int] = None,
         **kwargs,
     ) -> AxesImage:
         """Plot a 2D map with any CrystalMap attribute as map values.
@@ -78,6 +80,10 @@ class CrystalMapPlot(Axes):
             Whether to display Euler angles and any overlay values in
             the status bar when hovering over the map (default is
             ``False``).
+        axis
+            For 3D xmap, axis on which to plot 2D slice.
+        layer
+            For 3D xmap, layer on defined axis to plot 2D slice.
         **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.imshow`.
@@ -144,6 +150,12 @@ class CrystalMapPlot(Axes):
         >>> #plt.imsave("image2.png", im.get_array())
         """
         self._data_shape = crystal_map._original_shape
+        
+        if layer is None:
+            layer = 0
+        if axis is not None: #and crystal_map.ndim > 2:
+            crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
+            self._data_shape = crystal_map._original_shape
 
         patches = None
         if value is None:  # Phase map

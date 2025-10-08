@@ -984,6 +984,8 @@ class CrystalMap:
         colorbar_properties: Optional[dict] = None,
         remove_padding: bool = False,
         return_figure: bool = False,
+        axis: Optional[int] = None,
+        layer: Optional[int] = None,
         figure_kwargs: Optional[dict] = None,
         **kwargs,
     ) -> plt.Figure:
@@ -1028,6 +1030,10 @@ class CrystalMap:
             ``False``).
         return_figure
             Whether to return the figure (default is ``False``).
+        axis
+            For 3D xmap, axis on which to plot 2D slice.
+        layer
+            For 3D xmap, layer on defined axis to plot 2D slice.
         figure_kwargs
             Keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
@@ -1085,6 +1091,8 @@ class CrystalMap:
             scalebar_properties=scalebar_properties,
             legend=legend,
             legend_properties=legend_properties,
+            axis=axis,
+            layer=layer,
             **kwargs,
         )
         if overlay is not None:
@@ -1097,6 +1105,9 @@ class CrystalMap:
             ax.add_colorbar(label=colorbar_label, **colorbar_properties)
         if return_figure:
             return fig
+        
+    def _xmap_slice_from_axis(self, axis: int, layer: int):
+        return self[(slice(None),) * (axis % self.ndim) + (slice(layer, layer+1),)]
 
     def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
         """Return a slices defining the current data extent in all
