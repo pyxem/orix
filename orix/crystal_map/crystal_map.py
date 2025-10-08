@@ -1107,6 +1107,20 @@ class CrystalMap:
             return fig
         
     def _xmap_slice_from_axis(self, axis: int, layer: int) -> "CrystalMap":
+        """Returns a 2D slice of a CrystalMap object along a given axis.
+
+        Parameters
+        ----------
+        axis
+            For 3D xmap, axis on which to plot 2D slice.
+        layer
+            For 3D xmap, layer on defined axis to plot 2D slice.
+            
+        Returns
+        -------
+        CrystalMap
+            2D CrystalMap slice.
+        """
         return self[(slice(None),) * (axis % self.ndim) + (slice(layer, layer+1),)]
 
     def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
