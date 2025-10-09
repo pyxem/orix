@@ -726,7 +726,7 @@ class Orientation(Misorientation):
         self,
         projection: str = "axangle",
         figure: mfigure.Figure | None = None,
-        position: int | tuple[int, int, int] | SubplotSpec = (1, 1, 1),
+        position: int | tuple[int, int, int] | SubplotSpec | None = None,
         return_figure: bool = False,
         wireframe_kwargs: dict | None = None,
         size: int | None = None,
@@ -754,7 +754,8 @@ class Orientation(Misorientation):
             Where to add the new plot axis. 121 or (1, 2, 1) places it
             in the first of two positions in a grid of 1 row and 2
             columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
-            for further details. Default is (1, 1, 1).
+            for further details. If None, the default position of
+            (1, 1, 1) is assumed.
         return_figure
             Whether to return the figure. Default is False.
         wireframe_kwargs
@@ -790,6 +791,8 @@ class Orientation(Misorientation):
         orix.plot.InversePoleFigurePlot
         """
         if projection.lower() != "ipf":
+            if position is None:
+                position = (1, 1, 1)
             figure = super().scatter(
                 projection=projection,
                 figure=figure,
@@ -807,22 +810,28 @@ class Orientation(Misorientation):
 
             if figure is None:
                 # Determine which hemisphere(s) to show
-                symmetry = self.symmetry
-                sector = symmetry.fundamental_sector
+                sector = self.symmetry.fundamental_sector
                 if np.any(sector.vertices.polar > np.pi / 2):
                     hemisphere = "both"
                 else:
                     hemisphere = "upper"
 
                 figure, axes = _setup_inverse_pole_figure_plot(
-                    symmetry=symmetry,
+                    symmetry=self.symmetry,
                     direction=direction,
                     hemisphere=hemisphere,
                     figure_kwargs=figure_kwargs,
                 )
-            else:
+            elif position is None and len(figure.axes) > 0:
                 axes = np.asarray(figure.axes)
-
+            else:
+                if position is None:
+                    position = (1, 1, 1)
+                axes = [
+                    figure.add_subplot(
+                        *position, projection="ipf", symmetry=self.symmetry
+                    )
+                ]
             for ax in axes:
                 ax.scatter(self, **kwargs)
 

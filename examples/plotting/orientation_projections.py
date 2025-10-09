@@ -90,16 +90,16 @@ ori.scatter(c=clrs, position=(1, 4, 2), projection="rodrigues", figure=fig)
 fig.axes[1].set_title("Rodrigues Projection")
 ori.scatter(c=clrs, position=(1, 4, 3), projection="homochoric", figure=fig)
 fig.axes[2].set_title("Homochoric Projection")
-# TODO: Following line does not plot properly due to the logic in
-# Orientation.scatter
-# ori.scatter(c=clrs, position=(1, 4, 4), projection="ipf", figure=fig)
+ori.scatter(c=clrs, position=(1, 4, 4), projection="ipf", figure=fig)
+fig.axes[3].set_title("Inverse Pole Figure Projection \n\n")
+
 plt.tight_layout()
 
-
+############################################################################
 # This can also be used to create standalone figures
 ori.scatter(c=clrs, projection="ipf")
-plt.tight_layout()
 
+plt.tight_layout()
 
 ############################################################################
 # The second method is by setting the projections when defining the
@@ -107,7 +107,10 @@ plt.tight_layout()
 # auto-formatted like above, but it allows for more customization as well
 # as the plotting of multiple datasets on a single plot
 
-fig = plt.figure(figsize=(12, 4), layout="constrained")
+# Additionally, for these plots we will set the scaling equivalent in order
+# to better illustrate the differences in the scales of the
+# Neo-Eulerian plotting methods.
+fig = plt.figure(figsize=(12, 3), layout="constrained")
 ax_ax = fig.add_subplot(1, 4, 1, projection="axangle")
 ax_rod = fig.add_subplot(1, 4, 2, projection="rodrigues")
 ax_hom = fig.add_subplot(1, 4, 3, projection="homochoric")
@@ -125,6 +128,9 @@ for ax in [ax_ax, ax_rod, ax_hom]:
     ax.plot_wireframe(fundamental_zone)
     ax.set_proj_type = "ortho"
     ax.axis("off")
+    ax.set_xlim(-1.2, 1.2)
+    ax.set_ylim(-1.2, 1.2)
+    ax.set_zlim(-1.2, 1.2)
     ax.scatter(ori, c=clrs)
 
 plt.tight_layout()
