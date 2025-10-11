@@ -227,7 +227,8 @@ class Quaternion(Object3d):
                 m.coordinate_format = other.coordinate_format
                 return m
             else:
-                return other.__class__(v)
+                kwargs = other.get_kwargs(v, rotation=self)
+                return other.__class__(**kwargs)
         return NotImplemented
 
     def __neg__(self) -> Quaternion:
