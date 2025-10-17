@@ -993,8 +993,8 @@ class CrystalMap:
         colorbar_properties: dict | None = None,
         remove_padding: bool = False,
         return_figure: bool = False,
-        axis: int None = None,
-        layer: int None = None,
+        axis: int | None = None,
+        layer: int | None = None,
         figure_kwargs: dict | None = None,
         **kwargs,
     ) -> mfigure.Figure | None:
