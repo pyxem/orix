@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2025 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -28,11 +28,11 @@ __credits__ = [
     "Phillip Crout",
     "Duncan Johnstone",
     "Niels Cautaerts",
+    "Austin Gerlt",
     "Viljar Johan Femoen",
     "Anders Christian Mathisen",
     "Zhou Xu",
     "Carter Francis",
-    "Austin Gerlt",
     "Simon Høgås",
     "Alessandra da Silva",
     "Ondrej Lexa",

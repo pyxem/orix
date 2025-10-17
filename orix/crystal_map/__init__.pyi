@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2025 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,9 +17,10 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ._phase import Phase
+from ._phase_list import PhaseList
 from .crystal_map import CrystalMap, create_coordinate_arrays
 from .crystal_map_properties import CrystalMapProperties
-from .phase_list import Phase, PhaseList
 
 # Lazily imported in module init
 __all__ = [

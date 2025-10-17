@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,30 +10,32 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import annotations
 
 from itertools import product as iproduct
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any
 import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
+import matplotlib.figure as mfigure
 from matplotlib.gridspec import SubplotSpec
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 from tqdm import tqdm
 
+from orix._utils.deprecation import deprecated
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import Miller
+from orix.vector.miller import Miller
 
 
 class Misorientation(Rotation):
@@ -56,9 +59,9 @@ class Misorientation(Rotation):
 
     def __init__(
         self,
-        data: Union[np.ndarray, Misorientation, list, tuple],
-        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
-    ):
+        data: np.ndarray | Misorientation | list | tuple,
+        symmetry: tuple[Symmetry, Symmetry] | None = None,
+    ) -> None:
         super().__init__(data)
         if symmetry:
             self.symmetry = symmetry
@@ -66,7 +69,7 @@ class Misorientation(Rotation):
     # -------------------------- Properties -------------------------- #
 
     @property
-    def symmetry(self) -> Tuple[Symmetry, Symmetry]:
+    def symmetry(self) -> tuple[Symmetry, Symmetry]:
         """Return or set the crystal symmetries.
 
         Parameters
@@ -77,7 +80,7 @@ class Misorientation(Rotation):
         return self._symmetry
 
     @symmetry.setter
-    def symmetry(self, value: Union[List[Symmetry], Tuple[Symmetry, Symmetry]]):
+    def symmetry(self, value: list[Symmetry] | tuple[Symmetry, Symmetry]) -> None:
         if not isinstance(value, (list, tuple)):
             raise TypeError("Value must be a 2-tuple of Symmetry objects.")
         if len(value) != 2 or not all(isinstance(s, Symmetry) for s in value):
@@ -86,7 +89,7 @@ class Misorientation(Rotation):
 
     # ------------------------ Dunder methods ------------------------ #
 
-    def __eq__(self, other: Union[Any, Misorientation]) -> bool:
+    def __eq__(self, other: Any | Misorientation) -> bool:
         v1 = super().__eq__(other)
         if not v1:
             return v1
@@ -97,7 +100,7 @@ class Misorientation(Rotation):
                 v2.append(sym_s == sym_o)
             return all(v2)
 
-    def __getitem__(self, key) -> Misorientation:
+    def __getitem__(self, key: Any) -> Misorientation:
         M = super().__getitem__(key)
         M._symmetry = self._symmetry
         return M
@@ -107,7 +110,7 @@ class Misorientation(Rotation):
         M._symmetry = self._symmetry[::-1]
         return M
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """String representation."""
         cls = self.__class__.__name__
         shape = str(self.shape)
@@ -125,15 +128,15 @@ class Misorientation(Rotation):
         cls,
         other: Miller,
         initial: Miller,
-        weights: Optional[np.ndarray] = None,
+        weights: np.ndarray | None = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
-    ) -> Union[
-        Misorientation,
-        Tuple[Misorientation, float],
-        Tuple[Misorientation, np.ndarray],
-        Tuple[Misorientation, float, np.ndarray],
-    ]:
+    ) -> (
+        Misorientation
+        | tuple[Misorientation, float]
+        | tuple[Misorientation, np.ndarray]
+        | tuple[Misorientation, float, np.ndarray]
+    ):
         """Return an estimated misorientation to optimally align two
         sets of vectors, one set in each crystal.
 
@@ -213,7 +216,7 @@ class Misorientation(Rotation):
     def from_scipy_rotation(
         cls,
         rotation: SciPyRotation,
-        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
+        symmetry: tuple[Symmetry, Symmetry] | None = None,
     ) -> Misorientation:
         """Return misorientationss from
         :class:`scipy.spatial.transform.Rotation`.
@@ -266,8 +269,8 @@ class Misorientation(Rotation):
     @classmethod
     def random(
         cls,
-        shape: Union[int, tuple] = 1,
-        symmetry: Optional[Tuple[Symmetry, Symmetry]] = None,
+        shape: int | tuple = 1,
+        symmetry: tuple[Symmetry, Symmetry] | None = None,
     ) -> Misorientation:
         """Create random misorientations.
 
@@ -293,7 +296,7 @@ class Misorientation(Rotation):
 
     # --------------------- Other public methods --------------------- #
 
-    def reshape(self, *shape) -> Misorientation:
+    def reshape(self, *shape: tuple[int, ...]) -> Misorientation:
         M = super().reshape(*shape)
         M._symmetry = self._symmetry
         return M
@@ -308,7 +311,7 @@ class Misorientation(Rotation):
         M._symmetry = self._symmetry
         return M
 
-    def transpose(self, *axes) -> Misorientation:
+    def transpose(self, *axes: tuple[int, ...]) -> Misorientation:
         M = super().transpose(*axes)
         M._symmetry = self._symmetry
         return M
@@ -338,6 +341,7 @@ class Misorientation(Rotation):
 
         return self.__class__(equivalent).flatten()
 
+    @deprecated(since="0.14", removal="0.15", alternative="reduce")
     def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> Misorientation:
         """Return equivalent transformations which have the smallest
         angle of rotation as a new misorientation.
@@ -363,34 +367,64 @@ class Misorientation(Rotation):
         [[-0.7071  0.7071  0.      0.    ]
         [ 0.      1.      0.      0.    ]]
         """
+        return self.reduce(verbose)
+
+    def reduce(self, verbose: bool = False) -> Misorientation:
+        """Return equivalent transformations which have the smallest
+        angle of rotation as a new misorientation.
+
+        Parameters
+        ----------
+        verbose
+            Whether to print a progressbar. Default is ``False``.
+
+        Returns
+        -------
+        M
+            A new misorientation object with the assigned symmetry.
+
+        Examples
+        --------
+        >>> from orix.quaternion.symmetry import C4, C2
+        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
+        >>> M = Misorientation(data)
+        >>> M.symmetry = (C4, C2)
+        >>> M.reduce()
+        Misorientation (2,) 4, 2
+        [[-0.7071  0.7071  0.      0.    ]
+        [ 0.      1.      0.      0.    ]]
+        """
         Gl, Gr = self._symmetry
+        fz = OrientationRegion.from_symmetry(Gl, Gr)
         symmetry_pairs = iproduct(Gl, Gr)
         if verbose:
             symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
 
-        orientation_region = OrientationRegion.from_symmetry(Gl, Gr)
-        o_inside = self.__class__.identity(self.shape)
+        # There is one and only one combination of `symmetry_pairs` that
+        # moves an arbitrary rotation into fz. Apply the combinations
+        # iteratively to the outside quaternions until all are inside.
+        reduced = self.__class__.identity(self.shape)
         outside = np.ones(self.shape, dtype=bool)
         for gl, gr in symmetry_pairs:
             o_transformed = gl * self[outside] * gr
-            o_inside[outside] = o_transformed
-            outside = ~(o_inside < orientation_region)
+            reduced[outside] = o_transformed
+            outside = ~(reduced < fz)
             if not np.any(outside):
                 break
-        o_inside._symmetry = (Gl, Gr)
-        return o_inside
+        reduced._symmetry = (Gl, Gr)
+        return reduced
 
     def scatter(
         self,
         projection: str = "axangle",
-        figure: Optional[plt.Figure] = None,
-        position: Union[int, Tuple[int, int], SubplotSpec] = (1, 1, 1),
+        figure: mfigure.Figure | None = None,
+        position: int | tuple[int, int, int] | SubplotSpec = (1, 1, 1),
         return_figure: bool = False,
-        wireframe_kwargs: Optional[dict] = None,
-        size: Optional[int] = None,
-        figure_kwargs: Optional[dict] = None,
+        wireframe_kwargs: dict | None = None,
+        size: int | None = None,
+        figure_kwargs: dict | None = None,
         **kwargs,
-    ) -> plt.Figure:
+    ) -> mfigure.Figure | None:
         """Plot misorientations in axis-angle space or the Rodrigues
         fundamental zone.
 

@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,20 +10,20 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
-from typing import Optional
-
-from matplotlib.figure import Figure
+import matplotlib.figure as mfigure
 import numpy as np
 
-from orix.plot.direction_color_keys import DirectionColorKeyTSL
-from orix.plot.orientation_color_keys import IPFColorKey
-from orix.quaternion import Orientation, Symmetry
+from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
+from orix.plot.orientation_color_keys.ipf_color_key import IPFColorKey
+from orix.quaternion.orientation import Orientation
+from orix.quaternion.symmetry import Symmetry
 from orix.vector.vector3d import Vector3d
 
 
@@ -34,9 +35,7 @@ class IPFColorKeyTSL(IPFColorKey):
     This is based on the TSL color key implemented in MTEX.
     """
 
-    def __init__(
-        self, symmetry: Symmetry, direction: Optional[Vector3d] = None
-    ) -> None:
+    def __init__(self, symmetry: Symmetry, direction: Vector3d | None = None) -> None:
         """Create an inverse pole figure (IPF) color key to color
         orientations according a sample direction and a Laue symmetry's
         fundamental sector (IPF).
@@ -78,7 +77,7 @@ class IPFColorKeyTSL(IPFColorKey):
         rgb = self.direction_color_key.direction2color(m)
         return rgb
 
-    def plot(self, return_figure: bool = False) -> Optional[Figure]:
+    def plot(self, return_figure: bool = False) -> mfigure.Figure | None:
         """Plot the inverse pole figure color key.
 
         Parameters

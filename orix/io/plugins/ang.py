@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Reader of a crystal map from an .ang file in formats produced by EDAX
 TSL, NanoMegas ASTAR Index or EMsoft's EMdpmerge program.
@@ -21,16 +23,16 @@ TSL, NanoMegas ASTAR Index or EMsoft's EMdpmerge program.
 
 from io import TextIOWrapper
 import re
-from typing import List, Optional, Tuple, Union
 import warnings
 
 from diffpy.structure import Lattice, Structure
 import numpy as np
 
 from orix import __version__
-from orix.crystal_map import CrystalMap, PhaseList, create_coordinate_arrays
-from orix.quaternion import Rotation
-from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES, get_point_group
+from orix.crystal_map._phase_list import PhaseList
+from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
+from orix.quaternion.rotation import Rotation
+from orix.quaternion.symmetry import _EDAX_POINT_GROUP_ALIASES
 
 __all__ = ["file_reader", "file_writer"]
 
@@ -41,7 +43,7 @@ writes = True
 writes_this = CrystalMap
 
 
-def file_reader(filename: str, autogen_names: Optional[bool] = True) -> CrystalMap:
+def file_reader(filename: str, autogen_names: bool | None = True) -> CrystalMap:
     """Return a crystal map from a file in EDAX TLS's .ang format.
 
     The map in the input is assumed to be 2D.
@@ -157,7 +159,7 @@ def _autogen_phase_names(phase_list, formulas, ids):
         phase_list[j].name = names[i]
 
 
-def _get_header(file: TextIOWrapper) -> List[str]:
+def _get_header(file: TextIOWrapper) -> list[str]:
     """Return the first lines starting with '#' in an .ang file.
 
     Parameters
@@ -181,7 +183,7 @@ def _get_header(file: TextIOWrapper) -> List[str]:
     return header
 
 
-def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[str]]:
+def _get_vendor_columns(header: list[str], n_cols_file: int) -> tuple[str, list[str]]:
     """Return the .ang file column names and vendor, determined from the
     header.
 
@@ -331,25 +333,24 @@ def _get_vendor_columns(header: List[str], n_cols_file: int) -> Tuple[str, List[
     return vendor, vendor_column_names
 
 
-def _get_phases_from_header(header: List[str]) -> dict:
+def _get_phases_from_header(header: list[str]) -> tuple[dict, list]:
     """Parse a .ang header to extract a best guess of the phase names,
     symmetries, and chemical formula for each phase
 
 
     Parameters
     ----------
-    header : List[str]
+    header
         List with header lines as individual elements.
 
     Returns
     -------
-    phase_dict: dict
+    phase_dict
         Dictionary with the following keys (and types): "ids" (int),
         "names" (str), "point_groups" (str), "lattice_constants" (list
         of floats).
-
-    formulas: list[str]
-        List of the chemical formula for each phase
+    formulas
+        List of the chemical formula for each phase.
 
     Notes
     -----
@@ -407,13 +408,13 @@ def _get_phases_from_header(header: List[str]) -> dict:
 def file_writer(
     filename: str,
     xmap: CrystalMap,
-    index: Optional[int] = None,
-    image_quality_prop: Optional[str] = None,
-    confidence_index_prop: Optional[str] = None,
-    detector_signal_prop: Optional[str] = None,
-    pattern_fit_prop: Optional[str] = None,
-    extra_prop: Union[str, List[str], None] = None,
-):
+    index: int | None = None,
+    image_quality_prop: str | None = None,
+    confidence_index_prop: str | None = None,
+    detector_signal_prop: str | None = None,
+    pattern_fit_prop: str | None = None,
+    extra_prop: str | list[str] | None = None,
+) -> None:
     """Write a crystal map to an .ang file readable by MTEX and EDAX TSL
     OIM Analysis v7.
 
@@ -656,7 +657,7 @@ def _get_header_from_phases(xmap: CrystalMap) -> str:
     return header
 
 
-def _get_nrows_ncols_step_sizes(xmap: CrystalMap) -> Tuple[int, int, float, float]:
+def _get_nrows_ncols_step_sizes(xmap: CrystalMap) -> tuple[int, int, float, float]:
     """Get crystal map shape and step sizes.
 
     Parameters
@@ -699,10 +700,10 @@ def _get_column_width(max_value: int, decimals: int = 5) -> int:
 
 def _get_prop_arrays(
     xmap: CrystalMap,
-    prop_names: List[str],
-    desired_prop_names: List[str],
+    prop_names: list[str],
+    desired_prop_names: list[str],
     map_size: int,
-    index: Optional[int],
+    index: int | None,
     decimals: int = 5,
 ) -> np.ndarray:
     """Return a 2D array (n_points, n_properties) with desired property
@@ -755,13 +756,13 @@ def _get_prop_arrays(
 def _get_prop_array(
     xmap: CrystalMap,
     prop_name: str,
-    expected_prop_names: List[str],
-    prop_names: List[str],
+    expected_prop_names: list[str],
+    prop_names: list[str],
     prop_names_lower_arr: np.ndarray,
-    index: Optional[int],
+    index: int | None,
     decimals: int = 5,
-    fill_value: Union[int, float, bool] = 0,
-) -> Union[np.ndarray, None]:
+    fill_value: int | float | bool = 0,
+) -> np.ndarray | None:
     """Return a 1D array (n_points,) with the desired property values or
     ``None`` if the property cannot be read.
 

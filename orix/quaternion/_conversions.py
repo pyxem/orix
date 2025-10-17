@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,22 +10,21 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Conversions of rotations between many common representations from
 :cite:`rowenhorst2015consistent`, accelerated with Numba.
 """
 
-from typing import Tuple
-
 import numba as nb
 import numpy as np
 
-from orix import constants
+from orix._utils import constants
 
 
 @nb.njit("int64(float64[:])", cache=True, fastmath=True, nogil=True)
@@ -635,7 +635,7 @@ def qu2ax_2d(qu: np.ndarray) -> np.ndarray:
     return ax
 
 
-def qu2ax(qu: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def qu2ax(qu: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """N-dimensional wrapper for qu2ax_2d, see the docstring of that
     function for further details.
 

@@ -1,3 +1,21 @@
+#
+# Copyright 2018-2025 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 """
 ======================
 Select and modify data
@@ -14,18 +32,16 @@ There are five ways to select data:
     5. Boolean indexing
 """
 
-from typing import List, Union
-
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import plot
 from orix.crystal_map import CrystalMap, Phase
+from orix.plot import register_projections
+
+register_projections()  # Register our custom Matplotlib projections
 
 
-def plot_id(
-    xmaps: Union[CrystalMap, List[CrystalMap]], titles: Union[str, List[str]]
-) -> None:
+def plot_id(xmaps: CrystalMap | list[CrystalMap], titles: str | list[str]) -> None:
     """Convenience function to plot at most four crystal maps showing
     rows, columns and IDs of each map point.
     """

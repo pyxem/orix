@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2025 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,7 +17,8 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ._util import format_labels
+from ._plot import register_projections
+from ._util.formatting import format_labels
 from .crystal_map_plot import CrystalMapPlot
 from .direction_color_keys import DirectionColorKeyTSL
 from .orientation_color_keys import EulerColorKey, IPFColorKeyTSL
@@ -41,4 +42,5 @@ __all__ = [
     "StereographicPlot",
     # Functions
     "format_labels",
+    "register_projections",
 ]

@@ -5,7 +5,7 @@ Related projects
 This is a non-exhaustive list of related, open-source projects that users of orix might
 find useful:
 
-- :doc:`pyxem <pyxem:index>`: Python library for multi-dimensional diffraction
+- `pyxem <https://pyxem.org>`_: Python library for multi-dimensional diffraction
   microscopy.
   pyxem depends on orix for handling of crystal orientations.
 - :doc:`diffsims <diffsims:index>`: Python library for simulating diffraction.

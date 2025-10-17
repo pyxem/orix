@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2025 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -85,7 +85,6 @@ intersphinx_mapping = {
     "pytest": ("https://docs.pytest.org/en/stable", None),
     "pytest-xdist": ("https://pytest-xdist.readthedocs.io/en/stable/", None),
     "python": ("https://docs.python.org/3", None),
-    "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
     "readthedocs": ("https://docs.readthedocs.com/platform/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "sklearn": ("https://scikit-learn.org/stable", None),

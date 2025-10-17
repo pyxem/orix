@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,17 +10,17 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 import abc
-from typing import Optional
 
-from orix.quaternion import Symmetry
-from orix.vector import Vector3d
+from orix.quaternion.symmetry import Symmetry
+from orix.vector.vector3d import Vector3d
 
 
 class IPFColorKey(abc.ABC):
@@ -35,7 +36,7 @@ class IPFColorKey(abc.ABC):
     direction
     """
 
-    def __init__(self, symmetry: Symmetry, direction: Optional[Vector3d] = None):
+    def __init__(self, symmetry: Symmetry, direction: Vector3d | None = None) -> None:
         self.symmetry = symmetry
         if direction is None:
             direction = Vector3d.zvector()

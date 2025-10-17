@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,29 +10,29 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Private tools for coloring crystal directions.
 
 These functions are adapted from MTEX.
 """
 
-from typing import Tuple, Union
-
 import matplotlib.colors as mcolors
 import numpy as np
 
-from orix.quaternion import Rotation
-from orix.vector import FundamentalSector, Vector3d
+from orix.quaternion.rotation import Rotation
+from orix.vector.fundamental_sector import FundamentalSector
+from orix.vector.vector3d import Vector3d
 
 
 def polar_coordinates_in_sector(
     sector: FundamentalSector, v: Vector3d
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     r"""Calculate the polar coordinates of crystal direction(s)
     relative to the (bary)center of a fundamental sector of a Laue
     group.
@@ -116,12 +117,10 @@ def rgb_from_polar_coordinates(azimuth: np.ndarray, polar: np.ndarray) -> np.nda
 
 
 def hsl_to_hsv(
-    hue: Union[np.ndarray, float],
-    saturation: Union[np.ndarray, float],
-    lightness: Union[np.ndarray, float],
-) -> Tuple[
-    Union[np.ndarray, float], Union[np.ndarray, float], Union[np.ndarray, float]
-]:
+    hue: np.ndarray | float,
+    saturation: np.ndarray | float,
+    lightness: np.ndarray | float,
+) -> tuple[np.ndarray | float, np.ndarray | float, np.ndarray | float]:
     """Convert color described by HSL (hue, saturation and lightness) to
     HSV (hue, saturation and value).
 

@@ -1,3 +1,21 @@
+#
+# Copyright 2018-2025 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 """
 =============================
 Inverse pole density function
@@ -10,8 +28,11 @@ This example shows how to plot an inverse pole density function (IPDF)
 
 import matplotlib.pyplot as plt
 
-from orix import data, plot
+from orix import data
+from orix.plot import register_projections
 from orix.vector import Vector3d
+
+register_projections()  # Register our custom Matplotlib projections
 
 xmap = data.sdss_ferrite_austenite(allow_download=True)
 print(xmap)

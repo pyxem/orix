@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,22 +10,26 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Stereographic plot inheriting from :class:`~matplotlib.axes.Axes` for
 plotting :class:`~orix.vector.Vector3d`.
 """
 
+from collections.abc import Iterable
 from copy import deepcopy
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Literal, overload
 
+import matplotlib as mpl
 from matplotlib import rcParams
 import matplotlib.axes as maxes
 import matplotlib.collections as mcollections
+import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import matplotlib.path as mpath
 import matplotlib.projections as mprojections
@@ -57,6 +62,13 @@ ZORDER = dict(
     mesh=0,
 )
 
+COLLECTION_TYPES = (
+    maxes.Axes.ArtistList[mcollections.Collection]
+    | maxes.Axes.ArtistList[mpatches.Patch]
+)
+HEMISPHERE_VALUES = Literal["upper", "lower"]
+COLORLIKE = str | float | list[str] | list[float] | np.ndarray
+
 
 class StereographicPlot(maxes.Axes):
     """Stereographic plot for plotting :class:`~orix.vector.Vector3d`.
@@ -66,8 +78,8 @@ class StereographicPlot(maxes.Axes):
     *args
         Arguments passed to :class:`matplotlib.axes.Axes`.
     hemisphere
-        Which hemisphere to plot vectors in, either ``"upper"``
-        (default) or ``"lower"``.
+        Which hemisphere to plot vectors in, either "upper" (default) or
+        "lower".
     azimuth_resolution
         Resolution of azimuth grid lines in degrees. Default is 10
         degrees.
@@ -84,18 +96,26 @@ class StereographicPlot(maxes.Axes):
     def __init__(
         self,
         *args,
-        hemisphere: str = "upper",
-        azimuth_resolution: Union[int, float] = 10,
-        polar_resolution: Union[int, float] = 10,
+        hemisphere: HEMISPHERE_VALUES = "upper",
+        azimuth_resolution: int | float = 10,
+        polar_resolution: int | float = 10,
         **kwargs,
-    ):
+    ) -> None:
         """Create an axis for plotting :class:`~orix.vector.Vector3d`."""
         self.hemisphere = hemisphere
+
+        # Custom attributes to keep track of whether grids are on or off,
+        # as well as the spacings to use when drawing them.
+        self._stereographic_grid = None
+        self._wulff_net_grid = None
         self._azimuth_resolution = azimuth_resolution
         self._polar_resolution = polar_resolution
-
-        # Custom attribute to keep track of whether grid is on or off
-        self._stereographic_grid = None
+        self._lat_resolution = 2
+        self._long_resolution = 2
+        self._lat_resolution_major = 10
+        self._long_resolution_major = 10
+        self._wulff_net_cap = 10
+        self._wulff_net_linewidth_ratio = 2
 
         super().__init__(*args, **kwargs)
 
@@ -104,7 +124,7 @@ class StereographicPlot(maxes.Axes):
         self.set_aspect("equal", adjustable="box", anchor="C")
         self.clear()
 
-    def clear(self):
+    def clear(self) -> None:
         super().clear()
 
         self.xaxis.set_ticks_position("none")
@@ -125,7 +145,7 @@ class StereographicPlot(maxes.Axes):
                 radius=1,
                 facecolor="none",
                 edgecolor="k",
-                label="sa_circle",
+                label=self._get_label("border"),
                 zorder=ZORDER["border"],
             )
         )
@@ -134,7 +154,7 @@ class StereographicPlot(maxes.Axes):
         self.grid(False)
         self.stereographic_grid(rcParams["axes.grid"])
 
-    def format_coord(self, x, y):
+    def format_coord(self, x: float, y: float) -> str:
         if np.sqrt(np.sum(np.square([x, y]))) > 1:
             return ""
         else:
@@ -152,9 +172,9 @@ class StereographicPlot(maxes.Axes):
 
     def plot(
         self,
-        *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        *args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
         **kwargs,
-    ):
+    ) -> None:
         """Draw straight lines between vectors.
 
         This method overwrites :meth:`matplotlib.axes.Axes.plot`, see
@@ -184,9 +204,9 @@ class StereographicPlot(maxes.Axes):
 
     def scatter(
         self,
-        *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        *args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
         **kwargs,
-    ):
+    ) -> None:
         """A scatter plot of vectors.
 
         This method overwrites :meth:`matplotlib.axes.Axes.scatter`, see
@@ -212,30 +232,26 @@ class StereographicPlot(maxes.Axes):
             return
 
         # Color(s)
-        if "color" in updated_kwargs.keys():
-            key_color = "color"
-        else:
-            key_color = "c"
-        c = updated_kwargs.pop(key_color, "C0")
-        c = _get_array_of_values(value=c, visible=visible)
+        c = _get_color_from_dict(updated_kwargs)
+        c, updated_kwargs = _parse_color(c, visible, **updated_kwargs)
 
         # Size(s)
-        if "sizes" in updated_kwargs.keys():
-            key_size = "sizes"
+        for key_size in ["sizes", "s"]:
+            if key_size in updated_kwargs:
+                s = updated_kwargs.pop(key_size)
+                s = _parse_size(s, visible)
+                break
         else:
-            key_size = "s"
-        s = updated_kwargs.pop(key_size, None)
-        if s is not None:
-            s = _get_array_of_values(value=s, visible=visible)
+            s = None
 
         super().scatter(x, y, c=c, s=s, **updated_kwargs)
 
     def text(
         self,
-        *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
-        offset: Optional[Tuple[float, float]] = None,
+        *args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
+        offset: tuple[float, float] | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """Add text to the axes.
 
         This method overwrites :meth:`matplotlib.axes.Axes.text`, see
@@ -269,30 +285,31 @@ class StereographicPlot(maxes.Axes):
     # ----------- Custom attributes and methods below here ----------- #
 
     @property
-    def hemisphere(self) -> str:
-        """Return or set the hemisphere to plot, either ``"upper"`` or
-        ``"lower"``.
+    def hemisphere(self) -> HEMISPHERE_VALUES:
+        """Return or set the hemisphere to plot, either "upper" or
+        "lower".
 
         :attr:`pole` is derived from this attribute.
 
         Parameters
         ----------
         value : str
-            Either ``"upper"`` or ``"lower"``.
+            Either "upper" or "lower".
         """
         return self._hemisphere
 
     @hemisphere.setter
-    def hemisphere(self, value: str):
+    def hemisphere(self, value: HEMISPHERE_VALUES) -> None:
         """Set hemisphere to plot."""
-        value = value.lower()
-        if value in ["upper", "lower"]:
-            self._hemisphere = value
-        else:
-            raise ValueError(f"Hemisphere must be 'upper' or 'lower', not {value}.")
+        new_value = value.lower()
+        if new_value not in ["upper", "lower"]:
+            raise ValueError(
+                f"Hemisphere must be 'upper' or 'lower', not {new_value!r}"
+            )
+        self._hemisphere = new_value
 
     @property
-    def pole(self) -> int:
+    def pole(self) -> Literal[1, -1]:
         """Return the projection pole, either -1 or 1, where -1 (1)
         means the projection point of the stereographic transform is the
         lower (upper) pole [00-1] ([001]), i.e. only vectors with z > 0
@@ -300,26 +317,29 @@ class StereographicPlot(maxes.Axes):
 
         Derived from :attr:`hemisphere`.
         """
-        return {"upper": -1, "lower": 1}[self.hemisphere]
+        if self.hemisphere == "upper":
+            return -1
+        else:
+            return 1
 
     @property
-    def _projection(self):
+    def _projection(self) -> StereographicProjection:
         return StereographicProjection(self.pole)
 
     @property
-    def _inverse_projection(self):
+    def _inverse_projection(self) -> InverseStereographicProjection:
         return InverseStereographicProjection(self.pole)
 
     def pole_density_function(
         self,
-        *args: Union[np.ndarray, Vector3d],
-        resolution: float = 1,
-        sigma: float = 5,
+        *args: np.ndarray | Vector3d,
+        resolution: float = 1.0,
+        sigma: float = 5.0,
         log: bool = False,
         colorbar: bool = True,
-        weights: Optional[np.ndarray] = None,
+        weights: np.ndarray | None = None,
         **kwargs: Any,
-    ):
+    ) -> None:
         """Compute the Pole Density Function (PDF) of vectors in the
         stereographic projection. See :cite:`rohrer2004distribution`.
 
@@ -377,13 +397,13 @@ class StereographicPlot(maxes.Axes):
 
     def draw_circle(
         self,
-        *args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
-        opening_angle: Union[float, np.ndarray] = np.pi / 2,
+        *args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
+        opening_angle: float | np.ndarray = np.pi / 2,
         steps: int = 100,
         reproject: bool = False,
-        reproject_plot_kwargs: Optional[dict] = None,
+        reproject_plot_kwargs: dict | None = None,
         **kwargs,
-    ):
+    ) -> None:
         r"""Draw great or small circles with a given `opening_angle` to
         one or multiple vectors.
 
@@ -438,16 +458,16 @@ class StereographicPlot(maxes.Axes):
         circles = v.get_circle(opening_angle=opening_angle, steps=steps).unit
 
         # Enable using one color per circle
-        color = kwargs.pop("color", "C0")
-        color2 = _get_array_of_values(value=color, visible=visible)
+        c = _get_color_from_dict(updated_kwargs)
+        c, updated_kwargs = _parse_color(c, visible, **updated_kwargs)
 
         # Set above which plotting elements circles will appear (zorder)
-        new_kwargs = dict(zorder=ZORDER["draw_circle"], clip_on=True)
+        new_kwargs = {"zorder": ZORDER["draw_circle"], "clip_on": True}
         for k, v in new_kwargs.items():
             kwargs.setdefault(k, v)
 
-        for i, c in enumerate(circles):
-            self.plot(c.azimuth, c.polar, color=color2[i], **kwargs)
+        for i, circle in enumerate(circles):
+            self.plot(circle.azimuth, circle.polar, color=c[i], **kwargs)
 
         if reproject:
             if reproject_plot_kwargs is None:
@@ -457,8 +477,10 @@ class StereographicPlot(maxes.Axes):
             # temporarily setting the hemisphere to the other one
             other_hemisphere = {"upper": "lower", "lower": "upper"}
             self._hemisphere = other_hemisphere[self._hemisphere]
-            for i, c in enumerate(circles):
-                self.plot(c.azimuth, c.polar, color=color2[i], **reproject_plot_kwargs)
+            for i, circle in enumerate(circles):
+                self.plot(
+                    circle.azimuth, circle.polar, color=c[i], **reproject_plot_kwargs
+                )
             self._hemisphere = other_hemisphere[self._hemisphere]
 
     def restrict_to_sector(
@@ -467,7 +489,7 @@ class StereographicPlot(maxes.Axes):
         pad: float = 1.3,
         show_edges: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         """Restrict the stereographic axis to a
         :class:`~orix.vector.FundamentalSector`, typically obtained from
         :attr:`~orix.quaternion.Symmetry.fundamental_sector`.
@@ -487,15 +509,20 @@ class StereographicPlot(maxes.Axes):
             :class:`matplotlib.patches.PathPatch` if
             ``show_edges=True``.
         """
+        # Temporarily change sector pole
         original_pole = deepcopy(sector._pole)
         sector._pole = self.pole
+
         edges = sector.edges
         if edges.size == 0:
+            sector._pole = original_pole
             return
-        edges = _closed_edges_in_hemisphere(edges, sector, pole=self.pole)
+
+        edges = _closed_edges_in_hemisphere(edges, sector, self.pole)
         sector._pole = original_pole
         if edges.size == 0:
             return
+
         x, y, _ = self._pretransform_input((edges,))
 
         pad_angle = np.deg2rad(pad)
@@ -518,21 +545,20 @@ class StereographicPlot(maxes.Axes):
         self.patches[0].set_visible(False)
 
         if show_edges:
-            for k, v in [("facecolor", "none"), ("edgecolor", "k"), ("linewidth", 1)]:
-                kwargs.setdefault(k, v)
+            kwargs = _update_kwargs_for_fundamental_sector_patch(kwargs)
             patch = mpatches.PathPatch(
                 mpath.Path(np.column_stack([x, y]), closed=True),
-                label="sa_sector",
+                label=self._get_label("sector"),
                 **kwargs,
             )
             self.add_patch(patch)
             self.set_clip_path(patch)
-            labels = ["sa_azimuth_grid", "sa_polar_grid"]
+            labels = [self._get_label("azimuth_grid"), self._get_label("polar_grid")]
             for c in self.collections:
                 if c.get_label() in labels:
                     c.set_clip_path(patch)
 
-    def show_hemisphere_label(self, **kwargs):
+    def show_hemisphere_label(self, **kwargs) -> None:
         """Add a hemisphere label (``"upper"``/``"lower"``) to the upper
         left of the plot.
 
@@ -552,11 +578,11 @@ class StereographicPlot(maxes.Axes):
 
     def set_labels(
         self,
-        xlabel: Union[str, bool, None] = "x",
-        ylabel: Union[str, bool, None] = "y",
-        zlabel: Union[str, bool, None] = "z",
+        xlabel: str | bool | None = "x",
+        ylabel: str | bool | None = "y",
+        zlabel: str | bool | None = "z",
         **kwargs,
-    ):
+    ) -> None:
         """Set the reference frame's axes labels.
 
         Parameters
@@ -578,10 +604,10 @@ class StereographicPlot(maxes.Axes):
 
     def stereographic_grid(
         self,
-        show_grid: Optional[bool] = None,
-        azimuth_resolution: Optional[float] = None,
-        polar_resolution: Optional[float] = None,
-    ):
+        show_grid: bool | None = None,
+        azimuth_resolution: float | None = None,
+        polar_resolution: float | None = None,
+    ) -> None:
         """Turn a stereographic grid on or off, and set the azimuth and
         polar grid resolution in degrees.
 
@@ -610,27 +636,88 @@ class StereographicPlot(maxes.Axes):
             or show_grid is None
             and (azimuth_resolution is not None or polar_resolution is not None)
             or show_grid is True
-        ) and hasattr(self, "patch"):
+        ):
             self._azimuth_grid(azimuth_resolution)
             self._polar_grid(polar_resolution)
             self._stereographic_grid = True
         elif show_grid in [None, False] and self._stereographic_grid is True:
-            # Remove grid
-            has_azimuth, index_azimuth = self._has_collection(
-                "sa_azimuth_grid", self.collections
-            )
-            has_polar, index_polar = self._has_collection(
-                "sa_polar_grid", self.collections
-            )
-            if has_azimuth:
-                if index_polar > index_azimuth:
-                    index_polar -= 1
-                self.collections[index_azimuth].remove()
-            if has_polar:
-                self.collections[index_polar].remove()
+            self._remove_collection(self._get_label("azimuth_grid"))
+            self._remove_collection(self._get_label("polar_grid"))
             self._stereographic_grid = False
 
-    def symmetry_marker(self, v: Vector3d, fold: int, **kwargs):
+    def wulff_net(
+        self,
+        show_grid: bool | None = None,
+        lat_resolution: float | int | None = None,
+        long_resolution: float | int | None = None,
+        lat_resolution_major: float | int | None = None,
+        long_resolution_major: float | int | None = None,
+        wulff_net_cap: float | int | None = None,
+        linewidth_ratio: float | int = 2,
+    ) -> None:
+        """Turn a wulff net grid on or off, and set the grid resolution
+        in degrees.
+
+        Parameters
+        ----------
+        show_grid
+            Whether to show grid lines. If any keyword arguments are
+            passed, this is set to True. If not given and there are no
+            keyword arguments, the grid lines are toggled.
+        lat_resolution
+            Latitudinal (up and down) grid spacing in degrees.If not
+            given, the current resolution is used (2 degrees by default).
+        long_resolution
+            Longitudinal (left and right) grid spacing in degrees. If
+            not given, the current resolution is used (2 degrees by
+            default).
+        lat_resolution_major
+            Identical to *lat_resolution*, but for the major grid lines
+            (10 degrees resolution by default).
+        long_resolution_major
+            Identical to *long_resolution*, but for the major grid lines
+            (10 degrees resolution by default).
+        wulff_net_cap
+            The angular spread of the cap around the north and south
+            poles of the plot in degrees, within which longitudinal
+            lines are not drawn. If not given, the current resolution is
+            used (10 degrees by default).
+        linewidth_ratio
+            Ratio between the thickness of the major and minor grid
+            lines. Minor grid line properties are determined by the
+            "grid.linewidth" parameter in Matplotlib's rcParams, the
+            same way :meth:`matplotlib.axes.Axes.grid` objects are.
+            Major grid lines are then set relative to the minor values.
+
+        See Also
+        --------
+        matplotlib.axes.Axes.grid
+        """
+        if (
+            show_grid is None
+            and self._wulff_net_grid in [None, False]
+            or show_grid is None
+            and (lat_resolution is not None or long_resolution is not None)
+            or show_grid is True
+        ):
+            self._latitudinal_grid(
+                lat_resolution, lat_resolution_major, linewidth_ratio
+            )
+            self._longitudinal_grid(
+                long_resolution, long_resolution_major, linewidth_ratio, wulff_net_cap
+            )
+            self._wulff_net_grid = True
+        elif show_grid in [None, False] and self._wulff_net_grid is True:
+            for label in [
+                self._get_label("latitudinal_grid"),
+                self._get_label("latitudinal_grid_major"),
+                self._get_label("longitudinal_grid"),
+                self._get_label("longitudinal_grid_major"),
+            ]:
+                self._remove_collection(label)
+            self._wulff_net_grid = False
+
+    def symmetry_marker(self, v: Vector3d, fold: int, **kwargs) -> None:
         """Plot 2-, 3- 4- or 6-fold symmetry marker(s).
 
         Parameters
@@ -663,7 +750,9 @@ class StereographicPlot(maxes.Axes):
         # TODO: Find a way to control padding, so that markers aren't
         #  clipped
 
-    def _azimuth_grid(self, resolution: Optional[float] = None):
+    # ----------- Internal functions for controlling grids ----------- #
+
+    def _azimuth_grid(self, resolution: float | None = None) -> None:
         """Set the azimuth grid resolution in degrees.
 
         Parameters
@@ -699,26 +788,19 @@ class StereographicPlot(maxes.Axes):
             zorder=ZORDER["grid"],
         )
 
-        label = "sa_azimuth_grid"
+        # Replace azimuth grid
+        label = self._get_label("azimuth_grid")
+        self._remove_collection(label)
         lines = np.stack(((x_start, x_end), (y_start, y_end))).T
         lines_collection = mcollections.LineCollection(lines, label=label, **kwargs)
-        has_collection, index = self._has_collection(label, self.collections)
-        if has_collection:
-            self.collections[index].remove()
-        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
-        if has_sector:
-            lines_collection.set_clip_path(self.patches[sector_index])
+        # Clip to fundamental sector, if set
+        sector_patch = self._get_collection(self._get_label("sector"), self.patches)
+        if sector_patch is not None:
+            lines_collection.set_clip_path(sector_patch)
+
         self.add_collection(lines_collection)
 
-    @staticmethod
-    def _has_collection(label, collections):
-        labels = [c.get_label() for c in collections]
-        for i in range(len(labels)):
-            if label == labels[i]:
-                return True, i
-        return False, -1
-
-    def _polar_grid(self, resolution: Optional[float] = None):
+    def _polar_grid(self, resolution: float | None = None) -> None:
         """Set the polar grid resolution in degrees.
 
         Parameters
@@ -757,7 +839,7 @@ class StereographicPlot(maxes.Axes):
         circles = []
         for r in radii:
             circles.append(mpatches.Circle(radius=r, **kwargs))
-        label = "sa_polar_grid"
+        label = self._get_label("polar_grid")
         circles_collection = mcollections.PatchCollection(
             circles,
             label=label,
@@ -765,22 +847,237 @@ class StereographicPlot(maxes.Axes):
             facecolors=kwargs["fc"],
             alpha=kwargs["alpha"],
         )
-        has_collection, index = self._has_collection(label, self.collections)
-        if has_collection:
-            self.collections[index].remove()
-        has_sector, sector_index = self._has_collection("sa_sector", self.patches)
-        if has_sector:
-            circles_collection.set_clip_path(self.patches[sector_index])
+        self._remove_collection(label)
+        sector_patch = self._get_collection(self._get_label("sector"), self.patches)
+        if sector_patch is not None:
+            circles_collection.set_clip_path(sector_patch)
         self.add_collection(circles_collection)
+
+    def _latitudinal_grid(
+        self,
+        lat_resolution: float | int | None = None,
+        lat_resolution_major: float | int | None = None,
+        linewidth_ratio: float | int = 2,
+    ) -> None:
+        """Set the major and minor latitudinal grids.
+
+        Intended to be called by :meth:`wulff_net`.
+
+        Parameters
+        ----------
+        lat_resolution
+            Minor latitudinal grid resolution in degrees.
+        lat_resolution_major
+            Major latitudinal grid resolution in degrees. If 0, no
+            major grid lines will be added.
+        linewidth_ratio
+            Ratio between the thickness of the major and minor grid
+            lines.
+        """
+        if lat_resolution is not None:
+            self._lat_resolution = lat_resolution
+        if lat_resolution_major is not None:
+            self._lat_resolution_major = lat_resolution_major
+        if linewidth_ratio is not None:
+            self._wulff_net_linewidth_ratio = linewidth_ratio
+
+        self._remove_collection(self._get_label("latitudinal_grid_major"))
+        self._remove_collection(self._get_label("latitudinal_grid"))
+
+        kwargs_minor, kwargs_major = _get_kwargs_for_wulff_net_grids(
+            self._wulff_net_linewidth_ratio
+        )
+
+        def res2latlines(res, rotation_pole):
+            bottom = np.arange(-res, -90, -res)[::-1]
+            top = np.arange(0, 90, res)
+            ticks = np.hstack([bottom, top])
+            v_lats = Vector3d.xvector().rotate(angle=np.radians(ticks))
+            lat_deltas = np.linspace(0, np.pi, 100, True)
+            v_lines = [v.rotate(rotation_pole, lat_deltas) for v in v_lats]
+            xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
+            return xy_lines
+
+        rotation_pole = [0, self.pole, 0]
+
+        lc_minor = mcollections.LineCollection(
+            res2latlines(self._lat_resolution, rotation_pole),
+            label=self._get_label("latitudinal_grid"),
+            **kwargs_minor,
+        )
+
+        lc_major: None | mcollections.LineCollection = None
+        if self._lat_resolution_major > 0:
+            lc_major = mcollections.LineCollection(
+                res2latlines(self._lat_resolution_major, rotation_pole),
+                label=self._get_label("latitudinal_grid_major"),
+                **kwargs_major,
+            )
+
+        # Clip the grid to the fundamental sector subsection, if one is
+        # defined
+        sector_patch = self._get_collection(self._get_label("sector"), self.patches)
+        if sector_patch is not None:
+            lc_minor.set_clip_path(sector_patch)
+            if lc_major is not None:
+                lc_major.set_clip_path(sector_patch)
+
+        self.add_collection(lc_minor)
+        if lc_major is not None:
+            self.add_collection(lc_major)
+
+    def _longitudinal_grid(
+        self,
+        long_resolution: float | int | None = None,
+        long_resolution_major: float | int | None = None,
+        linewidth_ratio: float | int = 2,
+        wulff_net_cap: float | None = None,
+    ) -> None:
+        """Set the major and minor longitudinal grids.
+
+        Intended to be called by :meth:`wulff_net`.
+
+        Parameters
+        ----------
+        long_resolution
+            Minor longitudinal grid resolution in degrees.
+        long_resolution_major
+            Major longitudinal grid resolution in degrees. If 0, no
+            major grid lines will be added.
+        linewidth_ratio
+            Ratio between the thickness of the major and minor grid
+            lines.
+        """
+        if long_resolution is not None:
+            self._long_resolution = long_resolution
+        if long_resolution_major is not None:
+            self._long_resolution_major = long_resolution_major
+        if linewidth_ratio is not None:
+            self._wulff_net_linewidth_ratio = linewidth_ratio
+        if wulff_net_cap is not None:
+            self._wulff_net_cap = wulff_net_cap
+
+        self._remove_collection(self._get_label("longitudinal_grid_major"))
+        self._remove_collection(self._get_label("longitudinal_grid"))
+
+        kwargs_minor, kwargs_major = _get_kwargs_for_wulff_net_grids(
+            self._wulff_net_linewidth_ratio
+        )
+
+        def res2llonglines(res, cap, rotation_pole):
+            left = np.arange(90, 0 - res, -res)[::-1]
+            right = np.arange(90 + res, 180 + res, res)
+            ticks = np.hstack([left, right])
+            v_longs = Vector3d.xvector().rotate(rotation_pole, np.radians(-ticks))
+            long_deltas = np.radians(np.linspace(90 - cap, -90 + cap, 100, True))
+            v_lines = [
+                v.rotate(v.rotate([0, 1, 0], np.pi / 2), long_deltas) for v in v_longs
+            ]
+            xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
+            return xy_lines
+
+        rotation_pole = [0, -self.pole, 0]
+        lc_minor = mcollections.LineCollection(
+            res2llonglines(self._long_resolution, self._wulff_net_cap, rotation_pole),
+            label=self._get_label("longitudinal_grid"),
+            **kwargs_minor,
+        )
+
+        lc_major: None | mcollections.LineCollection = None
+        if self._long_resolution_major > 0:
+            lc_major = mcollections.LineCollection(
+                res2llonglines(
+                    self._long_resolution_major, self._wulff_net_cap, rotation_pole
+                ),
+                label=self._get_label("longitudinal_grid_major"),
+                **kwargs_major,
+            )
+
+        # Clip the grid to the fundamental sector subsection, if one is
+        # defined
+        sector_patch = self._get_collection(self._get_label("sector"), self.patches)
+        if sector_patch is not None:
+            lc_minor.set_clip_path(sector_patch)
+            if lc_major is not None:
+                lc_major.set_clip_path(sector_patch)
+
+        self.add_collection(lc_minor)
+        if lc_major is not None:
+            self.add_collection(lc_major)
+
+    # -------------------- Other internal methods -------------------- #
+
+    @staticmethod
+    def _get_label(name: str) -> str:
+        return f"_stereographic_{name}"
+
+    @overload
+    def _get_collection(
+        self, label: str, collections: maxes.Axes.ArtistList[mcollections.Collection]
+    ) -> mcollections.Collection: ...  # pragma: no cover
+
+    @overload
+    def _get_collection(
+        self, label: str, collections: maxes.Axes.ArtistList[mpatches.Patch]
+    ) -> mpatches.Patch: ...  # pragma: no cover
+
+    @overload
+    def _get_collection(
+        self, label: str, collections=None
+    ) -> mcollections.Collection | mpatches.Patch: ...  # pragma: no cover
+
+    def _get_collection(
+        self, label: str, collections: COLLECTION_TYPES | None = None
+    ) -> mcollections.Collection | mpatches.Patch | None:
+        """Return a collection or patch given by *label* among
+        *collections*.
+
+        If no collections are given, :attr:`collections` are searched.
+
+        If not found, None is returned.
+        """
+        if collections is None:
+            collections = self.collections
+        idx = _label_in_collection(label, collections)
+        if idx is None:
+            return
+        return collections[idx]
+
+    def _remove_collection(self, label: str) -> None:
+        """Remove a collection or patch given by *label*.
+
+        If not found, nothing happens.
+        """
+        collections = self.collections
+        idx = _label_in_collection(label, collections)
+        if idx is not None:
+            collections[idx].remove()
+
+    def _has_collection(
+        self,
+        label: str,
+        collections: (
+            maxes.Axes.ArtistList[mcollections.Collection]
+            | maxes.Axes.ArtistList[mpatches.Patch]
+            | None
+        ) = None,
+    ) -> tuple[bool, int]:
+        if collections is None:
+            collections = self.collections
+        labels = [c.get_label() for c in collections]
+        for i in range(len(labels)):
+            if label == labels[i]:
+                return True, i
+        return False, -1
 
     def _prepare_to_call_inherited_method(
         self,
-        args: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        args: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
         kwargs: dict,
-        new_kwargs: Optional[dict] = None,
+        new_kwargs: dict | None = None,
         sort: bool = False,
-        offset: Tuple[float, float] = None,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
+        offset: tuple[float, float] | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
         """Prepare arguments and keyword arguments passed to methods in
         :class:`StereographicPlot` inherited from
         :class:`matplotlib.axes.Axes`.
@@ -819,10 +1116,10 @@ class StereographicPlot(maxes.Axes):
 
     def _pretransform_input(
         self,
-        values: Union[Vector3d, Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
+        values: Vector3d | tuple[float, float] | tuple[np.ndarray, np.ndarray],
         sort: bool = False,
-        offset: Optional[Tuple[float, float]] = None,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        offset: tuple[float, float] | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Return arrays of (X, Y) from input data.
 
         Parameters
@@ -888,35 +1185,108 @@ class StereographicPlot(maxes.Axes):
 mprojections.register_projection(StereographicPlot)
 
 
-def _get_array_of_values(
-    value: Union[str, float, List[str], List[float]], visible: np.ndarray
-) -> np.ndarray:
-    """Return a usable array of ``value`` with the correct size
-    even though ``value`` doesn't have as many elements as
-    ``visible.size``, to be iterated over along with ``True`` elements
-    in ``visible``.
+def _parse_color(
+    color: COLORLIKE,
+    visible: np.ndarray,
+    **kwargs,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Return a usable array of *color* with the correct size, even
+    though *color* doesn't have as many elements as the number of
+    *visible* elements, to be iterated over along with True elements in
+    *visible*.
 
     Parameters
     ----------
-    value
-        Typically a keyword argument value to be passed to some
-        Matplotlib routine.
+    color
+        Values given to "colors" or "c" as keyword arguments to a
+        Matplotlib method.
     visible
         Boolean array with as many elements as input vectors, only some
-        of which are visible in the hemisphere (``True``).
+        of which are visible in the hemisphere (True).
+    **kwargs
+        Keyword arguments to possibly extract or update "cmap" and
+        "alpha".
+
+        The following applies to "cmap": Matplotlib color map or the
+        name of one. Only applicable if *color* is an iterable of scalar
+        values. If that's the case, color mapping is done here. If not
+        given, "viridis" is used.
+
+        The following applies to alpha: Alpha values to apply if *cmap*
+        is given. If that's not the case or if not given, no alpha is
+        used in color mapping.
 
     Returns
     -------
-    array
-        An array populated with ``value`` of a size equal to the number
-        of ``True`` elements in ``visible``.
+    out
+        An array populated with *color* of a size equal to the number of
+        True elements in *visible*.
+    kwargs
+        Keyword arguments with potentially "cmap" popped and applied and
+        "alpha" popped and applied or just updated.
     """
     n = visible.size
-    if not isinstance(value, str) and hasattr(value, "__iter__") and len(value) != n:
-        value = value[0]
-    if isinstance(value, str) or not hasattr(value, "__iter__"):
-        value = [value] * n
-    return np.asarray(value)[visible]
+
+    if isinstance(color, (str, float, int)):
+        out = [color] * n
+        out = np.asarray(out)
+        out = out[visible]
+    else:
+        out = np.asarray(color)
+        if not isinstance(color[0], str) and out.size == n:
+            # Colormapping of scalars
+            cmap = kwargs.pop("cmap", "viridis")
+            alpha = kwargs.pop("alpha", None)
+            if isinstance(cmap, mcolors.Colormap):
+                cmap_func = cmap
+            else:
+                cmap_func = mpl.colormaps[cmap]
+            out = cmap_func(out, alpha)
+        if len(out) != n:
+            raise ValueError(
+                f"Number of given colors {len(out)} do not match number of vectors {n}"
+            )
+        out = out[visible]
+
+    if "alpha" in kwargs and isinstance(kwargs["alpha"], Iterable):
+        alpha = np.asarray(kwargs["alpha"])
+        kwargs["alpha"] = alpha[visible]
+
+    return out, kwargs
+
+
+def _parse_size(
+    size: float | list[float] | np.ndarray, visible: np.ndarray
+) -> np.ndarray:
+    """Return a usable array of *size* with the correct size, even
+    though *size* doesn't have as many elements as the number of
+    *visible* elements, to be iterated over along with True elements in
+    *visible*.
+
+    Parameters
+    ----------
+    size
+        Values given to "sizes" or "s" as keyword arguments to a
+        Matplotlib method.
+    visible
+        Boolean array with as many elements as input vectors, only some
+        of which are visible in the hemisphere (True).
+
+    Returns
+    -------
+    out
+        An array populated with *size* of a size equal to the number
+        of True elements in *visible*.
+    """
+    n = visible.size
+    if isinstance(size, (float, int)):
+        out = [size] * n
+        out = np.asarray(out)
+        out = out[visible]
+    else:
+        out = np.asarray(size)
+        out = out[visible]
+    return out
 
 
 def _is_visible(polar: np.ndarray, pole: int) -> np.ndarray:
@@ -940,7 +1310,7 @@ def _is_visible(polar: np.ndarray, pole: int) -> np.ndarray:
         return polar >= np.pi / 2
 
 
-def _order_in_hemisphere(polar: np.ndarray, pole: int) -> Union[np.ndarray, None]:
+def _order_in_hemisphere(polar: np.ndarray, pole: int) -> np.ndarray | None:
     """Return order of vectors based on polar angles, so that the ones
     corresponding to vectors visible in this hemisphere are shifted to
     the start of the arrays.
@@ -968,3 +1338,46 @@ def _order_in_hemisphere(polar: np.ndarray, pole: int) -> Union[np.ndarray, None
         order = np.roll(order, shift=-(indices[-1] + 1))
 
     return order
+
+
+def _get_kwargs_for_wulff_net_grids(
+    linewidth_ratio: float,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    kwargs_minor = {
+        "linewidth": rcParams["grid.linewidth"],
+        "linestyle": rcParams["grid.linestyle"],
+        "alpha": rcParams["grid.alpha"],
+        "edgecolors": rcParams["grid.color"],
+        "facecolors": "none",
+        "antialiased": True,
+        "zorder": ZORDER["grid"],
+    }
+    kwargs_major = {}
+    kwargs_major.update(kwargs_minor)
+    kwargs_major["linewidth"] = kwargs_minor["linewidth"] * linewidth_ratio
+    return kwargs_minor, kwargs_major
+
+
+def _label_in_collection(label: str, collections: COLLECTION_TYPES) -> int | None:
+    labels = [c.get_label() for c in collections]
+    for i in range(len(labels)):
+        if label == labels[i]:
+            return i
+    else:
+        return
+
+
+def _get_color_from_dict(d: dict[str, Any]) -> COLORLIKE:
+    for key_color in ["color", "c"]:
+        if key_color in d:
+            c = d.pop(key_color)
+            break
+    else:
+        c = "C0"
+    return c
+
+
+def _update_kwargs_for_fundamental_sector_patch(d: dict[str, Any]) -> dict[str, Any]:
+    for k, v in [("facecolor", "none"), ("edgecolor", "k"), ("linewidth", 1)]:
+        d.setdefault(k, v)
+    return d
