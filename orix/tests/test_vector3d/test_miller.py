@@ -835,18 +835,18 @@ class TestMillerPointGroupsOrthorhombic(TestMillerPointGroups):
             m.symmetrise(unique=False).hkl,
             [
                 [ 0,  0,  1],
-                [ 0,  0, -1],
-                [ 0,  0, -1],
+                [ 0,  0,  1],
+                [ 0,  0,  1],
                 [ 0,  0,  1],
 
                 [ 0,  1,  1],
-                [ 0, -1, -1],
-                [ 0,  1, -1],
+                [ 0, -1,  1],
+                [ 0,  1,  1],
                 [ 0, -1,  1],
 
                 [ 1,  1,  1],
-                [ 1, -1, -1],
-                [ 1,  1, -1],
+                [-1, -1,  1],
+                [-1,  1,  1],
                 [ 1, -1,  1],
             ],
         )
@@ -855,23 +855,20 @@ class TestMillerPointGroupsOrthorhombic(TestMillerPointGroups):
             m_unique.hkl,
             [
                 [ 0,  0,  1],
-                [ 0,  0, -1],
 
                 [ 0,  1,  1],
-                [ 0, -1, -1],
-                [ 0,  1, -1],
                 [ 0, -1,  1],
 
                 [ 1,  1,  1],
-                [ 1, -1, -1],
-                [ 1,  1, -1],
+                [-1, -1,  1],
+                [-1,  1,  1],
                 [ 1, -1,  1],
             ],
         )
         # fmt: on
 
         mult = m.multiplicity
-        assert np.allclose(mult, [2, 4, 4])
+        assert np.allclose(mult, [1, 2, 4])
         assert np.sum(mult) == m_unique.size
 
     def test_group_2overm_2overm_2overm(self):
