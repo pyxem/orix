@@ -277,8 +277,9 @@ class Misorientation(Rotation):
     def from_path_ends(
         cls, points: Misorientation, closed: bool = False, steps: int = 100
     ) -> Misorientation:
-        """Return misorientations tracing the shortest path between
-        two or more consecutive points.
+        """Return misorientations tracing the shortest path (ignoring
+        symmetry) between two or more consecutive points.
+
         Parameters
         ----------
         points
@@ -290,21 +291,28 @@ class Misorientation(Rotation):
         steps
             Number of misorientations to return along the path
             between each pair of waypoints. The default is 100.
+
         Returns
         -------
         path
             misorientations that map a path between the given waypoints.
+
+        Note
+        -------
+        This function traces a path between points in SO(3), in which there
+        is one and only one direct path between every point. The equivalent
+        is not well-defined for misorientations, which define multiple
+        symmetrically-equivalent points in SO(3) with non-equivalent paths
+        between them.
         """
-        # Confirm `points` are (mis)orientations.
-        if not isinstance(points, Misorientation):
+        # Confirm `points` are misorientations.
+        if type(points) is not cls:
             raise TypeError(
                 f"Points must be a Misorientation, not of type {type(points)}"
             )
         # Create a path through Quaternion space, then reapply the symmetry.
-        out = super().from_path_ends(points=points, closed=closed, steps=steps)
-        path = cls(out.data)
-        path._symmetry = points._symmetry
-        return path
+        out = Rotation.from_path_ends(points=points, closed=closed, steps=steps)
+        return cls(out.data, symmetry=points.symmetry)
 
     @classmethod
     def random(

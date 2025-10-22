@@ -347,11 +347,10 @@ def test_from_path_ends():
         a = Misorientation.from_path_ends(q)
     with pytest.raises(TypeError, match="Points must be a Misorientation"):
         b = Misorientation.from_path_ends(r)
-    c = Misorientation.from_path_ends(o)
-    assert isinstance(c, Misorientation)
+    with pytest.raises(TypeError, match="Points must be a Misorientation"):
+        c = Misorientation.from_path_ends(o)
     d = Misorientation.from_path_ends(m)
     assert isinstance(d, Misorientation)
-    assert c.symmetry[1] == o.symmetry
     assert d.symmetry == m.symmetry
 
     # Orientation sanity checks
