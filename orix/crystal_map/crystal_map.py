@@ -402,17 +402,17 @@ class CrystalMap:
             origin = origin[::-1]
 
         # Assign data AFTER all checks and calculations are completed.
-        self._layer = indices[-2] if dims > 2 else None
-        self._row = indices[-1] if dims > 1 else None
-        self._column = indices[0]
+        self._layer = indices[0] if dims > 2 else None
+        self._row = indices[-2] if dims > 1 else None
+        self._column = indices[-1]
 
-        self._dz = spacing[-2] if dims > 2 else 0
-        self._dy = spacing[-1] if dims > 1 else 0
-        self._dx = spacing[0]
+        self._dz = spacing[0] if dims > 2 else 0
+        self._dy = spacing[-2] if dims > 1 else 0
+        self._dx = spacing[-1]
 
-        self._zmin = origin[-2] if dims > 2 else 0
-        self._ymin = origin[-1] if dims > 1 else 0
-        self._xmin = origin[0]
+        self._zmin = origin[0] if dims > 2 else 0
+        self._ymin = origin[-2] if dims > 1 else 0
+        self._xmin = origin[-1]
 
         return
 
