@@ -63,6 +63,11 @@ Fixed
 - Multicolor stereographic scatter plots now correctly cast RGB and RGBA color arrays
 - Coloring of vectors in :meth:`~orix.plot.StereographicPlot.scatter` and the equivalent
   vector method now correctly maps colors from RGB(A) arrays.
+- Randomly sampled quaternions, rotations, and (mis)orientations have positive angle (a)
+  components.
+- The symmetry operations of the orthorhombic point group *mm2* (*C2v*) are now in line
+  with the International Tables for Crystallography, with the 2-fold axis about z, not
+  x, as before.
 
 
 2025-01-01 - version 0.13.3
