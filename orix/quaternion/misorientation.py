@@ -439,48 +439,46 @@ class Misorientation(Rotation):
         ----------
         projection
             Which axis-angle projection to use for plotting into
-            Euclidean space. The options are "axangle" (default)
-            for a linear scaling, "homochoric" for an equal-volume
-            scaling, or "rodrigues" for an rectilinear scaling.
-
-            Which misorientation space to plot misorientations in,
-            either "axangle" (default), "homochoric", or "rodrigues".
+            Euclidean space. The options are "axangle" (default) for a
+            linear scaling, "homochoric" for an equal-volume scaling, or
+            "rodrigues" for a rectilinear scaling.
         figure
-            If given, a new plot axis with the projection specified
-            by ``projection`` is added to the figure in the position
-            specified by "position" If not given, a new
-            figure is created.
+            If given, a new plot axis with the projection specified by
+            *projection* is added to the figure in the position
+            specified by *position*. If not given, a new figure is
+            created.
         position
             Where to add the new plot axis. 121 or (1, 2, 1) places it
             in the first of two positions in a grid of 1 row and 2
             columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
             for further details. Default is (1, 1, 1).
         return_figure
-            Whether to return the figure. Default is ``False``.
+            Whether to return the figure. Default is False.
         wireframe_kwargs
             Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.plot_wireframe`.
+            :meth:`~orix.plot.AxAnglePlot.plot_wireframe` or equivalent.
         size
             If not given, all misorientations are plotted. If given, a
-            random sample of this ``size`` of the misorientations is
+            random sample of this size of the misorientations is
             plotted.
         figure_kwargs
             Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.figure` if ``figure`` is not given.
+            :func:`matplotlib.pyplot.figure` if *figure* is not given.
         **kwargs
             Keyword arguments passed to the orix plotting class set by
-            'position'.
+            *position*.
 
         Returns
         -------
         figure
-            Figure with the added plot axis, if ``return_figure=True``.
+            Figure with the added plot axis, if *return_figure* is True.
 
         See Also
         --------
-        orix.plot.AxAnglePlot
-        orix.plot.RodriguesPlot
-        orix.plot.HomochoricPlot
+        orix.quaternion.Orientation.scatter
+        :meth:`~orix.plot.AxAnglePlot`
+        :meth:`~orix.plot.RodriguesPlot`
+        :meth:`~orix.plot.HomochoricPlot`
         """
         from orix.plot.rotation_plot import _setup_rotation_plot
 

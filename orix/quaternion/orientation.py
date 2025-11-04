@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+from typing import Literal
 import warnings
 
 import dask.array as da
@@ -724,7 +725,7 @@ class Orientation(Misorientation):
 
     def scatter(
         self,
-        projection: str = "axangle",
+        projection: Literal["axangle", "rodrigues", "homochoric", "ipf"] = "axangle",
         figure: mfigure.Figure | None = None,
         position: int | tuple[int, int, int] | SubplotSpec | None = None,
         return_figure: bool = False,
@@ -740,30 +741,28 @@ class Orientation(Misorientation):
         Parameters
         ----------
         projection
-            Which projection to use for plotting into Euclidean
-            space. The 3D options "axangle" (default) for a linear
-            scaling, "homochoric" for an equal-volume scaling, or
-            "rodrigues" for an rectilinear scaling. The 2D option
-            is "ipf" to give an inverse pole figure.
+            Which projection to use for plotting into Euclidean space.
+            The 3D options are "axangle" (default) for a linear scaling,
+            "homochoric" for an equal-volume scaling, or "rodrigues" for
+            a rectilinear scaling. The 2D option is "ipf" to give an
+            inverse pole figure.
         figure
             If given, a new plot axis with the projection specified
-            by ``projection`` is added to the figure in the position
-            specified by ``position``. If not given, a new
-            figure is created.
+            by *projection* is added to the figure in the position
+            specified by *position*. If not given, a new figure is
+            created.
         position
             Where to add the new plot axis. 121 or (1, 2, 1) places it
             in the first of two positions in a grid of 1 row and 2
             columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
-            for further details. If None, the default position of
+            for further details. If not given, the default position of
             (1, 1, 1) is assumed.
         return_figure
             Whether to return the figure. Default is False.
         wireframe_kwargs
             Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
-            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
-            :meth:`orix.plot.AxAnglePlot.plot_wireframe`. Only applies
-            to neu-Eulerian plots.
+            :meth:`~orix.plot.AxAnglePlot.plot_wireframe` or equivalent.
+            Unused if *projection* is "ipf".
         size
             If not given, all orientations are plotted. If given, a
             random sample of this `size` of the orientations is plotted.
@@ -773,22 +772,23 @@ class Orientation(Misorientation):
             Only used when plotting inverse pole figures.
         figure_kwargs
             Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.figure` if `figure` is not given.
+            :func:`matplotlib.pyplot.figure` if *figure* is not given.
         **kwargs
             Keyword arguments passed to the orix plotting class set by
-            'position'.
+            *position*.
 
         Returns
         -------
         figure
-            Figure with the added plot axis, if ``return_figure=True``.
+            Figure with the added plot axis, if *return_figure* is True.
 
         See Also
         --------
-        orix.plot.AxAnglePlot,
-        orix.plot.RodriguesPlot,
-        orix.plot.HomochoricPlot,
-        orix.plot.InversePoleFigurePlot
+        orix.quaternion.Misorientation.scatter
+        :meth:`~orix.plot.AxAnglePlot`
+        :meth:`~orix.plot.RodriguesPlot`
+        :meth:`~orix.plot.HomochoricPlot`
+        :meth:`~orix.plot.InversePoleFigurePlot`
         """
         if projection.lower() != "ipf":
             if position is None:

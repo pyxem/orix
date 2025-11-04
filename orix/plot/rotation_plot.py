@@ -37,6 +37,9 @@ if TYPE_CHECKING:  # pragma: no cover
     from orix.quaternion.rotation import Rotation
 
 
+ROTATION_PLOT_NAME = Literal["axangle", "rodrigues", "homochoric"]
+
+
 class RotationPlot(Axes3D):
     """Plot of a (mis)orientation region."""
 
@@ -181,21 +184,20 @@ projections.register_projection(HomochoricPlot)
 
 def _setup_rotation_plot(
     figure: mfigure.Figure | None = None,
-    projection: Literal["axangle", "rodrigues", "homochoric"] = "axangle",
+    projection: ROTATION_PLOT_NAME = "axangle",
     position: int | tuple | SubplotSpec | None = (1, 1, 1),
     figure_kwargs: dict | None = None,
 ) -> tuple[mfigure.Figure, AxAnglePlot | RodriguesPlot | HomochoricPlot]:
     """Return a figure and rotation plot axis of the correct type.
 
     This is a convenience method used in e.g.
-    :meth:`orix.quaternion.Orientation.scatter`.
+    :meth:`~orix.quaternion.Orientation.scatter`.
 
     Parameters
     ----------
     figure
-        If given, a new plot axis :class:`orix.plot.AxAnglePlot`,
-        :class:`orix.plot.RodriguesPlot`, or `orix.plot.HomochoricPlot`
-        is added to the figure in the position specified by `position`.
+        If given, a new axis-angle, Rodrigues, or Homochoric plot axis
+        is added to the figure in the position specified by *position*.
         If not given, a new figure is created.
     projection
         Which orientation space to plot orientations in, either
@@ -203,11 +205,11 @@ def _setup_rotation_plot(
     position
         Where to add the new plot axis. 121 or (1, 2, 1) places it
         in the first of two positions in a grid of 1 row and 2
-        columns. See :meth:`matplotlib.figure.Figure.add_subplot`
+        columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
         for further details. Default is (1, 1, 1).
     figure_kwargs
         Dictionary of keyword arguments passed to
-        :func:`matplotlib.pyplot.figure` if `figure` is not given.
+        :func:`matplotlib.pyplot.figure` if *figure* is not given.
 
     Returns
     -------
