@@ -166,33 +166,34 @@ class Object3d:
 
     @classmethod
     def random(cls, shape: int | tuple[int, ...] = 1) -> Object3d:
-        """Create object with uniformly distributed random data.
+        """Return uniformly distributed random data.
 
-        For objects that map to the surfaces of n-dimensional unit spheres
-        (unit vectors, quaternions, octonions, etc), randomly sampling values
-        for each axis gives a non-uniform sampling that coalesces near the
-        poles. One proper method is to instead sample an n-dimensional
-        gaussian distribution for each axis, then normalize the result.
+        For objects that map to the surfaces of n-dimensional unit
+        spheres (unit vectors, quaternions, octonions, etc), randomly
+        sampling values for each axis gives a non-uniform sampling that
+        coalesces near the poles. One proper method is to instead sample
+        an n-dimensional gaussian distribution for each axis, then
+        normalize the result.
 
-        For Vector3d objects, this would produce a uniform sampling of the 2D
+        For vectors, this would produce a uniform sampling of the 2D
         surface of the 3D unit sphere.
 
-        For Rotation objects, this would be a uniform sampling of the 3D
+        For rotations, this would be a uniform sampling of the 3D
         surface of the 4D quaternion unit sphere.
 
-        Note that this is not the only definition of a "random" sample, but is
-        the one most commonly appropriate when discussing vectors and rotations
-        in crystallography
+        Note that this is not the only definition of a "random" sample,
+        but is the one most commonly appropriate when discussing vectors
+        and rotations in crystallography.
 
         Parameters
         ----------
         shape
-            Shape of the object.
+            Data shape.
 
         Returns
         -------
         obj
-            Object with random data.
+            Random data.
         """
         n = int(np.prod(shape))
         obj = np.random.normal(size=[n, cls.dim])
