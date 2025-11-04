@@ -16,13 +16,11 @@ The tutorials are live and available on MyBinder: |Binder|
 Crystal geometry
 ================
 
-These tutorials cover conventions for the unit cell, symmetry operations and relevant
-reference frames, and also show how to operate with vectors in the crystal and sample
-reference frames.
+These tutorials show how to operate with vectors in the crystal and sample reference
+frames.
 
 .. nbgallery::
 
-    crystal_reference_frame
     point_groups
     crystal_directions
     inverse_pole_figures
