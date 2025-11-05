@@ -277,33 +277,33 @@ class Misorientation(Rotation):
     def from_path_ends(
         cls, points: Misorientation, closed: bool = False, steps: int = 100
     ) -> Misorientation:
-        """Return misorientations tracing the shortest path (ignoring
-        symmetry) between two or more consecutive points.
+        """Return misorientations tracing the shortest path between
+        two or more consecutive points.
 
         Parameters
         ----------
         points
-            Two or more misorientations that define waypoints along
-            a path through rotation space (SO3).
+            Two or more misorientations that define points along the
+            path.
         closed
-            Option to add a final trip from the last waypoint back to
+            Option to add a final trip from the last point back to
             the first, thus closing the loop. The default is False.
         steps
-            Number of misorientations to return along the path
-            between each pair of waypoints. The default is 100.
+            Number of misorientations to return between each point
+            along the path defined by `points`. The default is 100.
 
         Returns
         -------
         path
-            misorientations that map a path between the given waypoints.
+            regularly spaced misorientations following the shortest
+            path.
 
-        Note
-        -------
-        This function traces a path between points in SO(3), in which there
-        is one and only one direct path between every point. The equivalent
-        is not well-defined for misorientations, which define multiple
-        symmetrically-equivalent points in SO(3) with non-equivalent paths
-        between them.
+        Notes
+        -----
+        This function traces the shortest path between points without
+        any regard to symmetry. Concept of "shortest path" is not
+        well-defined for misorientations, which can define multiple
+        symmetrically equivalent points with non-equivalent paths.
         """
         # Confirm `points` are misorientations.
         if type(points) is not cls:

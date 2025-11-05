@@ -356,33 +356,32 @@ class Orientation(Misorientation):
     def from_path_ends(
         cls, points: Orientation, closed: bool = False, steps: int = 100
     ) -> Misorientation:
-        """Return orientations tracing the shortest path (ignoring
-        symmetry) between two or more consecutive points.
+        """Return orientations tracing the shortest path between two
+        or more consecutive points.
 
         Parameters
         ----------
         points
-            Two or more orientations that define waypoints along
-            a path through rotation space (SO3).
+            Two or more orientations that define points along the
+            path.
         closed
-            Option to add a final trip from the last waypoint back to
+            Option to add a final trip from the last point back to
             the first, thus closing the loop. The default is False.
         steps
-            Number of orientations to return along the path
-            between each pair of waypoints. The default is 100.
+            Number of orientations to return between each point
+            along the path defined by `points`. The default is 100.
 
         Returns
         -------
         path
-            orientations that map a path between the given waypoints.
+            regularly spaced orientations following the shortest path.
 
-        Note
-        -------
-        This function traces a path between points in SO(3), in which there
-        is one and only one direct path between every point. The equivalent
-        is not well-defined for orientations, which define multiple
-        symmetrically-equivalent points in SO(3) with non-equivalent paths
-        between them.
+        Notes
+        -----
+        This function traces the shortest path between points without
+        any regard to symmetry. Concept of "shortest path" is not
+        well-defined for orientations, which can define multiple
+        symmetrically equivalent points with non-equivalent paths.
         """
         if type(points) is not cls:
             raise TypeError(

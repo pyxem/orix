@@ -1,16 +1,22 @@
 r"""
 =========================================
- Plot Paths In Rotation and Vector Space
+Visualizing crystallographic paths
 =========================================
-This example shows how paths though either rotation or vector space
-can be plotted using ORIX. These are the shortest paths through their
-respective spaces, and thus not always straight lines in euclidean
-projections (axis-angle, stereographic, etc.).
+
+This example shows how define and plot paths through either
+rotation or vector space.This is akin to describing crystallographic
+fiber textures in metallurgy, or the shortest arcs connecting points on
+the surface of a unit sphere.
+
+In both cases, "shortest" is defined as the route that minimizes the
+movement required to transform from point to point, which is typically
+not a stright line when plotted into a euclidean projection
+(axis-angle, stereographic, etc.).
+
 This functionality is available in :class:`~orix.vector.Vector3d`,
 :class:`~orix.quaternions.Rotation`,
 :class:`~orix.quaternions.Orientation`,
-and :class:`~orix.quaternions.Misorientation`.
-"""
+and :class:`~orix.quaternions.Misorientation`."""
 
 from matplotlib import cm
 import matplotlib.pyplot as plt
@@ -31,16 +37,18 @@ np.random.seed(2319)  # Create reproducible random data
 fig = plt.figure(figsize=(6, 6))
 n_steps = 30
 
-# ========= #
+# ============ #
 # Example 1: Plotting multiple paths into a user defined axis
-# ========= #
+
 # This subplot shows several paths through the cubic (m3m) fundamental zone
 # created by rotating 20 randomly chosen points 30 degrees around the z axis.
 # these paths are drawn in rodrigues space, which is an equal-angle projection
 # of rotation space. As such, notice how all lines tracing out axial rotations
 # are straight, but lines starting closer to the center of the fundamental zone
 # appear shorter.
+
 # the sampe paths are then also plotted on an Inverse Pole Figure (IPF) plot.
+
 rod_ax = fig.add_subplot(2, 2, 1, projection="rodrigues", proj_type="ortho")
 ipf_ax = fig.add_subplot(2, 2, 2, projection="ipf", symmetry=Oh)
 
@@ -86,12 +94,11 @@ rod_ax.set_title(r"Rodrigues, multiple paths")
 ipf_ax.set_title(r"IPF, multiple paths        ")
 
 
-# %%
-# ========= #
+# ============ #
 # Example 2: Plotting a path using `Rotation.scatter'
-# ========= #
 # This subplot traces the path of an object rotated 90 degrees around the
 # X axis, then 90 degrees around the Y axis.
+
 rots = Orientation.from_axes_angles(
     [[1, 0, 0], [1, 0, 0], [0, 1, 0]], [0, 90, 90], degrees=True, symmetry=C1
 )
@@ -99,7 +106,10 @@ rots[2] = rots[1] * rots[2]
 path = Orientation.from_path_ends(rots, steps=n_steps)
 # create a list of RGBA color values for a gradient red line and blue line
 path_colors = np.vstack(
-    [cm.Reds(np.linspace(0.5, 1, n_steps)), cm.Blues(np.linspace(0.5, 1, n_steps))]
+    [
+        cm.Reds(np.linspace(0.5, 1, n_steps)),
+        cm.Blues(np.linspace(0.5, 1, n_steps)),
+    ]
 )
 
 # Here, we instead use the in-built plotting tool from
@@ -108,11 +118,10 @@ path_colors = np.vstack(
 path.scatter(figure=fig, position=[2, 2, 3], marker=">", c=path_colors)
 fig.axes[2].set_title(r"Axis-Angle, two $90^\circ$ rotations")
 
-# %%
 
-# ========= #
+# ============ #
 # Example 3: paths in stereographic plots
-# ========= #
+
 # This is similar to the second example, but now vectors are being rotated
 # 30 degrees around the [1,1,1] axis on a stereographic plot.
 

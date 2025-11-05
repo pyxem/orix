@@ -697,21 +697,22 @@ class Quaternion(Object3d):
     ) -> Quaternion:
         """Return quaternions tracing the shortest path between two or
         more consecutive points.
+
         Parameters
         ----------
         points
-            Two or more quaternions that define points along a path
-            through rotation space (SO3).
+            Two or more quaternions that define points along the path.
         closed
-            Option to add a final trip from the last waypoint back to
+            Option to add a final trip from the last point back to
             the first, thus closing the loop. The default is False.
         steps
-            Number of quaternions to return along the path between each
-            pair of waypoints. The default is 100.
+            Number of quaternions to return between each point along
+            the path defined by `points`. The default is 100.
+
         Returns
         -------
         path
-            quaternions that map a path between the given waypoints.
+            regularly spaced quaternions following the shortest path.
         """
         points = points.flatten()
         n = points.size
