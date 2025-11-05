@@ -21,45 +21,26 @@ r"""
 Orientation projections
 =======================
 
-This example demonstrates the four different projections used by ORX to
-project Orientations (which are non-Euclidean) into either 2D or 3D
-orthogonal space. This is done by subclassing matplotlib's Axes and
-Axes3D classes.
+This example demonstrates how ORIX can be used to plot orientations.
 
-There are four options for plotting projections. The first and only 2D
-option is :class:`~orix.plot.InversePoleFigurePlot`, which is calculated
-as  :math:`(X, Y) = ((v_x/(1-v_z)),(v_y/(1-v_z)))`. This is computationally
-efficient and translates well to print publication, but loses orientation
-information perpendicular to whatever axis is being plotted, similar to a 2D
-X-ray of a skeleton.
+Plotting orientations requires defining some projection between
+orientation space and Euclidean space, which will by necessity
+introduce distortion. This problem is similar to how any 2D map
+of Earth's surface will always have a spatially-dependent scalebar.
 
-The next three are 3D axis-angle projections, sometimes also called
-Neo-Eulerian projections. Here, the fact that any rotation can be described
-by a twist math:`\omega` around an axis :math:`\hat{\mathbf{n}}`. The
-math:`(X,Y,Z)` coordinates of the orientation's projection is the
-math:`(V_x,V_y,V_z)` coordinates of a unit vector describing
-math:`\hat{\mathbf{n}}`, scaled by a function of :math:`\omega`.
-The scaling options are:
+ORIX currently includes four common projections, three Neo-Eulerian projections for
+3D plots and one Stereographic projection for 2D plots. All four begin with the
+axis-angle representation of an orientation as an angular rotation :math:`\omega` around a
+unit vector axis :math:`\hat{\mathbf{n}}`.
 
-    * :class:`~orix.plot.AxAnglePlot`:
-        math:`\omega * \hat{\mathbf{n}}`, A linear projection
-    * :class:`~orix.plot.RodriguesPlot`
-        math:`tan(\omega/2) * \hat{\mathbf{n}}`, A Rectilinear projection,
-        where orientations sharing a common rotation axis linearly align
-    * :class:`~orix.plot.HomochoricPlot`
-        math:`(0.75*(\omega-sin(\omega)))^{1/3} * \hat{\mathbf{n}}`, An
-        equal-volume projection, where a cube placed anywhere inside takes
-        up an identical solid angle in orientation space.
+    - :class:`~orix.plot.AxAnglePlot` :math:`(X,Y,Z) = \omega * \hat{\mathbf{n}}`, A linear Neo-Eulerian projection.
+    - :class:`~orix.plot.RodriguesPlot` :math:`(X,Y,Z) = tan(\omega/2) * \hat{\mathbf{n}}`,  A Rectilinear Neo-Eulerian projection, where orientations sharing a common rotation axis are linearly aligned.
+    - :class:`~orix.plot.HomochoricPlot` :math:`(X,Y,Z) = (0.75*(\omega-sin(\omega)))^{1/3} * \hat{\mathbf{n}}`, An equal-volume Neo-Eulerian projection, where a cube placed anywhere inside takes up an identical solid angle in orientation space.
+    - :class:`~orix.plot.InversePoleFigurePlot` :math:`(X,Y) = ((\hat{\mathbf{n}_x}/(1-\hat{\mathbf{n}_z})),(\hat{\mathbf{n}_y}/(1-\hat{\mathbf{n}_z})))` : An angle-preserving stereogrpahic plot.
 
-Note this list is not exhaustive and the descriptions are simplified.
-For a deeper dive into the advantages and disadganvages of these projections
-as well as enlightening comparisions of their warping of orientation space,
-refer to the following open access publication:
-
-
-.. _On three-dimensional misorientation spaces: https://royalsocietypublishing.org/doi/10.1098/rspa.2017.0274
-
-(doi link: https://doi.org/10.1098/rspa.2017.0274)
+More information on these and other projections can be found in the
+open-access publication "On three-dimensional misorientation spaces"
+(https://doi.org/10.1098/rspa.2017.0274).
 
 """
 
