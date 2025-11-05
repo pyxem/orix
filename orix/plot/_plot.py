@@ -19,14 +19,14 @@
 
 import matplotlib.projections as mprojections
 
-from .crystal_map_plot import CrystalMapPlot
-from .rotation_plot import AxAnglePlot, RodriguesPlot
-from .stereographic_plot import StereographicPlot
+from orix.plot.crystal_map_plot import CrystalMapPlot
+from orix.plot.rotation_plot import AxAnglePlot, HomochoricPlot, RodriguesPlot
+from orix.plot.stereographic_plot import StereographicPlot
 
 # Inverse pole figure plot class must be imported below stereographic
 # plot class, since the former imports the latter
 # isort: off
-from .inverse_pole_figure_plot import InversePoleFigurePlot
+from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot
 
 # isort: on
 
@@ -43,6 +43,7 @@ def register_projections() -> None:
     :class:`~orix.plot.InversePoleFigurePlot`
     :class:`~orix.plot.AxAnglePlot`
     :class:`~orix.plot.RodriguesPlot`
+    :class:`~orix.plot.HomochoricPlot`
     :class:`~orix.plot.StereographicPlot`
 
     Examples
@@ -63,6 +64,7 @@ def register_projections() -> None:
     projections = [
         AxAnglePlot,
         CrystalMapPlot,
+        HomochoricPlot,
         InversePoleFigurePlot,
         RodriguesPlot,
         StereographicPlot,

@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+from typing import Literal
 import warnings
 
 import dask.array as da
@@ -31,7 +32,11 @@ from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix.quaternion.misorientation import Misorientation
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
+from orix.quaternion.symmetry import (
+    C1,
+    Symmetry,
+    _get_unique_symmetry_elements,
+)
 from orix.vector.miller import Miller
 from orix.vector.vector3d import Vector3d
 
@@ -720,9 +725,9 @@ class Orientation(Misorientation):
 
     def scatter(
         self,
-        projection: str = "axangle",
+        projection: Literal["axangle", "rodrigues", "homochoric", "ipf"] = "axangle",
         figure: mfigure.Figure | None = None,
-        position: int | tuple[int, int, int] | SubplotSpec = (1, 1, 1),
+        position: int | tuple[int, int, int] | SubplotSpec | None = None,
         return_figure: bool = False,
         wireframe_kwargs: dict | None = None,
         size: int | None = None,
@@ -730,59 +735,67 @@ class Orientation(Misorientation):
         figure_kwargs: dict | None = None,
         **kwargs,
     ) -> mfigure.Figure | None:
-        """Plot orientations in axis-angle space, the Rodrigues
-        fundamental zone, or an inverse pole figure (IPF) given a sample
-        direction.
+        """Plot misorientations in 3D Euclidean space using either
+        a 3D neo-Eulerian projection or a 2D stereographic projection.
 
         Parameters
         ----------
         projection
-            Which orientation space to plot orientations in, either
-            "axangle" (default), "rodrigues" or "ipf" (inverse pole
-            figure).
+            Which projection to use for plotting into Euclidean space.
+            The 3D options are "axangle" (default) for a linear scaling,
+            "homochoric" for an equal-volume scaling, or "rodrigues" for
+            a rectilinear scaling. The 2D option is "ipf" to give an
+            inverse pole figure.
         figure
-            If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
-            :class:`~orix.plot.RodriguesPlot` is added to the figure in
-            the position specified by `position`. If not given, a new
-            figure is created.
+            If given, a new plot axis with the projection specified
+            by *projection* is added to the figure in the position
+            specified by *position*. If not given, a new figure is
+            created.
         position
             Where to add the new plot axis. 121 or (1, 2, 1) places it
             in the first of two positions in a grid of 1 row and 2
             columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
-            for further details. Default is (1, 1, 1).
+            for further details. If not given, the default position of
+            (1, 1, 1) is assumed.
         return_figure
             Whether to return the figure. Default is False.
         wireframe_kwargs
             Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
-            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+            :meth:`~orix.plot.AxAnglePlot.plot_wireframe` or equivalent.
+            Unused if *projection* is "ipf".
         size
             If not given, all orientations are plotted. If given, a
             random sample of this `size` of the orientations is plotted.
         direction
             Sample direction to plot with respect to crystal directions.
             If not given, the out of plane direction, sample Z, is used.
-            Only used when plotting IPF(s).
+            Only used when plotting inverse pole figures.
         figure_kwargs
             Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.figure` if `figure` is not given.
+            :func:`matplotlib.pyplot.figure` if *figure* is not given.
         **kwargs
-            Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.scatter`,
-            :meth:`orix.plot.RodriguesPlot.scatter`, or
-            :meth:`orix.plot.InversePoleFigurePlot.scatter`.
+            Keyword arguments passed to the orix plotting class set by
+            *position*.
 
         Returns
         -------
         figure
-            Figure with the added plot axis, if ``return_figure=True``.
+            Figure with the added plot axis, if *return_figure* is True.
 
         See Also
         --------
-        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot,
-        orix.plot.InversePoleFigurePlot
+        orix.quaternion.Misorientation.scatter
+        :meth:`~orix.plot.AxAnglePlot`
+        :meth:`~orix.plot.RodriguesPlot`
+        :meth:`~orix.plot.HomochoricPlot`
+        :meth:`~orix.plot.InversePoleFigurePlot`
         """
+        # TODO: Move all plot handling to the plot module, where it
+        # belongs
+
         if projection.lower() != "ipf":
+            if position is None:
+                position = (1, 1, 1)
             figure = super().scatter(
                 projection=projection,
                 figure=figure,
@@ -800,22 +813,32 @@ class Orientation(Misorientation):
 
             if figure is None:
                 # Determine which hemisphere(s) to show
-                symmetry = self.symmetry
-                sector = symmetry.fundamental_sector
+                sector = self.symmetry.fundamental_sector
                 if np.any(sector.vertices.polar > np.pi / 2):
                     hemisphere = "both"
                 else:
                     hemisphere = "upper"
 
                 figure, axes = _setup_inverse_pole_figure_plot(
-                    symmetry=symmetry,
+                    symmetry=self.symmetry,
                     direction=direction,
                     hemisphere=hemisphere,
                     figure_kwargs=figure_kwargs,
                 )
-            else:
+            elif position is None and len(figure.axes) > 0:
                 axes = np.asarray(figure.axes)
-
+            else:
+                # TODO: Separate this handling out so that we can use
+                # it more places
+                if position is None:
+                    position = (1, 1, 1)
+                elif isinstance(position, int):
+                    position = tuple(map(int, str(position)))
+                axes = [
+                    figure.add_subplot(
+                        *position, projection="ipf", symmetry=self.symmetry
+                    )
+                ]
             for ax in axes:
                 ax.scatter(self, **kwargs)
 

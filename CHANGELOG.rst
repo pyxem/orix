@@ -46,6 +46,9 @@ Changed
   This is faster and uses less memory.
 - Functions and classes are now loaded lazily with `lazy-loader`.
 - *matplotlib-scalebar* is now an optional dependency.
+- Passing a *projection* to ``Orientation.scatter()`` with a *position* argument now
+  allows subplots in the figure to have different projections (Matplotlib's own or our
+  custom ones).
 
 Removed
 -------

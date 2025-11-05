@@ -17,7 +17,7 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from matplotlib import projections
 import matplotlib.collections as mcollections
@@ -29,12 +29,15 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 import numpy as np
 
-from orix.vector.neo_euler import AxAngle, Rodrigues
+from orix.vector.neo_euler import AxAngle, Homochoric, Rodrigues
 
 if TYPE_CHECKING:  # pragma: no cover
     from orix.quaternion.misorientation import Misorientation
     from orix.quaternion.orientation_region import OrientationRegion
     from orix.quaternion.rotation import Rotation
+
+
+ROTATION_PLOT_NAME = Literal["axangle", "rodrigues", "homochoric"]
 
 
 class RotationPlot(Axes3D):
@@ -154,59 +157,66 @@ class RotationPlot(Axes3D):
 
 
 class RodriguesPlot(RotationPlot):
-    """Plot rotations in Rodrigues-Frank space."""
+    """Plot rotations in Rodrigues-Frank (rectilinear) axis-angle space."""
 
     name = "rodrigues"
     transformation_class = Rodrigues
 
 
 class AxAnglePlot(RotationPlot):
-    """Plot rotations in a axis-angle space."""
+    """Plot rotations in a linearly scalled axis-angle space."""
 
     name = "axangle"
     transformation_class = AxAngle
 
 
+class HomochoricPlot(RotationPlot):
+    """Plot rotations in homochoric (equi-volume) axis-angle space."""
+
+    name = "homochoric"
+    transformation_class = Homochoric
+
+
 projections.register_projection(RodriguesPlot)
 projections.register_projection(AxAnglePlot)
+projections.register_projection(HomochoricPlot)
 
 
 def _setup_rotation_plot(
     figure: mfigure.Figure | None = None,
-    projection: str = "axangle",
+    projection: ROTATION_PLOT_NAME = "axangle",
     position: int | tuple | SubplotSpec | None = (1, 1, 1),
     figure_kwargs: dict | None = None,
-) -> tuple[mfigure.Figure, AxAnglePlot | RodriguesPlot]:
+) -> tuple[mfigure.Figure, AxAnglePlot | RodriguesPlot | HomochoricPlot]:
     """Return a figure and rotation plot axis of the correct type.
 
     This is a convenience method used in e.g.
-    :meth:`orix.quaternion.Orientation.scatter`.
+    :meth:`~orix.quaternion.Orientation.scatter`.
 
     Parameters
     ----------
     figure
-        If given, a new plot axis :class:`orix.plot.AxAnglePlot` or
-        :class:`orix.plot.RodriguesPlot` is added to the figure in
-        the position specified by `position`. If not given, a new
-        figure is created.
+        If given, a new axis-angle, Rodrigues, or Homochoric plot axis
+        is added to the figure in the position specified by *position*.
+        If not given, a new figure is created.
     projection
         Which orientation space to plot orientations in, either
-        "axangle" (default) or "rodrigues".
+        "axangle" (default), "rodrigues", or 'homochoric'.
     position
         Where to add the new plot axis. 121 or (1, 2, 1) places it
         in the first of two positions in a grid of 1 row and 2
-        columns. See :meth:`matplotlib.figure.Figure.add_subplot`
+        columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
         for further details. Default is (1, 1, 1).
     figure_kwargs
         Dictionary of keyword arguments passed to
-        :func:`matplotlib.pyplot.figure` if `figure` is not given.
+        :func:`matplotlib.pyplot.figure` if *figure* is not given.
 
     Returns
     -------
     figure
         Figure with the added plot axis.
     ax
-        The axis-angle or Rodrigues plot axis.
+        The plot axis.
     """
     if figure is None:
         if figure_kwargs is None:

@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from itertools import product as iproduct
-from typing import Any
+from typing import Any, Literal
 import warnings
 
 import dask.array as da
@@ -34,7 +34,11 @@ from tqdm import tqdm
 from orix._utils.deprecation import deprecated
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
+from orix.quaternion.symmetry import (
+    C1,
+    Symmetry,
+    _get_unique_symmetry_elements,
+)
 from orix.vector.miller import Miller
 
 
@@ -206,7 +210,10 @@ class Misorientation(Rotation):
         out = list(out)
 
         try:
-            out[0].symmetry = (initial.phase.point_group, other.phase.point_group)
+            out[0].symmetry = (
+                initial.phase.point_group,
+                other.phase.point_group,
+            )
         except (AttributeError, ValueError):
             pass
 
@@ -416,7 +423,7 @@ class Misorientation(Rotation):
 
     def scatter(
         self,
-        projection: str = "axangle",
+        projection: Literal["axangle", "rodrigues", "homochoric"] = "axangle",
         figure: mfigure.Figure | None = None,
         position: int | tuple[int, int, int] | SubplotSpec = (1, 1, 1),
         return_figure: bool = False,
@@ -425,51 +432,53 @@ class Misorientation(Rotation):
         figure_kwargs: dict | None = None,
         **kwargs,
     ) -> mfigure.Figure | None:
-        """Plot misorientations in axis-angle space or the Rodrigues
-        fundamental zone.
+        """Plot misorientations in 3D Euclidean space using a
+        Neo-Eulerian projection.
 
         Parameters
         ----------
         projection
-            Which misorientation space to plot misorientations in,
-            either ``"axangle"`` (default) or ``"rodrigues"``.
+            Which axis-angle projection to use for plotting into
+            Euclidean space. The options are "axangle" (default) for a
+            linear scaling, "homochoric" for an equal-volume scaling, or
+            "rodrigues" for a rectilinear scaling.
         figure
-            If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
-            :class:`~orix.plot.RodriguesPlot` is added to the figure in
-            the position specified by ``position``. If not given, a new
-            figure is created.
+            If given, a new plot axis with the projection specified by
+            *projection* is added to the figure in the position
+            specified by *position*. If not given, a new figure is
+            created.
         position
             Where to add the new plot axis. 121 or (1, 2, 1) places it
             in the first of two positions in a grid of 1 row and 2
             columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
             for further details. Default is (1, 1, 1).
         return_figure
-            Whether to return the figure. Default is ``False``.
+            Whether to return the figure. Default is False.
         wireframe_kwargs
             Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
-            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+            :meth:`~orix.plot.AxAnglePlot.plot_wireframe` or equivalent.
         size
             If not given, all misorientations are plotted. If given, a
-            random sample of this ``size`` of the misorientations is
+            random sample of this size of the misorientations is
             plotted.
         figure_kwargs
             Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.figure` if ``figure`` is not given.
+            :func:`matplotlib.pyplot.figure` if *figure* is not given.
         **kwargs
-            Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.scatter` or
-            :meth:`orix.plot.RodriguesPlot.scatter`.
+            Keyword arguments passed to the orix plotting class set by
+            *position*.
 
         Returns
         -------
         figure
-            Figure with the added plot axis, if ``return_figure=True``.
+            Figure with the added plot axis, if *return_figure* is True.
 
         See Also
         --------
-        orix.plot.AxAnglePlot
-        orix.plot.RodriguesPlot
+        orix.quaternion.Orientation.scatter
+        :meth:`~orix.plot.AxAnglePlot`
+        :meth:`~orix.plot.RodriguesPlot`
+        :meth:`~orix.plot.HomochoricPlot`
         """
         from orix.plot.rotation_plot import _setup_rotation_plot
 
