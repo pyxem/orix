@@ -790,6 +790,9 @@ class Orientation(Misorientation):
         :meth:`~orix.plot.HomochoricPlot`
         :meth:`~orix.plot.InversePoleFigurePlot`
         """
+        # TODO: Move all plot handling to the plot module, where it
+        # belongs
+
         if projection.lower() != "ipf":
             if position is None:
                 position = (1, 1, 1)
@@ -825,8 +828,12 @@ class Orientation(Misorientation):
             elif position is None and len(figure.axes) > 0:
                 axes = np.asarray(figure.axes)
             else:
+                # TODO: Separate this handling out so that we can use
+                # it more places
                 if position is None:
                     position = (1, 1, 1)
+                elif isinstance(position, int):
+                    position = tuple(map(int, str(position)))
                 axes = [
                     figure.add_subplot(
                         *position, projection="ipf", symmetry=self.symmetry
