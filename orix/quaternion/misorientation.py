@@ -297,7 +297,6 @@ class Misorientation(Rotation):
         path
             Regularly spaced misorientations along the path.
 
-
         See Also
         --------
         :class:`~orix.quaternion.Quaternion.from_path_ends`,
