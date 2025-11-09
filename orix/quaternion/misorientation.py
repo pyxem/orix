@@ -277,8 +277,8 @@ class Misorientation(Rotation):
     def from_path_ends(
         cls, points: Misorientation, closed: bool = False, steps: int = 100
     ) -> Misorientation:
-        """Return misorientations tracing the shortest path between
-        two or more consecutive points.
+        """Return misorientations tracing the shortest path between two
+        or more consecutive points.
 
         Parameters
         ----------
@@ -286,31 +286,35 @@ class Misorientation(Rotation):
             Two or more misorientations that define points along the
             path.
         closed
-            Option to add a final trip from the last point back to
-            the first, thus closing the loop. The default is False.
+            Add a final trip from the last point back to the first, thus
+            closing the loop. Default is False.
         steps
-            Number of misorientations to return between each point
-            along the path defined by `points`. The default is 100.
+            Number of misorientations to return between each point along
+            the path given by *points*. Default is 100.
 
         Returns
         -------
         path
-            regularly spaced misorientations following the shortest
-            path.
+            Regularly spaced misorientations along the path.
+
+
+        See Also
+        --------
+        :class:`~orix.quaternion.Quaternion.from_path_ends`,
+        :class:`~orix.quaternion.Orientation.from_path_ends`
 
         Notes
         -----
         This function traces the shortest path between points without
-        any regard to symmetry. Concept of "shortest path" is not
+        considering symmetry. The concept of "shortest path" is not
         well-defined for misorientations, which can define multiple
         symmetrically equivalent points with non-equivalent paths.
         """
-        # Confirm `points` are misorientations.
-        if type(points) is not cls:
+        points_type = type(points)
+        if points_type is not cls:
             raise TypeError(
-                f"Points must be a Misorientation, not of type {type(points)}"
+                f"Points must be misorientations, not of type {points_type}"
             )
-        # Create a path through Quaternion space, then reapply the symmetry.
         out = Rotation.from_path_ends(points=points, closed=closed, steps=steps)
         return cls(out.data, symmetry=points.symmetry)
 
