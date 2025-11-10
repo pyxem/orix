@@ -34,8 +34,8 @@ Added
   An example of a custom projection is the :class:`~orix.plot.StereographicPlot`.
   This function replaces the previous behavior of relying on a side-effect of importing
   the :mod:`orix.plot` module, which also registered the projections.
-- :func:`~orix.quaternion.Rotation.from_path_ends` returns evenly spaced points
-  mapping the shortest path betwen two or more rotations.
+- Method ``from_path_ends()`` to return quaternions, rotations, orientations, or
+  misorientations along the shortest path between two or more points.
 
 Changed
 -------

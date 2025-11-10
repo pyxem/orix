@@ -317,52 +317,52 @@ def test_from_path_ends():
     In particular, ensure the class of the returned object matches the class
     used for creating it, NOT the class of the object passed in.
     """
-    q = Quaternion.random(10)
-    r = Rotation.random(10)
-    o = Orientation.random(10, Oh)
-    m = Misorientation.random(10, [D3, Oh])
+    qu = Quaternion.random(10)
+    rot = Rotation.random(10)
+    ori = Orientation.random(10, Oh)
+    mori = Misorientation.random(10, [D3, Oh])
 
     # Quaternion sanity checks
-    a = Quaternion.from_path_ends(q)
-    assert isinstance(a, Quaternion)
-    b = Quaternion.from_path_ends(r)
-    assert isinstance(b, Quaternion)
-    c = Quaternion.from_path_ends(o)
-    assert isinstance(c, Quaternion)
-    d = Quaternion.from_path_ends(m)
-    assert isinstance(d, Quaternion)
+    qu_path1 = Quaternion.from_path_ends(qu)
+    assert isinstance(qu_path1, Quaternion)
+    qu_path2 = Quaternion.from_path_ends(rot)
+    assert isinstance(qu_path2, Quaternion)
+    qu_path3 = Quaternion.from_path_ends(ori)
+    assert isinstance(qu_path3, Quaternion)
+    qu_path4 = Quaternion.from_path_ends(mori)
+    assert isinstance(qu_path4, Quaternion)
 
     # Rotation sanity checks
-    a = Rotation.from_path_ends(q)
-    assert isinstance(a, Rotation)
-    b = Rotation.from_path_ends(r)
-    assert isinstance(b, Rotation)
-    c = Rotation.from_path_ends(o)
-    assert isinstance(c, Rotation)
-    d = Rotation.from_path_ends(m)
-    assert isinstance(d, Rotation)
+    rot_path1 = Rotation.from_path_ends(qu)
+    assert isinstance(rot_path1, Rotation)
+    rot_path2 = Rotation.from_path_ends(rot)
+    assert isinstance(rot_path2, Rotation)
+    rot_path3 = Rotation.from_path_ends(ori)
+    assert isinstance(rot_path3, Rotation)
+    rot_path4 = Rotation.from_path_ends(mori)
+    assert isinstance(rot_path4, Rotation)
 
     # Misorientation sanity checks
-    with pytest.raises(TypeError, match="Points must be a Misorientation"):
-        a = Misorientation.from_path_ends(q)
-    with pytest.raises(TypeError, match="Points must be a Misorientation"):
-        b = Misorientation.from_path_ends(r)
-    with pytest.raises(TypeError, match="Points must be a Misorientation"):
-        c = Misorientation.from_path_ends(o)
-    d = Misorientation.from_path_ends(m)
-    assert isinstance(d, Misorientation)
-    assert d.symmetry == m.symmetry
+    with pytest.raises(TypeError, match="Points must be misorientations, "):
+        Misorientation.from_path_ends(qu)
+    with pytest.raises(TypeError, match="Points must be misorientations, "):
+        Misorientation.from_path_ends(rot)
+    with pytest.raises(TypeError, match="Points must be misorientations, "):
+        Misorientation.from_path_ends(ori)
+    mori_path = Misorientation.from_path_ends(mori)
+    assert isinstance(mori_path, Misorientation)
+    assert mori_path.symmetry == mori.symmetry
 
     # Orientation sanity checks
-    with pytest.raises(TypeError, match="Points must be an Orientation"):
-        a = Orientation.from_path_ends(q)
-    with pytest.raises(TypeError, match="Points must be an Orientation"):
-        b = Orientation.from_path_ends(r)
-    c = Orientation.from_path_ends(o)
-    assert c.symmetry == o.symmetry
-    assert isinstance(c, Orientation)
-    with pytest.raises(TypeError, match="Points must be an Orientation"):
-        d = Orientation.from_path_ends(m)
+    with pytest.raises(TypeError, match="Points must be orientations, "):
+        Orientation.from_path_ends(qu)
+    with pytest.raises(TypeError, match="Points must be orientations, "):
+        Orientation.from_path_ends(rot)
+    ori_path = Orientation.from_path_ends(ori)
+    assert ori_path.symmetry == ori.symmetry
+    assert isinstance(ori_path, Orientation)
+    with pytest.raises(TypeError, match="Points must be orientations, "):
+        qu_path4 = Orientation.from_path_ends(mori)
 
 
 class TestMisorientation:

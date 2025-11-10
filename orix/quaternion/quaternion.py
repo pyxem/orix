@@ -703,16 +703,21 @@ class Quaternion(Object3d):
         points
             Two or more quaternions that define points along the path.
         closed
-            Option to add a final trip from the last point back to
-            the first, thus closing the loop. The default is False.
+            Add a final trip from the last point back to the first, thus
+            closing the loop. Default is False.
         steps
             Number of quaternions to return between each point along
-            the path defined by `points`. The default is 100.
+            the path given by *points*. Default is 100.
 
         Returns
         -------
         path
-            regularly spaced quaternions following the shortest path.
+            Regularly spaced quaternions along the path.
+
+        See Also
+        --------
+        :class:`~orix.quaternion.Orientation.from_path_ends`,
+        :class:`~orix.quaternion.Misorientation.from_path_ends`
         """
         points = points.flatten()
         n = points.size
@@ -721,16 +726,19 @@ class Quaternion(Object3d):
 
         path_list = []
         for i in range(n):
-            # get start and end for this leg of the trip
-            q1 = points[i]
-            q2 = points[(i + 1) % (points.size)]
-            # find the ax/ang describing the trip between points
-            ax, ang = _conversions.qu2ax((~q1 * q2).data)
-            # get 'steps=n' steps along the trip and add them to the journey
-            trip = Quaternion.from_axes_angles(ax, np.linspace(0, ang, steps))
-            path_list.append((q1 * (trip.flatten())).data)
+            # Get start and end for this part of the jorney
+            qu1 = points[i]
+            qu2 = points[(i + 1) % (points.size)]
+            # Get the axis-angle pair describing this part
+            ax, ang = _conversions.qu2ax((~qu1 * qu2).data)
+            # Get steps along the trip and add them to the journey
+            angles = np.linspace(0, ang, steps)
+            qu_trip = Quaternion.from_axes_angles(ax, angles)
+            path_list.append((qu1 * qu_trip.flatten()).data)
+
         path_data = np.concatenate(path_list, axis=0)
         path = cls(path_data)
+
         return path
 
     @classmethod
