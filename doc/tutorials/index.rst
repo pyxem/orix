@@ -55,7 +55,6 @@ These tutorials cover how to segment points in a crystal map into clusters based
 
 .. nbgallery::
 
-    clustering_across_fundamental_region_boundaries
     clustering_orientations
     clustering_misorientations
 
