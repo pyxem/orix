@@ -147,7 +147,7 @@ for vec in vecs:
         vec_ax.scatter(path_ends[0], c=ipf_colormap.direction2color(path_ends[0]))
         continue
 
-    # Color each path using a gradient pased on the IPF coloring
+    # Color each path using a gradient based on the IPF coloring
     colors3 = ipf_colormap.direction2color(vec)
     path = Vector3d.from_path_ends(path_ends, steps=100)
     colors3_segment = colors3 * np.linspace(0.25, 1, path.size)[:, np.newaxis]

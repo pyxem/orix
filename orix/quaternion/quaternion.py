@@ -726,7 +726,7 @@ class Quaternion(Object3d):
 
         path_list = []
         for i in range(n):
-            # Get start and end for this part of the jorney
+            # Get start and end for this part of the journey
             qu1 = points[i]
             qu2 = points[(i + 1) % (points.size)]
             # Get the axis-angle pair describing this part
