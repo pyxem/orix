@@ -353,6 +353,47 @@ class Orientation(Misorientation):
         return O
 
     @classmethod
+    def from_path_ends(
+        cls, points: Orientation, closed: bool = False, steps: int = 100
+    ) -> Misorientation:
+        """Return orientations tracing the shortest path between two or
+        more consecutive points.
+
+        Parameters
+        ----------
+        points
+            Two or more orientations that define points along the path.
+        closed
+            Add a final trip from the last point back to the first, thus
+            closing the loop. Default is False.
+        steps
+            Number of orientations to return between each point along
+            the path given by *points*. Default is 100.
+
+        Returns
+        -------
+        path
+            Regularly spaced orientations along the path.
+
+        See Also
+        --------
+        :class:`~orix.quaternion.Quaternion.from_path_ends`,
+        :class:`~orix.quaternion.Misorientation.from_path_ends`
+
+        Notes
+        -----
+        This function traces the shortest path between points without
+        considering symmetry. The concept of "shortest path" is not
+        well-defined for orientations, which can define multiple
+        symmetrically equivalent points with non-equivalent paths.
+        """
+        points_type = type(points)
+        if points_type is not cls:  # Disallow misorientations
+            raise TypeError(f"Points must be orientations, not of type {points_type}")
+        out = Rotation.from_path_ends(points=points, closed=closed, steps=steps)
+        return cls(out.data, symmetry=points.symmetry)
+
+    @classmethod
     def random(
         cls, shape: int | tuple[int, ...] = 1, symmetry: Symmetry | None = None
     ) -> Orientation:

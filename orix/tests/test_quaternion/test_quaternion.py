@@ -336,6 +336,49 @@ class TestQuaternion:
         assert Q1 != Q2
         assert Q1 == Q2.inv()
 
+    def test_from_path_ends(self):
+        # choose a path with repeats and 180 tilts to test edge cases
+        waypoints = Quaternion(
+            data=np.array(
+                [
+                    [1, 0, 0, 0],
+                    [1, 0, 0, 0],
+                    [1, 1, 0, 0],
+                    [1, 0, 1, 0],
+                    [1, 0, 0, 1],
+                    [1, 0, 0, 1],
+                    [1, 0, -1, 0],
+                    [1, 0, 1, 0],
+                    [-1, 0, 1, 0],
+                    [1, 0, 0, -1],
+                    [-1, 0, 0, -1],
+                    [-1, 0, 0, 1],
+                ]
+            )
+        )
+        path = Quaternion.from_path_ends(waypoints)
+        loop = Quaternion.from_path_ends(waypoints, closed=True, steps=11)
+        # check the sizes are as expected
+        assert path.shape == (1100,)
+        assert loop.shape == (132,)
+        # check the spacing between points is homogenous
+        path_spacing = [(x[1:]).dot(x[:-1]) for x in path.reshape(11, 100)]
+        loop_spacing = [(x[1:]).dot(x[:-1]) for x in loop.reshape(12, 11)]
+        assert np.all(np.std(path_spacing, axis=1) < 1e-12)
+        assert np.all(np.std(loop_spacing, axis=1) < 1e-12)
+
+    def test_from_path_ends_fiber(self):
+        # check that a linear path in quaternion space follows an explicitly defined
+        # fiber along the same path.
+        # this ensures the path is the shortest distance in SO3 space, (as opposed
+        # to rodrigues or quaternion space) and also evenly spaced along the path.
+        Q1 = Quaternion.identity()
+        Q2 = Quaternion.from_axes_angles([1, 1, 1], 60, degrees=True)
+        Q12 = Quaternion.stack((Q1, Q2))
+        Q_path1 = Quaternion.from_axes_angles([1, 1, 1], np.arange(59), degrees=True)
+        Q_path2 = Quaternion.from_path_ends(Q12, steps=Q_path1.size)
+        assert np.allclose(Q_path1.dot(Q_path2), 1, atol=1e-3)
+
 
 class TestToFromEuler:
     """These tests address .to_euler() and .from_euler()."""

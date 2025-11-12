@@ -311,6 +311,60 @@ def test_symmetry_property_wrong_number_of_values_misorientation(error_type, val
         o.symmetry = value
 
 
+def test_from_path_ends():
+    """check from_path_ends returns what you would expect and
+    preserves symmetry information.
+    In particular, ensure the class of the returned object matches the class
+    used for creating it, NOT the class of the object passed in.
+    """
+    qu = Quaternion.random(10)
+    rot = Rotation.random(10)
+    ori = Orientation.random(10, Oh)
+    mori = Misorientation.random(10, [D3, Oh])
+
+    # Quaternion sanity checks
+    qu_path1 = Quaternion.from_path_ends(qu)
+    assert isinstance(qu_path1, Quaternion)
+    qu_path2 = Quaternion.from_path_ends(rot)
+    assert isinstance(qu_path2, Quaternion)
+    qu_path3 = Quaternion.from_path_ends(ori)
+    assert isinstance(qu_path3, Quaternion)
+    qu_path4 = Quaternion.from_path_ends(mori)
+    assert isinstance(qu_path4, Quaternion)
+
+    # Rotation sanity checks
+    rot_path1 = Rotation.from_path_ends(qu)
+    assert isinstance(rot_path1, Rotation)
+    rot_path2 = Rotation.from_path_ends(rot)
+    assert isinstance(rot_path2, Rotation)
+    rot_path3 = Rotation.from_path_ends(ori)
+    assert isinstance(rot_path3, Rotation)
+    rot_path4 = Rotation.from_path_ends(mori)
+    assert isinstance(rot_path4, Rotation)
+
+    # Misorientation sanity checks
+    with pytest.raises(TypeError, match="Points must be misorientations, "):
+        Misorientation.from_path_ends(qu)
+    with pytest.raises(TypeError, match="Points must be misorientations, "):
+        Misorientation.from_path_ends(rot)
+    with pytest.raises(TypeError, match="Points must be misorientations, "):
+        Misorientation.from_path_ends(ori)
+    mori_path = Misorientation.from_path_ends(mori)
+    assert isinstance(mori_path, Misorientation)
+    assert mori_path.symmetry == mori.symmetry
+
+    # Orientation sanity checks
+    with pytest.raises(TypeError, match="Points must be orientations, "):
+        Orientation.from_path_ends(qu)
+    with pytest.raises(TypeError, match="Points must be orientations, "):
+        Orientation.from_path_ends(rot)
+    ori_path = Orientation.from_path_ends(ori)
+    assert ori_path.symmetry == ori.symmetry
+    assert isinstance(ori_path, Orientation)
+    with pytest.raises(TypeError, match="Points must be orientations, "):
+        qu_path4 = Orientation.from_path_ends(mori)
+
+
 class TestMisorientation:
     def test_get_distance_matrix(self):
         """Compute distance between every misorientation in an instance
@@ -810,6 +864,11 @@ class TestOrientation:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
+
+    def test_from_path_ends(self):
+        # generate paths with orientations to check symmetry copying
+        wp_o = Orientation(data=np.eye(4)[:2], symmetry=Oh)
+        assert Orientation.from_path_ends(wp_o)._symmetry == (C1, Oh)
 
     def test_inverse(self):
         O1 = Orientation([np.sqrt(2) / 2, np.sqrt(2) / 2, 0, 0], D6)
