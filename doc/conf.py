@@ -353,6 +353,7 @@ sphinx_gallery_conf = {
     "reference_url": {"orix": None},
     "run_stale_examples": False,
     "show_memory": True,
+    "matplotlib_animations": True,
 }
 autosummary_generate = True
 
