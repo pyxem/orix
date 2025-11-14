@@ -142,7 +142,6 @@ fig = plt.figure(figsize=(12, 6))
 ori_without_symmetry.scatter(figure=fig, position=(1, 2, 1), c=colors_naive)
 ori.scatter(figure=fig, position=122, c=colors)
 
-########################################################################################
 # Generate an animation of the plot (assuming an interactive Matplotlib backend is
 # used).
 
@@ -156,5 +155,3 @@ def animate(angle):
 ani = manimation.FuncAnimation(
     fig, animate, np.linspace(75, 360 + 74, 720), interval=25
 )
-
-plt.show()
