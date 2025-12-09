@@ -1,3 +1,21 @@
+#
+# Copyright 2018-2025 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 r"""
 ==============================
 Restrict to fundamental sector
@@ -23,12 +41,14 @@ The band width is assumed to be two times the Bragg angle :math:`\theta`.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import plot
 from orix.crystal_map import Phase
+from orix.plot import format_labels, register_projections
 from orix.quaternion import symmetry
 from orix.vector import Miller
 
 plt.rcParams["font.size"] = 15
+
+register_projections()  # Register our custom Matplotlib projections
 
 # Symmetrically equivalent set of hkl
 g0 = Miller(
@@ -60,7 +80,7 @@ t = t.round().unique()
 t.scatter(
     figure=fig,
     c="none",
-    vector_labels=plot.format_labels(t.coordinates),
+    vector_labels=format_labels(t.coordinates),
     text_kwargs={"va": "center", "bbox": {"fc": "w", "pad": 1, "alpha": 0.75}},
 )
 

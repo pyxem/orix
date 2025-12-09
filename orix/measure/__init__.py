@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,14 +10,18 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Tools for quantification of orientation and vector data."""
 
-from orix.measure.pole_density_function import pole_density_function
+import lazy_loader
 
-__all__ = ["pole_density_function"]
+# Imports from stub file (see contributor guide for details)
+__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
+
+del lazy_loader

@@ -1,3 +1,21 @@
+#
+# Copyright 2018-2025 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 r"""
 ================================================
 Rotations mapping the fundamental sector on *S2*
@@ -7,7 +25,7 @@ This example shows how to sample rotations :math:`\mathbf{R}` that when rotating
 vector :math:`\mathbf{v_z} = (0, 0, 1)`, the resulting vectors cover the fundamental
 sector of a given Laue class.
 
-We show this by comparing the vectors we get by: 
+We show this by comparing the vectors we get by:
 
 1. Sampling rotations for *4/mmm* and then rotating :math:`\mathbf{v_z}`
 2. Sampling all of *S2* but only keeping those within the corresponding fundamental
@@ -22,9 +40,12 @@ transmission electron microscope.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import plot, sampling
+from orix import sampling
+from orix.plot import register_projections
 from orix.quaternion import symmetry
 from orix.vector import Vector3d
+
+register_projections()  # Register our custom Matplotlib projections
 
 # Sample rotations with an average misorientation
 res = 2

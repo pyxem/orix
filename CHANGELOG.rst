@@ -6,12 +6,82 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
+2025-12-09 - version 0.14.0
+===========================
+
+Added
+-----
+- A customizable Wulff net can be added to a stereographic plot using
+  :meth:`~orix.plot.StereographicPlot.wulff_net`.
+- Conversion of :class:`~orix.quaternion.Orientation`,
+  :class:`~orix.quaternion.Misorientation`, :class:`~orix.quaternion.Rotation`, and
+  :class:`~orix.quaternion.Quaternion` to :class:`scipy.spatial.transform.Rotation` via
+  :meth:`~orix.quaternion.Quaternion.to_scipy_rotation`.
+- Allow controlling whether to keep zero-vectors in
+  :meth:`~orix.vector.Vector3d.unique` with a new ``ignore_zero`` parameter.
+  Previous behavior, to discard them, is still default.
+- If a :class:`~orix.crystal_map.Phase`, :class:`~orix.crystal_map.PhaseList`, or a
+  :class:`~orix.crystal_map.CrystalMap` is passed to their own constructors, a copy is
+  returned.
+- Added :meth:`~orix.crystal_map.Phase.expand_asymmetric_unit` to add all symmetrically
+  equivalent atoms to the structure in a new phase.
+- Element-wise indexing into :class:`~orix.vector.Vector3d` and subclasses, such as
+  :class:`~orix.vector.Miller`.
+- Explicit support for Python 3.13.
+- Dependency on `lazy-loader`.
+- Function :func:`~orix.plot.register_projections` to register all our custom
+  projections for use in Matplotlib.
+  An example of a custom projection is the :class:`~orix.plot.StereographicPlot`.
+  This function replaces the previous behavior of relying on a side-effect of importing
+  the :mod:`orix.plot` module, which also registered the projections.
+- Method ``from_path_ends()`` to return quaternions, rotations, orientations, or
+  misorientations along the shortest path between two or more points.
+
+Changed
+-------
+- The \*.ang file reader accepts a boolean parameter ``autogen_names`` via
+  :func:`~orix.io.load` that allows rewriting phase names in the returned crystal map
+  based on elements and point groups, as opposed to automatically overwriting names.
+- Generation of random :class:`~orix.vector.Vector3d` and
+  :class:`~orix.quaternion.Quaternion` (and its subclasses) via ``random()`` now uses a
+  Gaussian method as opposed to rejection-based sampling.
+  This is faster and uses less memory.
+- Functions and classes are now loaded lazily with `lazy-loader`.
+- *matplotlib-scalebar* is now an optional dependency.
+- Passing a *projection* to ``Orientation.scatter()`` with a *position* argument now
+  allows subplots in the figure to have different projections (Matplotlib's own or our
+  custom ones).
+
+Removed
+-------
+
+Deprecated
+----------
+- Method :meth:`~orix.quaternion.Misorientation.map_into_symmetry_reduced_zone` for
+  (mis)orientations have been deprecated in favor of
+  :meth:`~orix.quaternion.Misorientation.reduce` and will be removed in version 0.15.0.
+
+Fixed
+-----
+- :class:`~orix.plot.IPFColorKey` labels for point groups *-3* and *6/m* are now
+  correct.
+- Multicolor stereographic scatter plots now correctly cast RGB and RGBA color arrays
+- Coloring of vectors in :meth:`~orix.plot.StereographicPlot.scatter` and the equivalent
+  vector method now correctly maps colors from RGB(A) arrays.
+- Randomly sampled quaternions, rotations, and (mis)orientations have positive angle (a)
+  components.
+- The symmetry operations of the orthorhombic point group *mm2* (*C2v*) are now in line
+  with the International Tables for Crystallography, with the 2-fold axis about z, not
+  x, as before.
+
+
 2025-01-01 - version 0.13.3
-==========
+===========================
 
 Fixed
 -----
 - Handle all EDAX TSL point group aliases.
+
 
 2024-09-25 - version 0.13.2
 ===========================
@@ -19,6 +89,7 @@ Fixed
 Added
 -----
 - Compatibility with NumPy v2.0.
+
 
 2024-09-20 - version 0.13.1
 ===========================
@@ -30,7 +101,7 @@ Added
 Changed
 -------
 - numpy-quaternion is now an optional dependency and will not be installed with ``pip``
-  unless ``pip install orix[all]`` is used.
+  unless ``pip install "orix[all]"`` is used.
 
 Removed
 -------
@@ -40,6 +111,7 @@ Fixed
 -----
 - ``Phase.from_cif()`` still gives a valid phase even though the space group could not
   be read.
+
 
 2024-09-03 - version 0.13.0
 ===========================
@@ -65,6 +137,7 @@ Deprecated
 - ``loadang()`` and ``loadctf()`` are deprecated and will be removed in the next minor
   release. Please use ``io.load()`` instead.
 
+
 2024-04-21 - version 0.12.1
 ===========================
 
@@ -75,6 +148,7 @@ Fixed
 - ``Phase.from_cif()`` now correctly adjusts atom positions when forcing
   ``Phase.structure.lattice.base`` to use the crystal axes alignment ``e1 || a``,
   ``e3 || c*``. This bug was introduced in 0.12.0.
+
 
 2024-04-13 - version 0.12.0
 ===========================
@@ -131,6 +205,7 @@ Fixed
   ``Phase.structure.lattice.base`` to use the crystal axes alignment ``e1 || a``,
   ``e3 || c*``. This is now fixed.
 
+
 2023-03-14 - version 0.11.1
 ===========================
 
@@ -138,6 +213,7 @@ Fixed
 -----
 - Initialization of a crystal map with a phase list with fewer phases than in the phase
   ID array given returns a map with a new phase list with correct phase IDs.
+
 
 2023-02-09 - version 0.11.0
 ===========================
@@ -193,6 +269,7 @@ Fixed
 -----
 - Reading of EDAX TSL .ang files with ten columns should now work.
 
+
 2022-10-25 - version 0.10.2
 ===========================
 
@@ -205,6 +282,7 @@ Fixed
 Changed
 -------
 - Unique rotations and vectors are now found by rounding to 10 instead of 12 decimals.
+
 
 2022-10-03 - version 0.10.1
 ===========================
@@ -227,6 +305,7 @@ Fixed
 - Indexing/slicing into an already indexed/sliced ``CrystalMap`` now correctly returns
   the index/slice according to ``CrystalMap.shape`` and not the original shape of the
   un-sliced map.
+
 
 2022-09-22 - version 0.10.0
 ===========================
@@ -273,6 +352,7 @@ Fixed
 -----
 - Plotting of unit cells works with Matplotlib v3.6, at the expense of a warning raised
   with earlier versions.
+
 
 2022-05-16 - version 0.9.0
 ==========================
@@ -338,6 +418,7 @@ Removed
 - The deprecation of function ``(Mis)Orientation.set_symmetry()`` and property
   ``Object3d.data_dim`` has expired and have been removed.
 
+
 2022-02-21 - version 0.8.2
 ==========================
 
@@ -354,6 +435,7 @@ Fixed
 -----
 - ``Miller.in_fundamental_sector()`` doesn't raise errors.
 - ``Miller.unique()`` now correctly returns unique vectors due to implemented rounding.
+
 
 2022-02-14 - version 0.8.1
 ==========================
@@ -374,6 +456,7 @@ Fixed
   original ``Rotation`` instance.
 - Handling of property arrays in .ang writer with multiple values per map point.
 - ``CrystalMap``'s handling of a mask of which points are in the data.
+
 
 2021-12-21 - version 0.8.0
 ==========================
@@ -443,6 +526,7 @@ Fixed
   points in the map.
 - Reading of point groups with "-" sign, like -43m, from EMsoft h5ebsd files.
 
+
 2021-09-07 - version 0.7.0
 ==========================
 
@@ -465,6 +549,7 @@ Changed
 -------
 - ``to_euler()`` changed internally, "Krakow_Hielscher" deprecated, use "MTEX" instead.
 - Default orientation space sampling method from "haar_euler" to "cubochoric".
+
 
 2021-05-23 - version 0.6.0
 ==========================
@@ -508,6 +593,7 @@ Fixed
   inverting orientations.
 - Reading of properties (scores etc.) from EMsoft h5ebsd files with certain map shapes.
 - Reading of crystal symmetry from EMsoft h5ebsd dot product files in CrystalMap plugin.
+
 
 2020-11-03 - version 0.5.1
 ==========================

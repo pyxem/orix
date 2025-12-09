@@ -29,7 +29,8 @@ Preparation
   patch release. If downstream packages should test their use of the next version of
   orix in CI before it is released, or we want to ensure that the below release steps
   work as expected, a release candidate with version e.g. "0.9.1rc1" can be made. Update
-  ``CHANGELOG.rst`` accordingly.
+  ``CHANGELOG.rst`` accordingly. Remove any deprecated functionality as described in 
+  ``orix/doc/dev/handling_deprecations.rst``.
 
 - Make a PR of the release branch to ``main``. Discuss the release and changelog with
   others. Merge.

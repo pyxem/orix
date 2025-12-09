@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,20 +10,34 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING, Literal
 
 from matplotlib import projections
+import matplotlib.collections as mcollections
+import matplotlib.figure as mfigure
 from matplotlib.gridspec import SubplotSpec
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
+import numpy as np
 
-from orix.vector import AxAngle, Rodrigues
+from orix.vector.neo_euler import AxAngle, Homochoric, Rodrigues
+
+if TYPE_CHECKING:  # pragma: no cover
+    from orix.quaternion.misorientation import Misorientation
+    from orix.quaternion.orientation_region import OrientationRegion
+    from orix.quaternion.rotation import Rotation
+
+
+ROTATION_PLOT_NAME = Literal["axangle", "rodrigues", "homochoric"]
 
 
 class RotationPlot(Axes3D):
@@ -33,9 +48,9 @@ class RotationPlot(Axes3D):
 
     def transform(
         self,
-        xs: Union["Misorientation", "OrientationRegion", "Rotation"],
-        fundamental_zone: Optional["OrientationRegion"] = None,
-    ):
+        xs: "Misorientation | OrientationRegion | Rotation",
+        fundamental_zone: "OrientationRegion | None" = None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Prepare (mis)orientations or rotations for plotting.
 
         Parameters
@@ -60,7 +75,7 @@ class RotationPlot(Axes3D):
                 raise TypeError("fundamental_zone is not an OrientationRegion object.")
             # if any in xs are out of fundamental_zone, calculate symmetry reduction
             if not (xs < fundamental_zone).all():
-                xs = xs.map_into_symmetry_reduced_zone()
+                xs = xs.reduce()
 
         if isinstance(xs, Rotation):
             if isinstance(xs, OrientationRegion):
@@ -72,8 +87,11 @@ class RotationPlot(Axes3D):
         return x, y, z
 
     def scatter(
-        self, xs: Union["Misorientation", "Rotation"], fundamental_zone=None, **kwargs
-    ):
+        self,
+        xs: "Misorientation | Rotation",
+        fundamental_zone: "OrientationRegion | None" = None,
+        **kwargs,
+    ) -> mcollections.PathCollection:
         """Create a scatter plot.
 
         Parameters
@@ -89,11 +107,11 @@ class RotationPlot(Axes3D):
         x, y, z = self.transform(xs, fundamental_zone=fundamental_zone)
         return super().scatter(x, y, z, **kwargs)
 
-    def plot(self, xs, **kwargs):
+    def plot(self, xs, **kwargs) -> list[mlines.Line2D]:
         x, y, z = self.transform(xs)
         return super().plot(x, y, z, **kwargs)
 
-    def plot_wireframe(self, xs, **kwargs):
+    def plot_wireframe(self, xs, **kwargs) -> Line3DCollection:
         d = dict(color="gray", alpha=0.5, linewidth=0.5, rcount=30, ccount=30)
         for k, v in d.items():
             kwargs.setdefault(k, v)
@@ -102,7 +120,7 @@ class RotationPlot(Axes3D):
 
     def _get_region_extent(
         self, fundamental_region: "OrientationRegion"
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         """Return the maximum angles in x, y, z of the fundamental
         region.
 
@@ -117,7 +135,9 @@ class RotationPlot(Axes3D):
         x, y, z = self.transform(fundamental_region)
         return x.max(), y.max(), z.max()
 
-    def _correct_aspect_ratio(self, fundamental_region, set_limits=True):
+    def _correct_aspect_ratio(
+        self, fundamental_region: "OrientationRegion", set_limits: bool = True
+    ) -> None:
         """Correct the aspect ratio of the axis according to the
         extent of the boundaries of the fundamental region.
 
@@ -137,59 +157,66 @@ class RotationPlot(Axes3D):
 
 
 class RodriguesPlot(RotationPlot):
-    """Plot rotations in Rodrigues-Frank space."""
+    """Plot rotations in Rodrigues-Frank (rectilinear) axis-angle space."""
 
     name = "rodrigues"
     transformation_class = Rodrigues
 
 
 class AxAnglePlot(RotationPlot):
-    """Plot rotations in a axis-angle space."""
+    """Plot rotations in a linearly scalled axis-angle space."""
 
     name = "axangle"
     transformation_class = AxAngle
 
 
+class HomochoricPlot(RotationPlot):
+    """Plot rotations in homochoric (equi-volume) axis-angle space."""
+
+    name = "homochoric"
+    transformation_class = Homochoric
+
+
 projections.register_projection(RodriguesPlot)
 projections.register_projection(AxAnglePlot)
+projections.register_projection(HomochoricPlot)
 
 
 def _setup_rotation_plot(
-    figure: Optional[plt.Figure] = None,
-    projection: str = "axangle",
-    position: Union[int, tuple, SubplotSpec, None] = (1, 1, 1),
-    figure_kwargs: Optional[dict] = None,
-) -> Tuple[plt.Figure, Union[AxAnglePlot, RodriguesPlot]]:
+    figure: mfigure.Figure | None = None,
+    projection: ROTATION_PLOT_NAME = "axangle",
+    position: int | tuple | SubplotSpec | None = (1, 1, 1),
+    figure_kwargs: dict | None = None,
+) -> tuple[mfigure.Figure, AxAnglePlot | RodriguesPlot | HomochoricPlot]:
     """Return a figure and rotation plot axis of the correct type.
 
     This is a convenience method used in e.g.
-    :meth:`orix.quaternion.Orientation.scatter`.
+    :meth:`~orix.quaternion.Orientation.scatter`.
 
     Parameters
     ----------
     figure
-        If given, a new plot axis :class:`orix.plot.AxAnglePlot` or
-        :class:`orix.plot.RodriguesPlot` is added to the figure in
-        the position specified by `position`. If not given, a new
-        figure is created.
+        If given, a new axis-angle, Rodrigues, or Homochoric plot axis
+        is added to the figure in the position specified by *position*.
+        If not given, a new figure is created.
     projection
         Which orientation space to plot orientations in, either
-        "axangle" (default) or "rodrigues".
+        "axangle" (default), "rodrigues", or 'homochoric'.
     position
         Where to add the new plot axis. 121 or (1, 2, 1) places it
         in the first of two positions in a grid of 1 row and 2
-        columns. See :meth:`matplotlib.figure.Figure.add_subplot`
+        columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
         for further details. Default is (1, 1, 1).
     figure_kwargs
         Dictionary of keyword arguments passed to
-        :func:`matplotlib.pyplot.figure` if `figure` is not given.
+        :func:`matplotlib.pyplot.figure` if *figure* is not given.
 
     Returns
     -------
     figure
         Figure with the added plot axis.
     ax
-        The axis-angle or Rodrigues plot axis.
+        The plot axis.
     """
     if figure is None:
         if figure_kwargs is None:

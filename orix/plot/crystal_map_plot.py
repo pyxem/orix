@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,43 +10,49 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
-from typing import List, Optional
+from typing import TYPE_CHECKING
 
 from matplotlib.axes import Axes
-import matplotlib.colorbar as mbar
+import matplotlib.colorbar as mcolorbar
 from matplotlib.image import AxesImage
 import matplotlib.patches as mpatches
 from matplotlib.projections import register_projection
-import matplotlib.pyplot as plt
-from matplotlib_scalebar.dimension import _Dimension
-from matplotlib_scalebar.scalebar import ScaleBar
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+
+from orix._utils.constants import installed, verify_dependency_or_raise
+
+if TYPE_CHECKING:  # pragma: no cover
+    if installed["matplotlib-scalebar"]:
+        from matplotlib_scalebar.scalebar import ScaleBar
+
+    from orix.crystal_map.crystal_map import CrystalMap
 
 
 class CrystalMapPlot(Axes):
     """Plotting of a :class:`~orix.crystal_map.crystal_map.CrystalMap`."""
 
     name = "plot_map"
-    _data_axes = None
-    _data_shape = None
-    colorbar = None
-    scalebar = None
+    _data_axes: tuple[int, ...] | None = None
+    _data_shape: tuple[int, ...] | None = None
+    colorbar: mcolorbar.Colorbar | None = None
+    scalebar: "ScaleBar | None" = None
 
     def plot_map(
         self,
-        crystal_map: "orix.crystal_map.CrystalMap",
-        value: Optional[np.ndarray] = None,
-        scalebar: bool = True,
-        scalebar_properties: Optional[dict] = None,
+        crystal_map: "CrystalMap",
+        value: np.ndarray | None = None,
+        scalebar: bool | None = None,
+        scalebar_properties: dict | None = None,
         legend: bool = True,
-        legend_properties: Optional[dict] = None,
+        legend_properties: dict | None = None,
         override_status_bar: bool = False,
         **kwargs,
     ) -> AxesImage:
@@ -62,8 +69,9 @@ class CrystalMapPlot(Axes):
             Attribute array to plot. If value is ``None`` (default), a
             phase map is plotted.
         scalebar
-            Whether to add a scalebar (default is ``True``) along the
-            horizontal map dimension.
+            Whether to add a scalebar along the horizontal map
+            dimension. If not given, a scalebar is added if
+            :mod:`matplotlib-scalebar` is installed.
         scalebar_properties
             Dictionary of keyword arguments passed to
             :class:`mpl_toolkits.axes_grid1.anchored_artists.AnchoredSizeBar`.
@@ -143,6 +151,14 @@ class CrystalMapPlot(Axes):
 
         >>> #plt.imsave("image2.png", im.get_array())
         """
+        # Add scalebar here to potentially raise an error early
+        if scalebar is None:
+            scalebar = installed["matplotlib-scalebar"]
+        if scalebar:
+            if scalebar_properties is None:
+                scalebar_properties = {}
+            _ = self.add_scalebar(crystal_map, **scalebar_properties)
+
         self._data_shape = crystal_map._original_shape
 
         patches = None
@@ -173,21 +189,13 @@ class CrystalMapPlot(Axes):
                 legend_properties = {}
             self._add_legend(patches, **legend_properties)
 
-        # Scalebar
-        if scalebar:
-            if scalebar_properties is None:
-                scalebar_properties = {}
-            _ = self.add_scalebar(crystal_map, **scalebar_properties)
-
         im = self.imshow(X=data, **kwargs)
         if override_status_bar:
             im = self._override_status_bar(im, crystal_map)
 
         return im
 
-    def add_scalebar(
-        self, crystal_map: "orix.crystal_map.CrystalMap", **kwargs
-    ) -> ScaleBar:
+    def add_scalebar(self, crystal_map: "CrystalMap", **kwargs) -> "ScaleBar":
         """Add a scalebar to the axes instance and return it.
 
         The scalebar is also available as an attribute :attr:`scalebar`.
@@ -197,8 +205,8 @@ class CrystalMapPlot(Axes):
         crystal_map
             Crystal map instance to obtain necessary data from.
         **kwargs
-            Keyword arguments passed to
-            :class:`matplotlib_scalebar.scalebar.ScaleBar`.
+            Keyword arguments passed on to
+            :class:`~matplotlib_scalebar.scalebar.ScaleBar`.
 
         Returns
         -------
@@ -216,7 +224,18 @@ class CrystalMapPlot(Axes):
         >>> ax = fig.add_subplot(projection="plot_map")
         >>> im = ax.plot_map(xmap, scalebar=False)
         >>> sbar = ax.add_scalebar(xmap, location=4, frameon=False)
+
+        Notes
+        -----
+        This function requires `matplotlib-scalebar` to be installed.
+        Please see the :doc:`installation guide </user/installation>`
+        for details.
         """
+        verify_dependency_or_raise("matplotlib-scalebar", "Adding a scalebar")
+
+        from matplotlib_scalebar.dimension import _Dimension
+        from matplotlib_scalebar.scalebar import ScaleBar
+
         # Get whether z, y or x
         last_axis = crystal_map.ndim - 1
         horizontal = crystal_map._coordinate_axes[last_axis]
@@ -230,7 +249,8 @@ class CrystalMapPlot(Axes):
         else:
             dim = _Dimension(scan_unit)
 
-        # Set up arguments to AnchoredSizeBar() if not already present in kwargs
+        # Set up arguments to AnchoredSizeBar() if not already present
+        # in kwargs
         d = dict(
             pad=0.2,
             sep=3,
@@ -241,7 +261,6 @@ class CrystalMapPlot(Axes):
         )
         [kwargs.setdefault(k, v) for k, v in d.items()]
 
-        # Create scalebar
         bar = ScaleBar(
             dx=crystal_map._step_sizes[horizontal],
             units=crystal_map.scan_unit,
@@ -252,7 +271,7 @@ class CrystalMapPlot(Axes):
 
         return bar
 
-    def add_overlay(self, crystal_map: "orix.crystal_map.CrystalMap", item: str):
+    def add_overlay(self, crystal_map: "CrystalMap", item: str) -> None:
         """Use a crystal map property as gray scale values of a phase
         map.
 
@@ -296,7 +315,7 @@ class CrystalMapPlot(Axes):
 
         image.set_data(image_data)
 
-    def add_colorbar(self, label: Optional[str] = None, **kwargs) -> mbar.Colorbar:
+    def add_colorbar(self, label: str | None = None, **kwargs) -> mcolorbar.Colorbar:
         """Add an opinionated colorbar to the figure and return it.
 
         The colorbar is also available as an attribute :attr:`colorbar`.
@@ -353,7 +372,7 @@ class CrystalMapPlot(Axes):
 
         return cbar
 
-    def remove_padding(self):
+    def remove_padding(self) -> None:
         """Remove all white padding outside of the figure.
 
         Examples
@@ -379,7 +398,7 @@ class CrystalMapPlot(Axes):
             right = 1
         self.figure.subplots_adjust(top=1, bottom=0, right=right, left=0)
 
-    def _add_legend(self, patches: List[mpatches.Patch], **kwargs):
+    def _add_legend(self, patches: list[mpatches.Patch], **kwargs) -> None:
         """Add a legend to the axes object.
 
         Parameters
@@ -399,7 +418,7 @@ class CrystalMapPlot(Axes):
         self.legend(handles=patches, **kwargs)
 
     def _override_status_bar(
-        self, image: AxesImage, crystal_map: "orix.crystal_map.CrystalMap"
+        self, image: AxesImage, crystal_map: "CrystalMap"
     ) -> AxesImage:
         """Display coordinates, a property value (if scalar values are
         plotted), and Euler angles (in radians) per data point in the

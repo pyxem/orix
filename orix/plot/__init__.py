@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,12 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
-
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 """Extensions of Matplotlib's projections framework for plotting
 :class:`~orix.vector.Vector3d`, :class:`~orix.quaternion.Rotation`,
 :class:`~orix.quaternion.Orientation`,
@@ -22,27 +23,16 @@
 :class:`~orix.crystal_map.CrystalMap`.
 """
 
-from orix.plot._util import format_labels
-from orix.plot.crystal_map_plot import CrystalMapPlot
-from orix.plot.direction_color_keys import DirectionColorKeyTSL
-from orix.plot.orientation_color_keys import EulerColorKey, IPFColorKeyTSL
-from orix.plot.rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
-from orix.plot.stereographic_plot import StereographicPlot
+import lazy_loader
 
-# Must be imported below StereographicPlot since it imports it
-from orix.plot.inverse_pole_figure_plot import InversePoleFigurePlot  # isort: skip
+from orix.plot._plot import register_projections
 
+# TODO: Remove this call once relying on the old side-effect of
+# importing orix.plot to register these projections has little-to-no
+# consequence
+register_projections()
 
-# Lists what will be imported when calling "from orix.plot import *"
-__all__ = [
-    "AxAnglePlot",
-    "CrystalMapPlot",
-    "DirectionColorKeyTSL",
-    "EulerColorKey",
-    "format_labels",
-    "InversePoleFigurePlot",
-    "IPFColorKeyTSL",
-    "RodriguesPlot",
-    "RotationPlot",
-    "StereographicPlot",
-]
+# Imports from stub file (see contributor guide for details)
+__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
+
+del lazy_loader

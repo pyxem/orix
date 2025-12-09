@@ -22,13 +22,17 @@
       "orcid": "0000-0003-3663-3793"
     },
     {
+      "name": "Austin Gerlt",
+      "orcid": "0000-0002-2204-2055",
+      "affiliation": "National Institute of Standards and Technology"
+    },
+    {
       "name": "Niels Cautaerts",
       "orcid": "0000-0002-6402-9879"
     },
     {
-      "name": "Austin Gerlt",
-      "orcid": "0000-0002-2204-2055",
-      "affiliation": "The Ohio State University"
+      "name": "Viljar Johan Femoen",
+      "affiliation": "Norwegian University of Science and Technology"
     },
     {
       "name": "Anders Christian Mathisen",
@@ -48,12 +52,16 @@
       "name": "Simon Høgås"
     },
     {
-      "name": "Viljar Johan Femoen",
-      "affiliation": "Norwegian University of Science and Technology"
-    },
-    {
       "name": "Alessandra da Silva",
       "orcid": "0000-0003-0465-504X"
+    },
+    {
+      "name": "Ondrej Lexa",
+      "orcid": "0000-0003-4616-9154",
+      "affiliation": "Charles University, Prague"
+    },
+    {
+      "name": "Eric Prestat"
     },
     {
       "name": "Alexander Clausen",

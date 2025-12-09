@@ -34,6 +34,7 @@ Feel free to `ask a question <https://github.com/pyxem/orix/discussions>`__,
 
     setting_up_development_installation.rst
     code_style.rst
+    importing.rst
     using_git.rst
     building_writing_documentation.rst
     handling_deprecations.rst

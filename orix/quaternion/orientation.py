@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,29 +10,35 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
+from typing import Literal
 import warnings
 
 import dask.array as da
 from dask.diagnostics import ProgressBar
 from diffpy.structure import Structure
+import matplotlib.figure as mfigure
 from matplotlib.gridspec import SubplotSpec
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 
 from orix.quaternion.misorientation import Misorientation
 from orix.quaternion.rotation import Rotation
-from orix.quaternion.symmetry import C1, Symmetry, _get_unique_symmetry_elements
-from orix.vector import Miller, Vector3d
+from orix.quaternion.symmetry import (
+    C1,
+    Symmetry,
+    _get_unique_symmetry_elements,
+)
+from orix.vector.miller import Miller
+from orix.vector.vector3d import Vector3d
 
 
 class Orientation(Misorientation):
@@ -66,7 +73,7 @@ class Orientation(Misorientation):
         return self._symmetry[1]
 
     @symmetry.setter
-    def symmetry(self, value: Symmetry):
+    def symmetry(self, value: Symmetry) -> None:
         if not isinstance(value, Symmetry):
             raise TypeError("Value must be an instance of orix.quaternion.Symmetry.")
         self._symmetry = (C1, value)
@@ -96,20 +103,21 @@ class Orientation(Misorientation):
         return f"{self.__class__.__name__} {self.shape} {self.symmetry.name}\n{data}"
 
     def __sub__(self, other: Orientation) -> Misorientation:
-        if isinstance(other, Orientation):
-            # Call to Object3d.squeeze() doesn't carry over symmetry
-            M = Misorientation(self * ~other).squeeze()
-            M.symmetry = (self.symmetry, other.symmetry)
-            return M.map_into_symmetry_reduced_zone()
-        return NotImplemented
+        if not isinstance(other, Orientation):
+            return NotImplemented
+        # Call to Object3d.squeeze() doesn't carry over symmetry
+        M = Misorientation(self * ~other).squeeze()
+        M.symmetry = (self.symmetry, other.symmetry)
+        M = M.reduce()
+        return M
 
     # ------------------------ Class methods ------------------------- #
 
     @classmethod
     def from_euler(
         cls,
-        euler: Union[np.ndarray, tuple, list],
-        symmetry: Optional[Symmetry] = None,
+        euler: np.ndarray | tuple | list,
+        symmetry: Symmetry | None = None,
         direction: str = "lab2crystal",
         degrees: bool = False,
     ) -> Orientation:
@@ -147,15 +155,15 @@ class Orientation(Misorientation):
         cls,
         other: Miller,
         initial: Vector3d,
-        weights: Optional[np.ndarray] = None,
+        weights: np.ndarray | None = None,
         return_rmsd: bool = False,
         return_sensitivity: bool = False,
-    ) -> Union[
-        Orientation,
-        Tuple[Orientation, float],
-        Tuple[Orientation, np.ndarray],
-        Tuple[Orientation, float, np.ndarray],
-    ]:
+    ) -> (
+        Orientation
+        | tuple[Orientation, float]
+        | tuple[Orientation, np.ndarray]
+        | tuple[Orientation, float, np.ndarray]
+    ):
         """Create an estimated orientation to optimally align vectors in
         the crystal and sample reference frames.
 
@@ -234,7 +242,7 @@ class Orientation(Misorientation):
 
     @classmethod
     def from_matrix(
-        cls, matrix: np.ndarray, symmetry: Optional[Symmetry] = None
+        cls, matrix: np.ndarray, symmetry: Symmetry | None = None
     ) -> Orientation:
         """Create orientations from orientation matrices
         :cite:`rowenhorst2015consistent`.
@@ -260,9 +268,9 @@ class Orientation(Misorientation):
     @classmethod
     def from_axes_angles(
         cls,
-        axes: Union[np.ndarray, Vector3d, tuple, list],
-        angles: Union[np.ndarray, tuple, list, float],
-        symmetry: Optional[Symmetry] = None,
+        axes: np.ndarray | Vector3d | tuple | list,
+        angles: np.ndarray | tuple | list | float,
+        symmetry: Symmetry | None = None,
         degrees: bool = False,
     ) -> Orientation:
         """Create orientations from axis-angle pairs
@@ -302,7 +310,7 @@ class Orientation(Misorientation):
 
     @classmethod
     def from_scipy_rotation(
-        cls, rotation: SciPyRotation, symmetry: Optional[Symmetry] = None
+        cls, rotation: SciPyRotation, symmetry: Symmetry | None = None
     ) -> Orientation:
         """Return orientation(s) from
         :class:`scipy.spatial.transform.Rotation`.
@@ -345,8 +353,49 @@ class Orientation(Misorientation):
         return O
 
     @classmethod
+    def from_path_ends(
+        cls, points: Orientation, closed: bool = False, steps: int = 100
+    ) -> Misorientation:
+        """Return orientations tracing the shortest path between two or
+        more consecutive points.
+
+        Parameters
+        ----------
+        points
+            Two or more orientations that define points along the path.
+        closed
+            Add a final trip from the last point back to the first, thus
+            closing the loop. Default is False.
+        steps
+            Number of orientations to return between each point along
+            the path given by *points*. Default is 100.
+
+        Returns
+        -------
+        path
+            Regularly spaced orientations along the path.
+
+        See Also
+        --------
+        :class:`~orix.quaternion.Quaternion.from_path_ends`,
+        :class:`~orix.quaternion.Misorientation.from_path_ends`
+
+        Notes
+        -----
+        This function traces the shortest path between points without
+        considering symmetry. The concept of "shortest path" is not
+        well-defined for orientations, which can define multiple
+        symmetrically equivalent points with non-equivalent paths.
+        """
+        points_type = type(points)
+        if points_type is not cls:  # Disallow misorientations
+            raise TypeError(f"Points must be orientations, not of type {points_type}")
+        out = Rotation.from_path_ends(points=points, closed=closed, steps=steps)
+        return cls(out.data, symmetry=points.symmetry)
+
+    @classmethod
     def random(
-        cls, shape: Union[int, tuple] = 1, symmetry: Optional[Symmetry] = None
+        cls, shape: int | tuple[int, ...] = 1, symmetry: Symmetry | None = None
     ) -> Orientation:
         """Create random orientations.
 
@@ -622,10 +671,10 @@ class Orientation(Misorientation):
         c: str = "tab:blue",
         return_figure: bool = False,
         axes_length: float = 0.5,
-        structure: Optional[Structure] = None,
+        structure: Structure | None = None,
         crystal_axes_loc: str = "origin",
         **arrow_kwargs,
-    ) -> plt.Figure:
+    ) -> mfigure.Figure | None:
         """Plot the unit cell orientation, showing the sample and
         crystal reference frames.
 
@@ -717,69 +766,77 @@ class Orientation(Misorientation):
 
     def scatter(
         self,
-        projection: str = "axangle",
-        figure: Optional[plt.Figure] = None,
-        position: Union[int, Tuple[int], SubplotSpec] = (1, 1, 1),
+        projection: Literal["axangle", "rodrigues", "homochoric", "ipf"] = "axangle",
+        figure: mfigure.Figure | None = None,
+        position: int | tuple[int, int, int] | SubplotSpec | None = None,
         return_figure: bool = False,
-        wireframe_kwargs: Optional[dict] = None,
-        size: Optional[int] = None,
-        direction: Optional[Vector3d] = None,
-        figure_kwargs: Optional[dict] = None,
+        wireframe_kwargs: dict | None = None,
+        size: int | None = None,
+        direction: Vector3d | None = None,
+        figure_kwargs: dict | None = None,
         **kwargs,
-    ) -> plt.Figure:
-        """Plot orientations in axis-angle space, the Rodrigues
-        fundamental zone, or an inverse pole figure (IPF) given a sample
-        direction.
+    ) -> mfigure.Figure | None:
+        """Plot misorientations in 3D Euclidean space using either
+        a 3D neo-Eulerian projection or a 2D stereographic projection.
 
         Parameters
         ----------
         projection
-            Which orientation space to plot orientations in, either
-            "axangle" (default), "rodrigues" or "ipf" (inverse pole
-            figure).
+            Which projection to use for plotting into Euclidean space.
+            The 3D options are "axangle" (default) for a linear scaling,
+            "homochoric" for an equal-volume scaling, or "rodrigues" for
+            a rectilinear scaling. The 2D option is "ipf" to give an
+            inverse pole figure.
         figure
-            If given, a new plot axis :class:`~orix.plot.AxAnglePlot` or
-            :class:`~orix.plot.RodriguesPlot` is added to the figure in
-            the position specified by `position`. If not given, a new
-            figure is created.
+            If given, a new plot axis with the projection specified
+            by *projection* is added to the figure in the position
+            specified by *position*. If not given, a new figure is
+            created.
         position
             Where to add the new plot axis. 121 or (1, 2, 1) places it
             in the first of two positions in a grid of 1 row and 2
             columns. See :meth:`~matplotlib.figure.Figure.add_subplot`
-            for further details. Default is (1, 1, 1).
+            for further details. If not given, the default position of
+            (1, 1, 1) is assumed.
         return_figure
             Whether to return the figure. Default is False.
         wireframe_kwargs
             Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.plot_wireframe` or
-            :meth:`orix.plot.RodriguesPlot.plot_wireframe`.
+            :meth:`~orix.plot.AxAnglePlot.plot_wireframe` or equivalent.
+            Unused if *projection* is "ipf".
         size
             If not given, all orientations are plotted. If given, a
             random sample of this `size` of the orientations is plotted.
         direction
             Sample direction to plot with respect to crystal directions.
             If not given, the out of plane direction, sample Z, is used.
-            Only used when plotting IPF(s).
+            Only used when plotting inverse pole figures.
         figure_kwargs
             Dictionary of keyword arguments passed to
-            :func:`matplotlib.pyplot.figure` if `figure` is not given.
+            :func:`matplotlib.pyplot.figure` if *figure* is not given.
         **kwargs
-            Keyword arguments passed to
-            :meth:`orix.plot.AxAnglePlot.scatter`,
-            :meth:`orix.plot.RodriguesPlot.scatter`, or
-            :meth:`orix.plot.InversePoleFigurePlot.scatter`.
+            Keyword arguments passed to the orix plotting class set by
+            *position*.
 
         Returns
         -------
         figure
-            Figure with the added plot axis, if ``return_figure=True``.
+            Figure with the added plot axis, if *return_figure* is True.
 
         See Also
         --------
-        orix.plot.AxAnglePlot, orix.plot.RodriguesPlot,
-        orix.plot.InversePoleFigurePlot
+        orix.quaternion.Misorientation.scatter
+        :meth:`~orix.plot.AxAnglePlot`
+        :meth:`~orix.plot.RodriguesPlot`
+        :meth:`~orix.plot.HomochoricPlot`
+        :meth:`~orix.plot.InversePoleFigurePlot`
         """
+        # TODO: Move all plot handling to the plot module, where it
+        # belongs
+
         if projection.lower() != "ipf":
+            if position is None:
+                position = (1, 1, 1)
             figure = super().scatter(
                 projection=projection,
                 figure=figure,
@@ -797,22 +854,32 @@ class Orientation(Misorientation):
 
             if figure is None:
                 # Determine which hemisphere(s) to show
-                symmetry = self.symmetry
-                sector = symmetry.fundamental_sector
+                sector = self.symmetry.fundamental_sector
                 if np.any(sector.vertices.polar > np.pi / 2):
                     hemisphere = "both"
                 else:
                     hemisphere = "upper"
 
                 figure, axes = _setup_inverse_pole_figure_plot(
-                    symmetry=symmetry,
+                    symmetry=self.symmetry,
                     direction=direction,
                     hemisphere=hemisphere,
                     figure_kwargs=figure_kwargs,
                 )
-            else:
+            elif position is None and len(figure.axes) > 0:
                 axes = np.asarray(figure.axes)
-
+            else:
+                # TODO: Separate this handling out so that we can use
+                # it more places
+                if position is None:
+                    position = (1, 1, 1)
+                elif isinstance(position, int):
+                    position = tuple(map(int, str(position)))
+                axes = [
+                    figure.add_subplot(
+                        *position, projection="ipf", symmetry=self.symmetry
+                    )
+                ]
             for ax in axes:
                 ax.scatter(self, **kwargs)
 

@@ -1,5 +1,5 @@
 ##
-## Copyright 2019-2025 the orix developers
+## Copyright 2018-2025 the orix developers
 ##
 ## This file is part of orix.
 ##
@@ -17,15 +17,15 @@
 ## along with orix. If not, see <http://www.gnu.org/licenses/>.
 ##
 repos:
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.12.0
     hooks:
       - id: black
       - id: black-jupyter
         files: \.ipynb
         args: [--line-length=77]
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 7.0.0
     hooks:
       - id: isort
         name: isort (python)
@@ -35,7 +35,14 @@ repos:
     rev: 'v0.8.8'
     hooks:
         - id: licenseheaders
-          args: ["-t", ".license.tmpl", "-cy", "-n", "orix", "-f"]
+          args: [
+            "-t", ".license.tmpl",
+            "-cy",
+            "-n", "orix",
+            "--additional-extensions", "python=.pyi",
+            "--exclude", "*/pull_request_template.md",
+            "-f",
+          ]
 # https://pre-commit.ci/#configuration
 ci:
   # Don't run automatically on PRs, instead add the comment

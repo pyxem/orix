@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,19 +10,22 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Base class for three-dimensional objects."""
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
+
+DataLike = np.ndarray | list | tuple
 
 
 class DimensionError(Exception):
@@ -36,7 +40,7 @@ class DimensionError(Exception):
         Array.
     """
 
-    def __init__(self, this: Object3d, data: np.ndarray):
+    def __init__(self, this: Object3d, data: np.ndarray) -> None:
         super().__init__(
             f"{this.__class__.__name__} requires data of dimension {this.dim}, but "
             f"received dimension {data.shape[-1]}"
@@ -63,7 +67,7 @@ class Object3d:
 
     __array_ufunc__ = None
 
-    def __init__(self, data=None):
+    def __init__(self, data: DataLike | Object3d | None = None) -> None:
         if isinstance(data, Object3d):
             self._data = data.data
         else:
@@ -84,7 +88,7 @@ class Object3d:
         return self._data[..., : self.dim]
 
     @data.setter
-    def data(self, data: np.ndarray):
+    def data(self, data: np.ndarray) -> None:
         """Set the data."""
         self._data[..., : self.dim] = data
 
@@ -134,7 +138,7 @@ class Object3d:
         obj = self.__class__(data)
         return obj
 
-    def __setitem__(self, key, value: np.ndarray):
+    def __setitem__(self, key, value: np.ndarray) -> None:
         """Set a slice of the data."""
         self.data[key] = value.data
 
@@ -161,26 +165,38 @@ class Object3d:
         return obj
 
     @classmethod
-    def random(cls, shape: Union[int, tuple] = 1) -> Object3d:
-        """Create object with random data.
+    def random(cls, shape: int | tuple[int, ...] = 1) -> Object3d:
+        """Return uniformly distributed random data.
+
+        For objects that map to the surfaces of n-dimensional unit
+        spheres (unit vectors, quaternions, octonions, etc), randomly
+        sampling values for each axis gives a non-uniform sampling that
+        coalesces near the poles. One proper method is to instead sample
+        an n-dimensional gaussian distribution for each axis, then
+        normalize the result.
+
+        For vectors, this would produce a uniform sampling of the 2D
+        surface of the 3D unit sphere.
+
+        For rotations, this would be a uniform sampling of the 3D
+        surface of the 4D quaternion unit sphere.
+
+        Note that this is not the only definition of a "random" sample,
+        but is the one most commonly appropriate when discussing vectors
+        and rotations in crystallography.
 
         Parameters
         ----------
         shape
-            Shape of the object.
+            Data shape.
 
         Returns
         -------
         obj
-            Object with random data.
+            Random data.
         """
         n = int(np.prod(shape))
-        obj = []
-        while len(obj) < n:
-            r = np.random.uniform(-1, 1, (3 * n, cls.dim))
-            r2 = np.sum(np.square(r), axis=1)
-            r = r[np.logical_and(1e-9**2 < r2, r2 <= 1)]
-            obj += list(r)
+        obj = np.random.normal(size=[n, cls.dim])
         obj = cls(np.array(obj[:n]))
         obj = obj.unit
         obj = obj.reshape(shape)
@@ -188,24 +204,27 @@ class Object3d:
 
     # --------------------- Other public methods --------------------- #
 
-    def flatten(self):
+    def flatten(self) -> Object3d:
         """Return a new object with the same data in a single column."""
         obj = self.__class__(self.data.T.reshape(self.dim, -1).T)
         real_dim = self._data.shape[-1]
         obj._data = self._data.T.reshape(real_dim, -1).T
         return obj
 
-    def unique(self, return_index: bool = False, return_inverse: bool = False) -> Union[
-        Tuple[Object3d, np.ndarray, np.ndarray],
-        Tuple[Object3d, np.ndarray],
-        Object3d,
-    ]:
+    def unique(
+        self,
+        return_index: bool = False,
+        return_inverse: bool = False,
+        ignore_zero: bool = True,
+    ) -> (
+        tuple[Object3d, np.ndarray, np.ndarray] | tuple[Object3d, np.ndarray] | Object3d
+    ):
         """Return a new object containing only this object's unique
         entries.
 
         Unless overridden, this method returns the numerically unique
         entries. It also removes zero-entries which are assumed to be
-        degenerate.
+        degenerate, unless ``ignore_zero`` is ``False``.
 
         Parameters
         ----------
@@ -215,6 +234,8 @@ class Object3d:
         return_inverse
             If ``True``, will also return the indices to reconstruct the
             (flattened) data from the unique data.
+        ignore_zero
+            If ``True``, remove any all-zero elements.
 
         Returns
         -------
@@ -228,7 +249,8 @@ class Object3d:
             ``return_inverse=True``.
         """
         data = self.flatten()._data.round(10)
-        data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
+        if ignore_zero:
+            data = data[~np.all(np.isclose(data, 0), axis=1)]  # Remove zeros
         _, idx, inv = np.unique(data, axis=0, return_index=True, return_inverse=True)
         obj = self.__class__(data[np.sort(idx), : self.dim])
         obj._data = data[np.sort(idx)]
@@ -254,7 +276,7 @@ class Object3d:
         obj._data = np.atleast_2d(self._data.squeeze())
         return obj
 
-    def reshape(self, *shape: Union[int, tuple]) -> Object3d:
+    def reshape(self, *shape: int | tuple[int, ...]) -> Object3d:
         """Return a new object with the same data in a new shape.
 
         Parameters
@@ -273,7 +295,7 @@ class Object3d:
         obj._data = self._data.reshape(*shape, self._data.shape[-1])
         return obj
 
-    def transpose(self, *axes: Optional[int]) -> Object3d:
+    def transpose(self, *axes: int | None) -> Object3d:
         """Return a new object with the same data transposed.
 
         If :attr:`ndim` is 2, the order may be undefined. In this case
@@ -312,8 +334,8 @@ class Object3d:
         return self.__class__(self.data.transpose(*axes + (-1,)))
 
     def get_random_sample(
-        self, size: Optional[int] = 1, replace: bool = False, shuffle: bool = False
-    ):
+        self, size: int | None = 1, replace: bool = False, shuffle: bool = False
+    ) -> Object3d:
         """Return a new flattened object from a random sample of a given
         size.
 

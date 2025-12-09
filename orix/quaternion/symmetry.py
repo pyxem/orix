@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,26 +10,38 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from diffpy.structure.spacegroups import GetSpaceGroup
 import matplotlib.figure as mfigure
 import numpy as np
 
 from orix.quaternion.rotation import Rotation
-from orix.vector import Vector3d
+from orix.vector.vector3d import Vector3d
 
 if TYPE_CHECKING:  # pragma: no cover
-    from orix.quaternion import Orientation
-    from orix.vector import FundamentalSector
+    from orix.quaternion.orientation import Orientation
+    from orix.vector.fundamental_sector import FundamentalSector
+
+
+VALID_SYSTEMS = Literal[
+    "triclinic",
+    "monoclinic",
+    "orthorhombic",
+    "tetragonal",
+    "trigonal",
+    "hexagonal",
+    "cubic",
+]
 
 
 class Symmetry(Rotation):
@@ -119,7 +132,7 @@ class Symmetry(Rotation):
             return Vector3d.stack(diads).flatten()
 
     @property
-    def euler_fundamental_region(self) -> tuple:
+    def euler_fundamental_region(self) -> tuple[int, int, int]:
         r"""Return the fundamental Euler angle region of the proper
         subgroup.
 
@@ -156,14 +169,9 @@ class Symmetry(Rotation):
         return region
 
     @property
-    def system(self) -> str | None:
+    def system(self) -> VALID_SYSTEMS | None:
         """Return which of the seven crystal systems this symmetry
-        belongs to.
-
-        Returns
-        -------
-        system
-            ``None`` is returned if the symmetry name is not recognized.
+        belongs to, or None if the symmetry name is not recognized.
         """
         name = self.name
         if name in ["1", "-1"]:
@@ -573,7 +581,7 @@ C2h.name = "2/m"
 # Orthorhombic
 D2 = Symmetry.from_generators(C2z, C2x, C2y)
 D2.name = "222"
-C2v = Symmetry.from_generators(C2x, Csz)
+C2v = Symmetry.from_generators(C2z, Csx)
 C2v.name = "mm2"
 D2h = Symmetry.from_generators(Csz, Csx, Csy)
 D2h.name = "mmm"

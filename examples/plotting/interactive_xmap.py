@@ -1,3 +1,21 @@
+#
+# Copyright 2018-2025 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 """
 ============================
 Interactive crystal map plot
@@ -22,10 +40,11 @@ corresponding Euler angles from the location of the click.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix import data, plot
 from orix.crystal_map import CrystalMap
+from orix.data import sdss_ferrite_austenite
+from orix.plot import IPFColorKeyTSL
 
-xmap = data.sdss_ferrite_austenite(allow_download=True)
+xmap = sdss_ferrite_austenite(allow_download=True)
 print(xmap)
 
 pg_laue = xmap.phases[1].point_group.laue
@@ -33,7 +52,7 @@ O_au = xmap["austenite"].orientations
 O_fe = xmap["ferrite"].orientations
 
 # Get IPF colors
-ipf_key = plot.IPFColorKeyTSL(pg_laue)
+ipf_key = IPFColorKeyTSL(pg_laue)
 rgb_au = ipf_key.orientation2color(O_au)
 rgb_fe = ipf_key.orientation2color(O_fe)
 

@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Four-dimensional objects.
 
@@ -21,21 +23,9 @@ Unit quaternions are efficient objects for representing rotations, and
 hence orientations.
 """
 
-from orix.quaternion.quaternion import Quaternion  # isort: skip
-from orix.quaternion.orientation import Misorientation, Orientation
-from orix.quaternion.orientation_region import OrientationRegion, get_proper_groups
-from orix.quaternion.rotation import Rotation, von_mises
-from orix.quaternion.symmetry import Symmetry, get_distinguished_points, get_point_group
+import lazy_loader
 
-__all__ = [
-    "Quaternion",
-    "Rotation",
-    "von_mises",
-    "Misorientation",
-    "Orientation",
-    "get_proper_groups",
-    "OrientationRegion",
-    "get_distinguished_points",
-    "get_point_group",
-    "Symmetry",
-]
+# Imports from stub file (see contributor guide for details)
+__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
+
+del lazy_loader
