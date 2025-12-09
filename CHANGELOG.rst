@@ -11,6 +11,25 @@ Unreleased
 
 Added
 -----
+
+Changed
+-------
+
+Removed
+-------
+
+Deprecated
+----------
+
+Fixed
+-----
+
+
+2025-12-09 - version 0.14.0
+===========================
+
+Added
+-----
 - A customizable Wulff net can be added to a stereographic plot using
   :meth:`~orix.plot.StereographicPlot.wulff_net`.
 - Conversion of :class:`~orix.quaternion.Orientation`,

@@ -20,9 +20,8 @@
 import numpy as np
 import pytest
 
-from orix._utils.constants import VisibleDeprecationWarning
 from orix.crystal_map import CrystalMap, Phase, PhaseList
-from orix.io import load, loadang, save
+from orix.io import load, save
 from orix.io.plugins.ang import (
     _autogen_phase_names,
     _get_column_width,
@@ -36,53 +35,6 @@ from orix.tests.conftest import (
     ANGFILE_EMSOFT_HEADER,
     ANGFILE_TSL_HEADER,
 )
-
-
-@pytest.mark.parametrize(
-    "angfile_astar, expected_data",
-    [
-        (
-            (
-                (2, 5),
-                (1, 1),
-                np.ones(2 * 5, dtype=int),
-                np.array(
-                    [
-                        [4.485496, 0.952426, 0.791507],
-                        [1.343904, 0.276111, 0.825890],
-                        [1.343904, 0.276111, 0.825890],
-                        [1.343904, 0.276111, 0.825890],
-                        [4.555309, 2.895152, 3.972020],
-                        [1.361357, 0.276111, 0.825890],
-                        [4.485496, 0.220784, 0.810182],
-                        [0.959931, 2.369110, 4.058938],
-                        [0.959931, 2.369110, 4.058938],
-                        [4.485496, 0.220784, 0.810182],
-                    ],
-                ),
-            ),
-            np.array(
-                [
-                    [0.77861956, -0.12501022, 0.44104243, 0.42849224],
-                    [0.46256046, -0.13302712, -0.03524667, -0.87584204],
-                    [0.46256046, -0.13302712, -0.03524667, -0.87584204],
-                    [0.46256046, -0.13302712, -0.03524667, -0.87584204],
-                    [0.05331986, 0.95051048, 0.28534763, -0.11074093],
-                    [0.45489991, -0.13271448, -0.03640618, -0.87984517],
-                    [0.8752001, -0.02905178, 0.10626836, 0.47104969],
-                    [0.3039118, 0.01972273, -0.92612154, 0.22259272],
-                    [0.3039118, 0.01972273, -0.92612154, 0.22259272],
-                    [0.8752001, -0.02905178, 0.10626836, 0.47104969],
-                ]
-            ),
-        ),
-    ],
-    indirect=["angfile_astar"],
-)
-def test_loadang(angfile_astar, expected_data):
-    with pytest.warns(VisibleDeprecationWarning):
-        loaded_data = loadang(angfile_astar)
-    assert np.allclose(loaded_data.data, expected_data)
 
 
 class TestAngReader:
