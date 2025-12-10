@@ -17,7 +17,7 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-__version__ = "0.14.0"
+__version__ = "0.14.1"
 
 # Sorted by line contributions (ideally excluding lines in notebook
 # files)
