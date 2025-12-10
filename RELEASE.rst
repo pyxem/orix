@@ -31,7 +31,7 @@ Preparation
   work as expected, a release candidate with version e.g. "0.9.1rc1" can be made. Update
   ``CHANGELOG.rst`` accordingly.
 
-- For minor releases, remove deprecated functionality. For details on how depreciations
+- For minor releases, remove deprecated functionality. For details on how deprecations
   are handled, see ``orix/doc/dev/handling_deprecations.rst``.
 
 - Make a PR of the release branch to ``main``. Discuss the release and changelog with
