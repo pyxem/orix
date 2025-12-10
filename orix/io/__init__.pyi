@@ -17,12 +17,10 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ._io import load, loadang, loadctf, save
+from ._io import load, save
 
 # Lazily imported in module init
 __all__ = [
-    "loadang",
-    "loadctf",
     "load",
     "save",
 ]
