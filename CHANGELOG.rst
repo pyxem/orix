@@ -25,6 +25,14 @@ Fixed
 -----
 
 
+2025-12-10 - version 0.14.1
+===========================
+
+Fixed
+-----
+- Documentation build now passes again.
+
+
 2025-12-09 - version 0.14.0
 ===========================
 
