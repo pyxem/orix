@@ -19,6 +19,7 @@
 
 from ._plot import register_projections
 from ._util.formatting import format_labels
+from ._util.arrow_3d import Arrow3D
 from .crystal_map_plot import CrystalMapPlot
 from .direction_color_keys import DirectionColorKeyTSL
 from .orientation_color_keys import EulerColorKey, IPFColorKeyTSL
@@ -48,5 +49,6 @@ __all__ = [
     "StereographicPlot",
     # Functions
     "format_labels",
+    "Arrow3D",
     "register_projections",
 ]
