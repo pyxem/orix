@@ -18,8 +18,8 @@
 #
 
 from ._plot import register_projections
-from ._util.formatting import format_labels
 from ._util.arrow_3d import Arrow3D
+from ._util.formatting import format_labels
 from .crystal_map_plot import CrystalMapPlot
 from .direction_color_keys import DirectionColorKeyTSL
 from .orientation_color_keys import EulerColorKey, IPFColorKeyTSL
