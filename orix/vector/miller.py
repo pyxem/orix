@@ -464,7 +464,10 @@ class Miller(Vector3d):
 
     def deepcopy(self) -> Miller:
         """Return a deepcopy of the instance."""
-        return deepcopy(self)
+        data = deepcopy(self.data)  # Otherwise, data is a view
+        copied = self.__class__(xyz=data, phase=self.phase) # deepcopy is slow.
+        copied.coordinate_format = self.coordinate_format
+        return copied
 
     def round(self, max_index: int = 20) -> Miller:
         """Round a set of index triplet (Miller) or quartet
