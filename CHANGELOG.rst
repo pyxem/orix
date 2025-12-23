@@ -13,8 +13,6 @@ Changed
 -----
 - The PDF version of the ORIX documentation is no longer automatically built by
   ReadtheDocs.
-- :class: Arrow3D class is no longer a private class, and is accessible as 
-  ``orix.plot.Arrow3d``.
 
 
 2025-12-10 - version 0.14.1

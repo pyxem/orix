@@ -33,8 +33,6 @@ dependencies = [
     "numba",
     "numpy",
     "pooch                  >= 0.13",
-    # TODO: Remove once diffpy.structure >= 3.2.1
-    "pycifrw",
     "scipy",
     "tqdm",
 ]
@@ -64,9 +62,7 @@ doc = [
 tests = [
     "numpydoc",
     "pytest                         >= 5.4",
-    # TODO: Remove restriction once a new release fixing
-    # https://github.com/pytest-dev/pytest-rerunfailures/issues/302 is available.
-    "pytest-rerunfailures           < 16.0",
+    "pytest-rerunfailures",
     "pytest-xdist",
 ]
 coverage = [
