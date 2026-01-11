@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
 r"""
 ================================================
 Rotations mapping the fundamental sector on *S2*
@@ -54,7 +55,7 @@ pg = symmetry.D4h  # 4/mmm
 R = sampling.get_sample_reduced_fundamental(res, point_group=pg)
 print(np.allclose(R.to_euler()[1:, 0], 0))
 
-########################################################################
+# %%
 # Get vectors within the fundamental sector following the two routes
 v1 = R * Vector3d.zvector()
 
@@ -66,7 +67,7 @@ print(np.allclose(v1.data, v2.data))
 print(v1)
 print(v2)
 
-########################################################################
+# %%
 # Plot the vectors in the fundamental sector of Laue group 4/mmm
 fig, (ax0, ax1) = plt.subplots(
     ncols=2, subplot_kw={"projection": "ipf", "symmetry": pg}, layout="tight"

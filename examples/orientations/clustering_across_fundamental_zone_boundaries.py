@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -27,7 +27,7 @@ and without the application of crystal symmetry using simulated data, as present
 :cite:`johnstone2020density`.
 """
 
-########################################################################################
+# %%
 # Import necessary dependencies and orix tools.
 
 import matplotlib.animation as manimation
@@ -43,7 +43,7 @@ from orix.quaternion.symmetry import C1, Oh
 
 register_projections()  # Register custom Matplotlib projections
 
-########################################################################################
+# %%
 # Generate artificial data
 # ========================
 #
@@ -69,7 +69,7 @@ ori = Orientation.stack([cluster1, cluster2, cluster3]).flatten()
 ori.symmetry = Oh
 ori = ori.reduce()
 
-########################################################################################
+# %%
 # Orientation clustering
 # ======================
 #
@@ -87,13 +87,13 @@ mori1 = (~ori_without_symmetry).outer(ori_without_symmetry)
 # Misorientation angles
 D1 = mori1.angle
 
-########################################################################################
+# %%
 # Perform clustering.
 
 dbscan_naive = DBSCAN(eps=0.3, min_samples=10, metric="precomputed").fit(D1)
 print("Labels:", np.unique(dbscan_naive.labels_))
 
-########################################################################################
+# %%
 # With symmetry
 # -------------
 #
@@ -106,7 +106,7 @@ mori2 = mori2.reduce()
 
 D2 = mori2.angle
 
-########################################################################################
+# %%
 # Perform clustering.
 
 dbscan = DBSCAN(eps=np.deg2rad(17), min_samples=20, metric="precomputed").fit(
@@ -114,7 +114,7 @@ dbscan = DBSCAN(eps=np.deg2rad(17), min_samples=20, metric="precomputed").fit(
 )
 print("Labels:", np.unique(dbscan.labels_))
 
-########################################################################################
+# %%
 # This should have shown that without symmetry there are 6 clusters, whereas with
 # symmetry there are 3.
 #
@@ -128,7 +128,7 @@ color_names = [to_rgb(f"C{i}") for i in range(6)]  # ['C0', 'C1', ...]
 colors_naive = label2rgb(dbscan_naive.labels_, colors=color_names, bg_label=-1)
 colors = label2rgb(dbscan.labels_, colors=color_names, bg_label=-1)
 
-########################################################################################
+# %%
 # Plot orientation clusters with Matplotlib and
 # :meth:`~orix.quaternion.Misorientation.scatter`.
 
