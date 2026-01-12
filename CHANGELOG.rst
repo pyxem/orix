@@ -11,8 +11,7 @@ its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>
 
 Changed
 -----
-- The PDF version of the ORIX documentation is no longer automatically built by
-  ReadtheDocs.
+- The PDF version of the documentation is no longer available from ReadTheDocs.
 
 
 2025-12-10 - version 0.14.1
