@@ -237,31 +237,36 @@ class Vector3d(Object3d):
     # ------------------------ Dunder methods ------------------------ #
 
     def __neg__(self) -> Vector3d:
-        return self.__class__(-self.data)
+        kwargs = self.get_kwargs(new_data=-self.data)
+        return self.__class__(**kwargs)
 
     def __add__(
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
-            return self.__class__(self.data + other.data)
+            kwargs = self.get_kwargs(new_data=self.data + other.data)
+            return self.__class__(**kwargs)
         elif isinstance(other, (int, float)):
-            return self.__class__(self.data + other)
+            kwargs = self.get_kwargs(new_data=self.data + other)
+            return self.__class__(**kwargs)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
-
         if isinstance(other, np.ndarray):
-            return self.__class__(self.data + other[..., np.newaxis])
+            kwargs = self.get_kwargs(new_data=self.data + other[..., np.newaxis])
+            return self.__class__(**kwargs)
 
         return NotImplemented
 
     def __radd__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
         if isinstance(other, (int, float)):
-            return self.__class__(other + self.data)
+            kwargs = self.get_kwargs(new_data=other + self.data)
+            return self.__class__(**kwargs)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] + self.data)
+            kwargs = self.get_kwargs(new_data=other[..., np.newaxis] + self.data)
+            return self.__class__(**kwargs)
 
         return NotImplemented
 
@@ -269,14 +274,17 @@ class Vector3d(Object3d):
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
-            return self.__class__(self.data - other.data)
+            kwargs = self.get_kwargs(new_data=self.data - other.data)
+            return self.__class__(**kwargs)
         elif isinstance(other, (int, float)):
-            return self.__class__(self.data - other)
+            kwargs = self.get_kwargs(self.data - other)
+            return self.__class__(**kwargs)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return self.__class__(self.data - other[..., np.newaxis])
+            kwargs = self.get_kwargs(self.data - other[..., np.newaxis])
+            return self.__class__(**kwargs)
 
         return NotImplemented
 
@@ -300,23 +308,27 @@ class Vector3d(Object3d):
                 "Try `.dot` or `.cross` instead."
             )
         elif isinstance(other, (int, float)):
-            return self.__class__(self.data * other)
+            kwargs = self.get_kwargs(new_data=self.data * other)
+            return self.__class__(**kwargs)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return self.__class__(self.data * other[..., np.newaxis])
+            kwargs = self.get_kwargs(new_data=self.data * other[..., np.newaxis])
+            return self.__class__(**kwargs)
 
         return NotImplemented
 
     def __rmul__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
         if isinstance(other, (int, float)):
-            return self.__class__(other * self.data)
+            kwargs = self.get_kwargs(new_data=other * self.data)
+            return self.__class__(**kwargs)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] * self.data)
+            kwargs = self.get_kwargs(new_data=other[..., np.newaxis] * self.data)
+            return self.__class__(**kwargs)
 
         return NotImplemented
 
@@ -326,12 +338,14 @@ class Vector3d(Object3d):
         if isinstance(other, Vector3d):
             raise ValueError("Dividing vectors is undefined")
         elif isinstance(other, (int, float)):
-            return self.__class__(self.data / other)
+            kwargs = self.get_kwargs(new_data=self.data / other)
+            return self.__class__(**kwargs)
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return self.__class__(self.data / other[..., np.newaxis])
+            kwargs = self.get_kwargs(new_data=self.data / other[..., np.newaxis])
+            return self.__class__(**kwargs)
 
         return NotImplemented
 
@@ -770,6 +784,11 @@ class Vector3d(Object3d):
             azimuth = np.rad2deg(azimuth)
             polar = np.rad2deg(polar)
         return azimuth, polar, self.radial
+
+    def get_kwargs(self, new_data, *args, **kwargs) -> Dict[str, Any]:
+        """Return the dictionary of attributes to be used in the
+        constructor when applying an ufunc."""
+        return dict(data=new_data)
 
     def in_fundamental_sector(self, symmetry: "Symmetry") -> Vector3d:
         """Project vectors to a symmetry's fundamental sector (inverse
