@@ -19,6 +19,7 @@
 
 import numpy as np
 import pytest
+import warnings
 
 from orix._base import DimensionError, Object3d
 
@@ -178,10 +179,20 @@ def test_stack(object3d, n):
 
 
 def test_flatten(object3d):
-    flat = object3d.flatten()
-    assert isinstance(flat, object3d.__class__)
-    assert flat.ndim == 1
-    assert flat.shape[0] == object3d.size
+    with warnings.catch_warnings(record=True) as w:
+        flat_C = object3d.flatten("C")
+        flat_F = object3d.flatten("F")
+        assert isinstance(flat_C, object3d.__class__)
+        assert flat_C.ndim == 1
+        assert flat_F.ndim == 1
+        assert flat_C.shape[0] == object3d.size
+        assert flat_F.shape[0] == object3d.size
+        assert len(w) == 0
+        flat_None = object3d.flatten()
+        assert flat_None.ndim == 1
+        assert flat_None.shape[0] == object3d.size
+        assert len(w) == 1
+        assert "0.16" in str(w[0].message)
 
 
 @pytest.mark.parametrize("test_object3d", [1], indirect=["test_object3d"])
