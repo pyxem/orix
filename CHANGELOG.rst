@@ -12,9 +12,13 @@ Unreleased
 
 Added
 -----
+- The unit cells and atomic positions of `~orix.crystalmap.Phase` objects can now
+  be visualized using `Phase.plot_unit_cell.
 
 Changed
 -------
+- The IPF color keys can take 'x', 'y', and 'z' text strings as direction inputs
+  instead of requiring Vector3d objects.
 
 Removed
 -------

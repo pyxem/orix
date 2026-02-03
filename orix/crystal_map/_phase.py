@@ -74,10 +74,12 @@ class Phase:
         :class:`~diffpy.structure.structure.Structure` compatible with
         the symmetry is used.
     cell_parameters
-        the six cell parameters used to define a unit cell. These are
-        a, b, and c in nanometers, and alpha, beta, gamma in degrees.
-        Values are passed directly into diffpy.structure.Lattice. This
-        value is ignored if structure is not None.
+        The six cell parameters used to define a unit cell. These are
+        the lengths of the a, b, and c axes of the unit cells followed
+        by the alpha, beta, and gamma angles between them in degrees.
+        Values are passed directly into diffpy.structure.Lattice, see
+        that class's docstring for more details. This value is ignored
+        if structure is not None.
     color
         Phase color. If not given, it is set to the first default
         Matplotlib color "tab:blue".
@@ -155,9 +157,7 @@ class Phase:
 
         # Ensure correct alignment
         old_matrix = value.lattice.base
-        new_matrix = new_structure_matrix_from_alignment(
-            old_matrix, x="a", z="c*"
-        )
+        new_matrix = new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
         new_value = value.copy()
 
         # Ensure atom positions are expressed in the new basis
@@ -431,9 +431,8 @@ class Phase:
                 new_atom.xyz = pos
                 # Only add new atom if not already present
                 for present_atom in diffpy_structure:
-                    if (
-                        present_atom.element == new_atom.element
-                        and np.allclose(present_atom.xyz, new_atom.xyz)
+                    if present_atom.element == new_atom.element and np.allclose(
+                        present_atom.xyz, new_atom.xyz
                     ):
                         break
                 else:
@@ -478,9 +477,7 @@ class Phase:
         ax.set_aspect("equal")
         ax.set_proj_type = "ortho"
         fc = self.color_rgb + (0.1,)
-        ax.add_collection3d(
-            Poly3DCollection(v[f], facecolors=fc, edgecolors=[0, 0, 0])
-        )
+        ax.add_collection3d(Poly3DCollection(v[f], facecolors=fc, edgecolors=[0, 0, 0]))
         if show_xyz:
             ax.plot([0, 1], [0, 0], [0, 0], "grey")
             ax.plot([0, 0], [0, 1], [0, 0], "grey")
@@ -497,9 +494,7 @@ class Phase:
                 xyz = self.structure[i].xyz.dot(self._diffpy_lattice.T)
                 elem = self.structure[i].element.title()  # titlecase
                 rgb = _jmol_colors.get(elem, [0, 0, 0])
-                ax.scatter(
-                    *xyz, facecolor=np.array(rgb) / 255, s=300, edgecolor="k"
-                )
+                ax.scatter(*xyz, facecolor=np.array(rgb) / 255, s=300, edgecolor="k")
         if return_figure:
             return fig
         return
