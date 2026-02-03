@@ -28,7 +28,6 @@ and :class:`~orix.crystal_map.PhaseList` objects.
 """
 
 import orix.crystal_map as ocm
-import orix.quaternion as oqu
 
 # %%
 # Creating a Phase

@@ -51,15 +51,16 @@ print(Al2O3_sym)
 # the unit cell. Again, using Alumina as the example:
 
 atoms = [
-    dps.Atom("Al",[1/3,2/3,0.815]),
-         dps.Atom("O",[0.361,1/3,0.583]),
-         ]
+    dps.Atom("Al", [1 / 3, 2 / 3, 0.815]),
+    dps.Atom("O", [0.361, 1 / 3, 0.583]),
+]
 lattice = dps.Lattice(0.481, 0.481, 1.391, 90, 90, 120)
 structure = dps.Structure(atoms=atoms, lattice=lattice)
-Al2O3_phase = ocm.Phase(name = "Alumina",
-    space_group = 167,
-    structure = structure,
-    color = 'red',
+Al2O3_phase = ocm.Phase(
+    name="Alumina",
+    space_group=167,
+    structure=structure,
+    color="red",
 ).expand_asymmetric_unit()
 
 unit_cell_figure = Al2O3_phase.plot_unit_cell(return_figure=True)
@@ -76,12 +77,11 @@ Al2O3_phase
 # the cell parameters, this will cause ORIX to fill in default values for cell
 # parameters based on the point group. This is simpler, has no effect on IPF coloring
 # or orientation calculations, and allows for tracking information such as names and
-# preferred plot color(hence why it is allowed), but it WILL cause incorrect Miller 
+# preferred plot color(hence why it is allowed), but it WILL cause incorrect Miller
 # calculations and IPF plotting.
 
 lazy_Al2O3_phase = ocm.Phase(space_group=167)
-correct_111 = ove.Miller(uvw=[1,1,1],phase=Al2O3_phase).xyz
-incorrect_111 = ove.Miller(uvw=[1,1,1],phase=lazy_Al2O3_phase).xyz
+correct_111 = ove.Miller(uvw=[1, 1, 1], phase=Al2O3_phase).xyz
+incorrect_111 = ove.Miller(uvw=[1, 1, 1], phase=lazy_Al2O3_phase).xyz
 print("Correct xyz for [111]:", np.stack(correct_111).flatten())
 print("Incorrect xyz for [111]:", np.stack(incorrect_111).flatten())
-
