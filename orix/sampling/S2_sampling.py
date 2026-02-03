@@ -573,7 +573,8 @@ for sampling_name, sampling_method in _sampling_method_registry.items():
     )
     _sampling_S2_method_names.add(f":func:`orix.sampling.{_func.__name__}`")
 
-_s2_sampling_docstring = ("""Return unit vectors that sample S2 with a specific angular
+_s2_sampling_docstring = (
+    """Return unit vectors that sample S2 with a specific angular
     resolution.
 
     Parameters
@@ -595,7 +596,8 @@ _s2_sampling_docstring = ("""Return unit vectors that sample S2 with a specific 
     See Also
     --------
     {}
-    """).format(
+    """
+).format(
     ", ".join(map(lambda x: f'``"{x}"``', sample_S2_methods)),
     "\n    ".join(_sampling_S2_method_names),
 )
