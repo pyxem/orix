@@ -15,6 +15,8 @@ Added
 
 Changed
 -------
+ - :func:`~orix/_base.py/Object3D.flatten()` supports column-major (current default)
+  and row-major (future default) flattening, similar to numpy.flatten().
 
 Removed
 -------
