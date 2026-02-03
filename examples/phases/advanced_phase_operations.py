@@ -27,10 +27,11 @@ This example shows some additional uncommon but useful operations related to
 
 """
 
+import diffpy.structure as dps
+
 import orix.crystal_map as ocm
 import orix.quaternion as oqu
 import orix.vector as ove
-import diffpy.structure as dps
 
 # %%
 # Directly accessing `diffpy.structure` operators

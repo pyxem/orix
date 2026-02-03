@@ -24,14 +24,12 @@ Phase versus Symmetry
 """
 
 import diffpy.structure as dps
-
 import numpy as np
 
 import orix.crystal_map as ocm
 import orix.quaternion as oqu
-import orix.vector as ove
-
 from orix.quaternion import symmetry
+import orix.vector as ove
 
 ##############################################################################
 # ORIX includes two different but related classes for describing crystallographic
