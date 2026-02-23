@@ -28,6 +28,7 @@ on:
       - main
     paths:
       - "orix/__init__.py"
+  workflow_dispatch:
 
 jobs:
   make-tagged-release:
