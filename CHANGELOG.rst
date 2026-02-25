@@ -48,40 +48,34 @@ Fixed
 
 Added
 -----
-- A customizable Wulff net can be added to a stereographic plot using
-  :meth:`~orix.plot.StereographicPlot.wulff_net`.
-- Conversion of :class:`~orix.quaternion.Orientation`,
-  :class:`~orix.quaternion.Misorientation`, :class:`~orix.quaternion.Rotation`, and
-  :class:`~orix.quaternion.Quaternion` to :class:`scipy.spatial.transform.Rotation` via
-  :meth:`~orix.quaternion.Quaternion.to_scipy_rotation`.
-- Allow controlling whether to keep zero-vectors in
-  :meth:`~orix.vector.Vector3d.unique` with a new ``ignore_zero`` parameter.
+- A customizable Wulff net can be added to a stereographic plot using ``wulff_net()``.
+- Conversion of ``Orientation``, ``Misorientation``, ``Rotation``, and ``Quaternion`` to
+  ``Rotation`` via ``to_scipy_rotation()``.
+- Allow controlling whether to keep zero-vectors in ``unique()`` with a new
+  ``ignore_zero`` parameter.
   Previous behavior, to discard them, is still default.
-- If a :class:`~orix.crystal_map.Phase`, :class:`~orix.crystal_map.PhaseList`, or a
-  :class:`~orix.crystal_map.CrystalMap` is passed to their own constructors, a copy is
-  returned.
-- Added :meth:`~orix.crystal_map.Phase.expand_asymmetric_unit` to add all symmetrically
-  equivalent atoms to the structure in a new phase.
-- Element-wise indexing into :class:`~orix.vector.Vector3d` and subclasses, such as
-  :class:`~orix.vector.Miller`.
+- If a ``Phase``, ``PhaseList``, or a ``CrystalMap`` is passed to their own
+  constructors, a copy is returned.
+- Added ``expand_asymmetric_unit()`` to add all symmetrically equivalent atoms to the
+  structure in a new phase.
+- Element-wise indexing into ``Vector3d`` and subclasses, such as ``Miller``.
 - Explicit support for Python 3.13.
 - Dependency on `lazy-loader`.
-- Function :func:`~orix.plot.register_projections` to register all our custom
-  projections for use in Matplotlib.
-  An example of a custom projection is the :class:`~orix.plot.StereographicPlot`.
+- Function ``register_projections()`` to register all our custom projections for use in
+  Matplotlib.
+  An example of a custom projection is the ``StereographicPlot``.
   This function replaces the previous behavior of relying on a side-effect of importing
-  the :mod:`orix.plot` module, which also registered the projections.
+  the ``plot`` module, which also registered the projections.
 - Method ``from_path_ends()`` to return quaternions, rotations, orientations, or
   misorientations along the shortest path between two or more points.
 
 Changed
 -------
-- The \*.ang file reader accepts a boolean parameter ``autogen_names`` via
-  :func:`~orix.io.load` that allows rewriting phase names in the returned crystal map
-  based on elements and point groups, as opposed to automatically overwriting names.
-- Generation of random :class:`~orix.vector.Vector3d` and
-  :class:`~orix.quaternion.Quaternion` (and its subclasses) via ``random()`` now uses a
-  Gaussian method as opposed to rejection-based sampling.
+- The \*.ang file reader accepts a boolean parameter ``autogen_names`` via ``load()``
+  that allows rewriting phase names in the returned crystal map based on elements and
+  point groups, as opposed to automatically overwriting names.
+- Generation of random ``Vector3d`` and ``Quaternion`` (and its subclasses) via
+  ``random()`` now uses a Gaussian method as opposed to rejection-based sampling.
   This is faster and uses less memory.
 - Functions and classes are now loaded lazily with `lazy-loader`.
 - *matplotlib-scalebar* is now an optional dependency.
@@ -94,17 +88,15 @@ Removed
 
 Deprecated
 ----------
-- Method :meth:`~orix.quaternion.Misorientation.map_into_symmetry_reduced_zone` for
-  (mis)orientations have been deprecated in favor of
-  :meth:`~orix.quaternion.Misorientation.reduce` and will be removed in version 0.15.0.
+- Method ``map_into_symmetry_reduced_zone()`` for (mis)orientations have been
+  deprecated in favor of ``reduce()`` and will be removed in version 0.15.0.
 
 Fixed
 -----
-- :class:`~orix.plot.IPFColorKey` labels for point groups *-3* and *6/m* are now
-  correct.
+- ``IPFColorKey`` labels for point groups *-3* and *6/m* are now correct.
 - Multicolor stereographic scatter plots now correctly cast RGB and RGBA color arrays
-- Coloring of vectors in :meth:`~orix.plot.StereographicPlot.scatter` and the equivalent
-  vector method now correctly maps colors from RGB(A) arrays.
+- Coloring of vectors in ``scatter()`` and the equivalent vector method now correctly
+  maps colors from RGB(A) arrays.
 - Randomly sampled quaternions, rotations, and (mis)orientations have positive angle (a)
   components.
 - The symmetry operations of the orthorhombic point group *mm2* (*C2v*) are now in line
