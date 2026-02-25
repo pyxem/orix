@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -73,6 +73,7 @@ intersphinx_mapping = {
     "defdap": ("https://defdap.readthedocs.io/en/latest", None),
     "diffpy.structure": ("https://www.diffpy.org/diffpy.structure", None),
     "diffsims": ("https://diffsims.readthedocs.io/en/latest", None),
+    "elasticipy": ("https://elasticipy.readthedocs.io/en/latest", None),
     "h5py": ("https://docs.h5py.org/en/stable", None),
     "kikuchipy": ("https://kikuchipy.org/en/latest", None),
     "matplotlib": ("https://matplotlib.org/stable", None),
