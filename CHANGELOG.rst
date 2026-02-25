@@ -6,6 +6,7 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
+
 Unreleased
 ==========
 
@@ -23,6 +24,15 @@ Deprecated
 
 Fixed
 -----
+
+
+2026-02-24 - version 0.14.2
+===========================
+
+Changed
+-------
+- The PDF version of the documentation is no longer available from Read The Docs.
+  This was done to reserve needed build time for the HTML version.
 
 
 2025-12-10 - version 0.14.1
