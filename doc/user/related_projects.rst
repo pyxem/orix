@@ -29,6 +29,6 @@ find useful:
 - `DREAM.3D <https://dream3d.io/>`_: C++ library to reconstruct, instatiate, quantify,
   mesh, handle and visualize multidimensional (3D), multimodal data (mainly EBSD
   orientation data).
-- `Elasticipy <https://elasticipy.readthedocs.io/>`_: A Python package designed to simplify 
-the integration and the manupulation of elastic properties and stress-strain calculations in 
-materials science workflows. 
+- :doc:`elasticipy <elasticipy:index>`: A Python package designed to simplify the
+  integration and the manipulation of elastic properties and stress-strain calculations
+  in materials science workflows.
