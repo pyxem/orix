@@ -1,5 +1,5 @@
 ##
-## Copyright 2018-2025 the orix developers
+## Copyright 2018-2026 the orix developers
 ##
 ## This file is part of orix.
 ##
@@ -43,10 +43,12 @@ jobs:
       with:
         python-version: '3.x'
 
+    # TODO: Remove install of setuptools once
+    # https://github.com/pyxem/orix/issues/629 is resolved
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install packaging outdated
+        pip install packaging outdated setuptools<82
 
     - name: Check whether a tagged release draft should be made
       run: |
