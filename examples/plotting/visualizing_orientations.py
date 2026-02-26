@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -87,7 +87,7 @@ ori = Orientation.random(n, symmetry=D3)
 color_key = IPFColorKeyTSL(D3)
 rgb = color_key.orientation2color(ori)
 
-########################################################################################
+# %%
 # Orientation plots can be made in one of two ways.
 # The first and simplest is via :meth:`~orix.quaternion.Orientation.scatter`.
 
@@ -101,12 +101,12 @@ fig.axes[2].set_title("Homochoric Projection")
 ori.scatter(c=rgb, position=144, projection="ipf", figure=fig)
 _ = fig.axes[3].set_title("Inverse Pole Figure Projection \n\n")
 
-########################################################################################
+# %%
 # This can also be used to create standalone figures
 
 ori.scatter(c=rgb, projection="ipf")
 
-########################################################################################
+# %%
 # The second method is by setting the projections when defining the Matplotlib axes.
 # This can require more tinkering since the plots are not auto-formatted like above, but
 # it allows for more customization as well as the plotting of multiple datasets on a

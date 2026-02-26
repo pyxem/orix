@@ -1,2 +1,0 @@
-Stereographic projection
-========================

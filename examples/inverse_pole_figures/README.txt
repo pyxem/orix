@@ -1,2 +1,0 @@
-Inverse pole figures
-====================

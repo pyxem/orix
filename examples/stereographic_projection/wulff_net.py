@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
 """
 =========
 Wulff net
@@ -32,7 +33,7 @@ from orix.quaternion.symmetry import C6h
 
 register_projections()  # Register our custom Matplotlib projections
 
-########################################################################################
+# %%
 # Plot two stereographic projections, one with the standard Wulff net, another with a
 # customized net
 
@@ -58,7 +59,7 @@ ax1.wulff_net()
 # Then turn it back on, with the previously defined grid spacing saved.
 ax1.wulff_net()
 
-########################################################################################
+# %%
 # The net also displays nicely for inverse pole figures (stereographic projections
 # restricted to a fundamental sector)
 fig = plt.figure(layout="tight")

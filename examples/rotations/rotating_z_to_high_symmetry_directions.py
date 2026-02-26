@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
 r"""
 =====================================================
 Rotating z-vector to high-symmetry crystal directions
@@ -52,7 +53,7 @@ t = t.in_fundamental_sector()
 t = t.unit.unique(use_symmetry=True).round()
 print(t)
 
-########################################################################
+# %%
 # Get the rotations that rotate :math:`\mathbf{v_z}` to these crystal
 # directions
 vz = Miller(uvw=[0, 0, 1], phase=t.phase)
@@ -61,7 +62,7 @@ for i, t_i in enumerate(t):
     R[i] = Rotation.from_align_vectors(t_i, vz)
 print(R)
 
-########################################################################
+# %%
 # Plot the crystal directions within the fundamental sector of Laue
 # group :math:`mmm`
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -25,7 +25,7 @@ Create crystal symmetry
 This example shows various ways to obtain a :class:`~orix.quaternion.symmetry.Symmetry`.
 """
 
-########################################################################################
+# %%
 # The simplest way is to import pre-defined point groups.
 # They are named after the Schoenflies notation and can be imported directly
 from orix.quaternion.symmetry import D6h, Oh
@@ -34,7 +34,7 @@ print(Oh)  # m-3m in international/Hermann-Mauguin notation
 
 print(D6h)  # 6/mmm
 
-########################################################################################
+# %%
 # If one wanted to, one can also combine two point groups to get a third.
 # Here're two versions of the orthorhombic point group *mm2* (*C2v*) with the 2-fold
 # axis about different axes (importing C2v directly gives the group with the axis about
@@ -44,7 +44,7 @@ from orix.quaternion.symmetry import C2x, C2z, Csx, Csz, Symmetry
 C2v_x = Symmetry.from_generators(C2x, Csz)
 C2v_z = Symmetry.from_generators(C2z, Csx)
 
-########################################################################################
+# %%
 # Notice the different symmetrically equivalent directions
 from orix.vector import Vector3d
 

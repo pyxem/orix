@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
 """
 ===================
 Color scatter plots
@@ -37,7 +38,7 @@ from orix.vector import Vector3d
 register_projections()  # Register our custom Matplotlib projections
 np.random.seed(2319)  # Create reproducible random data
 
-########################################################################################
+# %%
 # Create some random vectors and plot them in the stereographic projection, coloring by:
 #
 # - Scalar values mapped to a Matplotlib color map
@@ -70,7 +71,7 @@ ax3 = fig.add_subplot(1, n, 4, projection="stereographic")
 ax3.scatter(v, c=c_color)
 _ = ax3.set_title("A single color")
 
-########################################################################################
+# %%
 # This also works nicely when coloring (mis)orientations
 ori = Orientation.random(50)
 ori.symmetry = Oh
