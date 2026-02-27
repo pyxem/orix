@@ -21,7 +21,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
+import warnings
 
 import numpy as np
 
@@ -204,11 +205,37 @@ class Object3d:
 
     # --------------------- Other public methods --------------------- #
 
-    def flatten(self) -> Object3d:
-        """Return a new object with the same data in a single column."""
-        obj = self.__class__(self.data.T.reshape(self.dim, -1).T)
-        real_dim = self._data.shape[-1]
-        obj._data = self._data.T.reshape(real_dim, -1).T
+    # TODO: make "None" default to "C" in version 0.16.
+    def flatten(self, order: Literal["F", "C"] | None = None) -> Object3d:
+        """Return a new object with the same data in a single column.
+
+        Parameters
+        ----------
+        order: 'F' or 'C', optional
+            ‘C’ means to flatten in row-major (C-style) order. ‘F’
+            means to flatten in column-major (Fortran- style) order.
+            The default is ‘F’.
+
+        Notes
+        -----
+        For historical reasons, the current default is 'F'. This will
+        change to 'C' in orix 0.16, in order to match numpy.flatten().
+        """
+        if order == None:
+            warnings.warn(
+                DeprecationWarning(
+                    "The default flattening order for orix objects will "
+                    + "change from column-major (fortran style) to row-major "
+                    + "(numpy/C style) in orix 0.16. Setting 'order' to either "
+                    + "'C' for numpy or 'F' for fortran will silence this warning."
+                )
+            )
+        if order == "C":
+            obj = self.__class__(self.data.reshape(self.size, self.dim))
+        else:
+            obj = self.__class__(self.data.T.reshape(self.dim, -1).T)
+            real_dim = self._data.shape[-1]
+            obj._data = self._data.T.reshape(real_dim, -1).T
         return obj
 
     def unique(
