@@ -17,12 +17,15 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from diffpy.structure import Atom, Lattice, Structure, loadStructure
+import diffpy.structure as dst
 import numpy as np
 import pytest
 
-from orix.crystal_map import Phase
-from orix.crystal_map._phase import default_lattice, new_structure_matrix_from_alignment
+import orix.crystal_map as ocm
+from orix.crystal_map._phase import (
+    default_lattice,
+    new_structure_matrix_from_alignment,
+)
 from orix.quaternion.symmetry import O, Symmetry
 
 
@@ -37,9 +40,9 @@ class TestPhase:
                 None,
                 "tab:blue",
                 (0.121568, 0.466666, 0.705882),
-                Structure(title="Super", lattice=Lattice(1, 1, 1, 90, 90, 90)),
+                dst.Structure(title="Super", lattice=dst.Lattice(1, 1, 1, 90, 90, 90)),
             ),
-            (None, "1", 1, "blue", "blue", (0, 0, 1), Structure()),
+            (None, "1", 1, "blue", "blue", (0, 0, 1), dst.Structure()),
             (
                 "al",
                 "43",
@@ -47,7 +50,7 @@ class TestPhase:
                 "xkcd:salmon",
                 "xkcd:salmon",
                 (1, 0.474509, 0.423529),
-                Structure(title="ni", lattice=Lattice(1, 2, 3, 90, 90, 90)),
+                dst.Structure(title="ni", lattice=dst.Lattice(1, 2, 3, 90, 90, 90)),
             ),
             (
                 "My awes0me phase!",
@@ -61,9 +64,16 @@ class TestPhase:
         ],
     )
     def test_init_phase(
-        self, name, point_group, space_group, color, color_name, color_rgb, structure
+        self,
+        name,
+        point_group,
+        space_group,
+        color,
+        color_name,
+        color_rgb,
+        structure,
     ):
-        p = Phase(
+        p = ocm.Phase(
             name=name,
             point_group=point_group,
             space_group=space_group,
@@ -92,20 +102,31 @@ class TestPhase:
 
         if structure is not None:
             assert p.structure == structure
+            cell_params = structure.lattice.abcABG()
+            p_from_cell_params = ocm.Phase(
+                name=name,
+                point_group=point_group,
+                space_group=space_group,
+                cell_parameters=cell_params,
+                color=color,
+            )
+            assert np.allclose(
+                p._diffpy_lattice, p_from_cell_params._diffpy_lattice, 1e-5
+            )
         else:
-            assert p.structure == Structure()
+            assert p.structure == dst.Structure()
 
     def test_copy_constructor_phase(self):
-        p1 = Phase(
+        p1 = ocm.Phase(
             "test",
             225,
             "m-3m",
-            Structure(
-                [Atom("Al", (0, 0, 0))],
-                Lattice(10, 10, 10, 90, 90, 90),
+            dst.Structure(
+                [dst.Atom("Al", (0, 0, 0))],
+                dst.Lattice(10, 10, 10, 90, 90, 90),
             ),
         )
-        p2 = Phase(p1)
+        p2 = ocm.Phase(p1)
 
         assert p1 is not p2
         assert repr(p1) == repr(p2)
@@ -118,7 +139,7 @@ class TestPhase:
 
     @pytest.mark.parametrize("name", [None, "al", 1, np.arange(2)])
     def test_set_phase_name(self, name):
-        p = Phase(name=name)
+        p = ocm.Phase(name=name)
         if name is None:
             name = ""
         assert p.name == str(name)
@@ -132,7 +153,7 @@ class TestPhase:
         ],
     )
     def test_set_phase_color(self, color, color_alias, color_rgb, fails):
-        p = Phase()
+        p = ocm.Phase()
         if fails:
             with pytest.raises(ValueError, match="Invalid RGBA argument: "):
                 p.color = color
@@ -151,7 +172,7 @@ class TestPhase:
         ],
     )
     def test_set_phase_point_group(self, point_group, point_group_name, fails):
-        p = Phase()
+        p = ocm.Phase()
         if fails:
             with pytest.raises(ValueError, match=f"'{point_group}' must be of type"):
                 p.point_group = point_group
@@ -160,23 +181,27 @@ class TestPhase:
             assert p.point_group.name == point_group_name
 
     @pytest.mark.parametrize(
-        "structure", [Structure(), Structure(lattice=Lattice(1, 2, 3, 90, 120, 90))]
+        "structure",
+        [
+            dst.Structure(),
+            dst.Structure(lattice=dst.Lattice(1, 2, 3, 90, 120, 90)),
+        ],
     )
     def test_set_structure(self, structure):
-        p = Phase()
+        p = ocm.Phase()
         p.structure = structure
 
         assert p.structure == structure
 
     def test_set_structure_phase_name(self):
         name = "al"
-        p = Phase(name=name)
-        p.structure = Structure(lattice=Lattice(*([0.405] * 3 + [90] * 3)))
+        p = ocm.Phase(name=name)
+        p.structure = dst.Structure(lattice=dst.Lattice(*([0.405] * 3 + [90] * 3)))
         assert p.name == name
         assert p.structure.title == name
 
     def test_set_structure_raises(self):
-        p = Phase()
+        p = ocm.Phase()
         with pytest.raises(ValueError, match=".* must be a diffpy.structure.Structure"):
             p.structure = [1, 2, 3, 90, 90, 90]
 
@@ -189,9 +214,14 @@ class TestPhase:
         ],
     )
     def test_phase_repr_str(
-        self, name, space_group, desired_sg_str, desired_pg_str, desired_ppg_str
+        self,
+        name,
+        space_group,
+        desired_sg_str,
+        desired_pg_str,
+        desired_ppg_str,
     ):
-        p = Phase(name=name, space_group=space_group, color="C0")
+        p = ocm.Phase(name=name, space_group=space_group, color="C0")
         desired = (
             f"<name: {name}. "
             + f"space group: {desired_sg_str}. "
@@ -203,7 +233,7 @@ class TestPhase:
         assert p.__str__() == desired
 
     def test_deepcopy_phase(self):
-        p = Phase(name="al", space_group=225, color="C1")
+        p = ocm.Phase(name="al", space_group=225, color="C1")
         p2 = p.deepcopy()
 
         desired_p_repr = (
@@ -224,7 +254,7 @@ class TestPhase:
         assert p2.__repr__() == desired_p_repr
 
     def test_shallow_copy_phase(self):
-        p = Phase(name="al", point_group="m-3m", color="C1")
+        p = ocm.Phase(name="al", point_group="m-3m", color="C1")
         p2 = p
 
         p2.name = "austenite"
@@ -235,40 +265,50 @@ class TestPhase:
 
     def test_phase_init_non_matching_space_group_point_group(self):
         with pytest.warns(UserWarning, match="Setting space group to 'None', as"):
-            _ = Phase(space_group=225, point_group="432")
+            _ = ocm.Phase(space_group=225, point_group="432")
 
     @pytest.mark.parametrize(
         "space_group_no, desired_point_group_name",
-        [(1, "1"), (50, "mmm"), (100, "4mm"), (150, "32"), (200, "m-3"), (225, "m-3m")],
+        [
+            (1, "1"),
+            (50, "mmm"),
+            (100, "4mm"),
+            (150, "32"),
+            (200, "m-3"),
+            (225, "m-3m"),
+        ],
     )
     def test_point_group_derived_from_space_group(
         self, space_group_no, desired_point_group_name
     ):
-        p = Phase(space_group=space_group_no)
+        p = ocm.Phase(space_group=space_group_no)
         assert p.point_group.name == desired_point_group_name
 
     def test_set_space_group_raises(self):
         space_group = "outer-space"
         with pytest.raises(ValueError, match=f"'{space_group}' must be of type "):
-            p = Phase()
+            p = ocm.Phase()
             p.space_group = space_group
 
     def test_is_hexagonal(self):
-        p1 = Phase(
+        p1 = ocm.Phase(
             point_group="321",
-            structure=Structure(lattice=Lattice(1, 1, 2, 90, 90, 120)),
+            structure=dst.Structure(lattice=dst.Lattice(1, 1, 2, 90, 90, 120)),
         )
-        p2 = Phase(
+        p2 = ocm.Phase(
             point_group="m-3m",
-            structure=Structure(lattice=Lattice(1, 1, 1, 90, 90, 90)),
+            structure=dst.Structure(lattice=dst.Lattice(1, 1, 1, 90, 90, 90)),
         )
         assert p1.is_hexagonal
         assert not p2.is_hexagonal
 
     def test_structure_matrix(self):
         """Structure matrix is updated assuming e1 || a, e3 || c*."""
-        trigonal_lattice = Lattice(1.7, 1.7, 1.4, 90, 90, 120)
-        phase = Phase(point_group="321", structure=Structure(lattice=trigonal_lattice))
+        trigonal_lattice = dst.Lattice(1.7, 1.7, 1.4, 90, 90, 120)
+        phase = ocm.Phase(
+            point_group="321",
+            structure=dst.Structure(lattice=trigonal_lattice),
+        )
         lattice = phase.structure.lattice
 
         # Lattice parameters are unchanged
@@ -293,7 +333,7 @@ class TestPhase:
 
         # Setting the structure also updates the lattice
         phase2 = phase.deepcopy()
-        phase2.structure = Structure(lattice=trigonal_lattice)
+        phase2.structure = dst.Structure(lattice=trigonal_lattice)
         assert np.allclose(phase2.structure.lattice.base, lattice.base)
 
         # Getting new structure matrix without passing enough parameters
@@ -304,7 +344,7 @@ class TestPhase:
     def test_triclinic_structure_matrix(self):
         """Update a triclinic structure matrix."""
         # diffpy.structure aligns e1 || a*, e3 || c* by default
-        lat = Lattice(2, 3, 4, 70, 100, 120)
+        lat = dst.Lattice(2, 3, 4, 70, 100, 120)
         # fmt: off
         assert np.allclose(
             lat.base,
@@ -337,8 +377,11 @@ class TestPhase:
 
     def test_lattice_vectors(self):
         """Correct direct and reciprocal lattice vectors."""
-        trigonal_lattice = Lattice(1.7, 1.7, 1.4, 90, 90, 120)
-        phase = Phase(point_group="321", structure=Structure(lattice=trigonal_lattice))
+        trigonal_lattice = dst.Lattice(1.7, 1.7, 1.4, 90, 90, 120)
+        phase = ocm.Phase(
+            point_group="321",
+            structure=dst.Structure(lattice=trigonal_lattice),
+        )
 
         a, b, c = phase.a_axis, phase.b_axis, phase.c_axis
         ar, br, cr = phase.ar_axis, phase.br_axis, phase.cr_axis
@@ -358,34 +401,34 @@ class TestPhase:
         ["lat", "atoms"],
         [
             [
-                Lattice(1, 1, 1, 90, 90, 90),
+                dst.Lattice(1, 1, 1, 90, 90, 90),
                 [
-                    Atom("C", [0, 0, 0]),
-                    Atom("C", [0.5, 0.5, 0.5]),
-                    Atom("C", [0.5, 0, 0]),
+                    dst.Atom("C", [0, 0, 0]),
+                    dst.Atom("C", [0.5, 0.5, 0.5]),
+                    dst.Atom("C", [0.5, 0, 0]),
                 ],
             ],
             [
-                Lattice(1, 1, 1, 90, 90, 120),
+                dst.Lattice(1, 1, 1, 90, 90, 120),
                 [
-                    Atom("C", [0, 0, 0]),
-                    Atom("C", [0.5, 0, 0]),
-                    Atom("C", [0.5, 0.5, 0.5]),
+                    dst.Atom("C", [0, 0, 0]),
+                    dst.Atom("C", [0.5, 0, 0]),
+                    dst.Atom("C", [0.5, 0.5, 0.5]),
                 ],
             ],
             [
-                Lattice(1, 2, 3, 90, 90, 60),
+                dst.Lattice(1, 2, 3, 90, 90, 60),
                 [
-                    Atom("C", [0, 0, 0]),
-                    Atom("C", [0.1, 0.1, 0.6]),
-                    Atom("C", [0.5, 0, 0]),
+                    dst.Atom("C", [0, 0, 0]),
+                    dst.Atom("C", [0.1, 0.1, 0.6]),
+                    dst.Atom("C", [0.5, 0, 0]),
                 ],
             ],
         ],
     )
     def test_atom_positions(self, lat, atoms):
-        structure = Structure(atoms, lat)
-        phase = Phase(structure=structure)
+        structure = dst.Structure(atoms, lat)
+        phase = ocm.Phase(structure=structure)
         # xyz_cartn is independent of basis
         assert np.allclose(phase.structure.xyz_cartn, structure.xyz_cartn)
 
@@ -407,20 +450,22 @@ class TestPhase:
 
     def test_from_cif(self, cif_file):
         """CIF files parsed correctly with space group and all."""
-        phase = Phase.from_cif(cif_file)
+        phase = ocm.Phase.from_cif(cif_file)
         assert phase.space_group.number == 12
         assert phase.point_group.name == "2/m"
         assert len(phase.structure) == 22  # Number of atoms
         lattice = phase.structure.lattice
         assert np.allclose(lattice.abcABG(), [15.5, 4.05, 6.74, 90, 105.3, 90])
         assert np.allclose(
-            lattice.base, [[15.5, 0, 0], [0, 4.05, 0], [-1.779, 0, 6.501]], atol=1e-3
+            lattice.base,
+            [[15.5, 0, 0], [0, 4.05, 0], [-1.779, 0, 6.501]],
+            atol=1e-3,
         )
 
     def test_from_cif_same_structure(self, cif_file):
-        phase1 = Phase.from_cif(cif_file)
-        structure = loadStructure(cif_file)
-        phase2 = Phase(structure=structure)
+        phase1 = ocm.Phase.from_cif(cif_file)
+        structure = dst.loadStructure(cif_file)
+        phase2 = ocm.Phase(structure=structure)
         assert np.allclose(phase1.structure.lattice.base, phase2.structure.lattice.base)
         assert np.allclose(phase1.structure.xyz, phase2.structure.xyz)
 
@@ -429,18 +474,18 @@ class TestPhase:
         [
             [
                 # P1
-                Lattice(1, 1, 1, 90, 90, 90),
+                dst.Lattice(1, 1, 1, 90, 90, 90),
                 [
-                    Atom("C", [0, 0, 0]),
+                    dst.Atom("C", [0, 0, 0]),
                 ],
                 1,
                 [(0, 0, 0)],
             ],
             [
                 # Fd3m
-                Lattice(1, 1, 1, 90, 90, 90),
+                dst.Lattice(1, 1, 1, 90, 90, 90),
                 [
-                    Atom("C", [0, 0, 0]),
+                    dst.Atom("C", [0, 0, 0]),
                 ],
                 227,
                 [
@@ -456,10 +501,10 @@ class TestPhase:
             ],
             [
                 # P63/mmc (graphite)
-                Lattice(2, 2, 3, 90, 90, 120),
+                dst.Lattice(2, 2, 3, 90, 90, 120),
                 [
-                    Atom("C", [0, 0, 0.25]),
-                    Atom("C", [1 / 3, 2 / 3, 0.75]),
+                    dst.Atom("C", [0, 0, 0.25]),
+                    dst.Atom("C", [1 / 3, 2 / 3, 0.75]),
                 ],
                 194,
                 [
@@ -471,7 +516,7 @@ class TestPhase:
             ],
             [
                 # https://legacy.materialsproject.org/materials/mp-669458/
-                Lattice(
+                dst.Lattice(
                     8.66993200,
                     14.96934800,
                     22.00995998,
@@ -480,14 +525,14 @@ class TestPhase:
                     90.00000000,
                 ),
                 [
-                    Atom("Cs", (0.00142500, 0.33215200, 0.07744700)),
-                    Atom("Cs", (0.00000000, 0.00278300, 0.75000000)),
-                    Atom("Bi", (0.01120750, 0.33477050, 0.65575800)),
-                    Atom("I", (0.02018650, 0.16620050, 0.58287400)),
-                    Atom("I", (0.23071400, 0.07939400, 0.41065700)),
-                    Atom("I", (0.23081650, 0.41698250, 0.92495100)),
-                    Atom("I", (0.24771900, 0.24833100, 0.24318300)),
-                    Atom("I", (0.00000000, 0.49719300, 0.25000000)),
+                    dst.Atom("Cs", (0.00142500, 0.33215200, 0.07744700)),
+                    dst.Atom("Cs", (0.00000000, 0.00278300, 0.75000000)),
+                    dst.Atom("Bi", (0.01120750, 0.33477050, 0.65575800)),
+                    dst.Atom("I", (0.02018650, 0.16620050, 0.58287400)),
+                    dst.Atom("I", (0.23071400, 0.07939400, 0.41065700)),
+                    dst.Atom("I", (0.23081650, 0.41698250, 0.92495100)),
+                    dst.Atom("I", (0.24771900, 0.24833100, 0.24318300)),
+                    dst.Atom("I", (0.00000000, 0.49719300, 0.25000000)),
                 ],
                 15,
                 [
@@ -554,8 +599,8 @@ class TestPhase:
     def test_expand_asymmetric_unit(
         self, lattice, atoms, spacegroup, expected_atom_positions
     ):
-        s = Structure(lattice=lattice, atoms=atoms)
-        phase = Phase(structure=s, space_group=spacegroup)
+        s = dst.Structure(lattice=lattice, atoms=atoms)
+        phase = ocm.Phase(structure=s, space_group=spacegroup)
         base = phase.structure.lattice.base.copy()
         exp = phase.expand_asymmetric_unit()
         assert np.array_equal(base, exp.structure.lattice.base)
@@ -563,7 +608,7 @@ class TestPhase:
         # Check atom positions in ORIGINAL lattice alignment
         # Doing the check in orix's alignment makes independently computing expected sites difficult
         s = exp.structure.copy()
-        s.placeInLattice(Lattice(base=phase._diffpy_lattice))
+        s.placeInLattice(dst.Lattice(base=phase._diffpy_lattice))
         # Use set to avoid having to ensure the order is the same
         assert set(tuple(xyz.round(8).tolist()) for xyz in s.xyz) == set(
             expected_atom_positions
@@ -574,7 +619,7 @@ class TestPhase:
         assert np.array_equal(base, exp2.structure.lattice.base)
         assert len(exp2.structure) == len(expected_atom_positions)
         s = exp2.structure.copy()
-        s.placeInLattice(Lattice(base=phase._diffpy_lattice))
+        s.placeInLattice(dst.Lattice(base=phase._diffpy_lattice))
         assert set(tuple(xyz.round(8).tolist()) for xyz in s.xyz) == set(
             expected_atom_positions
         )
@@ -954,7 +999,7 @@ class TestPhase:
         filepath = tmp_path / "tmp.cif"
         with open(filepath, "w") as file:
             file.write(cif_file_content)
-        phase = Phase.from_cif(filepath)
+        phase = ocm.Phase.from_cif(filepath)
         # Asymmetric unit is automatically expanded when read from cif
         assert len(phase.structure) == expected_atom_count
         # Expand just in case
@@ -962,21 +1007,44 @@ class TestPhase:
         assert len(exp.structure) == expected_atom_count
 
     def test_expand_asymmetric_unit_raise_if_no_point_group(self):
-        phase = Phase()
+        phase = ocm.Phase()
         with pytest.raises(ValueError, match="Space group must be set"):
             phase.expand_asymmetric_unit()
 
     def test_default_lattice(self):
         for S in ["1", "2", "222", "422", "432"]:
-            phase = Phase(point_group=S)
+            phase = ocm.Phase(point_group=S)
             lattice_parameters = phase.structure.lattice.abcABG()
             assert np.allclose([1, 1, 1, 90, 90, 90], lattice_parameters)
 
         for S in ["3", "622"]:
-            phase = Phase(point_group=S)
+            phase = ocm.Phase(point_group=S)
             lattice_parameters = phase.structure.lattice.abcABG()
             assert np.allclose([1, 1, 1, 90, 90, 120], lattice_parameters)
 
     def test_default_lattice_raises(self):
         with pytest.raises(ValueError, match="Unknown crystal system 'rhombohedral'"):
             default_lattice("rhombohedral")
+
+    def test_plot_unit_cell(self):
+        import matplotlib.pyplot as plt
+
+        atoms = [
+            dst.Atom("Al", [1 / 3, 2 / 3, 0.815]),
+            dst.Atom("O", [0.361, 1 / 3, 0.583]),
+        ]
+        lattice = dst.Lattice(0.481, 0.481, 1.391, 90, 90, 120)
+        structure = dst.Structure(atoms=atoms, lattice=lattice)
+        Al2O3_phase = ocm.Phase(
+            name="Alumina",
+            space_group=167,
+            structure=structure,
+            color="red",
+        ).expand_asymmetric_unit()
+        Fe_phase = ocm.Phase(cell_parameters=[0.3, 0.3, 0.3, 90, 90, 90])
+        for p in [Al2O3_phase, Fe_phase]:
+            fig1 = p.plot_unit_cell(figsize=[5, 4], return_figure=True)
+            fig2 = p.plot_unit_cell(figsize=np.array([5.1, 4.3]), return_figure=True)
+            p.plot_unit_cell(show_xyz=True, show_atoms=True, show_uvw_labels=True)
+            p.plot_unit_cell(show_xyz=False, show_atoms=False, show_uvw_labels=False)
+            plt.close("all")
