@@ -17,9 +17,10 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import warnings
+
 import numpy as np
 import pytest
-import warnings
 
 from orix._base import DimensionError, Object3d
 

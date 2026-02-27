@@ -22,9 +22,9 @@
 from __future__ import annotations
 
 from typing import Any, Literal
+import warnings
 
 import numpy as np
-import warnings
 
 DataLike = np.ndarray | list | tuple
 
