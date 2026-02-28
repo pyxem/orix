@@ -33,13 +33,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 
 from orix.plot._util.color import get_matplotlib_color
-from orix.quaternion.symmetry import (
-    _EDAX_POINT_GROUP_ALIASES,
-    VALID_SYSTEMS,
-    Symmetry,
-    _groups,
-    get_point_group,
-)
+from orix.quaternion.symmetry import VALID_SYSTEMS, Symmetry, PointGroups
 from orix.vector.miller import Miller
 from orix.vector.vector3d import Vector3d
 
@@ -138,7 +132,9 @@ class Phase:
 
         # Ensure correct alignment
         old_matrix = value.lattice.base
-        new_matrix = new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
+        new_matrix = new_structure_matrix_from_alignment(
+            old_matrix, x="a", z="c*"
+        )
         new_value = value.copy()
 
         # Ensure atom positions are expressed in the new basis
@@ -225,7 +221,7 @@ class Phase:
             Point group.
         """
         if self.space_group is not None:
-            return get_point_group(self.space_group.number)
+            return PointGroups.from_space_group(self.space_group.number)
         else:
             return self._point_group
 
@@ -235,14 +231,7 @@ class Phase:
         if isinstance(value, int):
             value = str(value)
         if isinstance(value, str):
-            for key, aliases in _EDAX_POINT_GROUP_ALIASES.items():
-                if value in aliases:
-                    value = key
-                    break
-            for point_group in _groups:
-                if value == point_group.name:
-                    value = point_group
-                    break
+            value = PointGroups.get(value)
         if not isinstance(value, Symmetry) and value is not None:
             raise ValueError(
                 f"{value!r} must be of type {Symmetry}, the name of a valid point group"
@@ -486,7 +475,13 @@ def new_structure_matrix_from_alignment(
 
 
 def default_lattice(system: VALID_SYSTEMS) -> Lattice:
-    if system in ["triclinic", "monoclinic", "orthorhombic", "tetragonal", "cubic"]:
+    if system in [
+        "triclinic",
+        "monoclinic",
+        "orthorhombic",
+        "tetragonal",
+        "cubic",
+    ]:
         lat = Lattice()
     elif system in ["trigonal", "hexagonal"]:
         lat = Lattice(1, 1, 1, 90, 90, 120)

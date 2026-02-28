@@ -1430,14 +1430,17 @@ class PointGroups:
 
     def get(name: Literal[PointGroups._point_group_names]):
         """
-        Given a string or integer representation, this function will attempt to
-        return an associated Symmetry object.
+        Given a string or integer representation, this function will attempt
+        to return an associated Symmetry object.
 
-        This is done by first checking the labels defined in orix, which includes
-        Hermann-Mauguin ('m3m' or '2', etc.) and Shoenflies ('C6' or D3h', etc.).
+        This is done by first checking the labels defined in orix, which
+        includes Hermann-Mauguin ('m3m' or '2', etc.) and Shoenflies
+        ('C6' or D3h', etc.).
 
-        If it cannot find a match in either list, it will attempt to look up the
-        space group name using diffpy's GetSpaceGroup, and relate that back
+        Next, it will check through common point group Aliases used by EDAX.
+
+        If none of the anove result in a match, it will attempt to look
+        up the space group name using diffpy's GetSpaceGroup, and relate that back
         to a point group. this is equivalent to PointGroups.from_space_group(name)
 
          Parameters
@@ -1454,17 +1457,21 @@ class PointGroups:
         """
         # check the 'groups' list first, then 'permutations',
         # then 'permutations_repeated'.
-        print(vars().keys())
+        str_name = str(name).lower()
         for subset in ["groups", "permutations", "permutations_repeated"]:
             pgs = _point_groups_dictionary[subset]
             pg_dict = dict([(x.name, x) for x in pgs])
-            if str(name).lower() in pg_dict.keys():
-                return pg_dict[name.lower()]
+            if str_name in pg_dict.keys():
+                return pg_dict[str_name]
             # repeat check with Shoenflies notation
             pg_dict_s = dict([(x._schoenflies.lower(), x) for x in pgs])
-            if str(name).lower() in pg_dict_s.keys():
-                return pg_dict_s[name.lower()]
-        # If the name doesn't exist in orix, try diffpy
+            if str_name in pg_dict_s.keys():
+                return pg_dict_s[str_name]
+        # If the name doesn't exist in orix, try EDAX
+        for key, aliases in _EDAX_POINT_GROUP_ALIASES.items():
+            if str_name in aliases:
+                return pg_dict[key]
+        # Finally, try diffpy
         try:
             return PointGroups.from_space_group(name)
         # If the name still cannot be found, return a ValueError
@@ -1477,7 +1484,7 @@ class PointGroups:
             )
 
     def from_space_group(
-        self, space_group_number: Union(int, str), proper: bool = False
+        space_group_number: Union(int, str), proper: bool = False
     ) -> Symmetry:
         """
         Maps a space group number or name to a crystallographic point group.
