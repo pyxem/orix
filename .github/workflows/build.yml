@@ -1,5 +1,5 @@
 ##
-## Copyright 2019-2025 the orix developers
+## Copyright 2018-2025 the orix developers
 ##
 ## This file is part of orix.
 ##
@@ -34,15 +34,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: psf/black@stable
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - uses: isort/isort-action@master
-        with:
-          configuration: --profile black --filter-files --force-sort-within-sections --check-only --diff
 
       - name: Install Black with Jupyter extension
         run: |

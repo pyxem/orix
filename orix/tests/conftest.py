@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2025 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,15 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
+from collections import OrderedDict
+from numbers import Number
+from typing import Callable
+
 from diffpy.structure import Atom, Lattice, Structure
 from h5py import File
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix.constants import installed
+from orix.crystal_map._phase import Phase
+from orix.crystal_map._phase_list import PhaseList
 from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
-from orix.crystal_map.phase_list import PhaseList
+from orix.plot import register_projections
 from orix.quaternion.rotation import Rotation
 
 # --------------------------- pytest hooks --------------------------- #
@@ -32,17 +38,10 @@ from orix.quaternion.rotation import Rotation
 
 def pytest_sessionstart(session):
     plt.rcParams["backend"] = "agg"
+    register_projections()
 
 
 # -------------------- Control of test selection --------------------- #
-
-skipif_numpy_quaternion_present = pytest.mark.skipif(
-    installed["numpy-quaternion"], reason="numpy-quaternion installed"
-)
-
-skipif_numpy_quaternion_missing = pytest.mark.skipif(
-    not installed["numpy-quaternion"], reason="numpy-quaternion not installed"
-)
 
 
 def pytest_addoption(parser):
@@ -65,6 +64,34 @@ def pytest_runtest_setup(item):
 
 
 # ---------------------------- IO fixtures --------------------------- #
+
+
+@pytest.fixture
+def assert_equal_dictionaries_func() -> Callable:
+    def assert_equal_dictionaries(input_dict, output_dict) -> None:
+        for k in output_dict:
+            out_val = output_dict[k]
+            in_val = input_dict[k]
+            if isinstance(out_val, (dict, OrderedDict)):
+                assert_equal_dictionaries(in_val, out_val)
+            else:
+                if isinstance(out_val, (np.ndarray, Number)):
+                    assert np.allclose(in_val, out_val)
+                elif isinstance(out_val, Rotation):
+                    assert np.allclose(in_val.to_euler(), out_val.to_euler())
+                elif isinstance(out_val, Phase):
+                    assert_equal_dictionaries(in_val.__dict__, out_val.__dict__)
+                elif isinstance(out_val, PhaseList):
+                    assert_equal_dictionaries(in_val._dict, out_val._dict)
+                elif isinstance(out_val, Structure):
+                    assert np.allclose(out_val.xyz, in_val.xyz)
+                    assert str(out_val.element) == str(in_val.element)
+                    assert np.allclose(out_val.occupancy, in_val.occupancy)
+                else:
+                    assert in_val == out_val
+
+    return assert_equal_dictionaries
+
 
 # ----------------------------- .ang file ---------------------------- #
 

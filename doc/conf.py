@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2025 the orix developers
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -24,13 +24,13 @@
 from datetime import datetime
 import inspect
 import os
-from os.path import dirname, relpath
 import re
 import sys
 
 from numpydoc.docscrape_sphinx import SphinxDocString
 
-import orix
+from orix import __file__ as orix_file
+from orix import __version__ as orix_version
 from orix import data
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -42,7 +42,7 @@ sys.path.append("../")
 project = "orix"
 author = "orix developers"
 copyright = f"2018-{str(datetime.now().year)}, {author}"
-release = orix.__version__
+release = orix_version
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -83,10 +83,10 @@ intersphinx_mapping = {
     "numpydoc": ("https://numpydoc.readthedocs.io/en/latest", None),
     "pooch": ("https://www.fatiando.org/pooch/latest", None),
     "pytest": ("https://docs.pytest.org/en/stable", None),
-    "pytest-xdist": ("https://pytest-xdist.readthedocs.io/en/stable/", None),
+    "pytest-xdist": ("https://pytest-xdist.readthedocs.io/en/stable", None),
     "python": ("https://docs.python.org/3", None),
-    "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
-    "readthedocs": ("https://docs.readthedocs.com/platform/stable/", None),
+    "pyxem": ("https://www.pyxem.org/en/latest", None),
+    "readthedocs": ("https://docs.readthedocs.com/platform/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master", None),
@@ -177,12 +177,6 @@ nbsphinx_prolog = (
         }
       </script>
     </div>
-
-.. raw:: latex
-
-    \nbsphinxstartnotebook{\scriptsize\noindent\strut
-    \textcolor{gray}{The following section was generated from
-    \sphinxcode{\sphinxupquote{\strut {{ docname | escape_latex }}}} \dotfill}}
 """
 )
 # https://nbsphinx.readthedocs.io/en/0.8.0/never-execute.html
@@ -252,8 +246,8 @@ def linkcode_resolve(domain, info):
     else:
         linespec = ""
 
-    startdir = os.path.abspath(os.path.join(dirname(orix.__file__), ".."))
-    fn = relpath(fn, start=startdir).replace(os.path.sep, "/")
+    startdir = os.path.abspath(os.path.join(os.path.dirname(orix_file), ".."))
+    fn = os.path.relpath(fn, start=startdir).replace(os.path.sep, "/")
 
     if fn.startswith("orix/"):
         m = re.match(r"^.*dev0\+([a-f\d]+)$", release)

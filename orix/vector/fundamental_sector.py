@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,14 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
+
+from typing import Literal
 
 import numpy as np
 
@@ -142,12 +146,12 @@ def _order_to_sort_around_center(
 
 
 def _closed_edges_in_hemisphere(
-    edges: Vector3d, sector: FundamentalSector, pole: int = -1
+    edges: Vector3d, sector: FundamentalSector, pole: Literal[1, -1] = -1
 ) -> Vector3d:
     if pole == -1:
-        is_outside = edges.polar >= np.pi / 2
+        is_outside = edges.polar >= np.pi / 2 + 1e-6
     else:  # pole == 1
-        is_outside = edges.polar <= np.pi / 2
+        is_outside = edges.polar <= np.pi / 2 + 1e-6
 
     if not np.any(is_outside):
         return edges

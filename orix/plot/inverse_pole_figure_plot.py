@@ -1,4 +1,5 @@
-# Copyright 2018-2024 the orix developers
+#
+# Copyright 2018-2025 the orix developers
 #
 # This file is part of orix.
 #
@@ -9,11 +10,12 @@
 #
 # orix is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with orix.  If not, see <http://www.gnu.org/licenses/>.
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 
 """Inverse pole figure plot inheriting from
 :class:`~orix.plot.StereographicPlot` for plotting of
@@ -21,22 +23,26 @@
 rotated by orientations.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Literal
 
 import matplotlib.axes as maxes
 from matplotlib.figure import Figure
-from matplotlib.patches import PathPatch
+import matplotlib.patches as mpatches
 import matplotlib.projections as mprojections
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix.crystal_map import Phase
-from orix.measure import pole_density_function
+from orix.measure.pole_density_function import pole_density_function
 from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
-from orix.plot.stereographic_plot import ZORDER, StereographicPlot
-from orix.quaternion import Orientation
+from orix.plot.stereographic_plot import (
+    ZORDER,
+    StereographicPlot,
+    _update_kwargs_for_fundamental_sector_patch,
+)
+from orix.quaternion.orientation import Orientation
 from orix.quaternion.symmetry import C1, Symmetry
-from orix.vector import Miller, Vector3d
+from orix.vector.miller import Miller
+from orix.vector.vector3d import Vector3d
 
 
 class InversePoleFigurePlot(StereographicPlot):
@@ -56,8 +62,8 @@ class InversePoleFigurePlot(StereographicPlot):
         not given, the out of plane direction, sample Z, is used.
     hemisphere
         Which hemisphere(s) to plot the vectors in. If not given,
-        ``"upper"`` is used. Options are ``"upper"``, ``"lower"`` and
-        ``"both"``, which plots two projections side by side.
+        "upper" is used. Options are "upper", "lower" and "both", which
+        plots two projections side by side.
     **kwargs
         Keyword arguments passed to
         :class:`~orix.plot.StereographicPlot`.
@@ -68,9 +74,9 @@ class InversePoleFigurePlot(StereographicPlot):
     def __init__(
         self,
         *args: Any,
-        symmetry: Optional[Symmetry] = None,
-        direction: Optional[Vector3d] = None,
-        hemisphere: Optional[str] = None,
+        symmetry: Symmetry | None = None,
+        direction: Vector3d | None = None,
+        hemisphere: Literal["upper", "lower", "both"] | None = None,
         **kwargs: Any,
     ) -> None:
         """Create an inverse pole figure axis for plotting
@@ -89,26 +95,29 @@ class InversePoleFigurePlot(StereographicPlot):
             symmetry = C1
         self._symmetry = symmetry
 
-        self.restrict_to_sector(self._symmetry.fundamental_sector)
+        self._ensure_fundamental_sector_border_patch()
 
         self._add_crystal_direction_labels()
 
+    # -------------------------- Properties -------------------------- #
+
     @property
-    def _edge_patch(self) -> PathPatch:
+    def _edge_patch(self) -> mpatches.Patch:
         """Easy access to the fundamental sector border patch."""
-        patches = self.patches
-        return patches[self._has_collection(label="sa_sector", collections=patches)[1]]
+        return self._get_collection(self._get_label("sector"), self.patches)
+
+    # ---------------------------- Methods --------------------------- #
 
     def pole_density_function(
         self,
-        *args: Union[np.ndarray, Vector3d],
+        *args: np.ndarray | Vector3d,
         resolution: float = 0.25,
         sigma: float = 5,
         log: bool = False,
         colorbar: bool = True,
-        weights: Optional[np.ndarray] = None,
+        weights: np.ndarray | None = None,
         **kwargs: Any,
-    ):
+    ) -> None:
         """Compute the Inverse Pole Density Function (IPDF) of vectors
         in the stereographic projection.
 
@@ -171,7 +180,7 @@ class InversePoleFigurePlot(StereographicPlot):
 
     def scatter(
         self,
-        *args: Union[Tuple[np.ndarray, np.ndarray], Orientation, Vector3d],
+        *args: tuple[np.ndarray, np.ndarray] | Orientation | Vector3d,
         **kwargs: Any,
     ) -> None:
         """A scatter plot of sample directions rotated by orientations,
@@ -218,6 +227,8 @@ class InversePoleFigurePlot(StereographicPlot):
         x, y = self._edge_patch.get_path().vertices.T
         v = self._inverse_projection.xy2vector(np.min(x), np.max(y))
         self.text(v, s=self.hemisphere, **new_kwargs)
+
+    # ----------------------- Private methods ------------------------ #
 
     def _add_crystal_direction_labels(self) -> None:
         """Add appropriately placed and nicely formatted crystal
@@ -267,7 +278,7 @@ class InversePoleFigurePlot(StereographicPlot):
                 maxes.Axes.text(self, xi, yi, s=label, va=va, ha=ha, **text_kw)
 
     def _pretransform_input_ipf(
-        self, values: Union[Tuple[np.ndarray, np.ndarray], Orientation, Vector3d]
+        self, values: tuple[np.ndarray, np.ndarray] | Orientation | Vector3d
     ) -> Vector3d:
         """Return unit vectors within the inverse pole figure from input
         data.
@@ -299,6 +310,25 @@ class InversePoleFigurePlot(StereographicPlot):
         else:  # Orientation
             v = values[0] * self._direction
         return v.in_fundamental_sector(self._symmetry)
+
+    def _ensure_fundamental_sector_border_patch(self):
+        """Ensure a fundamental sector border patch is added to
+        :attr:`patches` with a label given by the default label +
+        "_sector".
+        """
+        self.restrict_to_sector(self._symmetry.fundamental_sector)
+
+        # A sector may not have been set, in which case we copy the
+        # equatorial plane border
+        sector_label = self._get_label("sector")
+        sector_patch = self._get_collection(sector_label)
+        if sector_patch is None:
+            border_patch = self._get_collection(self._get_label("border"), self.patches)
+            kw = _update_kwargs_for_fundamental_sector_patch({})
+            sector_patch = mpatches.PathPatch(
+                border_patch.get_path(), label=sector_label, **kw
+            )
+            self.add_patch(sector_patch)
 
     def plot_ipf_color_key(self, show_title: bool = True) -> None:
         """Plot an IPF color key code on this axis.
@@ -348,10 +378,10 @@ mprojections.register_projection(InversePoleFigurePlot)
 
 def _setup_inverse_pole_figure_plot(
     symmetry: Symmetry,
-    direction: Optional[Vector3d] = None,
-    hemisphere: Optional[str] = None,
-    figure_kwargs: Optional[Dict] = None,
-) -> Tuple[Figure, np.ndarray]:
+    direction: Vector3d | None = None,
+    hemisphere: str | None = None,
+    figure_kwargs: dict | None = None,
+) -> tuple[Figure, np.ndarray]:
     """Set up an inverse pole figure plot.
 
     Parameters
@@ -452,7 +482,7 @@ def _get_ipf_title(direction: Vector3d) -> str:
         return np.array_str(direction.data.squeeze()).strip("[]")
 
 
-def _get_ipf_axes_labels(vertices: Vector3d, symmetry: Symmetry) -> List[str]:
+def _get_ipf_axes_labels(vertices: Vector3d, symmetry: Symmetry) -> list[str]:
     r"""Get nicely formatted crystal direction strings from vector
     coordinates.
 
@@ -468,10 +498,15 @@ def _get_ipf_axes_labels(vertices: Vector3d, symmetry: Symmetry) -> List[str]:
     list of str
         List of strings, with -1 formatted like $\bar{1}$.
     """
+    # Import here to avoid circular import
+    from orix.crystal_map._phase import Phase
+
     phase = Phase(point_group=symmetry)
-    m = Miller(uvw=vertices.data, phase=phase)
+    m = Miller(xyz=vertices.data, phase=phase)
     if symmetry.system in ["trigonal", "hexagonal"]:
         m.coordinate_format = "UVTW"
+    else:
+        m.coordinate_format = "uvw"
     axes = m.round(max_index=2).coordinates.astype(int)
 
     labels = []

@@ -15,6 +15,7 @@ classifiers=[
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
@@ -27,8 +28,8 @@ dependencies = [
     "dask[array]",
     "diffpy.structure       >= 3.0.2",
     "h5py",
+    "lazy_loader",
     "matplotlib             >= 3.6.1",
-    "matplotlib-scalebar",
     "numba",
     "numpy",
     "pooch                  >= 0.13",
@@ -40,6 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = [  # NB! Update constants.py if this list is updated!
+    "matplotlib-scalebar",
     "numpy-quaternion",
 ]
 doc = [
@@ -62,7 +64,7 @@ doc = [
 tests = [
     "numpydoc",
     "pytest                         >= 5.4",
-    "pytest-rerunfailures",
+    "pytest-rerunfailures           != 16.0",
     "pytest-xdist",
 ]
 coverage = [

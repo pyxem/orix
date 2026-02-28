@@ -1,3 +1,21 @@
+##
+## Copyright 2018-2026 the orix developers
+##
+## This file is part of orix.
+##
+## orix is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## orix is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with orix. If not, see <http://www.gnu.org/licenses/>.
+##
 name: Perhaps make a tagged release
 
 # Trigger workflow when commits to the main branch contain a change in the
@@ -10,6 +28,7 @@ on:
       - main
     paths:
       - "orix/__init__.py"
+  workflow_dispatch:
 
 jobs:
   make-tagged-release:
@@ -24,10 +43,12 @@ jobs:
       with:
         python-version: '3.x'
 
+    # TODO: Remove install of setuptools once
+    # https://github.com/pyxem/orix/issues/629 is resolved
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install packaging outdated
+        pip install packaging outdated setuptools<82
 
     - name: Check whether a tagged release draft should be made
       run: |

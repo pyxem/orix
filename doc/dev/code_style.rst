@@ -7,7 +7,9 @@ The code making up orix is formatted closely following the `Style Guide for Pyth
 <https://pycqa.github.io/isort/>`__ to handle module imports.
 We use `pre-commit <https://pre-commit.com>`__ to run ``black`` and ``isort``
 automatically prior to each local commit.
-Please install it in your environment::
+Please install it in your environment:
+
+.. code-block:: bash
 
     pre-commit install
 
@@ -30,10 +32,12 @@ used to prevent sorting.
 Comment and docstring lines should preferably be limited to 72 characters (including
 leading whitespaces).
 
-We use type hints in the function definition without type duplication in the function
-docstring, for example::
+We use `type hints <https://docs.python.org/3/library/typing.html>`__` in the function
+signature without type duplication in the docstring, for example:
 
-    def my_function(arg1: int, arg2: Optional[bool] = None) -> Tuple[float, np.ndarray]:
+.. code-block:: python
+
+    def my_function(arg1: int, arg2: bool | None = None) -> tuple[float, np.ndarray]:
         """This is a new function.
 
         Parameters
@@ -49,12 +53,19 @@ docstring, for example::
             Explanation about returned values.
         """
 
-When working with classes in ``orix``, often a method argument will require another
-instance of the class.
+For new code, please use ``tuple[]``, ``list[]``, ``dict[]``, etc. instead of the
+deprecated capitalized variants.
+Instead of ``Optional[bool]``, use ``bool | None``.
+Instead of ``Union[int, float]``, use ``int | float``.
+
+When working with classes in orix, often a method argument will require another instance
+of the class.
 An example of this is :meth:`orix.vector.Vector3d.dot`, where the first argument to this
 function ``other`` is another instance of ``Vector3d``.
 In this case, to allow for the correct type hinting behaviour, the following import is
-required at the top of the file::
+required at the top of the file:
+
+.. code-block:: python
 
     from __future__ import annotations
 
