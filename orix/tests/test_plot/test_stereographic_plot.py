@@ -25,10 +25,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix import plot
-from orix.plot.stereographic_plot import _SymmetryMarker
-from orix.quaternion import symmetry
-from orix.vector import Vector3d
+import orix.plot as opl
+import orix.quaternion as oqu
+import orix.vector as ove
 
 plt.rcParams["axes.grid"] = True
 PROJ_NAME = "stereographic"
@@ -44,7 +43,7 @@ class TestStereographicPlot:
         assert ax.can_pan()
         assert ax.can_zoom()
 
-        v = Vector3d([[0, 0, 1], [2, 0, 2]])
+        v = ove.Vector3d([[0, 0, 1], [2, 0, 2]])
         ax.scatter(v[0])
         ax.scatter(v[1].azimuth, v[1].polar)
 
@@ -54,8 +53,8 @@ class TestStereographicPlot:
         plt.close("all")
 
     def test_ori_scatter(self):
-        oris = Orientation.from_axes_angles(
-            [1, 2, 3], [5, 15, 70], degrees=True, symmetry=symmetry.D6
+        oris = oqu.Orientation.from_axes_angles(
+            [1, 2, 3], [5, 15, 70], degrees=True, symmetry=oqu.symmetry.D6
         )
 
         fig0 = oris.scatter(return_figure=True)
@@ -84,7 +83,7 @@ class TestStereographicPlot:
     @pytest.mark.flaky(reruns=5)
     def test_scatter_coloring(self):
         # Marked as flaky since no vectors may be visible
-        v = Vector3d.random(10)
+        v = ove.Vector3d.random(10)
         visible = v.z >= 0
 
         # Four ways to color vectors
@@ -118,13 +117,17 @@ class TestStereographicPlot:
         assert np.allclose(c3, mcolors.to_rgba(c_color))
 
         # Single color with single alpha
-        fig4 = v.scatter(c=c_color, alpha=0.5, return_figure=True, label="scatter")
+        fig4 = v.scatter(
+            c=c_color, alpha=0.5, return_figure=True, label="scatter"
+        )
         fig4.canvas.draw()
         c4 = fig4.axes[0]._get_collection("scatter").get_facecolor()
         assert np.allclose(c4, mcolors.to_rgba(c_color, 0.5))
 
         # Single color with varying alpha
-        fig5 = v.scatter(c=c_color, alpha=c_scalar, return_figure=True, label="scatter")
+        fig5 = v.scatter(
+            c=c_color, alpha=c_scalar, return_figure=True, label="scatter"
+        )
         fig5.canvas.draw()
         c5 = fig5.axes[0]._get_collection("scatter").get_facecolor()
         rgba5 = np.full((v.size, 4), mcolors.to_rgba(c_color))
@@ -133,9 +136,9 @@ class TestStereographicPlot:
 
     def test_text(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
+        v = ove.Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
         ax.scatter(v)
-        labels = plot.format_labels(v.data, ("[", "]"), use_latex=False)
+        labels = opl.format_labels(v.data, ("[", "]"), use_latex=False)
         for i in range(v.size):
             ax.text(v[i], s=labels[i])
 
@@ -148,9 +151,9 @@ class TestStereographicPlot:
 
     def test_text_offset(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        v = Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
+        v = ove.Vector3d([[0, 0, 1], [-1, 0, 1], [1, 1, 1]])
         ax.scatter(v)
-        labels = plot.format_labels(v.data)
+        labels = opl.format_labels(v.data)
         offset = (-0.02, 0.05)
         for i in range(v.size):
             ax.text(v[i], s=labels[i], offset=offset)
@@ -281,7 +284,7 @@ class TestStereographicPlot:
 
         label_xy = [-0.71, 0.71]
 
-        ax[0].scatter(Vector3d([0, 0, 1]))
+        ax[0].scatter(ove.Vector3d([0, 0, 1]))
         ax[0].show_hemisphere_label()
         label_up = ax[0].texts[0]
         assert label_up.get_text() == "upper"
@@ -289,7 +292,7 @@ class TestStereographicPlot:
         assert np.allclose([label_up._x, label_up._y], label_xy)
 
         ax[1].hemisphere = "lower"
-        ax[1].scatter(Vector3d([0, 0, -1]))
+        ax[1].scatter(ove.Vector3d([0, 0, -1]))
         ax[1].show_hemisphere_label(color="r")
         label_low = ax[1].texts[0]
         assert label_low.get_text() == "lower"
@@ -337,7 +340,7 @@ class TestStereographicPlot:
         plt.close("all")
 
     def test_empty_scatter(self):
-        v = Vector3d([0, 0, 1])
+        v = ove.Vector3d([0, 0, 1])
 
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax.hemisphere = "lower"
@@ -352,22 +355,26 @@ class TestStereographicPlot:
     @pytest.mark.parametrize("shape", [(5, 10), (2, 3)])
     def test_multidimensional_vector(self, shape):
         n = np.prod(shape)
-        v = Vector3d(np.random.normal(size=3 * n).reshape(*shape, 3))
+        v = ove.Vector3d(np.random.normal(size=3 * n).reshape(*shape, 3))
         v.scatter()
         v.draw_circle()
 
         plt.close("all")
 
     def test_order_in_hemisphere(self):
-        v = Vector3d.from_polar(
+        v = ove.Vector3d.from_polar(
             azimuth=np.radians([45, 90, 135, 180]),
             polar=np.radians([50, 45, 140, 135]),
         )
 
         _, ax = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
         ax[1].hemisphere = "lower"
-        x_upper, y_upper, visible_upper = ax[0]._pretransform_input((v,), sort=True)
-        x_lower, y_lower, visible_lower = ax[1]._pretransform_input((v,), sort=True)
+        x_upper, y_upper, visible_upper = ax[0]._pretransform_input(
+            (v,), sort=True
+        )
+        x_lower, y_lower, visible_lower = ax[1]._pretransform_input(
+            (v,), sort=True
+        )
 
         x_upper_desired, y_upper_desired = ax[0]._projection.vector2xy(v[:2])
         assert np.allclose(x_upper, x_upper_desired)
@@ -390,20 +397,24 @@ class TestStereographicPlot:
 
     def test_color_parameter(self):
         """Pass either ``color`` or ``c`` to color scatter points."""
-        v = Vector3d([[1, 0, 0], [1, 1, 0], [1, 1, 1]])
+        v = ove.Vector3d([[1, 0, 0], [1, 1, 0], [1, 1, 1]])
 
         colors = [f"C{i}" for i in range(v.size)]
         colors_rgba = np.array([mcolors.to_rgba(c) for c in colors])
 
         fig = v.scatter(color=colors, return_figure=True)
-        assert np.allclose(fig.axes[0].collections[0].get_facecolors(), colors_rgba)
+        assert np.allclose(
+            fig.axes[0].collections[0].get_facecolors(), colors_rgba
+        )
 
         fig2 = v.scatter(c=colors, return_figure=True)
-        assert np.allclose(fig2.axes[0].collections[0].get_facecolors(), colors_rgba)
+        assert np.allclose(
+            fig2.axes[0].collections[0].get_facecolors(), colors_rgba
+        )
 
     def test_size_parameter(self):
         """Pass either ``sizes`` or ``s`` to set scatter points sizes."""
-        v = Vector3d([[1, 0, 0], [1, 1, 0], [1, 1, 1]])
+        v = ove.Vector3d([[1, 0, 0], [1, 1, 0], [1, 1, 1]])
         sizes = np.arange(v.size)
 
         fig = v.scatter(sizes=sizes, return_figure=True)
@@ -414,36 +425,46 @@ class TestStereographicPlot:
 
 
 class TestSymmetryMarker:
-    @pytest.mark.parametrize("v_data", [[0, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]])
+    @pytest.mark.parametrize(
+        "v_data", [[0, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]]
+    )
     @pytest.mark.parametrize("folds", [1, 2, 3, 4, 6])
-    @pytest.mark.parametrize("modifier", [None, "none", "rotoinversion", "inversion"])
+    @pytest.mark.parametrize(
+        "modifier", [None, "none", "rotoinversion", "inversion"]
+    )
     def test_main_properties(self, v_data, folds, modifier):
-        v = Vector3d(v_data)
-        marker = _SymmetryMarker(v, folds=folds, modifier=modifier)
+        v = ove.Vector3d(v_data)
+        marker = opl.stereographic_plot._SymmetryMarker(
+            v, folds=folds, modifier=modifier
+        )
         assert np.allclose(v.data, marker._vector.data)
         assert marker._folds == folds
         assert marker._inner_shape == modifier
         assert (marker.angle_deg - (np.rad2deg(v.azimuth) + 90)) ** 2 < 1e-4
         # check errors
         with pytest.raises(ValueError, match="Folds must"):
-            _SymmetryMarker([0, 0, 1], folds=5)
+            opl.stereographic_plot._SymmetryMarker([0, 0, 1], folds=5)
         with pytest.raises(ValueError, match="Modifier must"):
-            _SymmetryMarker([0, 0, 1], modifier="banana")
+            opl.stereographic_plot._SymmetryMarker([0, 0, 1], modifier="banana")
 
     def test_plot_symmetry_marker(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax.stereographic_grid(False)
         marker_size = 500
 
-        v = Vector3d([[1, 0, 0], [0, 1, 1]])
+        v = ove.Vector3d([[1, 0, 0], [0, 1, 1]])
         for i in [1, 2, 3, 4, 6]:
             ax.symmetry_marker(v[0], folds=i, s=marker_size, color="k")
-            ax.symmetry_marker(v[1], folds=i, modifier="inversion", s=marker_size)
+            ax.symmetry_marker(
+                v[1], folds=i, modifier="inversion", s=marker_size
+            )
             ax.symmetry_marker(
                 v, folds=1, modifier="inversion", color="C1", s=marker_size
             )
         for i in [4, 6]:
-            ax.symmetry_marker(v, folds=i, modifier="rotoinversion", s=marker_size)
+            ax.symmetry_marker(
+                v, folds=i, modifier="rotoinversion", s=marker_size
+            )
 
         markers = ax.collections
         assert len(markers) == 43
@@ -469,12 +490,12 @@ class TestDrawCircle:
     )
     def test_visible_in_hemisphere(self, pole, polar, desired_array):
         assert np.allclose(
-            plot.stereographic_plot._is_visible(polar, pole), desired_array
+            opl.stereographic_plot._is_visible(polar, pole), desired_array
         )
 
     def test_draw_circle(self):
-        v1 = Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
-        v2 = Vector3d(np.append(v1.data, -v1.data, axis=0))
+        v1 = ove.Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
+        v2 = ove.Vector3d(np.append(v1.data, -v1.data, axis=0))
 
         upper_steps = 100
         lower_steps = 150
@@ -504,7 +525,7 @@ class TestDrawCircle:
         plt.close("all")
 
     def test_draw_circle_empty(self):
-        v1 = Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
+        v1 = ove.Vector3d([[0, 0, 1], [1, 0, 1], [1, 1, 1]])
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax.hemisphere = "lower"
         ax.draw_circle(v1)
@@ -514,7 +535,7 @@ class TestDrawCircle:
 
     def test_draw_circle_opening_angle_array(self):
         """Passing an opening angle per vector as an array works."""
-        v = Vector3d([(0, 0, 1), (0, 0, -1), (1, 0, 1)])
+        v = ove.Vector3d([(0, 0, 1), (0, 0, -1), (1, 0, 1)])
         fig = v.draw_circle(
             opening_angle=np.array([np.pi / 2, np.pi / 4, np.pi / 2]),
             return_figure=True,
@@ -528,9 +549,11 @@ class TestDrawCircle:
         plt.close("all")
 
     def test_pdf_args(self):
-        v = Vector3d.random(10)
+        v = ove.Vector3d.random(10)
         resolution = 5
-        fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection="stereographic"))
+        fig, ax = plt.subplots(
+            ncols=2, subplot_kw=dict(projection="stereographic")
+        )
         # vector arg
         ax[0].pole_density_function(v, resolution=resolution)
         qm0 = [isinstance(c, QuadMesh) for c in ax[0].collections]
@@ -567,13 +590,13 @@ class TestRestrictToFundamentalSector:
         # C1 has no fundamental sector, so the circle marking the
         # edge of the axis region should be unchanged
         _, ax2 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
-        ax2.restrict_to_sector(symmetry.C1.fundamental_sector)
+        ax2.restrict_to_sector(oqu.symmetry.C1.fundamental_sector)
         assert np.allclose(vertices, ax2.patches[0].get_verts())
 
         # C6 fundamental sector is 1 / 6 of the unit sphere, with
         # half of it in the upper hemisphere
         _, ax3 = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
-        ax3[0].restrict_to_sector(symmetry.C6.fundamental_sector)
+        ax3[0].restrict_to_sector(oqu.symmetry.C6.fundamental_sector)
         assert not np.allclose(vertices[:10], ax3[0].patches[0].get_verts()[:10])
         assert ax3[0].patches[1].get_label() == "_stereographic_sector"
 
@@ -585,7 +608,7 @@ class TestRestrictToFundamentalSector:
 
         # Oh's fundamental sector is only in the upper hemisphere,
         # so the same as C1's sector applies for the lower hemisphere
-        fs = symmetry.Oh.fundamental_sector
+        fs = oqu.symmetry.Oh.fundamental_sector
         _, ax4 = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         ax4.restrict_to_sector(fs)
         upper_patches4 = ax4.patches
@@ -611,18 +634,18 @@ class TestRestrictToFundamentalSector:
         plt.close("all")
 
     def test_restrict_to_sector_pad(self):
-        v = Vector3d.zvector()
+        v = ove.Vector3d.zvector()
 
         fig = v.scatter(return_figure=True)
         ax = fig.axes[0]
         assert np.allclose(ax.get_xlim(), [-1.05, 1.05])
 
         # No change since the sector is the equator
-        ax.restrict_to_sector(symmetry.C1.fundamental_sector)
+        ax.restrict_to_sector(oqu.symmetry.C1.fundamental_sector)
         assert np.allclose(ax.get_xlim(), [-1.05, 1.05])
 
         # Default
-        fs_m3m = symmetry.Oh.fundamental_sector
+        fs_m3m = oqu.symmetry.Oh.fundamental_sector
         ax.restrict_to_sector(fs_m3m)
         assert np.allclose(ax.get_xlim(), [-0.0103, 0.4245], atol=1e-4)
 
@@ -633,19 +656,21 @@ class TestRestrictToFundamentalSector:
         plt.close("all")
 
     def test_restrict_to_sector_edges(self):
-        v = Vector3d.zvector()
+        v = ove.Vector3d.zvector()
 
         fig = v.scatter(return_figure=True)
         ax = fig.axes[0]
 
-        ax.restrict_to_sector(symmetry.Oh.fundamental_sector, show_edges=False)
+        ax.restrict_to_sector(
+            oqu.symmetry.Oh.fundamental_sector, show_edges=False
+        )
         assert len(ax.patches) == 1
         assert ax.patches[0].get_label() == "_stereographic_border"
 
         plt.close("all")
 
     def test_restrict_to_sector_full_projection(self):
-        v = Vector3d.zvector()
+        v = ove.Vector3d.zvector()
 
         fig = v.scatter(return_figure=True)
         ax = fig.axes[0]
@@ -654,12 +679,12 @@ class TestRestrictToFundamentalSector:
 
         # Ensure padding changes little (ideally to +/- 1.01, but it
         # does not on Windows...)
-        ax.restrict_to_sector(symmetry.Ci.fundamental_sector)
+        ax.restrict_to_sector(oqu.symmetry.Ci.fundamental_sector)
         xmin2, xmax2 = ax.get_xlim()
         assert all([(xmin + xmin2) <= 0.05, (xmax - xmax2) <= 0.05])
 
         # Upper part of projection, azimuthal in [0, 180]
-        ax.restrict_to_sector(symmetry.C2h.fundamental_sector)
+        ax.restrict_to_sector(oqu.symmetry.C2h.fundamental_sector)
         assert np.allclose(ax.get_ylim(), [-0.01, 1.01], atol=1e-3)
 
         plt.close("all")
