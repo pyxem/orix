@@ -302,9 +302,7 @@ class TestAngReader:
                         np.ones(int(np.floor((3 * 6) / 2))) * 2,
                     )
                 ),
-                np.array(
-                    [[1.62176, 2.36894, 1.72386], [1.60448, 2.36754, 1.72386]]
-                ),
+                np.array([[1.62176, 2.36894, 1.72386], [1.60448, 2.36754, 1.72386]]),
             ),
         ],
         indirect=["angfile_emsoft"],
@@ -423,9 +421,7 @@ class TestAngReader:
         temp_ang_file.close()
         with open(temp_ang_file.name) as f:
             header = _get_header(f)
-        with pytest.warns(
-            UserWarning, match=f"Number of columns, {n_cols_file}, "
-        ):
+        with pytest.warns(UserWarning, match=f"Number of columns, {n_cols_file}, "):
             vendor, column_names = _get_vendor_columns(header, n_cols_file)
             assert vendor == "unknown"
             expected_columns = [
@@ -504,9 +500,7 @@ class TestAngReader:
         assert formulas == expected_formula
         assert phases["names"] == expected_names
         assert phases["point_groups"] == expected_point_groups
-        assert np.allclose(
-            phases["lattice_constants"], expected_lattice_constants
-        )
+        assert np.allclose(phases["lattice_constants"], expected_lattice_constants)
         assert np.allclose(phases["ids"], expected_phase_id)
 
     def test_phasename_autogen(self):
@@ -694,9 +688,7 @@ class TestAngWriter:
         xmap_reload = load(fname)
 
         assert xmap_reload.ndim == 1
-        assert np.allclose(
-            xmap.rotations.to_euler(), xmap_reload.rotations.to_euler()
-        )
+        assert np.allclose(xmap.rotations.to_euler(), xmap_reload.rotations.to_euler())
 
     @pytest.mark.parametrize(
         "crystal_map_input, index",
@@ -709,9 +701,7 @@ class TestAngWriter:
     )
     def test_write_data_index(self, crystal_map_input, tmp_path, index):
         xmap = CrystalMap(**crystal_map_input)
-        ci = np.arange(xmap.size * xmap.rotations_per_point).reshape(
-            xmap.size, -1
-        )
+        ci = np.arange(xmap.size * xmap.rotations_per_point).reshape(xmap.size, -1)
         xmap.prop["ci"] = ci
         xmap.prop["iq"] = np.arange(xmap.size)
         extra_prop = "iq_times_ci"
@@ -742,9 +732,9 @@ class TestAngWriter:
         property arrays.
         """
         xmap = CrystalMap(**crystal_map_input)
-        xmap.prop["ci"] = np.arange(
-            xmap.size * xmap.rotations_per_point
-        ).reshape(xmap.size, xmap.rotations_per_point)
+        xmap.prop["ci"] = np.arange(xmap.size * xmap.rotations_per_point).reshape(
+            xmap.size, xmap.rotations_per_point
+        )
         fname = tmp_path / "test_write_data_index_none.ang"
         save(fname, xmap, extra_prop=["ci"])
 

@@ -121,14 +121,10 @@ class PhaseList:
 
     def __init__(
         self,
-        phases: (
-            Phase | list[Phase] | dict[int, Phase] | "PhaseList" | None
-        ) = None,
+        phases: Phase | list[Phase] | dict[int, Phase] | "PhaseList" | None = None,
         names: str | list[str] | None = None,
         space_groups: int | SpaceGroup | list[int | SpaceGroup] | None = None,
-        point_groups: (
-            str | int | Symmetry | list[str | int | Symmetry] | None
-        ) = None,
+        point_groups: str | int | Symmetry | list[str | int | Symmetry] | None = None,
         colors: str | list[str] | None = None,
         ids: int | list[int] | np.ndarray | None = None,
         structures: Structure | list[Structure] | None = None,
@@ -199,9 +195,7 @@ class PhaseList:
 
             # Get first 2 * n entries in color list (for good measure)
             all_colors, _ = get_named_matplotlib_colors()
-            all_color_names = list(islice(all_colors.keys(), 2 * max_entries))[
-                ::-1
-            ]
+            all_color_names = list(islice(all_colors.keys(), 2 * max_entries))[::-1]
 
             # Create phase dictionary
             d = {}
@@ -368,9 +362,7 @@ class PhaseList:
                     matching_phase_id = phase_id
                     break
             if matching_phase_id is None:
-                raise KeyError(
-                    f"{key} is not among the phase names {self.names}."
-                )
+                raise KeyError(f"{key} is not among the phase names {self.names}.")
             else:
                 self._dict.pop(matching_phase_id)
         else:
@@ -390,8 +382,7 @@ class PhaseList:
         sg_names = ["None" if not i else i.short_name for i in self.space_groups]
         pg_names = ["None" if not i else i.name for i in self.point_groups]
         ppg_names = [
-            "None" if not i else i.proper_subgroup.name
-            for i in self.point_groups
+            "None" if not i else i.proper_subgroup.name for i in self.point_groups
         ]
 
         # Determine column widths (allowing PhaseList to be empty)
@@ -409,12 +400,8 @@ class PhaseList:
         representation = (
             "{:{align}{width}}  ".format("Id", width=id_len, align=align)
             + "{:{align}{width}}  ".format("Name", width=name_len, align=align)
-            + "{:{align}{width}}  ".format(
-                "Space group", width=sg_len, align=align
-            )
-            + "{:{align}{width}}  ".format(
-                "Point group", width=pg_len, align=align
-            )
+            + "{:{align}{width}}  ".format("Space group", width=sg_len, align=align)
+            + "{:{align}{width}}  ".format("Point group", width=pg_len, align=align)
             + "{:{align}{width}}  ".format(
                 "Proper point group", width=ppg_len, align=align
             )

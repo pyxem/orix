@@ -117,17 +117,13 @@ class TestStereographicPlot:
         assert np.allclose(c3, mcolors.to_rgba(c_color))
 
         # Single color with single alpha
-        fig4 = v.scatter(
-            c=c_color, alpha=0.5, return_figure=True, label="scatter"
-        )
+        fig4 = v.scatter(c=c_color, alpha=0.5, return_figure=True, label="scatter")
         fig4.canvas.draw()
         c4 = fig4.axes[0]._get_collection("scatter").get_facecolor()
         assert np.allclose(c4, mcolors.to_rgba(c_color, 0.5))
 
         # Single color with varying alpha
-        fig5 = v.scatter(
-            c=c_color, alpha=c_scalar, return_figure=True, label="scatter"
-        )
+        fig5 = v.scatter(c=c_color, alpha=c_scalar, return_figure=True, label="scatter")
         fig5.canvas.draw()
         c5 = fig5.axes[0]._get_collection("scatter").get_facecolor()
         rgba5 = np.full((v.size, 4), mcolors.to_rgba(c_color))
@@ -369,12 +365,8 @@ class TestStereographicPlot:
 
         _, ax = plt.subplots(ncols=2, subplot_kw=dict(projection=PROJ_NAME))
         ax[1].hemisphere = "lower"
-        x_upper, y_upper, visible_upper = ax[0]._pretransform_input(
-            (v,), sort=True
-        )
-        x_lower, y_lower, visible_lower = ax[1]._pretransform_input(
-            (v,), sort=True
-        )
+        x_upper, y_upper, visible_upper = ax[0]._pretransform_input((v,), sort=True)
+        x_lower, y_lower, visible_lower = ax[1]._pretransform_input((v,), sort=True)
 
         x_upper_desired, y_upper_desired = ax[0]._projection.vector2xy(v[:2])
         assert np.allclose(x_upper, x_upper_desired)
@@ -403,14 +395,10 @@ class TestStereographicPlot:
         colors_rgba = np.array([mcolors.to_rgba(c) for c in colors])
 
         fig = v.scatter(color=colors, return_figure=True)
-        assert np.allclose(
-            fig.axes[0].collections[0].get_facecolors(), colors_rgba
-        )
+        assert np.allclose(fig.axes[0].collections[0].get_facecolors(), colors_rgba)
 
         fig2 = v.scatter(c=colors, return_figure=True)
-        assert np.allclose(
-            fig2.axes[0].collections[0].get_facecolors(), colors_rgba
-        )
+        assert np.allclose(fig2.axes[0].collections[0].get_facecolors(), colors_rgba)
 
     def test_size_parameter(self):
         """Pass either ``sizes`` or ``s`` to set scatter points sizes."""
@@ -425,13 +413,9 @@ class TestStereographicPlot:
 
 
 class TestSymmetryMarker:
-    @pytest.mark.parametrize(
-        "v_data", [[0, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]]
-    )
+    @pytest.mark.parametrize("v_data", [[0, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]])
     @pytest.mark.parametrize("folds", [1, 2, 3, 4, 6])
-    @pytest.mark.parametrize(
-        "modifier", [None, "none", "rotoinversion", "inversion"]
-    )
+    @pytest.mark.parametrize("modifier", [None, "none", "rotoinversion", "inversion"])
     def test_main_properties(self, v_data, folds, modifier):
         v = ove.Vector3d(v_data)
         marker = opl.stereographic_plot._SymmetryMarker(
@@ -455,16 +439,12 @@ class TestSymmetryMarker:
         v = ove.Vector3d([[1, 0, 0], [0, 1, 1]])
         for i in [1, 2, 3, 4, 6]:
             ax.symmetry_marker(v[0], folds=i, s=marker_size, color="k")
-            ax.symmetry_marker(
-                v[1], folds=i, modifier="inversion", s=marker_size
-            )
+            ax.symmetry_marker(v[1], folds=i, modifier="inversion", s=marker_size)
             ax.symmetry_marker(
                 v, folds=1, modifier="inversion", color="C1", s=marker_size
             )
         for i in [4, 6]:
-            ax.symmetry_marker(
-                v, folds=i, modifier="rotoinversion", s=marker_size
-            )
+            ax.symmetry_marker(v, folds=i, modifier="rotoinversion", s=marker_size)
 
         markers = ax.collections
         assert len(markers) == 43
@@ -551,9 +531,7 @@ class TestDrawCircle:
     def test_pdf_args(self):
         v = ove.Vector3d.random(10)
         resolution = 5
-        fig, ax = plt.subplots(
-            ncols=2, subplot_kw=dict(projection="stereographic")
-        )
+        fig, ax = plt.subplots(ncols=2, subplot_kw=dict(projection="stereographic"))
         # vector arg
         ax[0].pole_density_function(v, resolution=resolution)
         qm0 = [isinstance(c, QuadMesh) for c in ax[0].collections]
@@ -661,9 +639,7 @@ class TestRestrictToFundamentalSector:
         fig = v.scatter(return_figure=True)
         ax = fig.axes[0]
 
-        ax.restrict_to_sector(
-            oqu.symmetry.Oh.fundamental_sector, show_edges=False
-        )
+        ax.restrict_to_sector(oqu.symmetry.Oh.fundamental_sector, show_edges=False)
         assert len(ax.patches) == 1
         assert ax.patches[0].get_label() == "_stereographic_border"
 

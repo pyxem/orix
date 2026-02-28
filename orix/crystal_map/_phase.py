@@ -33,7 +33,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 
 from orix.plot._util.color import get_matplotlib_color
-from orix.quaternion.symmetry import VALID_SYSTEMS, Symmetry, PointGroups
+from orix.quaternion.symmetry import VALID_SYSTEMS, PointGroups, Symmetry
 from orix.vector.miller import Miller
 from orix.vector.vector3d import Vector3d
 
@@ -132,9 +132,7 @@ class Phase:
 
         # Ensure correct alignment
         old_matrix = value.lattice.base
-        new_matrix = new_structure_matrix_from_alignment(
-            old_matrix, x="a", z="c*"
-        )
+        new_matrix = new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
         new_value = value.copy()
 
         # Ensure atom positions are expressed in the new basis

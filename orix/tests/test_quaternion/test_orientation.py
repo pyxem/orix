@@ -42,6 +42,7 @@ from orix.quaternion.symmetry import (
     Oh,
     PointGroups,
 )
+
 # isort: on
 from orix.vector import Miller, Vector3d
 

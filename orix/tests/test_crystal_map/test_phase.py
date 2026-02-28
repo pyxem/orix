@@ -190,9 +190,7 @@ class TestPhase:
 
     def test_set_structure_raises(self):
         p = Phase()
-        with pytest.raises(
-            ValueError, match=".* must be a diffpy.structure.Structure"
-        ):
+        with pytest.raises(ValueError, match=".* must be a diffpy.structure.Structure"):
             p.structure = [1, 2, 3, 90, 90, 90]
 
     @pytest.mark.parametrize(
@@ -249,9 +247,7 @@ class TestPhase:
         assert p.__repr__() == p2.__repr__()
 
     def test_phase_init_non_matching_space_group_point_group(self):
-        with pytest.warns(
-            UserWarning, match="Setting space group to 'None', as"
-        ):
+        with pytest.warns(UserWarning, match="Setting space group to 'None', as"):
             _ = Phase(space_group=225, point_group="432")
 
     @pytest.mark.parametrize(
@@ -273,9 +269,7 @@ class TestPhase:
 
     def test_set_space_group_raises(self):
         space_group = "outer-space"
-        with pytest.raises(
-            ValueError, match=f"'{space_group}' must be of type "
-        ):
+        with pytest.raises(ValueError, match=f"'{space_group}' must be of type "):
             p = Phase()
             p.space_group = space_group
 
@@ -294,9 +288,7 @@ class TestPhase:
     def test_structure_matrix(self):
         """Structure matrix is updated assuming e1 || a, e3 || c*."""
         trigonal_lattice = Lattice(1.7, 1.7, 1.4, 90, 90, 120)
-        phase = Phase(
-            point_group="321", structure=Structure(lattice=trigonal_lattice)
-        )
+        phase = Phase(point_group="321", structure=Structure(lattice=trigonal_lattice))
         lattice = phase.structure.lattice
 
         # Lattice parameters are unchanged
@@ -326,9 +318,7 @@ class TestPhase:
 
         # Getting new structure matrix without passing enough parameters
         # raises an error
-        with pytest.raises(
-            ValueError, match="At least two of x, y, z must be set."
-        ):
+        with pytest.raises(ValueError, match="At least two of x, y, z must be set."):
             _ = new_structure_matrix_from_alignment(lattice.base, x="a")
 
     def test_triclinic_structure_matrix(self):
@@ -368,9 +358,7 @@ class TestPhase:
     def test_lattice_vectors(self):
         """Correct direct and reciprocal lattice vectors."""
         trigonal_lattice = Lattice(1.7, 1.7, 1.4, 90, 90, 120)
-        phase = Phase(
-            point_group="321", structure=Structure(lattice=trigonal_lattice)
-        )
+        phase = Phase(point_group="321", structure=Structure(lattice=trigonal_lattice))
 
         a, b, c = phase.a_axis, phase.b_axis, phase.c_axis
         ar, br, cr = phase.ar_axis, phase.br_axis, phase.cr_axis
@@ -424,17 +412,13 @@ class TestPhase:
         # however, Phase should (in many cases) change the basis.
         if np.allclose(structure.lattice.base, phase.structure.lattice.base):
             # In this branch we are in the same basis & all atoms should be the same
-            for atom_from_structure, atom_from_phase in zip(
-                structure, phase.structure
-            ):
+            for atom_from_structure, atom_from_phase in zip(structure, phase.structure):
                 assert np.allclose(atom_from_structure.xyz, atom_from_phase.xyz)
         else:
             # Here we have differing basis, so xyz must disagree for at least some atoms
             disagreement_found = False
 
-            for atom_from_structure, atom_from_phase in zip(
-                structure, phase.structure
-            ):
+            for atom_from_structure, atom_from_phase in zip(structure, phase.structure):
                 if not np.allclose(atom_from_structure.xyz, atom_from_phase.xyz):
                     disagreement_found = True
                     break
@@ -459,9 +443,7 @@ class TestPhase:
         phase1 = Phase.from_cif(cif_file)
         structure = loadStructure(cif_file)
         phase2 = Phase(structure=structure)
-        assert np.allclose(
-            phase1.structure.lattice.base, phase2.structure.lattice.base
-        )
+        assert np.allclose(phase1.structure.lattice.base, phase2.structure.lattice.base)
         assert np.allclose(phase1.structure.xyz, phase2.structure.xyz)
 
     @pytest.mark.parametrize(
@@ -1018,7 +1000,5 @@ class TestPhase:
             assert np.allclose([1, 1, 1, 90, 90, 120], lattice_parameters)
 
     def test_default_lattice_raises(self):
-        with pytest.raises(
-            ValueError, match="Unknown crystal system 'rhombohedral'"
-        ):
+        with pytest.raises(ValueError, match="Unknown crystal system 'rhombohedral'"):
             default_lattice("rhombohedral")

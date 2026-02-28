@@ -31,9 +31,9 @@ symmetry objects, see :ref:`create_symmetry.py`
 import matplotlib.pyplot as plt
 import numpy as np
 
+import orix.plot as opl
 import orix.quaternion as oqu
 import orix.vector as ove
-import orix.plot as opl
 
 # Set a random seed for reproducability
 np.random.seed = 897897
