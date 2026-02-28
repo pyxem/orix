@@ -25,7 +25,7 @@ from diffpy.structure.spacegroups import GetSpaceGroup
 import matplotlib.pyplot as plt
 import numpy as np
 
-from orix._util import deprecated, deprecated_argument
+from orix._utils.deprecation import deprecated, deprecated_argument
 from orix.quaternion.rotation import Rotation
 from orix.vector.vector3d import Vector3d
 
@@ -178,7 +178,6 @@ class Symmetry(Rotation):
         """Return which of the seven crystal systems this symmetry
         belongs to, or None if the symmetry name is not recognized.
         """
-        # fmt: off
         name = self.name
         if name in ["1", "-1"]:
             return "triclinic"
@@ -196,7 +195,6 @@ class Symmetry(Rotation):
             return "cubic"
         else:
             return None
-        # fmt: on
 
     @property
     def _tuples(self) -> set:
@@ -264,7 +262,9 @@ class Symmetry(Rotation):
             # Taken from MTEX
             center = Vector3d([0.707558, -0.000403, 0.706655])
         elif name in ["m-3", "432"]:
-            n = Vector3d(np.vstack([vx.data, [0, -1, 1], [-1, 0, 1], vy.data, vz.data]))
+            n = Vector3d(
+                np.vstack([vx.data, [0, -1, 1], [-1, 0, 1], vy.data, vz.data])
+            )
             # Taken from MTEX
             center = Vector3d([0.349928, 0.348069, 0.869711])
         elif name == "-43m":
@@ -372,7 +372,9 @@ class Symmetry(Rotation):
         return Symmetry.from_generators(*generators)
 
     def __hash__(self) -> int:
-        return hash(self.name.encode() + self.data.tobytes() + self.improper.tobytes())
+        return hash(
+            self.name.encode() + self.data.tobytes() + self.improper.tobytes()
+        )
 
     # ------------------------ Class methods ------------------------- #
 
@@ -481,8 +483,10 @@ class Symmetry(Rotation):
         sr = SphericalRegion(n.unique())
         return sr
 
-    @deprecated_argument(name="orientation", since="1.4", removal="1.5")
-    @deprecated_argument(name="reproject_scatter_kwargs", since="1.4", removal="1.5")
+    @deprecated_argument(name="orientation", since="1.5", removal="1.6")
+    @deprecated_argument(
+        name="reproject_scatter_kwargs", since="1.5", removal="1.6"
+    )
     def plot(
         self,
         asymmetric_vector: Vector3d | None = None,
@@ -494,7 +498,7 @@ class Symmetry(Rotation):
         reproject_scatter_kwargs: dict | None = None,
         marker_size: float = 150.0,
         mirror_width: float = 2.0,
-        asymetric_vector_dict: dict = {},
+        asymmetric_vector_dict: dict = {},
         asymmetric_vector_size: float = 50.0,
     ) -> plt.Figure | None:
         """Creates a stereographic projection of symmetry operations
@@ -551,29 +555,6 @@ class Symmetry(Rotation):
             The created figure, returned if ``return_figure=True`` is
             passed as a keyword argument.
 
-        Examples
-        --------
-
-        If users wish to have more control over their plots, this
-        function can be used to modify an existing plot, like so:
-
-        >>> import matplotlib.pyplot as plt
-        >>> from orix.quaternion.symmetry import PointGroups
-        >>> from orix.vector import Vector3d
-        >>> import orix.plot
-        >>>
-        >>> pg_Oh = PointGroups.get('m-3m')
-        >>> v = Vector3d.random(10)
-        >>> v_symm = pg_Oh.outer(v).flatten()
-        >>> fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "stereographic"})
-        >>> pg_Oh.plot(ax=ax, show_name=False)
-        >>> ax.set_title("my cool custom title")
-        >>> ax.scatter(v_symm)
-
-        In this way, keword arguments related to the plot, the title,
-        the scattered vector markers, and/or the symmetry markers can
-        be individually altered as desired.
-
         Notes
         -----
 
@@ -584,7 +565,7 @@ class Symmetry(Rotation):
         axes in the same plane as the plot, or the rotational
         orientation of the rotoinversion markers.
         """
-        # depreciated input arguments. remove after 0.15
+        # depreciated input arguments. remove after 0.16
         if orientation is not None:  # pragma: no cover
             # 'orientation' was replaced with "asymmetric_vector", so if that
             # input is not None, ignore 'orientation'.
@@ -647,7 +628,9 @@ class Symmetry(Rotation):
                 if t != "inversion":
                     continue
                 for sv in (self * v).unique():
-                    ax.symmetry_marker(sv, folds=f, s=marker_size, color=c, modifier=t)
+                    ax.symmetry_marker(
+                        sv, folds=f, s=marker_size, color=c, modifier=t
+                    )
 
         # plot asymmetric markers if requested.
         if asymmetric_vector is not None:
@@ -658,7 +641,7 @@ class Symmetry(Rotation):
                 "upper_marker": "+",
                 "lower_marker": "o",
             }
-            vdict.update(asymetric_vector_dict)
+            vdict.update(asymmetric_vector_dict)
             mask = v_symm.z >= 0
             ax.scatter(
                 -1 * v_symm[~mask],
@@ -1353,7 +1336,8 @@ _spacegroup2pointgroup_dict = {
 }
 
 
-class PointGroups(list):
+# TODO: there is no need for this to subclass list
+class PointGroups:
     # make a lookup table of common subsets of Point Groups
     subset_names = _point_groups_dictionary.keys()
     _point_group_names = dict(
@@ -1493,7 +1477,7 @@ class PointGroups(list):
             )
 
     def from_space_group(
-        space_group_number: Union(int, str), proper: bool = False
+        self, space_group_number: Union(int, str), proper: bool = False
     ) -> Symmetry:
         """
         Maps a space group number or name to a crystallographic point group.
@@ -1632,8 +1616,8 @@ def get_distinguished_points(s1: Symmetry, s2: Symmetry = C1) -> Rotation:
 
 
 @deprecated(
-    since="0.14",
-    removal="0.15",
+    since="0.15",
+    removal="0.16",
     alternative="PointGroups.from_space_group",
 )
 def get_point_group(space_group_number: int, proper: bool = False) -> Symmetry:

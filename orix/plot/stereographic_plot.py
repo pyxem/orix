@@ -445,7 +445,10 @@ class StereographicPlot(maxes.Axes):
         if x.size == 0:
             return
 
-        if isinstance(opening_angle, np.ndarray) and opening_angle.size == visible.size:
+        if (
+            isinstance(opening_angle, np.ndarray)
+            and opening_angle.size == visible.size
+        ):
             opening_angle = opening_angle[visible]
 
         # Get set of `steps` vectors delineating a circle per vector
@@ -474,7 +477,10 @@ class StereographicPlot(maxes.Axes):
             self._hemisphere = other_hemisphere[self._hemisphere]
             for i, circle in enumerate(circles):
                 self.plot(
-                    circle.azimuth, circle.polar, color=c[i], **reproject_plot_kwargs
+                    circle.azimuth,
+                    circle.polar,
+                    color=c[i],
+                    **reproject_plot_kwargs,
                 )
             self._hemisphere = other_hemisphere[self._hemisphere]
 
@@ -548,7 +554,10 @@ class StereographicPlot(maxes.Axes):
             )
             self.add_patch(patch)
             self.set_clip_path(patch)
-            labels = [self._get_label("azimuth_grid"), self._get_label("polar_grid")]
+            labels = [
+                self._get_label("azimuth_grid"),
+                self._get_label("polar_grid"),
+            ]
             for c in self.collections:
                 if c.get_label() in labels:
                     c.set_clip_path(patch)
@@ -699,7 +708,10 @@ class StereographicPlot(maxes.Axes):
                 lat_resolution, lat_resolution_major, linewidth_ratio
             )
             self._longitudinal_grid(
-                long_resolution, long_resolution_major, linewidth_ratio, wulff_net_cap
+                long_resolution,
+                long_resolution_major,
+                linewidth_ratio,
+                wulff_net_cap,
             )
             self._wulff_net_grid = True
         elif show_grid in [None, False] and self._wulff_net_grid is True:
@@ -712,7 +724,9 @@ class StereographicPlot(maxes.Axes):
                 self._remove_collection(label)
             self._wulff_net_grid = False
 
-    def symmetry_marker(self, v: Vector3d, fold: int, **kwargs) -> None:
+    def symmetry_marker(
+        self, v: Vector3d, folds: int, modifier="none", **kwargs
+    ) -> None:
         """Plot 2-, 3- 4- or 6-fold symmetry marker(s).
 
         Parameters
@@ -791,9 +805,13 @@ class StereographicPlot(maxes.Axes):
         label = self._get_label("azimuth_grid")
         self._remove_collection(label)
         lines = np.stack(((x_start, x_end), (y_start, y_end))).T
-        lines_collection = mcollections.LineCollection(lines, label=label, **kwargs)
+        lines_collection = mcollections.LineCollection(
+            lines, label=label, **kwargs
+        )
         # Clip to fundamental sector, if set
-        sector_patch = self._get_collection(self._get_label("sector"), self.patches)
+        sector_patch = self._get_collection(
+            self._get_label("sector"), self.patches
+        )
         if sector_patch is not None:
             lines_collection.set_clip_path(sector_patch)
 
@@ -847,7 +865,9 @@ class StereographicPlot(maxes.Axes):
             alpha=kwargs["alpha"],
         )
         self._remove_collection(label)
-        sector_patch = self._get_collection(self._get_label("sector"), self.patches)
+        sector_patch = self._get_collection(
+            self._get_label("sector"), self.patches
+        )
         if sector_patch is not None:
             circles_collection.set_clip_path(sector_patch)
         self.add_collection(circles_collection)
@@ -894,7 +914,9 @@ class StereographicPlot(maxes.Axes):
             v_lats = Vector3d.xvector().rotate(angle=np.radians(ticks))
             lat_deltas = np.linspace(0, np.pi, 100, True)
             v_lines = [v.rotate(rotation_pole, lat_deltas) for v in v_lats]
-            xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
+            xy_lines = [
+                np.stack(self._projection.vector2xy(x)).T for x in v_lines
+            ]
             return xy_lines
 
         rotation_pole = [0, self.pole, 0]
@@ -915,7 +937,9 @@ class StereographicPlot(maxes.Axes):
 
         # Clip the grid to the fundamental sector subsection, if one is
         # defined
-        sector_patch = self._get_collection(self._get_label("sector"), self.patches)
+        sector_patch = self._get_collection(
+            self._get_label("sector"), self.patches
+        )
         if sector_patch is not None:
             lc_minor.set_clip_path(sector_patch)
             if lc_major is not None:
@@ -967,17 +991,24 @@ class StereographicPlot(maxes.Axes):
             left = np.arange(90, 0 - res, -res)[::-1]
             right = np.arange(90 + res, 180 + res, res)
             ticks = np.hstack([left, right])
-            v_longs = Vector3d.xvector().rotate(rotation_pole, np.radians(-ticks))
+            v_longs = Vector3d.xvector().rotate(
+                rotation_pole, np.radians(-ticks)
+            )
             long_deltas = np.radians(np.linspace(90 - cap, -90 + cap, 100, True))
             v_lines = [
-                v.rotate(v.rotate([0, 1, 0], np.pi / 2), long_deltas) for v in v_longs
+                v.rotate(v.rotate([0, 1, 0], np.pi / 2), long_deltas)
+                for v in v_longs
             ]
-            xy_lines = [np.stack(self._projection.vector2xy(x)).T for x in v_lines]
+            xy_lines = [
+                np.stack(self._projection.vector2xy(x)).T for x in v_lines
+            ]
             return xy_lines
 
         rotation_pole = [0, -self.pole, 0]
         lc_minor = mcollections.LineCollection(
-            res2llonglines(self._long_resolution, self._wulff_net_cap, rotation_pole),
+            res2llonglines(
+                self._long_resolution, self._wulff_net_cap, rotation_pole
+            ),
             label=self._get_label("longitudinal_grid"),
             **kwargs_minor,
         )
@@ -986,7 +1017,9 @@ class StereographicPlot(maxes.Axes):
         if self._long_resolution_major > 0:
             lc_major = mcollections.LineCollection(
                 res2llonglines(
-                    self._long_resolution_major, self._wulff_net_cap, rotation_pole
+                    self._long_resolution_major,
+                    self._wulff_net_cap,
+                    rotation_pole,
                 ),
                 label=self._get_label("longitudinal_grid_major"),
                 **kwargs_major,
@@ -994,7 +1027,9 @@ class StereographicPlot(maxes.Axes):
 
         # Clip the grid to the fundamental sector subsection, if one is
         # defined
-        sector_patch = self._get_collection(self._get_label("sector"), self.patches)
+        sector_patch = self._get_collection(
+            self._get_label("sector"), self.patches
+        )
         if sector_patch is not None:
             lc_minor.set_clip_path(sector_patch)
             if lc_major is not None:
@@ -1012,7 +1047,9 @@ class StereographicPlot(maxes.Axes):
 
     @overload
     def _get_collection(
-        self, label: str, collections: maxes.Axes.ArtistList[mcollections.Collection]
+        self,
+        label: str,
+        collections: maxes.Axes.ArtistList[mcollections.Collection],
     ) -> mcollections.Collection: ...  # pragma: no cover
 
     @overload
@@ -1423,7 +1460,9 @@ class _SymmetryMarker:
 
         For example, if a _SymmetryMarker is created with 4 vertices, this allows for
         iteration over those vertices in a 'for' loop."""
-        for v, marker, size in zip(self._vector, self._marker, self.multiplicity):
+        for v, marker, size in zip(
+            self._vector, self._marker, self.multiplicity
+        ):
             yield v, marker, size
 
     @property
@@ -1485,6 +1524,8 @@ class _SymmetryMarker:
         trans = [mtransforms.Affine2D().rotate(a + (np.pi / 2)) for a in azimuth]
 
         return [marker.deepcopy().transformed(i) for i in trans]
+
+
 def _get_kwargs_for_wulff_net_grids(
     linewidth_ratio: float,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -1503,7 +1544,9 @@ def _get_kwargs_for_wulff_net_grids(
     return kwargs_minor, kwargs_major
 
 
-def _label_in_collection(label: str, collections: COLLECTION_TYPES) -> int | None:
+def _label_in_collection(
+    label: str, collections: COLLECTION_TYPES
+) -> int | None:
     labels = [c.get_label() for c in collections]
     for i in range(len(labels)):
         if label == labels[i]:
@@ -1522,7 +1565,9 @@ def _get_color_from_dict(d: dict[str, Any]) -> COLORLIKE:
     return c
 
 
-def _update_kwargs_for_fundamental_sector_patch(d: dict[str, Any]) -> dict[str, Any]:
+def _update_kwargs_for_fundamental_sector_patch(
+    d: dict[str, Any],
+) -> dict[str, Any]:
     for k, v in [("facecolor", "none"), ("edgecolor", "k"), ("linewidth", 1)]:
         d.setdefault(k, v)
     return d
