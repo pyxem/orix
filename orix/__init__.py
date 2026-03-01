@@ -34,8 +34,9 @@ __credits__ = [
     "Zhou Xu",
     "Carter Francis",
     "Simon Høgås",
-    "Alessandra da Silva",
     "Ondrej Lexa",
+    "Alessandra da Silva",
+    "Dorian Depriester",
     "Eric Prestat",
     "Alexander Clausen",
 ]
