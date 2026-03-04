@@ -29,7 +29,7 @@ from orix.plot.direction_color_keys._util import (
 from orix.projections import StereographicProjection
 from orix.quaternion import Symmetry
 from orix.sampling import sample_S2
-from orix.vector import Vector3d
+from orix.vector import Vector3d, Miller
 
 
 class DirectionColorKeyTSL(DirectionColorKey):
@@ -51,7 +51,7 @@ class DirectionColorKeyTSL(DirectionColorKey):
         laue_symmetry = symmetry.laue
         super().__init__(laue_symmetry)
 
-    def direction2color(self, direction: Vector3d) -> np.ndarray:
+    def direction2color(self, direction: Vector3d | Miller) -> np.ndarray:
         """Return an RGB color per (crystal) direction.
 
         Plot the inverse pole figure color key with :meth:`plot`.
@@ -67,16 +67,28 @@ class DirectionColorKeyTSL(DirectionColorKey):
         rgb
             Color array of shape direction.shape + (3,).
         """
+        if isinstance(direction, ove.Miller):
+            h_laue = direction.phase.point_group.laue.name
+            if  h_laue == self.symmetry
+                direction = Vector3d(direction)
+            else:
+                raise IOError(
+                    f"'direction' has a Laue group of {h_laue}, which differs " + 
+                    f" from the Laue group {self.symmetry} used by this color key"
+                    )
+                
         laue_group = self.symmetry
         h = direction.in_fundamental_sector(laue_group)
-        azimuth, polar = polar_coordinates_in_sector(laue_group.fundamental_sector, h)
+        azimuth, polar = polar_coordinates_in_sector(
+            laue_group.fundamental_sector, h
         polar = 0.5 + polar / 2
         return rgb_from_polar_coordinates(azimuth, polar)
 
     def _create_rgba_grid(
         self, alpha: float = 1.0, return_extent: bool = False
     ) -> (
-        np.ndarray | tuple[np.ndarray, tuple[tuple[float, float], tuple[float, float]]]
+        np.ndarray
+        | tuple[np.ndarray, tuple[tuple[float, float], tuple[float, float]]]
     ):
         """Return the 2D colormap used to represent crystal directions.
 
@@ -153,7 +165,9 @@ class DirectionColorKeyTSL(DirectionColorKey):
         figure
             Color key figure, returned if *return_figure* is True.
         """
-        from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
+        from orix.plot.inverse_pole_figure_plot import (
+            _setup_inverse_pole_figure_plot,
+        )
 
         fig, axes = _setup_inverse_pole_figure_plot(self.symmetry)
         ax = axes[0]
