@@ -22,54 +22,72 @@ import pytest
 
 from orix.plot import IPFColorKeyTSL
 from orix.plot.direction_color_keys._util import polar_coordinates_in_sector
-from orix.quaternion import symmetry
-from orix.vector import Vector3d
+
+import orix.vector as ove
+import orix.crystal_map as ocm
+import orix.quaternion.symmetry as osm
 
 
 class TestDirectionColorKeyTSL:
     def test_direction2color(self):
-        ckey_oh = IPFColorKeyTSL(symmetry.Oh)
+        ckey_oh = IPFColorKeyTSL(osm.Oh)
         ckey_oh_direction = ckey_oh.direction_color_key
         assert repr(ckey_oh_direction) == "DirectionColorKeyTSL, symmetry m-3m"
+
+    def test_direction2color_inputs(self):
+        ckey_oh = IPFColorKeyTSL(osm.Oh)
+        p1 = ocm.Phase(name="fakename", point_group=osm.Oh)
+        p2 = ocm.Phase(name="fakename", point_group=osm.D6h)
+        arr = np.linspace(0, 5, 30).reshape(10, 3)
+        v = ove.Vector3d(arr)
+        m1 = ove.Miller(xyz=arr, phase=p1)
+        m2 = ove.Miller(xyz=arr, phase=p2)
+        rgb_key = ckey_oh.direction_color_key
+
+        # Check Vector3ds and Millers as inputs
+        rgb = rgb_key.direction2color(direction=v)
+        rgb = rgb_key.direction2color(direction=m1)
+        with pytest.raises(ValueError, match="'direction' has a Laue group"):
+            rgb = rgb_key.direction2color(direction=m2)
 
     def test_triclinic(self):
         # Get RGB colors for C1. Will never reach from IPFColorKeyTSL
         # since Ci (-1) is the Laue group of C1.
-        sector = symmetry.C1.fundamental_sector
-        rgb2 = polar_coordinates_in_sector(sector, Vector3d.xvector())
+        sector = osm.C1.fundamental_sector
+        rgb2 = polar_coordinates_in_sector(sector, ove.Vector3d.xvector())
         assert rgb2[0].size == rgb2[1].size == 0
 
     @pytest.mark.parametrize(
         "symmetry, expected_shape, expected_xy_lims, expected_labels",
         [
-            [symmetry.C1, (2000, 2000, 4), [(-1.0, 1.0), (-1.0, 1.0)], ""],
-            [symmetry.Ci, (2000, 2000, 4), [(-1.0, 1.0), (-1.0, 1.0)], ""],
+            [osm.C1, (2000, 2000, 4), [(-1.0, 1.0), (-1.0, 1.0)], ""],
+            [osm.Ci, (2000, 2000, 4), [(-1.0, 1.0), (-1.0, 1.0)], ""],
             [
-                symmetry.C2,
+                osm.C2,
                 (1000, 2000, 4),
                 [(-1.0, 1.0), (0.0, 1.0)],
                 "[$1 0 0$][$\\bar{1} 0 0$]",
             ],
             [
-                symmetry.S6,
+                osm.S6,
                 (1000, 1500, 4),
                 [(-0.5, 1.0), (0, 1.0)],
                 "[$2 \\bar{1} \\bar{1} 0$][$0 0 0 1$][$\\bar{1} 2 \\bar{1} 0$]",
             ],
             [
-                symmetry.D6,
+                osm.D6,
                 (500, 1000, 4),
                 [(0.0, 1.0), (0.0, 0.5)],
                 "[$2 \\bar{1} \\bar{1} 0$][$0 0 0 1$][$1 0 \\bar{1} 0$]",
             ],
             [
-                symmetry.Oh,
+                osm.Oh,
                 (367, 415, 4),
                 [(0.0, 0.414), (0.0, 0.366)],
                 "[$1 1 1$][$1 0 1$][$0 0 1$]",
             ],
             [
-                symmetry.Th,
+                osm.Th,
                 (415, 415, 4),
                 [(0.0, 0.414), (0.0, 0.414)],
                 "[$0 1 1$][$1 1 1$][$1 0 1$][$0 0 1$]",
@@ -96,7 +114,7 @@ class TestDirectionColorKeyTSL:
 
     @pytest.mark.parametrize(
         "symmetry",
-        [symmetry.C2, symmetry.D6, symmetry.Oh],
+        [osm.C2, osm.D6, osm.Oh],
     )
     @pytest.mark.slow
     def test_rgba_grid_alpha(self, symmetry):
