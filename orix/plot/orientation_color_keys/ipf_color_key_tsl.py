@@ -26,7 +26,7 @@ from orix.plot.direction_color_keys.direction_color_key_tsl import (
 from orix.plot.orientation_color_keys.ipf_color_key import IPFColorKey
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.symmetry import Symmetry
-from orix.vector import Vector3d, Miller
+from orix.vector import Miller, Vector3d
 
 
 class IPFColorKeyTSL(IPFColorKey):
@@ -37,9 +37,7 @@ class IPFColorKeyTSL(IPFColorKey):
     This is based on the TSL color key implemented in MTEX.
     """
 
-    def __init__(
-        self, symmetry: Symmetry, direction: Vector3d | None = None
-    ) -> None:
+    def __init__(self, symmetry: Symmetry, direction: Vector3d | None = None) -> None:
         """Create an inverse pole figure (IPF) color key to color
         orientations according a sample direction and a Laue symmetry's
         fundamental sector (IPF).
@@ -64,9 +62,7 @@ class IPFColorKeyTSL(IPFColorKey):
                 try:
                     direction = Vector3d(np.asanyarray(direction))
                 except:
-                    raise ValueError(
-                        "'direction' cannot be interpreted as a Vector3d"
-                    )
+                    raise ValueError("'direction' cannot be interpreted as a Vector3d")
         super().__init__(symmetry.laue, direction=direction)
 
     @property
