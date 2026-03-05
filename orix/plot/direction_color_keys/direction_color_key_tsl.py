@@ -67,20 +67,21 @@ class DirectionColorKeyTSL(DirectionColorKey):
         rgb
             Color array of shape direction.shape + (3,).
         """
-        if isinstance(direction, ove.Miller):
+        if isinstance(direction, Miller):
             h_laue = direction.phase.point_group.laue.name
-            if  h_laue == self.symmetry
+            if h_laue == self.symmetry.name:
                 direction = Vector3d(direction)
             else:
-                raise IOError(
-                    f"'direction' has a Laue group of {h_laue}, which differs " + 
-                    f" from the Laue group {self.symmetry} used by this color key"
-                    )
-                
+                raise ValueError(
+                    f"'direction' has a Laue group of {h_laue}, which differs "
+                    + f" from the Laue group {self.symmetry.name} used by this color key"
+                )
+
         laue_group = self.symmetry
         h = direction.in_fundamental_sector(laue_group)
         azimuth, polar = polar_coordinates_in_sector(
             laue_group.fundamental_sector, h
+        )
         polar = 0.5 + polar / 2
         return rgb_from_polar_coordinates(azimuth, polar)
 
