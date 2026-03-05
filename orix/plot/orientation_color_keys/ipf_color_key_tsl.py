@@ -67,6 +67,10 @@ class IPFColorKeyTSL(IPFColorKey):
                     raise ValueError(
                         "'direction' cannot be interpreted as a Vector3d"
                     )
+            if direction.size != 1:
+                raise ValueError(
+                    "'direction' only accepts a single vector as an input"
+                )
         super().__init__(symmetry.laue, direction=direction)
 
     @property

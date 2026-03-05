@@ -36,12 +36,14 @@ class TestIPFColorKeyTSL:
         arr = np.linspace(0, 5, 30).reshape(10, 3)
         v = ove.Vector3d(arr)
         m = ove.Miller(xyz=arr, phase=p)
-        ckey = opl.IPFColorKeyTSL(symmetry=osm.Oh, direction=v)
+        ckey = opl.IPFColorKeyTSL(symmetry=osm.Oh, direction=v[0])
         ckey = opl.IPFColorKeyTSL(symmetry=osm.Oh, direction=[1, 1, 1])
         with pytest.raises(ValueError, match="The Viewing direction"):
             ckey = opl.IPFColorKeyTSL(symmetry=osm.Oh, direction=m)
         with pytest.raises(ValueError, match="'direction' cannot be"):
             ckey = opl.IPFColorKeyTSL(symmetry=osm.Oh, direction=[1, 1, 1, 1, 1])
+        with pytest.raises(ValueError, match="'direction' only accepts"):
+            ckey = opl.IPFColorKeyTSL(symmetry=osm.Oh, direction=v)
 
     def test_orientation2color(self):
         # Color vertices of Oh IPF red, green and blue
