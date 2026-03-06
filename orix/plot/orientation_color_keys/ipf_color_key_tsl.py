@@ -20,11 +20,13 @@
 import matplotlib.figure as mfigure
 import numpy as np
 
-from orix.plot.direction_color_keys.direction_color_key_tsl import DirectionColorKeyTSL
+from orix.plot.direction_color_keys.direction_color_key_tsl import (
+    DirectionColorKeyTSL,
+)
 from orix.plot.orientation_color_keys.ipf_color_key import IPFColorKey
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.symmetry import Symmetry
-from orix.vector.vector3d import Vector3d
+from orix.vector import Miller, Vector3d
 
 
 class IPFColorKeyTSL(IPFColorKey):
@@ -46,9 +48,23 @@ class IPFColorKeyTSL(IPFColorKey):
             (Laue) symmetry of the crystal. If a non-Laue symmetry
             is given, the Laue symmetry of that symmetry will be used.
         direction : orix.vector.Vector3d, optional
-            Sample direction. If not given, sample Z direction (out of
-            plane) is used.
+            Viewing direction the defines the IPF coloring. for the TSL
+            colormap, this defines the fiber of orientations that will be
+            colored red. If no value is given, the z axis (ie, out of plane)
+            is used.
         """
+        if direction is not None:
+            if isinstance(direction, Miller):
+                raise ValueError(
+                    "The Viewing direction must a real space vector (Vector3d), not a cystal vector (Miller)"
+                )
+            if not isinstance(direction, Vector3d):
+                try:
+                    direction = Vector3d(np.asanyarray(direction))
+                except:
+                    raise ValueError("'direction' cannot be interpreted as a Vector3d")
+            if direction.size != 1:
+                raise ValueError("'direction' only accepts a single vector as an input")
         super().__init__(symmetry.laue, direction=direction)
 
     @property
