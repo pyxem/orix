@@ -12,8 +12,11 @@ Unreleased
 
 Added
 -----
-- The unit cells and atomic positions of `~orix.crystalmap.Phase` objects can now
-  be visualized using `Phase.plot_unit_cell.
+- The unit cells and atomic positions of ``Phase`` objects can now be visualized
+  using ``Phase.plot_unit_cell``.
+- ``Phase`` objects can now be created using the seven crystal class methods ``Phase.triclinic``,
+  ``Phase.monoclinic``, ``Phase.orthorhombic``, ``Phase.tetragonal``, ``Phase.trigonal``, 
+  ``Phase.hexagonal``, and ``Phase.cubic``
 
 Changed
 -------
