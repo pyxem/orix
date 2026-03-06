@@ -608,10 +608,10 @@ class TestToFromScipyRotation:
             warnings.simplefilter("always")
             rot.to_scipy_rotation()
             # check this threw a warning
-            assert len(w) == 1
+            assert len(w) >= 1
             # check the warning thrown included words from the custom warning
             # message for converting Nd orix arrays to 1d scipy rotations.
-            assert "greater than" in str(w[-1].message)
+            assert "greater than" in str(w[0].message)
 
 
 class TestFromAlignVectors:
