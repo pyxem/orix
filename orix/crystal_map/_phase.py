@@ -43,25 +43,22 @@ from orix.quaternion.symmetry import (
 from orix.vector.miller import Miller
 from orix.vector.vector3d import Vector3d
 
+# ======================== #
+# Repeatedly used docstrings
+# ======================== #
 
-class Phase:
-    """Symmetry and unit cell of a phase in a crystallographic map.
-
-    The phase can be crystallographic or non-crystallographic, with the
-    latter not having a crystal structure or symmetry set.
-
-    Parameters
-    ----------
-    name
+_name_docstring = """name
         Phase name. Overwrites the name in the *structure*. A phase can
         also be given, in which case a copy is returned and all other
         parameters are ignored.
-    space_group
+    """
+_sg_docstring = """space_group
         Space group describing the symmetry operations resulting from
         associating the point group with a Bravais lattice, according
         to the International Tables for Crystallography. If not given,
         it is set to None.
-    point_group
+    """
+_pg_docstring = """point_group
         Point group describing the symmetry operations of the phase's
         crystal structure, according to the International Tables for
         Crystallography. If neither this nor *space_group* is given, it
@@ -69,13 +66,57 @@ class Phase:
         from the space group. If both this and *space_group* is given,
         the space group must to be derived from adding translational
         symmetry to the point group.
+    """
+_color_docstring = """color
+        Phase color. If not given, it is set to the first default
+        Matplotlib color "tab:blue".
+    """
+_a_docstring = """a
+        The unit cell length a (arbitrary units).
+    """
+_b_docstring = """b
+        The unit cell length b (arbitrary units).
+    """
+_c_docstring = """c
+        The unit cell length c (arbitrary units).
+    """
+_alpha_docstring = """alpha
+        The angle (in degrees) between the b and c axes of the unit cell.
+    """
+_beta_docstring = """beta
+        The angle (in degrees) between the a and c axes of the unit cell.
+    """
+_gamma_docstring = """gamma
+        The angle (in degrees) between the a and b axes of the unit cell.
+    """
+
+
+class Phase:
+    f"""Symmetry and unit cell of a phase in a crystallographic map.
+
+    The phase can be crystallographic or non-crystallographic, with the
+    latter not having a crystal structure or symmetry set.
+
+    Parameters
+    ----------
+    {_name_docstring}
+    {_sg_docstring}
+    {_pg_docstring}
     structure
         Unit cell with atoms and a lattice. If not given, a default
         :class:`~diffpy.structure.structure.Structure` compatible with
         the symmetry is used.
-    color
-        Phase color. If not given, it is set to the first default
-        Matplotlib color "tab:blue".
+    {_color_docstring}
+
+    Notes
+    -----
+    The list of allowable point group names can be seen using the
+    following command:
+        ```
+        import orix.quaternion as oqu
+        [point_group.name for point_group in oqu.symmetry._groups]
+        ```
+
     """
 
     def __init__(
@@ -89,16 +130,15 @@ class Phase:
         if isinstance(name, Phase):
             return Phase.__init__(
                 self,
-                name.name,
-                name.space_group,
-                name.point_group,
-                name.structure.copy(),
-                name.color,
+                name=name.name,
+                space_group=name.space_group,
+                point_group=name.point_group,
+                structure=name.structure.copy(),
+                color=name.color,
             )
 
         self.space_group = space_group  # Needs to be set before point group
         self.point_group = point_group
-
         self.color = color if color is not None else "tab:blue"
 
         if structure is None:
@@ -113,6 +153,9 @@ class Phase:
         if name is not None:
             self.name = name
 
+    # ------------------------------ #
+    #  Property Getters and Setters  #
+    # ------------------------------ #
     @property
     def structure(self) -> Structure:
         r"""Return or set the crystal structure containing a lattice
@@ -138,7 +181,9 @@ class Phase:
 
         # Ensure correct alignment
         old_matrix = value.lattice.base
-        new_matrix = new_structure_matrix_from_alignment(old_matrix, x="a", z="c*")
+        new_matrix = new_structure_matrix_from_alignment(
+            old_matrix, x="a", z="c*"
+        )
         new_value = value.copy()
 
         # Ensure atom positions are expressed in the new basis
@@ -325,6 +370,308 @@ class Phase:
             f"proper point group: {ppg_name}. color: {self.color}>"
         )
 
+    # ------------------------ #
+    #  Class creation Methods  #
+    # ------------------------ #
+    @classmethod
+    def triclinic(
+        cls,
+        name: str | Phase | None = None,
+        space_group: int | SpaceGroup | None = None,
+        point_group: int | str | Symmetry | None = None,
+        color: str | None = None,
+        a: float = 1.0,
+        b: float = 1.1,
+        c: float = 1.2,
+        alpha: float = 80.0,
+        beta: float = 85.0,
+        gamma: float = 88.0,
+    ) -> None:
+        f"""Create a Phase with triclinic symmetry.
+        
+        Parameters
+        ----------
+        {_name_docstring}
+        {_sg_docstring}
+        {_pg_docstring}
+        {_color_docstring}
+        {_color_docstring}
+        {_a_docstring}
+        {_b_docstring}
+        {_c_docstring}
+        {_alpha_docstring}
+        {_beta_docstring}
+        {_gamma_docstring}
+        
+        Returns
+        -------
+        phase
+            a Phase object with triclinic symmetry
+        """
+        phase = cls.Phase(
+            name=name,
+            space_group=space_group,
+            point_group=point_group,
+            color=color,
+        )
+        if phase.point_group.system != "triclinic":
+            raise ValueError(
+                f"{phase.point_group.name} is not a triclinic symmetry."
+            )
+        lat = Lattice(a, b, c, alpha, beta, gamma)
+        phase.structure = Structure(lattice=lat)
+        return phase
+
+    @classmethod
+    def monoclinic(
+        cls,
+        name: str | Phase | None = None,
+        space_group: int | SpaceGroup | None = None,
+        point_group: int | str | Symmetry | None = None,
+        color: str | None = None,
+        a: float = 1.0,
+        b: float = 1.1,
+        c: float = 1.2,
+        beta: float = 85.0,
+    ) -> None:
+        f"""Create a Phase with monoclinic symmetry.
+        
+        Parameters
+        ----------
+        {_name_docstring}
+        {_sg_docstring}
+        {_pg_docstring}
+        {_color_docstring}
+        {_color_docstring}
+        {_a_docstring}
+        {_b_docstring}
+        {_c_docstring}
+        {_beta_docstring}
+        
+        Returns
+        -------
+        phase
+            a Phase object with monoclinic symmetry
+        """
+        phase = cls.Phase(
+            name=name,
+            space_group=space_group,
+            point_group=point_group,
+            color=color,
+        )
+        if phase.point_group.system != "monoclinic":
+            raise ValueError(
+                f"{phase.point_group.name} is not a monoclinic symmetry."
+            )
+        lat = Lattice(a, b, c, 90.0, beta, 90.0)
+        phase.structure = Structure(lattice=lat)
+        return phase
+
+    @classmethod
+    def orthorhombic(
+        cls,
+        name: str | Phase | None = None,
+        space_group: int | SpaceGroup | None = None,
+        point_group: int | str | Symmetry | None = None,
+        color: str | None = None,
+        a: float = 1.0,
+        b: float = 1.1,
+        c: float = 1.2,
+    ) -> None:
+        f"""Create a Phase with orthorhombic symmetry.
+        
+        Parameters
+        ----------
+        {_name_docstring}
+        {_sg_docstring}
+        {_pg_docstring}
+        {_color_docstring}
+        {_color_docstring}
+        {_a_docstring}
+        {_b_docstring}
+        {_c_docstring}
+        
+        Returns
+        -------
+        phase
+            a Phase object with orthorhombic symmetry
+        """
+        phase = cls.Phase(
+            name=name,
+            space_group=space_group,
+            point_group=point_group,
+            color=color,
+        )
+        if phase.point_group.system != "orthorhombic":
+            raise ValueError(
+                f"{phase.point_group.name} is not an orthorhombic symmetry."
+            )
+        lat = Lattice(a, b, c, 90.0, 90.0, 90.0)
+        phase.structure = Structure(lattice=lat)
+        return phase
+
+    @classmethod
+    def tetragonal(
+        cls,
+        name: str | Phase | None = None,
+        space_group: int | SpaceGroup | None = None,
+        point_group: int | str | Symmetry | None = None,
+        color: str | None = None,
+        a: float = 1.0,
+        c: float = 1.2,
+    ) -> None:
+        f"""Create a Phase with tetragonal symmetry.
+        
+        Parameters
+        ----------
+        {_name_docstring}
+        {_sg_docstring}
+        {_pg_docstring}
+        {_color_docstring}
+        {_color_docstring}
+        {_a_docstring}
+        {_c_docstring}
+        
+        Returns
+        -------
+        phase
+            a Phase object with tetragonal symmetry
+        """
+        phase = cls.Phase(
+            name=name,
+            space_group=space_group,
+            point_group=point_group,
+            color=color,
+        )
+        if phase.point_group.system != "tetragonal":
+            raise ValueError(
+                f"{phase.point_group.name} is not a tetragonal symmetry."
+            )
+        lat = Lattice(a, a, c, 90.0, 90.0, 90.0)
+        phase.structure = Structure(lattice=lat)
+        return phase
+
+    @classmethod
+    def trigonal(
+        cls,
+        name: str | Phase | None = None,
+        space_group: int | SpaceGroup | None = None,
+        point_group: int | str | Symmetry | None = None,
+        color: str | None = None,
+        a: float = 1.0,
+        alpha: float = 80.0,
+    ) -> None:
+        f"""Create a Phase with trigonal (rhombohedral) symmetry.
+        
+        Parameters
+        ----------
+        {_name_docstring}
+        {_sg_docstring}
+        {_pg_docstring}
+        {_color_docstring}
+        {_color_docstring}
+        {_a_docstring}
+        {_alpha_docstring}
+        
+        Returns
+        -------
+        phase
+            a Phase object with trigonal (rhombohedral) symmetry
+        """
+        phase = cls.Phase(
+            name=name,
+            space_group=space_group,
+            point_group=point_group,
+            color=color,
+        )
+        if phase.point_group.system != "trigonal":
+            raise ValueError(
+                f"{phase.point_group.name} is not a trigonal (rhombohedral) symmetry."
+            )
+        lat = Lattice(a, a, a, alpha, alpha, alpha)
+        phase.structure = Structure(lattice=lat)
+        return phase
+
+    @classmethod
+    def hexagonal(
+        cls,
+        name: str | Phase | None = None,
+        space_group: int | SpaceGroup | None = None,
+        point_group: int | str | Symmetry | None = None,
+        color: str | None = None,
+        a: float = 1.0,
+        c: float = 1.2,
+    ) -> None:
+        f"""Create a Phase with triclinic symmetry.
+        
+        Parameters
+        ----------
+        {_name_docstring}
+        {_sg_docstring}
+        {_pg_docstring}
+        {_color_docstring}
+        {_color_docstring}
+        {_a_docstring}
+        {_c_docstring}
+        
+        Returns
+        -------
+        phase
+            a Phase object with triclinic symmetry
+        """
+        phase = cls.Phase(
+            name=name,
+            space_group=space_group,
+            point_group=point_group,
+            color=color,
+        )
+        if phase.point_group.system != "hexagonal":
+            raise ValueError(
+                f"{phase.point_group.name} is not a hexagonal symmetry."
+            )
+        lat = Lattice(a, a, c, 90, 90, 120)
+        phase.structure = Structure(lattice=lat)
+        return phase
+
+    @classmethod
+    def cubic(
+        cls,
+        name: str | Phase | None = None,
+        space_group: int | SpaceGroup | None = None,
+        point_group: int | str | Symmetry | None = None,
+        color: str | None = None,
+        a: float = 1.0,
+    ) -> None:
+        f"""Create a Phase with cubic symmetry.
+        
+        Parameters
+        ----------
+        {_name_docstring}
+        {_sg_docstring}
+        {_pg_docstring}
+        {_color_docstring}
+        {_color_docstring}
+        {_a_docstring}
+        
+        Returns
+        -------
+        phase
+            a Phase object with cubic symmetry
+        """
+        phase = cls.Phase(
+            name=name,
+            space_group=space_group,
+            point_group=point_group,
+            color=color,
+        )
+        if phase.point_group.system != "triclinic":
+            raise ValueError(
+                f"{phase.point_group.name} is not a triclinic symmetry."
+            )
+        lat = Lattice(a, a, a, 90, 90, 90)
+        phase.structure = Structure(lattice=lat)
+        return phase
+
     @classmethod
     def from_cif(cls, filename: str | Path) -> Phase:
         r"""Return a new phase from a Crystallographic Information File
@@ -359,6 +706,10 @@ class Phase:
             space_group = None
             warnings.warn(f"Could not read space group from CIF file {path!r}")
         return cls(name, space_group, structure=structure)
+
+    # ----------------- #
+    #  Class functions  #
+    # ----------------- #
 
     def deepcopy(self) -> Phase:
         """Return a deep copy using :py:func:`~copy.deepcopy`
@@ -425,6 +776,65 @@ class Phase:
 
         return expanded_phase
 
+    def plot_unit_cell(
+        self,
+        return_figure: bool = False,
+        show_xyz: bool = False,
+        show_atoms: bool = True,
+        show_uvw_labels=False,
+        figsize: None | np.array = None,
+    ):
+        """Create a plot of the unit cell for the phase"""
+        # define the vertices and faces of the paralellipid unit cell.
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+        unit_v = [[x, y, z] for x in [0, 1] for y in [0, 1] for z in [0, 1]]
+        v = np.array(unit_v).dot(self._diffpy_lattice.T)
+        f = [
+            [0, 1, 3, 2],
+            [0, 1, 5, 4],
+            [5, 4, 6, 7],
+            [6, 7, 3, 2],
+            [1, 3, 7, 5],
+            [0, 2, 6, 4],
+        ]
+
+        # set up the plot
+        if figsize is None:
+            fig = plt.figure()
+        else:
+            fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(projection="3d")
+        ax.set_aspect("equal")
+        ax.set_proj_type = "ortho"
+        fc = self.color_rgb + (0.1,)
+        ax.add_collection3d(
+            Poly3DCollection(v[f], facecolors=fc, edgecolors=[0, 0, 0])
+        )
+        if show_xyz:
+            ax.plot([0, 1], [0, 0], [0, 0], "grey")
+            ax.plot([0, 0], [0, 1], [0, 0], "grey")
+            ax.plot([0, 0], [0, 0], [0, 1], "grey")
+            ax.text(1, 0, 0, "X")
+            ax.text(0, 1, 0, "Y")
+            ax.text(0, 0, 1, "Z")
+        if show_uvw_labels:
+            ax.text(*v[4] + 0.01, "[100]")
+            ax.text(*v[2] + 0.01, "[010]")
+            ax.text(*v[1] + 0.01, "[001]")
+        if show_atoms and len(self.structure) > 0:
+            for i in range(len(self.structure)):
+                xyz = self.structure[i].xyz.dot(self._diffpy_lattice.T)
+                elem = self.structure[i].element.title()  # titlecase
+                rgb = _jmol_colors.get(elem, [0, 0, 0])
+                ax.scatter(
+                    *xyz, facecolor=np.array(rgb) / 255, s=300, edgecolor="k"
+                )
+        if return_figure:
+            return fig
+        return
+
 
 def new_structure_matrix_from_alignment(
     old_matrix: np.ndarray,
@@ -486,10 +896,130 @@ def new_structure_matrix_from_alignment(
 
 
 def default_lattice(system: VALID_SYSTEMS) -> Lattice:
-    if system in ["triclinic", "monoclinic", "orthorhombic", "tetragonal", "cubic"]:
+    if system in [
+        "triclinic",
+        "monoclinic",
+        "orthorhombic",
+        "tetragonal",
+        "cubic",
+    ]:
         lat = Lattice()
     elif system in ["trigonal", "hexagonal"]:
         lat = Lattice(1, 1, 1, 90, 90, 120)
     else:
         raise ValueError(f"Unknown crystal system {system!r}")
     return lat
+
+
+# The JMOL color dictionary, taken from http://jmol.sourceforge.net/jscolors
+_jmol_colors = {
+    "H": [255, 255, 255],
+    "He": [217, 255, 255],
+    "Li": [204, 128, 255],
+    "Be": [194, 255, 0],
+    "B": [255, 181, 181],
+    "C": [144, 144, 144],
+    "N": [48, 80, 248],
+    "O": [255, 13, 13],
+    "F": [144, 224, 80],
+    "Ne": [179, 227, 245],
+    "Na": [171, 92, 242],
+    "Mg": [138, 255, 0],
+    "Al": [191, 166, 166],
+    "Si": [240, 200, 160],
+    "P": [255, 128, 0],
+    "S": [255, 255, 48],
+    "Cl": [31, 240, 31],
+    "Ar": [128, 209, 227],
+    "K": [143, 64, 212],
+    "Ca": [61, 255, 0],
+    "Sc": [230, 230, 230],
+    "Ti": [191, 194, 199],
+    "V": [166, 166, 171],
+    "Cr": [138, 153, 199],
+    "Mn": [156, 122, 199],
+    "Fe": [224, 102, 51],
+    "Co": [240, 144, 160],
+    "Ni": [80, 208, 80],
+    "Cu": [200, 128, 51],
+    "Zn": [125, 128, 176],
+    "Ga": [194, 143, 143],
+    "Ge": [102, 143, 143],
+    "As": [189, 128, 227],
+    "Se": [255, 161, 0],
+    "Br": [166, 41, 41],
+    "Kr": [92, 184, 209],
+    "Rb": [112, 46, 176],
+    "Sr": [0, 255, 0],
+    "Y": [148, 255, 255],
+    "Zr": [148, 224, 224],
+    "Nb": [115, 194, 201],
+    "Mo": [84, 181, 181],
+    "Tc": [59, 158, 158],
+    "Ru": [36, 143, 143],
+    "Rh": [10, 125, 140],
+    "Pd": [0, 105, 133],
+    "Ag": [192, 192, 192],
+    "Cd": [255, 217, 143],
+    "In": [166, 117, 115],
+    "Sn": [102, 128, 128],
+    "Sb": [158, 99, 181],
+    "Te": [212, 122, 0],
+    "I": [148, 0, 148],
+    "Xe": [66, 158, 176],
+    "Cs": [87, 23, 143],
+    "Ba": [0, 201, 0],
+    "La": [112, 212, 255],
+    "Ce": [255, 255, 199],
+    "Pr": [217, 255, 199],
+    "Nd": [199, 255, 199],
+    "Pm": [163, 255, 199],
+    "Sm": [143, 255, 199],
+    "Eu": [97, 255, 199],
+    "Gd": [69, 255, 199],
+    "Tb": [48, 255, 199],
+    "Dy": [31, 255, 199],
+    "Ho": [0, 255, 156],
+    "Er": [0, 230, 117],
+    "Tm": [0, 212, 82],
+    "Yb": [0, 191, 56],
+    "Lu": [0, 171, 36],
+    "Hf": [77, 194, 255],
+    "Ta": [77, 166, 255],
+    "W": [33, 148, 214],
+    "Re": [38, 125, 171],
+    "Os": [38, 102, 150],
+    "Ir": [23, 84, 135],
+    "Pt": [208, 208, 224],
+    "Au": [255, 209, 35],
+    "Hg": [184, 184, 208],
+    "Tl": [166, 84, 77],
+    "Pb": [87, 89, 97],
+    "Bi": [158, 79, 181],
+    "Po": [171, 92, 0],
+    "At": [117, 79, 69],
+    "Rn": [66, 130, 150],
+    "Fr": [66, 0, 102],
+    "Ra": [0, 125, 0],
+    "Ac": [112, 171, 250],
+    "Th": [0, 186, 255],
+    "Pa": [0, 161, 255],
+    "U": [0, 143, 255],
+    "Np": [0, 128, 255],
+    "Pu": [0, 107, 255],
+    "Am": [84, 92, 242],
+    "Cm": [120, 92, 227],
+    "Bk": [138, 79, 227],
+    "Cf": [161, 54, 212],
+    "Es": [179, 31, 212],
+    "Fm": [179, 31, 186],
+    "Md": [179, 13, 166],
+    "No": [189, 13, 135],
+    "Lr": [199, 0, 102],
+    "Rf": [204, 0, 89],
+    "Db": [209, 0, 79],
+    "Sg": [217, 0, 69],
+    "Bh": [224, 0, 56],
+    "Hs": [230, 0, 46],
+    "Mt": [235, 0, 38],
+}
