@@ -29,7 +29,7 @@ from orix.plot.direction_color_keys._util import (
 from orix.projections import StereographicProjection
 from orix.quaternion import Symmetry
 from orix.sampling import sample_S2
-from orix.vector import Vector3d, Miller
+from orix.vector import Miller, Vector3d
 
 
 class DirectionColorKeyTSL(DirectionColorKey):
@@ -79,17 +79,14 @@ class DirectionColorKeyTSL(DirectionColorKey):
 
         laue_group = self.symmetry
         h = direction.in_fundamental_sector(laue_group)
-        azimuth, polar = polar_coordinates_in_sector(
-            laue_group.fundamental_sector, h
-        )
+        azimuth, polar = polar_coordinates_in_sector(laue_group.fundamental_sector, h)
         polar = 0.5 + polar / 2
         return rgb_from_polar_coordinates(azimuth, polar)
 
     def _create_rgba_grid(
         self, alpha: float = 1.0, return_extent: bool = False
     ) -> (
-        np.ndarray
-        | tuple[np.ndarray, tuple[tuple[float, float], tuple[float, float]]]
+        np.ndarray | tuple[np.ndarray, tuple[tuple[float, float], tuple[float, float]]]
     ):
         """Return the 2D colormap used to represent crystal directions.
 

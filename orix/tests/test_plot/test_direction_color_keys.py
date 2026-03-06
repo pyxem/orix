@@ -20,12 +20,11 @@
 import numpy as np
 import pytest
 
+import orix.crystal_map as ocm
 from orix.plot import IPFColorKeyTSL
 from orix.plot.direction_color_keys._util import polar_coordinates_in_sector
-
-import orix.vector as ove
-import orix.crystal_map as ocm
 import orix.quaternion.symmetry as osm
+import orix.vector as ove
 
 
 class TestDirectionColorKeyTSL:
