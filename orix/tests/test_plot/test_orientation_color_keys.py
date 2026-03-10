@@ -19,22 +19,24 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
-from orix.plot import EulerColorKey, IPFColorKeyTSL
-from orix.quaternion import Orientation, symmetry
-from orix.vector import Vector3d
+import orix.plot as opl
+import orix.quaternion as oqu
+import orix.vector as ove
 
 
 class TestIPFColorKeyTSL:
+
     def test_orientation2color(self):
         # Color vertices of Oh IPF red, green and blue
-        pg_o = symmetry.O  # 432
+        pg_o = oqu.symmetry.O  # 432
         pg_oh = pg_o.laue  # m-3m
-        ori = Orientation.from_euler(
+        ori = oqu.Orientation.from_euler(
             np.radians(((0, 0, 0), (0, 45, 0), (-45, 54.7356, 45))),
             symmetry=pg_oh,
         )
-        ckey_oh = IPFColorKeyTSL(pg_o)
+        ckey_oh = opl.IPFColorKeyTSL(pg_o, direction=ove.Vector3d.zvector())
         assert np.allclose(ckey_oh.symmetry.data, pg_oh.data)
         assert np.allclose(ckey_oh.direction.data, (0, 0, 1))
         assert repr(ckey_oh) == "IPFColorKeyTSL, symmetry: m-3m, direction: [0 0 1]"
@@ -43,15 +45,22 @@ class TestIPFColorKeyTSL:
         assert ax_o._symmetry.name == pg_oh.name
         rgb_oh = ckey_oh.orientation2color(ori)
         assert np.allclose(rgb_oh, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=0.1)
+        # using string input gives same result
+        ckey_z = opl.IPFColorKeyTSL(pg_o, direction="z")
+        rgb_z = ckey_z.orientation2color(ori)
+        assert np.allclose(rgb_z, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=0.1)
+        # Using nonsense direction raises informative error
+        with pytest.raises(IOError, match="'direction' must be"):
+            _ = opl.IPFColorKeyTSL(pg_o, direction="bad directions")
 
         # Color [001] and "diagonals" of 2/m IPF red, green and blue
-        pg_c2 = symmetry.C2  # 2
+        pg_c2 = oqu.symmetry.C2  # 2
         pg_c2h = pg_c2.laue  # 2/m
-        ori2 = Orientation.from_euler(
+        ori2 = oqu.Orientation.from_euler(
             np.radians(((-90, -90, 0), (0, 90, -55), (0, 90, 55))),
             symmetry=pg_c2h,
         )
-        ckey_c2h = IPFColorKeyTSL(pg_c2, Vector3d.xvector())
+        ckey_c2h = opl.IPFColorKeyTSL(pg_c2, "X")
         assert np.allclose(ckey_c2h.symmetry.data, pg_c2h.data)
         assert np.allclose(ckey_c2h.direction.data, (1, 0, 0))
         assert repr(ckey_c2h) == "IPFColorKeyTSL, symmetry: 2/m, direction: [1 0 0]"
@@ -59,22 +68,23 @@ class TestIPFColorKeyTSL:
         assert np.allclose(rgb_c2h, ((1, 0, 0), (0, 1, 0.23), (0, 0.23, 1)), atol=0.2)
 
         # Color vertices of D3d IPF red, green and blue
-        pg_d3d = symmetry.D3d  # -3m
-        ori3 = Orientation.from_euler(
+        pg_d3d = oqu.symmetry.D3d  # -3m
+        ori3 = oqu.Orientation.from_euler(
             np.radians(((0, 0, 0), (0, -90, 60), (0, 90, 60))),
             symmetry=pg_d3d,
         )
-        ckey_d3d = IPFColorKeyTSL(pg_d3d)
+        ckey_d3d = opl.IPFColorKeyTSL(pg_d3d)
         rgb_d3d = ckey_d3d.orientation2color(ori3)
         assert np.allclose(rgb_d3d, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=1e-2)
 
     def test_triclinic(self):
         # Complete circle, three vectors on equator 120 degrees apart
-        pg_c1 = symmetry.C1
-        ori = Orientation.from_euler(
-            np.radians(((0, 90, 90), (0, 90, -30), (0, -90, 30))), symmetry=pg_c1
+        pg_c1 = oqu.symmetry.C1
+        ori = oqu.Orientation.from_euler(
+            np.radians(((0, 90, 90), (0, 90, -30), (0, -90, 30))),
+            symmetry=pg_c1,
         )
-        ckey_c1 = IPFColorKeyTSL(pg_c1)
+        ckey_c1 = opl.IPFColorKeyTSL(pg_c1)
         rgb = ckey_c1.orientation2color(ori)
         assert np.allclose(rgb, ((1, 0, 0), (0, 1, 0), (0, 0, 1)))
 
@@ -82,7 +92,7 @@ class TestIPFColorKeyTSL:
 class TestEulerColorKey:
     def test_orientation2color(self):
         # (2 pi, pi, 2 pi) and some random orientations
-        ori = Orientation(
+        ori = oqu.Orientation(
             (
                 (0, -1, 0, 0),
                 (0.4094, 0.7317, -0.4631, -0.2875),
@@ -92,7 +102,7 @@ class TestEulerColorKey:
             )
         )
 
-        ckey_1 = EulerColorKey(symmetry.C1)
+        ckey_1 = opl.EulerColorKey(oqu.symmetry.C1)
         assert repr(ckey_1) == (
             "EulerColorKey, symmetry 1\n" "Max (phi1, Phi, phi2): (360, 180, 360)"
         )
@@ -109,7 +119,7 @@ class TestEulerColorKey:
             atol=1e-3,
         )
 
-        ckey_432 = EulerColorKey(symmetry.O)
+        ckey_432 = opl.EulerColorKey(oqu.symmetry.O)
         assert repr(ckey_432) == (
             "EulerColorKey, symmetry 432\n" "Max (phi1, Phi, phi2): (360, 90, 90)"
         )
@@ -127,7 +137,7 @@ class TestEulerColorKey:
         )
 
     def test_plot(self):
-        ckey_432 = EulerColorKey(symmetry.O)
+        ckey_432 = opl.EulerColorKey(oqu.symmetry.O)
         fig = ckey_432.plot(return_figure=True)
         assert isinstance(fig, plt.Figure)
         assert len(fig.axes) == 3
