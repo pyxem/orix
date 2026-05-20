@@ -136,9 +136,8 @@ class DirectionColorKeyTSL(DirectionColorKey):
         rgba_grid = rgba_grid[::-1]
 
         if return_extent:
-            return rgba_grid, ((x_min, x_max), (y_min, y_max))
-        else:
-            return rgba_grid
+            rgba_grid = [rgba_grid, ((x_min, x_max), (y_min, y_max))]
+        return rgba_grid
 
     def plot(self, return_figure: bool = False) -> Figure | None:
         """Plot the inverse pole figure color key.
@@ -153,7 +152,9 @@ class DirectionColorKeyTSL(DirectionColorKey):
         figure
             Color key figure, returned if *return_figure* is True.
         """
-        from orix.plot.inverse_pole_figure_plot import _setup_inverse_pole_figure_plot
+        from orix.plot.inverse_pole_figure_plot import (
+            _setup_inverse_pole_figure_plot,
+        )
 
         fig, axes = _setup_inverse_pole_figure_plot(self.symmetry)
         ax = axes[0]
