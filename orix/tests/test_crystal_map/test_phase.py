@@ -17,10 +17,12 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import diffpy.structure as dst
 from diffpy.structure import Atom, Lattice, Structure, loadStructure
 import numpy as np
 import pytest
 
+import orix.crystal_map as ocm
 from orix.crystal_map import Phase
 from orix.crystal_map._phase import default_lattice, new_structure_matrix_from_alignment
 from orix.quaternion.symmetry import O, Symmetry
@@ -563,7 +565,7 @@ class TestPhase:
         # Check atom positions in ORIGINAL lattice alignment
         # Doing the check in orix's alignment makes independently computing expected sites difficult
         s = exp.structure.copy()
-        s.placeInLattice(Lattice(base=phase._diffpy_lattice))
+        s.placeInLattice(dst.Lattice(base=phase._diffpy_lattice))
         # Use set to avoid having to ensure the order is the same
         assert set(tuple(xyz.round(8).tolist()) for xyz in s.xyz) == set(
             expected_atom_positions
@@ -574,7 +576,7 @@ class TestPhase:
         assert np.array_equal(base, exp2.structure.lattice.base)
         assert len(exp2.structure) == len(expected_atom_positions)
         s = exp2.structure.copy()
-        s.placeInLattice(Lattice(base=phase._diffpy_lattice))
+        s.placeInLattice(dst.Lattice(base=phase._diffpy_lattice))
         assert set(tuple(xyz.round(8).tolist()) for xyz in s.xyz) == set(
             expected_atom_positions
         )
@@ -954,7 +956,7 @@ class TestPhase:
         filepath = tmp_path / "tmp.cif"
         with open(filepath, "w") as file:
             file.write(cif_file_content)
-        phase = Phase.from_cif(filepath)
+        phase = ocm.Phase.from_cif(filepath)
         # Asymmetric unit is automatically expanded when read from cif
         assert len(phase.structure) == expected_atom_count
         # Expand just in case
@@ -980,3 +982,39 @@ class TestPhase:
     def test_default_lattice_raises(self):
         with pytest.raises(ValueError, match="Unknown crystal system 'rhombohedral'"):
             default_lattice("rhombohedral")
+
+    def test_plot_unit_cell(self):
+        import matplotlib.pyplot as plt
+
+        Al2O3_atoms = [
+            dst.Atom("Al", [1 / 3, 2 / 3, 0.815]),
+            dst.Atom("O", [0.361, 1 / 3, 0.583]),
+        ]
+        Al2O3_lattice = dst.Lattice(0.481, 0.481, 1.391, 90, 90, 120)
+        Al2O3_structure = dst.Structure(atoms=Al2O3_atoms, lattice=Al2O3_lattice)
+        Al2O3_phase = ocm.Phase(
+            name="Alumina",
+            space_group=167,
+            structure=Al2O3_structure,
+            color="red",
+        ).expand_asymmetric_unit()
+        Fe_atoms = [
+            dst.Atom("Fe", [0, 0, 0]),
+            dst.Atom("Fe", [1, 0, 0]),
+            dst.Atom("Fe", [0, 1, 0]),
+            dst.Atom("Fe", [0, 0, 1]),
+            dst.Atom("Fe", [0, 1, 1]),
+            dst.Atom("Fe", [1, 0, 1]),
+            dst.Atom("Fe", [1, 1, 0]),
+            dst.Atom("Fe", [1, 1, 1]),
+            dst.Atom("Fe", [1 / 2, 1 / 2, 1 / 2]),
+        ]
+        Fe_lattice = dst.Lattice(1, 1, 1, 90, 90, 90)
+        Fe_structure = dst.Structure(atoms=Fe_atoms, lattice=Fe_lattice)
+        Fe_phase = ocm.Phase(point_group="m3m", structure=Fe_structure)
+        for p in [Al2O3_phase, Fe_phase]:
+            fig1 = p.plot_unit_cell(figsize=[5, 4], return_figure=True)
+            fig2 = p.plot_unit_cell(figsize=np.array([5.1, 4.3]), return_figure=True)
+            p.plot_unit_cell(show_xyz=True, show_atoms=True, show_uvw_labels=True)
+            p.plot_unit_cell(show_xyz=False, show_atoms=False, show_uvw_labels=False)
+            plt.close("all")

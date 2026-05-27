@@ -19,9 +19,13 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
+import orix.plot as opl
 from orix.plot import EulerColorKey, IPFColorKeyTSL
+import orix.quaternion as oqu
 from orix.quaternion import Orientation, symmetry
+import orix.vector as ove
 from orix.vector import Vector3d
 
 
@@ -34,7 +38,7 @@ class TestIPFColorKeyTSL:
             np.radians(((0, 0, 0), (0, 45, 0), (-45, 54.7356, 45))),
             symmetry=pg_oh,
         )
-        ckey_oh = IPFColorKeyTSL(pg_o)
+        ckey_oh = opl.IPFColorKeyTSL(pg_o, direction=ove.Vector3d.zvector())
         assert np.allclose(ckey_oh.symmetry.data, pg_oh.data)
         assert np.allclose(ckey_oh.direction.data, (0, 0, 1))
         assert repr(ckey_oh) == "IPFColorKeyTSL, symmetry: m-3m, direction: [0 0 1]"
@@ -43,6 +47,13 @@ class TestIPFColorKeyTSL:
         assert ax_o._symmetry.name == pg_oh.name
         rgb_oh = ckey_oh.orientation2color(ori)
         assert np.allclose(rgb_oh, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=0.1)
+        # using string input gives same result
+        ckey_z = opl.IPFColorKeyTSL(pg_o, direction="z")
+        rgb_z = ckey_z.orientation2color(ori)
+        assert np.allclose(rgb_z, ((1, 0, 0), (0, 1, 0), (0, 0, 1)), atol=0.1)
+        # Using nonsense direction raises informative error
+        with pytest.raises(IOError, match="'direction' must be"):
+            _ = opl.IPFColorKeyTSL(pg_o, direction="bad directions")
 
         # Color [001] and "diagonals" of 2/m IPF red, green and blue
         pg_c2 = symmetry.C2  # 2
@@ -51,7 +62,7 @@ class TestIPFColorKeyTSL:
             np.radians(((-90, -90, 0), (0, 90, -55), (0, 90, 55))),
             symmetry=pg_c2h,
         )
-        ckey_c2h = IPFColorKeyTSL(pg_c2, Vector3d.xvector())
+        ckey_c2h = opl.IPFColorKeyTSL(pg_c2, "X")
         assert np.allclose(ckey_c2h.symmetry.data, pg_c2h.data)
         assert np.allclose(ckey_c2h.direction.data, (1, 0, 0))
         assert repr(ckey_c2h) == "IPFColorKeyTSL, symmetry: 2/m, direction: [1 0 0]"

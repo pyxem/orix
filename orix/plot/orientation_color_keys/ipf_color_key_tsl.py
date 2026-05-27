@@ -42,13 +42,24 @@ class IPFColorKeyTSL(IPFColorKey):
 
         Parameters
         ----------
-        symmetry : orix.quaternion.Symmetry
+        symmetry
             (Laue) symmetry of the crystal. If a non-Laue symmetry
             is given, the Laue symmetry of that symmetry will be used.
-        direction : orix.vector.Vector3d, optional
+        direction
             Sample direction. If not given, sample Z direction (out of
             plane) is used.
         """
+        if type(direction) is str:
+            direction = {
+                "x": Vector3d.xvector(),
+                "y": Vector3d.yvector(),
+                "z": Vector3d.zvector(),
+            }.get(direction.lower(), "fail")
+            if type(direction) is str:
+                raise IOError(
+                    "'direction' must be 'x', 'y','z', or a Vector3D instance"
+                )
+
         super().__init__(symmetry.laue, direction=direction)
 
     @property
