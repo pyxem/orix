@@ -166,19 +166,19 @@ class CrystalMapPlot(Axes):
             _ = self.add_scalebar(crystal_map, **scalebar_properties)
 
         self._data_shape = crystal_map._original_shape
-        
+
         # slice out 2D layer from 3D volume
         # If no layer/axis specified, default to zero
         if layer is None:
             layer = 0
-        if axis is not None: #and crystal_map.ndim > 2:
+        if axis is not None:  # and crystal_map.ndim > 2:
             crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
             self._data_shape = crystal_map._original_shape
         elif axis is None and crystal_map.ndim > 2:
-            axis=0
+            axis = 0
             crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
             self._data_shape = crystal_map._original_shape
-        
+
         patches = None
         if value is None:  # Phase map
             # Color each map pixel with corresponding phase color RGB tuple
