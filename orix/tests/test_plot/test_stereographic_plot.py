@@ -37,7 +37,7 @@ from orix.plot.stereographic_plot import (
 )
 # isort: on
 # fmt: on
-from orix.quaternion import symmetry
+from orix.quaternion import Orientation, symmetry
 from orix.vector import Vector3d
 
 plt.rcParams["axes.grid"] = True
@@ -45,7 +45,7 @@ PROJ_NAME = "stereographic"
 
 
 class TestStereographicPlot:
-    def test_scatter(self):
+    def test_vector_scatter(self):
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
         assert ax.name == PROJ_NAME
         assert ax._polar_resolution == 10
@@ -60,6 +60,34 @@ class TestStereographicPlot:
 
         with pytest.raises(ValueError, match="Accepts only one "):
             ax.scatter(v[0].azimuth)
+
+        plt.close("all")
+
+    def test_ori_scatter(self):
+        oris = Orientation.from_axes_angles(
+            [1, 2, 3], [5, 15, 70], degrees=True, symmetry=symmetry.D6
+        )
+
+        fig0 = oris.scatter(return_figure=True)
+
+        fig1 = plt.figure()
+        fig2 = plt.figure()
+        fig3 = plt.figure()
+
+        oris.scatter(figure=fig1, projection="ipf")
+        oris.scatter(figure=fig2, position=(1, 1, 1), projection="ipf")
+        oris.scatter(figure=fig3, position=(2, 2, 1), projection="rodrigues")
+        oris.scatter(figure=fig3, position=(2, 2, 2), projection="ipf")
+
+        # assert all four methods created subplots on the figures in the
+        # expected locations.
+        for full_fig in [fig0, fig1, fig2]:
+            corners = full_fig.axes[0].get_position().corners()
+            assert corners.max(axis=0).min() > 0.75
+            assert corners.min(axis=0).max() < 0.25
+
+        corners = fig3.axes[1].get_position().corners()
+        assert corners.min() > 0.4999
 
         plt.close("all")
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -73,6 +73,7 @@ intersphinx_mapping = {
     "defdap": ("https://defdap.readthedocs.io/en/latest", None),
     "diffpy.structure": ("https://www.diffpy.org/diffpy.structure", None),
     "diffsims": ("https://diffsims.readthedocs.io/en/latest", None),
+    "elasticipy": ("https://elasticipy.readthedocs.io/en/latest", None),
     "h5py": ("https://docs.h5py.org/en/stable", None),
     "kikuchipy": ("https://kikuchipy.org/en/latest", None),
     "matplotlib": ("https://matplotlib.org/stable", None),
@@ -83,9 +84,10 @@ intersphinx_mapping = {
     "numpydoc": ("https://numpydoc.readthedocs.io/en/latest", None),
     "pooch": ("https://www.fatiando.org/pooch/latest", None),
     "pytest": ("https://docs.pytest.org/en/stable", None),
-    "pytest-xdist": ("https://pytest-xdist.readthedocs.io/en/stable/", None),
+    "pytest-xdist": ("https://pytest-xdist.readthedocs.io/en/stable", None),
     "python": ("https://docs.python.org/3", None),
-    "readthedocs": ("https://docs.readthedocs.com/platform/stable/", None),
+    "pyxem": ("https://www.pyxem.org/en/latest", None),
+    "readthedocs": ("https://docs.readthedocs.com/platform/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master", None),
@@ -176,12 +178,6 @@ nbsphinx_prolog = (
         }
       </script>
     </div>
-
-.. raw:: latex
-
-    \nbsphinxstartnotebook{\scriptsize\noindent\strut
-    \textcolor{gray}{The following section was generated from
-    \sphinxcode{\sphinxupquote{\strut {{ docname | escape_latex }}}} \dotfill}}
 """
 )
 # https://nbsphinx.readthedocs.io/en/0.8.0/never-execute.html

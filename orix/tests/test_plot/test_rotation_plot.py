@@ -22,7 +22,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
-from orix.plot import AxAnglePlot, RodriguesPlot, RotationPlot
+from orix.plot import AxAnglePlot, HomochoricPlot, RodriguesPlot, RotationPlot
 from orix.quaternion import Misorientation, Orientation, OrientationRegion
 from orix.quaternion.symmetry import C1, D6
 
@@ -32,6 +32,13 @@ class TestRodriguesPlot:
         fig = plt.figure()
         ax = fig.add_subplot(projection="rodrigues")
         assert isinstance(ax, RodriguesPlot)
+
+
+class TestHomochoricPlot:
+    def test_creation(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="homochoric")
+        assert isinstance(ax, HomochoricPlot)
 
 
 class TestAxisAnglePlot:

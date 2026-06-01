@@ -66,9 +66,9 @@ def all_symmetries(request):
             (1, 2, 3),
             [
                 (1, 2, 3),
+                (-1, -2, 3),
+                (-1, 2, 3),
                 (1, -2, 3),
-                (1, -2, -3),
-                (1, 2, -3),
             ],
         ),
         (
@@ -279,7 +279,7 @@ def test_is_proper(symmetry, expected):
     [
         (C1, [C1]),
         (D2, [C1, C2x, C2y, C2z, D2]),
-        (C6v, [C1, Csx, Csy, C2z, C3, C3v, C6, C6v]),
+        (C6v, [C1, C2z, Csx, Csy, C2v, C3, C3v, C6, C6v]),
     ],
 )
 def test_subgroups(symmetry, expected):
@@ -307,7 +307,7 @@ def test_proper_subgroups(symmetry, expected):
         (Cs, C1),
         (C2h, C2),
         (D2, D2),
-        (C2v, C2x),
+        (C2v, C2z),
         (C4, C4),
         (C4h, C4),
         (C3h, C3),
@@ -597,9 +597,9 @@ class TestFundamentalSectorFromSymmetry:
     def test_fundamental_sector_c2v(self):
         pg = C2v  # mm2
         fs = pg.fundamental_sector
-        assert np.allclose(fs.data, [[0, 0, 1], [0, 1, 0]])
-        assert np.allclose(fs.vertices.data, [[1, 0, 0], [-1, 0, 0]])
-        assert np.allclose(fs.center.data, [[0, 0.5, 0.5]])
+        assert np.allclose(fs.data, [[1, 0, 0], [0, 1, 0]])
+        assert np.allclose(fs.vertices.data, [[0, 0, -1], [0, 0, 1]])
+        assert np.allclose(fs.center.data, [[0.5, 0.5, 0]])
 
     def test_fundamental_sector_d2h(self):
         pg = D2h  # mmm

@@ -22,7 +22,12 @@ from ._util.formatting import format_labels
 from .crystal_map_plot import CrystalMapPlot
 from .direction_color_keys import DirectionColorKeyTSL
 from .orientation_color_keys import EulerColorKey, IPFColorKeyTSL
-from .rotation_plot import AxAnglePlot, RodriguesPlot, RotationPlot
+from .rotation_plot import (
+    AxAnglePlot,
+    HomochoricPlot,
+    RodriguesPlot,
+    RotationPlot,
+)
 from .stereographic_plot import StereographicPlot
 
 # Must be imported below StereographicPlot since it imports it
@@ -35,6 +40,7 @@ __all__ = [
     "CrystalMapPlot",
     "DirectionColorKeyTSL",
     "EulerColorKey",
+    "HomochoricPlot",
     "InversePoleFigurePlot",
     "IPFColorKeyTSL",
     "RodriguesPlot",

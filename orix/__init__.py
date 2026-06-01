@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,7 +17,7 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-__version__ = "0.14.dev3"
+__version__ = "0.15.dev2"
 
 # Sorted by line contributions (ideally excluding lines in notebook
 # files)
@@ -27,15 +27,16 @@ __credits__ = [
     "Paddy Harrison",
     "Phillip Crout",
     "Duncan Johnstone",
-    "Niels Cautaerts",
     "Austin Gerlt",
+    "Niels Cautaerts",
     "Viljar Johan Femoen",
     "Anders Christian Mathisen",
     "Zhou Xu",
     "Carter Francis",
     "Simon Høgås",
-    "Alessandra da Silva",
     "Ondrej Lexa",
+    "Alessandra da Silva",
+    "Dorian Depriester",
     "Eric Prestat",
     "Alexander Clausen",
 ]

@@ -26,12 +26,10 @@ from h5py import File
 import numpy as np
 import pytest
 
-from orix._utils.constants import VisibleDeprecationWarning
 from orix.io._io import (
     _overwrite_or_not,
     _plugin_from_manufacturer,
     load,
-    loadctf,
     save,
 )
 from orix.io.plugins import bruker_h5ebsd, emsoft_h5ebsd, orix_hdf5
@@ -123,14 +121,3 @@ class TestGeneralIO:
 
         crystal_map2 = load(fname)
         assert crystal_map2.phases[0].name == expected_phase_name
-
-
-# TODO: Remove after 0.13.0
-def test_loadctf():
-    z = np.random.rand(100, 8)
-    fname = "temp.ctf"
-    np.savetxt(fname, z)
-
-    with pytest.warns(VisibleDeprecationWarning):
-        _ = loadctf(fname)
-    os.remove(fname)

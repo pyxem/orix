@@ -1173,6 +1173,12 @@ class StereographicPlot(maxes.Axes):
             x += offset[0]
             y += offset[1]
 
+        # convert size 1 arrays to scalars to better agree with numpy>=2.4
+        if x.size == 1:
+            x = x[0]
+        if y.size == 1:
+            y = y[0]
+
         return x, y, visible
 
     def _set_label(self, x: float, y: float, label: str, **kwargs):

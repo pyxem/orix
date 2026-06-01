@@ -39,7 +39,6 @@ build:
 # Doc formats
 formats:
   - htmlzip
-  - pdf
 
 conda:
   environment: doc/environment.yml
