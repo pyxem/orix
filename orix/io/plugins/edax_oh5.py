@@ -35,6 +35,7 @@ file_extensions = ["oh5"]
 writes = False
 writes_this = CrystalMap
 
+
 def file_reader(filename: str, **kwargs) -> CrystalMap:
     """Return a crystal map from a file in EDAX OIM's oh5
     file format.
@@ -65,6 +66,7 @@ def file_reader(filename: str, **kwargs) -> CrystalMap:
         )
     f.set_crystal_map_data()
     return f.get_crystal_map()
+
 
 class EDAXH5ebsdFile(H5ebsdFile):
     """EDAX OIM's HDF5 file in the oh5 format containing
@@ -251,20 +253,29 @@ def dict2phase(dictionary: dict) -> Phase:
     phase
     """
     lattice_dict = dict(
-        zip(["a", "b", "c", "alpha", "beta", "gamma"],
-            [dictionary["Lattice Constant a"], dictionary["Lattice Constant b"],
-             dictionary["Lattice Constant c"], dictionary["Lattice Constant alpha"],
-             dictionary["Lattice Constant beta"], dictionary["Lattice Constant gamma"]])
+        zip(
+            ["a", "b", "c", "alpha", "beta", "gamma"],
+            [
+                dictionary["Lattice Constant a"],
+                dictionary["Lattice Constant b"],
+                dictionary["Lattice Constant c"],
+                dictionary["Lattice Constant alpha"],
+                dictionary["Lattice Constant beta"],
+                dictionary["Lattice Constant gamma"],
+            ],
+        )
     )
     lattice = Lattice(**lattice_dict)
     # atoms = [str2atom(atom) for atom in dictionary["AtomPositions"].values()]
-    structure = Structure(lattice=lattice)#, atoms=atoms)
+    structure = Structure(lattice=lattice)  # , atoms=atoms)
     structure.title = dictionary["MaterialName"]
-    laue_group=str(dictionary['LGsymID'])
+    laue_group = str(dictionary["LGsymID"])
     return Phase(
-        name=dictionary["MaterialName"], point_group=_REVERSE_EDAX_POINT_GROUP_ALIASES.get(laue_group, laue_group)[0],
-        structure=structure
+        name=dictionary["MaterialName"],
+        point_group=_REVERSE_EDAX_POINT_GROUP_ALIASES.get(laue_group, laue_group)[0],
+        structure=structure,
     )
+
 
 def str2atom(atom_positions: str) -> Atom:
     """Return an atom from a string in the format used by EDAX
@@ -284,6 +295,7 @@ def str2atom(atom_positions: str) -> Atom:
         xyz=np.array(atom_positions[1:4]),
         occupancy=int(atom_positions[-1]),
     )
+
 
 # Point group alias mapping. This is needed because in EDAX TSL OIM
 # Analysis 7.2, e.g. point group 432 is entered as 43.

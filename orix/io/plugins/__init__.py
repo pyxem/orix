@@ -36,7 +36,7 @@
 
 from types import ModuleType
 
-from orix.io.plugins import ang, bruker_h5ebsd, ctf, emsoft_h5ebsd, orix_hdf5, edax_oh5
+from orix.io.plugins import ang, bruker_h5ebsd, ctf, edax_oh5, emsoft_h5ebsd, orix_hdf5
 
 plugin_list: list[ModuleType] = [
     ang,
