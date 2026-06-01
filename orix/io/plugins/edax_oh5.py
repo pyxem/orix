@@ -131,17 +131,17 @@ class EDAXH5ebsdFile(H5ebsdFile):
             eg_name + "Data", recursive=True, dont_read=self.dont_read_in_data
         )
 
-    # def set_sem_group_file_location(self):
-    #     """Set 'SEM' group HDF5 file location. This can either be
-    #     'Scan 1/SEM' or 'Scan 1/EBSD/SEM'.
-    #     """
-    #     sg = self.scan_groups[0]
-    #     potential_places = [sg, sg + "/EBSD"]
-    #     location = None
-    #     for pp in potential_places:
-    #         if "SEM" in self.file[pp].keys():
-    #             location = pp + "/SEM-PRIAS Images"
-    #     self.sem_group_location = location
+    def set_sem_group_file_location(self):
+        """Set 'SEM' group HDF5 file location. This can either be
+        'Scan 1/SEM' or 'Scan 1/EBSD/SEM'.
+        """
+        sg = self.scan_groups[0]
+        potential_places = [sg, sg + "/EBSD"]
+        location = None
+        for pp in potential_places:
+            if "SEM" in self.file[pp].keys():
+                location = pp + "/SEM-PRIAS Images"
+        self.sem_group_location = location
 
     def set_coordinate_arrays(self):
         """Set coordinate arrays from dictionaries."""
@@ -266,24 +266,24 @@ def dict2phase(dictionary: dict) -> Phase:
         structure=structure
     )
 
-# def str2atom(atom_positions: str) -> Atom:
-#     """Return an atom from a string in the format used by EDAX
-#     in their oh5 file.
+def str2atom(atom_positions: str) -> Atom:
+    """Return an atom from a string in the format used by EDAX
+    in their oh5 file.
 
-#     Parameters
-#     ----------
-#     atom_positions
+    Parameters
+    ----------
+    atom_positions
 
-#     Returns
-#     -------
-#     atom
-#     """
-#     atom_positions = atom_positions.split(",")
-#     return Atom(
-#         atype=atom_positions[0],
-#         xyz=np.array(atom_positions[1:4]),
-#         occupancy=int(atom_positions[-1]),
-#     )
+    Returns
+    -------
+    atom
+    """
+    atom_positions = atom_positions.split(",")
+    return Atom(
+        atype=atom_positions[0],
+        xyz=np.array(atom_positions[1:4]),
+        occupancy=int(atom_positions[-1]),
+    )
 
 # Point group alias mapping. This is needed because in EDAX TSL OIM
 # Analysis 7.2, e.g. point group 432 is entered as 43.
