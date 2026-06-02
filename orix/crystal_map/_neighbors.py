@@ -5,90 +5,107 @@ from skimage.util._map_array import map_array
 from orix.crystal_map import CrystalMap
 from orix.quaternion import Orientation
 
+def _raveled_offsets(array_shape: tuple,
+                     kernel: np.ndarray):
+    """Compute neighboring pixel offsets in raveled coordinate space.
+    
+    This is a simlification of the "_raveled_offsets_and_distances"
+    function in scikit-image.morphology._util, version 0.26.0. 
+    
+    Parameters
+    ----------    
+    array_shape
+        the shape of the array the kernel is being applied to.
+        equivalent to `array.shape`.
 
-def Neighbors(data, foot, mask=None):
-    """Performs the general preperations to do neighbor-based calculations on CrystalMaps in a vectorized form
+    kernel
+        the 2D array representing the neighborhood. this is normally
+        a 2D Von Neumann neighborhood such as [[0,1,0],[1,0,1],[0,1,0]],
+        but could also be a larger array of weighted values. all
+        non-zero entries will produce an offset value.
 
-    Args:
-        data: 2d array. Can be a CrystalMap object
-        mask: 2D array with same shape as CrystalMap indicating what points are valid or not eg. Non-indexed points
-        foot: The kernel that defines which neighbors to look at. Can be both binary and not
-
-    Returns: (maybe should be returned as an object instead?)
-        indices: Array where the index for each valid point is repeated as many times as it has valid neighbors
-        neighbor_indices: Array with the corosponding valid neighbors
-        foot_values: contains how each neighbor in neighbor_indices is weighted defined by a given footprine/kernel
-        num_neigbors_valid: the number of neighbors each valid point has
-        nodes_valid: The index for valid points with at least one valid neighbor
-        nodes_no_valid_neighbors: The index for valid points with no valid neighbors
-        nodes_not_valid: The index for non-valid points
-
-    Raises:
-        Have to add ValueErrors
+    Returns
+    -------
+    raveled_offsets
+        an array of offsets for each non-zero entry in the kernel.
     """
-    if mask is None:
-        if isinstance(data, CrystalMap):
-            mask = data.is_indexed.reshape(data.shape)
-        else:
-            mask = np.full(data.shape, True)  # All pointd are valid
+    center = tuple(s // 2 for s in kernel.shape)
+    offsets = np.stack(
+        [(idx - c) for idx, c in zip(np.nonzero(kernel), center)], axis=-1
+    )
+    ravel_factors = array_shape[1:] + (1,)
+    raveled_offsets = (offsets * ravel_factors).sum(axis=1)
+    return np.sort(raveled_offsets)
+
+def _find_neighbors(mask: np.ndarray | CrystalMap, 
+                    kernel: int | np.ndarray = 8,
+                    return_indices: bool=False,
+                    ):
+    """Given a 2D boolean array, return the neighbors for each pixel.
+
+    Parameters
+    ---------- 
+    mask
+    kernel
+    return_indices
+
+    Returns
+    -------
+    neighbors
+    indices
+    """
+
+    # Convert mask to a 2D aray of booleans
+    if isinstance(mask, CrystalMap):
+        mask = mask.is_indexed.reshape(mask.shape)
+    mask = np.atleast_2d(mask).astype(bool)        
+    # Convert kernel to a 2D array of floats
+    if isinstance(kernel, int):
+        von_neuman_dict = {
+            4:np.array([[0,1,0],[1,0,1],[0,1,0]]),
+            8:np.array([[1,1,1],[1,0,1],[1,1,1]]),
+            }
+        try:
+            kernel = von_neuman_dict[kernel]
+        except KeyError:
+            raise ValueError(
+                "'kernel` must be either 4, 8, or a 2D numpy array")
+        kernel = np.atleast_2d(kernel).astype(float)
+        if not np.all([mask.ndim ==2,kernel.ndim==2]):
+            raise ValueError("_find_neighbors only supports 2D arrays")
+
+    # calculate the padding, offsets, and indices's of the queried points. 
+    # note: padding must be at least one in all directions.
+    pad = [(max(x//2,1),max(x-(x//2)-1,1)) for x in kernel.shape]
+    offsets = _raveled_offsets(padded_mask.shape, kernel)
     nodes = np.flatnonzero(mask)
 
-    pad = np.max(foot.shape) // 2
-    padded_mask = np.pad(mask, pad, mode="constant", constant_values=False)
+    # calculate neighbors for the padded array.
+    padded_mask = np.pad(mask, pad, mode='constant', constant_values=False) 
     padded_nodes = np.flatnonzero(padded_mask)
+    neighbors = padded_nodes[:, np.newaxis] + offsets
 
-    # The offset are given in 1D for the neighbors defined in 2D
-    neighbor_offsets, dist = _raveled_offsets_and_distances(
-        padded_mask.shape, footprint=foot
-    )
-
-    padded_neighbors = padded_nodes[:, np.newaxis] + neighbor_offsets
-    neighbors = map_array(
-        padded_neighbors, padded_nodes, nodes
-    )  # finds the indeces (in a non-padded format) for the neighbors belonging to valid points
-    neighbors_mask = padded_mask.reshape(-1)[
-        padded_neighbors
-    ]  # sets which of those neigbors are valid
-
-    num_neighbors = np.sum(
-        neighbors_mask, axis=1
-    )  # the number of neighbors each valid point has
-    indices = np.repeat(
-        nodes, num_neighbors
-    )  # Array where the index for each valid point is repeated as many times as it has valid neighbors
-    neighbor_indices = neighbors[
-        neighbors_mask
-    ]  # Array with the corosponding valid neighbors
-
-    # Support for non-binary footprints
-    foot_offsets, dist = _raveled_offsets_and_distances(foot.shape, footprint=foot)
-    foot_nodes = foot_offsets + foot.size // 2
-    foot_values = foot.reshape(-1)[
-        np.repeat([foot_nodes], mask.sum(), axis=0)[neighbors_mask]
-    ]  # contains how each neighbor in neighbor_indices is weighted defined by a given footprine
-
-    valid_neighbor_mask = num_neighbors != 0
-    nodes_valid = nodes[
-        valid_neighbor_mask
-    ]  # The index for valid points with at least one valid neighbor
-    nodes_no_valid_neighbors = nodes[
-        ~valid_neighbor_mask
-    ]  # The index for valid points with no valid neighbors
-    nodes_invalid = np.flatnonzero(
-        ~mask
-    )  # The index for non-valid points (same as the mask input, not really neccesary)
-
-    num_neighbors_valid = num_neighbors[valid_neighbor_mask]
-
-    return (
-        indices,
-        neighbor_indices,
-        foot_values,
-        num_neighbors_valid,
-        nodes_valid,
-        nodes_no_valid_neighbors,
-        nodes_invalid,
-    )
+    # replace the padded indices with the correct unpadded ones, and set
+    # out-of-bounds or invalid neighbor indices to -1
+    # NOTE: this section is roughly equivalent to the following, faster
+    # Cython code:
+    #    from skimage.util._map_array import map_array
+    #    neighbors = map_array(neighbors, padded_nodes, nodes+1) -1
+    #
+    # However, _map_array is a private function in skimage 0.26, so the
+    # following vectorized method is used instead. If this slowdown becomes
+    # problematic in the future, we should consider writing our own cython
+    # code.
+    is_neighbor = np.isin(neighbors,padded_nodes)
+    depad_dict = dict(zip(padded_nodes, nodes))
+    depad_func = np.vectorize(lambda x: depad_dict.get(x,-1))
+    neighbors[is_neighbor] = depad_func(neighbors[is_neighbor])
+    neighbors[~is_neighbor] = -1
+    
+    if return_indices:
+        return neighbors, indices
+    
+    return neigbors
 
 
 def neighbor_misorientation(
