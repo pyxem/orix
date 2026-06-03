@@ -1,27 +1,50 @@
+#
+# Copyright 2018-2026 the orix developers
+#
+# This file is part of orix.
+#
+# orix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# orix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with orix. If not, see <http://www.gnu.org/licenses/>.
+#
 import numpy as np
-from skimage.morphology._util import _raveled_offsets_and_distances
-from skimage.util._map_array import map_array
 
 from orix.crystal_map import CrystalMap
 from orix.quaternion import Orientation
 
-def _raveled_offsets(array_shape: tuple,
-                     kernel: np.ndarray):
-    """Compute neighboring pixel offsets in raveled coordinate space.
-    
-    This is a simlification of the "_raveled_offsets_and_distances"
-    function in scikit-image.morphology._util, version 0.26.0. 
-    
+
+def _raveled_offsets(array_shape: tuple, kernel: np.ndarray):
+    """Compute indicies offsets for neighboring pixels.
+
+    This function is roughly equivalent to
+
+        ```_raveled_offsets_and_distances(array_shape,footprint)[0]```
+
+    in scikit-image.morphology._util, version 0.26.0. It calculates
+    the relative indicies of an arbitrary pixel's neightbors, which
+    can be used to quickly calculate all possible pixel-pixel
+    neighbor pairs for any subset of points in an n-dimensional grid.
+
     Parameters
-    ----------    
+    ----------
     array_shape
         the shape of the array the kernel is being applied to.
         equivalent to `array.shape`.
 
     kernel
-        the 2D array representing the neighborhood. this is normally
-        a 2D Von Neumann neighborhood such as [[0,1,0],[1,0,1],[0,1,0]],
-        but could also be a larger array of weighted values. all
+        the N-dimensional array representing the neighborhood, where
+        N is the length of `array_shape`. This array is often a 2D
+        Von Neumann neighborhood such as [[0,1,0],[1,0,1],[0,1,0]],
+        but could also be a larger array of weighted values. All
         non-zero entries will produce an offset value.
 
     Returns
@@ -29,6 +52,8 @@ def _raveled_offsets(array_shape: tuple,
     raveled_offsets
         an array of offsets for each non-zero entry in the kernel.
     """
+    # Developer note: this function is written to work for
+    # arrays of any dimension, includeing 3D or 4D crystal maps.
     center = tuple(s // 2 for s in kernel.shape)
     offsets = np.stack(
         [(idx - c) for idx, c in zip(np.nonzero(kernel), center)], axis=-1
@@ -37,58 +62,81 @@ def _raveled_offsets(array_shape: tuple,
     raveled_offsets = (offsets * ravel_factors).sum(axis=1)
     return np.sort(raveled_offsets)
 
-def _find_neighbors(mask: np.ndarray | CrystalMap, 
-                    kernel: int | np.ndarray = 8,
-                    return_indices: bool=False,
-                    ):
-    """Given a 2D boolean array, return the neighbors for each pixel.
+
+def _find_neighbors(
+    feature_map: np.ndarray,
+    kernel: int | np.ndarray = 8,
+):
+    """Return indicies of alike neighbors for each pixel in a 2D map.
+
+    The value of every pixel is compared to every other pixel in it's
+    local neighborhood, as defined by the 'kernel' variable.
+    The indicies of neighbors with matching values are then
+    returned.
+
+    For example, If feature_map is a boolean mask of indexed pixels,
+    this will return all pixel-pixel conections in the indexed data.
+    If feature_map is an array of grain IDs, this will return
+    all pixel-pixel connections within a grain. In either case, pixels
+    with a value of zero will be ignored.
 
     Parameters
-    ---------- 
-    mask
+    ----------
+    feature_map
+        A 2D numpy array.
     kernel
-    return_indices
+        Either an array describing a per-pixel neighborhood, or '4'
+        or `8` to indicate the Von Neumman Neighborhoods of size 4
+        and 8 respectively.
 
     Returns
     -------
+    feature_idxs
+        the indicies of the non-zero values in feature_map
     neighbors
-    indices
+        An n-by-m array of indices, where n is the number of non-zero
+        pixels in `feature_map`, and m is the number of neighbors
+        defined by 'kernel'. The values refer to each neighbor's
+        relative position in a flattened version of the feature_map,
+        with invalid connections replaced by the value -1.
     """
+    # Note to future Devs: This currently supports only 2D grids, but was
+    # written with the Developer note: this method currently only supports 2D grids, but
+    # was written with the intention of supporting 3D gridded and ungridded
+    # data in the future.
 
-    # Convert mask to a 2D aray of booleans
-    if isinstance(mask, CrystalMap):
-        mask = mask.is_indexed.reshape(mask.shape)
-    mask = np.atleast_2d(mask).astype(bool)        
     # Convert kernel to a 2D array of floats
     if isinstance(kernel, int):
         von_neuman_dict = {
-            4:np.array([[0,1,0],[1,0,1],[0,1,0]]),
-            8:np.array([[1,1,1],[1,0,1],[1,1,1]]),
-            }
+            4: np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]]),
+            8: np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]]),
+        }
         try:
             kernel = von_neuman_dict[kernel]
         except KeyError:
-            raise ValueError(
-                "'kernel` must be either 4, 8, or a 2D numpy array")
-        kernel = np.atleast_2d(kernel).astype(float)
-        if not np.all([mask.ndim ==2,kernel.ndim==2]):
-            raise ValueError("_find_neighbors only supports 2D arrays")
+            raise ValueError("'kernel` must be either 4, 8, or a 2D numpy array")
+    kernel = np.atleast_2d(kernel).astype(float)
 
-    # calculate the padding, offsets, and indices's of the queried points. 
-    # note: padding must be at least one in all directions.
-    pad = [(max(x//2,1),max(x-(x//2)-1,1)) for x in kernel.shape]
-    offsets = _raveled_offsets(padded_mask.shape, kernel)
-    nodes = np.flatnonzero(mask)
+    # assert the mask and kernel are 2D and of the correct data type.
+    feature_map = np.atleast_2d(feature_map)
+    if not np.all([feature_map.ndim == 2, kernel.ndim == 2]):
+        raise ValueError("_find_neighbors only supports 2D arrays")
 
-    # calculate neighbors for the padded array.
-    padded_mask = np.pad(mask, pad, mode='constant', constant_values=False) 
-    padded_nodes = np.flatnonzero(padded_mask)
-    neighbors = padded_nodes[:, np.newaxis] + offsets
-
-    # replace the padded indices with the correct unpadded ones, and set
-    # out-of-bounds or invalid neighbor indices to -1
+    pad = [(max(x // 2, 1), max(x - (x // 2) - 1, 1)) for x in kernel.shape]
+    # Neighbor lookup needs to happen on a padded array to avoid wraparound
+    padded_map = np.pad(
+        array=feature_map,
+        pad_width=pad,
+        mode="constant",
+        constant_values=0,
+    )
+    feature_idxs = np.flatnonzero(feature_map)
+    padded_idxs = np.flatnonzero(padded_map)
+    offsets = _raveled_offsets(padded_map.shape, kernel)
+    neighbors = padded_idxs[:, np.newaxis] + offsets
     # NOTE: this section is roughly equivalent to the following, faster
     # Cython code:
+    #
     #    from skimage.util._map_array import map_array
     #    neighbors = map_array(neighbors, padded_nodes, nodes+1) -1
     #
@@ -96,148 +144,98 @@ def _find_neighbors(mask: np.ndarray | CrystalMap,
     # following vectorized method is used instead. If this slowdown becomes
     # problematic in the future, we should consider writing our own cython
     # code.
-    is_neighbor = np.isin(neighbors,padded_nodes)
-    depad_dict = dict(zip(padded_nodes, nodes))
-    depad_func = np.vectorize(lambda x: depad_dict.get(x,-1))
+    is_neighbor = np.isin(neighbors, padded_idxs)
+    depad_dict = dict(zip(padded_idxs, feature_idxs))
+    depad_func = np.vectorize(lambda x: depad_dict.get(x, -1))
     neighbors[is_neighbor] = depad_func(neighbors[is_neighbor])
+
     neighbors[~is_neighbor] = -1
-    
-    if return_indices:
-        return neighbors, indices
-    
-    return neigbors
+    return feature_idxs, neighbors
 
 
-def neighbor_misorientation(
-    xmap, indices, neighbor_indices, degree=False, crystall_symmetry=None
+def kernel_average_misorientation_map(
+    feature_map: np.ndarray,
+    oris: Orientation,
+    kernel: int | np.ndarray = 8,
 ):
-    """Calculates the misorientation angles between a central point and its neighbors
-    Args:
-        xmap: CrystalMap object
-        indices: Array where the index for each valid point is repeated as many times as it has valid neighbors
-        neighbor_indices: Array with the corosponding valid neighbors
-        degree (bool): True-return results in degree. False-return results in radiens
-        crystall_symmetry: used to differentiate between rotation and orientation
-    Returns:
-        d: misorientation angles given in radiens
-
-    Raises:
-        Have to add ValueErrors
     """
-    if crystall_symmetry is None:
-        crystall_symmetry = xmap.phases[
-            0
-        ].point_group  # This can pehaps lead to problems, maybe make a check for multiple phases
+    Returns a Kernel-Averaged Misorientation (KAM) map.
 
-    O_central_points = Orientation(xmap.rotations[indices], crystall_symmetry)
-    O_neighbors = Orientation(xmap.rotations[neighbor_indices], crystall_symmetry)
-    mis_ori = O_central_points.angle_with(O_neighbors)
-
-    if degree:
-        mis_ori = mis_ori * 180 / np.pi
-
-    return mis_ori
+    For each non-zero pixel in feature_map, the misorientation angle
+    is calculated between it and each
 
 
-def KAM_calc(
-    xmap,
-    mis_ori,
-    non_index_value,
-    no_neighbors_value,
-    num_neighbors_valid,
-    nodes_valid,
-    nodes_no_valid_neighbors,
-    nodes_invalid,
-    foot_values=None,
+
+    and each pixel with the same feature_map value in it's local
+    neighborhood, as defined by the 'kernel'. The average angle
+    is then returned per-pixel. pixels with no neighbors are assigned
+    a KAM value of zero.
+
+    Parameters
+    ----------
+    xtal_map
+        Either a 1D or 2D
+        A 2D CrystalMap, Orientation, or Rotation object.
+    kernel
+        Either an array describing a per-pixel neighborhood, or '4'
+        or `8` to indicate the Von Neumman Neighborhoods of size 4
+        and 8 respectively.
+    feature_map
+        A 2D numpy array of integers or booleans. Must have the
+        same dimensions as `xtal_map`. If not given, assume all
+        pixels are potentially valid neighbors.
+
+    Returns
+    -------
+    kam_map
+        a 2D numpy array of kam angles.
+
+
+    """
+    map_idxs, map_neighbors = _find_neighbors(feature_map, kernel)
+    n_count = np.sum(map_neighbors > -1, axis=1)
+    l_idxs = np.repeat(map_idxs, n_count)
+    r_idxs = map_neighbors[map_neighbors > -1]
+
+    map2ori = np.zeros(map_idxs.max() + 2, dtype=int) - 1
+    map2ori[map_idxs] = np.arange(len(map_idxs))
+    m_angle = (oris[map2ori[l_idxs]] * ~oris[map2ori[r_idxs]]).angle
+    kam_map = np.zeros(feature_map.size, dtype=float)
+    if isinstance(kernel, np.ndarray):
+        weights = kernel[kernel > 0]
+        if len(np.uniuqe(weights)) > 1:
+            m_angle = (
+                m_angle
+                * np.repeat(weights[np.newaxis, :], oris.size, axis=0)[
+                    map_neighbors > -1
+                ]
+                / np.sum(weights)
+            )
+    kam_map[l_idxs] += m_angle
+    kam_map[map_idxs[n_count > 0]] /= n_count[n_count > 0]
+    kam_map = kam_map.reshape(feature_map.shape)
+
+    return kam_map
+
+
+def number_same_neighbors_map(
+    feature_map: np.ndarray,
+    oris: Orientation,
+    kernel: int | np.ndarray = 8,
+    cutoff_angle=5,
 ):
-    """Makes the KAM map
-    Args:
-        xmap: CrystalMap object (or any 2d array actually)
-        mis_ori: Misorientation angles given in radiens or degrees (from neighbor_misorientation())
-        non_index_value (int or float): Kam value given to a non-indexed points in the xmap
-        no_neigbors_value (int or float): Kam value given to an indexed point without a single indexed neighbor
+    map_idxs, map_neighbors = _find_neighbors(feature_map, kernel)
+    n_count = np.sum(map_neighbors > -1, axis=1)
+    l_idxs = np.repeat(map_idxs, n_count)
+    r_idxs = map_neighbors[map_neighbors > -1]
 
-        These are from Neighbors()
-        num_neigbors_valid: the number of neighbors each valid point has
-        nodes_valid: The index for valid points with at least one valid neighbor
-        nodes_no_valid_neighbors: The index for valid points with no valid neighbors
-        nodes_not_valid: The index for non-valid points
-        foot_values: The weight of different neighbors if non-binary foot is used
+    map2ori = np.zeros(map_idxs.max() + 2, dtype=int) - 1
+    map2ori[map_idxs] = np.arange(len(map_idxs))
+    m_angle = (oris[map2ori[l_idxs]] * ~oris[map2ori[r_idxs]]).angle
+    nsn = m_angle < (cutoff_angle * np.pi / 180)
 
-    Returns:
-        kam_map_im: 2D array with same shape as xmap with all the KAM values
+    nsn_map = np.zeros(feature_map.size, dtype=float)
+    nsn_map[l_idxs] += nsn
+    nsn_map = nsn_map.reshape(feature_map.shape)
 
-    Raises:
-        Have to add ValueErrors
-    """
-    if foot_values is None:
-        cumulative_miso = np.add.reduceat(
-            mis_ori, np.r_[0, np.cumsum(num_neighbors_valid)[:-1]]
-        )
-    else:
-        cumulative_miso = np.add.reduceat(
-            mis_ori * foot_values, np.r_[0, np.cumsum(num_neighbors_valid)[:-1]]
-        )
-
-    kam_map = np.full(xmap.size, np.nan, dtype=np.float32)
-    kam_map[nodes_valid] = cumulative_miso / num_neighbors_valid
-    kam_map[nodes_no_valid_neighbors] = no_neighbors_value
-    kam_map[nodes_invalid] = non_index_value
-    kam_map_im = kam_map.reshape(xmap.shape)
-
-    return kam_map_im
-
-
-def NSN_calc(
-    xmap,
-    mis_ori,
-    non_index_value,
-    no_neighbors_value,
-    lim,
-    num_neighbors_valid,
-    nodes_valid,
-    nodes_no_valid_neighbors,
-    nodes_invalid,
-    foot_values=None,
-):
-    """Makes a Number of same neighbors (NSN) map. Each point in the xmap gets assigned the value equal to the number similar
-       oriented neighbors. Where similar is defined by a user set limit
-    Args:
-        xmap: CrystalMap object (or any 2d array actually)
-        mis_ori: Misorientation angles given in radiens or degrees (from neighbor_misorientation())
-        non_index_value (int or float): NSN value given to a non-indexed points in the xmap
-        no_neigbors_value (int or float): NSN value given to an indexed point without a single indexed neighbor
-        lim (int or float): The limit for when two neighboring point are defined to have different/same orientations
-
-        These are from Neighbors()
-        num_neigbors_valid: the number of neighbors each valid point has
-        nodes_valid: The index for valid points with at least one valid neighbor
-        nodes_no_valid_neighbors: The index for valid points with no valid neighbors
-        nodes_not_valid: The index for non-valid points
-        foot_values: The weight of different neighbors if non-binary foot is used
-
-    Returns:
-        NDN_map_im: 2D array with same shape as xmap with all the NDN values
-
-    Raises:
-        Have to add ValueErrors
-    """
-
-    same_neighbors = mis_ori < lim
-    if foot_values is None:
-        NSN = np.add.reduceat(
-            same_neighbors, np.r_[0, np.cumsum(num_neighbors_valid)[:-1]]
-        )
-    else:
-        NSN = np.add.reduceat(
-            same_neighbors * foot_values, np.r_[0, np.cumsum(num_neighbors_valid)[:-1]]
-        )
-
-    NSN_map = np.full(xmap.size, np.nan, dtype=np.float32)
-    NSN_map[nodes_valid] = NSN
-    NSN_map[nodes_no_valid_neighbors] = no_neighbors_value
-    NSN_map[nodes_invalid] = non_index_value
-
-    NSN_map_im = NSN_map.reshape(xmap.shape)
-
-    return NSN_map_im
+    return nsn_map
