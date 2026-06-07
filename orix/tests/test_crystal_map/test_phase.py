@@ -22,7 +22,10 @@ import numpy as np
 import pytest
 
 from orix.crystal_map import Phase
-from orix.crystal_map._phase import default_lattice, new_structure_matrix_from_alignment
+from orix.crystal_map._phase import (
+    default_lattice,
+    new_structure_matrix_from_alignment,
+)
 from orix.quaternion.symmetry import O, Symmetry
 
 
@@ -61,7 +64,14 @@ class TestPhase:
         ],
     )
     def test_init_phase(
-        self, name, point_group, space_group, color, color_name, color_rgb, structure
+        self,
+        name,
+        point_group,
+        space_group,
+        color,
+        color_name,
+        color_rgb,
+        structure,
     ):
         p = Phase(
             name=name,
@@ -153,14 +163,17 @@ class TestPhase:
     def test_set_phase_point_group(self, point_group, point_group_name, fails):
         p = Phase()
         if fails:
-            with pytest.raises(ValueError, match=f"'{point_group}' must be of type"):
+            with pytest.raises(
+                ValueError, match=f"'{point_group}' could not be interpreted as"
+            ):
                 p.point_group = point_group
         else:
             p.point_group = point_group
             assert p.point_group.name == point_group_name
 
     @pytest.mark.parametrize(
-        "structure", [Structure(), Structure(lattice=Lattice(1, 2, 3, 90, 120, 90))]
+        "structure",
+        [Structure(), Structure(lattice=Lattice(1, 2, 3, 90, 120, 90))],
     )
     def test_set_structure(self, structure):
         p = Phase()
@@ -239,7 +252,14 @@ class TestPhase:
 
     @pytest.mark.parametrize(
         "space_group_no, desired_point_group_name",
-        [(1, "1"), (50, "mmm"), (100, "4mm"), (150, "32"), (200, "m-3"), (225, "m-3m")],
+        [
+            (1, "1"),
+            (50, "mmm"),
+            (100, "4mm"),
+            (150, "32"),
+            (200, "m-3"),
+            (225, "m-3m"),
+        ],
     )
     def test_point_group_derived_from_space_group(
         self, space_group_no, desired_point_group_name
@@ -414,7 +434,9 @@ class TestPhase:
         lattice = phase.structure.lattice
         assert np.allclose(lattice.abcABG(), [15.5, 4.05, 6.74, 90, 105.3, 90])
         assert np.allclose(
-            lattice.base, [[15.5, 0, 0], [0, 4.05, 0], [-1.779, 0, 6.501]], atol=1e-3
+            lattice.base,
+            [[15.5, 0, 0], [0, 4.05, 0], [-1.779, 0, 6.501]],
+            atol=1e-3,
         )
 
     def test_from_cif_same_structure(self, cif_file):

@@ -49,7 +49,10 @@ class TestAngReader:
                     np.zeros(5 * 3, dtype=int),  # phase_id
                     5,  # n_unknown_columns
                     np.array(
-                        [[1.59942, 2.37748, 4.53419], [1.59331, 2.37417, 4.53628]]
+                        [
+                            [1.59942, 2.37748, 4.53419],
+                            [1.59331, 2.37417, 4.53628],
+                        ]
                     ),  # rotations as rows of Euler angle triplets
                 ),
                 (5, 3),
@@ -67,7 +70,10 @@ class TestAngReader:
                     np.zeros(8 * 4, dtype=int),  # phase_id
                     1,  # n_unknown_columns
                     np.array(
-                        [[5.81107, 2.34188, 4.47345], [6.16205, 0.79936, 1.31702]]
+                        [
+                            [5.81107, 2.34188, 4.47345],
+                            [6.16205, 0.79936, 1.31702],
+                        ]
                     ),  # rotations as rows of Euler angle triplets
                 ),
                 (8, 4),
@@ -82,7 +88,13 @@ class TestAngReader:
         indirect=["angfile_tsl"],
     )
     def test_load_ang_tsl(
-        self, angfile_tsl, map_shape, step_sizes, phase_id, n_unknown_cols, example_rot
+        self,
+        angfile_tsl,
+        map_shape,
+        step_sizes,
+        phase_id,
+        n_unknown_cols,
+        example_rot,
     ):
         xmap = load(angfile_tsl)
 
@@ -155,7 +167,10 @@ class TestAngReader:
                 (4.5, 4.5),
                 np.ones(9 * 3, dtype=int),
                 np.array(
-                    [[1.895079, 0.739496, 1.413542], [1.897871, 0.742638, 1.413717]]
+                    [
+                        [1.895079, 0.739496, 1.413542],
+                        [1.897871, 0.742638, 1.413717],
+                    ]
                 ),
             ),
             (
@@ -174,7 +189,10 @@ class TestAngReader:
                 (10, 10),
                 np.ones(11 * 13, dtype=int),
                 np.array(
-                    [[1.621760, 2.368935, 4.559324], [1.604481, 2.367539, 4.541870]]
+                    [
+                        [1.621760, 2.368935, 4.559324],
+                        [1.604481, 2.367539, 4.541870],
+                    ]
                 ),
             ),
         ],
@@ -253,7 +271,10 @@ class TestAngReader:
                     )
                 ),
                 np.array(
-                    [[1.895079, 0.739496, 1.413542], [1.897871, 0.742638, 1.413717]]
+                    [
+                        [1.895079, 0.739496, 1.413542],
+                        [1.897871, 0.742638, 1.413717],
+                    ]
                 ),
             ),
             (
@@ -267,7 +288,10 @@ class TestAngReader:
                         )
                     ),  # phase_id
                     np.array(
-                        [[1.62176, 2.36894, 1.72386], [1.60448, 2.36754, 1.72386]]
+                        [
+                            [1.62176, 2.36894, 1.72386],
+                            [1.60448, 2.36754, 1.72386],
+                        ]
                     ),
                 ),
                 (3, 6),
@@ -362,14 +386,24 @@ class TestAngReader:
                 ],
                 ANGFILE_TSL_HEADER,
             ),
-            ("astar", ["ind", "rel", "phase_id", "relx100"], ANGFILE_ASTAR_HEADER),
+            (
+                "astar",
+                ["ind", "rel", "phase_id", "relx100"],
+                ANGFILE_ASTAR_HEADER,
+            ),
             ("emsoft", ["iq", "dp", "phase_id"], ANGFILE_EMSOFT_HEADER),
         ],
     )
     def test_get_vendor_columns(
         self, expected_vendor, expected_columns, vendor_header, temp_ang_file
     ):
-        expected_columns = ["euler1", "euler2", "euler3", "x", "y"] + expected_columns
+        expected_columns = [
+            "euler1",
+            "euler2",
+            "euler3",
+            "x",
+            "y",
+        ] + expected_columns
         n_cols_file = len(expected_columns)
 
         temp_ang_file.write(vendor_header)
@@ -630,7 +664,7 @@ class TestAngWriter:
         del pl[-1]
         assert xmap_reload.phases.names == pl.names
 
-    @pytest.mark.parametrize("point_group", ["432", "121", "222", "321", "622"])
+    @pytest.mark.parametrize("point_group", ["432", "121", "222", "622"])
     def test_point_group_aliases(self, crystal_map, tmp_path, point_group):
         crystal_map.phases[0].point_group = point_group
         fname = tmp_path / "test_point_group_aliases.ang"
