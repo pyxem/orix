@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,6 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
+import matplotlib
+
+# Use 'agg' backend to avoid displaying figure when running tests.
+# Put it here to avoid the backend being set elsewhere before test
+# collection.
+matplotlib.use("agg")
 
 from collections import OrderedDict
 from numbers import Number
@@ -37,7 +44,6 @@ from orix.quaternion.rotation import Rotation
 
 
 def pytest_sessionstart(session):
-    plt.rcParams["backend"] = "agg"
     register_projections()
 
 

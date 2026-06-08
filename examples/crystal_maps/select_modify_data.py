@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
 """
 ======================
 Select and modify data
@@ -32,6 +33,7 @@ There are five ways to select data:
     5. Boolean indexing
 """
 
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -71,7 +73,7 @@ def plot_id(xmaps: CrystalMap | list[CrystalMap], titles: str | list[str]) -> No
     fig.tight_layout()
 
 
-########################################################################################
+# %%
 # We start by creating a crystal map with five rows and ten columns with all points
 # having one phase and an identity rotation, and plot the row and column coordinates as
 # well as the map ID of each point into the originally created map
@@ -82,7 +84,7 @@ print(xmap)
 
 plot_id(xmap, "Initial map")
 
-########################################################################################
+# %%
 # Slice the map (1) by selecting some rows and columns. We'll plot the IDs again and see
 # that these do not update after slicing. We'll also select some values from the sliced
 # map (2) by passing one or more indices
@@ -94,7 +96,7 @@ print(xmap2[0, 0].id)
 print(xmap2[-1].id)  # Last row
 print(xmap2[:, 1].id)
 
-########################################################################################
+# %%
 # Select data based on phase(s) (3) after adding a new phase to the phase list and
 # giving some points in the data the new phase ID by modifying the phase IDs inplace
 
@@ -106,7 +108,7 @@ print(xmap)
 
 plot_id([xmap["a"], xmap["b"], xmap["a", "b"]], ["a", "b", "a and b"])
 
-########################################################################################
+# %%
 # Set some points to not indexed and select only the indexed data or the not indexed
 # data (4)
 
@@ -115,7 +117,7 @@ print(xmap)
 
 plot_id([xmap["indexed"], xmap["not_indexed"]], ["Indexed", "Not indexed"])
 
-########################################################################################
+# %%
 # Select data satisfying one or more criteria using boolean arrays (5)
 
 plot_id(
@@ -127,7 +129,7 @@ plot_id(
     ["Id greater than 10", "a and odd ID", "b or not indexed"],
 )
 
-########################################################################################
+# %%
 # When obtaining a new map from part of another map, the new map is a shallow copy of
 # the initial map. This means that changes to the new map also changes the initial map.
 # When this is undesirable, we make a deep copy by calling
