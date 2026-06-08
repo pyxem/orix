@@ -880,23 +880,7 @@ class CrystalMap:
         # apply existing data mask if applicable
         data_to_keep[~self.is_in_data] = False
 
-            # Insert new (sub)mask into old full mask
-            new_is_in_data = self.is_in_data.reshape(self._original_shape).copy()
-            new_is_in_data[self._data_slices_from_coordinates()] = new_is_in_data_slice
-            new_is_in_data = new_is_in_data.ravel()
-
-        # Insert the mask into a mask with the full map shape, if not
-        # done already
-        if new_is_in_data is None:
-            new_is_in_data = np.zeros_like(self.is_in_data, dtype=bool)  # 1D
-            new_is_in_data[self.id] = is_in_data
-
-        # Return a copy with all attributes shallow except for the mask
-        new_map = copy.copy(self)
-        new_map.is_in_data = new_is_in_data
-        new_map._shape = None
-
-        return new_map
+        return
 
     def __repr__(self) -> str:
         """Return a nice representation of the data."""
