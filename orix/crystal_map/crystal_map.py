@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import copy
+import logging
 from typing import Any
 
 import matplotlib.figure as mfigure
@@ -32,6 +33,8 @@ from orix.crystal_map.crystal_map_properties import CrystalMapProperties
 from orix.plot._util.color import get_named_matplotlib_colors
 from orix.quaternion.orientation import Orientation
 from orix.quaternion.rotation import Rotation
+
+_logger = logging.getLogger(__name__)
 
 
 class CrystalMap:
@@ -260,16 +263,12 @@ class CrystalMap:
             raise ValueError(
                 f"rotations must be of type {Rotation}, not {type(rotations)}."
             )
-        if rotations.size == data_size:
-            self._rotations = rotations.flatten()
-        elif rotations.shape[0] == data_size:
-            self._rotations = rotations
-        else:
-            raise ValueError(
-                "'rotations' has a shape of {}. Either the ".format(rotations.shape)
-                + "total size or the size of the first indicies of 'rotations' must"
-                + "match the size of the CrystalMap, {}".format(data_size)
-            )
+
+        self._rotations = rotations
+
+        # Set data size
+        data_size = rotations.shape[0]
+        self._shape = None
 
         # Set phase IDs
         if phase_id is None:  # Assume single phase data
@@ -487,16 +486,20 @@ class CrystalMap:
         return np.count_nonzero(self.is_in_data)
 
     @property
-    def shape(self) -> tuple:
+    def shape(self) -> tuple[int] | tuple[int, int]:
         """Return the shape of points in data."""
-        nx = None if self.column is None else np.max(self.column) - np.min(self.column)
-        ny = None if self.row is None else np.max(self.row) - np.min(self.row)
-        nz = None if self.layer is None else np.max(self.layer) - np.min(self.layer)
-        if self._indexing_order == "xyz":
-            all_n = [nx, ny, nz]
-        else:
-            all_n = [nz, ny, nx]
-        return tuple(int(n + 1) for n in all_n if n is not None)
+        # nx = None if self.column is None else np.max(self.column) - np.min(self.column)
+        # ny = None if self.row is None else np.max(self.row) - np.min(self.row)
+        # nz = None if self.layer is None else np.max(self.layer) - np.min(self.layer)
+        # if self._indexing_order == "xyz":
+        #     all_n = [nx, ny, nz]
+        # else:
+        #     all_n = [nz, ny, nx]
+        # return tuple(int(n + 1) for n in all_n if n is not None)
+        if self._shape is None:
+            _logger.debug("(Re)computing shape")
+            self._shape = self._data_shape_from_coordinates()
+        return self._shape
 
     @property
     def ndim(self) -> int:
@@ -797,6 +800,8 @@ class CrystalMap:
             # Calls CrystalMapProperties.__setitem__()
             self.prop[name] = value
         else:
+            if name in ["_x", "_y", "_is_in_data"]:
+                self._shape = None
             return object.__setattr__(self, name, value)
 
     def __getitem__(self, key: str | slice | tuple | int | np.ndarray) -> CrystalMap:
@@ -875,9 +880,23 @@ class CrystalMap:
         # apply existing data mask if applicable
         data_to_keep[~self.is_in_data] = False
 
-        # Return a new instance of just the desired subset of data
-        # TODO: create new map
-        return
+            # Insert new (sub)mask into old full mask
+            new_is_in_data = self.is_in_data.reshape(self._original_shape).copy()
+            new_is_in_data[self._data_slices_from_coordinates()] = new_is_in_data_slice
+            new_is_in_data = new_is_in_data.ravel()
+
+        # Insert the mask into a mask with the full map shape, if not
+        # done already
+        if new_is_in_data is None:
+            new_is_in_data = np.zeros_like(self.is_in_data, dtype=bool)  # 1D
+            new_is_in_data[self.id] = is_in_data
+
+        # Return a copy with all attributes shallow except for the mask
+        new_map = copy.copy(self)
+        new_map.is_in_data = new_is_in_data
+        new_map._shape = None
+
+        return new_map
 
     def __repr__(self) -> str:
         """Return a nice representation of the data."""

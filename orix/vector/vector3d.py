@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -408,17 +408,17 @@ class Vector3d(Object3d):
     @classmethod
     def xvector(cls) -> Vector3d:
         """Return a unit vector in the x-direction."""
-        return cls((1, 0, 0))
+        return cls((1.0, 0.0, 0.0))
 
     @classmethod
     def yvector(cls) -> Vector3d:
         """Return a unit vector in the y-direction."""
-        return cls((0, 1, 0))
+        return cls((0.0, 1.0, 0.0))
 
     @classmethod
     def zvector(cls) -> Vector3d:
         """Return a unit vector in the z-direction."""
-        return cls((0, 0, 1))
+        return cls((0.0, 0.0, 1.0))
 
     @classmethod
     def from_path_ends(
