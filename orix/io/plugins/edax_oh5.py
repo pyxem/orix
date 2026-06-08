@@ -17,7 +17,7 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Reader of a crystal map from Bruker's h5ebsd file format."""
+"""Reader of a crystal map from EDAX's (OIM) .oh5 file format."""
 
 from diffpy.structure import Atom, Lattice, Structure
 import numpy as np
@@ -29,15 +29,15 @@ from orix.quaternion import Rotation
 __all__ = ["file_reader"]
 
 # Plugin description
-format_name = "bruker_h5ebsd"
-manufacturer = "Bruker"
-file_extensions = ["h5", "hdf5", "h5ebsd"]
+format_name = "edax_oh5"
+manufacturer = "EDAX"
+file_extensions = ["oh5"]
 writes = False
 writes_this = CrystalMap
 
 
 def file_reader(filename: str, **kwargs) -> CrystalMap:
-    """Return a crystal map from a file in Bruker Nano's dot product
+    """Return a crystal map from a file in EDAX OIM's oh5
     file format.
 
     Parameters
@@ -52,7 +52,7 @@ def file_reader(filename: str, **kwargs) -> CrystalMap:
     xmap
         Crystal map.
     """
-    f = BrukerH5ebsdFile(filename)
+    f = EDAXH5ebsdFile(filename)
     f.open(**kwargs)
     f.set_scan_group_names()
     f.set_sem_group_file_location()
@@ -68,40 +68,29 @@ def file_reader(filename: str, **kwargs) -> CrystalMap:
     return f.get_crystal_map()
 
 
-class BrukerH5ebsdFile(H5ebsdFile):
-    """Bruker Nano's HDF5 file in the h5ebsd format containing
+class EDAXH5ebsdFile(H5ebsdFile):
+    """EDAX OIM's HDF5 file in the oh5 format containing
     orientation data from Hough indexing, to be returned as a crystal
     map.
     """
 
-    dont_read_in_data = ["RawPatterns"]
+    dont_read_in_data = []
     dont_read_in_header = [
-        "CameraTilt",
-        "Coordinate Systems",
-        "DetectorFullHeightMicrons",
-        "DetectorFullWidthMicrons",
-        "KV",
-        "MADMax",
-        "Magnification",
-        "MapStepFactor",
-        "MaxRadonBandCount",
-        "MinIndexedBands",
-        "NPoints",
-        "OriginalFile",
-        "PatternHeight",
-        "PatternWidth",
-        "PixelByteCount",
-        "SEPixelSizeX",
-        "SEPixelSizeY",
-        "SampleTilt",
-        "TopClip",
-        "UnClippedPatternHeight",
-        "WD",
-        "XSTEP",
-        "YSTEP",
-        "ZOffset",
+        "Camera Azimuthal Angle",
+        "Camera Diameter",
+        "Camera Elevation Angle",
+        "Comments",
+        "Coordinate System",
+        "Dictionary Pattern Count",
+        "File Index",
+        "Hough Details",
+        "Notes",
+        "Pattern Center Calibration",
+        "Sample Tilt",
+        "Voltage[KV]",
+        "Working Distance",
     ]
-    dont_read_in_sem = ["ZOffset"]
+    dont_read_in_sem = []
     is_rectangular = True
     map_cols = None
     map_rows = None
@@ -114,7 +103,7 @@ class BrukerH5ebsdFile(H5ebsdFile):
         -------
         can_read
         """
-        square_grid = self.header_dict["Grid Type"] == "isometric"
+        square_grid = self.header_dict["Grid Type"] == "SqrGrid"
         return self.is_rectangular * square_grid
 
     def final_preparations(self):
@@ -153,13 +142,13 @@ class BrukerH5ebsdFile(H5ebsdFile):
         location = None
         for pp in potential_places:
             if "SEM" in self.file[pp].keys():
-                location = pp + "/SEM"
+                location = pp + "/SEM-PRIAS Images"
         self.sem_group_location = location
 
     def set_coordinate_arrays(self):
         """Set coordinate arrays from dictionaries."""
-        y = self.properties["YSAMPLE"]
-        x = self.properties["XSAMPLE"]
+        y = self.properties["y"]
+        x = self.properties["x"]
         self.y = y - np.min(y)
         self.x = x - np.min(x)
 
@@ -173,40 +162,13 @@ class BrukerH5ebsdFile(H5ebsdFile):
         self.final_preparations()
 
     def set_map_shape(self):
-        """Set the number of map rows and columns.
-
-        Also try to set the map row and column position of each point in
-        the data arrays, if the data sets 'Scan 1/SEM/IY' and
-        'Scan 1/SEM/IX' are present. If not, it is assumed that the
-        order of the data points is correct, and can be reshaped into a
+        """Set the number of map rows and columns. It is assumed that the
+        order of the data points is correct and can be reshaped into a
         2D map without changing the order.
         """
-        sd = self.sem_dict
-        potential_names_y = ["IY", "SEM IY"]
-        potential_names_x = ["IX", "SEM IX"]
-        match_y = None
-        match_x = None
-        for key in sd.keys():
-            if key in potential_names_y:
-                match_y = key
-            elif key in potential_names_x:
-                match_x = key
-        if match_y is not None and match_x is not None:
-            map_rows = self.sem_dict[match_y]
-            map_cols = self.sem_dict[match_x]
 
-            # If False, we cannot read the data
-            self.is_rectangular = _roi_is_rectangular(map_rows, map_cols)
-
-            min_r, max_r = np.min(map_rows), np.max(map_rows)
-            min_c, max_c = np.min(map_cols), np.max(map_cols)
-            nrows = max_r - min_r + 1
-            ncols = max_c - min_c + 1
-            self.map_rows = map_rows - min_r
-            self.map_cols = map_cols - min_c
-        else:
-            nrows = self.header_dict["NROWS"]
-            ncols = self.header_dict["NCOLS"]
+        nrows = self.header_dict["nRows"]
+        ncols = self.header_dict["nColumns"]
         self.map_shape = (nrows, ncols)
 
     def set_phase_id(self):
@@ -215,7 +177,7 @@ class BrukerH5ebsdFile(H5ebsdFile):
 
     def set_phase_list(self):
         """Set phase list from dictionaries."""
-        phase_list = dict2phaselist(self.header_dict["Phases"])
+        phase_list = dict2phaselist(self.header_dict["Phase"])
         phase_id = self.phase_id
         if 0 in phase_id:
             phase_list.add_not_indexed()
@@ -226,31 +188,22 @@ class BrukerH5ebsdFile(H5ebsdFile):
     def set_properties(self):
         """Set dictionary of property arrays from dictionaries."""
         self.properties = dict(
-            PCX=self.data_dict["PCX"],
-            PCY=self.data_dict["PCY"],
-            DD=self.data_dict["DD"],
-            MAD=self.data_dict["MAD"],
-            MADPhase=self.data_dict["MADPhase"],
-            NIndexedBands=self.data_dict["NIndexedBands"],
-            RadonBandCount=self.data_dict["RadonBandCount"],
-            RadonQuality=self.data_dict["RadonQuality"],
-            XBEAM=self.data_dict["X BEAM"],
-            YBEAM=self.data_dict["Y BEAM"],
-            XSAMPLE=self.data_dict["X SAMPLE"],
-            YSAMPLE=self.data_dict["Y SAMPLE"],
-            ZSAMPLE=self.data_dict["Z SAMPLE"],
+            ci=self.data_dict["CI"],
+            fit=self.data_dict["Fit"],
+            iq=self.data_dict["IQ"],
+            y=self.data_dict["Y Position"],
+            x=self.data_dict["X Position"],
         )
 
     def set_rotations(self):
-        """Set rotations from dictionaries."""
+        """Set rotations from dictionaries. EDAX saves angles in radians."""
         dd = self.data_dict
-        euler = np.column_stack([dd["phi1"], dd["PHI"], dd["phi2"]])
-        euler = np.deg2rad(euler)
+        euler = np.column_stack([dd["Phi1"], dd["Phi"], dd["Phi2"]])
         self.rotations = Rotation.from_euler(euler)
 
 
 def _roi_is_rectangular(map_rows: np.ndarray, map_cols: np.ndarray) -> bool:
-    """Return whether points in a map from Bruker Nano's h5ebsd file
+    """Return whether points in a map from EDAX OIM's oh5 file
     are in a rectangle.
 
     Parameters
@@ -274,7 +227,7 @@ def _roi_is_rectangular(map_rows: np.ndarray, map_cols: np.ndarray) -> bool:
 
 def dict2phaselist(dictionary: dict) -> PhaseList:
     """Return a list of phases from a dictionary with keys and values
-    from a Bruker Nano h5ebsd file.
+    from an EDAX oh5 file.
 
     Parameters
     ----------
@@ -288,8 +241,8 @@ def dict2phaselist(dictionary: dict) -> PhaseList:
 
 
 def dict2phase(dictionary: dict) -> Phase:
-    """Return a phase from a dictionary with keys and values from a
-    Bruker Nano h5ebsd file.
+    """Return a phase from a dictionary with keys and values from an EDAX oh5
+    file.
 
     Parameters
     ----------
@@ -300,20 +253,33 @@ def dict2phase(dictionary: dict) -> Phase:
     phase
     """
     lattice_dict = dict(
-        zip(["a", "b", "c", "alpha", "beta", "gamma"], dictionary["LatticeConstants"])
+        zip(
+            ["a", "b", "c", "alpha", "beta", "gamma"],
+            [
+                dictionary["Lattice Constant a"],
+                dictionary["Lattice Constant b"],
+                dictionary["Lattice Constant c"],
+                dictionary["Lattice Constant alpha"],
+                dictionary["Lattice Constant beta"],
+                dictionary["Lattice Constant gamma"],
+            ],
+        )
     )
     lattice = Lattice(**lattice_dict)
-    atoms = [str2atom(atom) for atom in dictionary["AtomPositions"].values()]
-    structure = Structure(lattice=lattice, atoms=atoms)
-    structure.title = dictionary["Name"]
+    # atoms = [str2atom(atom) for atom in dictionary["AtomPositions"].values()]
+    structure = Structure(lattice=lattice)  # , atoms=atoms)
+    structure.title = dictionary["MaterialName"]
+    laue_group = str(dictionary["LGsymID"])
     return Phase(
-        name=dictionary["Name"], space_group=int(dictionary["IT"]), structure=structure
+        name=dictionary["MaterialName"],
+        point_group=_REVERSE_EDAX_POINT_GROUP_ALIASES.get(laue_group, laue_group)[0],
+        structure=structure,
     )
 
 
 def str2atom(atom_positions: str) -> Atom:
-    """Return an atom from a string in the format used by Bruker Nano
-    in their h5ebsd file.
+    """Return an atom from a string in the format used by EDAX
+    in their oh5 file.
 
     Parameters
     ----------
@@ -329,3 +295,18 @@ def str2atom(atom_positions: str) -> Atom:
         xyz=np.array(atom_positions[1:4]),
         occupancy=int(atom_positions[-1]),
     )
+
+
+# Point group alias mapping. This is needed because in EDAX TSL OIM
+# Analysis 7.2, e.g. point group 432 is entered as 43.
+# Used when reading a phase's point group from an EDAX OH5 file header
+_REVERSE_EDAX_POINT_GROUP_ALIASES = {
+    "20": ["121"],
+    "2": ["2/m"],
+    "22": ["222"],
+    "42": ["422"],
+    "32": ["321"],
+    "62": ["622"],
+    "43": ["432"],
+    "m3m": ["m-3m"],
+}
