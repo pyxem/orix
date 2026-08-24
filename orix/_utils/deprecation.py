@@ -33,7 +33,7 @@ class deprecated:
 
     Adapted from
     `scikit-image
-    <https://github.com/scikit-image/scikit-image/blob/main/skimage/_shared/utils.py#L297>`_
+    <https://github.com/scikit-image/scikit-image/blob/b118e596933885c83fbe26145a74c3cc34a5d422/src/skimage/_shared/utils.py#L207>
     and `matplotlib
     <https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/_api/deprecation.py#L122>`_.
     """
