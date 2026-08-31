@@ -36,11 +36,13 @@ from orix.quaternion.symmetry import (
     C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
     T, Th, O, Td, Oh,  # cubic
-    spacegroup2pointgroup_dict, _groups, _get_unique_symmetry_elements
+    _symm_lists, _get_unique_symmetry_elements, spacegroup2pointgroup_dict
 )
 # isort: on
 # fmt: on
 from orix.vector import Vector3d
+
+_groups = _symm_lists["permutations"]
 
 
 @pytest.fixture(params=[(1, 2, 3)])
@@ -278,8 +280,8 @@ def test_is_proper(symmetry, expected):
     "symmetry, expected",
     [
         (C1, [C1]),
-        (D2, [C1, C2x, C2y, C2z, D2]),
-        (C6v, [C1, C2z, Csx, Csy, C2v, C3, C3v, C6, C6v]),
+        (D2, [C1, C2, C2x, C2y, D2]),
+        (C6v, [C1, C2, Csx, Csy, C2v, C3, C3v, C6, C6v]),
     ],
 )
 def test_subgroups(symmetry, expected):
@@ -290,8 +292,8 @@ def test_subgroups(symmetry, expected):
     "symmetry, expected",
     [
         (C1, [C1]),
-        (D2, [C1, C2x, C2y, C2z, D2]),
-        (C6v, [C1, C2z, C3, C6]),
+        (D2, [C1, C2x, C2y, C2, D2]),
+        (C6v, [C1, C2, C3, C6]),
     ],
 )
 def test_proper_subgroups(symmetry, expected):
@@ -921,7 +923,7 @@ class TestEulerFundamentalRegion:
         # All point groups provide a region
         for pg in _groups:
             angles = pg.euler_fundamental_region
-            if pg.name in ["1", "-1", "2", "m11", "1m1", "11m"]:
+            if pg.name in ["1", "-1", "m", "m11", "1m1", "11m"]:
                 assert np.allclose(angles, (360, 180, 360))
             else:
                 assert not np.allclose(angles, (360, 180, 360))

@@ -22,12 +22,11 @@ import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation as SciPyRotation
 
-from orix._utils.constants import VisibleDeprecationWarning
 from orix.crystal_map import Phase
 from orix.quaternion import Misorientation
 
 # isort: off
-from orix.quaternion.symmetry import C1, D6, Oh, _groups
+from orix.quaternion.symmetry import C1, D6, Oh, _symm_lists
 
 # isort: on
 from orix.vector import Miller, Vector3d
@@ -84,7 +83,7 @@ class TestMisorientation:
         assert np.allclose(angle1, angle2)
 
     # Do not test Oh, as this takes ~4 GB
-    @pytest.mark.parametrize("symmetry", _groups[:-1])
+    @pytest.mark.parametrize("symmetry", _symm_lists["groups"][:-1])
     def test_get_distance_matrix_equal_explicit_calculation(self, symmetry):
         mori = Misorientation.random(5)
         mori.symmetry = (symmetry, symmetry)
@@ -185,16 +184,3 @@ class TestMisorientation:
 
         M3 = Misorientation.random(symmetry=(Oh, D6))
         assert M3.symmetry == (Oh, D6)
-
-    # TODO: Remove after v0.15.0 is released
-    def test_map_into_symmetry_reduced_zone_deprecation_message(self):
-        M = Misorientation.random()
-        M.symmetry = (Oh, Oh)
-        with pytest.warns(
-            VisibleDeprecationWarning,
-            match=(
-                r"Function `map_into_symmetry_reduced_zone\(\)` is deprecated and will "
-                r"be removed in version 0.15. Use `reduce\(\)` instead."
-            ),
-        ):
-            _ = M.map_into_symmetry_reduced_zone()
