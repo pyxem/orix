@@ -11,6 +11,8 @@ Unreleased
 
 Added
 -----
+- `orix.vector.Vector3d` now includes a `tensor` and 'tensor_outer` functions for
+  calculating tensor products.
 - Mean quaternion calculation now allows weighting each quaternion.
 - Function ``get_asymmetric_groups()`` to return two point groups for creating the
   fundamental zone for a set of two point groups.

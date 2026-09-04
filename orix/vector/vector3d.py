@@ -608,6 +608,97 @@ class Vector3d(Object3d):
         """
         return other.__class__(np.cross(self.data, other.data))
 
+    def tensor(self, other: Vector3d) -> Vector3d:
+        r"""Return the tensor product of a vector with another vector.
+
+        For multi-dimensional arrays of vectors, casting is done the
+        same as in  :func:`numpy.einsum`, removing length 1 dimensions
+        and combining dimensions with matching lengths. See Notes
+        section for further details.
+
+        Parameters
+        ----------
+        other
+            Another Vector3d
+        
+        Returns
+        -------
+        tensor
+            Numpy array of tensor products with shape (...,3,3)
+        
+        Notes
+        -----
+
+        The tensor product operation in linear algebra is typically
+        represented by the symbol $\otimes$, and is the linear
+        transformation defined by
+
+        .. math::
+
+            (a \otimes b)c = (b \cdot c)a
+
+        for two 3d vectors in orthonormal space, this can be rewritten
+        in Einstein notation as
+
+        .. math::
+
+            (a \otimes b)c = a_ib_jc_j = b_ic_ia_j = (b \cdot c)a
+        
+        and $\otimes$ can be explicitly rewritten as
+
+        .. math::
+ 
+            (a \otimes b) = [a_1,a_2,a_3] \otimes [b_1, a_2, a_3]
+            =\begin{bmatrix}
+            a_1b_1 & a_1b_2 & a_1b_3 \\
+            a_2b_1 & a_2b_2 & a_2b_3 \\
+            a_3b_1 & a_3b_2 & a_3b_3 \\
+            \end{bmatrix}
+
+        For multi-dimensional arrays, two Vector3ds of length n and m,
+        respectively, would produce an n-by-m array of
+        3-by-3 tensors. However, two Vector3ds of length n would
+        produce a n-by-3-by-3 array, in accortance with numpy's rules
+        for array casting. To force orix to explicitly cast along all
+        dimensions of both Vector3d objects, use 
+        :func:`Vector3d.tensor_outer`.
+    """
+        if not isinstance(other, Vector3d):
+            raise ValueError(f"{other} is not a vector")
+        return np.einsum("...i,...j->...ij", self.data, other.data)
+
+    def tensor_outer(self, other: Vector3d) -> Vector3d:
+        r"""Return the outer tensor product of a vector with another
+        vector.
+
+        Works identically to :func:`Vector3d.tensor`, but applied to
+        every axis regardless of size. See that function for further
+        details.
+
+        Parameters
+        ----------
+        other
+            Another Vector3d
+
+        Returns
+        -------
+        tensor
+            Numpy array of tensor products with shape
+            (self.shape, other.shape, 3, 3)
+        """
+        if not isinstance(other, Vector3d):
+            raise ValueError(f"{other} is not a vector")
+        return np.stack(
+            [
+                np.stack(
+                    [np.tensordot(a, b, axes=-1) for a in self.xyz],
+                    axis=-1,
+                )
+                for b in other.xyz
+            ],
+            axis=-1,
+        )
+
     def angle_with(self, other: Vector3d, degrees: bool = False) -> np.ndarray:
         """Return the angles between these vectors in other vectors.
 
