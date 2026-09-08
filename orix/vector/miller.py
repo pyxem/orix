@@ -366,6 +366,51 @@ class Miller(Vector3d):
         m.coordinate_format = self.coordinate_format
         return m
 
+    def __neg__(self) -> Vector3d:
+        out = self.__class__(-self.data,phase=self.phase)
+        out.coordinate_format = self.coordinate_format
+        return out
+
+    def __add__(
+        self, other: int | float | list | tuple | np.ndarray | Vector3d | Miller
+    ) -> Miller:
+        data = None
+        if isinstance(other, Vector3d):
+            data =self.data + other.data
+        elif isinstance(other, (int, float)):
+            data =self.data + other
+        elif isinstance(other, (list, tuple)):
+            other = np.array(other)
+        if isinstance(other, np.ndarray):
+            data = self.data - other[..., np.newaxis]
+
+        if data is None:
+            return NotImplemented
+
+        out = self.__class__(data, self.phase)
+        out.coordinate_format = self.coordinate_format
+        return out
+
+    def __sub__(
+        self, other: int | float | list | tuple | np.ndarray | Vector3d | Miller
+    ) -> Miller:
+        data = None
+        if isinstance(other, Vector3d):
+            data =self.data - other.data
+        elif isinstance(other, (int, float)):
+            data =self.data - other
+        elif isinstance(other, (list, tuple)):
+            other = np.array(other)
+        if isinstance(other, np.ndarray):
+            data = self.data - other[..., np.newaxis]
+
+        if data is None:
+            return NotImplemented
+
+        out = self.__class__(data, self.phase)
+        out.coordinate_format = self.coordinate_format
+        return out
+
     # ------------------------ Class methods ------------------------- #
 
     @classmethod
