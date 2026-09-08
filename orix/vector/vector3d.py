@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import logging
 from typing import TYPE_CHECKING, Any
 
 import dask.array as da
@@ -35,6 +36,7 @@ from orix.utils import _constants
 if TYPE_CHECKING:  # pragma: no cover
     from orix.quaternion.symmetry import Symmetry
 
+_logger = logging.getLogger(__name__)
 
 class Vector3d(Object3d):
     r"""Three-dimensional vectors.
@@ -244,6 +246,7 @@ class Vector3d(Object3d):
     ) -> Vector3d:
         if isinstance(other, Vector3d):
             # Vector + Miller = Miller
+            self._check_for_symmetry_mismatch(other)
             if hasattr(other,'phase'):
                 return other + self
             else:
@@ -268,6 +271,7 @@ class Vector3d(Object3d):
     ) -> Vector3d:
         if isinstance(other, Vector3d):
             # Vector - Miller = Miller
+            self._check_for_symmetry_mismatch(other)
             if hasattr(other,'phase'):
                 return - other + self
             else:
@@ -330,12 +334,14 @@ class Vector3d(Object3d):
 
     def __eq__(self, other: Any) -> np.ndarray:
         if isinstance(other, Vector3d):
+            self._check_for_symmetry_mismatch(other)
             return np.all(self.data == other.data, axis=-1)
         else:
             return self.data == other
 
     def __hash__(self) -> int:
         return id(self)
+
 
     # ------------------------ Class methods ------------------------- #
 
@@ -1616,3 +1622,16 @@ class Vector3d(Object3d):
         v2 = da.from_array(other.data, chunks=chunks2)
 
         return da.tensordot(v1, v2, axes=(v1.ndim - 1, v2.ndim - 1))
+
+    def _check_for_symmetry_mismatch(self, other) -> None:
+        # NOTE: Vector3D does not include phase information, but some of its
+        # subclasses (most importantly, Miller) do, and adding the checks
+        # in Vector3D allows for checking regardless of order ie, (v+m vs m+v)
+        # as well as identical messages in all subclasses.
+        phase_checks = [hasattr(self,'phase'), hasattr(other,'phase')]
+        if np.all(phase_checks):
+            if self.phase.point_group != other.phase.point_group:
+                _logger.warning("WARNING: Point group mismatch detected between crystal vectors.")
+        elif np.any(phase_checks):
+            _logger.warning("WARNING: This operation is between a crystal and real space vector.")
+        return None
