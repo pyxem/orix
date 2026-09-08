@@ -258,14 +258,8 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __radd__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
-        if isinstance(other, (int, float)):
-            return self.__class__(other + self.data)
-        elif isinstance(other, (list, tuple)):
-            other = np.array(other)
-
-        if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] + self.data)
-
+        if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
+            return self + other
         return NotImplemented
 
     def __sub__(
@@ -284,14 +278,8 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __rsub__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
-        if isinstance(other, (int, float)):
-            return self.__class__(other - self.data)
-        elif isinstance(other, (list, tuple)):
-            other = np.array(other)
-
-        if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] - self.data)
-
+        if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
+            return -self + other
         return NotImplemented
 
     def __mul__(
