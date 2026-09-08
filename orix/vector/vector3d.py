@@ -243,7 +243,11 @@ class Vector3d(Object3d):
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
-            return self.__class__(self.data + other.data)
+            # Vector + Miller = Miller
+            if hasattr(other,'phase'):
+                return other + self
+            else:
+                return self.__class__(self.data + other.data)
         elif isinstance(other, (int, float)):
             return self.__class__(self.data + other)
         elif isinstance(other, (list, tuple)):
@@ -263,7 +267,11 @@ class Vector3d(Object3d):
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
-            return self.__class__(self.data - other.data)
+            # Vector - Miller = Miller
+            if hasattr(other,'phase'):
+                return - other + self
+            else:
+                return self.__class__(self.data - other.data)
         elif isinstance(other, (int, float)):
             return self.__class__(self.data - other)
         elif isinstance(other, (list, tuple)):
@@ -298,14 +306,8 @@ class Vector3d(Object3d):
         return NotImplemented
 
     def __rmul__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
-        if isinstance(other, (int, float)):
-            return self.__class__(other * self.data)
-        elif isinstance(other, (list, tuple)):
-            other = np.array(other)
-
-        if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] * self.data)
-
+        if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
+            return self * other
         return NotImplemented
 
     def __truediv__(
