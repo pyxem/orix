@@ -38,6 +38,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 _logger = logging.getLogger(__name__)
 
+
 class Vector3d(Object3d):
     r"""Three-dimensional vectors.
 
@@ -247,7 +248,7 @@ class Vector3d(Object3d):
         if isinstance(other, Vector3d):
             # Vector + Miller = Miller
             self._check_for_symmetry_mismatch(other)
-            if hasattr(other,'phase'):
+            if hasattr(other, "phase"):
                 return other + self
             else:
                 return self.__class__(self.data + other.data)
@@ -272,8 +273,8 @@ class Vector3d(Object3d):
         if isinstance(other, Vector3d):
             # Vector - Miller = Miller
             self._check_for_symmetry_mismatch(other)
-            if hasattr(other,'phase'):
-                return - other + self
+            if hasattr(other, "phase"):
+                return -other + self
             else:
                 return self.__class__(self.data - other.data)
         elif isinstance(other, (int, float)):
@@ -341,7 +342,6 @@ class Vector3d(Object3d):
 
     def __hash__(self) -> int:
         return id(self)
-
 
     # ------------------------ Class methods ------------------------- #
 
@@ -1628,10 +1628,14 @@ class Vector3d(Object3d):
         # subclasses (most importantly, Miller) do, and adding the checks
         # in Vector3D allows for checking regardless of order ie, (v+m vs m+v)
         # as well as identical messages in all subclasses.
-        phase_checks = [hasattr(self,'phase'), hasattr(other,'phase')]
+        phase_checks = [hasattr(self, "phase"), hasattr(other, "phase")]
         if np.all(phase_checks):
             if self.phase.point_group != other.phase.point_group:
-                _logger.warning("WARNING: Point group mismatch detected between crystal vectors.")
+                _logger.warning(
+                    "WARNING: Point group mismatch detected between crystal vectors."
+                )
         elif np.any(phase_checks):
-            _logger.warning("WARNING: This operation is between a crystal and real space vector.")
+            _logger.warning(
+                "WARNING: This operation is between a crystal and real space vector."
+            )
         return None

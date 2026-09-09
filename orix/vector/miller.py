@@ -367,7 +367,7 @@ class Miller(Vector3d):
         return m
 
     def __neg__(self) -> Vector3d:
-        out = self.__class__(-self.data,phase=self.phase)
+        out = self.__class__(-self.data, phase=self.phase)
         out.coordinate_format = self.coordinate_format
         return out
 
@@ -376,9 +376,9 @@ class Miller(Vector3d):
     ) -> Miller:
         data = None
         if isinstance(other, Vector3d):
-            data =self.data + other.data
+            data = self.data + other.data
         elif isinstance(other, (int, float)):
-            data =self.data + other
+            data = self.data + other
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
         if isinstance(other, np.ndarray):
@@ -396,9 +396,9 @@ class Miller(Vector3d):
     ) -> Miller:
         data = None
         if isinstance(other, Vector3d):
-            data =self.data - other.data
+            data = self.data - other.data
         elif isinstance(other, (int, float)):
-            data =self.data - other
+            data = self.data - other
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
         if isinstance(other, np.ndarray):
