@@ -27,8 +27,8 @@ from orix.quaternion import (
     Misorientation,
     Orientation,
     OrientationRegion,
-    Rotation,
     Quaternion,
+    Rotation,
 )
 from orix.quaternion.symmetry import C1, D6
 
@@ -70,8 +70,8 @@ class TestAxisAnglePlot:
         ax.plot(Q)
 
         # check all '*ions` are transformed to 3D space identically
-        xyz = np.stack([l.get_data_3d() for l in ax.get_lines()])[:,:,0]
-        assert np.allclose(xyz,xyz[0])
+        xyz = np.stack([l.get_data_3d() for l in ax.get_lines()])[:, :, 0]
+        assert np.allclose(xyz, xyz[0])
 
         # check scatter
         ax.scatter(M)
