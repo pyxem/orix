@@ -34,6 +34,8 @@ Fixed
 - Setting a Rotaion will now copy over the proper/improper marker if present.
 - Orientation outer dot product now correctly handles order of axes for
   multi-dimensional orientations.
+- Quaternions plotted in a 3D projection (Axis-Angle, Rodrigues, Homochoric, etc)
+  will now correctly be transformed using the same algorithms as for Rotations.
 
 Deprecated
 ----------
