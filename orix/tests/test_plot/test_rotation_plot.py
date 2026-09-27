@@ -23,7 +23,13 @@ import numpy as np
 import pytest
 
 from orix.plot import AxAnglePlot, HomochoricPlot, RodriguesPlot, RotationPlot
-from orix.quaternion import Misorientation, Orientation, OrientationRegion
+from orix.quaternion import (
+    Misorientation,
+    Orientation,
+    OrientationRegion,
+    Quaternion,
+    Rotation,
+)
 from orix.quaternion.symmetry import C1, D6
 
 
@@ -50,17 +56,34 @@ class TestAxisAnglePlot:
         plt.close("all")
 
     def test_rotation_plot(self):
-        M = Misorientation.random()
-        O = Orientation.random()
+        Q = Quaternion.random()
+        M = Misorientation(Q)
+        O = Orientation(Q)
+        R = Rotation(Q)
         fig = plt.figure()
         ax = fig.add_subplot(projection="axangle", proj_type="ortho")
-        ax.scatter(M)
-        ax.scatter(O)
+
+        # Check ax.plot works
         ax.plot(M)
         ax.plot(O)
+        ax.plot(R)
+        ax.plot(Q)
+
+        # check all '*ions` are transformed to 3D space identically
+        xyz = np.stack([l.get_data_3d() for l in ax.get_lines()])[:, :, 0]
+        assert np.allclose(xyz, xyz[0])
+
+        # check scatter
+        ax.scatter(M)
+        ax.scatter(O)
+        ax.scatter(R)
+        ax.scatter(Q)
+
+        # check wireframe
         ax.plot_wireframe(OrientationRegion.from_symmetry(D6, D6))
 
-        ax.transform(np.asarray([1, 1, 1]))  # Edge case
+        # check Edge case
+        ax.transform(np.asarray([1, 1, 1]))
 
         plt.close("all")
 

@@ -60,7 +60,7 @@ class RotationPlot(Axes3D):
         fundamental_zone
             Orientation region to add to the plot as a wireframe.
         """
-        from orix.quaternion import Misorientation, OrientationRegion, Rotation
+        from orix.quaternion import Misorientation, OrientationRegion, Quaternion
 
         # Project rotations into fundamental zone if necessary
         if isinstance(xs, Misorientation):
@@ -77,7 +77,7 @@ class RotationPlot(Axes3D):
             if not (xs < fundamental_zone).all():
                 xs = xs.reduce()
 
-        if isinstance(xs, Rotation):
+        if isinstance(xs, Quaternion):
             if isinstance(xs, OrientationRegion):
                 xs = xs.get_plot_data()
             transformed = self.transformation_class.from_rotation(xs)
