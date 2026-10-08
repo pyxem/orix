@@ -36,6 +36,8 @@ Fixed
   multi-dimensional orientations.
 - Quaternions plotted in a 3D projection (Axis-Angle, Rodrigues, Homochoric, etc)
   will now correctly be transformed using the same algorithms as for Rotations.
+- orix can be imported with Matplotlib >= 3.12, where ``Axes.ArtistList`` is deprecated
+  in favour of ``matplotlib.artist.ArtistList``.
 
 Deprecated
 ----------
