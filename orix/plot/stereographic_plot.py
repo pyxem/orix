@@ -51,6 +51,11 @@ from orix.projections import InverseStereographicProjection, StereographicProjec
 from orix.vector import FundamentalSector, Vector3d
 from orix.vector.fundamental_sector import _closed_edges_in_hemisphere
 
+try:  # Matplotlib >= 3.12
+    from matplotlib.artist import ArtistList as mArtistList
+except ImportError:  # pragma: no cover
+    mArtistList = maxes.Axes.ArtistList
+
 # This order determines which parts are plotted over other parts
 ZORDER = dict(
     text=6,
@@ -62,10 +67,7 @@ ZORDER = dict(
     mesh=0,
 )
 
-COLLECTION_TYPES = (
-    maxes.Axes.ArtistList[mcollections.Collection]
-    | maxes.Axes.ArtistList[mpatches.Patch]
-)
+COLLECTION_TYPES = mArtistList[mcollections.Collection] | mArtistList[mpatches.Patch]
 HEMISPHERE_VALUES = Literal["upper", "lower"]
 COLORLIKE = str | float | list[str] | list[float] | np.ndarray
 
@@ -1013,12 +1015,12 @@ class StereographicPlot(maxes.Axes):
 
     @overload
     def _get_collection(
-        self, label: str, collections: maxes.Axes.ArtistList[mcollections.Collection]
+        self, label: str, collections: mArtistList[mcollections.Collection]
     ) -> mcollections.Collection: ...  # pragma: no cover
 
     @overload
     def _get_collection(
-        self, label: str, collections: maxes.Axes.ArtistList[mpatches.Patch]
+        self, label: str, collections: mArtistList[mpatches.Patch]
     ) -> mpatches.Patch: ...  # pragma: no cover
 
     @overload
@@ -1057,9 +1059,7 @@ class StereographicPlot(maxes.Axes):
         self,
         label: str,
         collections: (
-            maxes.Axes.ArtistList[mcollections.Collection]
-            | maxes.Axes.ArtistList[mpatches.Patch]
-            | None
+            mArtistList[mcollections.Collection] | mArtistList[mpatches.Patch] | None
         ) = None,
     ) -> tuple[bool, int]:
         if collections is None:
