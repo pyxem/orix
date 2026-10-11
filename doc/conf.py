@@ -86,7 +86,7 @@ intersphinx_mapping = {
     "pytest": ("https://docs.pytest.org/en/stable", None),
     "pytest-xdist": ("https://pytest-xdist.readthedocs.io/en/stable", None),
     "python": ("https://docs.python.org/3", None),
-    "pyxem": ("https://www.pyxem.org/en/latest", None),
+    "pyxem": ("https://pyxem.readthedocs.io/en/latest", None),
     "readthedocs": ("https://docs.readthedocs.com/platform/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
@@ -348,6 +348,13 @@ sphinx_gallery_conf = {
     "backreferences_dir": "reference/generated",
     "doc_module": ("orix",),
     "examples_dirs": "../examples",
+    # https://sphinx-gallery.github.io/stable/configuration.html#exclude-implicit-doc
+    # `<obj>.symmetry` resolves to a spurious base-class candidate
+    # `orix.Quaternion.symmetry` (`Quaternion` has no `symmetry`). It
+    # collides with the real `orix.quaternion.Symmetry` backreference on
+    # case-insensitive file systems (macOS, Windows), merging the two
+    # mini-galleries.
+    "exclude_implicit_doc": {r"^orix\.Quaternion\.symmetry$"},
     "filename_pattern": "^((?!sgskip).)*$",
     "gallery_dirs": "examples",
     "reference_url": {"orix": None},

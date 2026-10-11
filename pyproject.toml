@@ -108,6 +108,8 @@ doctest_optionflags = "NORMALIZE_WHITESPACE"
 filterwarnings = [
     "ignore:Deprecated call to `pkg_resources:DeprecationWarning",
     "ignore:pkg_resources is deprecated as an API:DeprecationWarning",
+    # TODO: Remove once 0.16.0 is released
+    "ignore:Argument `s:numpy.exceptions.VisibleDeprecationWarning",
 ]
 markers = [
     "slow: mark test as slow",

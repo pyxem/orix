@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -21,8 +21,8 @@ import warnings
 
 import pytest
 
-from orix._utils.constants import VisibleDeprecationWarning
-from orix._utils.deprecation import deprecated, deprecated_argument
+from orix.utils._constants import VisibleDeprecationWarning
+from orix.utils._deprecation import deprecated, deprecated_argument
 
 
 class TestDeprecateFunctionOrProperty:

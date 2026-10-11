@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -24,7 +24,7 @@
 import numba as nb
 import numpy as np
 
-from orix._utils import constants
+from orix.utils import _constants
 
 
 @nb.njit("int64(float64[:])", cache=True, fastmath=True, nogil=True)
@@ -592,10 +592,10 @@ def qu2ax_single(qu: np.ndarray) -> np.ndarray:
     """
     omega = 2 * np.arccos(qu[0])
 
-    if omega < constants.eps9:
+    if omega < _constants.eps9:
         return np.array([0, 0, 1, 0], dtype=np.float64)
 
-    if np.abs(qu[0]) < constants.eps9:
+    if np.abs(qu[0]) < _constants.eps9:
         return np.array([qu[1], qu[2], qu[3], np.pi], dtype=np.float64)
 
     s = np.sqrt(np.sum(np.square(qu[1:])))
@@ -909,26 +909,26 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
 
     qu = np.zeros(4, dtype=np.float64)
 
-    if a_almost < constants.eps9:
+    if a_almost < _constants.eps9:
         qu[0] = 0
     else:
         qu[0] = 0.5 * np.sqrt(a_almost)
 
-    if b_almost < constants.eps9:
+    if b_almost < _constants.eps9:
         qu[1] = 0
     elif om[2, 1] < om[1, 2]:
         qu[1] = -0.5 * np.sqrt(b_almost)
     else:
         qu[1] = 0.5 * np.sqrt(b_almost)
 
-    if c_almost < constants.eps9:
+    if c_almost < _constants.eps9:
         qu[2] = 0
     elif om[0, 2] < om[2, 0]:
         qu[2] = -0.5 * np.sqrt(c_almost)
     else:
         qu[2] = 0.5 * np.sqrt(c_almost)
 
-    if d_almost < constants.eps9:
+    if d_almost < _constants.eps9:
         qu[3] = 0
     elif om[1, 0] < om[0, 1]:
         qu[3] = -0.5 * np.sqrt(d_almost)
@@ -1011,8 +1011,8 @@ def qu2eu_single(qu: np.ndarray) -> np.ndarray:
     q_bc = (qu[1] * qu[1]) + (qu[2] * qu[2])
     chi = np.sqrt(q_ad * q_bc)
 
-    if chi < constants.eps9:
-        if q_bc < constants.eps9:
+    if chi < _constants.eps9:
+        if q_bc < _constants.eps9:
             a = -2 * qu[0] * qu[3]
             b = qu[0] * qu[0] - qu[3] * qu[3]
         else:
@@ -1031,7 +1031,7 @@ def qu2eu_single(qu: np.ndarray) -> np.ndarray:
     eu[1] = np.arctan2(2 * chi, q_ad - q_bc)
     eu[2] = np.arctan2(eu_2a, eu_2b)
 
-    eu[np.abs(eu) < constants.eps9] = 0
+    eu[np.abs(eu) < _constants.eps9] = 0
 
     return np.mod(eu, np.pi * 2)
 
@@ -1187,7 +1187,7 @@ def qu2ho_single(qu: np.ndarray) -> np.ndarray:
     """
     omega = 2 * np.arccos(qu[0])
 
-    if omega < constants.eps9:
+    if omega < _constants.eps9:
         return np.zeros(3, dtype=np.float64)
 
     s = np.sqrt(np.sum(np.square(qu[1:])))

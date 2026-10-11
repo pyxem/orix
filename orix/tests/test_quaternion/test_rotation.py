@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -411,6 +411,15 @@ def test_dot_outer_rot(rotation, improper, rotation_2, improper_2, expected):
     cosines = rotation.dot_outer(rotation_2)
     assert cosines.shape == rotation.shape + rotation_2.shape
     assert np.allclose(cosines.data, expected, atol=1e-4)
+
+
+def test_dot_outer_shape():
+    rot1 = Rotation.random(shape=(2, 3, 4))
+    rot2 = Rotation.random(shape=(5, 6))
+    dp12 = rot1.dot_outer(rot2)
+    assert dp12.shape == (2, 3, 4, 5, 6)
+    # TODO: Remove abs() once a Rotation.dot() handling handedness
+    assert np.isclose(dp12[1, 2, 3, 4, 5], abs(rot1[1, 2, 3].dot(rot2[4, 5])))
 
 
 @pytest.mark.parametrize(

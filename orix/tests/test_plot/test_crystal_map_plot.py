@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -24,9 +24,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix._utils.constants import installed
 from orix.crystal_map import CrystalMap, PhaseList
 from orix.plot import CrystalMapPlot
+from orix.utils._constants import installed
 
 # Can be easily changed in the future
 PLOT_MAP = "plot_map"

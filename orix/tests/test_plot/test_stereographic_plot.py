@@ -345,7 +345,7 @@ class TestStereographicPlot:
 
         plt.close("all")
 
-    def test_empty_scatter(self):
+    def test_out_of_range_scatter(self):
         v = Vector3d([0, 0, 1])
 
         _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
@@ -355,6 +355,22 @@ class TestStereographicPlot:
         ax.scatter(v)
         ax.text(v, s="1")
         assert len(ax.texts) == 0
+
+        plt.close("all")
+
+    def test_empty_scatter(self):
+        v = Vector3d.empty()
+
+        _, ax = plt.subplots(subplot_kw=dict(projection=PROJ_NAME))
+        ax.hemisphere = "lower"
+
+        # Not plotted since the vector  is empty
+        ax.scatter(v)
+        ax.text(v, s="1")
+        assert len(ax.texts) == 0
+
+        # Check a stereographic plot was still made
+        assert ax._has_collection("_stereographic_polar_grid")[0]
 
         plt.close("all")
 

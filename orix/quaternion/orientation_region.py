@@ -23,22 +23,62 @@ import itertools
 
 import numpy as np
 
-from orix._utils import constants
 from orix.quaternion.quaternion import Quaternion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import C1, Symmetry, get_distinguished_points
+from orix.utils import _constants
+from orix.utils._deprecation import deprecated, deprecated_argument
 from orix.vector.neo_euler import Rodrigues
 
 
-def _get_large_cell_normals(s1, s2):
-    dp = get_distinguished_points(s1, s2)
+def _get_large_cell_normals(
+    start: Symmetry = C1,
+    end: Symmetry = C1,
+    distinguished_points: Rotation | None = None,
+) -> Rotation:
+    """Return rotations defining fundamental zone bounds due to
+    symmetry.
 
-    if dp.size == 0:
+    Given two symmetries, calculates every unique rotation equivalent
+    to the identity, called "distinguished points". A Voronoi
+    tesselation is then done to define the bounds within which all
+    rotations are closer to identity than any distinguished points.
+
+    Instead of calculating them, a set of distinguished points can
+    also be added by the user, in which case the symmetry arguments
+    will be ignored. This is useful for defining non-crystallographic
+    orientation regions.
+
+    Parameters
+    ----------
+    start
+        Starting symmetry.
+    end
+        Ending symmetry.
+    distinguished_points
+        Set of rotations that are equivalent to identity. If given,
+        *start* and *end* will be ignored, and the normals will be
+        defined via tesselation of these points.
+
+    Returns
+    -------
+    normals
+        Rotation normals defining the fundamental zone bounds for the
+        given symmetries.
+    """
+    if distinguished_points is None:
+        distinguished_points = get_distinguished_points(s1=start, s2=end)
+
+    # Remove points with a rotation angle of zero (the identity and its
+    # antipodal), which would produce an infinite Rodrigues vector
+    distinguished_points = distinguished_points[distinguished_points.angle > 0]
+
+    if distinguished_points.size == 0:
         return Rotation.empty()
 
-    normals = Rodrigues.zero(dp.shape + (2,))
-    planes1 = dp.axis * np.tan(dp.angle / 4)
-    planes2 = -dp.axis * np.tan(dp.angle / 4) ** -1
+    normals = Rodrigues.zero(distinguished_points.shape + (2,))
+    planes1 = distinguished_points.axis * np.tan(distinguished_points.angle / 4)
+    planes2 = -distinguished_points.axis * np.tan(distinguished_points.angle / 4) ** -1
     planes2.data[np.isnan(planes2.data)] = 0
     normals[:, 0] = planes1
     normals[:, 1] = planes2
@@ -56,6 +96,8 @@ def _get_large_cell_normals(s1, s2):
     return normals
 
 
+# TODO: Remove once 0.16.0 is released
+@deprecated(since="0.16.0", removal="0.17.0", alternative="get_asymmetric_groups")
 def get_proper_groups(Gl: Symmetry, Gr: Symmetry) -> tuple[Symmetry, Symmetry]:
     """Return the appropriate groups for the asymmetric domain
     calculation.
@@ -83,44 +125,100 @@ def get_proper_groups(Gl: Symmetry, Gr: Symmetry) -> tuple[Symmetry, Symmetry]:
         special consideration is needed which is not yet implemented in
         orix.
     """
-    if Gl.is_proper and Gr.is_proper:
-        return Gl, Gr
-    elif Gl.is_proper and not Gr.is_proper:
-        return Gl, Gr.proper_subgroup
-    elif not Gl.is_proper and Gr.is_proper:
-        return Gl.proper_subgroup, Gr
+    return get_asymmetric_groups(start=Gl, end=Gr)
+
+
+def get_asymmetric_groups(start: Symmetry, end: Symmetry) -> tuple[Symmetry, Symmetry]:
+    """Return groups for defining a fundamental zone (orientation
+    region) for (mis)orientations :cite:`morawiec2004orientations`.
+
+    Parameters
+    ----------
+    start
+        Initial point group, C1 for orientations.
+    end
+        Ending point group.
+
+    Returns
+    -------
+    start
+        Initial proper, inversion, or laue subgroup as appropriate.
+    end
+        Final proper, inversion, or laue subgroup as appropriate.
+
+    See Also
+    --------
+    :meth:`~orix.quaternion.OrientationRegion.from_symmetry`
+
+    Notes
+    -----
+    Parametrization of the fundamental zone follows section 6.3.1 in
+    :cite:`morawiec2004orientations`. The output can be used with
+    :meth:`~orix.quaternion.OrientationRegion.from_symmetry` to
+    reproduce results from that textbook.
+
+    Because this method intentionally omits misorientation symmetries
+    where combinations of rotoinversions create an ambiguous
+    definition of the fundamental zone, orix has instead adopted a
+    method based on :cite:`krakow2017onthree` (see
+    :meth:`~orix.quaternion.OrientationRegion.from_symmetry`). However,
+    asymmetric domains are still used elsewhere, so this function is
+    provided for convenience.
+    """
+    if start.is_proper and end.is_proper:
+        return start, end
+    elif start.is_proper and not end.is_proper:
+        return start, end.proper_subgroup
+    elif not start.is_proper and end.is_proper:
+        return start.proper_subgroup, end
     else:
-        if Gl.contains_inversion and Gr.contains_inversion:
-            return Gl.proper_subgroup, Gr.proper_subgroup
-        elif Gl.contains_inversion and not Gr.contains_inversion:
-            return Gl.proper_subgroup, Gr.laue_proper_subgroup
-        elif not Gl.contains_inversion and Gr.contains_inversion:
-            return Gl.laue_proper_subgroup, Gr.proper_subgroup
+        if start.contains_inversion and end.contains_inversion:
+            return start.proper_subgroup, end.proper_subgroup
+        elif start.contains_inversion and not end.contains_inversion:
+            return start.proper_subgroup, end.laue_proper_subgroup
+        elif not start.contains_inversion and end.contains_inversion:
+            return start.laue_proper_subgroup, end.proper_subgroup
         else:
-            raise NotImplementedError(
-                "Both groups are improper, " "and do not contain inversion."
-            )
+            return start.laue_proper_subgroup, end.laue_proper_subgroup
 
 
 class OrientationRegion(Rotation):
-    """Some subset of the complete space of orientations.
+    """A subset of rotation space.
 
-    The complete orientation space represents every possible orientation
-    of an object. The whole space is not always needed, for example if
-    the orientation of an object is constrained or (most commonly) if
-    the object is symmetrical. In this case, the space can be segmented
-    using sets of Rotations representing boundaries in the space. This
-    is clearest in the Rodrigues parametrisation, where the boundaries
-    are planes, such as the example here: the asymmetric domain of an
-    adjusted 432 symmetry.
+    The complete set of all possible rigid body rotations is called
+    *SO(3)*. It can be thought of as half the quaternion unit sphere,
+    the entirety of Rodrigues space, the set of all 3x3 matrices with a
+    determinant of 1, or various other descriptors based on the
+    application.
+
+    Sometimes, this whole space is not needed, for example if the
+    orientation of an object is constrained or (most commonly) if the
+    object is symmetrical. In this case, the space can be segmented
+    using sets of rotations representing boundaries in the space. This
+    can be most easily visualized using Rodrigues space, where the
+    boundaries become flat planes normal to the rodrigues vectors of
+    those bounding rotations.
 
     .. image:: /_static/img/orientation-region-Oq.png
        :width: 300px
        :alt: Boundaries of an orientation region in Rodrigues space.
        :align: center
 
-    Rotations or orientations can be inside or outside of an orientation
-    region.
+    Quaternions can then be quickly defined as inside or outside of
+    these regions via a dot product operation.
+
+    Notes
+    -----
+    Notably, these regions are only defined in *SO(3)*, which means they
+    cannot account for improper operations. This is why
+    :meth:`from_symmetry` calculates identical regions for point groups
+    *432* and *m-3m* despite *m-3m* having twice as many distinguished
+    points. This ends up being irrelevant for orientations since any
+    improper operation that places a point within a fundamental zone
+    always has a paired proper operation that returns an identical
+    quaternion, but it can create confusion for misorientations with
+    rotoinversions when we assume an orientation region can uniquely
+    define a true fundamental zone.
     """
 
     # ------------------------ Dunder methods ------------------------ #
@@ -128,38 +226,131 @@ class OrientationRegion(Rotation):
     def __gt__(self, other: OrientationRegion) -> np.ndarray:
         """Overridden greater than method.
 
-        Applying this to an orientation will return only those that lie
-        within the region.
+        Applying this to a rotation will return only those that lie
+        within the region. This operation does not account for
+        inversion.
         """
         c = Quaternion(self).dot_outer(Quaternion(other))
         inside = np.logical_or(
-            np.all(np.greater_equal(c, -constants.eps9), axis=0),
-            np.all(np.less_equal(c, constants.eps9), axis=0),
+            np.all(np.greater_equal(c, -_constants.eps9), axis=0),
+            np.all(np.less_equal(c, _constants.eps9), axis=0),
         )
         return inside
 
     # ------------------------ Class methods ------------------------- #
 
+    # TODO: Remove deprecations and handling once 0.16.0 is released
     @classmethod
-    def from_symmetry(cls, s1: Symmetry, s2: Symmetry = C1) -> OrientationRegion:
-        """Return the set of unique (mis)orientations of a symmetrical
-        object.
+    @deprecated_argument("s1", since="0.16.0", removal="0.17.0", alternative="start")
+    @deprecated_argument("s2", since="0.16.0", removal="0.17.0", alternative="end")
+    def from_symmetry(
+        cls,
+        start: Symmetry = C1,
+        end: Symmetry = C1,
+        s1=None,
+        s2=None,
+    ) -> OrientationRegion:
+        """Return an orientation region for a given symmetry.
 
         Parameters
         ----------
-        s1
-            First symmetry.
-        s2
-            Second symmetry. Default is C1 (the identity).
+        start
+            Initial point group, C1 for passive orientations.
+        end
+            Ending point group.
 
         Returns
         -------
         region
             The orientation region.
+
+        Notes
+        -----
+        These regions are identical to the fundamental zone (FZ) for all
+        orientations and every misorientation where both symmetries are
+        proper and/or centrosymmetric. For all other cases, it is still
+        garunteed to inlude only one unique representation achievable
+        through proper rotations.
+
+        orix follows the FZ definitions described in
+        :cite:`krakow2017onthree`, except when it comes to handling of
+        improper symmetry elements. As described in section 3(b) of that
+        paper, FZ boundaries created by improper rotations represent
+        operations that cannot be achieved through rigid body rotations.
+        As a result, it is often appropriate to ignore these elements, a
+        practice orix also defaults to in operations such as orientation
+        :meth:`~orix.quaternion.Orientation.reduce` and
+        :meth:`~orix.quaternion.Orientation.mean`.
+
+        However, in order to support the rare exceptions where improper
+        FZ boundaries might be relevant (for example, grain boundary
+        misorientation distributions between non-centrosymmetric
+        crystals), orix allows defining FZs that include improper
+        elements for all 1024 possible combinations of two symmetries.
+
+        For 704 combinations, including all orientations and any
+        misorientation with centrosymmetry, this is irrelevant as
+        both methods exactly reduce to the same 121 cases described in
+        :cite:`krakow2017onthree`. For the remaining 320 combinations
+        where one or both point groups contain rotoinversions but are
+        not centrosymmetric (for example, *6mm* --> *6mm*), there are
+        always one and possibly two improper rotations that also map to
+        the FZ but with unique quaternion values, as well as a possible
+        unique pseudo-proper rotation only achievable through two
+        rotoinversions. In these cases, orix will return the FZ bounding
+        the unique proper and pseudo-proper representations.
         """
-        s1, s2 = get_proper_groups(s1, s2)
-        large_cell_normals = _get_large_cell_normals(s1, s2)
-        disjoint = s1 & s2
+        if s1 is not None:
+            start = s1
+        if s2 is not None:
+            end = s2
+
+        # Step 1: fundamental zones are only defined for proper rotations.
+        # add inversion centers where necessary to define as unique as
+        # possible of a fundamental zone, then remove all improper operators.
+
+        # If either symmetry is proper, any improper symmetries of the second
+        # group will fall outside the shared fundamental zone.
+        if not start.is_proper and not end.is_proper:
+            # If both symmetries contain an inversion, all improper operators
+            # will have a paired proper operator. If neither do, the proper
+            # and improper rotations will form two identical but inverted
+            # fundamental zones. Both cases produce one proper, two improper,
+            # and one pseudo-proper fundamental zone, but the first case is
+            # uninteresting because they have idencial quaternion
+            # representations. The second case requires some special
+            # consideration when using fundamental zones for averages or
+            # reducing. Regardless though, for both cases, reducing both
+            # symmetries to their proper subgroup gives the correct
+            # fundamental zone.
+            if start.contains_inversion != end.contains_inversion:
+                # The remaining case is when only one of the two groups
+                # contains an inversion. In this case, the combination of
+                # an inversion and rotation creates a mirror that needs to
+                # be added to the disjoint group. this is easiest done
+                # by converting the inversion-less symmetry to it's laue
+                # symmetry.
+                if not start.contains_inversion:
+                    start = start.laue
+                if not end.contains_inversion:
+                    end = end.laue
+        # With mirrors from inversion/rotoinversion combinations accounted
+        # for, remove all improper operators. The fundamental zone will now be
+        # one of the 61 in Table 3 of krakow2017.
+        start = start.proper_subgroup
+        end = end.proper_subgroup
+
+        # Step 2: define the bounding cells using the distinguished points.
+        # This is equivalent to the voronoi tesselation described in Krakow,
+        # but done in rodrigues space to take advantage of rectilinear planes.
+        dp = get_distinguished_points(start, end)
+        # These large cell normals are always one of the 15 from figure 5 of
+        # krakow2017
+        large_cell_normals = _get_large_cell_normals(dp)
+
+        # Step 3: (only for misorientations) restrict the domain to the
+        # fundamental sector of the pole figure of the shared symmetries.
+        disjoint = start & end
         fz = disjoint.fundamental_zone()
         fz_normals = Rotation.from_axes_angles(fz, np.pi)
         normals = Rotation(np.concatenate([large_cell_normals.data, fz_normals.data]))
@@ -167,6 +358,7 @@ class OrientationRegion(Rotation):
         vertices = region.vertices()
         if vertices.size:
             region = region[np.any(np.isclose(region.dot_outer(vertices), 0), axis=1)]
+
         return region
 
     # --------------------- Other public methods --------------------- #
@@ -223,8 +415,8 @@ class OrientationRegion(Rotation):
         from orix.vector import Vector3d
 
         # Get a grid of vector directions
-        theta = np.linspace(0, 2 * np.pi - constants.eps9, 361)
-        rho = np.linspace(0, np.pi - constants.eps9, 181)
+        theta = np.linspace(0, 2 * np.pi - _constants.eps9, 361)
+        rho = np.linspace(0, np.pi - _constants.eps9, 181)
         theta, rho = np.meshgrid(theta, rho)
         g = Vector3d.from_polar(rho, theta)
 

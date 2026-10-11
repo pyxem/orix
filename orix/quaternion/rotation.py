@@ -143,6 +143,12 @@ class Rotation(Quaternion):
         R.improper = self.improper[key]
         return R
 
+    def __setitem__(self, key, value: np.ndarray) -> None:
+        if isinstance(value, Rotation):
+            self._data[key] = value._data
+        else:
+            self.data[key] = value.data
+
     def __invert__(self) -> Rotation:
         R = super().__invert__()
         R.improper = self.improper

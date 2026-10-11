@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from orix._base import Object3d
-from orix._utils import constants
+from orix.utils import _constants
 
 if TYPE_CHECKING:  # pragma: no cover
     from orix.quaternion.symmetry import Symmetry
@@ -176,10 +176,10 @@ class Vector3d(Object3d):
             (x, y, z) &\rightarrow (-y, x, 0),\\
             (0, 0, z) &\rightarrow (1, 0, 0).
         """
-        if np.any(abs(self.x) < constants.eps12) and np.any(
-            abs(self.y) < constants.eps12
+        if np.any(abs(self.x) < _constants.eps12) and np.any(
+            abs(self.y) < _constants.eps12
         ):
-            if np.any(abs(self.z) < constants.eps12):
+            if np.any(abs(self.z) < _constants.eps12):
                 raise ValueError("No vectors are perpendicular")
             return Vector3d.xvector()
         x = -self.y

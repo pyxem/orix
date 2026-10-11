@@ -88,7 +88,7 @@ def test_quaternion_subclasses_copy_constructor_casting():
         ([(1, 0, 0, 0)], T, [(1, 0, 0, 0)]),
         ([(1, 0, 0, 0)], O, [(1, 0, 0, 0)]),
         # 7pi/12 -C2-> # 7pi/12
-        ([(0.6088, 0, 0, 0.7934)], C2, [(-0.7934, 0, 0, 0.6088)]),
+        ([(0.6088, 0, 0, 0.7934)], C2, [(0.7934, 0, 0, -0.6088)]),
         # 7pi/12 -C3-> # 7pi/12
         ([(0.6088, 0, 0, 0.7934)], C3, [(0.9914, 0, 0, -0.1305)]),
         # 7pi/12 -C4-> # pi/12
@@ -393,9 +393,7 @@ class TestOrientationInitialization:
         assert o1.symmetry.name == "1"
         o2 = Orientation.from_matrix(om, symmetry=Oh)
         o2 = o2.reduce()
-        assert np.allclose(
-            o2.data, np.array([1, 0, 0, 0] * 2 + [-1, 0, 0, 0] * 2).reshape(4, 4)
-        )
+        assert np.allclose(o2.data, np.array([1, 0, 0, 0] * 4).reshape(4, 4))
         assert o2.symmetry.name == "m-3m"
         o3 = Orientation(o1.data, symmetry=Oh)
         o3 = o3.reduce()
@@ -727,8 +725,19 @@ class TestOrientation:
         o2 = o.reduce(verbose=True)
         assert np.allclose(o1.data, o2.data)
 
-    @pytest.mark.flaky(reruns=3)
     def test_reduce_all_groups(self):
+        # In the past, this test has needed a flaky flag.
+        # https://github.com/pyxem/orix/pull/669 should have fixed the
+        # underlying issue, but leaving a note here in case a similar
+        # bug occurs in the future.
+        np.random.seed(2319)
         for group in _symm_lists["groups"]:
             ori = Orientation.random(symmetry=group)
             assert np.isclose(ori.angle_with(ori.reduce()), 0)
+
+    def test_dot_outer_shape(self):
+        ori1 = Orientation.random(shape=(2, 3, 4), symmetry=T)
+        ori2 = Orientation.random(shape=(5, 6), symmetry=D3)
+        dp12 = ori1.dot_outer(ori2)
+        assert dp12.shape == (2, 3, 4, 5, 6)
+        assert np.isclose(dp12[1, 2, 3, 4, 5], ori1[1, 2, 3].dot(ori2[4, 5]))

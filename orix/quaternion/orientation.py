@@ -675,11 +675,15 @@ class Orientation(Misorientation):
         M = other.outer(~self)
         all_dot_products = Rotation(M).dot_outer(symmetry)
         highest_dot_products = np.max(all_dot_products, axis=-1)
-        # need to return axes order so that self is first
-        order = tuple(range(self.ndim, self.ndim + other.ndim)) + tuple(
-            range(self.ndim)
-        )
-        return highest_dot_products.transpose(*order)
+
+        # Need to return axes order so that self is first
+        ndim1 = self.ndim
+        ndim2 = other.ndim
+        order = tuple(range(ndim2, ndim1 + ndim2)) + tuple(range(ndim2))
+
+        highest_dot_products = highest_dot_products.transpose(*order)
+
+        return highest_dot_products
 
     def plot_unit_cell(
         self,
