@@ -25,11 +25,7 @@ from scipy.stats import norm
 
 from orix.crystal_map import Phase
 from orix.quaternion import Misorientation, Quaternion
-
-# isort: off
-from orix.quaternion.symmetry import C1, C2h, C3, C2v, D6, Oh, _groups
-
-# isort: on
+from orix.quaternion.symmetry import C1, C3, D6, C2h, C2v, Oh, _symm_lists
 from orix.vector import Miller, Vector3d
 
 
@@ -84,7 +80,7 @@ class TestMisorientation:
         assert np.allclose(angle1, angle2)
 
     # Do not test Oh, as this takes ~4 GB
-    @pytest.mark.parametrize("symmetry", _groups[:-1])
+    @pytest.mark.parametrize("symmetry", _symm_lists["groups"][:-1])
     def test_get_distance_matrix_equal_explicit_calculation(self, symmetry):
         mori = Misorientation.random(5)
         mori.symmetry = (symmetry, symmetry)

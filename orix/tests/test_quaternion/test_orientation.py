@@ -39,8 +39,7 @@ from orix.quaternion.symmetry import (
     T,
     O,
     Oh,
-    _groups,
-    _proper_groups,
+    _symm_lists,
 )
 
 # isort: on
@@ -274,7 +273,8 @@ def test_symmetry_property_wrong_type_orientation():
 
 
 @pytest.mark.parametrize(
-    "error_type, value", [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)]
+    "error_type, value",
+    [(ValueError, (1, 2)), (ValueError, (C1, 2)), (TypeError, 1)],
 )
 def test_symmetry_property_wrong_type_misorientation(error_type, value):
     mori = Misorientation.random((3, 2))
@@ -682,7 +682,7 @@ class TestOrientation:
                 (-0.3874, 0.6708, -0.1986, 0.6004),
             )
         )
-        for pg in _proper_groups:
+        for pg in _symm_lists["proper_permutations"]:
             ori.symmetry = pg
             region = np.radians(pg.euler_fundamental_region)
             assert np.all(np.max(ori.in_euler_fundamental_region(), axis=0) <= region)
@@ -731,7 +731,7 @@ class TestOrientation:
         # underlying issue, but leaving a note here in case a similar
         # bug occurs in the future.
         np.random.seed(2319)
-        for group in _groups:
+        for group in _symm_lists["groups"]:
             ori = Orientation.random(symmetry=group)
             assert np.isclose(ori.angle_with(ori.reduce()), 0)
 

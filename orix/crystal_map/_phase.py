@@ -42,7 +42,7 @@ from orix.quaternion.symmetry import (
     _EDAX_POINT_GROUP_ALIASES,
     VALID_SYSTEMS,
     Symmetry,
-    _groups,
+    _symm_lists,
     get_point_group,
 )
 from orix.vector.miller import Miller
@@ -244,7 +244,8 @@ class Phase:
                 if value in aliases:
                     value = key
                     break
-            for point_group in _groups:
+            point_groups = _symm_lists["permutations_repeated"]
+            for point_group in point_groups:
                 if value == point_group.name:
                     value = point_group
                     break

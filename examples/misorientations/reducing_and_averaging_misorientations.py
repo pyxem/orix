@@ -123,7 +123,20 @@ _ = ax2.legend(loc="upper center", ncols=3)
 # misorientation groups.
 # This can be verified by comparing the following plots to Figure 5 of the same paper.
 
-name2group = {x.name: x for x in osm._groups}
+groups = [
+    osm.O,
+    osm.T,
+    osm.D6,
+    osm.C6,
+    osm.C4,
+    osm.D4,
+    osm.D3,
+    osm.C3,
+    osm.D2,
+    osm.C2x,
+    osm.C1,
+]
+name2group = {group.name: group for group in groups}
 
 fig3 = plt.figure(figsize=(5, 8), layout="constrained")
 
