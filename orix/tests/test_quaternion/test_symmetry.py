@@ -545,6 +545,11 @@ def test_symmetry_plot_raises(symmetry):
         _ = symmetry.plot(return_figure=True, orientation="test")
 
 
+@pytest.mark.parametrize("symmetry, schoenflies", [(C1, "C1"), (C4, "C4"), (Oh, "Oh")])
+def test_schoenflies_notation(symmetry: Symmetry, schoenflies: str) -> None:
+    assert symmetry.schoenflies == schoenflies
+
+
 class TestFundamentalSectorFromSymmetry:
     """Test the normals, vertices and centers of the fundamental sector
     for all 32 crystallographic point groups.

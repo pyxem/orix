@@ -73,6 +73,11 @@ class Symmetry(Rotation):
     # -------------------------- Properties -------------------------- #
 
     @property
+    def schoenflies(self) -> str:
+        """Return the Schoenflies notation name, if set."""
+        return self._schoenflies
+
+    @property
     def order(self) -> int:
         """Return the number of elements of the group."""
         return self.size
