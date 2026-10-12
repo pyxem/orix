@@ -660,8 +660,7 @@ Ci.improper = [0, 1]
 Ci.name = "-1"
 Ci._schoenflies = "Ci"
 # Include redundant point group S2 == Ci
-S2 = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)])
-S2.improper = [0, 1]
+S2 = Symmetry(Ci)
 S2.name = "-1"
 S2._schoenflies = "S2"
 
