@@ -91,15 +91,22 @@ class Symmetry(Rotation):
     def subgroups(self) -> list[Symmetry]:
         """Return all the crystal symmetry subgroups.
 
-        There are 32 distinct crystal groups possible for a infinitely
-        repeating lattice of unit cells. These groups decompose into 37
-        unique subgroups, which include the rotations and rotoinversions
-        around non-primary axes. ie, a two-fold rotation around the
-        z axis (C2z) is considered distinct form a two-fold rotation
-        around the x axis (C2x).
+        There are 32 distinct crystallographic point groups possible for
+        an infinitely repeating lattice of unit cells. These groups
+        decompose into 37 unique subgroups, which include the rotations
+        and rotoinversions around non-primary axes. For example, a
+        two-fold rotation around the z axis (*C2z*) is considered
+        distinct from a two-fold rotation around the x axis (*C2x*).
 
-        This function returns the subset of those 37 groups that are
+        This attribute returns the subset of those 37 groups that are
         fully contained within this symmetry.
+
+        See Also
+        --------
+        proper_subgroups
+        proper_subgroup
+        laue
+        laue_proper_subgroup
         """
         groups = _symm_lists["permutations"]
         return [g for g in groups if g._tuples <= self._tuples]
@@ -108,28 +115,41 @@ class Symmetry(Rotation):
     def proper_subgroups(self) -> list[Symmetry]:
         """Return all the proper crystal symmetry subgroups.
 
-        There are 32 distinct crystal groups possible for a infinitely
-        repeating lattice of unit cells. These groups decompose into 37
-        unique subgroups, which include the rotations and rotoinversions
-        around non-primary axes. ie, a two-fold rotation around the
-        z axis (C2z) is considered distinct form a two-fold rotation
-        around the x axis (C2x) for the purpose of this definition.
+        There are 32 distinct crystallographic point groups possible for
+        an infinitely repeating lattice of unit cells. These groups
+        decompose into 37 unique subgroups, which include the rotations
+        and rotoinversions around non-primary axes. For example, a
+        two-fold rotation around the z axis (*C2z*) is considered
+        distinct from a two-fold rotation around the x axis (*C2x*).
 
-        Of these 37 groups, 14 contain only purely rotational
-        (ie "proper") elements.
+        Of the 37 subgroups, 14 contain only purely rotational
+        ("proper") elements.
 
-        This function returns the subset of those 14 groups that are
+        This attribute returns the subset of those 14 groups that are
         fully contained within this symmetry.
+
+        See Also
+        --------
+        subgroups
+        proper_subgroup
+        laue
+        laue_proper_subgroup
         """
         return [g for g in self.subgroups if g.is_proper]
 
     @property
     def proper_subgroup(self) -> Symmetry:
-        """Return the largest proper subgroup.
+        """Return the proper subgroup of highest :attr:`order`.
 
-        In this context, 'largest' is the subgroup containing the
-        most elements. for details on how proper subgroups are defined,
-        refer to :func:`orix.quaternion.symmetry.Symmetry.proper_subgroups`
+        See :attr:`proper_subgroups` for how proper subgroups are
+        defined.
+
+        See Also
+        --------
+        subgroups
+        proper_subgroups
+        laue
+        laue_proper_subgroup
         """
         subgroups = self.proper_subgroups
         if len(subgroups) == 0:
@@ -142,11 +162,18 @@ class Symmetry(Rotation):
     def laue(self) -> Symmetry:
         """Return this symmetry combined with an inversion operation.
 
-        The subset of cyrstal symmetries containing inversion points
-        are called Laue groups. This function calculates every unique
+        The subset of crystal symmetries containing inversion points
+        are called Laue groups. This attribute calculates every unique
         element possible from permutations of this group with the
         inversion operation, and returns the Laue group matching the
         result.
+
+        See Also
+        --------
+        subgroups
+        proper_subgroups
+        proper_subgroup
+        laue_proper_subgroup
         """
         laue = Symmetry.from_generators(self, Ci)
         laue.name = _get_laue_group_name(self.name)
@@ -154,12 +181,17 @@ class Symmetry(Rotation):
 
     @property
     def laue_proper_subgroup(self) -> Symmetry:
-        """Return the largest proper subgroup of the Laue group.
+        """Return the proper subgroup of the Laue group of highest
+        :attr:`order`.
 
-        Refer to :func:`orix.quaternion.symmetry.Symmetry.laue` for a
-        proper definition of Laue groups. This function finds the
-        appropriate Laue group and returns it's largest subgroup
-        containing only rotational elements.
+        See :attr:`laue` for a definition of Laue groups.
+
+        See Also
+        --------
+        subgroups
+        proper_subgroups
+        proper_subgroup
+        laue
         """
         return self.laue.proper_subgroup
 
@@ -464,8 +496,7 @@ class Symmetry(Rotation):
     # --------------------- Other public methods --------------------- #
 
     def get_axis_orders(self) -> dict[Vector3d, int]:
-        """Return a dictionary of every rotation axis and it's order
-        (ie, folds)"""
+        """Return a dictionary of every rotation axis and its order."""
         s = self[self.angle > 0]
         if s.size == 0:
             return {}
@@ -475,8 +506,7 @@ class Symmetry(Rotation):
         }
 
     def get_highest_order_axis(self) -> tuple[Vector3d, np.ndarray]:
-        """Return the highest order rotational axis and it's order
-        (ie, folds)"""
+        """Return the highest order rotational axis and its order."""
         axis_orders = self.get_axis_orders()
         if len(axis_orders) == 0:
             return Vector3d.zvector(), np.inf
@@ -590,33 +620,36 @@ class Symmetry(Rotation):
             return figure
 
 
-# ---------------- Proceedural definitions of Point Groups ---------------- #
-# NOTE: ORIX uses Schoenflies symbols to define point groups. This is partly
-# because the notation is short and always starts with a letter (ie, they
-# make convenient python variables), and partly because it helps limit
-# accidental misinterpretation of Hermann-Mauguin symbols as space group
-# numbers. For example. "222" could be interpreted as SG#222 == Pn-3n, or
-# as PG'222'== D3.  there are similar examples with 2, 3, 4, 32, etc.
-
+# ------------- Proceedural definitions of Point Groups -------------- #
+#
+# orix uses Schoenflies symbols to define point groups. This is partly
+# because the notation is short and always starts with a letter (i.e.,
+# they make convenient Python variables), and partly because it helps
+# limit accidental misinterpretation of Hermann-Mauguin symbols as space
+# group numbers. For example. "222" could be interpreted as
+# SG#222 == Pn-3n, or as PG'222'== D3. There are similar examples with
+# point groups 2, 3, 4, 32, etc.
+#
 # Additionally, there are 43 crystallographically valid Schonflies group
 # notations, but only 32 unique ones, meaning certain point groups have
-# redundant representations in Schonflies notation(S4==C4i, Ci==S2, S6==C3i,
-# and C2==D1, for example). The International Tables for Crystallography (ITC),
-# Volume A, Section 12.1 defines the 32 standard representations, but several
-# the commonly used redundant ones included below for convenience.
-
-# Finally, while there are 32 Point groups, ITC names several additional
-# projections for the non-centrosymmetric groups (ie, using x and/or y as the
-# rotation axis instead of z). These are included below as well, following
-# the ITC naming convention (for example, a 2-fold cyclic rotation around
-# the x axis is called C2x, but a 2-fold cyclic rotation around the z axis
-# is just called C2).
-
+# redundant representations in Schonflies notation (S4 == C4i, Ci == S2,
+# S6 == C3i, and C2 == D1, for example). The International Tables for
+# Crystallography (ITC), Volume A, Section 12.1 defines the 32 standard
+# representations, but several of the commonly used redundant ones are
+# included below for convenience.
+#
+# Finally, while there are 32 point groups, ITC names several additional
+# projections for the non-centrosymmetric groups (i.e, using x and/or y
+# as the rotation axis instead of z). These are included below as well,
+# following the ITC naming convention (for example, a 2-fold cyclic
+# rotation around the x axis is called C2x, but a 2-fold cyclic rotation
+# around the z axis is just called C2).
+#
 # For more details on how point groups can be generated, the following
 # resources lay out three different but equally valid approaches:
-#    1)"Structure of Materials", De Graef et al, Section 9.2
-#    2)"International Tables for Crystallography: Volume A" Section 12.1
-#    3)"Crystallogrpahic Texture and Group Representations", Chi-Sing Man, Ch2
+# 1) "Structure of Materials," McHenry and De Graef, section 9.2
+# 2) "International Tables for Crystallography: Volume A," section 12.1
+# 3) "Crystallogrpahic Texture and Group Representations," Chi-Sing Man, chapter 2
 
 # Triclinic
 C1 = Symmetry((1, 0, 0, 0))
@@ -626,7 +659,7 @@ Ci = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)])
 Ci.improper = [0, 1]
 Ci.name = "-1"
 Ci._schoenflies = "Ci"
-# include redundant point group S2 == Ci
+# Include redundant point group S2 == Ci
 S2 = Symmetry([(1, 0, 0, 0), (1, 0, 0, 0)])
 S2.improper = [0, 1]
 S2.name = "-1"
@@ -650,7 +683,7 @@ C2z._schoenflies = "C2z"
 C2 = Symmetry(C2z)
 C2.name = "2"
 C2._schoenflies = "C2"
-# included redundant point group D1 == C2
+# Included redundant point group D1 == C2
 D1 = Symmetry(C2z)
 D1.name = "2"
 D1._schoenflies = "D1"
@@ -722,7 +755,7 @@ S4 = Symmetry(C4)
 S4.improper = [0, 1, 0, 1]
 S4.name = "-4"
 S4._schoenflies = "S4"
-# include redundant point group C4i == S4
+# Include redundant point group C4i == S4
 C4i = Symmetry(C4)
 C4i.improper = [0, 1, 0, 1]
 C4i.name = "-4"
@@ -755,7 +788,7 @@ C3._schoenflies = "C3"
 C3i = Symmetry.from_generators(C3, Ci)
 C3i.name = "-3"
 C3i._schoenflies = "C3i"
-# include redundant point group S6==C3i
+# Include redundant point group S6 == C3i
 S6 = Symmetry.from_generators(C3, Ci)
 S6.name = "-3"
 S6._schoenflies = "S6"
@@ -815,24 +848,25 @@ Oh = Symmetry.from_generators(O, Ci)
 Oh.name = "m-3m"
 Oh._schoenflies = "Oh"
 
-# a dictionary of several common point group sets. This is used by Symmetry to
-# determine the Laue and Proper groups/subgroups of classes.
-_symm_lists = {
+# A private (!) dictionary of several common point group sets. This is
+# used by the symmetry class to determine the Laue and proper
+# groups and subgroups of classes.
+_symm_lists: dict[str, list[Symmetry]] = {
     "permutations_repeated": [
         # Triclinic
         C1,
         Ci,
-        S2,  # redundant
+        S2,  # == Ci
         # Monoclinic
         C2,
-        D1,  # redundant
+        D1,  # == C2
         C2x,
         C2y,
-        C2z,  # redundant
+        C2z,  # == C2
         Cs,
         Csx,
         Csy,
-        Csz,  # redundant
+        Csz,  # == Cs
         C2h,
         # Orthorhombic
         D2,
@@ -841,7 +875,7 @@ _symm_lists = {
         # Tetragonal
         C4,
         S4,
-        C4i,  # redundant
+        C4i,  # == S4
         C4h,
         D4,
         C4v,
@@ -850,7 +884,7 @@ _symm_lists = {
         # Trigonal
         C3,
         C3i,
-        S6,  # redundant
+        S6,  # == C3i
         D3,
         D3x,
         D3y,
@@ -864,7 +898,7 @@ _symm_lists = {
         C6v,
         D3h,
         D6h,
-        # cubic
+        # Cubic
         T,
         Th,
         O,
@@ -910,7 +944,7 @@ _symm_lists = {
         C6v,
         D3h,
         D6h,
-        # cubic
+        # Cubic
         T,
         Th,
         O,
@@ -951,7 +985,7 @@ _symm_lists = {
         C6v,
         D3h,
         D6h,
-        # cubic
+        # Cubic
         T,
         Th,
         O,
@@ -974,7 +1008,7 @@ _symm_lists = {
         # Hexagonal
         C6,
         D6,
-        # cubic
+        # Cubic
         T,
         O,
     ],
@@ -997,7 +1031,7 @@ _symm_lists = {
         # Hexagonal
         C6,
         D6,
-        # cubic
+        # Cubic
         T,
         O,
     ],
@@ -1017,7 +1051,7 @@ _symm_lists = {
         # Hexagonal
         C6h,
         D6h,
-        # cubic
+        # Cubic
         Th,
         Oh,
     ],

@@ -16,7 +16,7 @@ Added
   fundamental zone for a set of two point groups.
   This function replaces ``get_proper_groups()``.
 - Function to set the log level of orix logs, ``orix.utils.set_log_level()``.
-- ``Symmetry.schoenflies`` property returning the Schoenflies notation name.
+- ``Symmetry.schoenflies`` attribute returning the Schoenflies notation name.
 
 Changed
 -------

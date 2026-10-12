@@ -550,6 +550,16 @@ def test_schoenflies_notation(symmetry: Symmetry, schoenflies: str) -> None:
     assert symmetry.schoenflies == schoenflies
 
 
+def test_symmetry_list():
+    sym_all = _symm_lists["permutations_repeated"]
+    assert len(sym_all) == 44
+    assert len(set(s.schoenflies for s in sym_all)) == 44
+
+    # Names are used in equality
+    assert len(set(s.name for s in sym_all)) == 40
+    assert len(set(sym_all)) == 40
+
+
 class TestFundamentalSectorFromSymmetry:
     """Test the normals, vertices and centers of the fundamental sector
     for all 32 crystallographic point groups.
