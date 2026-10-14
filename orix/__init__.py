@@ -34,11 +34,11 @@ __credits__ = [
     "Zhou Xu",
     "Carter Francis",
     "Simon Høgås",
+    "Vincent Gao",
     "Ondrej Lexa",
     "Alessandra da Silva",
     "Cristian Chiriac",
     "Dorian Depriester",
     "Eric Prestat",
     "Alexander Clausen",
-    "Vincent Gao",
 ]
