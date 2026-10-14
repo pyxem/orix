@@ -608,46 +608,49 @@ class Vector3d(Object3d):
         """
         return other.__class__(np.cross(self.data, other.data))
 
-    def tensor(self, other: Vector3d) -> Vector3d:
+    def tensor(self, other: Vector3d) -> np.ndarray:
         r"""Return the tensor product of a vector with another vector.
-
-        For multi-dimensional arrays of vectors, casting is done the
-        same as in  :func:`numpy.einsum`, removing length 1 dimensions
-        and combining dimensions with matching lengths. See Notes
-        section for further details.
 
         Parameters
         ----------
         other
-            Another Vector3d
-        
+            Another vector.
+
         Returns
         -------
-        tensor
-            Numpy array of tensor products with shape (...,3,3)
-        
+        tensor_product
+            Array of tensor products with shape :attr:`shape` +
+            :attr:`shape` of *other* + (3, 3).
+
+            For multi-dimensional arrays of vectors, broadcasting is
+            done in the same as in :func:`numpy.einsum`, removing
+            singleton dimensions and combining dimensions with matching
+            lengths.
+
+        See Also
+        --------
+        tensor_outer,
+        numpy.einsum
+
         Notes
         -----
-
-        The tensor product operation in linear algebra is typically
-        represented by the symbol $\otimes$, and is the linear
-        transformation defined by
+        The tensor product between two vectors is given by
 
         .. math::
 
-            (a \otimes b)c = (b \cdot c)a
+            (\mathbf{a} \otimes \mathbf{b})\mathbf{c} = (\mathbf{b} \cdot \mathbf{c})\mathbf{a}.
 
-        for two 3d vectors in orthonormal space, this can be rewritten
+        For two 3D vectors in orthonormal space, this can be rewritten
         in Einstein notation as
 
         .. math::
 
             (a \otimes b)c = a_ib_jc_j = b_ic_ia_j = (b \cdot c)a
-        
-        and $\otimes$ can be explicitly rewritten as
+
+        and :math:`\otimes` can be explicitly rewritten as
 
         .. math::
- 
+
             (a \otimes b) = [a_1,a_2,a_3] \otimes [b_1, a_2, a_3]
             =\begin{bmatrix}
             a_1b_1 & a_1b_2 & a_1b_3 \\
@@ -655,36 +658,39 @@ class Vector3d(Object3d):
             a_3b_1 & a_3b_2 & a_3b_3 \\
             \end{bmatrix}
 
-        For multi-dimensional arrays, two Vector3ds of length n and m,
-        respectively, would produce an n-by-m array of
-        3-by-3 tensors. However, two Vector3ds of length n would
-        produce a n-by-3-by-3 array, in accortance with numpy's rules
-        for array casting. To force orix to explicitly cast along all
-        dimensions of both Vector3d objects, use 
-        :func:`Vector3d.tensor_outer`.
-    """
+        For multi-dimensional arrays, two vectors of length n and m,
+        respectively, would produce an n-by-m array of 3-by-3 tensors.
+        However, two vectors of length n would produce a n-by-3-by-3
+        array, in accortance with NumPy's rules for broadcasting. To
+        explicitly cast along all dimensions of both vectors, use
+        :meth:`Vector3d.tensor_outer`.
+        """
         if not isinstance(other, Vector3d):
             raise ValueError(f"{other} is not a vector")
         return np.einsum("...i,...j->...ij", self.data, other.data)
 
-    def tensor_outer(self, other: Vector3d) -> Vector3d:
+    def tensor_outer(self, other: Vector3d) -> np.ndarray:
         r"""Return the outer tensor product of a vector with another
         vector.
 
-        Works identically to :func:`Vector3d.tensor`, but applied to
-        every axis regardless of size. See that function for further
-        details.
+        Differs from :meth:`tensor` in that the product is taken for
+        every axis regardless of size.
 
         Parameters
         ----------
         other
-            Another Vector3d
+            Another vector.
 
         Returns
         -------
-        tensor
-            Numpy array of tensor products with shape
-            (self.shape, other.shape, 3, 3)
+        tensor_product
+            Array of tensor products, always with shape :attr:`shape` +
+            :attr:`shape` of *other* + (3, 3).
+
+        See Also
+        --------
+        tensor,
+        numpy.einsum
         """
         if not isinstance(other, Vector3d):
             raise ValueError(f"{other} is not a vector")
