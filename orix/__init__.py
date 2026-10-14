@@ -36,6 +36,7 @@ __credits__ = [
     "Simon Høgås",
     "Ondrej Lexa",
     "Alessandra da Silva",
+    "Cristian Chiriac",
     "Dorian Depriester",
     "Eric Prestat",
     "Alexander Clausen",
