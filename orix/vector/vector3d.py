@@ -42,13 +42,16 @@ class Vector3d(Object3d):
     Vectors :math:`\mathbf{v} = (x, y, z)` support the following
     mathematical operations:
 
-    * Unary negation.
+    * Unary negation
     * Addition to other vectors, numbers, and compatible array-like
-      objects.
-    * Subtraction to and from the above.
-    * Multiplication to numbers and compatible array-like objects.
+      objects
+    * Subtraction to and from the above
+    * Multiplication to numbers and compatible array-like objects
     * Division by the same as multiplication. Division by a vector is
-      not defined in general.
+      not defined in general
+    * Dot product
+    * Cross product
+    * Tensor product
 
     Examples
     --------
