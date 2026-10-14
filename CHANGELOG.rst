@@ -23,7 +23,7 @@ Added
 
 Changed
 -------
-- Misorientations and orientations account for symmetry when calculating means.
+- Misorientations and orientations account for symmetry when calculating the mean.
 - An orientation region can now be calculated from every combination of two point groups
   (previously not possible for 200/1024 combinations).
 
@@ -35,11 +35,12 @@ Fixed
 - ``Rotation.to_euler()`` now returns correct Bunge Euler angles for 180 degree
   rotations about an axis in the xy-plane not aligned with x or y.
 - Silenced warnings from diffpy.structure >= 3.4.
-- Setting a Rotaion will now copy over the proper/improper marker if present.
-- Orientation outer dot product now correctly handles order of axes for
+- Overwriting ``Rotation.data`` with another rotation will now copy over the
+  proper/improper marker if present.
+- Orientation outer dot product now correctly handles axes order for
   multi-dimensional orientations.
-- Quaternions plotted in a 3D projection (Axis-Angle, Rodrigues, Homochoric, etc)
-  will now correctly be transformed using the same algorithms as for Rotations.
+- Quaternions plotted in a 3D projection (axis-Angle, Rodrigues, homochoric, etc.) will
+  now correctly be transformed using the same algorithms as for rotations.
 - orix can be imported with Matplotlib >= 3.12, where ``Axes.ArtistList`` is deprecated
   in favour of ``matplotlib.artist.ArtistList``.
 
