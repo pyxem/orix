@@ -249,13 +249,13 @@ class Vector3d(Object3d):
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
-            # Check for symmetry and reference fram mismatches
-            self._check_for_crystal_mismatch(other)
             if hasattr(other, "phase"):
                 # If 'other' has a phase attribute (e.g, 'Miller'),
                 # use its addition function instead.
                 return other + self
             else:
+                # Check for symmetry and reference fram mismatches
+                self._check_for_crystal_mismatch(other)
                 return self.__class__(self.data + other.data)
         elif isinstance(other, (int, float)):
             return self.__class__(self.data + other)
@@ -268,7 +268,9 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __radd__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
+    def __radd__(
+        self, other: int | float | list | tuple | np.ndarray
+    ) -> Vector3d:
         if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
             return self + other
         return NotImplemented
@@ -281,7 +283,9 @@ class Vector3d(Object3d):
             other = np.array(other)
         return self + (-other)
 
-    def __rsub__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
+    def __rsub__(
+        self, other: int | float | list | tuple | np.ndarray
+    ) -> Vector3d:
         if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
             return -self + other
         return NotImplemented
@@ -304,7 +308,9 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rmul__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
+    def __rmul__(
+        self, other: int | float | list | tuple | np.ndarray
+    ) -> Vector3d:
         if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
             return self * other
         return NotImplemented
@@ -1725,19 +1731,21 @@ class Vector3d(Object3d):
                 pg1 = self.phase.point_group.name
                 pg2 = other.phase.point_group.name
                 _logger.warning(
-                    "WARNING: Point group mismatch ({pg1} versus {pg2}) detected between crystal vectors."
+                    f"WARNING: Point group mismatch detected between crystal vectors ({pg1} versus {pg2})."
                 )
         elif np.any(phase_checks):
             _logger.warning(
-                "WARNING: This operation is between a crystal and real space vector."
+                "WARNING: Reference frame mismatch detected (Euclidean versus crystal vectors)."
             )
         crd_checks = [
-            hasattr(self,'coordinate_format'), hasattr(other,'coordinate_format')
-            ]
+            hasattr(self, "coordinate_format"),
+            hasattr(other, "coordinate_format"),
+        ]
         if np.all(crd_checks):
             cf1 = self.coordinate_format
             cf2 = other.coordinate_format
-            _logger.warning(
-                    "WARNING: Coordinates mismatch ({cf1} versus {cf2}) detected between crystal vectors."
+            if cf1 != cf2:
+                _logger.warning(
+                    f"WARNING: Coordinates mismatch detected between crystal vectors ({cf1} versus {cf2})."
                 )
         return None

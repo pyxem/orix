@@ -384,7 +384,7 @@ class Miller(Vector3d):
             if not  hasattr(other, "phase"):
                 # assume the other vector is being added in the same
                 # coordinate frame as the crystal vector
-                other = self.__class__(*{self.coordinate_format: other.data}, phase=self.phase)
+                other = self.__class__(**{self.coordinate_format: other.data}, phase=self.phase)
             data = self.data + other.data
         elif isinstance(other, (int, float)):
             data = self.data + other
@@ -396,7 +396,7 @@ class Miller(Vector3d):
         if data is None:
             return NotImplemented
 
-        out = self.__class__(data, self.phase)
+        out = self.__class__(xyz=data, phase = self.phase)
         out.coordinate_format = self.coordinate_format
         return out
 
