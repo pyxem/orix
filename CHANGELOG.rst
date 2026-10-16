@@ -11,6 +11,8 @@ Unreleased
 
 Added
 -----
+- Vector tensor products via new ``Vector3d`` methods ``tensor()`` and
+  ``tensor_outer()``.
 - Mean quaternion calculation now allows weighting each quaternion.
 - Function ``get_asymmetric_groups()`` to return two point groups for creating the
   fundamental zone for a set of two point groups.

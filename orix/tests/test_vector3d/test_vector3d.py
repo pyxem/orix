@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -18,13 +18,14 @@
 #
 
 from matplotlib.collections import QuadMesh
+import matplotlib.figure as mfigure
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix import plot
-from orix.quaternion import Orientation, symmetry
-from orix.vector import Vector3d
+import orix.plot as opl
+import orix.quaternion as oqu
+import orix.vector as ove
 
 vectors = [
     (1, 0, 0),
@@ -60,12 +61,12 @@ numbers = [-12, 0.5, -0.333333333, 4]
 
 @pytest.fixture(params=vectors)
 def vector(request):
-    return Vector3d(request.param)
+    return ove.Vector3d(request.param)
 
 
 @pytest.fixture(params=singles)
 def something(request):
-    return Vector3d(request.param)
+    return ove.Vector3d(request.param)
 
 
 @pytest.fixture(params=numbers)
@@ -73,436 +74,353 @@ def number(request):
     return request.param
 
 
-def test_neg(vector):
-    assert np.all((-vector).data == -(vector.data))
+class TestVector3d:
+    def test_neg(self, vector):
+        assert np.all((-vector).data == -(vector.data))
 
-
-@pytest.mark.parametrize(
-    "vector, other, expected",
-    [
-        (
-            [1, 2, 3],
-            Vector3d([[1, 2, 3], [-3, -2, -1]]),
-            [[2, 4, 6], [-2, 0, 2]],
-        ),
-        ([1, 2, 3], [4], [5, 6, 7]),
-        ([1, 2, 3], 0.5, [1.5, 2.5, 3.5]),
-        ([1, 2, 3], [-1, 2], [[0, 1, 2], [3, 4, 5]]),
-        ([1, 2, 3], np.array([-1, 1]), [[0, 1, 2], [2, 3, 4]]),
-    ],
-    indirect=["vector"],
-)
-def test_add(vector, other, expected):
-    s1 = vector + other
-    s2 = other + vector
-    assert np.allclose(s1.data, expected)
-    assert np.allclose(s1.data, s2.data)
-
-
-@pytest.mark.parametrize(
-    "vector, other",
-    [([1, 2, 3], "dracula")],
-    indirect=["vector"],
-)
-def test_add_raises(vector, other):
-    with pytest.raises(TypeError):
-        _ = vector + other
-
-
-@pytest.mark.parametrize(
-    "vector, other, expected",
-    [
-        (
-            [1, 2, 3],
-            Vector3d([[1, 2, 3], [-3, -2, -1]]),
-            [[0, 0, 0], [4, 4, 4]],
-        ),
-        ([1, 2, 3], [4], [-3, -2, -1]),
-        ([1, 2, 3], 0.5, [0.5, 1.5, 2.5]),
-        ([1, 2, 3], [-1, 2], [[2, 3, 4], [-1, 0, 1]]),
-        ([1, 2, 3], np.array([-1, 1]), [[2, 3, 4], [0, 1, 2]]),
-    ],
-    indirect=["vector"],
-)
-def test_sub(vector, other, expected):
-    s1 = vector - other
-    s2 = other - vector
-    assert np.allclose(s1.data, expected)
-    assert np.allclose(-s1.data, s2.data)
-
-
-@pytest.mark.parametrize(
-    "vector, other",
-    [
-        ([1, 2, 3], "dracula"),
-    ],
-    indirect=["vector"],
-)
-def test_sub_raises(vector, other):
-    with pytest.raises(TypeError):
-        _ = vector - other
-
-
-@pytest.mark.parametrize(
-    "vector, other, expected",
-    [
-        ([1, 2, 3], [4], [4, 8, 12]),
-        ([1, 2, 3], 0.5, [0.5, 1.0, 1.5]),
-        ([1, 2, 3], [-1, 2], [[-1, -2, -3], [2, 4, 6]]),
-        ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]]),
-    ],
-    indirect=["vector"],
-)
-def test_mul(vector, other, expected):
-    s1 = vector * other
-    s2 = other * vector
-    assert np.allclose(s1.data, expected)
-    assert np.allclose(s1.data, s2.data)
-
-
-@pytest.mark.parametrize(
-    "vector, other, error_type",
-    [
-        ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), ValueError),
-        ([1, 2, 3], "dracula", TypeError),
-    ],
-    indirect=["vector"],
-)
-def test_mul_raises(vector, other, error_type):
-    with pytest.raises(error_type):
-        _ = vector * other
-
-
-@pytest.mark.parametrize(
-    "vector, other, expected",
-    [
-        ([4, 8, 12], [4], [1, 2, 3]),
-        ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
-        (
-            [1, 2, 3],
-            [-1, 2],
-            [[-1, -2, -3], [1 / 2, 1, 3 / 2]],
-        ),
-        (
-            [1, 2, 3],
-            np.array([-1, 1]),
-            [[-1, -2, -3], [1, 2, 3]],
-        ),
-    ],
-    indirect=["vector"],
-)
-def test_div(vector, other, expected):
-    s1 = vector / other
-    assert np.allclose(s1.data, expected)
-
-
-@pytest.mark.parametrize(
-    "vector, other, error_type",
-    [
-        ([1, 2, 3], Vector3d([[1, 2, 3], [-3, -2, -1]]), ValueError),
-        ([1, 2, 3], "dracula", TypeError),
-    ],
-    indirect=["vector"],
-)
-def test_div_raises(vector, other, error_type):
-    with pytest.raises(error_type):
-        _ = vector / other
-
-
-def test_rdiv_raises():
-    with pytest.raises(ValueError):
-        _ = 1 / Vector3d.xvector()
-
-
-def test_eq():
-    v = Vector3d.zvector()
-    s1 = symmetry.D3
-    s2 = symmetry.C6
-    s3 = symmetry.O
-    # check element-wise comparison
-    assert np.all((v == s1.axis) == [True, True, False, False, False, False])
-    assert np.all((v == s2.axis) == [True, True, False, True, False, True])
-    # check that two lists compare per-row
-    assert np.all((s1.axis == s2.axis) == [1, 1, 1, 0, 0, 0])
-    # check incorrectly sized things compare as a flat falsse
-    assert not (s1 == s3)
-    # check that things that aren't vectors treat vector comparison as array
-    # comparison.
-    assert np.all((v == 1) == [0, 0, 1])
-
-
-def test_dot(vector, something):
-    assert np.allclose(vector.dot(vector), (vector.data**2).sum(axis=-1))
-    assert np.allclose(vector.dot(something), something.dot(vector))
-
-
-def test_dot_error(vector, number):
-    with pytest.raises(ValueError):
-        vector.dot(number)
-
-
-def test_dot_outer(vector, something):
-    d = vector.dot_outer(something)
-    assert d.shape == vector.shape + something.shape
-    for i in np.ndindex(vector.shape):
-        for j in np.ndindex(something.shape):
-            assert np.allclose(d[i + j], vector[i].dot(something[j]))
-    d_lazy = vector.dot_outer(something, lazy=True)
-    assert isinstance(d_lazy, np.ndarray)
-    assert np.allclose(d, d_lazy)
-    d_lazy_no_pb = vector.dot_outer(
-        something, lazy=True, progressbar=False, chunk_size=25
+    @pytest.mark.parametrize(
+        "vector, other, expected",
+        [
+            (
+                [1, 2, 3],
+                ove.Vector3d([[1, 2, 3], [-3, -2, -1]]),
+                [[2, 4, 6], [-2, 0, 2]],
+            ),
+            ([1, 2, 3], [4], [5, 6, 7]),
+            ([1, 2, 3], 0.5, [1.5, 2.5, 3.5]),
+            ([1, 2, 3], [-1, 2], [[0, 1, 2], [3, 4, 5]]),
+            ([1, 2, 3], np.array([-1, 1]), [[0, 1, 2], [2, 3, 4]]),
+        ],
+        indirect=["vector"],
     )
-    assert np.allclose(d_lazy, d_lazy_no_pb)
+    def test_add(self, vector, other, expected):
+        # test vector addition
+        s1 = vector + other
+        s2 = other + vector
+        assert np.allclose(s1.data, expected)
+        assert np.allclose(s1.data, s2.data)
+        # check error messages
+        with pytest.raises(TypeError):
+            _ = vector + "dracula"
 
-
-def test_dot_outer_progressbar(vector, something, capsys):
-    d = vector.dot_outer(something, lazy=True, progressbar=True)
-    out, _ = capsys.readouterr()
-    assert "Completed" in out
-    assert d.shape == vector.shape + something.shape
-
-
-def test_cross(vector, something):
-    assert isinstance(vector.cross(something), Vector3d)
-
-
-def test_cross_error(vector, number):
-    with pytest.raises(AttributeError):
-        vector.cross(number)
-
-
-@pytest.mark.parametrize(
-    "azimuth, polar, radial, expected",
-    [
-        (np.pi / 4, np.pi / 4, 1, Vector3d((0.5, 0.5, 0.707107))),
-        (7 * np.pi / 6, 2 * np.pi / 3, 1, Vector3d((-0.75, -0.433013, -0.5))),
-    ],
-)
-def test_polar(azimuth, polar, radial, expected):
-    v1 = Vector3d.from_polar(azimuth, polar, radial)
-    v2 = Vector3d.from_polar(
-        np.rad2deg(azimuth), np.rad2deg(polar), radial, degrees=True
+    @pytest.mark.parametrize(
+        "vector, other, expected",
+        [
+            (
+                [1, 2, 3],
+                ove.Vector3d([[1, 2, 3], [-3, -2, -1]]),
+                [[0, 0, 0], [4, 4, 4]],
+            ),
+            ([1, 2, 3], [4], [-3, -2, -1]),
+            ([1, 2, 3], 0.5, [0.5, 1.5, 2.5]),
+            ([1, 2, 3], [-1, 2], [[2, 3, 4], [-1, 0, 1]]),
+            ([1, 2, 3], np.array([-1, 1]), [[2, 3, 4], [0, 1, 2]]),
+        ],
+        indirect=["vector"],
     )
-    assert np.allclose(v1.data, expected.data, atol=1e-5)
-    assert np.allclose(v2.data, v1.data, atol=1e-5)
+    def test_sub(self, vector, other, expected):
+        # test vector subtraction
+        s1 = vector - other
+        s2 = other - vector
+        assert np.allclose(s1.data, expected)
+        assert np.allclose(-s1.data, s2.data)
+        # check error messages
+        with pytest.raises(TypeError):
+            _ = vector - "dracula"
 
+    @pytest.mark.parametrize(
+        "vector, other, expected",
+        [
+            ([1, 2, 3], [4], [4, 8, 12]),
+            ([1, 2, 3], 0.5, [0.5, 1.0, 1.5]),
+            ([1, 2, 3], [-1, 2], [[-1, -2, -3], [2, 4, 6]]),
+            ([1, 2, 3], np.array([-1, 1]), [[-1, -2, -3], [1, 2, 3]]),
+        ],
+        indirect=["vector"],
+    )
+    def test_mul(self, vector, other, expected):
+        # test vector multiplication
+        s1 = vector * other
+        s2 = other * vector
+        assert np.allclose(s1.data, expected)
+        assert np.allclose(s1.data, s2.data)
+        # check for appropriate error messages
+        with pytest.raises(ValueError):
+            _ = vector * ove.Vector3d([[1, 2, 3], [-3, -2, -1]])
+        with pytest.raises(TypeError):
+            _ = vector * "dracula"
 
-@pytest.mark.parametrize(
-    "shape",
-    [
-        (1,),
-        (2, 2),
-        (5, 4, 3),
-    ],
-)
-def test_zero(shape):
-    v = Vector3d.zero(shape)
-    assert v.shape == shape
-    assert v.data.shape[-1] == v.dim
+    @pytest.mark.parametrize(
+        "vector, other, expected",
+        [
+            ([4, 8, 12], [4], [1, 2, 3]),
+            ([0.5, 1.0, 1.5], 0.5, [1, 2, 3]),
+            (
+                [1, 2, 3],
+                [-1, 2],
+                [[-1, -2, -3], [1 / 2, 1, 3 / 2]],
+            ),
+            (
+                [1, 2, 3],
+                np.array([-1, 1]),
+                [[-1, -2, -3], [1, 2, 3]],
+            ),
+        ],
+        indirect=["vector"],
+    )
+    def test_div(self, vector, other, expected):
+        # test vector division
+        s1 = vector / other
+        assert np.allclose(s1.data, expected)
+        # check for appropriate error messages
+        with pytest.raises(ValueError):
+            _ = vector * ove.Vector3d([[1, 2, 3], [-3, -2, -1]])
+        with pytest.raises(TypeError):
+            _ = vector * "dracula"
+        with pytest.raises(ValueError):
+            _ = 1 / ove.Vector3d.xvector()
 
+    def test_eq(self):
+        v = ove.Vector3d.zvector()
+        s1 = oqu.symmetry.D3
+        s2 = oqu.symmetry.C6
+        s3 = oqu.symmetry.O
+        # check element-wise comparison
+        assert np.all((v == s1.axis) == [True, True, False, False, False, False])
+        assert np.all((v == s2.axis) == [True, True, False, True, False, True])
+        # check that two lists compare per-row
+        assert np.all((s1.axis == s2.axis) == [1, 1, 1, 0, 0, 0])
+        # check incorrectly sized things compare as a flat falsse
+        assert not (s1 == s3)
+        # check that things that aren't vectors treat vector comparison as array
+        # comparison.
+        assert np.all((v == 1) == [0, 0, 1])
 
-def test_angle_with(vector, something):
-    a1 = vector.angle_with(vector)
-    assert np.allclose(a1, 0)
+    def test_dot(self, vector, something, number):
+        assert np.allclose(vector.dot(vector), (vector.data**2).sum(axis=-1))
+        assert np.allclose(vector.dot(something), something.dot(vector))
+        with pytest.raises(ValueError):
+            vector.dot(number)
 
-    a2 = vector.angle_with(something)
-    assert np.all(a2 >= 0)
-    assert np.all(a2 <= np.pi)
+    def test_dot_outer(self, vector, something, capsys):
+        # Test dot_outer
+        d = vector.dot_outer(something)
+        assert d.shape == vector.shape + something.shape
+        for i in np.ndindex(vector.shape):
+            for j in np.ndindex(something.shape):
+                assert np.allclose(d[i + j], vector[i].dot(something[j]))
+        d_lazy = vector.dot_outer(something, lazy=True)
+        assert isinstance(d_lazy, np.ndarray)
+        assert np.allclose(d, d_lazy)
+        d_lazy_no_pb = vector.dot_outer(
+            something, lazy=True, progressbar=False, chunk_size=25
+        )
+        assert np.allclose(d_lazy, d_lazy_no_pb)
+        # Test progressbar
+        d = vector.dot_outer(something, lazy=True, progressbar=True)
+        out, _ = capsys.readouterr()
+        assert "Completed" in out
+        assert d.shape == vector.shape + something.shape
 
-    a3 = vector.angle_with(something, degrees=True)
-    assert np.allclose(np.rad2deg(a2), a3)
+    def test_cross(self, vector, something, number):
+        assert isinstance(vector.cross(something), ove.Vector3d)
+        with pytest.raises(AttributeError):
+            vector.cross(number)
 
+    def test_tensor(self, vector, number):
+        # test definition of tensor in orthonormal space
+        a = ove.Vector3d.random()
+        b = ove.Vector3d.random()
+        c = ove.Vector3d.random()
+        abc = np.dot((a.tensor(b)[0]), c.data[0])
+        bca = (b.dot(c) * a).data
+        assert np.allclose(abc, bca)
 
-def test_mul_array(vector):
-    array = np.random.rand(*vector.shape)
-    m1 = vector * array
-    m2 = array * vector
-    assert isinstance(m1, Vector3d)
-    assert isinstance(m2, Vector3d)
-    assert np.all(m1.data == m2.data)
+        # repeat test with tensor_outer method
+        abc_outer = np.dot((a.tensor_outer(b)[0]), c.data[0])
+        assert np.allclose(abc_outer, bca)
 
+        # test casting
+        v1 = ove.Vector3d.random((3, 4))
+        v2 = ove.Vector3d.random((3, 4))
+        v3 = ove.Vector3d.random((2, 3, 4))
+        v4 = ove.Vector3d.random((3, 1, 4))
+        assert v1.tensor(v2).shape == (3, 4, 3, 3)
+        assert v1.tensor(v3).shape == (2, 3, 4, 3, 3)
+        assert v1.tensor(v4).shape == (3, 3, 4, 3, 3)
+        assert v1.tensor_outer(v2).shape == (3, 4, 3, 4, 3, 3)
+        assert v1.tensor_outer(v3).shape == (3, 4, 2, 3, 4, 3, 3)
 
-@pytest.mark.parametrize(
-    "vector, x, y, z",
-    [
-        ([1, 2, 3], 1, 2, 3),
-        ([[0, 2, 3], [2, 2, 3]], [0, 2], [2, 2], [3, 3]),
-    ],
-    indirect=["vector"],
-)
-def test_xyz(vector, x, y, z):
-    vx, vy, vz = vector.xyz
-    assert np.allclose(vx, x)
-    assert np.allclose(vy, y)
-    assert np.allclose(vz, z)
+        # For both functions, test errors
+        with pytest.raises(ValueError):
+            vector.tensor(number)
+        with pytest.raises(ValueError):
+            vector.tensor_outer(number)
 
+    @pytest.mark.parametrize(
+        "azimuth, polar, radial, expected",
+        [
+            (np.pi / 4, np.pi / 4, 1, ove.Vector3d((0.5, 0.5, 0.707107))),
+            (7 * np.pi / 6, 2 * np.pi / 3, 1, ove.Vector3d((-0.75, -0.433013, -0.5))),
+        ],
+    )
+    def test_polar(self, azimuth, polar, radial, expected):
+        v1 = ove.Vector3d.from_polar(azimuth, polar, radial)
+        v2 = ove.Vector3d.from_polar(
+            np.rad2deg(azimuth), np.rad2deg(polar), radial, degrees=True
+        )
+        assert np.allclose(v1.data, expected.data, atol=1e-5)
+        assert np.allclose(v2.data, v1.data, atol=1e-5)
 
-@pytest.mark.parametrize(
-    "vector, rotation, expected",
-    [
-        ((1, 0, 0), np.pi / 2, (0, 1, 0)),
-        ((1, 1, 0), np.pi / 2, (-1, 1, 0)),
-        (
-            (1, 1, 0),
-            [np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi],
-            [(-1, 1, 0), (-1, -1, 0), (1, -1, 0), (1, 1, 0)],
-        ),
-        ((1, 1, 1), -np.pi / 2, (1, -1, 1)),
-    ],
-    indirect=["vector"],
-)
-def test_rotate(vector, rotation, expected):
-    r = Vector3d(vector).rotate(Vector3d.zvector(), rotation)
-    assert isinstance(r, Vector3d)
-    assert np.allclose(r.data, expected)
+    @pytest.mark.parametrize(
+        "shape",
+        [
+            (1,),
+            (2, 2),
+            (5, 4, 3),
+        ],
+    )
+    def test_zero(self, shape):
+        v = ove.Vector3d.zero(shape)
+        assert v.shape == shape
+        assert v.data.shape[-1] == v.dim
 
+    def test_angle_with(self, vector, something):
+        a1 = vector.angle_with(vector)
+        assert np.allclose(a1, 0)
 
-@pytest.mark.parametrize(
-    "vector, data, expected",
-    [
-        ([1, 2, 3], 3, [3, 2, 3]),
-        ([[0, 2, 3], [2, 2, 3]], 1, [[1, 2, 3], [1, 2, 3]]),
-        ([[0, 2, 3], [2, 2, 3]], [-1, 1], [[-1, 2, 3], [1, 2, 3]]),
-    ],
-    indirect=["vector"],
-)
-def test_assign_x(vector, data, expected):
-    vector.x = data
-    assert np.allclose(vector.data, expected)
+        a2 = vector.angle_with(something)
+        assert np.all(a2 >= 0)
+        assert np.all(a2 <= np.pi)
 
+        a3 = vector.angle_with(something, degrees=True)
+        assert np.allclose(np.rad2deg(a2), a3)
 
-@pytest.mark.parametrize(
-    "vector, data, expected",
-    [
-        ([1, 2, 3], 3, [1, 3, 3]),
-        ([[0, 2, 3], [2, 2, 3]], 1, [[0, 1, 3], [2, 1, 3]]),
-        ([[0, 2, 3], [2, 2, 3]], [-1, 1], [[0, -1, 3], [2, 1, 3]]),
-    ],
-    indirect=["vector"],
-)
-def test_assign_y(vector, data, expected):
-    vector.y = data
-    assert np.allclose(vector.data, expected)
+    def test_mul_array(self, vector):
+        array = np.random.rand(*vector.shape)
+        m1 = vector * array
+        m2 = array * vector
+        assert isinstance(m1, ove.Vector3d)
+        assert isinstance(m2, ove.Vector3d)
+        assert np.all(m1.data == m2.data)
 
+    @pytest.mark.parametrize(
+        "vector, x, y, z",
+        [
+            ([1, 2, 3], 1, 2, 3),
+            ([[0, 2, 3], [2, 2, 3]], [0, 2], [2, 2], [3, 3]),
+        ],
+        indirect=["vector"],
+    )
+    def test_xyz(self, vector, x, y, z):
+        vx, vy, vz = vector.xyz
+        assert np.allclose(vx, x)
+        assert np.allclose(vy, y)
+        assert np.allclose(vz, z)
 
-@pytest.mark.parametrize(
-    "vector, data, expected",
-    [
-        ([1, 2, 3], 1, [1, 2, 1]),
-        ([[0, 2, 3], [2, 2, 3]], 1, [[0, 2, 1], [2, 2, 1]]),
-        ([[0, 2, 3], [2, 2, 3]], [-1, 1], [[0, 2, -1], [2, 2, 1]]),
-    ],
-    indirect=["vector"],
-)
-def test_assign_z(vector, data, expected):
-    vector.z = data
-    assert np.allclose(vector.data, expected)
+    @pytest.mark.parametrize(
+        "vector, rotation, expected",
+        [
+            ((1, 0, 0), np.pi / 2, (0, 1, 0)),
+            ((1, 1, 0), np.pi / 2, (-1, 1, 0)),
+            (
+                (1, 1, 0),
+                [np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi],
+                [(-1, 1, 0), (-1, -1, 0), (1, -1, 0), (1, 1, 0)],
+            ),
+            ((1, 1, 1), -np.pi / 2, (1, -1, 1)),
+        ],
+        indirect=["vector"],
+    )
+    def test_rotate(self, vector, rotation, expected):
+        r = ove.Vector3d(vector).rotate(ove.Vector3d.zvector(), rotation)
+        assert isinstance(r, ove.Vector3d)
+        assert np.allclose(r.data, expected)
 
+    @pytest.mark.parametrize(
+        "vector, change",
+        [
+            ([1, 2, 3], 3),
+            ([[0, 2, 3], [2, 2, 3]], 1),
+            ([[0, 2, 3], [2, 2, 3]], [-1, 1]),
+        ],
+        indirect=["vector"],
+    )
+    def test_assign_xyz(self, vector, change):
+        array = vector.data
+        # test assignments to x
+        array[..., 0] = change
+        vector.x = change
+        assert np.allclose(vector.data, array)
+        # test assignments to y
+        array[..., 1] = change
+        vector.y = change
+        assert np.allclose(vector.data, array)
+        # test assignments to z
+        array[..., 2] = change
+        vector.z = change
+        assert np.allclose(vector.data, array)
 
-@pytest.mark.parametrize(
-    "vector",
-    [
-        [(1, 0, 0)],
-        [(0.5, 0.5, 1.25), (-1, -1, -1)],
-    ],
-    indirect=["vector"],
-)
-def test_perpendicular(vector: Vector3d):
-    assert np.allclose(vector.dot(vector.perpendicular), 0)
+    @pytest.mark.parametrize(
+        "vector",
+        [
+            [(1, 0, 0)],
+            [(0.5, 0.5, 1.25), (-1, -1, -1)],
+        ],
+        indirect=["vector"],
+    )
+    def test_perpendicular(self, vector: ove.Vector3d):
+        # return perpendicular axis for nomral vector
+        assert np.allclose(vector.dot(vector.perpendicular), 0)
+        # return error for vector of zeros
+        with pytest.raises(ValueError):
+            _ = ove.Vector3d.zero((1,)).perpendicular
 
+    def test_mean_xyz(self):
+        x = ove.Vector3d.xvector()
+        y = ove.Vector3d.yvector()
+        z = ove.Vector3d.zvector()
+        t = ove.Vector3d([3 * x.data, 3 * y.data, 3 * z.data])
+        np.allclose(t.mean().data, 1)
 
-def test_mean_xyz():
-    x = Vector3d.xvector()
-    y = Vector3d.yvector()
-    z = Vector3d.zvector()
-    t = Vector3d([3 * x.data, 3 * y.data, 3 * z.data])
-    np.allclose(t.mean().data, 1)
+    def test_transpose_1d(self):
+        v1 = ove.Vector3d.random(7)
+        v2 = v1.transpose()
 
+        assert np.allclose(v1.data, v2.data)
 
-def test_transpose_1d():
-    v1 = Vector3d.random(7)
-    v2 = v1.transpose()
+    def test_transpose(self):
+        v_2d = ove.Vector3d.random((4, 6))
+        v_3d = ove.Vector3d.random((2, 3, 4))
+        v_4d = ove.Vector3d.random((2, 1, 3, 4))
+        # expected to work for 2D shapes
+        assert v_2d.transpose().shape == (6, 4)
+        # should not work for generic 3d without guidance
+        with pytest.raises(ValueError, match="Axes must be defined for more than"):
+            _ = v_3d.transpose()
+        # should also not work for incomplete axes information
+        with pytest.raises(ValueError, match="Number of axes is ill-defined"):
+            _ = v_3d.transpose(0, 2)
+        # But will work for full axes reordering list
+        assert v_3d.transpose(0, 2, 1).shape == (2, 4, 3)
+        assert v_4d.transpose(0, 2, 1, 3).shape == (2, 3, 1, 4)
 
-    assert np.allclose(v1.data, v2.data)
+    def test_get_nearest(self):
+        v_ref = ove.Vector3d.zvector()
+        v = ove.Vector3d([[0, 0, 0.9], [0, 0, 0.8], [0, 0, 1.1]])
+        v_nearest = v_ref.get_nearest(v)
+        assert np.allclose(v_nearest.data, [0, 0, 0.9])
 
+        with pytest.raises(AttributeError, match="`get_nearest` only works for "):
+            v.get_nearest(v_ref)
 
-@pytest.mark.parametrize(
-    "shape, expected_shape",
-    [
-        ((6, 4), (4, 6)),
-        ((11, 5), (5, 11)),
-    ],
-)
-def test_transpose_2d_data_shape(shape, expected_shape):
-    v1 = Vector3d.random(shape)
-    assert v1.transpose().shape == expected_shape
-
-
-def test_transpose_3d_no_axes():
-    v1 = Vector3d.random((5, 4, 2))
-    with pytest.raises(ValueError, match="Axes must be defined for more than"):
-        _ = v1.transpose()
-
-
-def test_transpose_3d_wrong_number_of_axes():
-    v1 = Vector3d.random((5, 4, 2))
-    with pytest.raises(ValueError, match="Number of axes is ill-defined"):
-        _ = v1.transpose(0, 2)
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape",
-    [
-        ((6, 4), (4, 6)),
-        ((11, 5), (5, 11)),
-    ],
-)
-def test_transpose_2d_shape(shape, expected_shape):
-    v1 = Vector3d.random(shape)
-    assert v1.transpose().shape == expected_shape
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape, axes",
-    [((6, 4, 5), (4, 5, 6), (1, 2, 0)), ((6, 4, 5), (5, 4, 6), (2, 1, 0))],
-)
-def test_transpose_3d_data_shape(shape, expected_shape, axes):
-    v1 = Vector3d.random(shape)
-    assert v1.transpose(*axes).shape == expected_shape
-
-
-@pytest.mark.parametrize(
-    "shape, expected_shape, axes",
-    [((6, 4, 5), (4, 5, 6), (1, 2, 0)), ((6, 4, 5), (5, 4, 6), (2, 1, 0))],
-)
-def test_transpose_3d_shape(shape, expected_shape, axes):
-    v1 = Vector3d.random(shape)
-    assert v1.transpose(*axes).shape == expected_shape
-
-
-def test_zero_perpendicular():
-    with pytest.raises(ValueError):
-        _ = Vector3d.zero((1,)).perpendicular
-
-
-def test_get_nearest():
-    v_ref = Vector3d.zvector()
-    v = Vector3d([[0, 0, 0.9], [0, 0, 0.8], [0, 0, 1.1]])
-    v_nearest = v_ref.get_nearest(v)
-    assert np.allclose(v_nearest.data, [0, 0, 0.9])
-
-    with pytest.raises(AttributeError, match="`get_nearest` only works for "):
-        v.get_nearest(v_ref)
-
-
-def test_tuples():
-    v = Vector3d(np.zeros([10, 3]))
-    tup = v._tuples
-    assert len(tup) == 1
-    v = Vector3d(np.arange(30).reshape([10, 3]))
-    tup = v._tuples
-    assert len(tup) == 10
+    def test_tuples(self):
+        v = ove.Vector3d(np.zeros([10, 3]))
+        tup = v._tuples
+        assert len(tup) == 1
+        v = ove.Vector3d(np.arange(30).reshape([10, 3]))
+        tup = v._tuples
+        assert len(tup) == 10
 
 
 class TestSpareNotImplemented:
@@ -521,9 +439,9 @@ class TestSpareNotImplemented:
 
 class TestVector3dInversePoleDensityFunction:
     def test_ipdf_plot(self):
-        v = Vector3d.random(1_000)
+        v = ove.Vector3d.random(1_000)
         fig = v.inverse_pole_density_function(
-            symmetry=symmetry.Th,
+            symmetry=oqu.symmetry.Th,
             return_figure=True,
             show_hemisphere_label=True,
         )
@@ -534,9 +452,9 @@ class TestVector3dInversePoleDensityFunction:
 
     def test_ipdf_plot_hemisphere_raises(self):
         with pytest.raises(ValueError, match="Hemisphere must be either "):
-            v = Vector3d.random(1_000)
+            v = ove.Vector3d.random(1_000)
             _ = v.inverse_pole_density_function(
-                symmetry=symmetry.Th,
+                symmetry=oqu.symmetry.Th,
                 return_figure=True,
                 hemisphere="test",
             )
@@ -544,7 +462,7 @@ class TestVector3dInversePoleDensityFunction:
 
 class TestVector3dPoleDensityFunction:
     def test_pdf_plot_colorbar(self):
-        v = Vector3d.random(10_000)
+        v = ove.Vector3d.random(10_000)
         fig1 = v.pole_density_function(return_figure=True, colorbar=True)
         assert len(fig1.axes) == 2  # plot and colorbar
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
@@ -568,7 +486,7 @@ class TestVector3dPoleDensityFunction:
         plt.close(fig4)
 
     def test_pdf_plot_hemisphere(self):
-        v = Vector3d.random(10_000)
+        v = ove.Vector3d.random(10_000)
         fig1 = v.pole_density_function(return_figure=True, hemisphere="upper")
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
         assert any(qm1)
@@ -600,7 +518,7 @@ class TestVector3dPoleDensityFunction:
         assert np.allclose(qmesh2, qmesh3_2)  # lower
 
     def test_pdf_plot_sigma(self):
-        v = Vector3d.random(10_000)
+        v = ove.Vector3d.random(10_000)
         fig1 = v.pole_density_function(return_figure=True)
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
         assert any(qm1)
@@ -617,7 +535,7 @@ class TestVector3dPoleDensityFunction:
         assert not np.allclose(qmesh1, qmesh2)
 
     def test_pdf_plot_log(self):
-        v = Vector3d.random(10_000)
+        v = ove.Vector3d.random(10_000)
         fig1 = v.pole_density_function(return_figure=True)
         qm1 = [isinstance(c, QuadMesh) for c in fig1.axes[0].collections]
         assert any(qm1)
@@ -634,7 +552,7 @@ class TestVector3dPoleDensityFunction:
         assert not np.allclose(qmesh1, qmesh2)
 
     def test_pdf_hemisphere_raises(self):
-        v = Vector3d.random(100)
+        v = ove.Vector3d.random(100)
         with pytest.raises(ValueError, match=r"Hemisphere must be either "):
             _ = v.pole_density_function(return_figure=True, hemisphere="test")
 
@@ -643,9 +561,9 @@ class TestSphericalCoordinates:
     @pytest.mark.parametrize(
         "v, polar_desired, azimuth_desired, radial_desired",
         [
-            (Vector3d((0.5, 0.5, 0.707107)), np.pi / 4, np.pi / 4, 1),
+            (ove.Vector3d((0.5, 0.5, 0.707107)), np.pi / 4, np.pi / 4, 1),
             (
-                Vector3d((-0.75, -0.433013, -0.5)),
+                ove.Vector3d((-0.75, -0.433013, -0.5)),
                 2 * np.pi / 3,
                 7 * np.pi / 6,
                 1,
@@ -665,13 +583,13 @@ class TestSphericalCoordinates:
 
     def test_polar_loop(self, vector):
         azimuth, polar, radial = vector.to_polar()
-        vector2 = Vector3d.from_polar(azimuth=azimuth, polar=polar, radial=radial)
+        vector2 = ove.Vector3d.from_polar(azimuth=azimuth, polar=polar, radial=radial)
         assert np.allclose(vector.data, vector2.data)
 
 
 class TestGetCircle:
     def test_get_circle(self):
-        v = Vector3d([0, 0, 1])
+        v = ove.Vector3d([0, 0, 1])
         oa = 0.5 * np.pi
         c = v.get_circle(opening_angle=oa, steps=101)
 
@@ -682,26 +600,26 @@ class TestGetCircle:
         assert np.allclose(v.cross(c[0, 0]).data, [1, 0, 0])
 
     def test_from_path_ends(self):
-        vx = Vector3d.xvector()
-        vy = Vector3d.yvector()
+        vx = ove.Vector3d.xvector()
+        vy = ove.Vector3d.yvector()
 
-        v_xy = Vector3d.from_path_ends(Vector3d.stack((vx, vy)))
+        v_xy = ove.Vector3d.from_path_ends(ove.Vector3d.stack((vx, vy)))
         assert v_xy.size == 27
         assert np.allclose(v_xy.polar, np.pi / 2)
         assert np.allclose(v_xy[-1].data, vy.data)
 
-        v_xyz = Vector3d.from_path_ends(
+        v_xyz = ove.Vector3d.from_path_ends(
             [[1, 0, 0], [0, 1, 0], [0, 0, 1]], steps=150, close=True
         )
         assert v_xyz.size == 115
         assert np.allclose(v_xyz[-1].data, vx.data)
 
         with pytest.raises(ValueError, match="No vectors are perpendicular"):
-            _ = Vector3d.from_path_ends(Vector3d.stack((vx, -vx)))
+            _ = ove.Vector3d.from_path_ends(ove.Vector3d.stack((vx, -vx)))
 
 
 class TestPlotting:
-    v = Vector3d(
+    v = ove.Vector3d(
         [
             [0, 0, 1],
             [1, 0, 1],
@@ -721,7 +639,7 @@ class TestPlotting:
 
         axes_labels = ["x", "y"]
         fig1 = v.scatter(return_figure=True, axes_labels=axes_labels)
-        assert isinstance(fig1, plt.Figure)
+        assert isinstance(fig1, mfigure.Figure)
         texts1 = fig1.axes[0].texts
         for i in range(len(axes_labels)):
             assert texts1[i].get_text() == axes_labels[i]
@@ -731,7 +649,7 @@ class TestPlotting:
         fig_size = (5, 10)
         text_size = 20
         scatter_colors = ["C0", "C1", "C2"] * 2
-        labels = plot.format_labels(v.data)
+        labels = opl.format_labels(v.data)
         offset = (-0.02, 0.05)
         fig2 = v.scatter(
             hemisphere="both",
@@ -808,8 +726,8 @@ class TestPlotting:
             self.v.scatter(projection="equal_angle")
 
     def test_scatter_reproject(self):
-        o = Orientation.from_axes_angles((-1, 8, 1), 65, degrees=True)
-        v = (symmetry.Oh * o) * Vector3d.zvector()
+        o = oqu.Orientation.from_axes_angles((-1, 8, 1), 65, degrees=True)
+        v = (oqu.symmetry.Oh * o) * ove.Vector3d.zvector()
 
         # Normal scatter: half of the vectors are shown
         fig1 = v.scatter(return_figure=True)
@@ -849,7 +767,7 @@ class TestPlotting:
             linestyle="--",
         )
 
-        assert isinstance(fig1, plt.Figure)
+        assert isinstance(fig1, mfigure.Figure)
         assert len(fig1.axes) == 2
         assert all(a.hemisphere == h for a, h in zip(fig1.axes, ["upper", "lower"]))
         assert fig1.axes[0].lines[0]._path._vertices.shape == (steps, 2)
@@ -879,7 +797,7 @@ class TestPlotting:
         """Ensure that parts of circles on the other hemisphere are
         added with correct appearance to `StereographicPlot.lines`.
         """
-        v = Vector3d([(1, 1, 1), (-1, 1, 1)])
+        v = ove.Vector3d([(1, 1, 1), (-1, 1, 1)])
 
         fig1 = v.draw_circle(return_figure=True)
         assert len(fig1.axes[0].lines) == 2
@@ -908,7 +826,7 @@ class TestPlotting:
 
         # Cover line where `reproject_plot_kwargs` is not passed
         # directly to `StereographicPlot.draw_circle()`
-        fig4, ax4 = plt.subplots(subplot_kw=dict(projection="stereographic"))
+        _, ax4 = plt.subplots(subplot_kw=dict(projection="stereographic"))
         ax4.draw_circle(v, reproject=True)
         circles4 = ax4.lines
         assert len(circles4) == 4
@@ -918,8 +836,8 @@ class TestPlotting:
 class TestProjectingToFundamentalSector:
     def test_in_fundamental_sector_oh(self):
         # First two outside, last barely within
-        v1 = Vector3d(((1, 0, 0), (1, 1, 0), (1, 0.9, 1.1)))
-        point_group = symmetry.Oh
+        v1 = ove.Vector3d(((1, 0, 0), (1, 1, 0), (1, 0.9, 1.1)))
+        point_group = oqu.symmetry.Oh
         fs = point_group.fundamental_sector
         assert np.allclose((False, False, True), v1 < fs)
         v2 = v1.in_fundamental_sector(point_group)
@@ -927,21 +845,21 @@ class TestProjectingToFundamentalSector:
         assert np.allclose(((0, 0, 1), (1, 0, 1), (1, 0.9, 1.1)), v2.data)
 
     def test_in_fundamental_sector_special(self):
-        v1 = Vector3d(((0, -1.1, 0.1), (0.9, 1, -1), (1, 0.9, 1.1)))
+        v1 = ove.Vector3d(((0, -1.1, 0.1), (0.9, 1, -1), (1, 0.9, 1.1)))
 
         # Triclinic, which has a sector with no center. Nothing changes
-        point_group = symmetry.C1
+        point_group = oqu.symmetry.C1
         assert np.allclose(v1.data, v1.in_fundamental_sector(point_group).data)
 
         # Tetragonal -4
-        point_group = symmetry.S4
+        point_group = oqu.symmetry.S4
         fs = point_group.fundamental_sector
         assert np.allclose((False, False, True), v1 < fs)
         v2 = v1.in_fundamental_sector(point_group)
         assert np.all(v2 < fs)
 
         # Trigonal 321, 312, -3
-        point_group = symmetry.S6
+        point_group = oqu.symmetry.S6
         fs = point_group.fundamental_sector
         assert np.allclose((False, False, True), v1 < fs)
         v3 = v1.in_fundamental_sector(point_group)
