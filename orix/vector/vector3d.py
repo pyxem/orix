@@ -249,15 +249,18 @@ class Vector3d(Object3d):
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
-            # Vector + Miller = Miller
-            self._check_for_symmetry_mismatch(other)
+            # Check for symmetry and reference fram mismatches
+            self._check_for_crystal_mismatch(other)
             if hasattr(other, "phase"):
+                # If 'other' has a phase attribute (e.g, 'Miller'),
+                # use its addition function instead.
                 return other + self
             else:
                 return self.__class__(self.data + other.data)
         elif isinstance(other, (int, float)):
             return self.__class__(self.data + other)
         elif isinstance(other, (list, tuple)):
+            # convert lists and tuples into numpy arrays
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
@@ -273,22 +276,10 @@ class Vector3d(Object3d):
     def __sub__(
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
-        if isinstance(other, Vector3d):
-            # Vector - Miller = Miller
-            self._check_for_symmetry_mismatch(other)
-            if hasattr(other, "phase"):
-                return -other + self
-            else:
-                return self.__class__(self.data - other.data)
-        elif isinstance(other, (int, float)):
-            return self.__class__(self.data - other)
-        elif isinstance(other, (list, tuple)):
+        # Convert to `self + (-other)` to avoid code repetition
+        if isinstance(other, (list, tuple)):
             other = np.array(other)
-
-        if isinstance(other, np.ndarray):
-            return self.__class__(self.data - other[..., np.newaxis])
-
-        return NotImplemented
+        return self + (-other)
 
     def __rsub__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
         if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
@@ -1723,19 +1714,30 @@ class Vector3d(Object3d):
 
         return da.tensordot(v1, v2, axes=(v1.ndim - 1, v2.ndim - 1))
 
-    def _check_for_symmetry_mismatch(self, other) -> None:
-        # NOTE: Vector3D does not include phase information, but some of its
-        # subclasses (most importantly, Miller) do, and adding the checks
-        # in Vector3D allows for checking regardless of order ie, (v+m vs m+v)
-        # as well as identical messages in all subclasses.
+    def _check_for_crystal_mismatch(self, other) -> None:
+        # NOTE: Vector3D does not include phase or coordinate_format
+        # information, but some of it's subclasses (most importantly, Miller)
+        # do. Adding the checker function to Vector3D allows logging
+        # consistent warnings regardless of operation order (ie, v+m or m+v).
         phase_checks = [hasattr(self, "phase"), hasattr(other, "phase")]
         if np.all(phase_checks):
             if self.phase.point_group != other.phase.point_group:
+                pg1 = self.phase.point_group.name
+                pg2 = other.phase.point_group.name
                 _logger.warning(
-                    "WARNING: Point group mismatch detected between crystal vectors."
+                    "WARNING: Point group mismatch ({pg1} versus {pg2}) detected between crystal vectors."
                 )
         elif np.any(phase_checks):
             _logger.warning(
                 "WARNING: This operation is between a crystal and real space vector."
             )
+        crd_checks = [
+            hasattr(self,'coordinate_format'), hasattr(other,'coordinate_format')
+            ]
+        if np.all(crd_checks):
+            cf1 = self.coordinate_format
+            cf2 = other.coordinate_format
+            _logger.warning(
+                    "WARNING: Coordinates mismatch ({cf1} versus {cf2}) detected between crystal vectors."
+                )
         return None

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from itertools import product
+import logging
 from typing import TYPE_CHECKING
 
 from diffpy.structure import Lattice
@@ -32,6 +33,9 @@ from orix.vector.vector3d import Vector3d
 if TYPE_CHECKING:  # pragma: no cover
     from orix.crystal_map._phase import Phase
     from orix.quaternion.symmetry import Symmetry
+
+
+_logger = logging.getLogger(__name__)
 
 
 class Miller(Vector3d):
@@ -376,29 +380,14 @@ class Miller(Vector3d):
     ) -> Miller:
         data = None
         if isinstance(other, Vector3d):
+            self._check_for_crystal_mismatch(other)
+            if not  hasattr(other, "phase"):
+                # assume the other vector is being added in the same
+                # coordinate frame as the crystal vector
+                other = self.__class__(*{self.coordinate_format: other.data}, phase=self.phase)
             data = self.data + other.data
         elif isinstance(other, (int, float)):
             data = self.data + other
-        elif isinstance(other, (list, tuple)):
-            other = np.array(other)
-        if isinstance(other, np.ndarray):
-            data = self.data - other[..., np.newaxis]
-
-        if data is None:
-            return NotImplemented
-
-        out = self.__class__(data, self.phase)
-        out.coordinate_format = self.coordinate_format
-        return out
-
-    def __sub__(
-        self, other: int | float | list | tuple | np.ndarray | Vector3d | Miller
-    ) -> Miller:
-        data = None
-        if isinstance(other, Vector3d):
-            data = self.data - other.data
-        elif isinstance(other, (int, float)):
-            data = self.data - other
         elif isinstance(other, (list, tuple)):
             other = np.array(other)
         if isinstance(other, np.ndarray):
