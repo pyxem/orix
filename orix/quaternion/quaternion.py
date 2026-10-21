@@ -222,7 +222,7 @@ class Quaternion(Object3d):
                 )
             else:  # pragma: no cover
                 v = qu_rotate_vec(self.unit.data, other.data)
-            if isinstance(other, Miller):
+            if hasattr(object, 'phase'):
                 m = other.__class__(xyz=v, phase=other.phase)
                 m.coordinate_format = other.coordinate_format
                 return m
