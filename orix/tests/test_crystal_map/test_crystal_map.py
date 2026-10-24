@@ -1140,6 +1140,22 @@ class TestCrystalMapShape:
         xmap = CrystalMap(**crystal_map_input)
         assert xmap._coordinate_axes == expected_coordinate_axes
 
+    def test_coordinates_not_starting_at_zero(self):
+        # E.g. a region of interest exported with stage coordinates
+        d, map_size = create_coordinate_arrays((3, 4), step_sizes=(0.5, 0.5))
+        d["x"] = d["x"] + 10
+        d["y"] = d["y"] + 3
+        xmap = CrystalMap(rotations=Rotation.identity(map_size), **d)
+        assert xmap.shape == (3, 4)
+        x = xmap.get_map_data("x")
+        assert x.shape == (3, 4)
+        assert np.allclose(x[0], [10, 10.5, 11, 11.5])
+
+        xmap2 = xmap[1:, 1:]
+        assert xmap2.shape == (2, 3)
+        assert np.allclose(xmap2.get_map_data("x")[0], [10.5, 11, 11.5])
+        assert np.allclose(xmap2.get_map_data("y")[:, 0], [3.5, 4])
+
     def test_data_slices_from_coordinates_no_steps(self):
         d, _ = create_coordinate_arrays((3, 4), step_sizes=(0.1, 0.2))
         slices = _data_slices_from_coordinates(d)

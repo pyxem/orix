@@ -1089,11 +1089,19 @@ class CrystalMap:
         slices
             Data slice in each existing direction in (y, x) order.
         """
+        steps = self._step_sizes
         if only_is_in_data:
             coordinates = self._coordinates
         else:
             coordinates = self._all_coordinates
-        slices = _data_slices_from_coordinates(coordinates, self._step_sizes)
+        slices = _data_slices_from_coordinates(coordinates, steps)
+        # Make slices relative to the first point in the full map, so
+        # that maps whose coordinates do not start at zero can be
+        # indexed into arrays of the original map shape
+        origin = _data_slices_from_coordinates(self._all_coordinates, steps)
+        slices = tuple(
+            slice(s.start - o.start, s.stop - o.start) for s, o in zip(slices, origin)
+        )
         return slices
 
     def _data_shape_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
