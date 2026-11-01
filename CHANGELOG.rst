@@ -28,6 +28,8 @@ Changed
 - Misorientations and orientations account for symmetry when calculating the mean.
 - An orientation region can now be calculated from every combination of two point groups
   (previously not possible for 200/1024 combinations).
+- Improved stability of getting a quaternion from a rotation matrix by using Shepperd's
+  method.
 
 Removed
 -------
