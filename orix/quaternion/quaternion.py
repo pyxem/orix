@@ -513,8 +513,8 @@ class Quaternion(Object3d):
 
     @classmethod
     def from_matrix(cls, matrix: np.ndarray | tuple | list) -> Quaternion:
-        """Create unit quaternions from orientation matrices
-        :cite:`rowenhorst2015consistent`.
+        """Create unit quaternions from orientation matrices using
+        Shepperd's method :cite:`sarabandi2018accurate`.
 
         Parameters
         ----------
@@ -526,6 +526,14 @@ class Quaternion(Object3d):
         -------
         Q
             Unit quaternions.
+
+        Notes
+        -----
+        Uses Shepperd's method :cite:`sarabandi2018accurate`, which
+        avoids numerical instability by computing the largest quaternion
+        component from the diagonal of the matrix and the remaining
+        components from the off-diagonal elements. The returned
+        quaternion has a non-negative real part.
 
         Examples
         --------
