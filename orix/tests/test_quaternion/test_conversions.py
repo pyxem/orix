@@ -20,7 +20,7 @@
 import numpy as np
 import pytest
 
-from orix.quaternion import Orientation
+from orix.quaternion import Orientation, Rotation
 from orix.quaternion._conversions import (
     ax2qu,
     ax2qu_2d,
@@ -104,6 +104,30 @@ class TestRotationConversions:
         ori = Orientation.from_euler(eu_64[-1], Oh)
         assert ori.symmetry == Oh
         assert np.allclose(ori.data[0], qu_64[-1], atol=1e-4)
+
+    def test_qu2eu_equatorial_twofold(self):
+        # 180 deg rotations about equatorial (xy-plane) axes hit the Phi = pi
+        # branch of qu2eu (Rowenhorst et al. (2015) Eq. A.14). Off-axis axes,
+        # with x and y both non-zero, must round-trip back to the rotation.
+        psi = np.linspace(0, np.pi, 19)
+        axes = np.column_stack([np.cos(psi), np.sin(psi), np.zeros_like(psi)])
+        qu = ax2qu(axes, np.full(psi.shape, np.pi))
+
+        # jit path: qu -> eu -> qu, compared as matrices to sidestep the
+        # quaternion double cover
+        assert np.allclose(qu2om(qu), qu2om(eu2qu(qu2eu(qu))), atol=1e-6)
+
+        # Pure-Python path
+        for q in qu:
+            q_rt = eu2qu_single.py_func(qu2eu_single.py_func(q))
+            assert np.allclose(
+                qu2om_single.py_func(q), qu2om_single.py_func(q_rt), atol=1e-6
+            )
+
+        # Public API round-trip
+        rot = Rotation.from_axes_angles(axes, np.pi)
+        rot_rt = Rotation.from_euler(rot.to_euler())
+        assert np.allclose(rot.to_matrix(), rot_rt.to_matrix(), atol=1e-6)
 
     def test_get_pyramid(self, cubochoric_coordinates):
         """Cubochoric coordinates situated in expected pyramid."""

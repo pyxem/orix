@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,12 +17,12 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from diffpy.structure.spacegroups import GetSpaceGroup
 from h5py import File
 import numpy as np
 import pytest
 
 from orix import __version__ as orix_version
+from orix._utils._diffpy_structure_utils import get_cell_parms, get_space_group
 from orix.crystal_map import CrystalMap, Phase
 import orix.io as oio
 from orix.io.plugins.orix_hdf5 import (
@@ -125,7 +125,7 @@ class TestOrixHDF5Plugin:
         phase_dict1 = phase2dict(phase)
         assert phase_dict1["space_group"] == sg100
 
-        sg200 = GetSpaceGroup(200)
+        sg200 = get_space_group(200)
         phase.space_group = sg200
         phase_dict2 = phase2dict(phase)
         assert phase_dict2["space_group"] == sg200.number
@@ -180,7 +180,9 @@ class TestOrixHDF5Plugin:
         assert phase1.color == phase2.color
         assert phase1.space_group.number == phase2.space_group.number
         assert phase1.point_group.name == phase2.point_group.name
-        assert phase1.structure.lattice.abcABG() == phase2.structure.lattice.abcABG()
+        assert get_cell_parms(phase1.structure.lattice) == get_cell_parms(
+            phase2.structure.lattice
+        )
 
     def test_dict2phase_spacegroup(self):
         """Space group number int or None is properly parsed from a dict."""
@@ -195,7 +197,7 @@ class TestOrixHDF5Plugin:
 
         lattice1 = structure1.lattice
         lattice2 = structure2.lattice
-        assert lattice1.abcABG() == lattice2.abcABG()
+        assert get_cell_parms(lattice1) == get_cell_parms(lattice2)
         assert np.allclose(lattice1.baserot, lattice2.baserot)
 
         assert str(structure1.element) == str(structure2.element)
@@ -205,7 +207,7 @@ class TestOrixHDF5Plugin:
         lattice = phase_list[0].structure.lattice
         lattice2 = dict2lattice(lattice2dict(lattice))
 
-        assert lattice.abcABG() == lattice2.abcABG()
+        assert get_cell_parms(lattice) == get_cell_parms(lattice2)
         assert np.allclose(lattice.baserot, lattice2.baserot)
 
     def test_dict2atom(self, phase_list):

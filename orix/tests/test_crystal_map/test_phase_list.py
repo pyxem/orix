@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -18,10 +18,10 @@
 #
 
 from diffpy.structure import Lattice, Structure
-from diffpy.structure.spacegroups import GetSpaceGroup
 import numpy as np
 import pytest
 
+from orix._utils._diffpy_structure_utils import get_space_group
 from orix.crystal_map import Phase, PhaseList
 
 
@@ -311,7 +311,7 @@ class TestPhaseList:
         pl.add(Phase(name, space_group=sg_no))
         assert pl.ids == [0]
         assert pl.names == [name]
-        assert pl.space_groups == [GetSpaceGroup(sg_no)]
+        assert pl.space_groups == [get_space_group(sg_no)]
         assert pl.structures == [Structure()]
 
     def test_add_list_phases_to_phaselist(self):
@@ -329,7 +329,8 @@ class TestPhaseList:
         pl.add([Phase(name=n, space_group=i) for n, i in zip(new_names, new_sg_no)])
         assert pl.names == names + new_names
         assert pl.space_groups == (
-            [GetSpaceGroup(i) for i in sg_no] + [GetSpaceGroup(i) for i in new_sg_no]
+            [get_space_group(i) for i in sg_no]
+            + [get_space_group(i) for i in new_sg_no]
         )
         assert pl.colors == colors + ["tab:green", "tab:red"]
 
@@ -349,7 +350,7 @@ class TestPhaseList:
         pl1.add(pl2)
         assert pl1.names == names + names2
         assert pl1.space_groups == (
-            [GetSpaceGroup(i) for i in sg_no] + [GetSpaceGroup(i) for i in sg_no2]
+            [get_space_group(i) for i in sg_no] + [get_space_group(i) for i in sg_no2]
         )
         assert pl1.ids == [0, 1, 2, 3]
 

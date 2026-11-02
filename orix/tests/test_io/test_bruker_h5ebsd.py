@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -20,6 +20,7 @@
 import numpy as np
 import pytest
 
+from orix._utils._diffpy_structure_utils import get_cell_parms
 from orix.io import load
 
 
@@ -89,7 +90,7 @@ class TestBrukerH5ebsdReader:
         pid = phase_id[-1]
         assert xmap.phases[pid].space_group.number == 225
         assert np.allclose(
-            xmap.phases[pid].structure.lattice.abcABG()[3:], [90, 90, 90]
+            get_cell_parms(xmap.phases[pid].structure.lattice)[3:], [90, 90, 90]
         )
         if 0 in phase_id:
             assert -1 in xmap.phases.ids

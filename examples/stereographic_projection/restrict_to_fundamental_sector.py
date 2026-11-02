@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
+
 r"""
 ==============================
 Restrict to fundamental sector
@@ -26,8 +27,8 @@ one of the eleven Laue group symmetries :math:`S` using
 :meth:`~orix.plot.StereographicPlot.restrict_to_sector`.
 The sector is typically obtained from
 :attr:`orix.quaternion.Symmetry.fundamental_sector`.
-It is often called the 'fundamental triangle' or
-'standard stereographic triangle (SST)'.
+It is often called the 'fundamental triangle' or 'standard stereographic triangle
+(SST)'.
 
 We demonstrate this functionality by drawing (near) great circles about some typically
 strongly reflecting low-index reciprocal lattice vectors :math:`\mathbf{g} = \{hkl\}` in
@@ -38,12 +39,13 @@ $a$ = 0.404 nm (aluminium) and an accelerating voltage of 20 kV.
 The band width is assumed to be two times the Bragg angle :math:`\theta`.
 """
 
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 
 from orix.crystal_map import Phase
 from orix.plot import format_labels, register_projections
-from orix.quaternion import symmetry
+from orix.quaternion.symmetry import Oh
 from orix.vector import Miller
 
 plt.rcParams["font.size"] = 15
@@ -53,7 +55,7 @@ register_projections()  # Register our custom Matplotlib projections
 # Symmetrically equivalent set of hkl
 g0 = Miller(
     hkl=[[1, 1, 1], [2, 0, 0], [2, 2, 0], [3, 1, 1]],
-    phase=Phase(point_group=symmetry.Oh),
+    phase=Phase(point_group=Oh),
 )
 print(g0)
 g, idx = g0.symmetrise(unique=True, return_index=True)

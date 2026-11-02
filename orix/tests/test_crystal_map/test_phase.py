@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,10 +17,15 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from diffpy.structure import Atom, Lattice, Structure, loadStructure
+from diffpy.structure import Atom, Lattice, Structure
 import numpy as np
 import pytest
 
+from orix._utils._diffpy_structure_utils import (
+    get_cell_parms,
+    load_structure,
+    place_in_lattice,
+)
 from orix.crystal_map import Phase
 from orix.crystal_map._phase import default_lattice, new_structure_matrix_from_alignment
 from orix.quaternion.symmetry import O, Symmetry
@@ -113,7 +118,9 @@ class TestPhase:
         assert p1.structure[0].element == p2.structure[0].element
         assert tuple(p1.structure[0].xyz) == tuple(p2.structure[0].xyz)
         assert p1.structure[0] is not p2.structure[0]
-        assert p1.structure.lattice.abcABG() == p2.structure.lattice.abcABG()
+        assert get_cell_parms(p1.structure.lattice) == get_cell_parms(
+            p2.structure.lattice
+        )
         assert p1.structure.lattice is not p2.structure.lattice
 
     @pytest.mark.parametrize("name", [None, "al", 1, np.arange(2)])
@@ -272,7 +279,7 @@ class TestPhase:
         lattice = phase.structure.lattice
 
         # Lattice parameters are unchanged
-        assert np.allclose(lattice.abcABG(), [1.7, 1.7, 1.4, 90, 90, 120])
+        assert np.allclose(get_cell_parms(lattice), [1.7, 1.7, 1.4, 90, 90, 120])
 
         # Structure matrix has changed internally, but not the input
         # `Lattice` instance
@@ -412,14 +419,14 @@ class TestPhase:
         assert phase.point_group.name == "2/m"
         assert len(phase.structure) == 22  # Number of atoms
         lattice = phase.structure.lattice
-        assert np.allclose(lattice.abcABG(), [15.5, 4.05, 6.74, 90, 105.3, 90])
+        assert np.allclose(get_cell_parms(lattice), [15.5, 4.05, 6.74, 90, 105.3, 90])
         assert np.allclose(
             lattice.base, [[15.5, 0, 0], [0, 4.05, 0], [-1.779, 0, 6.501]], atol=1e-3
         )
 
-    def test_from_cif_same_structure(self, cif_file):
+    def test_from_cif_same_structure(self, cif_file: str):
         phase1 = Phase.from_cif(cif_file)
-        structure = loadStructure(cif_file)
+        structure = load_structure(cif_file)
         phase2 = Phase(structure=structure)
         assert np.allclose(phase1.structure.lattice.base, phase2.structure.lattice.base)
         assert np.allclose(phase1.structure.xyz, phase2.structure.xyz)
@@ -563,7 +570,7 @@ class TestPhase:
         # Check atom positions in ORIGINAL lattice alignment
         # Doing the check in orix's alignment makes independently computing expected sites difficult
         s = exp.structure.copy()
-        s.placeInLattice(Lattice(base=phase._diffpy_lattice))
+        s = place_in_lattice(s, Lattice(base=phase._diffpy_lattice))
         # Use set to avoid having to ensure the order is the same
         assert set(tuple(xyz.round(8).tolist()) for xyz in s.xyz) == set(
             expected_atom_positions
@@ -574,7 +581,7 @@ class TestPhase:
         assert np.array_equal(base, exp2.structure.lattice.base)
         assert len(exp2.structure) == len(expected_atom_positions)
         s = exp2.structure.copy()
-        s.placeInLattice(Lattice(base=phase._diffpy_lattice))
+        s = place_in_lattice(s, Lattice(base=phase._diffpy_lattice))
         assert set(tuple(xyz.round(8).tolist()) for xyz in s.xyz) == set(
             expected_atom_positions
         )
@@ -969,12 +976,12 @@ class TestPhase:
     def test_default_lattice(self):
         for S in ["1", "2", "222", "422", "432"]:
             phase = Phase(point_group=S)
-            lattice_parameters = phase.structure.lattice.abcABG()
+            lattice_parameters = get_cell_parms(phase.structure.lattice)
             assert np.allclose([1, 1, 1, 90, 90, 90], lattice_parameters)
 
         for S in ["3", "622"]:
             phase = Phase(point_group=S)
-            lattice_parameters = phase.structure.lattice.abcABG()
+            lattice_parameters = get_cell_parms(phase.structure.lattice)
             assert np.allclose([1, 1, 1, 90, 90, 120], lattice_parameters)
 
     def test_default_lattice_raises(self):

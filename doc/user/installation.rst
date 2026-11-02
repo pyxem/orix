@@ -130,6 +130,7 @@ This is a list of required package dependencies:
 * :doc:`matplotlib <matplotlib:index>`: Visualization
 * :doc:`numba <numba:index>`: CPU acceleration
 * :doc:`numpy <numpy:index>`: Handling of N-dimensional arrays
+* :doc:`packaging <packaging:index>`: Version comparison
 * :doc:`pooch <pooch:api/index>`: Downloading and caching of datasets
 * :doc:`scipy <scipy:index>`: Optimization algorithms, filtering and more
 * `tqdm <https://tqdm.github.io/>`__: Progressbars

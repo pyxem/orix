@@ -61,7 +61,7 @@ class IPFColorKeyTSL(IPFColorKey):
     The TSL colormaps map only the 11 Laue classes, as they can all be
     described as weighted combinations of red, green, and blue. For
     details on this map as well as options for less limiting alternative
-    mappings, refer to :cite:`nolze2016orientation`.
+    mappings, refer to :cite:`nolze2016orientations`.
     """
 
     def __init__(

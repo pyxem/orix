@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,11 +17,12 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from diffpy.structure import Atom, Lattice, Structure
+from diffpy.structure import Lattice, Structure
 import numpy as np
 import pytest
 
 from orix import io
+from orix._utils._diffpy_structure_utils import get_cell_parms
 from orix.crystal_map import PhaseList
 
 
@@ -118,7 +119,8 @@ class TestCTFReader:
             assert phase.name == phase_test.name
             assert phase.space_group.number == phase_test.space_group.number
             assert np.allclose(
-                phase.structure.lattice.abcABG(), phase_test.structure.lattice.abcABG()
+                get_cell_parms(phase.structure.lattice),
+                get_cell_parms(phase_test.structure.lattice),
             )
 
     @pytest.mark.parametrize(
@@ -191,7 +193,14 @@ class TestCTFReader:
         phase = xmap.phases[1]
         assert phase.name == "Gold"
         assert phase.space_group.number == 225
-        assert phase.structure.lattice.abcABG() == (4.079, 4.079, 4.079, 90, 90, 90)
+        assert get_cell_parms(phase.structure.lattice) == (
+            4.079,
+            4.079,
+            4.079,
+            90,
+            90,
+            90,
+        )
 
     @pytest.mark.parametrize(
         "ctf_astar, map_shape, R_example",
@@ -263,7 +272,14 @@ class TestCTFReader:
         phase = xmap.phases[1]
         assert phase.name == "_mineral 'Gold'  'Gold'"
         assert phase.space_group.number == 225
-        assert phase.structure.lattice.abcABG() == (4.078, 4.078, 4.078, 90, 90, 90)
+        assert get_cell_parms(phase.structure.lattice) == (
+            4.078,
+            4.078,
+            4.078,
+            90,
+            90,
+            90,
+        )
 
     @pytest.mark.parametrize(
         "ctf_emsoft, map_shape, step_sizes, R_example",
@@ -353,7 +369,8 @@ class TestCTFReader:
             assert phase.name == phase_test.name
             assert phase.space_group.number == phase_test.space_group.number
             assert np.allclose(
-                phase.structure.lattice.abcABG(), phase_test.structure.lattice.abcABG()
+                get_cell_parms(phase.structure.lattice),
+                get_cell_parms(phase_test.structure.lattice),
             )
 
     @pytest.mark.parametrize(
@@ -443,5 +460,6 @@ class TestCTFReader:
             assert phase.name == phase_test.name
             assert phase.point_group.name == phase_test.point_group.name
             assert np.allclose(
-                phase.structure.lattice.abcABG(), phase_test.structure.lattice.abcABG()
+                get_cell_parms(phase.structure.lattice),
+                get_cell_parms(phase_test.structure.lattice),
             )
