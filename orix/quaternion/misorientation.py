@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -20,18 +20,20 @@
 from __future__ import annotations
 
 from itertools import product as iproduct
-from typing import Any, Literal
+import logging
+import sys
+from typing import Any, Literal, overload
 import warnings
 
 import dask.array as da
-from dask.diagnostics import ProgressBar
+from dask.diagnostics.progress import ProgressBar
 import matplotlib.figure as mfigure
 from matplotlib.gridspec import SubplotSpec
 import numpy as np
 from scipy.spatial.transform import Rotation as SciPyRotation
 from tqdm import tqdm
 
-from orix._utils.deprecation import deprecated
+from orix.quaternion._numba import _mori_distance_matrix
 from orix.quaternion.orientation_region import OrientationRegion
 from orix.quaternion.rotation import Rotation
 from orix.quaternion.symmetry import (
@@ -40,6 +42,8 @@ from orix.quaternion.symmetry import (
     _get_unique_symmetry_elements,
 )
 from orix.vector.miller import Miller
+
+_logger = logging.getLogger(__name__)
 
 
 class Misorientation(Rotation):
@@ -392,77 +396,104 @@ class Misorientation(Rotation):
 
         return self.__class__(equivalent).flatten()
 
-    @deprecated(since="0.14", removal="0.15", alternative="reduce")
-    def map_into_symmetry_reduced_zone(self, verbose: bool = False) -> Misorientation:
-        """Return equivalent transformations which have the smallest
-        angle of rotation as a new misorientation.
-
-        Parameters
-        ----------
-        verbose
-            Whether to print a progressbar. Default is ``False``.
-
-        Returns
-        -------
-        M
-            A new misorientation object with the assigned symmetry.
-
-        Examples
-        --------
-        >>> from orix.quaternion.symmetry import C4, C2
-        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> M = Misorientation(data)
-        >>> M.symmetry = (C4, C2)
-        >>> M.map_into_symmetry_reduced_zone()
-        Misorientation (2,) 4, 2
-        [[-0.7071  0.7071  0.      0.    ]
-        [ 0.      1.      0.      0.    ]]
-        """
-        return self.reduce(verbose)
-
     def reduce(self, verbose: bool = False) -> Misorientation:
-        """Return equivalent transformations which have the smallest
-        angle of rotation as a new misorientation.
+        """Return symmetrically equivalent transformations with the
+        smallest angle of rotation.
+
+        For misorientations, reduced representations are further
+        restricted to transforms inside their symmetry's fundamental
+        zone. See *Notes* for details.
 
         Parameters
         ----------
         verbose
-            Whether to print a progressbar. Default is ``False``.
+            Whether to print a progressbar. Default is False.
 
         Returns
         -------
-        M
-            A new misorientation object with the assigned symmetry.
+        mori
+            New misorientation with the assigned symmetry.
+
+        See Also
+        --------
+        :class:`~orix.quaternion.OrientationRegion`
+
+        Notes
+        -----
+        In orix, a (mis)orientation fundamental zone (FZ) is defined as
+        a bounded volume in quaternion space containing only proper
+        rotations. This is a common convention (see
+        :meth:`~orix.quaternion.OrientationRegion.from_symmetry` for
+        details). This is relevant for defining a reduced representation
+        because the brute force expansion of a misorientation to its
+        symmetric equivalents can produce up to four unique rotations
+        that fall inside the FZ and also all have the same rotation
+        angle.
+
+        For all orientations and 924/1024 possible symmetry combinations
+        (32^2) for misorientations, this fact is irrelevant, as either
+        only a single proper rotation or an identical proper and
+        improper pair will map to the FZ. The remaining 100 cases occur
+        when both symmetries are improper and do not possess an
+        inversion. In this case, four unique values fall within the FZ,
+        including two proper rotations. One of these is produced using
+        only proper rotations, whereas the second is a 'pseudo-proper'
+        rotation resulting from two consecutive rotoinversions. Since
+        pseudo-proper variants cannot be reached through any combination
+        of proper rotations from either symmetry, they are ignored by
+        orix and only the proper rotation is returned.
+
+        If *verbose* is True, the progress bar will most likely
+        terminate before trying all iterations, as all (mis)orientations
+        are within the fundamental zone already.
 
         Examples
         --------
+        >>> from orix.quaternion import Misorientation
         >>> from orix.quaternion.symmetry import C4, C2
-        >>> data = np.array([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
-        >>> M = Misorientation(data)
-        >>> M.symmetry = (C4, C2)
-        >>> M.reduce()
+        >>> mori = Misorientation([[0.5, 0.5, 0.5, 0.5], [0, 1, 0, 0]])
+        >>> mori.symmetry = (C4, C2)
+        >>> mori.reduce()
         Misorientation (2,) 4, 2
-        [[-0.7071  0.7071  0.      0.    ]
+        [[-0.7071 0.     -0.7071  0.    ]
         [ 0.      1.      0.      0.    ]]
         """
-        Gl, Gr = self._symmetry
-        fz = OrientationRegion.from_symmetry(Gl, Gr)
-        symmetry_pairs = iproduct(Gl, Gr)
-        if verbose:
-            symmetry_pairs = tqdm(symmetry_pairs, total=Gl.size * Gr.size)
+        # Combine symmetry elements of start and end of transformation
+        # given by the (mis)orientation
+        start, end = self._symmetry
+        symmetry_pairs = iproduct(start, end)
 
-        # There is one and only one combination of `symmetry_pairs` that
-        # moves an arbitrary rotation into fz. Apply the combinations
-        # iteratively to the outside quaternions until all are inside.
+        log_msg = "Reducing to fundamental zone"
+        if verbose:
+            symmetry_pairs = tqdm(
+                symmetry_pairs, total=start.size * end.size, desc=log_msg
+            )
+        else:
+            _logger.info(log_msg)
+
+        # Find the (mis)orientations which lie inside the Rodrigues
+        # (orientation) or MacKenzie (misorientation) fundamental zone
+        # (FZ), given by the symmetry elements. We loop over all
+        # symmetry pairs and rotate all (mis)orientations until all are
+        # inside the FZ. Ignore symmetry combinations that need an
+        # inversion, as these are not handled by the MacKenzie/Rodrigues
+        # definitions of a FZ.
+        fz = OrientationRegion.from_symmetry(start=start, end=end)
         reduced = self.__class__.identity(self.shape)
-        outside = np.ones(self.shape, dtype=bool)
-        for gl, gr in symmetry_pairs:
-            o_transformed = gl * self[outside] * gr
-            reduced[outside] = o_transformed
-            outside = ~(reduced < fz)
-            if not np.any(outside):
+        is_outside = np.ones(self.shape, dtype=bool)
+        for sym_start, sym_end in symmetry_pairs:
+            if sym_start.improper != sym_end.improper:
+                continue
+            reduced[is_outside] = sym_end * self[is_outside] * sym_start
+            is_outside = ~(reduced < fz)
+            if not is_outside.any():
                 break
-        reduced._symmetry = (Gl, Gr)
+
+        # Convert to northern hemisphere representations
+        reduced.data[reduced.a < 0] = reduced.data[reduced.a < 0] * -1
+
+        reduced._symmetry = (start, end)
+
         return reduced
 
     def scatter(
@@ -568,6 +599,8 @@ class Misorientation(Rotation):
         chunk_size: int = 20,
         progressbar: bool = True,
         degrees: bool = False,
+        *,
+        lazy: bool = True,
     ) -> np.ndarray:
         r"""Return the symmetry reduced smallest angle of rotation
         transforming every misorientation in this instance to every
@@ -579,19 +612,24 @@ class Misorientation(Rotation):
             Number of misorientations per axis to include in each
             iteration of the computation. Default is 20. Increasing this
             might reduce the computation time at the cost of increased
-            memory use.
+            memory use. Only used if *lazy* is True.
         progressbar
             Whether to show a progressbar during computation. Default is
-            ``True``.
+            True. Only used if *lazy* is True.
         degrees
-            If ``True``, the angles are returned in degrees. Default is
-            ``False``.
+            If True, the angles are returned in degrees. Default is
+            False.
+        lazy
+            Whether to compute with Dask. Default is True. Setting False
+            should be both faster and use less memory.
+
+            False will be the default in the future.
 
         Returns
         -------
         angles
-            Misorientation angles in radians (``degrees=False``) or
-            degrees (``degrees=True``).
+            Misorientation angles in radians (*degrees* is False) or
+            degrees (*degrees* is True).
 
         Notes
         -----
@@ -617,43 +655,27 @@ class Misorientation(Rotation):
         Examples
         --------
         >>> from orix.quaternion import Misorientation, symmetry
-        >>> M = Misorientation.from_axes_angles([1, 0, 0], [0, 90], degrees=True)
-        >>> M.symmetry = (symmetry.D6, symmetry.D6)
-        >>> M.get_distance_matrix(progressbar=False, degrees=True)
+        >>> mori = Misorientation.from_axes_angles([1, 0, 0], [0, 90], degrees=True)
+        >>> mori.symmetry = (symmetry.D6, symmetry.D6)
+        >>> mori.get_distance_matrix(progressbar=False, degrees=True)
         array([[ 0., 90.],
                [90.,  0.]])
         """
         # Reduce symmetry operations to the unique ones
         symmetry = _get_unique_symmetry_elements(*self.symmetry)
 
-        # Perform "s_k m_i s_l s_k m_j" (see Notes)
-        M1 = symmetry.outer(self).outer(symmetry)
-        M2 = M1._outer_dask(~self, chunk_size=chunk_size)
-
-        # Perform last outer product and reduce to all dot products at
-        # the same time
-        warnings.filterwarnings("ignore", category=da.PerformanceWarning)
-        str1 = "abcdefghijklmnopqrstuvwxy"[: M2.ndim]
-        str2 = "z" + str1[-1]  # Last axis has shape (4,)
-        sum_over = f"{str1},{str2}->{str1[:-1] + str2[0]}"
-        all_dot_products = da.einsum(sum_over, M2, symmetry.data)
-
-        # Get highest dot product
-        axes = (0, self.ndim + 1, 2 * self.ndim + 2)
-        dot_products = da.max(abs(all_dot_products), axis=axes)
-
-        # Round because some dot products are slightly above 1
-        dot_products = da.round(dot_products, 12)
-
-        # Calculate disorientation angles
-        angles_dask = da.arccos(2 * dot_products**2 - 1)
-        angles_dask = da.nan_to_num(angles_dask)
-        angles = np.zeros(angles_dask.shape)
-        if progressbar:
-            with ProgressBar():
-                da.store(sources=angles_dask, targets=angles)
+        if lazy:
+            angles = _get_distance_matrix_dask(
+                mori=self,
+                symmetry=symmetry,
+                chunk_size=chunk_size,
+                progressbar=progressbar,
+            )
         else:
-            da.store(sources=angles_dask, targets=angles)
+            qu = np.ascontiguousarray(self.unit.data.reshape(-1, 4), dtype=np.float64)
+            sym_ops = np.ascontiguousarray(symmetry.data, dtype=np.float64)
+            angles = _mori_distance_matrix(qu, sym_ops)
+            angles = angles.reshape(self.shape + self.shape)
 
         if degrees:
             angles = np.rad2deg(angles)
@@ -663,3 +685,173 @@ class Misorientation(Rotation):
     def inv(self) -> Misorientation:
         r"""Return the inverse misorientations :math:`M^{-1}`."""
         return self.__invert__()
+
+    @overload
+    def mean(
+        self,
+        weights: np.ndarray | None = None,
+        include_improper: bool = False,
+        use_symmetry: bool = True,
+        return_neighbors: Literal[False] = False,
+        verbose: bool = False,
+    ) -> Misorientation: ...
+
+    @overload
+    def mean(
+        self,
+        weights: np.ndarray | None = None,
+        include_improper: bool = False,
+        use_symmetry: bool = True,
+        return_neighbors: Literal[True] = True,
+        verbose: bool = False,
+    ) -> tuple[Misorientation, Rotation]: ...
+
+    def mean(
+        self,
+        weights: np.ndarray | None = None,
+        include_improper: bool = False,
+        use_symmetry: bool = True,
+        return_neighbors: bool = False,
+        verbose: bool = False,
+    ) -> Misorientation | tuple[Misorientation, Rotation]:
+        """Return the symmetry-respecting mean (mis)orientation.
+
+        Parameters
+        ----------
+        weights
+            Weights for calculating a weighted average. Must be of the
+            same size as the (mis)orientation, or None.
+        include_improper
+            Whether to exclude equivalent representations that require
+            inversion symmetry to calculate. Default is False.
+        use_symmetry
+            Whether to consider symmetry. Default is True. If False, the
+            calculation is the same as for rotations.
+        return_neighbors
+            Whether to return the nearest neighbors used to calculate
+            the mean. Default is False.
+        verbose
+            Whether to print progressbars. Default is False.
+
+        Returns
+        -------
+        fine_mean
+            Mean (mis)orientation.
+        neighbors
+            If *return_neighbors* is True, returns the representations
+            used to calculate the mean.
+
+        Notes
+        -----
+        This method uses the Frobenius norm of rotation space to define
+        a mean for rotations, as given in equations 12 and 13 of
+        :cite:`markley_averaging_2007`. Refer to
+        :meth:`~orix.quaternion.Quaternion.mean` for details.
+
+        To account for symmetry, the following procedure is used:
+
+        1. Misorientations are reduced to the fundamental zone.
+        2. A rough mean is calculated.
+        3. Misorientations with equivalent values closer to the rough
+           mean are updated to the nearby value.
+        4. The precise mean is recalculated.
+
+        If *use_symmetry* is False, steps 3 and 4 are skipped, and the
+        mean is returned as a :class:`~orix.quaternion.Rotation` to
+        signify the loss of symmetry information.
+
+        Since a pure rotation cannot align an inverted reference frame
+        with an uninverted one, a Frobenius norm cannot be calculated
+        for a mix of proper and improper rotations. By default, this
+        problem is addressed by ignoring symmetrically equivalent
+        operations that include inversion. This aligns with the
+        definition of a fundamental zone in (mis)orientation space used
+        in :meth:`~orix.quaternion.Misorientation.reduce` and
+        :meth:`~orix.quaternion.OrientationRegion.from_symmetry`.
+        Passing True to *include_improper* will instead investigate all
+        symmetry operations and treat all operations as proper when
+        calculating the mean.
+        """
+        if not use_symmetry:
+            # Convert to a rotation to emphasize loss of symmetry
+            # information
+            return Rotation(self.data).mean(weights=weights)
+
+        start, end = self._symmetry
+        if not include_improper:
+            start = start.proper_subgroup
+            end = end.proper_subgroup
+
+        symmetry_pairs = iproduct(Rotation(start), Rotation(end))
+
+        # Overwrite new nearest values into neighbors. Use rotations for
+        # calculating the candidate for inclusion in neighbors.
+        neighbors = self.reduce(verbose=verbose)
+        rot = Rotation(neighbors.data)
+        rough_mean = rot.mean(weights=weights)
+        max_dp = rot.dot(rough_mean)
+
+        log_msg = "Checking for closer equivalent representations"
+        if verbose:
+            symmetry_pairs = tqdm(
+                symmetry_pairs, total=start.size * end.size, desc=log_msg
+            )
+        else:
+            _logger.info(log_msg)
+
+        for start, end in symmetry_pairs:
+            candidates = end * rot * start
+            dp = np.abs(candidates.dot(rough_mean))
+            mask = dp > max_dp
+
+            # Copy quaternion plus handedness
+            neighbors._data[mask, :] = candidates._data[mask, :]
+
+            max_dp[mask] = dp[mask]
+
+        fine_mean = Rotation(neighbors.data).mean(weights=weights)
+        fine_mean = self.__class__(fine_mean)
+        fine_mean._symmetry = self._symmetry
+
+        if return_neighbors:
+            return fine_mean, neighbors
+
+        return fine_mean
+
+
+def _get_distance_matrix_dask(
+    mori: Misorientation,
+    symmetry: Symmetry,
+    chunk_size: int,
+    progressbar: bool,
+) -> np.ndarray:
+    # Perform "s_k m_i s_l s_k m_j" (see Notes)
+    M1 = symmetry.outer(mori).outer(symmetry)
+    M2 = M1._outer_dask(~mori, chunk_size=chunk_size)
+
+    # Perform last outer product and reduce to all dot products at
+    # the same time
+    warnings.filterwarnings("ignore", category=da.PerformanceWarning)
+    str1 = "abcdefghijklmnopqrstuvwxy"[: M2.ndim]
+    str2 = "z" + str1[-1]  # Last axis has shape (4,)
+    sum_over = f"{str1},{str2}->{str1[:-1] + str2[0]}"
+    all_dot_products = da.einsum(sum_over, M2, symmetry.data)
+
+    # Get highest dot product
+    axes = (0, mori.ndim + 1, 2 * mori.ndim + 2)
+    dot_products = da.max(abs(all_dot_products), axis=axes)
+
+    # Round because some dot products are slightly above 1
+    dot_products = da.round(dot_products, 12)
+
+    # Calculate disorientation angles
+    angles_dask = da.arccos(2 * dot_products**2 - 1)
+    angles_dask = da.nan_to_num(angles_dask)
+    angles = np.zeros(angles_dask.shape)
+    if progressbar:
+        with ProgressBar():
+            da.store(sources=angles_dask, targets=angles)
+    else:
+        da.store(sources=angles_dask, targets=angles)
+
+    return angles

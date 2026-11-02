@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -34,11 +34,9 @@
     orix_hdf5
 """
 
-from types import ModuleType
-
 from orix.io.plugins import ang, bruker_h5ebsd, ctf, emsoft_h5ebsd, orix_hdf5
 
-plugin_list: list[ModuleType] = [
+plugin_list = [
     ang,
     bruker_h5ebsd,
     ctf,

@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -26,18 +26,23 @@ from pathlib import Path
 import warnings
 
 from diffpy.structure import Lattice, Structure
-from diffpy.structure.parsers import p_cif
-from diffpy.structure.spacegroups import GetSpaceGroup, SpaceGroup
+from diffpy.structure.spacegroups import SpaceGroup
 from diffpy.structure.symmetryutilities import ExpandAsymmetricUnit
 import matplotlib.colors as mcolors
 import numpy as np
 
+from orix._utils._diffpy_structure_utils import (
+    get_cell_parms,
+    get_parser_and_structure_from_cif_file,
+    get_space_group,
+    place_in_lattice,
+)
 from orix.plot._util.color import get_matplotlib_color
 from orix.quaternion.symmetry import (
     _EDAX_POINT_GROUP_ALIASES,
     VALID_SYSTEMS,
     Symmetry,
-    _groups,
+    _symm_lists,
     get_point_group,
 )
 from orix.vector.miller import Miller
@@ -142,7 +147,7 @@ class Phase:
         new_value = value.copy()
 
         # Ensure atom positions are expressed in the new basis
-        new_value.placeInLattice(Lattice(base=new_matrix))
+        new_value = place_in_lattice(new_value, Lattice(base=new_matrix))
 
         # Store old lattice for expand_asymmetric_unit
         self._diffpy_lattice = old_matrix
@@ -207,7 +212,7 @@ class Phase:
     def space_group(self, value: int | SpaceGroup | None) -> None:
         """Set the space group."""
         if isinstance(value, int):
-            value = GetSpaceGroup(value)
+            value = get_space_group(value)
         if not isinstance(value, SpaceGroup) and value is not None:
             raise ValueError(
                 f"{value!r} must be of type {SpaceGroup}, an integer 1-230, or None"
@@ -239,7 +244,8 @@ class Phase:
                 if value in aliases:
                     value = key
                     break
-            for point_group in _groups:
+            point_groups = _symm_lists["permutations_repeated"]
+            for point_group in point_groups:
                 if value == point_group.name:
                     value = point_group
                     break
@@ -265,7 +271,7 @@ class Phase:
         """Return whether the crystal structure is hexagonal/trigonal or
         not.
         """
-        return np.allclose(self.structure.lattice.abcABG()[3:], [90, 90, 120])
+        return np.allclose(get_cell_parms(self.structure.lattice)[3:], [90, 90, 120])
 
     @property
     def a_axis(self) -> Miller:
@@ -350,14 +356,13 @@ class Phase:
         file format.
         """
         path = Path(filename)
-        parser = p_cif.P_cif()
-        name = path.stem
-        structure = parser.parseFile(str(path))
+        parser, structure = get_parser_and_structure_from_cif_file(str(path))
         try:
             space_group = parser.spacegroup.number
         except AttributeError:  # pragma: no cover
             space_group = None
             warnings.warn(f"Could not read space group from CIF file {path!r}")
+        name = path.stem
         return cls(name, space_group, structure=structure)
 
     def deepcopy(self) -> Phase:
@@ -401,7 +406,9 @@ class Phase:
 
         # Ensure atom positions are expressed in diffpy's convention
         diffpy_structure = self.structure.copy()
-        diffpy_structure.placeInLattice(Lattice(base=self._diffpy_lattice))
+        diffpy_structure = place_in_lattice(
+            diffpy_structure, Lattice(base=self._diffpy_lattice)
+        )
         xyz = diffpy_structure.xyz
         diffpy_structure.clear()
 

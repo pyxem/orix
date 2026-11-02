@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -28,6 +28,7 @@ from diffpy.structure import Atom, Lattice, Structure
 from h5py import File, Group
 import numpy as np
 
+from orix._utils._diffpy_structure_utils import get_cell_parms
 from orix.crystal_map._phase import Phase
 from orix.crystal_map._phase_list import PhaseList
 from orix.crystal_map.crystal_map import CrystalMap
@@ -445,7 +446,7 @@ def lattice2dict(lattice: Lattice, dictionary: dict | None = None) -> dict:
     """
     if dictionary is None:
         dictionary = {}
-    dictionary["abcABG"] = np.array(lattice.abcABG())
+    dictionary["abcABG"] = np.array(get_cell_parms(lattice))
     dictionary["baserot"] = lattice.baserot
     return dictionary
 

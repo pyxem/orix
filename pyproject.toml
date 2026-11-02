@@ -32,6 +32,7 @@ dependencies = [
     "matplotlib             >= 3.6.1",
     "numba",
     "numpy",
+    "packaging",
     "pooch                  >= 0.13",
     # TODO: Remove once diffpy.structure >= 3.2.1
     "pycifrw",
@@ -46,11 +47,12 @@ all = [  # NB! Update constants.py if this list is updated!
 ]
 doc = [
     "ipykernel",  # Used by nbsphinx to execute notebooks
+    "matplotlib-scalebar",
     "memory_profiler",
     "nbconvert                      >= 7.16.4",
     "nbsphinx                       >= 0.7",
     # Restriction due to https://github.com/pyxem/orix/issues/570
-    "numpydoc != 1.9.0",
+    "numpydoc                       != 1.9.0",
     "pydata-sphinx-theme",
     "scikit-image",
     "scikit-learn",
@@ -76,7 +78,6 @@ dev = [
     "hatch",
     "isort                          >= 5.10",
     "licenseheaders",
-    "outdated",
     "pre-commit                     >= 1.16",
     "orix[doc,tests,coverage]",
 ]
@@ -107,6 +108,8 @@ doctest_optionflags = "NORMALIZE_WHITESPACE"
 filterwarnings = [
     "ignore:Deprecated call to `pkg_resources:DeprecationWarning",
     "ignore:pkg_resources is deprecated as an API:DeprecationWarning",
+    # TODO: Remove once 0.16.0 is released
+    "ignore:Argument `s:numpy.exceptions.VisibleDeprecationWarning",
 ]
 markers = [
     "slow: mark test as slow",

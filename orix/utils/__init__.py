@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,20 +17,11 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pytest
+"""Utilities."""
 
-from orix._utils.constants import installed
+import lazy_loader
 
+# Imports from stub file (see contributor guide for details)
+__getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
 
-class TestConstants:
-    @pytest.mark.skipif(
-        installed["numpy-quaternion"], reason="numpy-quaternion is installed"
-    )
-    def test_numpy_quaternion_not_installed(self):
-        assert not installed["numpy-quaternion"]
-
-    @pytest.mark.skipif(
-        not installed["numpy-quaternion"], reason="numpy-quaternion is installed"
-    )
-    def test_numpy_quaternion_installed(self):
-        assert installed["numpy-quaternion"]
+del lazy_loader

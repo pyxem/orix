@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -29,6 +29,7 @@ from diffpy.structure import Lattice, Structure
 import numpy as np
 
 from orix import __version__
+from orix._utils._diffpy_structure_utils import get_cell_parms
 from orix.crystal_map._phase_list import PhaseList
 from orix.crystal_map.crystal_map import CrystalMap, create_coordinate_arrays
 from orix.quaternion.rotation import Rotation
@@ -65,6 +66,9 @@ def file_reader(filename: str, autogen_names: bool | None = True) -> CrystalMap:
     ----------
     filename
         Path and file name.
+    autogen_names
+        Whether to allow autogenerating names if some of them are the
+        same.
 
     Returns
     -------
@@ -615,7 +619,7 @@ def _get_header_from_phases(xmap: CrystalMap) -> str:
     # Phase IDs are reversed because EDAX TSL OIM Analysis v7.2.0
     # assumes a reversed phase order in the header
     for i, (_, phase) in reversed(list(enumerate(pl))):
-        lattice_constants = phase.structure.lattice.abcABG()
+        lattice_constants = get_cell_parms(phase.structure.lattice)
         lattice_constants = " ".join([f"{float(val):.3f}" for val in lattice_constants])
         phase_id = i + 1
         phase_name = phase.name

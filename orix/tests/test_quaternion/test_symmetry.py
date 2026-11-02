@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -19,11 +19,11 @@
 
 from copy import deepcopy
 
-from diffpy.structure.spacegroups import GetSpaceGroup
 from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
+from orix._utils._diffpy_structure_utils import get_space_group
 from orix.quaternion import Rotation, Symmetry, get_point_group
 
 # fmt: off
@@ -36,11 +36,13 @@ from orix.quaternion.symmetry import (
     C3, S6, D3x, D3y, D3, C3v, D3d,  # trigonal
     C6, C3h, C6h, D6, C6v, D3h, D6h,  # hexagonal
     T, Th, O, Td, Oh,  # cubic
-    spacegroup2pointgroup_dict, _groups, _get_unique_symmetry_elements
+    _symm_lists, _get_unique_symmetry_elements, spacegroup2pointgroup_dict
 )
 # isort: on
 # fmt: on
 from orix.vector import Vector3d
+
+_groups = _symm_lists["permutations"]
 
 
 @pytest.fixture(params=[(1, 2, 3)])
@@ -278,8 +280,8 @@ def test_is_proper(symmetry, expected):
     "symmetry, expected",
     [
         (C1, [C1]),
-        (D2, [C1, C2x, C2y, C2z, D2]),
-        (C6v, [C1, C2z, Csx, Csy, C2v, C3, C3v, C6, C6v]),
+        (D2, [C1, C2, C2x, C2y, D2]),
+        (C6v, [C1, C2, Csx, Csy, C2v, C3, C3v, C6, C6v]),
     ],
 )
 def test_subgroups(symmetry, expected):
@@ -290,8 +292,8 @@ def test_subgroups(symmetry, expected):
     "symmetry, expected",
     [
         (C1, [C1]),
-        (D2, [C1, C2x, C2y, C2z, D2]),
-        (C6v, [C1, C2z, C3, C6]),
+        (D2, [C1, C2x, C2y, C2, D2]),
+        (C6v, [C1, C2, C3, C6]),
     ],
 )
 def test_proper_subgroups(symmetry, expected):
@@ -444,7 +446,7 @@ def test_get_point_group():
         proper_pg = get_point_group(sg_number, proper=True)
         assert proper_pg in [C1, C2, C3, C4, C6, D2, D3, D4, D6, O, T]
 
-        sg = GetSpaceGroup(sg_number)
+        sg = get_space_group(sg_number)
         pg = get_point_group(sg_number, proper=False)
         assert proper_pg == spacegroup2pointgroup_dict[sg.point_group_name]["proper"]
         assert pg == spacegroup2pointgroup_dict[sg.point_group_name]["improper"]
@@ -541,6 +543,21 @@ def test_symmetry_plot(pg):
 def test_symmetry_plot_raises(symmetry):
     with pytest.raises(TypeError, match="Orientation must be a Rotation instance"):
         _ = symmetry.plot(return_figure=True, orientation="test")
+
+
+@pytest.mark.parametrize("symmetry, schoenflies", [(C1, "C1"), (C4, "C4"), (Oh, "Oh")])
+def test_schoenflies_notation(symmetry: Symmetry, schoenflies: str) -> None:
+    assert symmetry.schoenflies == schoenflies
+
+
+def test_symmetry_list():
+    sym_all = _symm_lists["permutations_repeated"]
+    assert len(sym_all) == 44
+    assert len(set(s.schoenflies for s in sym_all)) == 44
+
+    # Names are used in equality
+    assert len(set(s.name for s in sym_all)) == 40
+    assert len(set(sym_all)) == 40
 
 
 class TestFundamentalSectorFromSymmetry:
@@ -921,7 +938,7 @@ class TestEulerFundamentalRegion:
         # All point groups provide a region
         for pg in _groups:
             angles = pg.euler_fundamental_region
-            if pg.name in ["1", "-1", "2", "m11", "1m1", "11m"]:
+            if pg.name in ["1", "-1", "m", "m11", "1m1", "11m"]:
                 assert np.allclose(angles, (360, 180, 360))
             else:
                 assert not np.allclose(angles, (360, 180, 360))

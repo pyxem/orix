@@ -115,3 +115,6 @@ ENV/
 
 # MacOS
 .DS_Store
+
+# Temporary files in workflows/
+release_part_in_changelog.rst

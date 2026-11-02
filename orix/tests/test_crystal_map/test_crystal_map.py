@@ -17,13 +17,10 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import logging
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from orix._utils.constants import installed
 from orix.crystal_map import (
     CrystalMap,
     Phase,
@@ -34,6 +31,8 @@ from orix.crystal_map.crystal_map import _data_slices_from_coordinates
 from orix.plot import CrystalMapPlot
 from orix.quaternion import Orientation, Rotation
 from orix.quaternion.symmetry import C2, C3, C4, O
+import orix.utils as ous
+from orix.utils._constants import installed
 
 # Note that many parts of the crystal map class are tested while testing
 # IO and the phase classes
@@ -678,10 +677,10 @@ class TestCrystalMapOrientations:
     @pytest.mark.parametrize(
         "point_group, rotation, expected_orientation",
         [
-            (C2, [(0.6088, 0, 0, 0.7934)], [(-0.7934, 0, 0, 0.6088)]),
-            (C3, [(0.6088, 0, 0, 0.7934)], [(-0.9914, 0, 0, 0.1305)]),
-            (C4, [(0.6088, 0, 0, 0.7934)], [(-0.9914, 0, 0, -0.1305)]),
-            (O, [(0.6088, 0, 0, 0.7934)], [(-0.9914, 0, 0, -0.1305)]),
+            (C2, [(0.6088, 0, 0, 0.7934)], [(0.7934, 0, 0, -0.6088)]),
+            (C3, [(0.6088, 0, 0, 0.7934)], [(0.9914, 0, 0, -0.1305)]),
+            (C4, [(0.6088, 0, 0, 0.7934)], [(0.9914, 0, 0, 0.1305)]),
+            (O, [(0.6088, 0, 0, 0.7934)], [(0.9914, 0, 0, 0.1305)]),
         ],
     )
     def test_orientations_symmetry(self, point_group, rotation, expected_orientation):
@@ -1090,7 +1089,7 @@ class TestCrystalMapShape:
         assert xmap.shape == expected_shape
 
     def test_shape_recomputes(self, crystal_map: CrystalMap, caplog):
-        caplog.set_level(logging.DEBUG, logger="orix.crystal_map")
+        ous.set_log_level("DEBUG")
         log_msg = "(Re)computing shape"
 
         # Recomputes

@@ -1,5 +1,5 @@
 ##
-## Copyright 2018-2025 the orix developers
+## Copyright 2018-2026 the orix developers
 ##
 ## This file is part of orix.
 ##
@@ -20,6 +20,6 @@ channels:
   - conda-forge
 dependencies:
   - pip
-  - python=3.11
+  - python=3.14
   # Version requirements imposed by nbconvert via nbsphinx
   - pandoc>=2.14.2, <4.0.0
