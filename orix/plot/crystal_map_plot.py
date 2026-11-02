@@ -157,6 +157,21 @@ class CrystalMapPlot(Axes):
 
         >>> #plt.imsave("image2.png", im.get_array())
         """
+        # Slice out 2D layer from 3D volume before adding scalebar
+        if crystal_map.ndim == 3:
+            if axis is None:
+                if 1 in crystal_map.shape:
+                    axis = crystal_map.shape.index(1)
+                    layer = 0
+                else:
+                    axis = 0
+            if layer is None:
+                layer = 0
+            crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
+
+        self._data_shape = crystal_map._original_shape
+        self._crystal_map = crystal_map
+
         # Add scalebar here to potentially raise an error early
         if scalebar is None:
             scalebar = installed["matplotlib-scalebar"]
@@ -164,20 +179,6 @@ class CrystalMapPlot(Axes):
             if scalebar_properties is None:
                 scalebar_properties = {}
             _ = self.add_scalebar(crystal_map, **scalebar_properties)
-
-        self._data_shape = crystal_map._original_shape
-
-        # slice out 2D layer from 3D volume
-        # If no layer/axis specified, default to zero
-        if layer is None:
-            layer = 0
-        if axis is not None:  # and crystal_map.ndim > 2:
-            crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
-            self._data_shape = crystal_map._original_shape
-        elif axis is None and crystal_map.ndim > 2:
-            axis = 0
-            crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
-            self._data_shape = crystal_map._original_shape
 
         patches = None
         if value is None:  # Phase map
@@ -323,7 +324,9 @@ class CrystalMapPlot(Axes):
             image_data = image.to_rgba(image_data)[:, :, :3]  # No alpha
 
         # Scale prop to [0, 1] to maximize image contrast
-        overlay = crystal_map.get_map_data(item)
+        if crystal_map.ndim == 3 and getattr(self, "_crystal_map", None) is not None:
+            crystal_map = self._crystal_map
+        overlay = np.squeeze(crystal_map.get_map_data(item))
         overlay_min = np.nanmin(overlay)
         rescaled_overlay = (overlay - overlay_min) / (np.nanmax(overlay) - overlay_min)
 
