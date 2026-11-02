@@ -1151,9 +1151,9 @@ def _data_slices_from_coordinates(
             "y": _step_size_from_coordinates(coords["y"]),
         }
     slices = []
-    for coords, step in zip(coords.values(), steps.values()):
-        if coords is not None and step != 0:
-            c_min, c_max = np.min(coords), np.max(coords)
+    for coords_i, step in zip(coords.values(), steps.values()):
+        if coords_i is not None and step != 0:
+            c_min, c_max = np.min(coords_i), np.max(coords_i)
             i_min = int(np.around(c_min / step))
             i_max = int(np.around((c_max / step) + 1))
             slices.append(slice(i_min, i_max))
