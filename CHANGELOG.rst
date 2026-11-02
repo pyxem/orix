@@ -44,8 +44,8 @@ Fixed
 - Quaternions plotted in a 3D projection (axis-Angle, Rodrigues, homochoric, etc.) will
   now correctly be transformed using the same algorithms as for rotations.
 - ``CrystalMap.get_map_data()`` and slicing a crystal map now work for maps whose
-  coordinates do not start at zero. Previously, an empty array was returned or a
-  ``ValueError`` was raised.
+  coordinates do not start at zero.
+  Previously, an empty array was returned or a ``ValueError`` was raised.
 
 Deprecated
 ----------
