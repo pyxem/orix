@@ -1074,8 +1074,10 @@ class CrystalMap:
         if return_figure:
             return fig
 
-    def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
-        """Return a slices defining the current data extent in all
+    def _data_slices_from_coordinates(
+        self, only_is_in_data: bool = True
+    ) -> tuple[slice, ...]:
+        """Return slices defining the current data extent in all
         directions.
 
         Parameters
