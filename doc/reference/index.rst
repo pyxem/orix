@@ -49,4 +49,5 @@ code lines.
     projections
     quaternion
     sampling
+    utils
     vector

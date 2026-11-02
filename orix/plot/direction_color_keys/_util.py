@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -56,7 +56,7 @@ def polar_coordinates_in_sector(
     -----
     This procedure is adopted from MTEX' :code:`polarCoordinates`
     function, which implements the coloring described in section 2.4 in
-    :cite:`nolze2016orientation` (see Fig. 4 in that reference).
+    :cite:`nolze2016orientations` (see Fig. 4 in that reference).
 
     The azimuthal coordinate is the angle to the barycenter relative to
     some fixed vertex of the sector, here chosen as the north pole

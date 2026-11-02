@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING
 from diffpy.structure import Lattice
 import numpy as np
 
+from orix._utils._diffpy_structure_utils import get_cell_parms
 from orix.vector.vector3d import Vector3d
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -717,9 +718,9 @@ class Miller(Vector3d):
         m.coordinate_format = self.coordinate_format
         return m
 
-    def get_nearest(self, *args) -> NotImplemented:
+    def get_nearest(self, *args) -> None:
         """NotImplemented."""
-        return NotImplemented
+        raise NotImplementedError
 
     def mean(self, use_symmetry: bool = False) -> Miller:
         """Return the mean vector of the set of vectors.
@@ -736,7 +737,7 @@ class Miller(Vector3d):
         """
         # TODO: Allow using symmetry by projecting to fundamental sector
         if use_symmetry:
-            return NotImplemented
+            raise NotImplementedError
         m = self.__class__(xyz=super().mean().data, phase=self.phase)
         m.coordinate_format = self.coordinate_format
         return m
@@ -871,8 +872,8 @@ class Miller(Vector3d):
         """
         same_symmetry = self.phase.point_group == other.phase.point_group
         same_lattice = np.allclose(
-            self.phase.structure.lattice.abcABG(),
-            other.phase.structure.lattice.abcABG(),
+            get_cell_parms(self.phase.structure.lattice),
+            get_cell_parms(other.phase.structure.lattice),
         )
         same_space = self.space == other.space
         compatible = same_symmetry * same_lattice * same_space

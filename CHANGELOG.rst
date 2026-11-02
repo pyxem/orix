@@ -6,21 +6,77 @@ All user facing changes to this project are documented in this file. The format 
 on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`__, and this project tries
 its best to adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`__.
 
-
 Unreleased
 ==========
 
 Added
 -----
+- Vector tensor products via new ``Vector3d`` methods ``tensor()`` and
+  ``tensor_outer()``.
+- Mean quaternion calculation now allows weighting each quaternion.
+- Function ``get_asymmetric_groups()`` to return two point groups for creating the
+  fundamental zone for a set of two point groups.
+  This function replaces ``get_proper_groups()``.
+- Function to set the log level of orix logs, ``orix.utils.set_log_level()``.
+- ``Symmetry.schoenflies`` attribute returning the Schoenflies notation name for all
+  predefined symmetries.
+- Some additional symmetries, equivalent to existing ones, are given for completeness:
+  S2 (== Ci), D1 (== C2), C4i (== S4), and C3i (== S6).
 
 Changed
 -------
+- Misorientations and orientations account for symmetry when calculating the mean.
+- An orientation region can now be calculated from every combination of two point groups
+  (previously not possible for 200/1024 combinations).
 
 Removed
 -------
 
+Fixed
+-----
+- ``Rotation.to_euler()`` now returns correct Bunge Euler angles for 180 degree
+  rotations about an axis in the xy-plane not aligned with x or y.
+- Silenced warnings from diffpy.structure >= 3.4.
+- Overwriting ``Rotation.data`` with another rotation will now copy over the
+  proper/improper marker if present.
+- Orientation outer dot product now correctly handles axes order for
+  multi-dimensional orientations.
+- Quaternions plotted in a 3D projection (axis-Angle, Rodrigues, homochoric, etc.) will
+  now correctly be transformed using the same algorithms as for rotations.
+
 Deprecated
 ----------
+- ``get_proper_groups()`` is deprecated and will be removed in 0.17.0.
+  Use the new ``get_asymmetric_groups()`` instead.
+
+
+2026-06-29 - version 0.15.0
+===========================
+
+Added
+-----
+- Non-lazy computation of dot products with
+  ``Misorientation.get_distance_matrix(lazy=True)``.
+  Currently opt-in, but will be the default in the next minor version.
+
+Changed
+-------
+- ``Miller.get_nearest()`` now raises a ``NotImplementedError`` rather than returning
+  ``NotImplemented``.
+- ``Mille.mean(use_symmetry=True)`` now raises a ``NotImplementedError`` rather than
+  returning ``NotImplemented``.
+- Improved (faster and using less memory) non-lazy computation of misorientation angles
+  from ``Orientation.with_angle_outer()``.
+
+Fixed
+-----
+- (Mis)orientation reduction to the fundamental zone via ``reduce()`` now correctly
+  applies the symmetries in the opposite order, from right to left,
+  ``s_end * g * s_start``, where ``g`` is a (mis)orientation.
+
+
+2026-06-06 - version 0.14.3
+===========================
 
 Fixed
 -----

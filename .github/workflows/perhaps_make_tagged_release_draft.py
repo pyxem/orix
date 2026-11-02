@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -17,10 +17,11 @@
 # along with orix. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import json
 import re
 
-from outdated import check_outdated
 from packaging.version import Version
+import requests
 
 with open("../../orix/__init__.py") as fid:
     for line in fid:
@@ -28,12 +29,16 @@ with open("../../orix/__init__.py") as fid:
             branch_version_str = line.strip().split(" = ")[-1][1:-1]
             break
 
-# Within a try/except because we don't want to throw the error if a new
+# Within a try/except because we don't want to raise the error if a new
 # tagged release draft is to be made, we just want to know if the branch
 # version is different (hopefully always newer if different) from the
 # PyPI version
 try:
-    make_release, pypi_version_str = check_outdated("orix", branch_version_str)
+    current_version = Version(branch_version_str)
+    pypi_txt = requests.get("https://pypi.python.org/pypi/orix/json").text
+    pypi_version_str = json.loads(pypi_txt)["info"]["version"]
+    pypi_version = Version(pypi_version_str)
+    make_release = current_version > pypi_version
 except ValueError as err:
     pattern = re.compile(r"([\d.]+)")  # Any "word" with decimal digits and dots
     matches = []

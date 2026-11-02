@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -24,7 +24,7 @@ import inspect
 from typing import Callable, Literal
 import warnings
 
-from orix._utils.constants import VisibleDeprecationWarning
+from orix.utils._constants import VisibleDeprecationWarning
 
 
 class deprecated:

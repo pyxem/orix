@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -27,7 +27,7 @@ from matplotlib.projections import register_projection
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-from orix._utils.constants import installed, verify_dependency_or_raise
+from orix.utils._constants import installed, verify_dependency_or_raise
 
 if TYPE_CHECKING:  # pragma: no cover
     if installed["matplotlib-scalebar"]:

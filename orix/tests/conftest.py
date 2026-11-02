@@ -26,7 +26,7 @@ matplotlib.use("agg")
 
 from collections import OrderedDict
 from numbers import Number
-from typing import Callable
+from typing import Callable, Generator
 
 from diffpy.structure import Atom, Lattice, Structure
 from h5py import File
@@ -1088,7 +1088,7 @@ def temp_bruker_h5ebsd_file(tmpdir, request):
 
 
 @pytest.fixture
-def cif_file(tmpdir):
+def cif_file(tmpdir) -> Generator[str, None, None]:
     """Actual CIF file of beta double prime phase often seen in Al-Mg-Si
     alloys.
     """

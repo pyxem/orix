@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -27,6 +27,8 @@ from h5py import File, is_hdf5
 from orix.crystal_map.crystal_map import CrystalMap
 from orix.io.plugins import plugin_list
 from orix.io.plugins._h5ebsd import hdf5group2dict
+
+plugin_list: list[ModuleType]
 
 extensions = [plugin.file_extensions for plugin in plugin_list if plugin.writes]
 

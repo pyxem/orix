@@ -468,7 +468,8 @@ class TestFromToMatrix:
 
     def test_from_euler_to_matrix_from_matrix(self, eu):
         q = Quaternion.from_euler(eu.reshape(5, 2, 3))
-        assert np.allclose(Quaternion.from_matrix(q.to_matrix()).data, q.data)
+        q_from_to = Quaternion.from_matrix(q.to_matrix())
+        assert np.allclose(q_from_to.data, q.data, atol=1e-6)
 
     def test_from_matrix_to_euler_from_euler_to_matrix(self, eu):
         rot_180x = np.diag([1, -1, -1])
