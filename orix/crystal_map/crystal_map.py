@@ -227,10 +227,6 @@ class CrystalMap:
         prop: dict | None = None,
         scan_unit: str | None = "px",
         is_in_data: np.ndarray | None = None,
-        indices: np.ndarray | None = None,
-        spacing: np.ndarray | None = None,
-        origin: np.ndarray | None = None,
-        indexing_order: str = "zyx",
     ) -> None:
         if isinstance(rotations, CrystalMap):
             return CrystalMap.__init__(
@@ -256,14 +252,6 @@ class CrystalMap:
         data_size = rotations.shape[0]
         self._shape = None
 
-        # Set indexing order
-        if indexing_order in ["xyz", "zyx"]:
-            self._indexing_order = indexing_order
-        else:
-            raise ValueError(
-                f"indexing_oder must be 'xyz' or 'zyx' not {indexing_order}"
-            )
-
         # Set phase IDs
         if phase_id is None:  # Assume single phase data
             phase_id = np.zeros(data_size)
@@ -275,10 +263,11 @@ class CrystalMap:
         self._id = point_id
 
         # Set spatial coordinates
-        if indices is not None:
-            self._set_grid_from_indices(indices, spacing, origin)
-        else:
-            self._set_grid_from_coords(z, y, x)
+        if x is None and y is None and z is None:
+            x = np.arange(data_size)
+        self._x = x
+        self._y = y
+        self._z = z
 
         # Create phase list
         # Sorted in ascending order
@@ -378,38 +367,41 @@ class CrystalMap:
     @property
     def x(self) -> np.ndarray | None:
         """Return the x coordinates of points in data."""
-        if self._column is None or self._dx == 0:
-            return None
-        return self._column[self.is_in_data] * self._dx + self._xmin
+        if self._x is None or len(np.unique(self._x)) == 1:
+            return
+        else:
+            return self._x[self.is_in_data]
 
     @property
     def y(self) -> np.ndarray | None:
         """Return the y coordinates of points in data."""
-        if self._row is None or self._dy == 0:
-            return None
-        return self._row[self.is_in_data] * self._dy + self._ymin
+        if self._y is None or len(np.unique(self._y)) == 1:
+            return
+        else:
+            return self._y[self.is_in_data]
 
     @property
     def z(self) -> np.ndarray | None:
         """Return the z coordinates of points in data."""
-        if self._layer is None or self._dz == 0:
-            return None
-        return self._layer[self.is_in_data] * self._dz + self._zmin
+        if self._z is None or len(np.unique(self._z)) == 1:
+            return
+        else:
+            return self._z[self.is_in_data]
 
     @property
     def dx(self) -> float:
         """Return the x coordinate step size."""
-        return self._dx
+        return _step_size_from_coordinates(self._x)
 
     @property
     def dy(self) -> float:
         """Return the y coordinate step size."""
-        return self._dy
+        return _step_size_from_coordinates(self._y)
 
     @property
     def dz(self) -> float:
         """Return the z coordinate step size."""
-        return self._dz
+        return _step_size_from_coordinates(self._z)
 
     @property
     def row(self) -> np.ndarray | None:
@@ -424,10 +416,19 @@ class CrystalMap:
         >>> xmap[1:3, 1:3].row
         array([0, 0, 1, 1])
         """
-        if self._row is None:
-            return np.zeros(self.size, dtype=int)
-        rows = self._row[self.is_in_data]
-        return rows - rows.min() if rows.size > 0 else rows
+        orig_shape = self._original_shape
+        if len(orig_shape) == 1:
+            if self.x is None:
+                orig_shape += (1,)
+            else:
+                orig_shape = (1,) + orig_shape
+        if len(orig_shape) == 3:
+            _, rows, _ = np.indices(orig_shape)
+        else:
+            rows, _ = np.indices(orig_shape)
+        rows = rows.flatten()[self.is_in_data]
+        rows -= rows.min()
+        return rows
 
     @property
     def col(self) -> np.ndarray | None:
@@ -442,18 +443,33 @@ class CrystalMap:
         >>> xmap[1:3, 1:3].col
         array([0, 1, 0, 1])
         """
-        if self._column is None:
-            return np.zeros(self.size, dtype=int)
-        cols = self._column[self.is_in_data]
-        return cols - cols.min() if cols.size > 0 else cols
+        shape = self._original_shape
+        if len(shape) == 1:
+            if self.x is None:
+                shape += (1,)
+            else:
+                shape = (1,) + shape
+        if len(shape) == 3:
+            _, _, cols = np.indices(shape)
+        else:
+            _, cols = np.indices(shape)
+        cols = cols.flatten()[self.is_in_data]
+        cols -= cols.min()
+        return cols
 
     @property
     def layer(self) -> np.ndarray | None:
-        """Return the layer (z-axis) coordinate of each point in the data."""
-        if self._layer is None:
-            return np.zeros(self.size, dtype=int)
-        layers = self._layer[self.is_in_data]
-        return layers - layers.min() if layers.size > 0 else layers
+        """Return the layer coordinate of each point in the data.
+
+        Returns ``None`` if :attr:`z` is ``None``.
+        """
+        shape = self._original_shape
+        if len(shape) < 3:
+            return None
+        layers, _, _ = np.indices(shape)
+        layers = layers.flatten()[self.is_in_data]
+        layers -= layers.min()
+        return layers
 
     @property
     def phase_id(self) -> np.ndarray:
@@ -615,156 +631,32 @@ class CrystalMap:
     def _coordinates(self) -> dict[str, np.ndarray | None]:
         """Return the coordinates of points in the data."""
         coords = {"y": self.y, "x": self.x}
-        if self._layer is not None:
+        if self.z is not None:
             coords = {"z": self.z, **coords}
         return coords
 
     @property
     def _all_coordinates(self) -> dict[str, np.ndarray | None]:
         """Return the coordinates of all points."""
-        coords = {
-            "y": None if self._row is None else self._row * self._dy + self._ymin,
-            "x": None if self._column is None else self._column * self._dx + self._xmin,
-        }
-        if self._layer is not None:
-            coords = {"z": self._layer * self._dz + self._zmin, **coords}
+        coords = {"y": self._y, "x": self._x}
+        if self.z is not None:
+            coords = {"z": self._z, **coords}
         return coords
-
-    @property
-    def _indices(self) -> dict[str, np.ndarray | None]:
-        """Return the grid indices of points in the data."""
-        return {
-            "z": None if self._layer is None else self._layer[self.is_in_data],
-            "y": None if self._row is None else self._row[self.is_in_data],
-            "x": None if self._column is None else self._column[self.is_in_data],
-        }
-
-    @property
-    def _all_indices(self) -> dict[str, np.ndarray | None]:
-        """Return the grid indices of all points."""
-        return {"z": self._layer, "y": self._row, "x": self._column}
 
     @property
     def _step_sizes(self) -> dict[str, float | None]:
         """Return the step sizes of dimensions in the data."""
         steps = {"y": self.dy, "x": self.dx}
-        if self._layer is not None:
+        if self.z is not None:
             steps = {"z": self.dz, **steps}
         return steps
+
 
     @property
     def _coordinate_axes(self) -> dict:
         """Return which data axis corresponds to which coordinate."""
         present_coordinates = [k for k, v in self._coordinates.items() if v is not None]
         return {i: coord for i, coord in zip(range(self.ndim), present_coordinates)}
-
-    def _set_grid_from_indices(
-        self, indices: np.ndarray, spacing: np.ndarray, origin: np.ndarray
-    ):
-        """Sets the values for _layer, _row, _column, _dx, _dy, and _dz based on
-        integer indices values"""
-        indices = np.atleast_2d(indices)
-        if len(indices.shape) != 2:
-            raise ValueError("indices must be interpretable as a two-dimensional array")
-        if not np.issubdtype(indices.dtype, np.integer):
-            raise ValueError("indices must be an array of integers")
-        dims = indices.shape[0]
-        if not np.isin(dims, (1, 2, 3)):
-            raise ValueError(
-                "indices must have a shape of (d, N), where 'd' is 1, 2, or 3"
-            )
-        size = indices.shape[1]
-        if size != self._rotations.shape[0]:
-            raise ValueError(
-                "There must be the same number of indices as there are pixels"
-            )
-
-        if spacing is None:
-            spacing = np.ones(dims, dtype=np.float32)
-        spacing = np.atleast_1d(spacing).flatten()
-        if spacing.size != dims:
-            raise ValueError(
-                "Spacing should have {} values, not {}".format(dims, spacing.size)
-            )
-
-        if origin is None:
-            origin = np.zeros(dims, dtype=np.float32)
-        origin = np.atleast_1d(origin).flatten()
-        if origin.size != dims:
-            raise ValueError(
-                "origin should have {} values, not {}".format(dims, origin.size)
-            )
-
-        if self._indexing_order == "xyz":
-            indices = indices[::-1, :]
-            origin = origin[::-1]
-
-        # Assign data AFTER all checks and calculations are completed.
-        self._layer = indices[0] if dims > 2 else None
-        self._row = indices[-2] if dims > 1 else None
-        self._column = indices[-1]
-
-        self._dz = spacing[0] if dims > 2 else 0
-        self._dy = spacing[-2] if dims > 1 else 0
-        self._dx = spacing[-1]
-
-        self._zmin = origin[0] if dims > 2 else 0
-        self._ymin = origin[-2] if dims > 1 else 0
-        self._xmin = origin[-1]
-
-        return
-
-    def _set_grid_from_coords(self, z, y, x):
-        """Sets the values for _layer, _row, _column, _dx, _dy, and _dz based on
-        xyz spatial coordinates"""
-        if z is not None and y is None:
-            raise ValueError("y cannot be None if z is not None")
-
-        if z is None:
-            dz = 0
-            zmin = 0
-            layer = None
-        elif not np.issubdtype(z.dtype, np.number):
-            raise ValueError("z must be interpretable as a 1d array of floats or ints")
-        else:
-            z = np.atleast_1d(z).flatten()
-            dz = _step_size_from_coordinates(z)
-            zmin = np.min(z)
-            layer = np.around((z - zmin) / dz, 0).astype(int) if dz != 0 else None
-
-        if y is None:
-            dy = 0
-            ymin = 0
-            row = None
-        elif not np.issubdtype(y.dtype, np.number):
-            raise ValueError("y must be interpretable as a 1d array of floats or ints")
-        else:
-            y = np.atleast_1d(y).flatten()
-            dy = _step_size_from_coordinates(y)
-            ymin = np.min(y)
-            row = np.around((y - ymin) / dy, 0).astype(int) if dy != 0 else None
-
-        if x is None:
-            x = np.arange(self._rotations.shape[0], dtype=int)
-        elif not np.issubdtype(x.dtype, np.number):
-            raise ValueError("x must be interpretable as a 1d array of floats or ints")
-        x = np.atleast_1d(x).flatten()
-        dx = _step_size_from_coordinates(x)
-        xmin = np.min(x)
-        column = np.around((x - xmin) / dx, 0).astype(int) if dx != 0 else None
-
-        # Assign data AFTER all checks and calculations are completed.
-        self._layer = layer
-        self._row = row
-        self._column = column
-
-        self._dz = dz
-        self._dy = dy
-        self._dx = dx
-
-        self._zmin = zmin
-        self._ymin = ymin
-        self._xmin = xmin
 
     def __getattr__(self, item) -> Any:
         """Return an attribute in the :attr:`prop` dictionary directly
@@ -785,7 +677,7 @@ class CrystalMap:
             # Calls CrystalMapProperties.__setitem__()
             self.prop[name] = value
         else:
-            if name in ["_layer", "_row", "_column", "is_in_data", "_is_in_data"]:
+            if name in ["_x", "_y", "_is_in_data"]:
                 self._shape = None
             return object.__setattr__(self, name, value)
 
@@ -838,35 +730,30 @@ class CrystalMap:
             if isinstance(key, (slice, int)):
                 key = (key,)
 
-            # When a 3D map is indexed with an integer along one axis (e.g. xmap3d[100, :, :]),
-            # extract a true 2D CrystalMap slice of shape (N, M)
-            if (
-                self.ndim == 3
-                and sum(isinstance(k, (int, np.integer)) for k in key) == 1
-            ):
-                int_axis = [
-                    i for i, k in enumerate(key) if isinstance(k, (int, np.integer))
-                ][0]
-                sliced_2d = self._xmap_slice_from_axis(
-                    axis=int_axis, layer=int(key[int_axis])
-                )
-                remaining_slices = tuple(
-                    k for i, k in enumerate(key) if i != int_axis
-                )
-                if any(s != slice(None, None, None) for s in remaining_slices):
-                    return sliced_2d[remaining_slices]
-                return sliced_2d
-
             slices = [slice(None, None, None)] * self.ndim
             for i, k in enumerate(key):
                 slices[i] = k
+
+            int_axes = [
+                i for i, s in enumerate(slices) if isinstance(s, (int, np.integer))
+            ]
+            if self.ndim == 3 and len(int_axes) == 1:
+                axis = int_axes[0]
+                layer = int(slices[axis])
+                xmap_2d = self._xmap_slice_from_axis(axis=axis, layer=layer)
+                remaining_slices = tuple(
+                    s for i, s in enumerate(slices) if i != axis
+                )
+                if any(s != slice(None, None, None) for s in remaining_slices):
+                    xmap_2d = xmap_2d[remaining_slices]
+                return xmap_2d
 
             new_is_in_data_slice = np.zeros(self.shape, dtype=bool)  # > 1D
             new_is_in_data_slice[tuple(slices)] = True
 
             # Insert new (sub)mask into old full mask
             new_is_in_data = self.is_in_data.reshape(self._original_shape).copy()
-            new_is_in_data[self._data_slices_from_coordinates()] &= new_is_in_data_slice
+            new_is_in_data[self._data_slices_from_coordinates()] = new_is_in_data_slice
             new_is_in_data = new_is_in_data.ravel()
 
         # Insert the mask into a mask with the full map shape, if not
@@ -1273,25 +1160,24 @@ class CrystalMap:
             raise ValueError("Can only extract a 2D slice from a 3D CrystalMap.")
 
         axis = axis % 3
+        layer = layer % self.shape[axis]
         sliced_3d = self[(slice(None),) * axis + (slice(layer, layer + 1),)]
 
         all_axes = [
-            (sliced_3d.layer, sliced_3d.dz, float(np.min(sliced_3d.z))),
-            (sliced_3d.row, sliced_3d.dy, float(np.min(sliced_3d.y))),
-            (sliced_3d.col, sliced_3d.dx, float(np.min(sliced_3d.x))),
+            sliced_3d.layer * sliced_3d.dz + float(np.min(sliced_3d.z)),
+            sliced_3d.row * sliced_3d.dy + float(np.min(sliced_3d.y)),
+            sliced_3d.col * sliced_3d.dx + float(np.min(sliced_3d.x)),
         ]
         active = [all_axes[i] for i in range(3) if i != axis]
 
         return CrystalMap(
             rotations=sliced_3d.rotations,
             phase_id=sliced_3d.phase_id,
+            y=active[0],
+            x=active[1],
             phase_list=sliced_3d.phases,
             prop={k: sliced_3d.prop[k] for k in sliced_3d.prop},
             scan_unit=sliced_3d.scan_unit,
-            indices=np.vstack([active[0][0], active[1][0]]),
-            spacing=np.array([active[0][1], active[1][1]]),
-            origin=np.array([active[0][2], active[1][2]]),
-            indexing_order="zyx",
         )
 
     def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
@@ -1309,12 +1195,12 @@ class CrystalMap:
         slices
             Data slice in each existing direction in (y, x) order.
         """
-        indices = self._indices if only_is_in_data else self._all_indices
-        slices = []
-        for idx in indices.values():
-            if idx is not None:
-                slices.append(slice(int(np.min(idx)), int(np.max(idx)) + 1))
-        return tuple(slices)
+        if only_is_in_data:
+            coordinates = self._coordinates
+        else:
+            coordinates = self._all_coordinates
+        slices = _data_slices_from_coordinates(coordinates, self._step_sizes)
+        return slices
 
     def _data_shape_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
         """Return data shape based upon coordinate arrays.
@@ -1357,13 +1243,13 @@ def _data_slices_from_coordinates(
     """
     if steps is None:
         steps = {
-            k: _step_size_from_coordinates(v) if v is not None else 0
-            for k, v in coords.items()
+            "x": _step_size_from_coordinates(coords["x"]),
+            "y": _step_size_from_coordinates(coords["y"]),
         }
     slices = []
-    for coord, step in zip(coords.values(), steps.values()):
-        if coord is not None and step != 0:
-            c_min, c_max = np.min(coord), np.max(coord)
+    for coords, step in zip(coords.values(), steps.values()):
+        if coords is not None and step != 0:
+            c_min, c_max = np.min(coords), np.max(coords)
             i_min = int(np.around(c_min / step))
             i_max = int(np.around((c_max / step) + 1))
             slices.append(slice(i_min, i_max))
@@ -1400,7 +1286,7 @@ def create_coordinate_arrays(
     step sizes, suitable for initializing a
     :class:`~orix.crystal_map.CrystalMap`.
 
-    Arrays for 1D or 2D maps can be returned.
+    Arrays for 1D, 2D, or 3D maps can be returned.
 
     Parameters
     ----------

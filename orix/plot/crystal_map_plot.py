@@ -175,10 +175,7 @@ class CrystalMapPlot(Axes):
             self._slice_axis = axis % 3
             self._slice_layer = layer
             crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
-
-        self._data_shape = crystal_map._original_shape
-        self._crystal_map = crystal_map
-
+        
         # Add scalebar here to potentially raise an error early
         if scalebar is None:
             scalebar = installed["matplotlib-scalebar"]
@@ -186,6 +183,9 @@ class CrystalMapPlot(Axes):
             if scalebar_properties is None:
                 scalebar_properties = {}
             _ = self.add_scalebar(crystal_map, **scalebar_properties)
+
+        self._data_shape = crystal_map._original_shape
+        self._crystal_map = crystal_map
 
         patches = None
         if value is None:  # Phase map
@@ -331,18 +331,7 @@ class CrystalMapPlot(Axes):
             image_data = image.to_rgba(image_data)[:, :, :3]  # No alpha
 
         # Scale prop to [0, 1] to maximize image contrast
-        if crystal_map.ndim == 3 and getattr(self, "_crystal_map", None) is not None:
-            if isinstance(item, np.ndarray) and item.shape[0] == crystal_map.size:
-                overlay_3d = crystal_map.get_map_data(item)
-                overlay = np.squeeze(
-                    np.take(
-                        overlay_3d, indices=self._slice_layer, axis=self._slice_axis
-                    )
-                )
-            else:
-                overlay = np.squeeze(self._crystal_map.get_map_data(item))
-        else:
-            overlay = np.squeeze(crystal_map.get_map_data(item))
+        overlay = crystal_map.get_map_data(item)
         overlay_min = np.nanmin(overlay)
         rescaled_overlay = (overlay - overlay_min) / (np.nanmax(overlay) - overlay_min)
 
