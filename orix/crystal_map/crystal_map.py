@@ -378,18 +378,23 @@ class CrystalMap:
     @property
     def x(self) -> np.ndarray | None:
         """Return the x coordinates of points in data."""
-        return None if self._column is None else self.col * self._dx + self._xmin
+        if self._column is None or self._dx == 0:
+            return None
+        return self._column[self.is_in_data] * self._dx + self._xmin
 
     @property
     def y(self) -> np.ndarray | None:
         """Return the y coordinates of points in data."""
-        return None if self._row is None else self.row * self._dy + self._ymin
+        if self._row is None or self._dy == 0:
+            return None
+        return self._row[self.is_in_data] * self._dy + self._ymin
 
     @property
     def z(self) -> np.ndarray | None:
         """Return the z coordinates of points in data."""
-        return None if self._layer is None else self.layer * self._dz + self._zmin
-
+        if self._layer is None or self._dz == 0:
+            return None
+        return self._layer[self.is_in_data] * self._dz + self._zmin
 
     @property
     def dx(self) -> float:
@@ -410,8 +415,6 @@ class CrystalMap:
     def row(self) -> np.ndarray | None:
         """Return the row coordinate of each point in the data.
 
-        Returns ``None`` if :attr:`z` is not ``None``.
-
         Examples
         --------
         >>> from orix.crystal_map import CrystalMap
@@ -422,15 +425,13 @@ class CrystalMap:
         array([0, 0, 1, 1])
         """
         if self._row is None:
-            return None
+            return np.zeros(self.size, dtype=int)
         rows = self._row[self.is_in_data]
-        return rows - rows.min()
+        return rows - rows.min() if rows.size > 0 else rows
 
     @property
     def col(self) -> np.ndarray | None:
         """Return the column coordinate of each point in the data.
-
-        Returns ``None`` if :attr:`z` is not ``None``.
 
         Examples
         --------
@@ -442,19 +443,18 @@ class CrystalMap:
         array([0, 1, 0, 1])
         """
         if self._column is None:
-            return None
+            return np.zeros(self.size, dtype=int)
         cols = self._column[self.is_in_data]
-        return cols - cols.min()
-    
+        return cols - cols.min() if cols.size > 0 else cols
+
     @property
     def layer(self) -> np.ndarray | None:
-        """Returns the layer (z-axis) indice for each point in the CrystalMap."""
-        # TODO: re-add example
+        """Return the layer (z-axis) coordinate of each point in the data."""
         if self._layer is None:
-            return None
+            return np.zeros(self.size, dtype=int)
         layers = self._layer[self.is_in_data]
-        return layers - layers.min()
-    
+        return layers - layers.min() if layers.size > 0 else layers
+
     @property
     def phase_id(self) -> np.ndarray:
         """Return or set the phase IDs of points in data.
@@ -614,12 +614,21 @@ class CrystalMap:
     @property
     def _coordinates(self) -> dict[str, np.ndarray | None]:
         """Return the coordinates of points in the data."""
-        return {"z": self.z, "y": self.y, "x": self.x}
+        coords = {"y": self.y, "x": self.x}
+        if self._layer is not None:
+            coords = {"z": self.z, **coords}
+        return coords
 
     @property
     def _all_coordinates(self) -> dict[str, np.ndarray | None]:
         """Return the coordinates of all points."""
-        return {"z": self._z, "y": self._y, "x": self._x}
+        coords = {
+            "y": None if self._row is None else self._row * self._dy + self._ymin,
+            "x": None if self._column is None else self._column * self._dx + self._xmin,
+        }
+        if self._layer is not None:
+            coords = {"z": self._layer * self._dz + self._zmin, **coords}
+        return coords
 
     @property
     def _indices(self) -> dict[str, np.ndarray | None]:
@@ -638,14 +647,17 @@ class CrystalMap:
     @property
     def _step_sizes(self) -> dict[str, float | None]:
         """Return the step sizes of dimensions in the data."""
-        return {"z": self.dz, "y": self.dy, "x": self.dx}
+        steps = {"y": self.dy, "x": self.dx}
+        if self._layer is not None:
+            steps = {"z": self.dz, **steps}
+        return steps
 
     @property
     def _coordinate_axes(self) -> dict:
         """Return which data axis corresponds to which coordinate."""
         present_coordinates = [k for k, v in self._coordinates.items() if v is not None]
         return {i: coord for i, coord in zip(range(self.ndim), present_coordinates)}
-    
+
     def _set_grid_from_indices(
         self, indices: np.ndarray, spacing: np.ndarray, origin: np.ndarray
     ):
@@ -658,10 +670,14 @@ class CrystalMap:
             raise ValueError("indices must be an array of integers")
         dims = indices.shape[0]
         if not np.isin(dims, (1, 2, 3)):
-            raise ValueError("indices must have a shape of (d, N), where 'd' is 1, 2, or 3")
+            raise ValueError(
+                "indices must have a shape of (d, N), where 'd' is 1, 2, or 3"
+            )
         size = indices.shape[1]
         if size != self._rotations.shape[0]:
-            raise ValueError("There must be the same number of indices as there are pixels")
+            raise ValueError(
+                "There must be the same number of indices as there are pixels"
+            )
 
         if spacing is None:
             spacing = np.ones(dims, dtype=np.float32)
@@ -714,10 +730,7 @@ class CrystalMap:
             z = np.atleast_1d(z).flatten()
             dz = _step_size_from_coordinates(z)
             zmin = np.min(z)
-            if dz != 0:
-                layer = np.around((z - zmin) / dz, 0).astype(int)
-            else:
-                layer = np.zeros_like(z, dtype=int)
+            layer = np.around((z - zmin) / dz, 0).astype(int) if dz != 0 else None
 
         if y is None:
             dy = 0
@@ -729,10 +742,7 @@ class CrystalMap:
             y = np.atleast_1d(y).flatten()
             dy = _step_size_from_coordinates(y)
             ymin = np.min(y)
-            if dy != 0:
-                row = np.around((y - ymin) / dy, 0).astype(int)
-            else:
-                row = np.zeros_like(y, dtype=int)
+            row = np.around((y - ymin) / dy, 0).astype(int) if dy != 0 else None
 
         if x is None:
             x = np.arange(self._rotations.shape[0], dtype=int)
@@ -741,10 +751,7 @@ class CrystalMap:
         x = np.atleast_1d(x).flatten()
         dx = _step_size_from_coordinates(x)
         xmin = np.min(x)
-        if dx != 0:
-            column = np.around((x - xmin) / dx, 0).astype(int)
-        else:
-            column = np.zeros_like(x, dtype=int)
+        column = np.around((x - xmin) / dx, 0).astype(int) if dx != 0 else None
 
         # Assign data AFTER all checks and calculations are completed.
         self._layer = layer
@@ -778,7 +785,7 @@ class CrystalMap:
             # Calls CrystalMapProperties.__setitem__()
             self.prop[name] = value
         else:
-            if name in ["_layer", "_row", "_column", "is_in_data"]:
+            if name in ["_layer", "_row", "_column", "is_in_data", "_is_in_data"]:
                 self._shape = None
             return object.__setattr__(self, name, value)
 
@@ -859,7 +866,7 @@ class CrystalMap:
 
             # Insert new (sub)mask into old full mask
             new_is_in_data = self.is_in_data.reshape(self._original_shape).copy()
-            new_is_in_data[self._data_slices_from_coordinates()] = new_is_in_data_slice
+            new_is_in_data[self._data_slices_from_coordinates()] &= new_is_in_data_slice
             new_is_in_data = new_is_in_data.ravel()
 
         # Insert the mask into a mask with the full map shape, if not
@@ -1215,7 +1222,7 @@ class CrystalMap:
         >>> xmap.plot("dp", colorbar=True, colorbar_label="Dot product", cmap="gray")
         """
         # Register "plot_map" projection with Matplotlib
-        # import orix.plot.crystal_map_plot
+        import orix.plot.crystal_map_plot
 
         if figure_kwargs is None:
             figure_kwargs = {}
@@ -1246,7 +1253,7 @@ class CrystalMap:
 
         if return_figure:
             return fig
-        
+
     def _xmap_slice_from_axis(self, axis: int, layer: int) -> "CrystalMap":
         """Returns a 2D slice of a CrystalMap object along a given axis.
 
@@ -1350,14 +1357,13 @@ def _data_slices_from_coordinates(
     """
     if steps is None:
         steps = {
-            "z": _step_size_from_coordinates(coords["z"]),
-            "y": _step_size_from_coordinates(coords["y"]),
-            "x": _step_size_from_coordinates(coords["x"]),
+            k: _step_size_from_coordinates(v) if v is not None else 0
+            for k, v in coords.items()
         }
     slices = []
-    for coords, step in zip(coords.values(), steps.values()):
-        if coords is not None and step != 0:
-            c_min, c_max = np.min(coords), np.max(coords)
+    for coord, step in zip(coords.values(), steps.values()):
+        if coord is not None and step != 0:
+            c_min, c_max = np.min(coord), np.max(coord)
             i_min = int(np.around(c_min / step))
             i_max = int(np.around((c_max / step) + 1))
             slices.append(slice(i_min, i_max))

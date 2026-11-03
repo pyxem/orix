@@ -167,6 +167,13 @@ class CrystalMapPlot(Axes):
                     axis = 0
             if layer is None:
                 layer = 0
+            if isinstance(value, np.ndarray) and value.shape[0] == crystal_map.size:
+                value_3d = crystal_map.get_map_data(value)
+                value = np.take(value_3d, indices=layer, axis=axis % 3).reshape(
+                    -1, *value.shape[1:]
+                )
+            self._slice_axis = axis % 3
+            self._slice_layer = layer
             crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
 
         self._data_shape = crystal_map._original_shape
@@ -325,8 +332,17 @@ class CrystalMapPlot(Axes):
 
         # Scale prop to [0, 1] to maximize image contrast
         if crystal_map.ndim == 3 and getattr(self, "_crystal_map", None) is not None:
-            crystal_map = self._crystal_map
-        overlay = np.squeeze(crystal_map.get_map_data(item))
+            if isinstance(item, np.ndarray) and item.shape[0] == crystal_map.size:
+                overlay_3d = crystal_map.get_map_data(item)
+                overlay = np.squeeze(
+                    np.take(
+                        overlay_3d, indices=self._slice_layer, axis=self._slice_axis
+                    )
+                )
+            else:
+                overlay = np.squeeze(self._crystal_map.get_map_data(item))
+        else:
+            overlay = np.squeeze(crystal_map.get_map_data(item))
         overlay_min = np.nanmin(overlay)
         rescaled_overlay = (overlay - overlay_min) / (np.nanmax(overlay) - overlay_min)
 
