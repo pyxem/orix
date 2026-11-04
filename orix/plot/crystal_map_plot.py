@@ -175,7 +175,7 @@ class CrystalMapPlot(Axes):
             self._slice_axis = axis % 3
             self._slice_layer = layer
             crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
-        
+
         # Add scalebar here to potentially raise an error early
         if scalebar is None:
             scalebar = installed["matplotlib-scalebar"]

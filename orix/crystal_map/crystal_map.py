@@ -651,7 +651,6 @@ class CrystalMap:
             steps = {"z": self.dz, **steps}
         return steps
 
-
     @property
     def _coordinate_axes(self) -> dict:
         """Return which data axis corresponds to which coordinate."""
@@ -741,9 +740,7 @@ class CrystalMap:
                 axis = int_axes[0]
                 layer = int(slices[axis])
                 xmap_2d = self._xmap_slice_from_axis(axis=axis, layer=layer)
-                remaining_slices = tuple(
-                    s for i, s in enumerate(slices) if i != axis
-                )
+                remaining_slices = tuple(s for i, s in enumerate(slices) if i != axis)
                 if any(s != slice(None, None, None) for s in remaining_slices):
                     xmap_2d = xmap_2d[remaining_slices]
                 return xmap_2d
