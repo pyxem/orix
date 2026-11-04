@@ -1074,8 +1074,10 @@ class CrystalMap:
         if return_figure:
             return fig
 
-    def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
-        """Return a slices defining the current data extent in all
+    def _data_slices_from_coordinates(
+        self, only_is_in_data: bool = True
+    ) -> tuple[slice, ...]:
+        """Return slices defining the current data extent in all
         directions.
 
         Parameters
@@ -1089,11 +1091,19 @@ class CrystalMap:
         slices
             Data slice in each existing direction in (y, x) order.
         """
+        steps = self._step_sizes
         if only_is_in_data:
             coordinates = self._coordinates
         else:
             coordinates = self._all_coordinates
-        slices = _data_slices_from_coordinates(coordinates, self._step_sizes)
+        slices = _data_slices_from_coordinates(coordinates, steps)
+        # Make slices relative to the first point in the full map, so
+        # that maps whose coordinates do not start at zero can be
+        # indexed into arrays of the original map shape
+        origin = _data_slices_from_coordinates(self._all_coordinates, steps)
+        slices = tuple(
+            slice(s.start - o.start, s.stop - o.start) for s, o in zip(slices, origin)
+        )
         return slices
 
     def _data_shape_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
@@ -1141,9 +1151,9 @@ def _data_slices_from_coordinates(
             "y": _step_size_from_coordinates(coords["y"]),
         }
     slices = []
-    for coords, step in zip(coords.values(), steps.values()):
-        if coords is not None and step != 0:
-            c_min, c_max = np.min(coords), np.max(coords)
+    for coords_i, step in zip(coords.values(), steps.values()):
+        if coords_i is not None and step != 0:
+            c_min, c_max = np.min(coords_i), np.max(coords_i)
             i_min = int(np.around(c_min / step))
             i_max = int(np.around((c_max / step) + 1))
             slices.append(slice(i_min, i_max))
