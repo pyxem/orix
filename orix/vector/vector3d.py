@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import logging
 from typing import TYPE_CHECKING, Any
 
 import dask.array as da
@@ -34,6 +35,8 @@ from orix.utils import _constants
 
 if TYPE_CHECKING:  # pragma: no cover
     from orix.quaternion.symmetry import Symmetry
+
+_logger = logging.getLogger(__name__)
 
 
 class Vector3d(Object3d):
@@ -246,10 +249,18 @@ class Vector3d(Object3d):
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
         if isinstance(other, Vector3d):
-            return self.__class__(self.data + other.data)
+            if hasattr(other, "phase"):
+                # If 'other' has a phase attribute (e.g, 'Miller'),
+                # use its addition function instead.
+                return other + self
+            else:
+                # Check for symmetry and reference fram mismatches
+                self._check_for_crystal_mismatch(other)
+                return self.__class__(self.data + other.data)
         elif isinstance(other, (int, float)):
             return self.__class__(self.data + other)
         elif isinstance(other, (list, tuple)):
+            # convert lists and tuples into numpy arrays
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
@@ -257,41 +268,26 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __radd__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
-        if isinstance(other, (int, float)):
-            return self.__class__(other + self.data)
-        elif isinstance(other, (list, tuple)):
-            other = np.array(other)
-
-        if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] + self.data)
-
+    def __radd__(
+        self, other: int | float | list | tuple | np.ndarray
+    ) -> Vector3d:
+        if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
+            return self + other
         return NotImplemented
 
     def __sub__(
         self, other: int | float | list | tuple | np.ndarray | Vector3d
     ) -> Vector3d:
-        if isinstance(other, Vector3d):
-            return self.__class__(self.data - other.data)
-        elif isinstance(other, (int, float)):
-            return self.__class__(self.data - other)
-        elif isinstance(other, (list, tuple)):
+        # Convert to `self + (-other)` to avoid code repetition
+        if isinstance(other, (list, tuple)):
             other = np.array(other)
+        return self + (-other)
 
-        if isinstance(other, np.ndarray):
-            return self.__class__(self.data - other[..., np.newaxis])
-
-        return NotImplemented
-
-    def __rsub__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
-        if isinstance(other, (int, float)):
-            return self.__class__(other - self.data)
-        elif isinstance(other, (list, tuple)):
-            other = np.array(other)
-
-        if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] - self.data)
-
+    def __rsub__(
+        self, other: int | float | list | tuple | np.ndarray
+    ) -> Vector3d:
+        if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
+            return -self + other
         return NotImplemented
 
     def __mul__(
@@ -312,15 +308,11 @@ class Vector3d(Object3d):
 
         return NotImplemented
 
-    def __rmul__(self, other: int | float | list | tuple | np.ndarray) -> Vector3d:
-        if isinstance(other, (int, float)):
-            return self.__class__(other * self.data)
-        elif isinstance(other, (list, tuple)):
-            other = np.array(other)
-
-        if isinstance(other, np.ndarray):
-            return self.__class__(other[..., np.newaxis] * self.data)
-
+    def __rmul__(
+        self, other: int | float | list | tuple | np.ndarray
+    ) -> Vector3d:
+        if isinstance(other, (int, float, list, tuple, np.ndarray, Vector3d)):
+            return self * other
         return NotImplemented
 
     def __truediv__(
@@ -343,6 +335,7 @@ class Vector3d(Object3d):
 
     def __eq__(self, other: Any) -> np.ndarray:
         if isinstance(other, Vector3d):
+            self._check_for_symmetry_mismatch(other)
             return np.all(self.data == other.data, axis=-1)
         else:
             return self.data == other
@@ -1726,3 +1719,33 @@ class Vector3d(Object3d):
         v2 = da.from_array(other.data, chunks=chunks2)
 
         return da.tensordot(v1, v2, axes=(v1.ndim - 1, v2.ndim - 1))
+
+    def _check_for_crystal_mismatch(self, other) -> None:
+        # NOTE: Vector3D does not include phase or coordinate_format
+        # information, but some of it's subclasses (most importantly, Miller)
+        # do. Adding the checker function to Vector3D allows logging
+        # consistent warnings regardless of operation order (ie, v+m or m+v).
+        phase_checks = [hasattr(self, "phase"), hasattr(other, "phase")]
+        if np.all(phase_checks):
+            if self.phase.point_group != other.phase.point_group:
+                pg1 = self.phase.point_group.name
+                pg2 = other.phase.point_group.name
+                _logger.warning(
+                    f"WARNING: Point group mismatch detected between crystal vectors ({pg1} versus {pg2})."
+                )
+        elif np.any(phase_checks):
+            _logger.warning(
+                "WARNING: Reference frame mismatch detected (Euclidean versus crystal vectors)."
+            )
+        crd_checks = [
+            hasattr(self, "coordinate_format"),
+            hasattr(other, "coordinate_format"),
+        ]
+        if np.all(crd_checks):
+            cf1 = self.coordinate_format
+            cf2 = other.coordinate_format
+            if cf1 != cf2:
+                _logger.warning(
+                    f"WARNING: Coordinates mismatch detected between crystal vectors ({cf1} versus {cf2})."
+                )
+        return None
