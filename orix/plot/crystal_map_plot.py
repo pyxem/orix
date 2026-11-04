@@ -54,6 +54,8 @@ class CrystalMapPlot(Axes):
         legend: bool = True,
         legend_properties: dict | None = None,
         override_status_bar: bool = False,
+        axis: int | None = None,
+        layer: int | None = None,
         **kwargs,
     ) -> AxesImage:
         """Plot a 2D map with any CrystalMap attribute as map values.
@@ -86,6 +88,10 @@ class CrystalMapPlot(Axes):
             Whether to display Euler angles and any overlay values in
             the status bar when hovering over the map (default is
             ``False``).
+        axis
+            For 3D xmap, axis on which to plot 2D slice.
+        layer
+            For 3D xmap, layer on defined axis to plot 2D slice.
         **kwargs
             Keyword arguments passed to
             :meth:`matplotlib.axes.Axes.imshow`.
@@ -151,6 +157,25 @@ class CrystalMapPlot(Axes):
 
         >>> #plt.imsave("image2.png", im.get_array())
         """
+        # Slice out 2D layer from 3D volume before adding scalebar
+        if crystal_map.ndim == 3:
+            if axis is None:
+                if 1 in crystal_map.shape:
+                    axis = crystal_map.shape.index(1)
+                    layer = 0
+                else:
+                    axis = 0
+            if layer is None:
+                layer = 0
+            if isinstance(value, np.ndarray) and value.shape[0] == crystal_map.size:
+                value_3d = crystal_map.get_map_data(value)
+                value = np.take(value_3d, indices=layer, axis=axis % 3).reshape(
+                    -1, *value.shape[1:]
+                )
+            self._slice_axis = axis % 3
+            self._slice_layer = layer
+            crystal_map = crystal_map._xmap_slice_from_axis(axis, layer)
+
         # Add scalebar here to potentially raise an error early
         if scalebar is None:
             scalebar = installed["matplotlib-scalebar"]
@@ -160,6 +185,7 @@ class CrystalMapPlot(Axes):
             _ = self.add_scalebar(crystal_map, **scalebar_properties)
 
         self._data_shape = crystal_map._original_shape
+        self._crystal_map = crystal_map
 
         patches = None
         if value is None:  # Phase map
