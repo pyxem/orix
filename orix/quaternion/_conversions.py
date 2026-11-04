@@ -882,8 +882,7 @@ def eu2qu(eu: np.ndarray) -> np.ndarray:
 
 @nb.njit("float64[:](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def om2qu_single(om: np.ndarray) -> np.ndarray:
-    """Convert a single (3, 3) rotation matrix to a unit quaternion
-    :cite:`rowenhorst2015consistent`.
+    """Convert a single (3, 3) rotation matrix to a unit quaternion.
 
     Parameters
     ----------
@@ -897,43 +896,50 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
 
     Notes
     -----
-    Uses Eq. A.11 in :cite:`rowenhorst2015consistent`.
+    Uses Shepperd's method :cite:`sarabandi2018accurate`, which avoids
+    numerical instability by computing the largest quaternion component
+    from the diagonal of the matrix and the remaining components from
+    the off-diagonal elements. The returned quaternion has a
+    non-negative real part.
 
     This function is optimized with Numba, so care must be taken with
     array shapes and data types.
     """
-    a_almost = 1 + om[0, 0] + om[1, 1] + om[2, 2]
-    b_almost = 1 + om[0, 0] - om[1, 1] - om[2, 2]
-    c_almost = 1 - om[0, 0] + om[1, 1] - om[2, 2]
-    d_almost = 1 - om[0, 0] - om[1, 1] + om[2, 2]
+    trace = om[0, 0] + om[1, 1] + om[2, 2]
 
     qu = np.zeros(4, dtype=np.float64)
 
-    if a_almost < _constants.eps9:
-        qu[0] = 0
+    if trace >= om[0, 0] and trace >= om[1, 1] and trace >= om[2, 2]:
+        a = 0.5 * np.sqrt(1 + trace)
+        f = 0.25 / a
+        qu[0] = a
+        qu[1] = f * (om[2, 1] - om[1, 2])
+        qu[2] = f * (om[0, 2] - om[2, 0])
+        qu[3] = f * (om[1, 0] - om[0, 1])
+    elif om[0, 0] >= om[1, 1] and om[0, 0] >= om[2, 2]:
+        b = 0.5 * np.sqrt(1 + om[0, 0] - om[1, 1] - om[2, 2])
+        f = 0.25 / b
+        qu[0] = f * (om[2, 1] - om[1, 2])
+        qu[1] = b
+        qu[2] = f * (om[0, 1] + om[1, 0])
+        qu[3] = f * (om[0, 2] + om[2, 0])
+    elif om[1, 1] >= om[2, 2]:
+        c = 0.5 * np.sqrt(1 - om[0, 0] + om[1, 1] - om[2, 2])
+        f = 0.25 / c
+        qu[0] = f * (om[0, 2] - om[2, 0])
+        qu[1] = f * (om[0, 1] + om[1, 0])
+        qu[2] = c
+        qu[3] = f * (om[1, 2] + om[2, 1])
     else:
-        qu[0] = 0.5 * np.sqrt(a_almost)
+        d = 0.5 * np.sqrt(1 - om[0, 0] - om[1, 1] + om[2, 2])
+        f = 0.25 / d
+        qu[0] = f * (om[1, 0] - om[0, 1])
+        qu[1] = f * (om[0, 2] + om[2, 0])
+        qu[2] = f * (om[1, 2] + om[2, 1])
+        qu[3] = d
 
-    if b_almost < _constants.eps9:
-        qu[1] = 0
-    elif om[2, 1] < om[1, 2]:
-        qu[1] = -0.5 * np.sqrt(b_almost)
-    else:
-        qu[1] = 0.5 * np.sqrt(b_almost)
-
-    if c_almost < _constants.eps9:
-        qu[2] = 0
-    elif om[0, 2] < om[2, 0]:
-        qu[2] = -0.5 * np.sqrt(c_almost)
-    else:
-        qu[2] = 0.5 * np.sqrt(c_almost)
-
-    if d_almost < _constants.eps9:
-        qu[3] = 0
-    elif om[1, 0] < om[0, 1]:
-        qu[3] = -0.5 * np.sqrt(d_almost)
-    else:
-        qu[3] = 0.5 * np.sqrt(d_almost)
+    if qu[0] < 0:
+        qu = -qu
 
     norm = np.sqrt(np.sum(np.square(qu)))
     qu = qu / norm
@@ -943,8 +949,8 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
 
 @nb.njit("float64[:, :](float64[:, :, :])", cache=True, fastmath=True, nogil=True)
 def om2qu_3d(om: np.ndarray) -> np.ndarray:
-    """Convert multiple rotation matrices to unit quaternions
-    :cite:`rowenhorst2015consistent`.
+    """Convert multiple rotation matrices to unit quaternions using
+    Shepperd's method :cite:`sarabandi2018accurate`.
 
     Parameters
     ----------
