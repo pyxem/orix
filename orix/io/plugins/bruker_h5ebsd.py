@@ -98,7 +98,7 @@ class BrukerH5ebsdFile(H5ebsdFile):
         "UnClippedPatternHeight",
         "WD",
         "XSTEP",
-        "YSTE",
+        "YSTEP",
         "ZOffset",
     ]
     dont_read_in_sem = ["ZOffset"]
