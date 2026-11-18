@@ -26,8 +26,8 @@ orix is released under the GPL v3 license.
 .. |python| image:: https://img.shields.io/badge/python-3.10+-blue.svg
    :target: https://www.python.org/downloads/
 
-.. |Coveralls| image:: https://coveralls.io/repos/github/pyxem/orix/badge.svg?branch=develop
-   :target: https://coveralls.io/github/pyxem/orix?branch=develop
+.. |coverage| image:: https://codecov.io/github/pyxem/orix/graph/badge.svg?token=TLRI1M0LBB
+   :target: https://codecov.io/github/pyxem/orix
 
 .. |pypi_downloads| image:: https://img.shields.io/pypi/dm/orix.svg?label=PyPI%20downloads
    :target: https://pypi.org/project/orix/
@@ -58,7 +58,7 @@ orix is released under the GPL v3 license.
 +----------------------+------------------------------------------------+
 | Build status         | |build_status| |docs| |python|                 |
 +----------------------+------------------------------------------------+
-| Metrics              | |Coveralls|                                    |
+| Metrics              | |coverage|                                     |
 +----------------------+------------------------------------------------+
 | Activity             | |pypi_downloads| |conda_downloads|             |
 +----------------------+------------------------------------------------+
