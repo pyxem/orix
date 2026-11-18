@@ -23,4 +23,4 @@ User guide
     bibliography.rst
     applications.rst
     related_projects.rst
-    License <https://github.com/pyxem/orix/blob/develop/LICENSE>
+    licensing.rst

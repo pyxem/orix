@@ -1,5 +1,5 @@
 ##
-## Copyright 2018-2025 the orix developers
+## Copyright 2018-2026 the orix developers
 ##
 ## This file is part of orix.
 ##
@@ -34,7 +34,16 @@ repos:
   - repo: https://github.com/johann-petrak/licenseheaders.git
     rev: 'v0.8.8'
     hooks:
+        # TODO: Uncomment once we start using the license template
+        # - id: licenseheaders
+        #   files: ^orix/example/file\.py$
+        #   name: licenseheaders (BSD-3-Clause)
+        #   args: ["-t", ".license_bsd.tmpl", "-cy", "-n", "orix", "-f"]
         - id: licenseheaders
+          name: licenseheaders (GPL-3.0-or-later)
+          # TODO: Uncomment once we start using the BSD-3 license
+          # template
+          # exclude: ^orix/example/file\.py$
           args: [
             "-t", ".license.tmpl",
             "-cy",

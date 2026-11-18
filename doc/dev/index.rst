@@ -40,4 +40,5 @@ Feel free to `ask a question <https://github.com/pyxem/orix/discussions>`__,
     handling_deprecations.rst
     running_writing_tests.rst
     adding_to_data_module.rst
+    licensing_considerations.rst
     continuous_integration.rst

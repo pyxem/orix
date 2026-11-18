@@ -19,5 +19,6 @@
 - [ ] New functions are imported in corresponding `__init__.py`.
 - [ ] New features, API changes, and deprecations are mentioned in the unreleased
       section in `CHANGELOG.rst`.
+- [ ] Files with a BSD 3-Clause license do not import from GPLv3+ software.
 - [ ] Contributor(s) are listed correctly in `__credits__` in `orix/__init__.py` and in
       `.zenodo.json`.
