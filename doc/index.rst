@@ -10,6 +10,8 @@ Functionality builds primarily on `NumPy <https://www.numpy.org>`_ and `Matplotl
 <https://matplotlib.org>`_.
 Initiation of the package was inspired by `MTEX <https://mtex-toolbox.github.io>`_.
 
+See :doc:`user/licensing` for details on licensing.
+
 .. toctree::
     :hidden:
     :titlesonly:
