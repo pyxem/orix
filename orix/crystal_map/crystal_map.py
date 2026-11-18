@@ -60,6 +60,9 @@ class CrystalMap:
     y
         Map y coordinate of each data point. If not given, the map is
         assumed to be 1D, and it is set to ``None``.
+    z
+        Map z coordinate of each data point. If not given, the map is
+        assumed to be 1D, and it is set to ``None``.
     phase_list
         A list of phases in the data with their with names, space
         groups, point groups, and structures. The order in which the
@@ -219,6 +222,7 @@ class CrystalMap:
         phase_id: np.ndarray | None = None,
         x: np.ndarray | None = None,
         y: np.ndarray | None = None,
+        z: np.ndarray | None = None,
         phase_list: PhaseList | None = None,
         prop: dict | None = None,
         scan_unit: str | None = "px",
@@ -231,6 +235,7 @@ class CrystalMap:
                 rotations.phase_id,
                 rotations.x,
                 rotations.y,
+                rotations.z,
                 rotations.phases,
                 rotations.prop,
                 rotations.scan_unit,
@@ -258,10 +263,11 @@ class CrystalMap:
         self._id = point_id
 
         # Set spatial coordinates
-        if x is None and y is None:
+        if x is None and y is None and z is None:
             x = np.arange(data_size)
         self._x = x
         self._y = y
+        self._z = z
 
         # Create phase list
         # Sorted in ascending order
@@ -375,6 +381,14 @@ class CrystalMap:
             return self._y[self.is_in_data]
 
     @property
+    def z(self) -> np.ndarray | None:
+        """Return the z coordinates of points in data."""
+        if self._z is None or len(np.unique(self._z)) == 1:
+            return
+        else:
+            return self._z[self.is_in_data]
+
+    @property
     def dx(self) -> float:
         """Return the x coordinate step size."""
         return _step_size_from_coordinates(self._x)
@@ -385,10 +399,13 @@ class CrystalMap:
         return _step_size_from_coordinates(self._y)
 
     @property
+    def dz(self) -> float:
+        """Return the z coordinate step size."""
+        return _step_size_from_coordinates(self._z)
+
+    @property
     def row(self) -> np.ndarray | None:
         """Return the row coordinate of each point in the data.
-
-        Returns ``None`` if :attr:`z` is not ``None``.
 
         Examples
         --------
@@ -405,7 +422,10 @@ class CrystalMap:
                 orig_shape += (1,)
             else:
                 orig_shape = (1,) + orig_shape
-        rows, _ = np.indices(orig_shape)
+        if len(orig_shape) == 3:
+            _, rows, _ = np.indices(orig_shape)
+        else:
+            rows, _ = np.indices(orig_shape)
         rows = rows.flatten()[self.is_in_data]
         rows -= rows.min()
         return rows
@@ -413,8 +433,6 @@ class CrystalMap:
     @property
     def col(self) -> np.ndarray | None:
         """Return the column coordinate of each point in the data.
-
-        Returns ``None`` if :attr:`z` is not ``None``.
 
         Examples
         --------
@@ -431,10 +449,27 @@ class CrystalMap:
                 shape += (1,)
             else:
                 shape = (1,) + shape
-        _, cols = np.indices(shape)
+        if len(shape) == 3:
+            _, _, cols = np.indices(shape)
+        else:
+            _, cols = np.indices(shape)
         cols = cols.flatten()[self.is_in_data]
         cols -= cols.min()
         return cols
+
+    @property
+    def layer(self) -> np.ndarray | None:
+        """Return the layer coordinate of each point in the data.
+
+        Returns ``None`` if :attr:`z` is ``None``.
+        """
+        shape = self._original_shape
+        if len(shape) < 3:
+            return None
+        layers, _, _ = np.indices(shape)
+        layers = layers.flatten()[self.is_in_data]
+        layers -= layers.min()
+        return layers
 
     @property
     def phase_id(self) -> np.ndarray:
@@ -595,17 +630,26 @@ class CrystalMap:
     @property
     def _coordinates(self) -> dict[str, np.ndarray | None]:
         """Return the coordinates of points in the data."""
-        return {"y": self.y, "x": self.x}
+        coords = {"y": self.y, "x": self.x}
+        if self.z is not None:
+            coords = {"z": self.z, **coords}
+        return coords
 
     @property
     def _all_coordinates(self) -> dict[str, np.ndarray | None]:
         """Return the coordinates of all points."""
-        return {"y": self._y, "x": self._x}
+        coords = {"y": self._y, "x": self._x}
+        if self.z is not None:
+            coords = {"z": self._z, **coords}
+        return coords
 
     @property
     def _step_sizes(self) -> dict[str, float | None]:
         """Return the step sizes of dimensions in the data."""
-        return {"y": self.dy, "x": self.dx}
+        steps = {"y": self.dy, "x": self.dx}
+        if self.z is not None:
+            steps = {"z": self.dz, **steps}
+        return steps
 
     @property
     def _coordinate_axes(self) -> dict:
@@ -688,6 +732,18 @@ class CrystalMap:
             slices = [slice(None, None, None)] * self.ndim
             for i, k in enumerate(key):
                 slices[i] = k
+
+            int_axes = [
+                i for i, s in enumerate(slices) if isinstance(s, (int, np.integer))
+            ]
+            if self.ndim == 3 and len(int_axes) == 1:
+                axis = int_axes[0]
+                layer = int(slices[axis])
+                xmap_2d = self._xmap_slice_from_axis(axis=axis, layer=layer)
+                remaining_slices = tuple(s for i, s in enumerate(slices) if i != axis)
+                if any(s != slice(None, None, None) for s in remaining_slices):
+                    xmap_2d = xmap_2d[remaining_slices]
+                return xmap_2d
 
             new_is_in_data_slice = np.zeros(self.shape, dtype=bool)  # > 1D
             new_is_in_data_slice[tuple(slices)] = True
@@ -955,6 +1011,8 @@ class CrystalMap:
         colorbar_properties: dict | None = None,
         remove_padding: bool = False,
         return_figure: bool = False,
+        axis: int | None = None,
+        layer: int | None = None,
         figure_kwargs: dict | None = None,
         **kwargs,
     ) -> mfigure.Figure | None:
@@ -1000,6 +1058,10 @@ class CrystalMap:
             ``False``).
         return_figure
             Whether to return the figure (default is ``False``).
+        axis
+            For 3D xmap, axis on which to plot 2D slice.
+        layer
+            For 3D xmap, layer on defined axis to plot 2D slice.
         figure_kwargs
             Keyword arguments passed to
             :func:`matplotlib.pyplot.subplots`.
@@ -1057,6 +1119,8 @@ class CrystalMap:
             scalebar_properties=scalebar_properties,
             legend=legend,
             legend_properties=legend_properties,
+            axis=axis,
+            layer=layer,
             **kwargs,
         )
 
@@ -1073,6 +1137,45 @@ class CrystalMap:
 
         if return_figure:
             return fig
+
+    def _xmap_slice_from_axis(self, axis: int, layer: int) -> "CrystalMap":
+        """Returns a 2D slice of a CrystalMap object along a given axis.
+
+        Parameters
+        ----------
+        axis
+            For 3D xmap, axis on which to plot 2D slice.
+        layer
+            For 3D xmap, layer on defined axis to plot 2D slice.
+
+        Returns
+        -------
+        CrystalMap
+            2D CrystalMap slice.
+        """
+        if self.ndim != 3:
+            raise ValueError("Can only extract a 2D slice from a 3D CrystalMap.")
+
+        axis = axis % 3
+        layer = layer % self.shape[axis]
+        sliced_3d = self[(slice(None),) * axis + (slice(layer, layer + 1),)]
+
+        all_axes = [
+            sliced_3d.layer * sliced_3d.dz + float(np.min(sliced_3d.z)),
+            sliced_3d.row * sliced_3d.dy + float(np.min(sliced_3d.y)),
+            sliced_3d.col * sliced_3d.dx + float(np.min(sliced_3d.x)),
+        ]
+        active = [all_axes[i] for i in range(3) if i != axis]
+
+        return CrystalMap(
+            rotations=sliced_3d.rotations,
+            phase_id=sliced_3d.phase_id,
+            y=active[0],
+            x=active[1],
+            phase_list=sliced_3d.phases,
+            prop={k: sliced_3d.prop[k] for k in sliced_3d.prop},
+            scan_unit=sliced_3d.scan_unit,
+        )
 
     def _data_slices_from_coordinates(self, only_is_in_data: bool = True) -> tuple:
         """Return a slices defining the current data extent in all
@@ -1180,7 +1283,7 @@ def create_coordinate_arrays(
     step sizes, suitable for initializing a
     :class:`~orix.crystal_map.CrystalMap`.
 
-    Arrays for 1D or 2D maps can be returned.
+    Arrays for 1D, 2D, or 3D maps can be returned.
 
     Parameters
     ----------
@@ -1215,19 +1318,23 @@ def create_coordinate_arrays(
     if not step_sizes:
         step_sizes = (1,) * ndim
 
-    if ndim == 3 or len(step_sizes) > 2:
-        raise ValueError("Can only create coordinate arrays for 2D maps")
+    if ndim > 3 or len(step_sizes) > 3:
+        raise ValueError("Can only create coordinate arrays for up to 3D maps.")
 
-    # Set up as if a 2D map is to be returned
-    dy, dx = (1,) * (2 - ndim) + step_sizes
-    ny, nx = (1,) * (2 - ndim) + shape
-    d = dict()
+    dz, dy, dx = (1,) * (3 - ndim) + tuple(step_sizes)
+    nz, ny, nx = (1,) * (3 - ndim) + tuple(shape)
 
-    # Add coordinate arrays depending on the number of map dimensions
-    d["x"] = np.tile(np.arange(nx) * dx, ny).flatten()
-    map_size = nx
+    z_grid, y_grid, x_grid = np.meshgrid(
+        np.arange(nz) * dz,
+        np.arange(ny) * dy,
+        np.arange(nx) * dx,
+        indexing="ij",
+    )
+
+    d = {"x": x_grid.ravel()}
     if ndim > 1:
-        d["y"] = np.sort(np.tile(np.arange(ny) * dy, nx)).flatten()
-        map_size *= ny
+        d["y"] = y_grid.ravel()
+    if ndim > 2:
+        d["z"] = z_grid.ravel()
 
-    return d, map_size
+    return d, int(nz * ny * nx)

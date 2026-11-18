@@ -1197,4 +1197,4 @@ class TestCrystalMapPlotMethod:
 class TestCreateCoordinateArrays:
     def test_create_coordinate_arrays_raises(self):
         with pytest.raises(ValueError, match="Can only create coordinate arrays for "):
-            _ = create_coordinate_arrays((1, 2, 3))
+            _ = create_coordinate_arrays((1, 2, 3, 4))
