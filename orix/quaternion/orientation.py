@@ -245,8 +245,8 @@ class Orientation(Misorientation):
     def from_matrix(
         cls, matrix: np.ndarray, symmetry: Symmetry | None = None
     ) -> Orientation:
-        """Create orientations from orientation matrices
-        :cite:`rowenhorst2015consistent`.
+        """Create orientations from orientation matrices using
+        Shepperd's method :cite:`sarabandi2018accurate`.
 
         Parameters
         ----------
