@@ -54,6 +54,12 @@ class TestMiller:
         m = Miller(hkil=[1, 1, -2, 0], phase=TRIGONAL_PHASE)
         assert repr(m) == "Miller (1,), point group 321, hkil\n" "[[ 1.  1. -2.  0.]]"
 
+    def test_repr_without_point_group(self):
+        phase = Phase(structure=Structure(lattice=TETRAGONAL_LATTICE))
+        m = Miller(hkl=[1, 2, 0], phase=phase)
+
+        assert repr(m) == "Miller (1,), point group None, hkl\n[[1. 2. 0.]]"
+
     def test_coordinate_format_raises(self):
         m = Miller(hkl=[1, 1, 1], phase=TETRAGONAL_PHASE)
         with pytest.raises(ValueError, match="Available coordinate formats are "):
