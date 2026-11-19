@@ -28,11 +28,8 @@ frames.
 Orientations
 ============
 
-This tutorial covers how to sample orientation space of the proper point groups.
-
-.. nbgallery::
-
-    uniform_sampling_of_orientation_space
+See :ref:`sphx_glr_examples_orientations_uniform_sampling_of_orientation_space.py`
+for a comparison of three methods for sampling orientation space.
 
 Vectors
 =======
