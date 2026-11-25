@@ -880,10 +880,67 @@ def eu2qu(eu: np.ndarray) -> np.ndarray:
     return qu
 
 
+# TODO: Update other methods to use a similar approach to the
+# orientation matrix -> quaternion conversion inplace writing into a
+# single preallocated array.
+#
+# This should allow us to remove _om2qu_single() and similar functions.
+
+
+@nb.njit("void(float64[:, :], float64[:])", cache=True, fastmath=True, nogil=True)
+def _om2qu_inplace(om: np.ndarray, qu: np.ndarray) -> None:
+    """Write the unit quaternion (a, b, c, d) of a single (3, 3)
+    rotation matrix to *qu* using Shepperd's method, see
+    :func:`om2qu_single`.
+
+    Notes
+    -----
+    Works on scalars and writes into a preallocated array to avoid
+    allocating temporary arrays for every matrix.
+    """
+    m00, m01, m02 = om[0, 0], om[0, 1], om[0, 2]
+    m10, m11, m12 = om[1, 0], om[1, 1], om[1, 2]
+    m20, m21, m22 = om[2, 0], om[2, 1], om[2, 2]
+    trace = m00 + m11 + m22
+
+    if trace >= m00 and trace >= m11 and trace >= m22:
+        a = 0.5 * np.sqrt(1 + trace)
+        f = 0.25 / a
+        b = f * (m21 - m12)
+        c = f * (m02 - m20)
+        d = f * (m10 - m01)
+    elif m00 >= m11 and m00 >= m22:
+        b = 0.5 * np.sqrt(1 + m00 - m11 - m22)
+        f = 0.25 / b
+        a = f * (m21 - m12)
+        c = f * (m01 + m10)
+        d = f * (m02 + m20)
+    elif m11 >= m22:
+        c = 0.5 * np.sqrt(1 - m00 + m11 - m22)
+        f = 0.25 / c
+        a = f * (m02 - m20)
+        b = f * (m01 + m10)
+        d = f * (m12 + m21)
+    else:
+        d = 0.5 * np.sqrt(1 - m00 - m11 + m22)
+        f = 0.25 / d
+        a = f * (m10 - m01)
+        b = f * (m02 + m20)
+        c = f * (m12 + m21)
+
+    # Normalize, and ensure a non-negative real part
+    scale = 1 / np.sqrt(a * a + b * b + c * c + d * d)
+    if a < 0:
+        scale = -scale
+    qu[0] = a * scale
+    qu[1] = b * scale
+    qu[2] = c * scale
+    qu[3] = d * scale
+
+
 @nb.njit("float64[:](float64[:, :])", cache=True, fastmath=True, nogil=True)
 def om2qu_single(om: np.ndarray) -> np.ndarray:
-    """Convert a single (3, 3) rotation matrix to a unit quaternion
-    :cite:`rowenhorst2015consistent`.
+    """Convert a single (3, 3) rotation matrix to a unit quaternion.
 
     Parameters
     ----------
@@ -897,54 +954,18 @@ def om2qu_single(om: np.ndarray) -> np.ndarray:
 
     Notes
     -----
-    Uses Eq. A.11 in :cite:`rowenhorst2015consistent`.
-
     This function is optimized with Numba, so care must be taken with
     array shapes and data types.
     """
-    a_almost = 1 + om[0, 0] + om[1, 1] + om[2, 2]
-    b_almost = 1 + om[0, 0] - om[1, 1] - om[2, 2]
-    c_almost = 1 - om[0, 0] + om[1, 1] - om[2, 2]
-    d_almost = 1 - om[0, 0] - om[1, 1] + om[2, 2]
-
     qu = np.zeros(4, dtype=np.float64)
-
-    if a_almost < _constants.eps9:
-        qu[0] = 0
-    else:
-        qu[0] = 0.5 * np.sqrt(a_almost)
-
-    if b_almost < _constants.eps9:
-        qu[1] = 0
-    elif om[2, 1] < om[1, 2]:
-        qu[1] = -0.5 * np.sqrt(b_almost)
-    else:
-        qu[1] = 0.5 * np.sqrt(b_almost)
-
-    if c_almost < _constants.eps9:
-        qu[2] = 0
-    elif om[0, 2] < om[2, 0]:
-        qu[2] = -0.5 * np.sqrt(c_almost)
-    else:
-        qu[2] = 0.5 * np.sqrt(c_almost)
-
-    if d_almost < _constants.eps9:
-        qu[3] = 0
-    elif om[1, 0] < om[0, 1]:
-        qu[3] = -0.5 * np.sqrt(d_almost)
-    else:
-        qu[3] = 0.5 * np.sqrt(d_almost)
-
-    norm = np.sqrt(np.sum(np.square(qu)))
-    qu = qu / norm
-
+    _om2qu_inplace(om, qu)
     return qu
 
 
 @nb.njit("float64[:, :](float64[:, :, :])", cache=True, fastmath=True, nogil=True)
 def om2qu_3d(om: np.ndarray) -> np.ndarray:
-    """Convert multiple rotation matrices to unit quaternions
-    :cite:`rowenhorst2015consistent`.
+    """Convert multiple rotation matrices to unit quaternions using
+    Shepperd's method :cite:`sarabandi2018accurate`.
 
     Parameters
     ----------
@@ -958,13 +979,19 @@ def om2qu_3d(om: np.ndarray) -> np.ndarray:
 
     Notes
     -----
+    Uses Shepperd's method :cite:`sarabandi2018accurate`, which avoids
+    numerical instability by computing the largest quaternion component
+    from the diagonal of the matrix and the remaining components from
+    the off-diagonal elements. The returned quaternion has a
+    non-negative real part.
+
     This function is optimized with Numba, so care must be taken with
     array shapes and data types.
     """
     n = om.shape[0]
     qu = np.zeros((n, 4), dtype=np.float64)
     for i in nb.prange(n):
-        qu[i] = om2qu_single(om[i])
+        _om2qu_inplace(om[i], qu[i])
     return qu
 
 

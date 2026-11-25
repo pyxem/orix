@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2025 the orix developers
+# Copyright 2018-2026 the orix developers
 #
 # This file is part of orix.
 #
@@ -22,6 +22,7 @@ import pytest
 
 from orix.quaternion import Orientation, Rotation
 from orix.quaternion._conversions import (
+    _om2qu_inplace,
     ax2qu,
     ax2qu_2d,
     ax2qu_single,
@@ -344,6 +345,58 @@ class TestRotationConversions:
         qu_32_nd = qu_64_nd.astype(np.float32)
         assert np.allclose(om2qu(om_32_nd), qu_32_nd, atol=1e-4)
         assert np.allclose(om_32_nd, qu2om(qu_32_nd), atol=1e-4)
+
+    def test_om2qu_shepperd_branches(self):
+        """Rotations of 180 degrees about axes chosen so that each of
+        the four branches of Shepperd's method is used, plus rotations
+        close to 180 degrees where the trace is close to -1.
+        """
+        axes = [
+            [1, 0, 0],  # Largest diagonal element is om[0, 0]
+            [0, 1, 0],  # om[1, 1]
+            [0, 0, 1],  # om[2, 2]
+            [1, 1, 0],
+            [1, 0, 1],
+            [0, 1, 1],
+            [1, 1, 1],
+            [1, -2, 3],
+            [-3, 1, -1],
+        ]
+        angles = [0, 1e-6, 1, np.pi / 2, 3, np.pi - 1e-6, np.pi]
+        for axis in axes:
+            axis = np.array(axis, dtype=np.float64)
+            axis /= np.linalg.norm(axis)
+            for angle in angles:
+                qu_expected = np.concatenate(
+                    ([np.cos(angle / 2)], np.sin(angle / 2) * axis)
+                )
+                om = qu2om_single.py_func(qu_expected)
+
+                qu = om2qu_single.py_func(om)
+
+                assert np.isclose(np.linalg.norm(qu), 1)
+                assert qu[0] >= 0
+                assert np.allclose(qu2om_single.py_func(qu), om, atol=1e-12)
+                assert np.allclose(qu, qu_expected, atol=1e-6)
+
+    def test_om2qu_inplace(self):
+        """Cover all branches of Shepperd's method (largest of the
+        trace, om[0, 0], om[1, 1] and om[2, 2]) and the sign flip for a
+        negative real part (angles > pi), using both the Numba function
+        and the Python function so that coverage can trace the latter.
+        """
+        axes = [[1, 1, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        for axis in axes:
+            axis = np.array(axis) / np.linalg.norm(axis)
+            for angle in [0.5, 3.5]:
+                qu = np.concatenate(([np.cos(angle / 2)], np.sin(angle / 2) * axis))
+                om = qu2om_single.py_func(qu)
+                if qu[0] < 0:
+                    qu = -qu
+                for func in [_om2qu_inplace, _om2qu_inplace.py_func]:
+                    qu_out = np.zeros(4)
+                    func(om, qu_out)
+                    assert np.allclose(qu_out, qu)
 
     def test_om2qu(self, orientation_matrices, quaternions_conversions):
         om_64 = orientation_matrices
