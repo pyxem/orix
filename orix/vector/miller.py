@@ -353,7 +353,8 @@ class Miller(Vector3d):
         """String representation."""
         name = self.__class__.__name__
         shape = self.shape
-        symmetry = None if self.phase is None else self.phase.point_group.name
+        point_group = None if self.phase is None else self.phase.point_group
+        symmetry = None if point_group is None else point_group.name
         coordinate_format = self.coordinate_format
         data = np.array_str(self.coordinates, precision=4, suppress_small=True)
         return (
