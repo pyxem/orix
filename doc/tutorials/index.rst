@@ -37,15 +37,15 @@ This tutorial covers how to sample orientation space of the proper point groups.
 Vectors
 =======
 
-These tutorials cover how to visualize 3D vectors in the stereographic projection,
-sample unit vectors and quantify and visualize the distribution of crystal poles in the
-sample reference frame.
+These tutorials show how to visualize 3D vectors in the stereographic projection and
+sample unit vectors. For the distribution of crystal poles in the sample
+reference frame, see the
+:ref:`pole density example <sphx_glr_examples_pole_figures_pole_density_function.py>`.
 
 .. nbgallery::
 
     stereographic_projection
     s2_sampling
-    pole_density_function
 
 Clustering of (mis)orientations
 ===============================
